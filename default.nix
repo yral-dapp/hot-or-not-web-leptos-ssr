@@ -8,6 +8,6 @@ pkgs.mkShell {
   buildInputs = with pkgs; [
     cargo-leptos
     rustup
-    sass
+    tailwindcss
   ];
 }
