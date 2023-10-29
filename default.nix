@@ -1,14 +1,14 @@
 {}:
 let
-  rev = "75a52265bda7fd25e06e3a67dee3f0354e73243c";
+  rev = "51d906d2341c9e866e48c2efcaac0f2d70bfd43e";
   nixpkgs = fetchTarball "https://github.com/NixOS/nixpkgs/archive/${rev}.tar.gz";
   pkgs = import nixpkgs { };
 in
 pkgs.mkShell {
   buildInputs = with pkgs; [
+    binaryen
     cargo-leptos
     flyctl
     rustup
-    tailwindcss
   ];
 }
