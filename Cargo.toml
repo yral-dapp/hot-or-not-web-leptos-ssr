@@ -17,6 +17,7 @@ leptos_meta = { version = "0.5", features = ["nightly"] }
 leptos_router = { version = "0.5", features = ["nightly"] }
 log = "0.4"
 simple_logger = "4"
+stylers = { version = "1.0.0-alpha" }
 tokio = { version = "1.25.0", optional = true }
 tower = { version = "0.4.13", optional = true }
 tower-http = { version = "0.4", features = ["fs"], optional = true }
@@ -24,6 +25,9 @@ wasm-bindgen = "=0.2.87"
 thiserror = "1.0.38"
 tracing = { version = "0.1.37", optional = true }
 http = "0.2.8"
+
+[build-dependencies]
+stylers = { version = "1.0.0-alpha" }
 
 [features]
 hydrate = ["leptos/hydrate", "leptos_meta/hydrate", "leptos_router/hydrate"]
@@ -57,6 +61,12 @@ site-root = "target/site"
 # The site-root relative folder where all compiled output (JS, WASM and CSS) is written
 # Defaults to pkg
 site-pkg-dir = "pkg"
+
+# The source style file. If it ends with _.sass_ or _.scss_ then it will be compiled by `dart-sass`
+# into CSS and processed by lightning css. When release is set, then it will also be minified.
+#
+# Optional. Env: LEPTOS_STYLE_FILE.
+style-file = "style/main.css"
 
 # Assets source dir. All files found here will be copied and synchronized to site-root.
 # The assets-dir cannot have a sub directory with the same name/path as site-pkg-dir.

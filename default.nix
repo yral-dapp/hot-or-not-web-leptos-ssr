@@ -9,6 +9,7 @@ pkgs.mkShell {
     binaryen
     cargo-leptos
     flyctl
+    leptosfmt
     rustup
   ];
 }

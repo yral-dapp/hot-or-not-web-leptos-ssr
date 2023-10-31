@@ -1,0 +1,12 @@
+{
+  "rust-analyzer.rustfmt.overrideCommand": [
+    "leptosfmt",
+    "--stdin",
+    "--rustfmt"
+  ],
+  "cssvar.files": [
+    "https://unpkg.com/open-props",
+    "https://unpkg.com/open-props/normalize.min.css",
+    "https://unpkg.com/open-props/buttons.min.css"
+  ]
+}
