@@ -10,6 +10,8 @@ pkgs.mkShell {
     cargo-leptos
     flyctl
     leptosfmt
+    nodejs_21
+    nodePackages_latest.postcss-cli
     rustup
   ];
 }
