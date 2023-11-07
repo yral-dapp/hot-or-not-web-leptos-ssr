@@ -6,8 +6,12 @@ let
 in
 pkgs.mkShell {
   buildInputs = with pkgs; [
+    binaryen
     cargo-leptos
+    flyctl
+    leptosfmt
+    nodejs_21
+    nodePackages_latest.postcss-cli
     rustup
-    tailwindcss
   ];
 }

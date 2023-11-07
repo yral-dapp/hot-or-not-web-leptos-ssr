@@ -1,0 +1,23 @@
+{
+  "rust-analyzer.rustfmt.overrideCommand": [
+    "leptosfmt",
+    "--stdin",
+    "--rustfmt"
+  ],
+  "cssvar.files": ["./node_modules/open-props/open-props.min.css"],
+  // Do not ignore node_modules css files, which is ignored by default
+  "cssvar.ignore": [],
+  "cssvar.extensions": ["html", "css"],
+  "emmet.includeLanguages": {
+    "rust": "html",
+    "*.rs": "html"
+  },
+  "files.associations": {
+    "*.rs": "rust"
+  },
+  "editor.quickSuggestions": {
+    "other": "on",
+    "comments": "on",
+    "strings": true
+  }
+}
