@@ -1,1 +1,1 @@
-cargo leptos watch --hot-reload & postcss style/stylers.css -o style/main.css --watch
+postcss style/stylers.css -o style/main.css --watch & cargo leptos watch --hot-reload
