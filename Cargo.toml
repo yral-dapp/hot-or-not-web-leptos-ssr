@@ -120,7 +120,4 @@ lib-default-features = false
 # Optional. Defaults to "release".
 lib-profile-release = "wasm-release"
 
-# Pass additional parameters to the cargo process to build the server
-# 
-# Optional. No default
-bin_cargo-args = ["--target", "x86_64-unknown-linux-musl"]
+bin-target = "x86_64-unknown-linux-musl"
