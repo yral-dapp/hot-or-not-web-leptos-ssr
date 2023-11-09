@@ -1,4 +1,4 @@
-cargo leptos build --release
+cargo leptos build --release -vv
 
 # docker rm hot-or-not-web-leptos-ssr
 

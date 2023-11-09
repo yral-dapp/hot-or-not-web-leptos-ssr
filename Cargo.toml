@@ -120,4 +120,4 @@ lib-default-features = false
 # Optional. Defaults to "release".
 lib-profile-release = "wasm-release"
 
-bin-target = "x86_64-unknown-linux-musl"
+bin_target_triple = "x86_64-unknown-linux-musl"
