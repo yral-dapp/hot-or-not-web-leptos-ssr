@@ -22,8 +22,8 @@ jobs:
         uses: actions/checkout@v3
       - name: Install Nix packages
         uses: DeterminateSystems/nix-installer-action@main
-#       - name: Cache Nix packages
-#         uses: DeterminateSystems/magic-nix-cache-action@main
+      - name: Cache Nix packages
+        uses: DeterminateSystems/magic-nix-cache-action@main
 #       - name: Cache rust dependencies and build output
 #         uses: actions/cache@v3
 #         with:
