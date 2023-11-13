@@ -31,14 +31,8 @@ jobs:
             ~/.cargo/
             target/
           key: cargo-${{ hashFiles('**/Cargo.lock') }}
-#       - name: Run database migrations
-#         run: nix-shell --run 'sqlx migrate run'
-#         env:
-#           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-#       - name: Build Rust project to `musl` output
-#         run: nix-shell --run 'cargo build --release --target x86_64-unknown-linux-musl'
-#         env:
-#           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      - name: Build the Leptos project to `musl` output
+        run: nix-shell --run 'cargo leptos build --release'
 #       - name: Authenticate to Google Cloud
 #         uses: google-github-actions/auth@v1
 #         with:
