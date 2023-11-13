@@ -24,13 +24,13 @@ jobs:
         uses: DeterminateSystems/nix-installer-action@main
       - name: Cache Nix packages
         uses: DeterminateSystems/magic-nix-cache-action@main
-#       - name: Cache rust dependencies and build output
-#         uses: actions/cache@v3
-#         with:
-#           path: |
-#             ~/.cargo/
-#             target/
-#           key: cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache rust dependencies and build output
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/
+            target/
+          key: cargo-${{ hashFiles('**/Cargo.lock') }}
 #       - name: Run database migrations
 #         run: nix-shell --run 'sqlx migrate run'
 #         env:
