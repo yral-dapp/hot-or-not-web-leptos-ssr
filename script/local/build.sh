@@ -1,7 +1,8 @@
-cargo leptos build --release -vv
+cargo leptos build --release
 
-# docker rm hot-or-not-web-leptos-ssr
+docker stop hot-or-not-web-leptos-ssr
+docker rm hot-or-not-web-leptos-ssr
 
-# docker build . --tag hot-or-not-web-leptos-ssr
+docker build . --tag hot-or-not-web-leptos-ssr
 
-# docker run --detach --publish 3000:3000 --name hot-or-not-web-leptos-ssr hot-or-not-web-leptos-ssr
+docker run --detach --publish 8080:8080 --name hot-or-not-web-leptos-ssr hot-or-not-web-leptos-ssr
