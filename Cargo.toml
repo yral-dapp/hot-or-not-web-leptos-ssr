@@ -119,3 +119,8 @@ lib-default-features = false
 #
 # Optional. Defaults to "release".
 lib-profile-release = "wasm-release"
+
+# The target triple to build the server binary file for
+#
+# Optional. Defaults to "x86_64-unknown-linux-gnu".
+bin-target-triple = "x86_64-unknown-linux-musl"
