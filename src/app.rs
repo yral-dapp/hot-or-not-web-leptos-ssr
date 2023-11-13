@@ -18,6 +18,11 @@ pub fn App() -> impl IntoView {
         // sets the document title
         <Title text="Welcome to Hot or Not"/>
 
+        <Meta
+            name="description"
+            content="Hot or Not's upcoming blazing fast web app that can do it all."
+        />
+
         // content for this welcome page
         <Router fallback=|| {
             let mut outside_errors = Errors::default();
