@@ -12,10 +12,11 @@ pub fn App() -> impl IntoView {
     provide_meta_context();
 
     view! {
+        <Html lang="en"/>
         <Stylesheet id="leptos" href="/pkg/hot-or-not-web-leptos-ssr.css"/>
 
         // sets the document title
-        <Title text="Welcome to Leptos"/>
+        <Title text="Welcome to Hot or Not"/>
 
         // content for this welcome page
         <Router fallback=|| {
@@ -40,7 +41,7 @@ fn HomePage() -> impl IntoView {
     let on_click = move |_| set_count.update(|count| *count += 1);
 
     view! {
-        <h1>"Welcome to Leptos!"</h1>
+        <h1>"Welcome to Hot or Not!"</h1>
         <button on:click=on_click>"Click Me: " {count}</button>
         <SomeComponent/>
     }

@@ -5,8 +5,8 @@ use stylers::style;
 pub fn SomeComponent() -> impl IntoView {
     let styles = style! {
         h2 {
-            color: var(--red-6);
-            background-color: var(--green-2);
+            color: var(--red-8);
+            background-color: var(--green-1);
             padding: var(--size-7);
         }
     };
