@@ -3,20 +3,11 @@ on:
   push:
     # branches:
     #   - main
-# env:
-#   PROJECT_ID: hot-or-not-monitoring
-#   DEPLOY_REGION: us-central1
-#   IMAGE_NAME: receive_canister_metrics_from_fleet_and_push_to_timeseries_database
-#   SERVICE_NAME: receive-canister-metrics-and-push-to-timeseries-database
 
 jobs:
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
-    #     permissions:
-    #       contents: read
-    #       packages: write
-    #       id-token: write
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
@@ -37,29 +28,3 @@ jobs:
         run: nix-shell --run 'fly deploy'
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-#       - name: Authenticate to Google Cloud
-#         uses: google-github-actions/auth@v1
-#         with:
-#           credentials_json: ${{ secrets.GOOGLE_CLOUD_SERVICE_ACCOUNT }}
-#       - name: Set up Cloud SDK
-#         uses: google-github-actions/setup-gcloud@v1
-#         with:
-#           project_id: ${{ env.PROJECT_ID }}
-#       - name: Docker auth
-#         run: |-
-#           gcloud auth configure-docker ${{ env.DEPLOY_REGION }}-docker.pkg.dev
-#       - name: "Build and push container"
-#         run: |-
-#           docker build . --tag ${{ env.DEPLOY_REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-#           docker push ${{ env.DEPLOY_REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-#       - name: Deploy to cloud run
-#         id: deploy
-#         uses: "google-github-actions/deploy-cloudrun@v1"
-#         with:
-#           service: ${{ env.SERVICE_NAME }}
-#           image: ${{ env.DEPLOY_REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-#           region: ${{ env.DEPLOY_REGION }}
-#           project_id: ${{ env.PROJECT_ID }}
-#           flags: "--allow-unauthenticated --max-instances=1 --cpu=1 --memory=512Mi --concurrency=1000"
-#           env_vars: |
-#             DATABASE_URL=${{ secrets.DATABASE_URL }}
