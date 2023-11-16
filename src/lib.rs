@@ -1,5 +1,6 @@
 use cfg_if::cfg_if;
 pub mod app;
+pub mod backend_canister_bindings;
 pub mod component;
 pub mod error_template;
 pub mod fileserv;
@@ -19,3 +20,4 @@ cfg_if! { if #[cfg(feature = "hydrate")] {
         leptos::mount_to_body(App);
     }
 }}
+

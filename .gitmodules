@@ -1,0 +1,3 @@
+[submodule "hot-or-not-backend-canister"]
+	path = hot-or-not-backend-canister
+	url = https://github.com/go-bazzinga/hot-or-not-backend-canister
