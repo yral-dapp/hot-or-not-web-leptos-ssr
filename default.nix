@@ -1,12 +1,13 @@
 {}:
 let
-  rev = "fe82c7563fbcc82504be06734f16a3690243bcc5";
+  rev = "51a01a7e5515b469886c120e38db325c96694c2f";
   nixpkgs = fetchTarball "https://github.com/NixOS/nixpkgs/archive/${rev}.tar.gz";
   # nixpkgs = fetchTarball "https://github.com/NixOS/nixpkgs/archive/master.tar.gz";
   pkgs = import nixpkgs { };
 in
 pkgs.mkShell {
   buildInputs = with pkgs; [
+    binaryen
     cargo-leptos
     flyctl
     leptosfmt
