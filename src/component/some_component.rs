@@ -13,4 +13,3 @@ pub fn SomeComponent() -> impl IntoView {
 
     view! { class=styles, <h2>"Hello World"</h2> }
 }
-

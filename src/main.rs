@@ -2,10 +2,10 @@
 #[tokio::main]
 async fn main() {
     use axum::{routing::post, Router};
-    use leptos::*;
-    use leptos_axum::{generate_route_list, LeptosRoutes};
     use hot_or_not_web_leptos_ssr::app::*;
     use hot_or_not_web_leptos_ssr::fileserv::file_and_error_handler;
+    use leptos::*;
+    use leptos_axum::{generate_route_list, LeptosRoutes};
 
     simple_logger::init_with_level(log::Level::Debug).expect("couldn't initialize logging");
 
@@ -41,4 +41,3 @@ pub fn main() {
     // unless we want this to work with e.g., Trunk for a purely client-side app
     // see lib.rs for hydration function instead
 }
-
