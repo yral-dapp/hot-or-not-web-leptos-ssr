@@ -4,6 +4,9 @@
     "--stdin",
     "--rustfmt"
   ],
+  "rust-analyzer.procMacro.ignored": {
+    "leptos_macro": ["component", "server"]
+  },
   "cssvar.files": ["./node_modules/open-props/open-props.min.css"],
   // Do not ignore node_modules css files, which is ignored by default
   "cssvar.ignore": [],
@@ -11,9 +14,6 @@
   "emmet.includeLanguages": {
     "rust": "html",
     "*.rs": "html"
-  },
-  "files.associations": {
-    "*.rs": "rust"
   },
   "editor.quickSuggestions": {
     "other": "on",

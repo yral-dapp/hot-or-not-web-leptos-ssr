@@ -1,1 +1,2 @@
 ./didc bind --target rs-agent ./hot-or-not-backend-canister/src/canister/post_cache/can.did > src/backend_canister_bindings/post_cache.rs
+./didc bind --target rs-agent ./hot-or-not-backend-canister/src/canister/individual_user_template/can.did > src/backend_canister_bindings/individual_user_template.rs

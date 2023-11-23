@@ -1,6 +1,6 @@
 use crate::{
     error_template::{AppError, ErrorTemplate},
-    route::root::RootPage,
+    route::{hot_or_not::canister_id::post_id::PostPage, root::RootPage},
 };
 use leptos::*;
 use leptos_meta::*;
@@ -32,9 +32,9 @@ pub fn App() -> impl IntoView {
             <main>
                 <Routes>
                     <Route path="/" view=RootPage/>
+                    <Route path="/hot-or-not/:canister_id/:post_id" view=PostPage/>
                 </Routes>
             </main>
         </Router>
     }
 }
-
