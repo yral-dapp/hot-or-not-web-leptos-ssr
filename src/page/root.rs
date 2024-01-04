@@ -1,7 +1,7 @@
 use crate::component::spinner::Spinner;
 use candid::Principal;
 use leptos::*;
-use leptos_router::use_navigate;
+use leptos_router::*;
 
 #[cfg(feature = "ssr")]
 use crate::{canister::post_cache, state::canisters::Canisters};
@@ -31,7 +31,7 @@ async fn get_top_post_id() -> Result<Option<(Principal, u64)>, ServerFnError> {
 
 #[component]
 pub fn RootPage() -> impl IntoView {
-    let target_url = create_resource(|| (), |_| get_top_post_id());
+    let target_post = create_resource(|| (), |_| get_top_post_id());
 
     view! {
         <Suspense fallback=|| {
@@ -42,18 +42,19 @@ pub fn RootPage() -> impl IntoView {
             }
         }>
             {move || {
-                let url = match target_url.get() {
-                    Some(Ok(Some((canister, post_id)))) => {
-                        format!("/hot-or-not/{canister}/{post_id}")
-                    }
-                    Some(Ok(None)) => "/error?err=No Posts Found".to_string(),
-                    Some(Err(e)) => format!("/error?err={e}"),
-                    None => return,
-                };
-                let nav = use_navigate();
-                nav(&url, Default::default());
+                target_post
+                    .get()
+                    .map(|u| {
+                        let url = match u {
+                            Ok(Some((canister, post_id))) => {
+                                format!("/hot-or-not/{canister}/{post_id}")
+                            }
+                            Ok(None) => "/error?err=No Posts Found".to_string(),
+                            Err(e) => format!("/error?err={e}"),
+                        };
+                        view! { <Redirect path=url/> }
+                    })
             }}
-
         </Suspense>
     }
 }
