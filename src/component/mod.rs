@@ -1,1 +1,1 @@
-pub mod some_component;
+pub mod spinner;

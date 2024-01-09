@@ -1,5 +1,5 @@
 [package]
-name = "hot-or-not-web-leptos-ssr"
+name = "leptos-ssr"
 version = "0.1.0"
 edition = "2021"
 
@@ -8,32 +8,35 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 axum = { version = "0.6.4", optional = true }
-candid = "0.9.11"
-cfg-if = "1"
 console_error_panic_hook = "0.1"
 console_log = "1"
-http = "0.2.8"
-ic-agent = { version = "0.30.0", features = ["wasm-bindgen", "reqwest"] }
+cfg-if = "1"
 leptos = { version = "0.5", features = ["nightly"] }
 leptos_axum = { version = "0.5", optional = true }
 leptos_meta = { version = "0.5", features = ["nightly"] }
 leptos_router = { version = "0.5", features = ["nightly"] }
 log = "0.4"
-serde = { version = "*", features = ["derive"] }
 simple_logger = "4"
-stylers = { version = "1.0.0-alpha" }
-thiserror = "1.0.38"
 tokio = { version = "1.25.0", optional = true }
 tower = { version = "0.4.13", optional = true }
 tower-http = { version = "0.4", features = ["fs"], optional = true }
+wasm-bindgen = "=0.2.89"
+thiserror = "1.0.38"
 tracing = { version = "0.1.37", optional = true }
-wasm-bindgen = "=0.2.88"
+http = "0.2.8"
+serde = { version = "1.0.193", features = ["derive"] }
+candid = "0.10.1"
+ic-agent = { version = "0.31.0", default-features = false, features = ["pem", "reqwest"] }
+serde-wasm-bindgen = { version = "0.6.3" }
 
 [build-dependencies]
-stylers = { version = "1.0.0-alpha" }
+candid_parser = "0.1.1"
+serde = { version = "1.0.193", features = ["derive"] }
+serde_json = "1.0.110"
+convert_case = "0.6.0"
 
 [features]
-hydrate = ["leptos/hydrate", "leptos_meta/hydrate", "leptos_router/hydrate"]
+hydrate = ["leptos/hydrate", "leptos_meta/hydrate", "leptos_router/hydrate", "ic-agent/wasm-bindgen"]
 ssr = [
     "dep:axum",
     "dep:tokio",
@@ -56,7 +59,7 @@ panic = "abort"
 
 [package.metadata.leptos]
 # The name used by wasm-bindgen/cargo-leptos for the JS/WASM bundle. Defaults to the crate name
-output-name = "hot-or-not-web-leptos-ssr"
+output-name = "leptos-ssr"
 
 # The site root folder is where cargo-leptos generate all output. WARNING: all content of this folder will be erased on a rebuild. Use it in your server setup.
 site-root = "target/site"
@@ -65,11 +68,15 @@ site-root = "target/site"
 # Defaults to pkg
 site-pkg-dir = "pkg"
 
-# The source style file. If it ends with _.sass_ or _.scss_ then it will be compiled by `dart-sass`
-# into CSS and processed by lightning css. When release is set, then it will also be minified.
-#
-# Optional. Env: LEPTOS_STYLE_FILE.
-style-file = "style/main.css"
+# [Optional] The source CSS file. If it ends with .sass or .scss then it will be compiled by dart-sass into CSS. The CSS is optimized by Lightning CSS before being written to <site-root>/<site-pkg>/app.css
+#style-file = "style/main.scss"
+
+# The tailwind input file.
+tailwind-input-file = "style/input.css"
+
+# The tailwind config file.
+tailwind-config-file = "tailwind.config.js"
+
 
 # Assets source dir. All files found here will be copied and synchronized to site-root.
 # The assets-dir cannot have a sub directory with the same name/path as site-pkg-dir.
@@ -122,8 +129,3 @@ lib-default-features = false
 #
 # Optional. Defaults to "release".
 lib-profile-release = "wasm-release"
-
-# The target triple to build the server binary file for
-#
-# Optional. Defaults to "x86_64-unknown-linux-gnu".
-bin-target-triple = "x86_64-unknown-linux-musl"
