@@ -6,6 +6,22 @@ struct ServerErrParams {
     err: String,
 }
 
+#[macro_export]
+macro_rules! try_or_redirect {
+    ($e:expr) => {
+        match $e {
+            Ok(v) => v,
+            Err(e) => {
+                use leptos_router::use_navigate;
+                let err = e.to_string();
+                let nav = use_navigate();
+                nav(format!("/error?err={err}"), Default::default());
+                return None;
+            }
+        }
+    };
+}
+
 #[component]
 pub fn ServerErrorPage() -> impl IntoView {
     let params = use_query::<ServerErrParams>();

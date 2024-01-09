@@ -48,10 +48,7 @@ mod handlers {
 #[cfg(feature = "ssr")]
 #[tokio::main]
 async fn main() {
-    use axum::{
-        routing::{get, post},
-        Router,
-    };
+    use axum::{routing::get, Router};
     use handlers::*;
     use leptos::*;
     use leptos_axum::{generate_route_list, LeptosRoutes};

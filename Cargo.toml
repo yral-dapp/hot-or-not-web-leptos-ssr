@@ -28,6 +28,9 @@ serde = { version = "1.0.193", features = ["derive"] }
 candid = "0.10.1"
 ic-agent = { version = "0.31.0", default-features = false, features = ["pem", "reqwest"] }
 serde-wasm-bindgen = { version = "0.6.3" }
+futures = "0.3.30"
+leptos-use = "0.9.0"
+ehttp = "0.3.1"
 
 [build-dependencies]
 candid_parser = "0.1.1"
@@ -47,6 +50,8 @@ ssr = [
     "leptos_meta/ssr",
     "leptos_router/ssr",
     "dep:tracing",
+    "leptos-use/ssr",
+    "ehttp/native-async"
 ]
 
 # Defines a size-optimized profile for the WASM bundle in release mode
