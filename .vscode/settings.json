@@ -1,23 +1,26 @@
 {
-  "rust-analyzer.rustfmt.overrideCommand": [
-    "leptosfmt",
-    "--stdin",
-    "--rustfmt"
-  ],
-  "rust-analyzer.procMacro.ignored": {
-    "leptos_macro": ["component", "server"]
-  },
-  "cssvar.files": ["./node_modules/open-props/open-props.min.css"],
-  // Do not ignore node_modules css files, which is ignored by default
-  "cssvar.ignore": [],
-  "cssvar.extensions": ["html", "css"],
-  "emmet.includeLanguages": {
-    "rust": "html",
-    "*.rs": "html"
-  },
-  "editor.quickSuggestions": {
-    "other": "on",
-    "comments": "on",
-    "strings": true
-  }
+    "rust-analyzer.rustfmt.overrideCommand": [
+        "leptosfmt",
+        "--stdin",
+        "--rustfmt"
+    ],
+    "rust-analyzer.cargo.features": "all",
+    "rust-analyzer.check.features": "all",
+    "emmet.includeLanguages": {
+        "rust": "html",
+        "*.rs": "html"
+    },
+    "tailwindCSS.includeLanguages": {
+        "rust": "html",
+        "*.rs": "html"
+    },
+    "files.associations": {
+        "*.rs": "rust"
+    },
+    "editor.quickSuggestions": {
+        "other": "on",
+        "comments": "on",
+        "strings": true
+    },
+    "css.validate": false
 }

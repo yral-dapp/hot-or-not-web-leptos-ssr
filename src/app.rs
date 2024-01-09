@@ -1,6 +1,7 @@
 use crate::{
     error_template::{AppError, ErrorTemplate},
-    route::{hot_or_not::canister_id::post_id::PostPage, root::RootPage},
+    page::{err::ServerErrorPage, post_view::PostView, root::RootPage},
+    state::canisters::Canisters,
 };
 use leptos::*;
 use leptos_meta::*;
@@ -10,18 +11,13 @@ use leptos_router::*;
 pub fn App() -> impl IntoView {
     // Provides context that manages stylesheets, titles, meta tags, etc.
     provide_meta_context();
+    provide_context(Canisters::default());
 
     view! {
-        <Html lang="en"/>
-        <Stylesheet id="leptos" href="/pkg/hot-or-not-web-leptos-ssr.css"/>
+        <Stylesheet id="leptos" href="/pkg/leptos-ssr.css"/>
 
         // sets the document title
-        <Title text="Welcome to Hot or Not"/>
-
-        <Meta
-            name="description"
-            content="Hot or Not's upcoming blazing fast web app that can do it all."
-        />
+        <Title text="Welcome to Leptos"/>
 
         // content for this welcome page
         <Router fallback=|| {
@@ -32,7 +28,8 @@ pub fn App() -> impl IntoView {
             <main>
                 <Routes>
                     <Route path="/" view=RootPage/>
-                    <Route path="/hot-or-not/:canister_id/:post_id" view=PostPage/>
+                    <Route path="/hot-or-not/:canister_id/:post_id" view=PostView/>
+                    <Route path="/error" view=ServerErrorPage/>
                 </Routes>
             </main>
         </Router>
