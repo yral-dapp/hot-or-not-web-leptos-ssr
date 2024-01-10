@@ -39,7 +39,8 @@ pub fn HlsVideo(video_ref: NodeRef<Video>, allow_show: RwSignal<bool>) -> impl I
         ..
     } = expect_context();
 
-    let current_uid = create_memo(move |_| with!(|video_queue| video_queue[current_idx()].clone()));
+    let current_uid =
+        create_memo(move |_| with!(|video_queue| video_queue[current_idx()].uid.clone()));
     let wasp = create_rw_signal(None::<WaspHlsPlayerW>);
     let bg_url = move || bg_url(current_uid());
 
@@ -93,8 +94,8 @@ pub fn ThumbView(idx: usize) -> impl IntoView {
         ..
     } = expect_context();
 
-    let uid = create_memo(move |_| with!(|video_queue| video_queue[idx].clone()));
-    let view_bg_url = create_memo(move |_| bg_url(uid()));
+    let uid = create_memo(move |_| with!(|video_queue| video_queue[idx].uid.clone()));
+    let view_bg_url = move || bg_url(uid());
 
     use_intersection_observer_with_options(
         container_ref,
@@ -108,9 +109,10 @@ pub fn ThumbView(idx: usize) -> impl IntoView {
             let rect = visible.bounding_client_rect();
             // TODO: confirm this in different screens and browsers
             // this prevents an initial back and forth between the first and second video
-            if rect.y() == rect.height() {
+            if rect.y() == rect.height() || idx == current_idx.get_untracked() {
                 return;
             }
+
             // fetch new videos
             if idx == 14 || (idx > 14 && idx % 8 == 0) {
                 log::debug!("trigger rerender");

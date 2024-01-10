@@ -12,7 +12,7 @@ pub async fn get_post_uid(
     canisters: &Canisters,
     user_canister: Principal,
     post_id: u64,
-) -> Result<Option<String>, PostViewError> {
+) -> Result<Option<PostDetails>, PostViewError> {
     let post_creator_can = canisters.individual_user(user_canister);
     let post_details = match post_creator_can
         .get_individual_post_details_by_id(post_id)
@@ -43,7 +43,18 @@ pub async fn get_post_uid(
         return Ok(None);
     }
 
-    Ok(Some(post_uuid))
+    Ok(Some(PostDetails {
+        canister_id: user_canister,
+        post_id,
+        uid: post_uuid,
+    }))
+}
+
+#[derive(Clone, PartialEq, Debug, Hash)]
+pub struct PostDetails {
+    pub canister_id: Principal,
+    pub post_id: u64,
+    pub uid: String,
 }
 
 pub struct VideoFetchStream<'a> {
@@ -59,7 +70,8 @@ impl<'a> VideoFetchStream<'a> {
     pub async fn fetch_post_uids_chunked(
         self,
         chunks: usize,
-    ) -> Result<impl Stream<Item = Vec<Result<String, PostViewError>>> + 'a, PostViewError> {
+    ) -> Result<impl Stream<Item = Vec<Result<PostDetails, PostViewError>>> + 'a, PostViewError>
+    {
         let post_cache = self.canisters.post_cache();
         let top_posts_fut = post_cache
             .get_top_posts_aggregated_from_canisters_on_this_network_for_hot_or_not_feed(

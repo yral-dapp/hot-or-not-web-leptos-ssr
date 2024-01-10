@@ -13,6 +13,8 @@ use crate::{component::spinner::Spinner, state::canisters::Canisters, try_or_red
 use video_iter::{get_post_uid, VideoFetchStream};
 use video_loader::{BgView, HlsVideo, ThumbView};
 
+use self::video_iter::PostDetails;
+
 #[derive(Params, PartialEq)]
 struct PostParams {
     canister_id: String,
@@ -27,7 +29,7 @@ struct FetchCursor {
 
 #[derive(Clone)]
 struct VideoCtx {
-    video_queue: ReadSignal<Vec<String>>,
+    video_queue: ReadSignal<Vec<PostDetails>>,
     current_idx: RwSignal<usize>,
     trigger_fetch: Action<(), ()>,
 }
@@ -55,13 +57,15 @@ pub fn ScrollingView() -> impl IntoView {
     };
 
     let video_enum = create_memo(move |_| {
-        let start = current_start();
-        video_queue.get()[start..]
-            .iter()
-            .take(PLAYER_CNT)
-            .enumerate()
-            .map(|(idx, item)| (idx + start, item.clone()))
-            .collect::<Vec<_>>()
+        with!(|video_queue| {
+            let start = current_start();
+            video_queue[start..]
+                .iter()
+                .take(PLAYER_CNT)
+                .enumerate()
+                .map(|(idx, item)| (idx + start, item.clone()))
+                .collect::<Vec<_>>()
+        })
     });
 
     view! {
@@ -71,11 +75,11 @@ pub fn ScrollingView() -> impl IntoView {
         >
             <For
                 each=video_enum
-                key=|u| u.clone()
-                children=move |(queue_idx, uid)| {
+                key=|u| (u.0, u.1.uid.clone())
+                children=move |(queue_idx, details)| {
                     view! {
                         <div class="snap-always snap-end">
-                            <BgView uid=uid.clone()>
+                            <BgView uid=details.uid.clone()>
                                 <Show
                                     when=move || queue_idx == current_idx() && allow_show()
                                     fallback=move || view! { <ThumbView idx=queue_idx/> }
@@ -153,6 +157,24 @@ pub fn PostView() -> impl IntoView {
             set_video_queue.update(|q| q.extend_from_slice(&[uid]));
         },
     );
+
+    let current_post_base = create_memo(move |_| {
+        with!(|video_queue| {
+            let cur_idx = current_idx();
+            let details = video_queue.get(cur_idx)?;
+            Some((details.canister_id, details.post_id))
+        })
+    });
+
+    create_effect(move |_| {
+        let Some((canister_id, post_id)) = current_post_base() else {
+            return;
+        };
+        use_navigate()(
+            &format!("/hot-or-not/{canister_id}/{post_id}",),
+            Default::default(),
+        );
+    });
 
     view! {
         <Suspense fallback=|| {
