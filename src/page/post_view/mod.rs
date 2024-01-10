@@ -1,3 +1,4 @@
+mod error;
 mod video_iter;
 mod video_loader;
 
@@ -8,7 +9,7 @@ use futures::StreamExt;
 use leptos::{html::Video, *};
 use leptos_router::*;
 
-use crate::{component::spinner::Spinner, state::canisters::Canisters};
+use crate::{component::spinner::Spinner, state::canisters::Canisters, try_or_redirect};
 use video_iter::{get_post_uid, VideoFetchStream};
 use video_loader::{BgView, HlsVideo, ThumbView};
 
@@ -96,17 +97,8 @@ pub fn PostView() -> impl IntoView {
     let params = use_params::<PostParams>();
     let canister_and_post = move || {
         params.with_untracked(|p| {
-            let go_to_root = || {
-                let nav = use_navigate();
-                nav("/", Default::default());
-                None
-            };
-            let Ok(p) = p else {
-                return go_to_root();
-            };
-            let Ok(canister_id) = Principal::from_text(&p.canister_id) else {
-                return go_to_root();
-            };
+            let p = p.as_ref().ok()?;
+            let canister_id = Principal::from_text(&p.canister_id).ok()?;
 
             Some((canister_id, p.post_id))
         })
@@ -127,12 +119,15 @@ pub fn PostView() -> impl IntoView {
         let canisters = expect_context::<Canisters>();
         let cursor = fetch_cursor.get_untracked();
         let fetch_stream = VideoFetchStream::new(&canisters, cursor);
-        let Some(chunks) = fetch_stream.fetch_post_uids_chunked(10).await else {
-            return;
-        };
+        let chunks = try_or_redirect!(fetch_stream.fetch_post_uids_chunked(10).await);
         let mut chunks = pin!(chunks);
-        while let Some(mut chunk) = chunks.next().await {
-            set_video_queue.update(|q| q.append(&mut chunk));
+        while let Some(chunk) = chunks.next().await {
+            set_video_queue.update(|q| {
+                for uid in chunk {
+                    let uid = try_or_redirect!(uid);
+                    q.push(uid);
+                }
+            });
         }
 
         set_fetch_cursor.update(|cursor| {
@@ -151,9 +146,10 @@ pub fn PostView() -> impl IntoView {
         move |_| async move {
             let canisters = expect_context::<Canisters>();
             let Some((canister, post)) = canister_and_post() else {
+                use_navigate()("/", Default::default());
                 return;
             };
-            let uid = get_post_uid(&canisters, canister, post).await.unwrap();
+            let uid = try_or_redirect!(get_post_uid(&canisters, canister, post).await).unwrap();
             set_video_queue.update(|q| q.extend_from_slice(&[uid]));
         },
     );

@@ -15,8 +15,8 @@ macro_rules! try_or_redirect {
                 use leptos_router::use_navigate;
                 let err = e.to_string();
                 let nav = use_navigate();
-                nav(format!("/error?err={err}"), Default::default());
-                return None;
+                nav(&format!("/error?err={err}"), Default::default());
+                return;
             }
         }
     };
