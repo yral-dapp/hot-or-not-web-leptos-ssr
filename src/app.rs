@@ -14,7 +14,7 @@ pub fn App() -> impl IntoView {
     provide_context(Canisters::default());
 
     view! {
-        <Stylesheet id="leptos" href="/pkg/leptos-ssr.css"/>
+        <Stylesheet id="leptos" href="/pkg/hot-or-not-leptos-ssr.css"/>
 
         // sets the document title
         <Title text="Welcome to Leptos"/>

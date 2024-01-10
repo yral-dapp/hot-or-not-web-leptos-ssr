@@ -1,5 +1,6 @@
 name: Deploy to Fly on push to main
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -22,8 +23,15 @@ jobs:
             ~/.cargo/
             target/
           key: cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: Rust Setup
+        run: |
+          nix-shell --run "rustup default nightly"
+          nix-shell --run "rustup target add x86_64-unknown-linux-musl"
+          nix-shell --run 'rustup target add wasm32-unknown-unknown'
       - name: Build the Leptos project to `musl` output
         run: nix-shell --run 'cargo leptos build --release'
+        env:
+          LEPTOS_BIN_TARGET_TRIPLE: x86_64-unknown-linux-musl
       - name: Deploy a docker container to Fly.io
         run: nix-shell --run 'fly deploy'
         env:
