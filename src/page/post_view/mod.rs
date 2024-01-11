@@ -14,6 +14,7 @@ use video_iter::{get_post_uid, VideoFetchStream};
 use video_loader::{BgView, HlsVideo, ThumbView};
 
 use self::video_iter::PostDetails;
+use super::err::failure_redirect;
 
 #[derive(Params, PartialEq)]
 struct PostParams {
@@ -97,22 +98,12 @@ pub fn ScrollingView() -> impl IntoView {
 }
 
 #[component]
-pub fn PostView() -> impl IntoView {
-    let params = use_params::<PostParams>();
-    let canister_and_post = move || {
-        params.with_untracked(|p| {
-            let p = p.as_ref().ok()?;
-            let canister_id = Principal::from_text(&p.canister_id).ok()?;
-
-            Some((canister_id, p.post_id))
-        })
-    };
-
+pub fn PostViewWithUpdates(initial_post: PostDetails) -> impl IntoView {
     // TODO: this is a dead simple with no GC
     // We're using virtual lists for DOM, so this doesn't consume much memory
     // as uids only occupy 32 bytes each
     // but ideally this should be cleaned up
-    let (video_queue, set_video_queue) = create_signal(Vec::new());
+    let (video_queue, set_video_queue) = create_signal(vec![initial_post]);
     let current_idx = create_rw_signal(0);
     let (fetch_cursor, set_fetch_cursor) = create_signal(FetchCursor {
         start: 1,
@@ -139,24 +130,16 @@ pub fn PostView() -> impl IntoView {
             cursor.limit = 20
         });
     });
+
+    create_effect(move |_| {
+        fetch_video_uids.dispatch(());
+    });
+
     provide_context(VideoCtx {
         video_queue,
         current_idx,
         trigger_fetch: fetch_video_uids,
     });
-
-    let fetch_first_video_uid = create_resource(
-        || (),
-        move |_| async move {
-            let canisters = expect_context::<Canisters>();
-            let Some((canister, post)) = canister_and_post() else {
-                use_navigate()("/", Default::default());
-                return;
-            };
-            let uid = try_or_redirect!(get_post_uid(&canisters, canister, post).await).unwrap();
-            set_video_queue.update(|q| q.extend_from_slice(&[uid]));
-        },
-    );
 
     let current_post_base = create_memo(move |_| {
         with!(|video_queue| {
@@ -177,6 +160,48 @@ pub fn PostView() -> impl IntoView {
     });
 
     view! {
+        <ScrollingView />
+    }
+}
+
+#[component]
+pub fn PostView() -> impl IntoView {
+    let params = use_params::<PostParams>();
+    let canister_and_post = move || {
+        params.with_untracked(|p| {
+            let p = p.as_ref().ok()?;
+            let canister_id = Principal::from_text(&p.canister_id).ok()?;
+
+            Some((canister_id, p.post_id))
+        })
+    };
+
+    let fetch_first_video_uid = create_resource(
+        || (),
+        move |_| async move {
+            // if !canisters_avail {
+            //     return None;
+            // }
+            let canisters = expect_context();
+            let Some((canister, post)) = canister_and_post() else {
+                use_navigate()("/", Default::default());
+                return None;
+            };
+            let uid = match get_post_uid(&canisters, canister, post).await {
+                Ok(Some(uid)) => uid,
+                Err(e) => {
+                    failure_redirect(e);
+                    return None;
+                }
+                Ok(None) => {
+                    panic!("initial post not found");
+                }
+            };
+            Some(uid)
+        },
+    );
+
+    view! {
         <Suspense fallback=|| {
             view! {
                 <div class="grid grid-cols-1 h-screen w-screen bg-black justify-items-center place-content-center">
@@ -185,15 +210,11 @@ pub fn PostView() -> impl IntoView {
             }
         }>
 
-            {move || {
-                fetch_first_video_uid
+            {move || fetch_first_video_uid
                     .get()
-                    .map(|_| {
-                        fetch_video_uids.dispatch(());
-                        view! { <ScrollingView/> }
-                    })
-            }}
-
+                    .flatten()
+                    .map(|post| view! { <PostViewWithUpdates initial_post=post /> })
+            }
         </Suspense>
     }
 }

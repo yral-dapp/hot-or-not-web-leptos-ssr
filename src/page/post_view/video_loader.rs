@@ -46,6 +46,7 @@ pub fn HlsVideo(video_ref: NodeRef<Video>, allow_show: RwSignal<bool>) -> impl I
 
     create_effect(move |_| {
         let video = video_ref.get()?;
+        let video = video.classes("object-contain h-screen");
         log::debug!("initializing wasp player");
         let wasp_p = WaspHlsPlayerW::new(&video, None);
         video.set_muted(true);
@@ -76,7 +77,7 @@ pub fn HlsVideo(video_ref: NodeRef<Video>, allow_show: RwSignal<bool>) -> impl I
     view! {
         <video
             _ref=video_ref
-            class="object-contain h-screen muted autoplay"
+            class="object-contain h-screen"
             poster=bg_url
             loop
             muted

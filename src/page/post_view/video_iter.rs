@@ -1,5 +1,6 @@
 use candid::Principal;
 use futures::{stream::FuturesOrdered, Stream, StreamExt};
+use serde::{Deserialize, Serialize};
 
 use crate::{
     canister::post_cache::{self},
@@ -30,16 +31,8 @@ pub async fn get_post_uid(
         "https://customer-2p3jflss4r4hmpnz.cloudflarestream.com/{}/manifest/video.m3u8",
         post_uuid,
     );
-    let head_req = ehttp::Request {
-        method: "HEAD".into(),
-        url: req_url,
-        body: vec![],
-        headers: Default::default(),
-    };
-    let res = ehttp::fetch_async(head_req)
-        .await
-        .map_err(PostViewError::HttpFetch)?;
-    if res.status != 200 {
+    let res = reqwest::Client::default().head(req_url).send().await?;
+    if res.status() != 200 {
         return Ok(None);
     }
 
@@ -50,7 +43,7 @@ pub async fn get_post_uid(
     }))
 }
 
-#[derive(Clone, PartialEq, Debug, Hash)]
+#[derive(Clone, PartialEq, Debug, Hash, Serialize, Deserialize)]
 pub struct PostDetails {
     pub canister_id: Principal,
     pub post_id: u64,

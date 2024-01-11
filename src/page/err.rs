@@ -1,3 +1,5 @@
+use std::error::Error;
+
 use leptos::*;
 use leptos_router::*;
 
@@ -12,14 +14,17 @@ macro_rules! try_or_redirect {
         match $e {
             Ok(v) => v,
             Err(e) => {
-                use leptos_router::use_navigate;
-                let err = e.to_string();
-                let nav = use_navigate();
-                nav(&format!("/error?err={err}"), Default::default());
+                use $crate::page::err::failure_redirect;
+                failure_redirect(e);
                 return;
             }
         }
     };
+}
+
+pub fn failure_redirect<E: Error>(err: E) {
+    let nav = use_navigate();
+    nav(&format!("/error?err={err}"), Default::default());
 }
 
 #[component]
@@ -35,7 +40,7 @@ pub fn ServerErrorPage() -> impl IntoView {
     view! {
         <div>
             <h1>Server Error</h1>
-            <h3>{error()}</h3>
+            <h3>{error}</h3>
         </div>
     }
 }

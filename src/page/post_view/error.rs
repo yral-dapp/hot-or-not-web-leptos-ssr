@@ -8,5 +8,5 @@ pub enum PostViewError {
     #[error("Canister error {0}")]
     Canister(String),
     #[error("http fetch error {0}")]
-    HttpFetch(String),
+    HttpFetch(#[from] reqwest::Error),
 }
