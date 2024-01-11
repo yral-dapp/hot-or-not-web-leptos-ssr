@@ -1216,6 +1216,36 @@ dependencies = [
 ]
 
 [[package]]
+name = "hot-or-not-web-leptos-ssr"
+version = "0.1.0"
+dependencies = [
+ "axum",
+ "candid",
+ "candid_parser",
+ "cfg-if",
+ "console_error_panic_hook",
+ "console_log",
+ "convert_case",
+ "http",
+ "ic-agent",
+ "leptos",
+ "leptos_axum",
+ "leptos_meta",
+ "leptos_router",
+ "log",
+ "serde",
+ "serde-wasm-bindgen 0.6.3",
+ "serde_json",
+ "simple_logger",
+ "thiserror",
+ "tokio",
+ "tower",
+ "tower-http",
+ "tracing",
+ "wasm-bindgen",
+]
+
+[[package]]
 name = "html-escape"
 version = "0.2.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1577,36 +1607,6 @@ dependencies = [
  "typed-builder-macro",
  "wasm-bindgen",
  "web-sys",
-]
-
-[[package]]
-name = "leptos-ssr"
-version = "0.1.0"
-dependencies = [
- "axum",
- "candid",
- "candid_parser",
- "cfg-if",
- "console_error_panic_hook",
- "console_log",
- "convert_case",
- "http",
- "ic-agent",
- "leptos",
- "leptos_axum",
- "leptos_meta",
- "leptos_router",
- "log",
- "serde",
- "serde-wasm-bindgen 0.6.3",
- "serde_json",
- "simple_logger",
- "thiserror",
- "tokio",
- "tower",
- "tower-http",
- "tracing",
- "wasm-bindgen",
 ]
 
 [[package]]

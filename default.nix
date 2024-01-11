@@ -12,7 +12,7 @@ pkgs.mkShell {
     flyctl
     leptosfmt
     nodejs_21
-    nodePackages_latest.postcss-cli
+    nodePackages_latest.tailwindcss
     rustup
   ];
 }

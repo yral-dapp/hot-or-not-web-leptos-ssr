@@ -8,7 +8,7 @@ mod handlers {
     };
     use leptos::provide_context;
     use leptos_axum::handle_server_fns_with_context;
-    use leptos_ssr::{app::App, state::server::AppState};
+    use hot_or_not_web_leptos_ssr::{app::App, state::server::AppState};
 
     pub async fn server_fn_handler(
         State(app_state): State<AppState>,
@@ -55,10 +55,10 @@ async fn main() {
     use handlers::*;
     use leptos::*;
     use leptos_axum::{generate_route_list, LeptosRoutes};
-    use leptos_ssr::app::*;
-    use leptos_ssr::fileserv::file_and_error_handler;
-    use leptos_ssr::state::canisters::Canisters;
-    use leptos_ssr::state::server::AppState;
+    use hot_or_not_web_leptos_ssr::app::*;
+    use hot_or_not_web_leptos_ssr::fileserv::file_and_error_handler;
+    use hot_or_not_web_leptos_ssr::state::canisters::Canisters;
+    use hot_or_not_web_leptos_ssr::state::server::AppState;
 
     simple_logger::init_with_level(log::Level::Debug).expect("couldn't initialize logging");
 
