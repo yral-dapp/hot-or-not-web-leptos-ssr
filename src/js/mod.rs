@@ -7,12 +7,18 @@ pub mod wasp {
 
     #[wasm_bindgen(module = "/src/js/wasp-wrapper.js")]
     extern "C" {
-        pub type WaspHlsPlayer;
+        type WaspHlsPlayer;
 
         fn buildPlayer(videoElement: JsValue, config: JsValue) -> WaspHlsPlayer;
 
         #[wasm_bindgen(method)]
-        pub fn load(this: &WaspHlsPlayer, url: &str);
+        fn load(this: &WaspHlsPlayer, url: &str);
+        #[wasm_bindgen(method)]
+        fn dispose(this: &WaspHlsPlayer);
+        #[wasm_bindgen(method)]
+        fn addEventListener(this: &WaspHlsPlayer, event: &str, cb: &Closure<dyn Fn(String)>);
+        #[wasm_bindgen(method)]
+        fn stop(this: &WaspHlsPlayer);
     }
 
     #[derive(Serialize, Deserialize, Default)]
@@ -33,11 +39,35 @@ pub mod wasp {
         pub media_playlist_backoff_max: Option<f64>,
     }
 
-    impl WaspHlsPlayer {
+    pub struct WaspHlsPlayerW(WaspHlsPlayer);
+
+    impl WaspHlsPlayerW {
         pub fn new(video_element: &HtmlElement<Video>, config: Option<WaspHlsConfig>) -> Self {
             let video_raw: &JsValue = video_element.deref();
             let conf = serde_wasm_bindgen::to_value(&config).unwrap();
-            buildPlayer(video_raw.clone(), conf)
+            let wasp = buildPlayer(video_raw.clone(), conf);
+            Self(wasp)
+        }
+
+        pub fn load(&self, url: &str) {
+            self.0.load(url);
+        }
+
+        pub fn stop(&self) {
+            self.0.stop();
+        }
+
+        pub fn add_event_listener(&self, event: &str, cb: impl Fn(String) + 'static) {
+            let cb = Closure::new(cb);
+            self.0.addEventListener(event, &cb);
+            // move ownership to js GC
+            cb.forget();
+        }
+    }
+
+    impl Drop for WaspHlsPlayerW {
+        fn drop(&mut self) {
+            self.0.dispose();
         }
     }
 }

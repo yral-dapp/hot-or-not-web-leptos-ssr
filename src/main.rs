@@ -6,9 +6,9 @@ mod handlers {
         http::{header::HeaderMap, Request},
         response::{IntoResponse, Response},
     };
+    use hot_or_not_web_leptos_ssr::{app::App, state::server::AppState};
     use leptos::provide_context;
     use leptos_axum::handle_server_fns_with_context;
-    use hot_or_not_web_leptos_ssr::{app::App, state::server::AppState};
 
     pub async fn server_fn_handler(
         State(app_state): State<AppState>,
@@ -48,17 +48,14 @@ mod handlers {
 #[cfg(feature = "ssr")]
 #[tokio::main]
 async fn main() {
-    use axum::{
-        routing::{get, post},
-        Router,
-    };
+    use axum::{routing::get, Router};
     use handlers::*;
-    use leptos::*;
-    use leptos_axum::{generate_route_list, LeptosRoutes};
     use hot_or_not_web_leptos_ssr::app::*;
     use hot_or_not_web_leptos_ssr::fileserv::file_and_error_handler;
     use hot_or_not_web_leptos_ssr::state::canisters::Canisters;
     use hot_or_not_web_leptos_ssr::state::server::AppState;
+    use leptos::*;
+    use leptos_axum::{generate_route_list, LeptosRoutes};
 
     simple_logger::init_with_level(log::Level::Debug).expect("couldn't initialize logging");
 

@@ -17,9 +17,9 @@ async fn get_top_post_id() -> Result<Option<(Principal, u64)>, ServerFnError> {
     {
         post_cache::Result_::Ok(items) => items,
         post_cache::Result_::Err(_) => {
-            return Err(ServerFnError::ServerError(format!(
-                "failed to fetch top post"
-            )));
+            return Err(ServerFnError::ServerError(
+                "failed to fetch top post".to_string(),
+            ));
         }
     };
     let Some(top_item) = top_items.first() else {
@@ -55,6 +55,7 @@ pub fn RootPage() -> impl IntoView {
                         view! { <Redirect path=url/> }
                     })
             }}
+
         </Suspense>
     }
 }
