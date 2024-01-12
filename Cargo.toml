@@ -31,6 +31,10 @@ serde-wasm-bindgen = { version = "0.6.3" }
 futures = "0.3.30"
 leptos-use = "0.9.0"
 reqwest = { version = "0.11.23", default-features = false }
+serde_bytes = "0.11.14"
+hex = "0.4.3"
+leptos_icons = "0.2.0"
+icondata = "0.3.0"
 
 [build-dependencies]
 candid_parser = "0.1.1"

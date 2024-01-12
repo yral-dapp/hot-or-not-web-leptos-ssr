@@ -9,12 +9,16 @@ use futures::StreamExt;
 use leptos::{html::Video, *};
 use leptos_router::*;
 
-use crate::{component::spinner::Spinner, state::canisters::Canisters, try_or_redirect};
+use crate::{
+    component::spinner::FullScreenSpinner,
+    state::canisters::Canisters,
+    try_or_redirect,
+    utils::route::{failure_redirect, go_to_root},
+};
 use video_iter::{get_post_uid, VideoFetchStream};
 use video_loader::{BgView, HlsVideo, ThumbView};
 
 use self::video_iter::PostDetails;
-use super::err::failure_redirect;
 
 #[derive(Params, PartialEq)]
 struct PostParams {
@@ -71,7 +75,7 @@ pub fn ScrollingView() -> impl IntoView {
 
     view! {
         <div
-            class="snap-mandatory snap-y overflow-scroll h-screen"
+            class="snap-mandatory snap-y overflow-y-scroll h-screen"
             style:scroll-snap-points-y="repeat(100vh)"
         >
             <For
@@ -159,9 +163,7 @@ pub fn PostViewWithUpdates(initial_post: PostDetails) -> impl IntoView {
         );
     });
 
-    view! {
-        <ScrollingView />
-    }
+    view! { <ScrollingView/> }
 }
 
 #[component]
@@ -179,12 +181,9 @@ pub fn PostView() -> impl IntoView {
     let fetch_first_video_uid = create_resource(
         || (),
         move |_| async move {
-            // if !canisters_avail {
-            //     return None;
-            // }
             let canisters = expect_context();
             let Some((canister, post)) = canister_and_post() else {
-                use_navigate()("/", Default::default());
+                go_to_root();
                 return None;
             };
             let uid = match get_post_uid(&canisters, canister, post).await {
@@ -202,19 +201,15 @@ pub fn PostView() -> impl IntoView {
     );
 
     view! {
-        <Suspense fallback=|| {
-            view! {
-                <div class="grid grid-cols-1 h-screen w-screen bg-black justify-items-center place-content-center">
-                    <Spinner/>
-                </div>
-            }
-        }>
+        <Suspense fallback=FullScreenSpinner>
 
-            {move || fetch_first_video_uid
+            {move || {
+                fetch_first_video_uid
                     .get()
                     .flatten()
-                    .map(|post| view! { <PostViewWithUpdates initial_post=post /> })
-            }
+                    .map(|post| view! { <PostViewWithUpdates initial_post=post/> })
+            }}
+
         </Suspense>
     }
 }
