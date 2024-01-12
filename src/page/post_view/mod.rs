@@ -36,7 +36,7 @@ struct FetchCursor {
 struct VideoCtx {
     video_queue: ReadSignal<Vec<PostDetails>>,
     current_idx: RwSignal<usize>,
-    trigger_fetch: Action<(), ()>,
+    trigger_fetch: Resource<(), ()>,
 }
 
 const POST_CNT: usize = 25;
@@ -83,7 +83,7 @@ pub fn ScrollingView() -> impl IntoView {
                 key=|u| (u.0, u.1.uid.clone())
                 children=move |(queue_idx, details)| {
                     view! {
-                        <div class="snap-always snap-end">
+                        <div class="snap-always snap-end h-full">
                             <BgView uid=details.uid.clone()>
                                 <Show
                                     when=move || queue_idx == current_idx() && allow_show()
@@ -114,11 +114,11 @@ pub fn PostViewWithUpdates(initial_post: PostDetails) -> impl IntoView {
         limit: POST_CNT as u64 - 1,
     });
 
-    let fetch_video_uids = create_action(move |&()| async move {
+    let fetch_video_uids = Resource::once(move || async move {
         let canisters = expect_context::<Canisters>();
         let cursor = fetch_cursor.get_untracked();
         let fetch_stream = VideoFetchStream::new(&canisters, cursor);
-        let chunks = try_or_redirect!(fetch_stream.fetch_post_uids_chunked(10).await);
+        let chunks = try_or_redirect!(fetch_stream.fetch_post_uids_chunked(8).await);
         let mut chunks = pin!(chunks);
         while let Some(chunk) = chunks.next().await {
             set_video_queue.update(|q| {
@@ -133,10 +133,6 @@ pub fn PostViewWithUpdates(initial_post: PostDetails) -> impl IntoView {
             cursor.start += cursor.limit;
             cursor.limit = 20
         });
-    });
-
-    create_effect(move |_| {
-        fetch_video_uids.dispatch(());
     });
 
     provide_context(VideoCtx {
