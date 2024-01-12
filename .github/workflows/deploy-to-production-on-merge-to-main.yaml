@@ -6,33 +6,24 @@ on:
       - main
 
 jobs:
+  build_check:
+    uses: ./.github/workflows/build-check.yml
+    with:
+      publish-artifact: true
+  
   deploy:
     name: Deploy
+    needs: build_check
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
-      - name: Install Nix packages
-        uses: DeterminateSystems/nix-installer-action@main
-      - name: Cache Nix packages
-        uses: DeterminateSystems/magic-nix-cache-action@main
-      - name: Cache rust dependencies and build output
-        uses: actions/cache@v3
+      - uses: actions/checkout@v3
+      - name: Download build
+        uses: actions/download-artifact@v3
         with:
-          path: |
-            ~/.cargo/
-            target/
-          key: cargo-${{ hashFiles('**/Cargo.lock') }}
-      - name: Rust Setup
-        run: |
-          nix-shell --run "rustup default nightly"
-          nix-shell --run "rustup target add x86_64-unknown-linux-musl"
-          nix-shell --run 'rustup target add wasm32-unknown-unknown'
-      - name: Build the Leptos project to `musl` output
-        run: nix-shell --run 'cargo leptos build --release'
-        env:
-          LEPTOS_BIN_TARGET_TRIPLE: x86_64-unknown-linux-musl
+          name: build-musl
+      - run: chmod +x target/x86_64-unknown-linux-musl/release/hot-or-not-web-leptos-ssr
+      - uses: superfly/flyctl-actions/setup-flyctl@master
       - name: Deploy a docker container to Fly.io
-        run: nix-shell --run 'fly deploy'
+        run: flyctl deploy --remote-only
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

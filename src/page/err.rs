@@ -1,7 +1,7 @@
 use leptos::*;
 use leptos_router::*;
 
-#[derive(Params, PartialEq)]
+#[derive(Clone, Params, PartialEq)]
 struct ServerErrParams {
     err: String,
 }
@@ -10,12 +10,12 @@ struct ServerErrParams {
 pub fn ServerErrorPage() -> impl IntoView {
     let params = use_query::<ServerErrParams>();
     let error = move || {
-        params.with(|p| {
-            p.as_ref()
-                .map(|p| p.err.clone())
-                .unwrap_or("Server Error".to_string())
-        })
+        params
+            .get()
+            .map(|p| p.err)
+            .unwrap_or_else(|_| "Server Error".to_string())
     };
+
     view! {
         <div>
             <h1>Server Error</h1>

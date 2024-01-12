@@ -1,0 +1,56 @@
+name: Build and Check linting
+
+on:
+  workflow_call:
+    inputs:
+      publish-artifact:
+        default: false
+        required: false
+        type: boolean
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build_check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+      - name: Install Nix packages
+        uses: DeterminateSystems/nix-installer-action@main
+      - name: Cache Nix packages
+        uses: DeterminateSystems/magic-nix-cache-action@main
+      - name: Cache rust dependencies and build output
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/
+            target/
+          key: cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: Rust Setup
+        run: |
+          nix-shell --run "rustup default nightly"
+          nix-shell --run "rustup target add x86_64-unknown-linux-musl"
+          nix-shell --run 'rustup target add wasm32-unknown-unknown'
+          nix-shell --run "rustup component add rustfmt"
+          nix-shell --run "rustup component add clippy"
+      - name: lint check
+        run: |
+          nix-shell --run "cargo fmt --check"
+          nix-shell --run "cargo clippy --no-deps --all-features --release -- -Dwarnings"
+      - name: Build the Leptos project to `musl` output
+        run: nix-shell --run 'cargo leptos build --release'
+        env:
+          LEPTOS_BIN_TARGET_TRIPLE: x86_64-unknown-linux-musl
+      - run: touch .empty 
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v3
+        if: ${{ inputs.publish-artifact }}
+        with:
+          name: build-musl
+          path: |
+            target/x86_64-unknown-linux-musl/release/hot-or-not-web-leptos-ssr
+            target/site
+            .empty

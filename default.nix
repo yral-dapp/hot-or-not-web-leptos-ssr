@@ -14,5 +14,7 @@ pkgs.mkShell {
     nodejs_21
     nodePackages_latest.tailwindcss
     rustup
+    # only used for clippy
+    openssl
   ];
 }
