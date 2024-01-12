@@ -3,6 +3,7 @@ use candid::Principal;
 use crate::canister::{
     individual_user_template::IndividualUserTemplate,
     post_cache::{self, PostCache},
+    user_index::{self, UserIndex},
     AGENT_URL,
 };
 
@@ -29,5 +30,9 @@ impl Canisters {
 
     pub fn individual_user(&self, user_canister: Principal) -> IndividualUserTemplate<'_> {
         IndividualUserTemplate(user_canister, &self.agent)
+    }
+
+    pub fn user_index(&self) -> UserIndex<'_> {
+        UserIndex(user_index::CANISTER_ID, &self.agent)
     }
 }

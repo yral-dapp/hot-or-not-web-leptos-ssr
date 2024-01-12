@@ -1,6 +1,7 @@
-use std::fmt::Display;
-
-use crate::{consts::CF_STREAM_BASE, js::wasp::WaspHlsPlayerW};
+use crate::{
+    canister::utils::{bg_url, stream_url},
+    js::wasp::WaspHlsPlayerW,
+};
 use leptos::{
     html::{Img, Video},
     *,
@@ -8,14 +9,6 @@ use leptos::{
 use leptos_use::{use_intersection_observer_with_options, UseIntersectionObserverOptions};
 
 use super::VideoCtx;
-
-fn bg_url(uid: impl Display) -> String {
-    format!("{CF_STREAM_BASE}/{uid}/thumbnails/thumbnail.jpg")
-}
-
-fn stream_url(uid: impl Display) -> String {
-    format!("{CF_STREAM_BASE}/{uid}/manifest/video.m3u8")
-}
 
 #[component]
 pub fn BgView(uid: String, children: Children) -> impl IntoView {
@@ -74,15 +67,7 @@ pub fn HlsVideo(video_ref: NodeRef<Video>, allow_show: RwSignal<bool>) -> impl I
         })
     });
 
-    view! {
-        <video
-            _ref=video_ref
-            class="object-contain h-screen"
-            poster=bg_url
-            loop
-            muted
-        ></video>
-    }
+    view! { <video _ref=video_ref class="object-contain h-screen" poster=bg_url loop muted></video> }
 }
 
 #[component]

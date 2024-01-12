@@ -1,4 +1,4 @@
-use crate::component::spinner::Spinner;
+use crate::component::spinner::FullScreenSpinner;
 use candid::Principal;
 use leptos::*;
 use leptos_router::*;
@@ -34,13 +34,7 @@ pub fn RootPage() -> impl IntoView {
     let target_post = create_resource(|| (), |_| get_top_post_id());
 
     view! {
-        <Suspense fallback=|| {
-            view! {
-                <div class="h-screen w-screen grid grid-cols-1 bg-slate-950 justify-items-center place-content-center">
-                    <Spinner/>
-                </div>
-            }
-        }>
+        <Suspense fallback=FullScreenSpinner>
             {move || {
                 target_post
                     .get()
