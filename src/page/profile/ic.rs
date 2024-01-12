@@ -242,7 +242,7 @@ pub fn ProfileStream<T, I: 'static, S, K, KF, N, EF>(
     key: KF,
     children: EF,
     #[prop(optional)] _ty: PhantomData<T>,
-    #[prop(optional)] _key: PhantomData<K>,
+    #[prop(optional)] _ky: PhantomData<K>,
     #[prop(optional)] _child: PhantomData<N>,
 ) -> impl IntoView
 where
