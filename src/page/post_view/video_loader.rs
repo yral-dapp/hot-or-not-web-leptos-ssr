@@ -32,10 +32,11 @@ pub fn HlsVideo(video_ref: NodeRef<Video>, allow_show: RwSignal<bool>) -> impl I
         ..
     } = expect_context();
 
-    let current_uid =
-        create_memo(move |_| with!(|video_queue| video_queue[current_idx()].uid.clone()));
+    let current_uid = create_memo(move |_| {
+        with!(|video_queue| video_queue.get(current_idx()).map(|q| q.uid.clone()))
+    });
     let wasp = create_rw_signal(None::<WaspHlsPlayerW>);
-    let bg_url = move || bg_url(current_uid());
+    let bg_url = move || current_uid().map(bg_url);
 
     create_effect(move |_| {
         let video = video_ref.get()?;
@@ -65,8 +66,8 @@ pub fn HlsVideo(video_ref: NodeRef<Video>, allow_show: RwSignal<bool>) -> impl I
         with!(|wasp| {
             let wasp = wasp.as_ref()?;
             let video = video_ref.get()?;
-            wasp.load(&stream_url(current_uid()));
-            video.set_poster(&bg_url());
+            wasp.load(&stream_url(current_uid()?));
+            video.set_poster(&bg_url()?);
             Some(())
         })
     });
@@ -84,8 +85,9 @@ pub fn ThumbView(idx: usize) -> impl IntoView {
         ..
     } = expect_context();
 
-    let uid = create_memo(move |_| with!(|video_queue| video_queue[idx].uid.clone()));
-    let view_bg_url = move || bg_url(uid());
+    let uid =
+        create_memo(move |_| with!(|video_queue| video_queue.get(idx).map(|q| q.uid.clone())));
+    let view_bg_url = move || uid().map(bg_url);
 
     use_intersection_observer_with_options(
         container_ref,

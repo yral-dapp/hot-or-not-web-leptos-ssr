@@ -75,7 +75,7 @@ pub fn ScrollingView() -> impl IntoView {
 
     view! {
         <div
-            class="snap-mandatory snap-y overflow-y-scroll h-screen"
+            class="snap-mandatory snap-y overflow-y-scroll h-screen bg-black"
             style:scroll-snap-points-y="repeat(100vh)"
         >
             <For
@@ -102,17 +102,25 @@ pub fn ScrollingView() -> impl IntoView {
 }
 
 #[component]
-pub fn PostViewWithUpdates(initial_post: PostDetails) -> impl IntoView {
+pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
+    let (fetch_cursor, set_fetch_cursor) = create_signal({
+        let mut fetch_cursor = FetchCursor {
+            start: 1,
+            limit: POST_CNT as u64,
+        };
+        if initial_post.is_some() {
+            fetch_cursor.limit -= 1;
+        }
+        fetch_cursor
+    });
+
     // TODO: this is a dead simple with no GC
     // We're using virtual lists for DOM, so this doesn't consume much memory
     // as uids only occupy 32 bytes each
     // but ideally this should be cleaned up
-    let (video_queue, set_video_queue) = create_signal(vec![initial_post]);
+    let (video_queue, set_video_queue) =
+        create_signal(initial_post.map(|p| vec![p]).unwrap_or_default());
     let current_idx = create_rw_signal(0);
-    let (fetch_cursor, set_fetch_cursor) = create_signal(FetchCursor {
-        start: 1,
-        limit: POST_CNT as u64 - 1,
-    });
 
     let fetch_video_uids = Resource::once(move || async move {
         let canisters = expect_context::<Canisters>();
@@ -182,17 +190,15 @@ pub fn PostView() -> impl IntoView {
                 go_to_root();
                 return None;
             };
-            let uid = match get_post_uid(&canisters, canister, post).await {
-                Ok(Some(uid)) => uid,
+
+            match get_post_uid(&canisters, canister, post).await {
+                Ok(Some(uid)) => Some(uid),
                 Err(e) => {
                     failure_redirect(e);
-                    return None;
+                    None
                 }
-                Ok(None) => {
-                    panic!("initial post not found");
-                }
-            };
-            Some(uid)
+                Ok(None) => None,
+            }
         },
     );
 
@@ -202,7 +208,6 @@ pub fn PostView() -> impl IntoView {
             {move || {
                 fetch_first_video_uid
                     .get()
-                    .flatten()
                     .map(|post| view! { <PostViewWithUpdates initial_post=post/> })
             }}
 
