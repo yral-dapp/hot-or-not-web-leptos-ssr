@@ -36,7 +36,7 @@ struct FetchCursor {
 struct VideoCtx {
     video_queue: ReadSignal<Vec<PostDetails>>,
     current_idx: RwSignal<usize>,
-    trigger_fetch: Action<(), ()>,
+    trigger_fetch: Resource<(), ()>,
 }
 
 const POST_CNT: usize = 25;
@@ -75,7 +75,7 @@ pub fn ScrollingView() -> impl IntoView {
 
     view! {
         <div
-            class="snap-mandatory snap-y overflow-y-scroll h-screen"
+            class="snap-mandatory snap-y overflow-y-scroll h-screen bg-black"
             style:scroll-snap-points-y="repeat(100vh)"
         >
             <For
@@ -83,7 +83,7 @@ pub fn ScrollingView() -> impl IntoView {
                 key=|u| (u.0, u.1.uid.clone())
                 children=move |(queue_idx, details)| {
                     view! {
-                        <div class="snap-always snap-end">
+                        <div class="snap-always snap-end h-full">
                             <BgView uid=details.uid.clone()>
                                 <Show
                                     when=move || queue_idx == current_idx() && allow_show()
@@ -102,23 +102,31 @@ pub fn ScrollingView() -> impl IntoView {
 }
 
 #[component]
-pub fn PostViewWithUpdates(initial_post: PostDetails) -> impl IntoView {
+pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
+    let (fetch_cursor, set_fetch_cursor) = create_signal({
+        let mut fetch_cursor = FetchCursor {
+            start: 1,
+            limit: POST_CNT as u64,
+        };
+        if initial_post.is_some() {
+            fetch_cursor.limit -= 1;
+        }
+        fetch_cursor
+    });
+
     // TODO: this is a dead simple with no GC
     // We're using virtual lists for DOM, so this doesn't consume much memory
     // as uids only occupy 32 bytes each
     // but ideally this should be cleaned up
-    let (video_queue, set_video_queue) = create_signal(vec![initial_post]);
+    let (video_queue, set_video_queue) =
+        create_signal(initial_post.map(|p| vec![p]).unwrap_or_default());
     let current_idx = create_rw_signal(0);
-    let (fetch_cursor, set_fetch_cursor) = create_signal(FetchCursor {
-        start: 1,
-        limit: POST_CNT as u64 - 1,
-    });
 
-    let fetch_video_uids = create_action(move |&()| async move {
+    let fetch_video_uids = Resource::once(move || async move {
         let canisters = expect_context::<Canisters>();
         let cursor = fetch_cursor.get_untracked();
         let fetch_stream = VideoFetchStream::new(&canisters, cursor);
-        let chunks = try_or_redirect!(fetch_stream.fetch_post_uids_chunked(10).await);
+        let chunks = try_or_redirect!(fetch_stream.fetch_post_uids_chunked(8).await);
         let mut chunks = pin!(chunks);
         while let Some(chunk) = chunks.next().await {
             set_video_queue.update(|q| {
@@ -133,10 +141,6 @@ pub fn PostViewWithUpdates(initial_post: PostDetails) -> impl IntoView {
             cursor.start += cursor.limit;
             cursor.limit = 20
         });
-    });
-
-    create_effect(move |_| {
-        fetch_video_uids.dispatch(());
     });
 
     provide_context(VideoCtx {
@@ -186,17 +190,15 @@ pub fn PostView() -> impl IntoView {
                 go_to_root();
                 return None;
             };
-            let uid = match get_post_uid(&canisters, canister, post).await {
-                Ok(Some(uid)) => uid,
+
+            match get_post_uid(&canisters, canister, post).await {
+                Ok(Some(uid)) => Some(uid),
                 Err(e) => {
                     failure_redirect(e);
-                    return None;
+                    None
                 }
-                Ok(None) => {
-                    panic!("initial post not found");
-                }
-            };
-            Some(uid)
+                Ok(None) => None,
+            }
         },
     );
 
@@ -206,7 +208,6 @@ pub fn PostView() -> impl IntoView {
             {move || {
                 fetch_first_video_uid
                     .get()
-                    .flatten()
                     .map(|post| view! { <PostViewWithUpdates initial_post=post/> })
             }}
 
