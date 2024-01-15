@@ -9,7 +9,11 @@ pub mod wasp {
     extern "C" {
         type WaspHlsPlayer;
 
-        fn buildPlayer(videoElement: JsValue, config: JsValue) -> WaspHlsPlayer;
+        fn buildPlayer(
+            videoElement: JsValue,
+            initialBandwidth: f64,
+            config: JsValue,
+        ) -> WaspHlsPlayer;
 
         #[wasm_bindgen(method)]
         fn load(this: &WaspHlsPlayer, url: &str);
@@ -42,10 +46,24 @@ pub mod wasp {
     pub struct WaspHlsPlayerW(WaspHlsPlayer);
 
     impl WaspHlsPlayerW {
-        pub fn new(video_element: &HtmlElement<Video>, config: Option<WaspHlsConfig>) -> Self {
+        pub fn new_recommended(video_element: &HtmlElement<Video>) -> Self {
+            let config = WaspHlsConfig {
+                buffer_goal: Some(15.),
+                ..Default::default()
+            };
+            Self::new(video_element, Some(config), None)
+        }
+
+        pub fn new(
+            video_element: &HtmlElement<Video>,
+            config: Option<WaspHlsConfig>,
+            initial_bandwidth: Option<usize>,
+        ) -> Self {
             let video_raw: &JsValue = video_element.deref();
             let conf = serde_wasm_bindgen::to_value(&config).unwrap();
-            let wasp = buildPlayer(video_raw.clone(), conf);
+            // Default estimate for 720p
+            let initial_bandwidth = initial_bandwidth.unwrap_or(6500000);
+            let wasp = buildPlayer(video_raw.clone(), initial_bandwidth as f64, conf);
             Self(wasp)
         }
 
