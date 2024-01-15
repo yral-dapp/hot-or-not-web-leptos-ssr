@@ -42,7 +42,7 @@ pub fn HlsVideo(video_ref: NodeRef<Video>, allow_show: RwSignal<bool>) -> impl I
         let video = video_ref.get()?;
         let video = video.classes("object-contain h-full");
         log::debug!("initializing wasp player");
-        let wasp_p = WaspHlsPlayerW::new(&video, None);
+        let wasp_p = WaspHlsPlayerW::new_recommended(&video);
         video.set_muted(true);
         video.set_loop(true);
         video.set_autoplay(true);
