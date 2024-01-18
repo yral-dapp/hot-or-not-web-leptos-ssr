@@ -1,4 +1,6 @@
 pub mod canisters;
+#[cfg(feature = "cloudflare")]
+pub mod cf;
 
 #[cfg(feature = "ssr")]
 pub mod server {
@@ -11,6 +13,8 @@ pub mod server {
     pub struct AppState {
         pub leptos_options: LeptosOptions,
         pub canisters: Canisters,
+        #[cfg(feature = "cloudflare")]
+        pub cloudflare: super::cf::CfApi<true>,
         pub routes: Vec<RouteListing>,
     }
 }

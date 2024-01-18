@@ -1,4 +1,4 @@
-use std::error::Error;
+use std::fmt::Display;
 
 use leptos_router::use_navigate;
 
@@ -16,7 +16,7 @@ macro_rules! try_or_redirect {
     };
 }
 
-pub fn failure_redirect<E: Error>(err: E) {
+pub fn failure_redirect<E: Display>(err: E) {
     let nav = use_navigate();
     nav(&format!("/error?err={err}"), Default::default());
 }

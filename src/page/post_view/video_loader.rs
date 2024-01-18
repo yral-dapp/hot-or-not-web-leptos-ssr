@@ -72,7 +72,15 @@ pub fn HlsVideo(video_ref: NodeRef<Video>, allow_show: RwSignal<bool>) -> impl I
         })
     });
 
-    view! { <video _ref=video_ref class="object-contain autoplay h-full" poster=bg_url loop muted></video> }
+    view! {
+        <video
+            _ref=video_ref
+            class="object-contain autoplay h-full"
+            poster=bg_url
+            loop
+            muted
+        ></video>
+    }
 }
 
 #[component]
