@@ -4,7 +4,10 @@ use crate::{
         err::ServerErrorPage, post_view::PostView, profile::ProfileView, root::RootPage,
         upload::UploadPostPage,
     },
-    state::canisters::Canisters,
+    state::{
+        auth::AuthClient,
+        canisters::{do_canister_auth, Canisters},
+    },
 };
 use leptos::*;
 use leptos_meta::*;
@@ -15,6 +18,10 @@ pub fn App() -> impl IntoView {
     // Provides context that manages stylesheets, titles, meta tags, etc.
     provide_meta_context();
     provide_context(Canisters::default());
+    provide_context(Resource::local(
+        || (),
+        |_| do_canister_auth(AuthClient::default()),
+    ));
 
     view! {
         <Stylesheet id="leptos" href="/pkg/hot-or-not-leptos-ssr.css"/>

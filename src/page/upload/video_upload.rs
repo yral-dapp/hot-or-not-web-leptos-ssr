@@ -3,8 +3,10 @@ use super::{
     UploadParams,
 };
 use crate::{
+    canister::individual_user_template::{PostDetailsFromFrontend, Result_},
     component::modal::Modal,
-    try_or_redirect,
+    state::canisters::{authenticated_canisters, Canisters},
+    try_or_redirect, try_or_redirect_opt,
     utils::route::{failure_redirect, go_to_root},
 };
 use candid::Principal;
@@ -73,7 +75,7 @@ pub fn PreVideoUpload(file_blob: WriteSignal<Option<FileWithUrl>>) -> impl IntoV
             .get_untracked()
             .map(|v| v.duration())
             .unwrap_or_default();
-        let Some(vid_file) = file() else {
+        let Some(vid_file) = file.get_untracked() else {
             return;
         };
         if duration <= 60.0 || duration.is_nan() {
@@ -133,69 +135,107 @@ pub fn PreVideoUpload(file_blob: WriteSignal<Option<FileWithUrl>>) -> impl IntoV
 }
 
 #[component]
+pub fn ProgressItem(
+    #[prop(into)] initial_text: String,
+    #[prop(into)] done_text: String,
+    #[prop(into)] loading: Signal<bool>,
+) -> impl IntoView {
+    view! {
+        <Show
+            when=loading
+            fallback=move || {
+                view! {
+                    <Icon class="w-10 h-10 text-green-600" icon=icondata::BsCheckCircleFill/>
+                    <span class="text-white text-lg font-semibold">{done_text.clone()}</span>
+                }
+            }
+        >
+
+            <Icon class="w-10 h-10 text-orange-600 animate-spin" icon=icondata::CgSpinnerTwo/>
+            <span class="text-white text-lg font-semibold">{initial_text.clone()}</span>
+        </Show>
+    }
+}
+
+#[component]
 pub fn VideoUploader(params: UploadParams) -> impl IntoView {
     let file_blob = params.file_blob;
     let hashtags = params.hashtags;
     let description = params.description;
 
-    let processed = create_rw_signal(false);
-    let upload_uid = create_rw_signal(None::<String>);
-    let pending = move || with!(|upload_uid| upload_uid.is_none() || !processed());
+    let uploading = create_rw_signal(true);
+    let processing = create_rw_signal(true);
+    let publishing = create_rw_signal(true);
     let video_url = file_blob.url;
     let file_blob = file_blob.file.clone();
 
-    let upload_action = create_resource(
-        || (),
-        move |_| {
-            let hashtags = hashtags.clone();
-            let description = description.clone();
-            let file_blob = file_blob.clone();
-            async move {
-                let time_ms = SystemTime::now()
-                    .duration_since(SystemTime::UNIX_EPOCH)
-                    .unwrap()
-                    .as_millis();
-                let upload_info = try_or_redirect!(
-                    get_upload_info(
-                        Principal::anonymous(),
-                        hashtags,
-                        description,
-                        time_ms.to_string()
-                    )
-                    .await
-                );
-                try_or_redirect!(upload_video_stream(&upload_info, &file_blob).await);
-                upload_uid.set(Some(upload_info.uid));
-            }
-        },
-    );
+    let up_hashtags = hashtags.clone();
+    let up_desc = description.clone();
+    let upload_action = create_action(move |_: &()| {
+        let hashtags = up_hashtags.clone();
+        let description = up_desc.clone();
+        let file_blob = file_blob.clone();
+        async move {
+            let time_ms = SystemTime::now()
+                .duration_since(SystemTime::UNIX_EPOCH)
+                .unwrap()
+                .as_millis();
+            let upload_info = try_or_redirect_opt!(
+                get_upload_info(
+                    Principal::anonymous(),
+                    hashtags,
+                    description,
+                    time_ms.to_string()
+                )
+                .await
+            );
+            try_or_redirect_opt!(upload_video_stream(&upload_info, &file_blob).await);
+            uploading.set(false);
 
-    let process_action = create_local_resource(upload_uid, move |upload_uid| async move {
-        let upload_uid = upload_uid?;
-        let mut check_status = IntervalStream::new(4000);
-        while (check_status.next().await).is_some() {
-            let status = match get_video_status(upload_uid.clone()).await {
-                Ok(status) => status,
-                Err(e) => {
-                    failure_redirect(e);
-                    return None;
+            let mut check_status = IntervalStream::new(4000);
+            while (check_status.next().await).is_some() {
+                let uid = upload_info.uid.clone();
+                let status = try_or_redirect_opt!(get_video_status(uid).await);
+                if status == "ready" {
+                    break;
                 }
-            };
-            if status == "ready" {
-                break;
             }
-        }
-        // TODO: Authenticated canister call
-        processed.set(true);
-        Some(())
-    });
+            processing.set(false);
 
-    let processing_spinner = || {
-        view! {
-            <Icon class="w-10 h-10 text-orange-600 animate-spin" icon=icondata::CgSpinnerTwo/>
-            <span class="text-white text-lg font-semibold">Processing</span>
+            Some(upload_info.uid)
         }
-    };
+    });
+    upload_action.dispatch(());
+
+    let canisters = authenticated_canisters();
+    let upload_uid = upload_action.value();
+    let publish_action = create_action(move |(canisters, uid): &(Canisters<true>, String)| {
+        let canisters = canisters.clone();
+        let hashtags = hashtags.clone();
+        let description = description.clone();
+        let uid = uid.clone();
+        async move {
+            let user = canisters.authenticated_user();
+            let res = user
+                .add_post_v_2(PostDetailsFromFrontend {
+                    hashtags,
+                    description,
+                    video_uid: uid,
+                    creator_consent_for_inclusion_in_hot_or_not: params.enable_hot_or_not,
+                    is_nsfw: params.is_nsfw,
+                })
+                .await;
+            let res = try_or_redirect!(res);
+            match res {
+                Result_::Ok(_) => (),
+                Result_::Err(e) => {
+                    failure_redirect(e);
+                    return;
+                }
+            }
+            publishing.set(false);
+        }
+    });
 
     view! {
         <div class="flex flex-col justify-start self-center w-full h-2/5 md:h-1/2 lg:w-auto lg:h-full basis-full lg:basis-5/12">
@@ -210,56 +250,26 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
         </div>
         <div class="flex flex-col basis-full lg:basis-7/12 gap-4 px-4">
             <div class="flex flex-row gap-4">
-                <Suspense fallback=|| {
-                    view! {
-                        <Icon
-                            class="w-10 h-10 text-orange-600 animate-spin"
-                            icon=icondata::CgSpinnerTwo
-                        />
-                        <span class="text-white text-lg font-semibold">Uploading</span>
-                    }
-                }>
+                <ProgressItem initial_text="Uploading" done_text="Uploaded" loading=uploading/>
+            </div>
+            <div class="flex flex-row gap-4">
+                <ProgressItem initial_text="Processing" done_text="Processed" loading=processing/>
+            </div>
+            <div class="flex flex-row gap-4">
+                <ProgressItem initial_text="Publishing" done_text="Published" loading=publishing/>
+                <Suspense>
                     {move || {
-                        upload_action
-                            .get()
-                            .map(|_| {
-                                view! {
-                                    <Icon
-                                        class="w-10 h-10 text-green-600"
-                                        icon=icondata::BsCheckCircleFill
-                                    />
-                                    <span class="text-white text-lg font-semibold">Uploaded</span>
-                                }
-                            })
+                        let uid = upload_uid().flatten()?;
+                        let canisters = try_or_redirect_opt!(canisters.get() ?);
+                        publish_action.dispatch((canisters, uid));
+                        Some(())
                     }}
 
                 </Suspense>
             </div>
-            <div class="flex flex-row gap-4">
-                <Suspense fallback=processing_spinner>
-                    <Show when=processed fallback=processing_spinner>
-                        {move || {
-                            process_action
-                                .get()
-                                .map(|_| {
-                                    view! {
-                                        <Icon
-                                            class="w-10 h-10 text-green-600"
-                                            icon=icondata::BsCheckCircleFill
-                                        />
-                                        <span class="text-white text-lg font-semibold">
-                                            Processed
-                                        </span>
-                                    }
-                                })
-                        }}
-
-                    </Show>
-                </Suspense>
-            </div>
             <button
                 on:click=|_| go_to_root()
-                disabled=pending
+                disabled=publishing
                 class="py-3 w-5/6 md:w-4/6 my-8 self-center disabled:bg-orange-400 disabled:text-white/80 bg-green-600 rounded-full font-bold text-md md:text-lg lg:text-xl"
             >
                 Continue Browsing

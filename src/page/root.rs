@@ -4,11 +4,11 @@ use leptos::*;
 use leptos_router::*;
 
 #[cfg(feature = "ssr")]
-use crate::{canister::post_cache, state::canisters::Canisters};
+use crate::{canister::post_cache, state::canisters::unauth_canisters};
 
 #[server]
 async fn get_top_post_id() -> Result<Option<(Principal, u64)>, ServerFnError> {
-    let canisters = expect_context::<Canisters>();
+    let canisters = unauth_canisters();
     let post_cache = canisters.post_cache();
 
     let top_items = match post_cache
