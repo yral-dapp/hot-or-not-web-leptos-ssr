@@ -1,8 +1,8 @@
 use crate::{
     error_template::{AppError, ErrorTemplate},
     page::{
-        err::ServerErrorPage, post_view::PostView, profile::ProfileView, root::RootPage,
-        upload::UploadPostPage,
+        err::ServerErrorPage, menu::Menu, post_view::PostView, profile::ProfileView,
+        root::RootPage, upload::UploadPostPage,
     },
     state::{
         auth::AuthClient,
@@ -42,6 +42,7 @@ pub fn App() -> impl IntoView {
                     <Route path="/profile/:id" view=ProfileView/>
                     <Route path="/upload" view=UploadPostPage/>
                     <Route path="/error" view=ServerErrorPage/>
+                    <Route path="/menu" view=Menu/>
                 </Routes>
             </main>
         </Router>

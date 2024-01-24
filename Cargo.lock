@@ -1494,6 +1494,7 @@ dependencies = [
  "http",
  "ic-agent",
  "icondata",
+ "icondata_core",
  "k256",
  "leptos",
  "leptos-use",

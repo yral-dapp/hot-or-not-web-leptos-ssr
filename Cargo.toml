@@ -40,6 +40,7 @@ once_cell = "1.19.0"
 async-trait = "0.1.77"
 web-time = "1.0.0"
 k256 = { version = "0.13.3", default-features = false, features = ["std"] }
+icondata_core = "0.1.0"
 
 [build-dependencies]
 candid_parser = "0.1.1"
