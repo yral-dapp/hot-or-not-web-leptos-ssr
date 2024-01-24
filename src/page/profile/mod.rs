@@ -7,7 +7,7 @@ use leptos::*;
 use leptos_icons::*;
 use leptos_router::*;
 
-use crate::{component::spinner::FullScreenSpinner, state::canisters::Canisters};
+use crate::{component::spinner::FullScreenSpinner, state::canisters::unauth_canisters};
 use ic::ProfileDetails;
 
 use posts::ProfilePosts;
@@ -117,7 +117,7 @@ pub fn ProfileView() -> impl IntoView {
     };
 
     let user_details = create_resource(principal_or_username, |principal_or_username| async move {
-        let canisters = expect_context::<Canisters>();
+        let canisters = unauth_canisters();
         let user_index = canisters.user_index();
         let user_canister = match principal_or_username? {
             Ok(p) => user_index

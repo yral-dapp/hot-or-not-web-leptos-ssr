@@ -7,6 +7,7 @@ type KnownPrincipalType = variant {
   CanisterIdDataBackup;
   CanisterIdPostCache;
   CanisterIdSNSController;
+  CanisterIdSnsGovernance;
   UserIdGlobalSuperAdmin;
 };
 type PostCacheInitArgs = record {
@@ -23,7 +24,7 @@ type TopPostsFetchError = variant {
   InvalidBoundsPassed;
   ExceededMaxNumberOfItemsAllowedInOneRequest;
 };
-service : (PostCacheInitArgs) -> {
+service : {
   get_top_posts_aggregated_from_canisters_on_this_network_for_home_feed : (
       nat64,
       nat64,

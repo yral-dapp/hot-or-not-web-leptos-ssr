@@ -15,3 +15,6 @@ auto_stop_machines = true
 auto_start_machines = true
 min_machines_running = 0
 processes = ["app"]
+
+[env]
+CF_ACCOUNT_ID="a209c523d2d9646cc56227dbe6ce3ede"

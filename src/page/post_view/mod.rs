@@ -11,7 +11,7 @@ use leptos_router::*;
 
 use crate::{
     component::spinner::FullScreenSpinner,
-    state::canisters::Canisters,
+    state::canisters::unauth_canisters,
     try_or_redirect,
     utils::route::{failure_redirect, go_to_root},
 };
@@ -123,7 +123,7 @@ pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
     let current_idx = create_rw_signal(0);
 
     let fetch_video_uids = Resource::once(move || async move {
-        let canisters = expect_context::<Canisters>();
+        let canisters = unauth_canisters();
         let cursor = fetch_cursor.get_untracked();
         let fetch_stream = VideoFetchStream::new(&canisters, cursor);
         let chunks = try_or_redirect!(fetch_stream.fetch_post_uids_chunked(8).await);

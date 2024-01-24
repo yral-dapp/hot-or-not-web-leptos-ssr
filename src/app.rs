@@ -1,7 +1,13 @@
 use crate::{
     error_template::{AppError, ErrorTemplate},
-    page::{err::ServerErrorPage, post_view::PostView, profile::ProfileView, root::RootPage},
-    state::canisters::Canisters,
+    page::{
+        err::ServerErrorPage, post_view::PostView, profile::ProfileView, root::RootPage,
+        upload::UploadPostPage,
+    },
+    state::{
+        auth::AuthClient,
+        canisters::{do_canister_auth, Canisters},
+    },
 };
 use leptos::*;
 use leptos_meta::*;
@@ -12,6 +18,10 @@ pub fn App() -> impl IntoView {
     // Provides context that manages stylesheets, titles, meta tags, etc.
     provide_meta_context();
     provide_context(Canisters::default());
+    provide_context(Resource::local(
+        || (),
+        |_| do_canister_auth(AuthClient::default()),
+    ));
 
     view! {
         <Stylesheet id="leptos" href="/pkg/hot-or-not-leptos-ssr.css"/>
@@ -30,6 +40,7 @@ pub fn App() -> impl IntoView {
                     <Route path="/" view=RootPage/>
                     <Route path="/hot-or-not/:canister_id/:post_id" view=PostView/>
                     <Route path="/profile/:id" view=ProfileView/>
+                    <Route path="/upload" view=UploadPostPage/>
                     <Route path="/error" view=ServerErrorPage/>
                 </Routes>
             </main>

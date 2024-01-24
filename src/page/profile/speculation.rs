@@ -5,7 +5,7 @@ use leptos_icons::*;
 use super::ic::{
     speculations_stream, BetDetails, BetOutcome, PostDetails, ProfileDetails, ProfileStream,
 };
-use crate::{canister::utils::bg_url, state::canisters::Canisters};
+use crate::{canister::utils::bg_url, state::canisters::unauth_canisters};
 
 #[component]
 pub fn ExternalUser(user: Option<ProfileDetails>) -> impl IntoView {
@@ -104,7 +104,7 @@ pub fn Speculation(details: BetDetails) -> impl IntoView {
     let profile_details = create_resource(
         move || details.canister_id,
         move |canister_id| async move {
-            let canister = expect_context::<Canisters>();
+            let canister = unauth_canisters();
             let user = canister.individual_user(canister_id);
             let profile_details = user.get_profile_details().await.ok()?;
             Some(ProfileDetails::from(profile_details))
@@ -113,7 +113,7 @@ pub fn Speculation(details: BetDetails) -> impl IntoView {
     let post_details = create_resource(
         move || (details.canister_id, details.post_id),
         move |(canister_id, post_id)| async move {
-            let canister = expect_context::<Canisters>();
+            let canister = unauth_canisters();
             let user = canister.individual_user(canister_id);
             let post_details = user.get_individual_post_details_by_id(post_id).await.ok()?;
             Some(PostDetails::from(&post_details))

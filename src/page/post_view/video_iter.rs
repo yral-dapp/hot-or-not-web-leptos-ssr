@@ -10,7 +10,7 @@ use crate::{
 use super::{error::PostViewError, FetchCursor};
 
 pub async fn get_post_uid(
-    canisters: &Canisters,
+    canisters: &Canisters<false>,
     user_canister: Principal,
     post_id: u64,
 ) -> Result<Option<PostDetails>, PostViewError> {
@@ -51,12 +51,12 @@ pub struct PostDetails {
 }
 
 pub struct VideoFetchStream<'a> {
-    canisters: &'a Canisters,
+    canisters: &'a Canisters<false>,
     cursor: FetchCursor,
 }
 
 impl<'a> VideoFetchStream<'a> {
-    pub fn new(canisters: &'a Canisters, cursor: FetchCursor) -> Self {
+    pub fn new(canisters: &'a Canisters<false>, cursor: FetchCursor) -> Self {
         Self { canisters, cursor }
     }
 

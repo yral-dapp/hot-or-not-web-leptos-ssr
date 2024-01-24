@@ -1,8 +1,6 @@
 //! Auto generated bindings for canisters
 #[allow(clippy::all)]
-mod generated {
-    include!(concat!(env!("OUT_DIR"), "/did/mod.rs"));
-}
+mod generated;
 
 pub mod utils;
 pub use generated::*;

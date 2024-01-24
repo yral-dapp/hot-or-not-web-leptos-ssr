@@ -23,6 +23,8 @@ mod handlers {
             raw_query,
             move || {
                 provide_context(app_state.canisters.clone());
+                #[cfg(feature = "cloudflare")]
+                provide_context(app_state.cloudflare.clone());
             },
             request,
         )
@@ -38,11 +40,23 @@ mod handlers {
             app_state.routes.clone(),
             move || {
                 provide_context(app_state.canisters.clone());
+                #[cfg(feature = "cloudflare")]
+                provide_context(app_state.cloudflare.clone());
             },
             App,
         );
         handler(req).await.into_response()
     }
+}
+
+#[cfg(feature = "ssr")]
+#[cfg(feature = "cloudflare")]
+fn init_cf() -> hot_or_not_web_leptos_ssr::state::cf::CfApi<true> {
+    use hot_or_not_web_leptos_ssr::state::cf::{CfApi, CfCredentials};
+    let Some(creds) = CfCredentials::from_env("CF_TOKEN", "CF_ACCOUNT_ID") else {
+        panic!("Cloudlflare credentials are required: CF_TOKEN, CF_ACCOUNT_ID");
+    };
+    CfApi::<true>::new(creds)
 }
 
 #[cfg(feature = "ssr")]
@@ -73,6 +87,8 @@ async fn main() {
         leptos_options,
         canisters: Canisters::default(),
         routes: routes.clone(),
+        #[cfg(feature = "cloudflare")]
+        cloudflare: init_cf(),
     };
 
     // build our application with a route

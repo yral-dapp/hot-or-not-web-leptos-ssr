@@ -12,7 +12,7 @@ use crate::{
     },
     component::bullet_loader::BulletLoader,
     consts::FALLBACK_PROPIC_BASE,
-    state::canisters::Canisters,
+    state::canisters::unauth_canisters,
 };
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -173,7 +173,7 @@ where
     I: 'static,
     C: Fn(R) -> Option<Vec<I>> + 'static,
 {
-    let canisters = expect_context::<Canisters>();
+    let canisters = unauth_canisters();
     futures::stream::try_unfold(
         (getter, conv, canisters, 0usize, false),
         move |(getter, conv, canisters, mut cursor, mut ended)| async move {
