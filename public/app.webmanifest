@@ -1,0 +1,68 @@
+{
+  "short_name": "Hot or Not",
+  "name": "Hot or Not",
+  "icons": [
+    {
+      "src": "/img/logo-symbol-square-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/img/logo-full-square-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "orientation": "portrait",
+  "background_color": "#000",
+  "display": "standalone",
+  "scope": "/",
+  "theme_color": "#E96B25",
+  "shortcuts": [
+    {
+      "name": "All Videos",
+      "short_name": "Videos",
+      "description": "View sizzling videos on Hot or Not",
+      "url": "/feed",
+      "icons": [
+        {
+          "src": "/img/logo-symbol-square-192.png",
+          "type": "image/png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Hot or Not",
+      "short_name": "Videos",
+      "description": "Rate the videos hot or not",
+      "url": "/hot",
+      "icons": [
+        {
+          "src": "/img/logo-symbol-alt-square-192.png",
+          "type": "image/png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "description": "The First App to Host Creative Short Video Challenges - Participate , Speculate, Gain Fame, Earn In Cryptocurrency",
+  "screenshots": [
+    {
+      "src": "/img/screenshots/0.jpg",
+      "type": "image/jpeg",
+      "sizes": "780x1688"
+    },
+    {
+      "src": "/img/screenshots/1.jpg",
+      "type": "image/jpeg",
+      "sizes": "780x1688"
+    },
+    {
+      "src": "/img/screenshots/2.jpg",
+      "type": "image/jpeg",
+      "sizes": "780x1688"
+    }
+  ]
+}

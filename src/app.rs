@@ -1,8 +1,9 @@
 use crate::{
     error_template::{AppError, ErrorTemplate},
     page::{
-        err::ServerErrorPage, menu::Menu, post_view::PostView, profile::ProfileView,
-        root::RootPage, upload::UploadPostPage,
+        about_us::AboutUs, airdrop::Airdrop, err::ServerErrorPage, faq::Faq, menu::Menu,
+        post_view::PostView, privacy::PrivacyPolicy, profile::ProfileView, refer_earn::ReferEarn,
+        root::RootPage, terms::TermsOfService, upload::UploadPostPage,
     },
     state::{
         auth::AuthClient,
@@ -29,6 +30,8 @@ pub fn App() -> impl IntoView {
         // sets the document title
         <Title text="Welcome to Leptos"/>
 
+        <Link rel="manifest" href="/app.webmanifest"/>
+
         // content for this welcome page
         <Router fallback=|| {
             let mut outside_errors = Errors::default();
@@ -43,6 +46,12 @@ pub fn App() -> impl IntoView {
                     <Route path="/upload" view=UploadPostPage/>
                     <Route path="/error" view=ServerErrorPage/>
                     <Route path="/menu" view=Menu/>
+                    <Route path="/airdrop" view=Airdrop/>
+                    <Route path="/refer-earn" view=ReferEarn/>
+                    <Route path="/about-us" view=AboutUs/>
+                    <Route path="/faq" view=Faq/>
+                    <Route path="/terms-of-service" view=TermsOfService/>
+                    <Route path="/privacy-policy" view=PrivacyPolicy/>
                 </Routes>
             </main>
         </Router>

@@ -1,30 +1,21 @@
-use crate::component::ic_symbol::IcSymbol;
+use crate::component::social::*;
 use crate::consts::social;
 use leptos::*;
 use leptos_icons::*;
 
 #[component]
-fn MenuItem(#[prop(into)] text: String, #[prop(into)] icon: icondata::Icon) -> impl IntoView {
+fn MenuItem(
+    #[prop(into)] text: String,
+    #[prop(into)] href: String,
+    #[prop(into)] icon: icondata::Icon,
+) -> impl IntoView {
     view! {
-        <div class="grid grid-cols-2 items-center w-full">
+        <a href=href class="grid grid-cols-2 items-center w-full">
             <div class="flex flex-row gap-4 items-center">
                 <Icon class="text-2xl" icon=icon/>
                 <span>{text}</span>
             </div>
             <Icon class="text-2xl justify-self-end" icon=icondata::AiRightOutlined/>
-        </div>
-    }
-}
-
-#[component]
-fn FollowItem(#[prop(into)] href: String, #[prop(into)] icon: icondata::Icon) -> impl IntoView {
-    view! {
-        <a
-            href=href
-            target="_blank"
-            class="h-12 w-12 text-2xl rounded-full grid place-items-center aspect-square border-[1px] border-orange-600"
-        >
-            <Icon icon/>
         </a>
     }
 }
@@ -35,10 +26,10 @@ fn MenuFooter() -> impl IntoView {
         <div class="flex flex-col items-center w-full gap-4 pt-10 pb-8">
             <span class="text-white/50 text-sm">Follow us on</span>
             <div class="flex flex-row gap-4">
-                <FollowItem href=social::TELEGRAM icon=icondata::TbBrandTelegram/>
-                <FollowItem href=social::DISCORD icon=icondata::BiDiscordAlt/>
-                <FollowItem href=social::TWITTER icon=icondata::BiTwitter/>
-                <FollowItem href=social::IC_WEBSITE icon=IcSymbol/>
+                <Telegram/>
+                <Discord/>
+                <Twitter/>
+                <IcWebsite/>
             </div>
             <svg class="h-14" viewBox="0 0 228 49">
                 <path
@@ -75,14 +66,18 @@ pub fn Menu() -> impl IntoView {
                 <button class="font-bold rounded-full bg-orange-600 py-3 w-2/12">Login</button>
             </div>
             <div class="flex flex-col py-12 px-8 gap-8 w-full text-lg">
-                <MenuItem text="Airdrop" icon=icondata::TbMoneybag/>
-                <MenuItem text="How to Earn" icon=icondata::AiQuestionCircleOutlined/>
-                <MenuItem text="About us" icon=icondata::AiInfoCircleOutlined/>
-                <MenuItem text="FAQs" icon=icondata::TbMessageDots/>
-                <MenuItem text="Talk to the team" icon=icondata::BiWhatsapp/>
-                <MenuItem text="Terms of Service" icon=icondata::TbBook2/>
-                <MenuItem text="Privacy Policy" icon=icondata::TbLock/>
-                <MenuItem text="Install App" icon=icondata::TbDownload/>
+                <MenuItem href="/airdrop" text="Airdrop" icon=icondata::TbMoneybag/>
+                <MenuItem
+                    href="/refer-earn"
+                    text="How to Earn"
+                    icon=icondata::AiQuestionCircleOutlined
+                />
+                <MenuItem href="/about-us" text="About us" icon=icondata::AiInfoCircleOutlined/>
+                <MenuItem href="/faq" text="FAQs" icon=icondata::TbMessageDots/>
+                <MenuItem href=social::TELEGRAM text="Talk to the team" icon=icondata::BiWhatsapp/>
+                <MenuItem href="/terms-of-service" text="Terms of Service" icon=icondata::TbBook2/>
+                <MenuItem href="/privacy-policy" text="Privacy Policy" icon=icondata::TbLock/>
+            // <MenuItem href="/install-app" text="Install App" icon=icondata::TbDownload/>
             </div>
             <MenuFooter/>
         </div>
