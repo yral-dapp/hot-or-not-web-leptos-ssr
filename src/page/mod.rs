@@ -1,5 +1,12 @@
+pub mod about_us;
+pub mod airdrop;
 pub mod err;
+pub mod faq;
+pub mod menu;
 pub mod post_view;
+pub mod privacy;
 pub mod profile;
+pub mod refer_earn;
 pub mod root;
+pub mod terms;
 pub mod upload;

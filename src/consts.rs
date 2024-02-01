@@ -8,3 +8,10 @@ pub static CF_BASE_URL: Lazy<Url> =
     Lazy::new(|| Url::parse("https://api.cloudflare.com/client/v4/").unwrap());
 pub static AUTH_URL: Lazy<Url> =
     Lazy::new(|| Url::parse("https://hot-or-not-auth.fly.dev/").unwrap());
+
+pub mod social {
+    pub const TELEGRAM: &str = "https://t.me/+c-LTX0Cp-ENmMzI1";
+    pub const DISCORD: &str = "https://discord.gg/GZ9QemnZuj";
+    pub const TWITTER: &str = "https://twitter.com/hotornot_dapp";
+    pub const IC_WEBSITE: &str = "https://vyatz-hqaaa-aaaam-qauea-cai.ic0.app";
+}
