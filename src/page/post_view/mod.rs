@@ -2,6 +2,7 @@ mod error;
 mod video_iter;
 mod video_loader;
 
+use leptos_icons::*;
 use std::pin::pin;
 
 use candid::Principal;
@@ -73,6 +74,14 @@ pub fn ScrollingView() -> impl IntoView {
         })
     });
 
+    let muted = create_rw_signal(true);
+    let trigger_unmute = move || {
+        muted.set(false);
+        if let Some(v) = video_ref.get() {
+            v.set_muted(false)
+        }
+    };
+
     view! {
         <div
             class="snap-mandatory snap-y overflow-y-scroll h-screen bg-black"
@@ -97,6 +106,17 @@ pub fn ScrollingView() -> impl IntoView {
                 }
             />
 
+            <Show when=muted>
+                <div
+                    class="fixed top-1/2 left-1/2 cursor-pointer"
+                    on:click=move |_| trigger_unmute()
+                >
+                    <Icon
+                        class="text-white/80 animate-ping text-4xl"
+                        icon=icondata::BiVolumeMuteSolid
+                    />
+                </div>
+            </Show>
         </div>
     }
 }
