@@ -43,7 +43,7 @@ pub async fn get_post_uid(
     }))
 }
 
-#[derive(Clone, PartialEq, Debug, Hash, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Debug, Hash, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct PostDetails {
     pub canister_id: Principal,
     pub post_id: u64,

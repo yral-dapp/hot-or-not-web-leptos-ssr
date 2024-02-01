@@ -2,12 +2,11 @@ mod error;
 mod video_iter;
 mod video_loader;
 
-use leptos_icons::*;
 use std::pin::pin;
 
 use candid::Principal;
 use futures::StreamExt;
-use leptos::{html::Video, *};
+use leptos::*;
 use leptos_router::*;
 
 use crate::{
@@ -17,7 +16,7 @@ use crate::{
     utils::route::{failure_redirect, go_to_root},
 };
 use video_iter::{get_post_uid, VideoFetchStream};
-use video_loader::{BgView, HlsVideo, ThumbView};
+use video_loader::{BgView, VideoView};
 
 use self::video_iter::PostDetails;
 
@@ -37,11 +36,11 @@ struct FetchCursor {
 struct VideoCtx {
     video_queue: ReadSignal<Vec<PostDetails>>,
     current_idx: RwSignal<usize>,
-    trigger_fetch: Resource<(), ()>,
+    trigger_fetch: RwSignal<usize>,
 }
 
-const POST_CNT: usize = 25;
-const PLAYER_CNT: usize = 5;
+const INITIAL_POST_CNT: usize = 10;
+const PLAYER_CNT: usize = 15;
 
 // Infinite Scrolling View
 // Basically a virtual list with 5 items visible at a time
@@ -52,11 +51,10 @@ pub fn ScrollingView() -> impl IntoView {
         current_idx,
         ..
     } = expect_context();
-    let allow_show = create_rw_signal(true);
 
-    let video_ref = create_node_ref::<Video>();
-    // Cache wasp views to avoid re-initialization
-    let _video_view = view! { <HlsVideo video_ref allow_show/> };
+    // let video_ref = create_node_ref::<Video>();
+    // // Cache wasp views to avoid re-initialization
+    // let _video_view = view! { <HlsVideo video_ref allow_show/> };
     let current_start = move || {
         let cur_idx = current_idx();
         cur_idx.max(PLAYER_CNT / 2) - (PLAYER_CNT / 2)
@@ -74,14 +72,6 @@ pub fn ScrollingView() -> impl IntoView {
         })
     });
 
-    let muted = create_rw_signal(true);
-    let trigger_unmute = move || {
-        muted.set(false);
-        if let Some(v) = video_ref.get() {
-            v.set_muted(false)
-        }
-    };
-
     view! {
         <div
             class="snap-mandatory snap-y overflow-y-scroll h-screen bg-black"
@@ -94,29 +84,12 @@ pub fn ScrollingView() -> impl IntoView {
                     view! {
                         <div class="snap-always snap-end h-full">
                             <BgView uid=details.uid.clone()>
-                                <Show
-                                    when=move || queue_idx == current_idx() && allow_show()
-                                    fallback=move || view! { <ThumbView idx=queue_idx/> }
-                                >
-                                    {video_ref}
-                                </Show>
+                                <VideoView idx=queue_idx/>
                             </BgView>
                         </div>
                     }
                 }
             />
-
-            <Show when=muted>
-                <div
-                    class="fixed top-1/2 left-1/2 cursor-pointer"
-                    on:click=move |_| trigger_unmute()
-                >
-                    <Icon
-                        class="text-white/80 animate-ping text-4xl"
-                        icon=icondata::BiVolumeMuteSolid
-                    />
-                </div>
-            </Show>
         </div>
     }
 }
@@ -126,7 +99,7 @@ pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
     let (fetch_cursor, set_fetch_cursor) = create_signal({
         let mut fetch_cursor = FetchCursor {
             start: 1,
-            limit: POST_CNT as u64,
+            limit: INITIAL_POST_CNT as u64,
         };
         if initial_post.is_some() {
             fetch_cursor.limit -= 1;
@@ -142,19 +115,25 @@ pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
         create_signal(initial_post.map(|p| vec![p]).unwrap_or_default());
     let current_idx = create_rw_signal(0);
 
-    let fetch_video_uids = Resource::once(move || async move {
+    let refetch_signal = create_rw_signal(0);
+    let _ = create_resource(refetch_signal, move |_| async move {
         let canisters = unauth_canisters();
         let cursor = fetch_cursor.get_untracked();
         let fetch_stream = VideoFetchStream::new(&canisters, cursor);
-        let chunks = try_or_redirect!(fetch_stream.fetch_post_uids_chunked(8).await);
+        let chunks = try_or_redirect!(fetch_stream.fetch_post_uids_chunked(2).await);
         let mut chunks = pin!(chunks);
+        let mut cnt = 0;
         while let Some(chunk) = chunks.next().await {
+            cnt += chunk.len();
             set_video_queue.update(|q| {
                 for uid in chunk {
                     let uid = try_or_redirect!(uid);
                     q.push(uid);
                 }
             });
+        }
+        if cnt < 8 {
+            refetch_signal.update(|c| *c += 1);
         }
 
         set_fetch_cursor.update(|cursor| {
@@ -166,7 +145,7 @@ pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
     provide_context(VideoCtx {
         video_queue,
         current_idx,
-        trigger_fetch: fetch_video_uids,
+        trigger_fetch: refetch_signal,
     });
 
     let current_post_base = create_memo(move |_| {
