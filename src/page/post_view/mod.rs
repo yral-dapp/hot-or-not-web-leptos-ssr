@@ -77,7 +77,9 @@ pub fn ScrollingView() -> impl IntoView {
     let muted = create_rw_signal(true);
     let trigger_unmute = move || {
         muted.set(false);
-        if let Some(v) = video_ref.get() { v.set_muted(false) }
+        if let Some(v) = video_ref.get() {
+            v.set_muted(false)
+        }
     };
 
     view! {
