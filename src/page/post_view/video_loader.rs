@@ -20,7 +20,7 @@ pub fn BgView(uid: String, children: Children) -> impl IntoView {
 }
 
 #[component]
-pub fn VideoView(idx: usize) -> impl IntoView {
+pub fn VideoView(idx: usize, muted: RwSignal<bool>) -> impl IntoView {
     let container_ref = create_node_ref::<Video>();
     let VideoCtx {
         video_queue,
@@ -29,7 +29,6 @@ pub fn VideoView(idx: usize) -> impl IntoView {
         ..
     } = expect_context();
 
-    let muted = create_rw_signal(true);
     let uid =
         create_memo(move |_| with!(|video_queue| video_queue.get(idx).map(|q| q.uid.clone())));
     let view_bg_url = move || uid().map(bg_url);
@@ -85,7 +84,7 @@ pub fn VideoView(idx: usize) -> impl IntoView {
     create_effect(move |_| {
         let vid = container_ref().unwrap();
         // the attributes in DOM don't seem to be working
-        vid.set_muted(true);
+        vid.set_muted(muted.get_untracked());
         vid.set_loop(true);
     });
 

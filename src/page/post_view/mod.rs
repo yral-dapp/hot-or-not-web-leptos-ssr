@@ -64,6 +64,7 @@ pub fn ScrollingView() -> impl IntoView {
                 .collect::<Vec<_>>()
         })
     });
+    let muted = create_rw_signal(true);
 
     view! {
         <div
@@ -77,7 +78,7 @@ pub fn ScrollingView() -> impl IntoView {
                     view! {
                         <div class="snap-always snap-end h-full">
                             <BgView uid=details.uid.clone()>
-                                <VideoView idx=queue_idx/>
+                                <VideoView idx=queue_idx muted/>
                             </BgView>
                         </div>
                     }
