@@ -54,7 +54,7 @@ pub fn VideoView(idx: usize) -> impl IntoView {
             // fetch new videos
             if video_queue.with_untracked(|q| q.len()).saturating_sub(idx) == 10 {
                 log::debug!("trigger rerender");
-                trigger_fetch.update(|c| *c += 1);
+                trigger_fetch.update(|c| c.advance());
             }
             current_idx.set(idx);
         },
@@ -99,16 +99,10 @@ pub fn VideoView(idx: usize) -> impl IntoView {
             loop
             muted
             preload="auto"
-        />
+        ></video>
         <Show when=move || muted() && current_idx() == idx>
-            <div
-                class="fixed top-1/2 left-1/2 cursor-pointer"
-                on:click=move |_| muted.set(false)
-            >
-                <Icon
-                    class="text-white/80 animate-ping text-4xl"
-                    icon=icondata::BiVolumeMuteSolid
-                />
+            <div class="fixed top-1/2 left-1/2 cursor-pointer" on:click=move |_| muted.set(false)>
+                <Icon class="text-white/80 animate-ping text-4xl" icon=icondata::BiVolumeMuteSolid/>
             </div>
         </Show>
     }

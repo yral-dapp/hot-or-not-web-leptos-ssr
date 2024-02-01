@@ -18,7 +18,7 @@ use crate::{
 use video_iter::{get_post_uid, VideoFetchStream};
 use video_loader::{BgView, VideoView};
 
-use self::video_iter::PostDetails;
+use self::video_iter::{FetchCursor, PostDetails};
 
 #[derive(Params, PartialEq)]
 struct PostParams {
@@ -26,20 +26,13 @@ struct PostParams {
     post_id: u64,
 }
 
-#[derive(Clone, Copy, PartialEq, Debug)]
-struct FetchCursor {
-    start: u64,
-    limit: u64,
-}
-
 #[derive(Clone)]
 struct VideoCtx {
     video_queue: ReadSignal<Vec<PostDetails>>,
     current_idx: RwSignal<usize>,
-    trigger_fetch: RwSignal<usize>,
+    trigger_fetch: WriteSignal<FetchCursor>,
 }
 
-const INITIAL_POST_CNT: usize = 10;
 const PLAYER_CNT: usize = 15;
 
 // Infinite Scrolling View
@@ -79,7 +72,7 @@ pub fn ScrollingView() -> impl IntoView {
         >
             <For
                 each=video_enum
-                key=|u| (u.0, u.1.uid.clone())
+                key=|u| u.1.uid.clone()
                 children=move |(queue_idx, details)| {
                     view! {
                         <div class="snap-always snap-end h-full">
@@ -90,6 +83,7 @@ pub fn ScrollingView() -> impl IntoView {
                     }
                 }
             />
+
         </div>
     }
 }
@@ -97,11 +91,9 @@ pub fn ScrollingView() -> impl IntoView {
 #[component]
 pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
     let (fetch_cursor, set_fetch_cursor) = create_signal({
-        let mut fetch_cursor = FetchCursor {
-            start: 1,
-            limit: INITIAL_POST_CNT as u64,
-        };
+        let mut fetch_cursor = FetchCursor::default();
         if initial_post.is_some() {
+            fetch_cursor.start = 1;
             fetch_cursor.limit -= 1;
         }
         fetch_cursor
@@ -115,10 +107,8 @@ pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
         create_signal(initial_post.map(|p| vec![p]).unwrap_or_default());
     let current_idx = create_rw_signal(0);
 
-    let refetch_signal = create_rw_signal(0);
-    let _ = create_resource(refetch_signal, move |_| async move {
+    let _ = create_resource(fetch_cursor, move |cursor| async move {
         let canisters = unauth_canisters();
-        let cursor = fetch_cursor.get_untracked();
         let fetch_stream = VideoFetchStream::new(&canisters, cursor);
         let chunks = try_or_redirect!(fetch_stream.fetch_post_uids_chunked(2).await);
         let mut chunks = pin!(chunks);
@@ -133,19 +123,14 @@ pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
             });
         }
         if cnt < 8 {
-            refetch_signal.update(|c| *c += 1);
+            set_fetch_cursor.update(|c| c.advance());
         }
-
-        set_fetch_cursor.update(|cursor| {
-            cursor.start += cursor.limit;
-            cursor.limit = 20
-        });
     });
 
     provide_context(VideoCtx {
         video_queue,
         current_idx,
-        trigger_fetch: refetch_signal,
+        trigger_fetch: set_fetch_cursor,
     });
 
     let current_post_base = create_memo(move |_| {
