@@ -26,7 +26,7 @@ tracing = { version = "0.1.37", optional = true }
 http = "0.2.8"
 serde = { version = "1.0.193", features = ["derive"] }
 candid = "0.10.1"
-ic-agent = { version = "0.31.0", default-features = false, features = ["pem", "reqwest"] }
+ic-agent = { version = "0.32.0", default-features = false, features = ["pem", "reqwest"] }
 serde-wasm-bindgen = { version = "0.6.3" }
 futures = "0.3.30"
 leptos-use = "0.9.0"
