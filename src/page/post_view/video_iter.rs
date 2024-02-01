@@ -7,7 +7,29 @@ use crate::{
     state::canisters::Canisters,
 };
 
-use super::{error::PostViewError, FetchCursor};
+use super::error::PostViewError;
+
+#[derive(Clone, Copy, PartialEq, Debug)]
+pub struct FetchCursor {
+    pub start: u64,
+    pub limit: u64,
+}
+
+impl Default for FetchCursor {
+    fn default() -> Self {
+        Self {
+            start: 0,
+            limit: 10,
+        }
+    }
+}
+
+impl FetchCursor {
+    pub fn advance(&mut self) {
+        self.start += self.limit;
+        self.limit = 20;
+    }
+}
 
 pub async fn get_post_uid(
     canisters: &Canisters<false>,
@@ -43,7 +65,7 @@ pub async fn get_post_uid(
     }))
 }
 
-#[derive(Clone, PartialEq, Debug, Hash, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Debug, Hash, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct PostDetails {
     pub canister_id: Principal,
     pub post_id: u64,

@@ -9,3 +9,7 @@ pub fn bg_url(uid: impl Display) -> String {
 pub fn stream_url(uid: impl Display) -> String {
     format!("{CF_STREAM_BASE}/{uid}/manifest/video.m3u8")
 }
+
+pub fn mp4_url(uid: impl Display) -> String {
+    format!("{CF_STREAM_BASE}/{uid}/downloads/default.mp4")
+}
