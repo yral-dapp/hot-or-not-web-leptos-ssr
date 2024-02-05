@@ -26,11 +26,15 @@ struct PostParams {
     post_id: u64,
 }
 
-#[derive(Clone)]
-struct VideoCtx {
-    video_queue: ReadSignal<Vec<PostDetails>>,
+#[derive(Clone, Default)]
+pub struct PostViewCtx {
+    fetch_cursor: RwSignal<FetchCursor>,
+    // TODO: this is a dead simple with no GC
+    // We're using virtual lists for DOM, so this doesn't consume much memory
+    // as uids only occupy 32 bytes each
+    // but ideally this should be cleaned up
+    video_queue: RwSignal<Vec<PostDetails>>,
     current_idx: RwSignal<usize>,
-    trigger_fetch: WriteSignal<FetchCursor>,
 }
 
 const PLAYER_CNT: usize = 15;
@@ -39,7 +43,7 @@ const PLAYER_CNT: usize = 15;
 // Basically a virtual list with 5 items visible at a time
 #[component]
 pub fn ScrollingView() -> impl IntoView {
-    let VideoCtx {
+    let PostViewCtx {
         video_queue,
         current_idx,
         ..
@@ -91,24 +95,42 @@ pub fn ScrollingView() -> impl IntoView {
 
 #[component]
 pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
-    let (fetch_cursor, set_fetch_cursor) = create_signal({
-        let mut fetch_cursor = FetchCursor::default();
-        if initial_post.is_some() {
-            fetch_cursor.start = 1;
-            fetch_cursor.limit -= 1;
-        }
-        fetch_cursor
-    });
+    let PostViewCtx {
+        fetch_cursor,
+        video_queue,
+        current_idx,
+    } = expect_context();
 
-    // TODO: this is a dead simple with no GC
-    // We're using virtual lists for DOM, so this doesn't consume much memory
-    // as uids only occupy 32 bytes each
-    // but ideally this should be cleaned up
-    let (video_queue, set_video_queue) =
-        create_signal(initial_post.map(|p| vec![p]).unwrap_or_default());
-    let current_idx = create_rw_signal(0);
+    let fetch_fuse = create_rw_signal(true);
+
+    if let Some(initial_post) = initial_post {
+        fetch_cursor.update_untracked(|f| {
+            // we've already fetched the first posts
+            if f.start > 1 {
+                // unblow fuse so first fetch is skipped
+                fetch_fuse.set(false);
+                return;
+            }
+            f.start = 1;
+            f.limit = 1;
+        });
+        video_queue.update_untracked(|v| {
+            if v.len() > 1 {
+                return;
+            }
+            *v = vec![initial_post];
+        })
+    }
 
     let _ = create_resource(fetch_cursor, move |cursor| async move {
+        // if fuse is not yet blown
+        // skip fetching
+        if !fetch_fuse.get_untracked() {
+            // blow the fuse so next fetch is not skipped
+            fetch_fuse.set(true);
+            return;
+        }
+
         let canisters = unauth_canisters();
         let fetch_stream = VideoFetchStream::new(&canisters, cursor);
         let chunks = try_or_redirect!(fetch_stream.fetch_post_uids_chunked(2).await);
@@ -116,7 +138,7 @@ pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
         let mut cnt = 0;
         while let Some(chunk) = chunks.next().await {
             cnt += chunk.len();
-            set_video_queue.update(|q| {
+            video_queue.update(|q| {
                 for uid in chunk {
                     let uid = try_or_redirect!(uid);
                     q.push(uid);
@@ -124,14 +146,8 @@ pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
             });
         }
         if cnt < 8 {
-            set_fetch_cursor.update(|c| c.advance());
+            fetch_cursor.update(|c| c.advance());
         }
-    });
-
-    provide_context(VideoCtx {
-        video_queue,
-        current_idx,
-        trigger_fetch: set_fetch_cursor,
     });
 
     let current_post_base = create_memo(move |_| {
@@ -170,13 +186,25 @@ pub fn PostView() -> impl IntoView {
     let fetch_first_video_uid = create_resource(
         || (),
         move |_| async move {
-            let canisters = expect_context();
-            let Some((canister, post)) = canister_and_post() else {
+            let PostViewCtx {
+                video_queue,
+                current_idx,
+                ..
+            } = expect_context();
+            let Some((canister, post_id)) = canister_and_post() else {
                 go_to_root();
                 return None;
             };
+            if let Some(post) =
+                video_queue.with_untracked(|q| q.get(current_idx.get_untracked()).cloned())
+            {
+                if post.canister_id == canister && post.post_id == post_id {
+                    return Some(post);
+                }
+            }
 
-            match get_post_uid(&canisters, canister, post).await {
+            let canisters = expect_context();
+            match get_post_uid(&canisters, canister, post_id).await {
                 Ok(Some(uid)) => Some(uid),
                 Err(e) => {
                     failure_redirect(e);
