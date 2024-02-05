@@ -1,6 +1,5 @@
 use crate::canister::utils::{bg_url, mp4_url};
 use leptos::{html::Video, *};
-use leptos_icons::*;
 use leptos_use::{
     use_document, use_intersection_observer_with_options, UseIntersectionObserverOptions,
 };
@@ -100,10 +99,5 @@ pub fn VideoView(idx: usize, muted: RwSignal<bool>) -> impl IntoView {
             muted
             preload="auto"
         ></video>
-        <Show when=move || muted() && current_idx() == idx>
-            <div class="fixed top-1/2 left-1/2 cursor-pointer" on:click=move |_| muted.set(false)>
-                <Icon class="text-white/80 animate-ping text-4xl" icon=icondata::BiVolumeMuteSolid/>
-            </div>
-        </Show>
     }
 }

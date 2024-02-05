@@ -7,6 +7,7 @@ use std::pin::pin;
 use candid::Principal;
 use futures::StreamExt;
 use leptos::*;
+use leptos_icons::*;
 use leptos_router::*;
 
 use crate::{
@@ -89,6 +90,17 @@ pub fn ScrollingView() -> impl IntoView {
                 }
             />
 
+            <Show when=muted>
+                <div
+                    class="fixed top-1/2 left-1/2 cursor-pointer"
+                    on:click=move |_| muted.set(false)
+                >
+                    <Icon
+                        class="text-white/80 animate-ping text-4xl"
+                        icon=icondata::BiVolumeMuteSolid
+                    />
+                </div>
+            </Show>
         </div>
     }
 }
