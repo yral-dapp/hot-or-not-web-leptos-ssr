@@ -1,9 +1,19 @@
 use crate::{
+    component::nav::NavBar,
     error_template::{AppError, ErrorTemplate},
     page::{
-        about_us::AboutUs, airdrop::Airdrop, err::ServerErrorPage, faq::Faq, menu::Menu,
-        post_view::PostView, privacy::PrivacyPolicy, profile::ProfileView, refer_earn::ReferEarn,
-        root::RootPage, terms::TermsOfService, upload::UploadPostPage,
+        about_us::AboutUs,
+        airdrop::Airdrop,
+        err::ServerErrorPage,
+        faq::Faq,
+        menu::Menu,
+        post_view::{PostView, PostViewCtx},
+        privacy::PrivacyPolicy,
+        profile::ProfileView,
+        refer_earn::ReferEarn,
+        root::RootPage,
+        terms::TermsOfService,
+        upload::UploadPostPage,
     },
     state::{
         auth::AuthClient,
@@ -23,6 +33,7 @@ pub fn App() -> impl IntoView {
         || (),
         |_| do_canister_auth(AuthClient::default()),
     ));
+    provide_context(PostViewCtx::default());
 
     view! {
         <Stylesheet id="leptos" href="/pkg/hot-or-not-leptos-ssr.css"/>
@@ -54,6 +65,9 @@ pub fn App() -> impl IntoView {
                     <Route path="/privacy-policy" view=PrivacyPolicy/>
                 </Routes>
             </main>
+            <nav>
+                <NavBar/>
+            </nav>
         </Router>
     }
 }

@@ -3,7 +3,7 @@ use leptos::{html::Video, *};
 use leptos_icons::*;
 use leptos_use::{use_intersection_observer_with_options, UseIntersectionObserverOptions};
 
-use super::VideoCtx;
+use super::PostViewCtx;
 
 #[component]
 pub fn BgView(uid: String, children: Children) -> impl IntoView {
@@ -22,9 +22,9 @@ pub fn BgView(uid: String, children: Children) -> impl IntoView {
 #[component]
 pub fn VideoView(idx: usize, muted: RwSignal<bool>) -> impl IntoView {
     let container_ref = create_node_ref::<Video>();
-    let VideoCtx {
+    let PostViewCtx {
         video_queue,
-        trigger_fetch,
+        fetch_cursor,
         current_idx,
         ..
     } = expect_context();
@@ -53,7 +53,7 @@ pub fn VideoView(idx: usize, muted: RwSignal<bool>) -> impl IntoView {
             // fetch new videos
             if video_queue.with_untracked(|q| q.len()).saturating_sub(idx) == 10 {
                 log::debug!("trigger rerender");
-                trigger_fetch.update(|c| c.advance());
+                fetch_cursor.update(|c| c.advance());
             }
             current_idx.set(idx);
         },
@@ -67,6 +67,7 @@ pub fn VideoView(idx: usize, muted: RwSignal<bool>) -> impl IntoView {
             _ = vid.pause();
             return;
         }
+        vid.scroll_into_view();
         vid.set_autoplay(true);
         _ = vid.play();
     });
@@ -74,11 +75,7 @@ pub fn VideoView(idx: usize, muted: RwSignal<bool>) -> impl IntoView {
     // Handles mute/unmute
     create_effect(move |_| {
         let vid = container_ref().unwrap();
-        if muted() {
-            vid.set_muted(true);
-            return;
-        }
-        vid.set_muted(false);
+        vid.set_muted(muted());
     });
 
     create_effect(move |_| {
