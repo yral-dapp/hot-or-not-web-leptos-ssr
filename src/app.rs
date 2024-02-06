@@ -1,5 +1,5 @@
 use crate::{
-    component::nav::NavBar,
+    component::{auth_provider::AuthProvider, nav::NavBar},
     error_template::{AppError, ErrorTemplate},
     page::{
         about_us::AboutUs,
@@ -15,10 +15,7 @@ use crate::{
         terms::TermsOfService,
         upload::UploadPostPage,
     },
-    state::{
-        auth::AuthClient,
-        canisters::{do_canister_auth, Canisters},
-    },
+    state::canisters::{do_canister_auth, Canisters},
 };
 use leptos::*;
 use leptos_meta::*;
@@ -29,11 +26,9 @@ pub fn App() -> impl IntoView {
     // Provides context that manages stylesheets, titles, meta tags, etc.
     provide_meta_context();
     provide_context(Canisters::default());
-    provide_context(Resource::local(
-        || (),
-        |_| do_canister_auth(AuthClient::default()),
-    ));
     provide_context(PostViewCtx::default());
+    let auth = create_rw_signal(None);
+    provide_context(Resource::local(auth, do_canister_auth));
 
     view! {
         <Stylesheet id="leptos" href="/pkg/hot-or-not-leptos-ssr.css"/>
@@ -64,6 +59,7 @@ pub fn App() -> impl IntoView {
                     <Route path="/terms-of-service" view=TermsOfService/>
                     <Route path="/privacy-policy" view=PrivacyPolicy/>
                 </Routes>
+                <AuthProvider auth/>
             </main>
             <nav>
                 <NavBar/>
