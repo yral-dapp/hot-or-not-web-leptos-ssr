@@ -1,7 +1,8 @@
 use crate::canister::utils::{bg_url, mp4_url};
 use leptos::{html::Video, *};
-use leptos_icons::*;
-use leptos_use::{use_intersection_observer_with_options, UseIntersectionObserverOptions};
+use leptos_use::{
+    use_document, use_intersection_observer_with_options, UseIntersectionObserverOptions,
+};
 
 use super::PostViewCtx;
 
@@ -39,7 +40,7 @@ pub fn VideoView(idx: usize, muted: RwSignal<bool>) -> impl IntoView {
         move |entry, _| {
             let Some(visible) = entry
                 .into_iter()
-                .find(|entry| entry.is_intersecting() && entry.intersection_ratio() == 1.0)
+                .find(|entry| entry.is_intersecting() && entry.intersection_ratio() >= 0.8)
             else {
                 return;
             };
@@ -57,7 +58,9 @@ pub fn VideoView(idx: usize, muted: RwSignal<bool>) -> impl IntoView {
             }
             current_idx.set(idx);
         },
-        UseIntersectionObserverOptions::default().thresholds(vec![1.0]),
+        UseIntersectionObserverOptions::default()
+            .thresholds(vec![1.0])
+            .root(use_document().as_ref().and_then(|d| d.body())),
     );
 
     // Handles autoplay
@@ -96,10 +99,5 @@ pub fn VideoView(idx: usize, muted: RwSignal<bool>) -> impl IntoView {
             muted
             preload="auto"
         ></video>
-        <Show when=move || muted() && current_idx() == idx>
-            <div class="fixed top-1/2 left-1/2 cursor-pointer" on:click=move |_| muted.set(false)>
-                <Icon class="text-white/80 animate-ping text-4xl" icon=icondata::BiVolumeMuteSolid/>
-            </div>
-        </Show>
     }
 }
