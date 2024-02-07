@@ -2,10 +2,12 @@ use candid::Principal;
 use leptos::*;
 use leptos_icons::*;
 
-use super::ic::{
-    speculations_stream, BetDetails, BetOutcome, PostDetails, ProfileDetails, ProfileStream,
+use super::ic::ProfileStream;
+use crate::{
+    canister::utils::bg_url,
+    state::canisters::unauth_canisters,
+    utils::profile::{speculations_stream, BetDetails, BetOutcome, PostDetails, ProfileDetails},
 };
-use crate::{canister::utils::bg_url, state::canisters::unauth_canisters};
 
 #[component]
 pub fn ExternalUser(user: Option<ProfileDetails>) -> impl IntoView {

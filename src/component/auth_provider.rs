@@ -1,6 +1,6 @@
 use crate::{
     consts::AUTH_URL,
-    state::auth::{DelegationIdentity, SessionResponse},
+    state::auth::{auth_state, DelegationIdentity, SessionResponse},
 };
 use leptos::*;
 use leptos_use::{use_event_listener, use_window};
@@ -20,11 +20,17 @@ pub fn AuthFrame(auth: RwSignal<Option<DelegationIdentity>>) -> impl IntoView {
         let identity = res.delegation_identity;
         auth.set(Some(identity))
     });
-    view! { <iframe src=AUTH_URL.join("/anonymous_identity").unwrap().to_string()></iframe> }
+    view! {
+        <iframe
+            class="h-0 w-0 hidden"
+            src=AUTH_URL.join("/anonymous_identity").unwrap().to_string()
+        ></iframe>
+    }
 }
 
 #[component]
-pub fn AuthProvider(auth: RwSignal<Option<DelegationIdentity>>) -> impl IntoView {
+pub fn AuthProvider() -> impl IntoView {
+    let auth = auth_state().identity;
     view! {
         <Show when=move || auth.with(|a| a.is_none())>
             <AuthFrame auth/>

@@ -3,9 +3,12 @@ use leptos_icons::*;
 
 use candid::Principal;
 
-use crate::canister::utils::bg_url;
+use crate::{
+    canister::utils::bg_url,
+    utils::profile::{posts_stream, PostDetails},
+};
 
-use super::ic::{posts_stream, PostDetails, ProfileStream};
+use super::ic::ProfileStream;
 
 #[component]
 fn Post(details: PostDetails) -> impl IntoView {

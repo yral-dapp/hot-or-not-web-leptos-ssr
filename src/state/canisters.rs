@@ -4,11 +4,14 @@ use candid::Principal;
 use ic_agent::{identity::DelegatedIdentity, Identity};
 use leptos::*;
 
-use crate::canister::{
-    individual_user_template::IndividualUserTemplate,
-    post_cache::{self, PostCache},
-    user_index::{self, UserIndex},
-    AGENT_URL,
+use crate::{
+    canister::{
+        individual_user_template::IndividualUserTemplate,
+        post_cache::{self, PostCache},
+        user_index::{self, UserIndex},
+        AGENT_URL,
+    },
+    utils::MockPartialEq,
 };
 
 use super::auth::{AuthError, DelegationIdentity};
@@ -95,7 +98,7 @@ pub fn unauth_canisters() -> Canisters<false> {
 }
 
 pub type AuthCanistersResource =
-    Resource<Option<DelegationIdentity>, Result<Option<Canisters<true>>, AuthError>>;
+    Resource<MockPartialEq<Option<DelegationIdentity>>, Result<Option<Canisters<true>>, AuthError>>;
 
 pub async fn do_canister_auth(
     auth: Option<DelegationIdentity>,

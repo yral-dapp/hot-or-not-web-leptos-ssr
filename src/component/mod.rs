@@ -1,6 +1,7 @@
 pub mod airdrop_logo;
 pub mod auth_provider;
 pub mod bullet_loader;
+pub mod connect;
 pub mod ic_symbol;
 pub mod modal;
 pub mod nav;
