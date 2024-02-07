@@ -2,19 +2,16 @@ use std::sync::Arc;
 
 use candid::Principal;
 use ic_agent::{identity::DelegatedIdentity, Identity};
-use leptos::{expect_context, Resource};
+use leptos::*;
 
-use crate::{
-    canister::{
-        individual_user_template::IndividualUserTemplate,
-        post_cache::{self, PostCache},
-        user_index::{self, UserIndex},
-        AGENT_URL,
-    },
-    state::auth::AuthClient,
+use crate::canister::{
+    individual_user_template::IndividualUserTemplate,
+    post_cache::{self, PostCache},
+    user_index::{self, UserIndex},
+    AGENT_URL,
 };
 
-use super::auth::AuthError;
+use super::auth::{AuthError, DelegationIdentity};
 
 #[derive(Clone)]
 pub struct Canisters<const AUTH: bool> {
@@ -97,10 +94,16 @@ pub fn unauth_canisters() -> Canisters<false> {
     expect_context()
 }
 
-pub type AuthCanistersResource = Resource<(), Result<Canisters<true>, AuthError>>;
+pub type AuthCanistersResource =
+    Resource<Option<DelegationIdentity>, Result<Option<Canisters<true>>, AuthError>>;
 
-pub async fn do_canister_auth(client: AuthClient) -> Result<Canisters<true>, AuthError> {
-    let auth = client.generate_session().await?;
+pub async fn do_canister_auth(
+    auth: Option<DelegationIdentity>,
+) -> Result<Option<Canisters<true>>, AuthError> {
+    let Some(auth) = auth else {
+        return Ok(None);
+    };
+    let auth: DelegatedIdentity = auth.try_into()?;
     let mut canisters = Canisters::<true>::authenticated(auth);
     let idx = canisters.user_index();
     // TOOD: referrer
@@ -112,10 +115,9 @@ pub async fn do_canister_auth(client: AuthClient) -> Result<Canisters<true>, Aut
         .await
         .unwrap();
     canisters.user_canister = user_canister;
-    Ok(canisters)
+    Ok(Some(canisters))
 }
 
 pub fn authenticated_canisters() -> AuthCanistersResource {
-    // TODO: handle identity expiry
     expect_context()
 }

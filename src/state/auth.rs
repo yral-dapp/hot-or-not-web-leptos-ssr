@@ -3,32 +3,42 @@ use std::num::ParseIntError;
 use candid::Principal;
 use ic_agent::identity::{DelegatedIdentity, Secp256k1Identity};
 use k256::SecretKey;
+
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 use crate::consts::AUTH_URL;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 struct PrincipalId {
     _arr: String,
     #[serde(rename = "_isPrincipal")]
     _is_principal: bool,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct DelegationIdentity {
     pub _inner: Vec<Vec<u8>>,
     pub _delegation: DelegationChain,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+// WARN: This is just a mock implementation, which always returns false
+// do not rely on this
+// This exists just for Resource::local creation
+impl PartialEq for DelegationIdentity {
+    fn eq(&self, _other: &Self) -> bool {
+        false
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct DelegationChain {
     pub delegations: Vec<SignedDelegation>,
     #[serde(rename = "publicKey")]
     pub public_key: Vec<u8>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SignedDelegation {
     pub delegation: Delegation,
     pub signature: Vec<u8>,
@@ -53,7 +63,7 @@ impl TryFrom<SignedDelegation> for ic_agent::identity::SignedDelegation {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Delegation {
     pub pubkey: Vec<u8>,
     pub expiration: String,
@@ -81,10 +91,10 @@ impl TryFrom<DelegationIdentity> for DelegatedIdentity {
 }
 
 #[derive(Deserialize)]
-struct SessionResponse {
+pub struct SessionResponse {
     #[allow(dead_code)]
     user_identity: String,
-    delegation_identity: DelegationIdentity,
+    pub delegation_identity: DelegationIdentity,
 }
 
 #[derive(Error, Debug, Clone)]
