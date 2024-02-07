@@ -1,5 +1,10 @@
-use crate::component::social::*;
+use crate::component::{connect::ConnectLogin, social::*};
 use crate::consts::social;
+use crate::state::auth::account_connected_reader;
+use crate::state::canisters::authenticated_canisters;
+use crate::try_or_redirect_opt;
+use crate::utils::profile::ProfileDetails;
+use crate::utils::MockPartialEq;
 use leptos::*;
 use leptos_icons::*;
 
@@ -58,12 +63,80 @@ fn MenuFooter() -> impl IntoView {
 }
 
 #[component]
+fn ProfileLoading() -> impl IntoView {
+    view! {
+        <div class="w-48 md:w-36 lg:w-24 aspect-square overflow-clip rounded-full bg-white/20 animate-pulse"></div>
+        <div class="flex flex-col gap-2 animate-pulse">
+            <div class="w-64 h-4 bg-white/20 rounded-full"></div>
+            <div class="w-48 h-3 bg-white/20 rounded-full"></div>
+        </div>
+    }
+}
+
+#[component]
+fn ProfileLoaded(user_details: ProfileDetails) -> impl IntoView {
+    view! {
+        <div class="w-48 md:w-36 lg:w-24 aspect-square overflow-clip rounded-full">
+            <img class="h-full w-full object-cover" src=user_details.profile_pic_or_random()/>
+        </div>
+        <div class="flex flex-col">
+            <span class="text-white text-ellipsis line-clamp-1 text-xl">
+                {user_details.display_name_or_fallback()}
+            </span>
+            <a
+                class="text-orange-600 text-md"
+                href=format!("/profile/{}", user_details.username_or_principal())
+            >
+                View Profile
+            </a>
+        </div>
+    }
+}
+
+#[component]
+fn ProfileInfo() -> impl IntoView {
+    let canisters = authenticated_canisters();
+    let profile_details = create_resource(
+        move || MockPartialEq(canisters.get().and_then(|c| c.transpose())),
+        move |canisters| async move {
+            let canisters = try_or_redirect_opt!(canisters.0?);
+            let user = canisters.authenticated_user();
+            let user_details = user.get_profile_details().await.ok()?;
+            Some(ProfileDetails::from(user_details))
+        },
+    );
+
+    view! {
+        <Suspense fallback=ProfileLoading>
+            {move || {
+                profile_details()
+                    .flatten()
+                    .map(|user_details| view! { <ProfileLoaded user_details/> })
+                    .unwrap_or_else(|| view! { <ProfileLoading/> })
+            }}
+
+        </Suspense>
+    }
+}
+
+#[component]
 pub fn Menu() -> impl IntoView {
+    let (is_connected, _) = account_connected_reader();
+
     view! {
         <div class="min-h-screen w-full flex flex-col text-white py-2 bg-black items-center divide-y divide-white/10">
             <div class="flex flex-col items-center w-full gap-20 pb-16">
                 <span class="font-bold text-2xl">Menu</span>
-                <button class="font-bold rounded-full bg-orange-600 py-3 w-2/12">Login</button>
+                <div class="flex flex-col items-center w-full gap-4">
+                    <div class="flex flex-row justify-center gap-4 items-center px-4 w-full">
+                        <ProfileInfo/>
+                    </div>
+                    <Show when=move || !is_connected()>
+                        <div class="w-2/12">
+                            <ConnectLogin/>
+                        </div>
+                    </Show>
+                </div>
             </div>
             <div class="flex flex-col py-12 px-8 gap-8 w-full text-lg">
                 <MenuItem href="/airdrop" text="Airdrop" icon=icondata::TbMoneybag/>

@@ -4,10 +4,12 @@ use candid::Principal;
 use ic_agent::identity::{DelegatedIdentity, Secp256k1Identity};
 use k256::SecretKey;
 
+use leptos::{create_effect, create_signal, expect_context, Effect, ReadSignal, RwSignal};
+use leptos_use::storage::{use_local_storage, StringCodec};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-use crate::consts::AUTH_URL;
+use crate::consts::{ACCOUNT_CONNECTED_STORE, AUTH_URL};
 
 #[derive(Debug, Serialize, Clone)]
 struct PrincipalId {
@@ -20,15 +22,6 @@ struct PrincipalId {
 pub struct DelegationIdentity {
     pub _inner: Vec<Vec<u8>>,
     pub _delegation: DelegationChain,
-}
-
-// WARN: This is just a mock implementation, which always returns false
-// do not rely on this
-// This exists just for Resource::local creation
-impl PartialEq for DelegationIdentity {
-    fn eq(&self, _other: &Self) -> bool {
-        false
-    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -129,4 +122,28 @@ impl AuthClient {
             .await?;
         resp.delegation_identity.try_into()
     }
+}
+
+#[derive(Default, Clone)]
+pub struct AuthState {
+    pub identity: RwSignal<Option<DelegationIdentity>>,
+}
+
+pub fn auth_state() -> AuthState {
+    expect_context()
+}
+
+/// Prevents hydration bugs if the value in store is used to conditionally show views
+/// this is because the server will always get a `false` value and do rendering based on that
+pub fn account_connected_reader() -> (ReadSignal<bool>, Effect<()>) {
+    let (read_account_connected, _, _) =
+        use_local_storage::<bool, StringCodec>(ACCOUNT_CONNECTED_STORE);
+    let (is_connected, set_is_connected) = create_signal(false);
+
+    (
+        is_connected,
+        create_effect(move |_| {
+            set_is_connected(read_account_connected());
+        }),
+    )
 }

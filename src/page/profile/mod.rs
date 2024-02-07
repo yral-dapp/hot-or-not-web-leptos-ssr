@@ -7,8 +7,10 @@ use leptos::*;
 use leptos_icons::*;
 use leptos_router::*;
 
-use crate::{component::spinner::FullScreenSpinner, state::canisters::unauth_canisters};
-use ic::ProfileDetails;
+use crate::{
+    component::spinner::FullScreenSpinner, state::canisters::unauth_canisters,
+    utils::profile::ProfileDetails,
+};
 
 use posts::ProfilePosts;
 use speculation::ProfileSpeculations;

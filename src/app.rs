@@ -15,7 +15,11 @@ use crate::{
         terms::TermsOfService,
         upload::UploadPostPage,
     },
-    state::canisters::{do_canister_auth, Canisters},
+    state::{
+        auth::AuthState,
+        canisters::{do_canister_auth, Canisters},
+    },
+    utils::MockPartialEq,
 };
 use leptos::*;
 use leptos_meta::*;
@@ -27,8 +31,12 @@ pub fn App() -> impl IntoView {
     provide_meta_context();
     provide_context(Canisters::default());
     provide_context(PostViewCtx::default());
-    let auth = create_rw_signal(None);
-    provide_context(Resource::local(auth, do_canister_auth));
+    let auth_state = AuthState::default();
+    provide_context(auth_state.clone());
+    provide_context(Resource::local(
+        move || MockPartialEq(auth_state.identity.get()),
+        |auth| do_canister_auth(auth.0),
+    ));
 
     view! {
         <Stylesheet id="leptos" href="/pkg/hot-or-not-leptos-ssr.css"/>
@@ -59,7 +67,7 @@ pub fn App() -> impl IntoView {
                     <Route path="/terms-of-service" view=TermsOfService/>
                     <Route path="/privacy-policy" view=PrivacyPolicy/>
                 </Routes>
-                <AuthProvider auth/>
+                <AuthProvider/>
             </main>
             <nav>
                 <NavBar/>
