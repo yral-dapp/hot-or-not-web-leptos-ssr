@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use leptos::*;
 use leptos_use::{
     storage::{use_local_storage, StringCodec},
@@ -15,6 +17,7 @@ pub fn ConnectLogin() -> impl IntoView {
     let (_, write_account_connected, _) =
         use_local_storage::<bool, StringCodec>(ACCOUNT_CONNECTED_STORE);
     let logging_in = create_rw_signal(false);
+    let target_close = create_rw_signal(None::<Rc<dyn Fn()>>);
     let auth = auth_state().identity;
     create_effect(move |_| {
         if auth.with(|a| a.is_none()) {
@@ -33,6 +36,9 @@ pub fn ConnectLogin() -> impl IntoView {
             auth.set(Some(identity));
             logging_in.set(false);
             write_account_connected.set(true);
+            _ = target_close
+                .get_untracked()
+                .expect("Target window should be available")();
         });
     });
 
@@ -56,7 +62,7 @@ pub fn ConnectLogin() -> impl IntoView {
                     },
                     500,
                 );
-                on_cleanup(move || _ = target.close());
+                target_close.set(Some(Rc::new(move || _ = target.close())));
                 logging_in.set(true);
             }
 
