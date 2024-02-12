@@ -70,9 +70,12 @@ pub fn ScrollingView() -> impl IntoView {
         })
     });
     let muted = create_rw_signal(true);
+    let scroll_root = create_node_ref::<html::Div>();
+    let scroll_fuse = create_rw_signal(false);
 
     view! {
         <div
+            _ref=scroll_root
             class="snap-mandatory snap-y overflow-y-scroll h-screen bg-black"
             style:scroll-snap-points-y="repeat(100vh)"
         >
@@ -82,8 +85,8 @@ pub fn ScrollingView() -> impl IntoView {
                 children=move |(queue_idx, details)| {
                     view! {
                         <div class="snap-always snap-end h-full">
-                            <BgView uid=details.uid.clone()>
-                                <VideoView idx=queue_idx muted/>
+                            <BgView uid=details.uid idx=queue_idx root=scroll_root>
+                                <VideoView idx=queue_idx muted scroll_fuse/>
                             </BgView>
                         </div>
                     }
