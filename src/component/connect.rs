@@ -36,7 +36,7 @@ pub fn ConnectLogin() -> impl IntoView {
             auth.set(Some(identity));
             logging_in.set(false);
             write_account_connected.set(true);
-            _ = target_close
+            target_close
                 .get_untracked()
                 .expect("Target window should be available")();
         });
