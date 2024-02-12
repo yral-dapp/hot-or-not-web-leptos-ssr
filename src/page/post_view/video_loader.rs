@@ -1,46 +1,30 @@
 use crate::canister::utils::{bg_url, mp4_url};
 use leptos::{html::Video, *};
-use leptos_use::{
-    use_document, use_intersection_observer_with_options, UseIntersectionObserverOptions,
-};
+use leptos_use::{use_intersection_observer_with_options, UseIntersectionObserverOptions};
 
 use super::PostViewCtx;
 
 #[component]
-pub fn BgView(uid: String, children: Children) -> impl IntoView {
-    view! {
-        <div
-            class="bg-black bg-cover h-full"
-            style:background-image=move || format!("url({})", bg_url(&uid))
-        >
-            <div class="grid grid-cols-1 h-full w-full justify-items-center backdrop-blur-lg">
-                {children()}
-            </div>
-        </div>
-    }
-}
-
-#[component]
-pub fn VideoView(idx: usize, muted: RwSignal<bool>) -> impl IntoView {
-    let container_ref = create_node_ref::<Video>();
+pub fn BgView(
+    uid: String,
+    idx: usize,
+    root: NodeRef<html::Div>,
+    children: Children,
+) -> impl IntoView {
     let PostViewCtx {
         video_queue,
-        fetch_cursor,
         current_idx,
+        fetch_cursor,
         ..
     } = expect_context();
-
-    let uid =
-        create_memo(move |_| with!(|video_queue| video_queue.get(idx).map(|q| q.uid.clone())));
-    let view_bg_url = move || uid().map(bg_url);
-    let view_video_url = move || uid().map(mp4_url);
+    let container_ref = create_node_ref::<html::Div>();
 
     use_intersection_observer_with_options(
         container_ref,
         move |entry, _| {
             let Some(visible) = entry
                 .into_iter()
-                .find(|entry| entry.is_intersecting() && entry.intersection_ratio() >= 0.8)
+                .find(|entry| entry.is_intersecting() && entry.intersection_ratio() >= 0.91)
             else {
                 return;
             };
@@ -60,8 +44,35 @@ pub fn VideoView(idx: usize, muted: RwSignal<bool>) -> impl IntoView {
         },
         UseIntersectionObserverOptions::default()
             .thresholds(vec![1.0])
-            .root(use_document().as_ref().and_then(|d| d.body())),
+            .root(Some(root)),
     );
+
+    view! {
+        <div
+            _ref=container_ref
+            class="bg-black bg-cover bg-center h-full w-full -z-10"
+            style:background-image=move || format!("url({})", bg_url(&uid))
+        >
+            <div class="grid grid-cols-1 h-full w-full justify-items-center backdrop-blur-lg bg-transparent">
+                {children()}
+            </div>
+        </div>
+    }
+}
+
+#[component]
+pub fn VideoView(idx: usize, muted: RwSignal<bool>, scroll_fuse: RwSignal<bool>) -> impl IntoView {
+    let container_ref = create_node_ref::<Video>();
+    let PostViewCtx {
+        video_queue,
+        current_idx,
+        ..
+    } = expect_context();
+
+    let uid =
+        create_memo(move |_| with!(|video_queue| video_queue.get(idx).map(|q| q.uid.clone())));
+    let view_bg_url = move || uid().map(bg_url);
+    let view_video_url = move || uid().map(mp4_url);
 
     // Handles autoplay
     create_effect(move |_| {
@@ -70,7 +81,10 @@ pub fn VideoView(idx: usize, muted: RwSignal<bool>) -> impl IntoView {
             _ = vid.pause();
             return;
         }
-        vid.scroll_into_view();
+        if !scroll_fuse.get_untracked() {
+            vid.scroll_into_view();
+            scroll_fuse.set(true);
+        }
         vid.set_autoplay(true);
         _ = vid.play();
     });
@@ -92,7 +106,7 @@ pub fn VideoView(idx: usize, muted: RwSignal<bool>) -> impl IntoView {
         <video
             on:click=move |_| muted.update(|m| *m = !*m)
             _ref=container_ref
-            class="object-contain h-full cursor-pointer"
+            class="object-contain h-screen cursor-pointer backdrop-blur-lg"
             poster=view_bg_url
             src=view_video_url
             loop
