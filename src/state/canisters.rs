@@ -7,6 +7,7 @@ use leptos::*;
 use crate::{
     canister::{
         individual_user_template::IndividualUserTemplate,
+        platform_orchestrator::{self, PlatformOrchestrator},
         post_cache::{self, PostCache},
         user_index::{self, UserIndex},
         AGENT_URL,
@@ -91,6 +92,14 @@ impl<const A: bool> Canisters<A> {
     pub fn user_index(&self) -> UserIndex<'_> {
         UserIndex(user_index::CANISTER_ID, &self.agent)
     }
+
+    pub fn user_index_with(&self, subnet_principal: Principal) -> UserIndex<'_> {
+        UserIndex(subnet_principal, &self.agent)
+    }
+
+    pub fn orchestrator(&self) -> PlatformOrchestrator<'_> {
+        PlatformOrchestrator(platform_orchestrator::CANISTER_ID, &self.agent)
+    }
 }
 
 pub fn unauth_canisters() -> Canisters<false> {
@@ -108,7 +117,10 @@ pub async fn do_canister_auth(
     };
     let auth: DelegatedIdentity = auth.try_into()?;
     let mut canisters = Canisters::<true>::authenticated(auth);
-    let idx = canisters.user_index();
+    let orchestrator = canisters.orchestrator();
+    // TODO: error handling
+    let subnet_idx = orchestrator.get_next_available_subnet().await.unwrap();
+    let idx = canisters.user_index_with(subnet_idx);
     // TOOD: referrer
     // TODO: error handling
     let user_canister = idx
