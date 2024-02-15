@@ -41,7 +41,7 @@ pub fn NavBar() -> impl IntoView {
     });
 
     view! {
-        <div class="flex flex-row justify-between px-4 py-5 w-full bg-transparent fixed left-0 bottom-0">
+        <div class="flex flex-row justify-between px-4 py-5 w-full bg-transparent fixed left-0 bottom-0 z-50">
             <NavIcon idx=0 href=home_path icon=icondata::TbHome cur_selected=cur_selected/>
             <NavIcon
                 idx=1

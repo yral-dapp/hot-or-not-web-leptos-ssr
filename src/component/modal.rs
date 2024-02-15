@@ -14,7 +14,7 @@ pub fn Modal(#[prop(into)] show: RwSignal<bool>, children: Children) -> impl Int
                 }
             }
 
-            class="cursor-pointer modal-bg w-screen h-screen absolute left-0 top-0 bg-black/60 z-50 justify-center items-center"
+            class="cursor-pointer modal-bg w-screen h-screen absolute left-0 top-0 bg-black/60 z-[99] justify-center items-center"
             style:display=move || if show() { "flex" } else { "none" }
         >
             <div class="w-2/5 h-2/5 cursor-auto flex-col flex justify-around bg-neutral-900 rounded-md divide-y-2 divide-neutral-800">
