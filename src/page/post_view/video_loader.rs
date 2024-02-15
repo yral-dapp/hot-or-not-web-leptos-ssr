@@ -48,12 +48,13 @@ pub fn BgView(
     );
 
     view! {
-        <div
-            _ref=container_ref
-            class="bg-black bg-cover bg-center h-full w-full -z-10"
-            style:background-image=move || format!("url({})", bg_url(&uid))
-        >
-            <div class="grid grid-cols-1 h-full w-full justify-items-center backdrop-blur-lg bg-transparent">
+        <div _ref=container_ref class="bg-transparent w-full h-full relative">
+            <div
+                class="absolute top-0 left-0 bg-cover bg-center w-full h-full z-[1] blur-lg"
+                style:background-color="rgb(0, 0, 0)"
+                style:background-image=move || format!("url({})", bg_url(&uid))
+            ></div>
+            <div class="grid grid-cols-1 h-full w-full justify-items-center bg-transparent absolute top-0 left-0 z-[2]">
                 {children()}
             </div>
         </div>
@@ -106,11 +107,12 @@ pub fn VideoView(idx: usize, muted: RwSignal<bool>, scroll_fuse: RwSignal<bool>)
         <video
             on:click=move |_| muted.update(|m| *m = !*m)
             _ref=container_ref
-            class="object-contain h-screen cursor-pointer backdrop-blur-lg"
+            class="object-contain h-screen cursor-pointer"
             poster=view_bg_url
             src=view_video_url
             loop
             muted
+            playsinline
             preload="auto"
         ></video>
     }
