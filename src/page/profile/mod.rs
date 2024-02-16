@@ -8,7 +8,8 @@ use leptos_icons::*;
 use leptos_router::*;
 
 use crate::{
-    component::spinner::FullScreenSpinner, state::canisters::unauth_canisters,
+    component::spinner::FullScreenSpinner,
+    state::{auth::auth_client, canisters::unauth_canisters},
     utils::profile::ProfileDetails,
 };
 
@@ -109,28 +110,21 @@ fn ProfileViewInner(user: ProfileDetails, user_canister: Principal) -> impl Into
 #[component]
 pub fn ProfileView() -> impl IntoView {
     let params = use_params::<ProfileParams>();
-    let principal_or_username = move || {
+    let principal = move || {
         params.with(|p| {
             let ProfileParams { id } = p.as_ref().ok()?;
 
-            let res = Principal::from_text(id).map_err(|_| id.clone());
-            Some(res)
+            Principal::from_text(id).ok()
         })
     };
 
-    let user_details = create_resource(principal_or_username, |principal_or_username| async move {
+    let user_details = create_resource(principal, |principal| async move {
         let canisters = unauth_canisters();
-        let user_index = canisters.user_index();
-        let user_canister = match principal_or_username? {
-            Ok(p) => user_index
-                .get_user_canister_id_from_user_principal_id(p)
-                .await
-                .ok()??,
-            Err(u) => user_index
-                .get_user_canister_id_from_unique_user_name(u)
-                .await
-                .ok()??,
-        };
+        let auth = auth_client();
+        let user_canister = auth
+            .get_individual_canister_by_user_principal(principal?)
+            .await
+            .ok()??;
         let user = canisters.individual_user(user_canister);
         let user_details = user.get_profile_details().await.ok()?;
         Some((user_details.into(), user_canister))

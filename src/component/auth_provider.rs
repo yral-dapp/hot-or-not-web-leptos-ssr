@@ -1,6 +1,9 @@
 use crate::{
     consts::AUTH_URL,
-    state::auth::{auth_state, DelegationIdentity, SessionResponse},
+    state::auth::{
+        auth_state,
+        types::{DelegationIdentity, SessionResponse},
+    },
 };
 use leptos::*;
 use leptos_use::{use_event_listener, use_window};

@@ -9,7 +9,7 @@ use reqwest::Url;
 
 use crate::{
     consts::{self, ACCOUNT_CONNECTED_STORE},
-    state::auth::{auth_state, SessionResponse},
+    state::auth::{auth_state, types::SessionResponse},
 };
 
 #[component]
