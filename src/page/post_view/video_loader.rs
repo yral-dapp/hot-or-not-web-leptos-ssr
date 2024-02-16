@@ -1,54 +1,12 @@
 use crate::canister::utils::{bg_url, mp4_url};
 use leptos::{html::Video, *};
-use leptos_use::{use_intersection_observer_with_options, UseIntersectionObserverOptions};
 
 use super::PostViewCtx;
 
 #[component]
-pub fn BgView(
-    uid: String,
-    idx: usize,
-    root: NodeRef<html::Div>,
-    children: Children,
-) -> impl IntoView {
-    let PostViewCtx {
-        video_queue,
-        current_idx,
-        fetch_cursor,
-        ..
-    } = expect_context();
-    let container_ref = create_node_ref::<html::Div>();
-
-    use_intersection_observer_with_options(
-        container_ref,
-        move |entry, _| {
-            let Some(visible) = entry
-                .into_iter()
-                .find(|entry| entry.is_intersecting() && entry.intersection_ratio() >= 0.91)
-            else {
-                return;
-            };
-            let rect = visible.bounding_client_rect();
-            // TODO: confirm this in different screens and browsers
-            // this prevents an initial back and forth between the first and second video
-            if rect.y() == rect.height() || idx == current_idx.get_untracked() {
-                return;
-            }
-
-            // fetch new videos
-            if video_queue.with_untracked(|q| q.len()).saturating_sub(idx) == 10 {
-                log::debug!("trigger rerender");
-                fetch_cursor.update(|c| c.advance());
-            }
-            current_idx.set(idx);
-        },
-        UseIntersectionObserverOptions::default()
-            .thresholds(vec![1.0])
-            .root(Some(root)),
-    );
-
+pub fn BgView(uid: String, children: Children) -> impl IntoView {
     view! {
-        <div _ref=container_ref class="bg-transparent w-full h-full relative">
+        <div class="bg-transparent w-full h-full relative">
             <div
                 class="absolute top-0 left-0 bg-cover bg-center w-full h-full z-[1] blur-lg"
                 style:background-color="rgb(0, 0, 0)"
@@ -62,7 +20,7 @@ pub fn BgView(
 }
 
 #[component]
-pub fn VideoView(idx: usize, muted: RwSignal<bool>, scroll_fuse: RwSignal<bool>) -> impl IntoView {
+pub fn VideoView(idx: usize, muted: RwSignal<bool>) -> impl IntoView {
     let container_ref = create_node_ref::<Video>();
     let PostViewCtx {
         video_queue,
@@ -81,10 +39,6 @@ pub fn VideoView(idx: usize, muted: RwSignal<bool>, scroll_fuse: RwSignal<bool>)
         if idx != current_idx() {
             _ = vid.pause();
             return;
-        }
-        if !scroll_fuse.get_untracked() {
-            vid.scroll_into_view();
-            scroll_fuse.set(true);
         }
         vid.set_autoplay(true);
         _ = vid.play();
@@ -107,12 +61,14 @@ pub fn VideoView(idx: usize, muted: RwSignal<bool>, scroll_fuse: RwSignal<bool>)
         <video
             on:click=move |_| muted.update(|m| *m = !*m)
             _ref=container_ref
-            class="object-contain h-screen cursor-pointer"
+            class="object-contain absolute z-[3] h-dvh max-h-dvh cursor-pointer"
             poster=view_bg_url
             src=view_video_url
             loop
             muted
             playsinline
+            disablepictureinpicture
+            disableremoteplayback
             preload="auto"
         ></video>
     }
