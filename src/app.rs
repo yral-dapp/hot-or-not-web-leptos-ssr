@@ -16,7 +16,7 @@ use crate::{
         upload::UploadPostPage,
     },
     state::{
-        auth::AuthState,
+        auth::{AuthClient, AuthState},
         canisters::{do_canister_auth, Canisters},
     },
     utils::MockPartialEq,
@@ -33,6 +33,7 @@ pub fn App() -> impl IntoView {
     provide_context(PostViewCtx::default());
     let auth_state = AuthState::default();
     provide_context(auth_state.clone());
+    provide_context(AuthClient::default());
     provide_context(Resource::local(
         move || MockPartialEq(auth_state.identity.get()),
         |auth| do_canister_auth(auth.0),

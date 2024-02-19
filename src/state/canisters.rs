@@ -9,17 +9,18 @@ use crate::{
         individual_user_template::IndividualUserTemplate,
         platform_orchestrator::{self, PlatformOrchestrator},
         post_cache::{self, PostCache},
-        user_index::{self, UserIndex},
+        user_index::UserIndex,
         AGENT_URL,
     },
     utils::MockPartialEq,
 };
 
-use super::auth::{AuthError, DelegationIdentity};
+use super::auth::{types::DelegationIdentity, AuthClient, AuthError};
 
 #[derive(Clone)]
 pub struct Canisters<const AUTH: bool> {
     agent: ic_agent::Agent,
+    auth_client: AuthClient,
     id: Option<Arc<DelegatedIdentity>>,
     user_canister: Principal,
     expiry: u64,
@@ -33,6 +34,7 @@ impl Default for Canisters<false> {
                 .build()
                 .unwrap(),
             id: None,
+            auth_client: AuthClient::default(),
             user_canister: Principal::anonymous(),
             expiry: 0,
         }
@@ -56,6 +58,7 @@ impl Canisters<true> {
                 .build()
                 .unwrap(),
             id: Some(id),
+            auth_client: AuthClient::default(),
             user_canister: Principal::anonymous(),
             expiry,
         }
@@ -89,10 +92,6 @@ impl<const A: bool> Canisters<A> {
         IndividualUserTemplate(user_canister, &self.agent)
     }
 
-    pub fn user_index(&self) -> UserIndex<'_> {
-        UserIndex(user_index::CANISTER_ID, &self.agent)
-    }
-
     pub fn user_index_with(&self, subnet_principal: Principal) -> UserIndex<'_> {
         UserIndex(subnet_principal, &self.agent)
     }
@@ -109,17 +108,25 @@ pub fn unauth_canisters() -> Canisters<false> {
 pub type AuthCanistersResource =
     Resource<MockPartialEq<Option<DelegationIdentity>>, Result<Option<Canisters<true>>, AuthError>>;
 
-pub async fn do_canister_auth(
-    auth: Option<DelegationIdentity>,
-) -> Result<Option<Canisters<true>>, AuthError> {
-    let Some(auth) = auth else {
-        return Ok(None);
-    };
-    let auth: DelegatedIdentity = auth.try_into()?;
-    let mut canisters = Canisters::<true>::authenticated(auth);
+async fn create_individual_canister(
+    canisters: &Canisters<true>,
+    delegation_id: DelegationIdentity,
+) -> Result<Principal, AuthError> {
     let orchestrator = canisters.orchestrator();
     // TODO: error handling
-    let subnet_idx = orchestrator.get_next_available_subnet().await.unwrap();
+    let subnet_idxs = orchestrator
+        .get_all_available_subnet_orchestrators()
+        .await
+        .unwrap();
+
+    let mut by = [0u8; 16];
+    let principal = canisters.identity().sender().unwrap();
+    let principal_by = principal.as_slice();
+    let cnt = by.len().min(principal_by.len());
+    by[..cnt].copy_from_slice(&principal_by[..cnt]);
+
+    let discrim = u128::from_be_bytes(by);
+    let subnet_idx = subnet_idxs[(discrim % subnet_idxs.len() as u128) as usize];
     let idx = canisters.user_index_with(subnet_idx);
     // TOOD: referrer
     // TODO: error handling
@@ -129,7 +136,31 @@ pub async fn do_canister_auth(
         )
         .await
         .unwrap();
-    canisters.user_canister = user_canister;
+    canisters
+        .auth_client
+        .update_user_metadata(delegation_id, user_canister, "".into())
+        .await?;
+    Ok(user_canister)
+}
+
+pub async fn do_canister_auth(
+    auth: Option<DelegationIdentity>,
+) -> Result<Option<Canisters<true>>, AuthError> {
+    let Some(delegation_identity) = auth else {
+        return Ok(None);
+    };
+    let auth: DelegatedIdentity = delegation_identity.clone().try_into()?;
+    let mut canisters = Canisters::<true>::authenticated(auth);
+    canisters.user_canister = if let Some(user_canister) = canisters
+        .auth_client
+        .get_individual_canister_by_user_principal(canisters.identity().sender().unwrap())
+        .await?
+    {
+        user_canister
+    } else {
+        create_individual_canister(&canisters, delegation_identity).await?
+    };
+
     Ok(Some(canisters))
 }
 

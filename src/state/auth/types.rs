@@ -1,15 +1,10 @@
-use std::num::ParseIntError;
-
 use candid::Principal;
 use ic_agent::identity::{DelegatedIdentity, Secp256k1Identity};
 use k256::SecretKey;
 
-use leptos::{create_effect, create_signal, expect_context, Effect, ReadSignal, RwSignal};
-use leptos_use::storage::{use_local_storage, StringCodec};
 use serde::{Deserialize, Serialize};
-use thiserror::Error;
 
-use crate::consts::{ACCOUNT_CONNECTED_STORE, AUTH_URL};
+use super::AuthError;
 
 #[derive(Debug, Serialize, Clone)]
 struct PrincipalId {
@@ -90,60 +85,9 @@ pub struct SessionResponse {
     pub delegation_identity: DelegationIdentity,
 }
 
-#[derive(Error, Debug, Clone)]
-pub enum AuthError {
-    #[error("Invalid Secret Key")]
-    InvalidSecretKey(#[from] k256::elliptic_curve::Error),
-    #[error("Invalid expiry")]
-    InvalidExpiry(#[from] ParseIntError),
-    #[error("reqwest error: {0}")]
-    Reqwest(String),
-}
-
-impl From<reqwest::Error> for AuthError {
-    fn from(e: reqwest::Error) -> Self {
-        AuthError::Reqwest(e.to_string())
-    }
-}
-
-#[derive(Default, Clone)]
-pub struct AuthClient {
-    client: reqwest::Client,
-}
-
-impl AuthClient {
-    pub async fn generate_session(&self) -> Result<DelegatedIdentity, AuthError> {
-        let resp: SessionResponse = self
-            .client
-            .post(AUTH_URL.join("api/generate_session").unwrap())
-            .send()
-            .await?
-            .json()
-            .await?;
-        resp.delegation_identity.try_into()
-    }
-}
-
-#[derive(Default, Clone)]
-pub struct AuthState {
-    pub identity: RwSignal<Option<DelegationIdentity>>,
-}
-
-pub fn auth_state() -> AuthState {
-    expect_context()
-}
-
-/// Prevents hydration bugs if the value in store is used to conditionally show views
-/// this is because the server will always get a `false` value and do rendering based on that
-pub fn account_connected_reader() -> (ReadSignal<bool>, Effect<()>) {
-    let (read_account_connected, _, _) =
-        use_local_storage::<bool, StringCodec>(ACCOUNT_CONNECTED_STORE);
-    let (is_connected, set_is_connected) = create_signal(false);
-
-    (
-        is_connected,
-        create_effect(move |_| {
-            set_is_connected(read_account_connected());
-        }),
-    )
+#[derive(Serialize)]
+pub struct UserDetails {
+    pub delegation_identity: DelegationIdentity,
+    pub user_canister_id: String,
+    pub user_name: String,
 }
