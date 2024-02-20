@@ -2,8 +2,8 @@ use std::rc::Rc;
 
 use leptos::*;
 use leptos_use::{
-    storage::{use_local_storage, StringCodec},
-    use_event_listener, use_interval_fn, use_window,
+    storage::use_local_storage, use_event_listener, use_interval_fn, use_window,
+    utils::FromToStringCodec,
 };
 use reqwest::Url;
 
@@ -15,7 +15,7 @@ use crate::{
 #[component]
 pub fn ConnectLogin() -> impl IntoView {
     let (_, write_account_connected, _) =
-        use_local_storage::<bool, StringCodec>(ACCOUNT_CONNECTED_STORE);
+        use_local_storage::<bool, FromToStringCodec>(ACCOUNT_CONNECTED_STORE);
     let logging_in = create_rw_signal(false);
     let target_close = create_rw_signal(None::<Rc<dyn Fn()>>);
     let auth = auth_state().identity;

@@ -5,7 +5,7 @@ use std::num::ParseIntError;
 use ic_agent::{export::Principal, identity::DelegatedIdentity};
 
 use leptos::{create_effect, create_signal, expect_context, Effect, ReadSignal, RwSignal};
-use leptos_use::storage::{use_local_storage, StringCodec};
+use leptos_use::{storage::use_local_storage, utils::FromToStringCodec};
 use thiserror::Error;
 
 use crate::consts::{ACCOUNT_CONNECTED_STORE, AUTH_URL};
@@ -101,7 +101,7 @@ pub fn auth_state() -> AuthState {
 /// this is because the server will always get a `false` value and do rendering based on that
 pub fn account_connected_reader() -> (ReadSignal<bool>, Effect<()>) {
     let (read_account_connected, _, _) =
-        use_local_storage::<bool, StringCodec>(ACCOUNT_CONNECTED_STORE);
+        use_local_storage::<bool, FromToStringCodec>(ACCOUNT_CONNECTED_STORE);
     let (is_connected, set_is_connected) = create_signal(false);
 
     (

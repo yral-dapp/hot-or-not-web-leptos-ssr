@@ -1,19 +1,14 @@
 use candid::Principal;
-use cfg_if::cfg_if;
+#[cfg(all(feature = "cloudflare", feature = "ssr"))]
+use cf_impl::server_func::*;
+#[cfg(feature = "cloudflare")]
+pub use cf_impl::upload_video_stream;
 use leptos::*;
+#[cfg(all(not(feature = "cloudflare"), feature = "ssr"))]
+use mock_impl::server_func::*;
+#[cfg(not(feature = "cloudflare"))]
+pub use mock_impl::upload_video_stream;
 use serde::{Deserialize, Serialize};
-
-cfg_if! {
-    if #[cfg(feature = "cloudflare")] {
-        pub use cf_impl::upload_video_stream;
-        #[cfg(feature = "ssr")]
-        use cf_impl::server_func::*;
-    } else {
-        pub use mock_impl::upload_video_stream;
-        #[cfg(feature = "ssr")]
-        use mock_impl::server_func::*;
-    }
-}
 
 #[derive(Serialize, Deserialize)]
 pub struct UploadInfo {
@@ -49,8 +44,6 @@ pub async fn get_video_status(uid: String) -> Result<String, ServerFnError> {
 
 #[cfg(feature = "cloudflare")]
 mod cf_impl {
-    use cfg_if::cfg_if;
-
     use super::UploadInfo;
 
     #[cfg(feature = "ssr")]
@@ -108,16 +101,15 @@ mod cf_impl {
         _upload_res: &UploadInfo,
         _file: &gloo::file::File,
     ) -> Result<(), gloo::net::Error> {
-        cfg_if! {if #[cfg(feature = "hydrate")] {
+        #[cfg(feature = "hydrate")]
+        {
             use gloo::net::http::Request;
             use leptos::web_sys::FormData;
             let form = FormData::new().unwrap();
             form.append_with_blob("file", _file.as_ref()).unwrap();
-            let req = Request::post(&_upload_res.upload_url)
-                .body(form)
-                .unwrap();
+            let req = Request::post(&_upload_res.upload_url).body(form).unwrap();
             req.send().await?;
-        }}
+        }
         Ok(())
     }
 }

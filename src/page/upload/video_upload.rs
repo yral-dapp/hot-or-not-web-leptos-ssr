@@ -10,11 +10,10 @@ use crate::{
     utils::route::{failure_redirect, go_to_root},
 };
 use candid::Principal;
-use cfg_if::cfg_if;
 use futures::StreamExt;
 use gloo::{file::ObjectUrl, timers::future::IntervalStream};
 use leptos::{
-    ev::{change, durationchange},
+    ev::durationchange,
     html::{Input, Video},
     *,
 };
@@ -57,18 +56,20 @@ pub fn PreVideoUpload(file_blob: WriteSignal<Option<FileWithUrl>>) -> impl IntoV
     let video_ref = create_node_ref::<Video>();
     let modal_show = create_rw_signal(false);
 
-    _ = use_event_listener(file_ref, change, move |_ev| {
-        cfg_if! { if #[cfg(feature = "hydrate")] {
+    #[cfg(feature = "hydrate")]
+    {
+        use leptos::ev::change;
+        _ = use_event_listener(file_ref, change, move |ev| {
             use wasm_bindgen::JsCast;
             use web_sys::HtmlInputElement;
-            _ev.target().and_then(|target| {
+            ev.target().and_then(|target| {
                 let input: &HtmlInputElement = target.dyn_ref()?;
                 let inp_file = input.files()?.get(0)?;
                 file.set(Some(FileWithUrl::new(inp_file.into())));
                 Some(())
             });
-        }}
-    });
+        });
+    }
 
     _ = use_event_listener(video_ref, durationchange, move |_| {
         let duration = video_ref

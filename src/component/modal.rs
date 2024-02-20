@@ -1,4 +1,3 @@
-use cfg_if::cfg_if;
 use leptos::*;
 use leptos_icons::*;
 
@@ -6,12 +5,18 @@ use leptos_icons::*;
 pub fn Modal(#[prop(into)] show: RwSignal<bool>, children: Children) -> impl IntoView {
     view! {
         <div
-            on:click=move |ev| {
-                cfg_if! {
-                    if #[cfg(feature = "hydrate")] { use web_sys::HtmlElement; let target =
-                    event_target::< HtmlElement > (& ev); if target.class_list()
-                    .contains("modal-bg") { show.set(false); } } else { _ = ev }
+            on:click={
+                #[cfg(feature = "hydrate")]
+                {
+                    move |ev| {
+                        use web_sys::HtmlElement;
+                        let target = event_target::<HtmlElement>(&ev);
+                        if target.class_list().contains("modal-bg") {
+                            show.set(false);
+                        }
+                    }
                 }
+                #[cfg(not(feature = "hydrate"))] { |_| () }
             }
 
             class="cursor-pointer modal-bg w-screen h-screen absolute left-0 top-0 bg-black/60 z-[99] justify-center items-center"
