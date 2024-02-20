@@ -1,5 +1,3 @@
-use std::array;
-
 use candid::Principal;
 use futures::{Future, Stream, StreamExt};
 use serde::{Deserialize, Serialize};
@@ -43,12 +41,8 @@ impl From<UserProfileDetailsForFrontend> for ProfileDetails {
 }
 
 fn color_from_principal(principal: Principal) -> String {
-    let mut col_iter = principal
-        .as_slice()
-        .chunks(4)
-        .map(|c| c.iter().fold(0u8, |acc, &x| acc.wrapping_add(x)));
-    let colors: [u8; 3] = array::from_fn(|_| col_iter.next().unwrap());
-    hex::encode(colors)
+    let col_int = crc32fast::hash(principal.as_slice()) & 0xFFFFFF;
+    format!("{col_int:06x}")
 }
 
 impl ProfileDetails {
