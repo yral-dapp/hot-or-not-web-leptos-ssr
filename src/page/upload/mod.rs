@@ -2,7 +2,7 @@ mod cf_upload;
 mod validators;
 mod video_upload;
 
-use crate::component::toggle::Toggle;
+use crate::component::toggle::ToggleWithLabel;
 
 use leptos::{
     html::{Input, Textarea},
@@ -120,8 +120,8 @@ fn PreUploadView(trigger_upload: WriteSignal<Option<UploadParams>>) -> impl Into
                 />
             </div>
             <div class="flex flex-col gap-y-2">
-                <Toggle node_ref=enable_hot_or_not lab="Participate in Hot or Not"/>
-                <Toggle lab="NSFW"/>
+                <ToggleWithLabel node_ref=enable_hot_or_not lab="Participate in Hot or Not"/>
+                <ToggleWithLabel lab="NSFW"/>
             </div>
             <button
                 on:click=move |_| on_submit()

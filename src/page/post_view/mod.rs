@@ -10,11 +10,13 @@ use leptos::*;
 use leptos_icons::*;
 use leptos_router::*;
 use leptos_use::{
-    use_debounce_fn, use_intersection_observer_with_options, UseIntersectionObserverOptions,
+    storage::use_local_storage, use_debounce_fn, use_intersection_observer_with_options,
+    utils::FromToStringCodec, UseIntersectionObserverOptions,
 };
 
 use crate::{
     component::spinner::FullScreenSpinner,
+    consts::NSFW_TOGGLE_STORE,
     state::canisters::unauth_canisters,
     try_or_redirect,
     utils::route::{failure_redirect, go_to_root},
@@ -87,7 +89,6 @@ pub fn ScrollingView<NV: Fn() -> NVR + Clone + 'static, NVR>(
                             {
                                 next_videos();
                             }
-                            log::info!("setting idx {}", queue_idx);
                             current_idx.set(queue_idx);
                         },
                         UseIntersectionObserverOptions::default()
@@ -160,12 +161,17 @@ pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
             *v = vec![initial_post];
         })
     }
+    let (nsfw_enabled, _, _) = use_local_storage::<bool, FromToStringCodec>(NSFW_TOGGLE_STORE);
 
     let fetch_video_action = create_action(move |()| async move {
         loop {
             let canisters = unauth_canisters();
             let fetch_stream = VideoFetchStream::new(&canisters, fetch_cursor.get_untracked());
-            let chunks = try_or_redirect!(fetch_stream.fetch_post_uids_chunked(3).await);
+            let chunks = try_or_redirect!(
+                fetch_stream
+                    .fetch_post_uids_chunked(3, nsfw_enabled.get_untracked())
+                    .await
+            );
             let mut chunks = pin!(chunks);
             let mut cnt = 0;
             while let Some(chunk) = chunks.next().await {

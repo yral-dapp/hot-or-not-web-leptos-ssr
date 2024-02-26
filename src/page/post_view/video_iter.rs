@@ -85,16 +85,19 @@ impl<'a> VideoFetchStream<'a> {
     pub async fn fetch_post_uids_chunked(
         self,
         chunks: usize,
+        allow_nsfw: bool,
     ) -> Result<impl Stream<Item = Vec<Result<PostDetails, PostViewError>>> + 'a, PostViewError>
     {
         let post_cache = self.canisters.post_cache();
         let top_posts_fut = post_cache
-            .get_top_posts_aggregated_from_canisters_on_this_network_for_hot_or_not_feed(
+            .get_top_posts_aggregated_from_canisters_on_this_network_for_hot_or_not_feed_cursor(
                 self.cursor.start,
-                self.cursor.start + self.cursor.limit,
+                self.cursor.limit,
+                if allow_nsfw { None } else { Some(false) },
+                None,
             );
         // TODO: error handling
-        let post_cache::Result_::Ok(top_posts) = top_posts_fut.await? else {
+        let post_cache::Result1::Ok(top_posts) = top_posts_fut.await? else {
             return Err(PostViewError::Canister(
                 "canister refused to send posts".into(),
             ));
