@@ -41,8 +41,6 @@ pub struct PostViewCtx {
     current_idx: RwSignal<usize>,
 }
 
-const PLAYER_CNT: usize = 15;
-
 // Infinite Scrolling View
 // Basically a virtual list with 5 items visible at a time
 #[component]
@@ -56,25 +54,6 @@ pub fn ScrollingView<NV: Fn() -> NVR + Clone + 'static, NVR>(
         ..
     } = expect_context();
 
-    // let video_ref = create_node_ref::<Video>();
-    // // Cache wasp views to avoid re-initialization
-    // let _video_view = view! { <HlsVideo video_ref allow_show/> };
-    let current_start = move || {
-        let cur_idx = current_idx();
-        cur_idx.max(PLAYER_CNT / 2) - (PLAYER_CNT / 2)
-    };
-
-    let video_enum = create_memo(move |_| {
-        with!(|video_queue| {
-            let start = current_start();
-            video_queue[start..]
-                .iter()
-                .take(PLAYER_CNT)
-                .enumerate()
-                .map(|(idx, item)| (idx + start, item.clone()))
-                .collect::<Vec<_>>()
-        })
-    });
     let muted = create_rw_signal(true);
     let scroll_root = create_node_ref::<html::Div>();
 
@@ -85,7 +64,7 @@ pub fn ScrollingView<NV: Fn() -> NVR + Clone + 'static, NVR>(
             style:scroll-snap-points-y="repeat(100vh)"
         >
             <For
-                each=video_enum
+                each=move || video_queue().into_iter().enumerate()
                 key=|(_, details)| (details.canister_id, details.post_id)
                 children=move |(queue_idx, details)| {
                     let container_ref = create_node_ref::<html::Div>();
@@ -112,7 +91,7 @@ pub fn ScrollingView<NV: Fn() -> NVR + Clone + 'static, NVR>(
                             current_idx.set(queue_idx);
                         },
                         UseIntersectionObserverOptions::default()
-                            .thresholds(vec![1.0])
+                            .thresholds(vec![0.83])
                             .root(Some(scroll_root)),
                     );
                     create_effect(move |_| {
@@ -127,11 +106,6 @@ pub fn ScrollingView<NV: Fn() -> NVR + Clone + 'static, NVR>(
                         }
                     });
                     view! {
-                        // TODO: confirm this in different screens and browsers
-                        // this prevents an initial back and forth between the first and second video
-
-                        // fetch new videos
-
                         <div _ref=container_ref class="snap-always snap-end w-full h-full">
                             <BgView uid=details.uid>
                                 <VideoView idx=queue_idx muted/>
