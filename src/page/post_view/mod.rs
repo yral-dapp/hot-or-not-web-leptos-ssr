@@ -105,11 +105,15 @@ pub fn ScrollingView<NV: Fn() -> NVR + Clone + 'static, NVR>(
                             recovering_state.set(false);
                         }
                     });
+                    let show_video = create_memo(move |_| queue_idx.abs_diff(current_idx()) <= 20);
+                    let uid = move || details.uid.clone();
                     view! {
                         <div _ref=container_ref class="snap-always snap-end w-full h-full">
-                            <BgView uid=details.uid>
-                                <VideoView idx=queue_idx muted/>
-                            </BgView>
+                            <Show when=show_video>
+                                <BgView uid=uid()>
+                                    <VideoView idx=queue_idx muted/>
+                                </BgView>
+                            </Show>
                         </div>
                     }
                 }

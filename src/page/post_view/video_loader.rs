@@ -60,26 +60,20 @@ pub fn VideoView(idx: usize, muted: RwSignal<bool>) -> impl IntoView {
         vid.set_loop(true);
         Some(())
     });
-    let show_video = create_memo(move |_| idx.abs_diff(current_idx()) <= 20);
 
     view! {
-        <Show
-            when=show_video
-            fallback=|| view! { <div class="bg-black h-dvh max-h-dvh absolute z-[3] w-2/12"></div> }
-        >
-            <video
-                on:click=move |_| muted.update(|m| *m = !*m)
-                _ref=container_ref
-                class="object-contain absolute z-[3] h-dvh max-h-dvh cursor-pointer"
-                poster=view_bg_url
-                src=view_video_url
-                loop
-                muted
-                playsinline
-                disablepictureinpicture
-                disableremoteplayback
-                preload="auto"
-            ></video>
-        </Show>
+        <video
+            on:click=move |_| muted.update(|m| *m = !*m)
+            _ref=container_ref
+            class="object-contain absolute z-[3] h-dvh max-h-dvh cursor-pointer"
+            poster=view_bg_url
+            src=view_video_url
+            loop
+            muted
+            playsinline
+            disablepictureinpicture
+            disableremoteplayback
+            preload="auto"
+        ></video>
     }
 }
