@@ -12,9 +12,7 @@ pub fn BgView(uid: String, children: Children) -> impl IntoView {
                 style:background-color="rgb(0, 0, 0)"
                 style:background-image=move || format!("url({})", bg_url(&uid))
             ></div>
-            <div class="grid grid-cols-1 h-full w-full justify-items-center bg-transparent absolute top-0 left-0 z-[2]">
-                {children()}
-            </div>
+            {children()}
         </div>
     }
 }
@@ -62,18 +60,25 @@ pub fn VideoView(idx: usize, muted: RwSignal<bool>) -> impl IntoView {
     });
 
     view! {
-        <video
-            on:click=move |_| muted.update(|m| *m = !*m)
-            _ref=container_ref
-            class="object-contain absolute z-[3] h-dvh max-h-dvh cursor-pointer"
-            poster=view_bg_url
-            src=view_video_url
-            loop
-            muted
-            playsinline
-            disablepictureinpicture
-            disableremoteplayback
-            preload="auto"
-        ></video>
+        <label class="w-full h-full absolute top-0 left-0 grid grid-cols-1 justify-items-center items-center cursor-pointer z-[3]">
+            <input
+                on:change=move |_| muted.update(|m| *m = !*m)
+                type="checkbox"
+                value=""
+                class="sr-only"
+            />
+            <video
+                _ref=container_ref
+                class="object-contain h-dvh max-h-dvh cursor-pointer"
+                poster=view_bg_url
+                src=view_video_url
+                loop
+                muted
+                playsinline
+                disablepictureinpicture
+                disableremoteplayback
+                preload="auto"
+            ></video>
+        </label>
     }
 }
