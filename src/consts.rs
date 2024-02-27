@@ -9,6 +9,7 @@ pub static CF_BASE_URL: Lazy<Url> =
 pub static AUTH_URL: Lazy<Url> =
     Lazy::new(|| Url::parse("https://hot-or-not-auth.fly.dev/").unwrap());
 pub const ACCOUNT_CONNECTED_STORE: &str = "account-connected";
+pub const NSFW_TOGGLE_STORE: &str = "nsfw-enabled";
 
 pub mod social {
     pub const TELEGRAM: &str = "https://t.me/+c-LTX0Cp-ENmMzI1";

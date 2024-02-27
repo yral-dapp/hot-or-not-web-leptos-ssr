@@ -227,13 +227,15 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
                 })
                 .await;
             let res = try_or_redirect!(res);
-            match res {
-                Result_::Ok(_) => (),
+            let post_id = match res {
+                Result_::Ok(p) => p,
                 Result_::Err(e) => {
                     failure_redirect(e);
                     return;
                 }
-            }
+            };
+            let res = user.update_post_as_ready_to_view(post_id).await;
+            try_or_redirect!(res);
             publishing.set(false);
         }
     });

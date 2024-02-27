@@ -1,12 +1,15 @@
-use crate::component::{connect::ConnectLogin, social::*};
-use crate::consts::social;
+use crate::component::{connect::ConnectLogin, social::*, toggle::Toggle};
+use crate::consts::{social, NSFW_TOGGLE_STORE};
 use crate::state::auth::account_connected_reader;
 use crate::state::canisters::authenticated_canisters;
 use crate::try_or_redirect_opt;
 use crate::utils::profile::ProfileDetails;
 use crate::utils::MockPartialEq;
+use leptos::html::Input;
 use leptos::*;
 use leptos_icons::*;
+use leptos_use::use_event_listener;
+use leptos_use::{storage::use_local_storage, utils::FromToStringCodec};
 
 #[component]
 fn MenuItem(
@@ -120,6 +123,34 @@ fn ProfileInfo() -> impl IntoView {
 }
 
 #[component]
+fn NsfwToggle() -> impl IntoView {
+    let (nsfw_enabled, set_nsfw_enabled, _) =
+        use_local_storage::<bool, FromToStringCodec>(NSFW_TOGGLE_STORE);
+    let toggle_ref = create_node_ref::<Input>();
+
+    _ = use_event_listener(toggle_ref, ev::change, move |_| {
+        set_nsfw_enabled(
+            toggle_ref
+                .get_untracked()
+                .map(|t| t.checked())
+                .unwrap_or_default(),
+        )
+    });
+
+    view! {
+        <div class="grid grid-cols-2 items-center w-full">
+            <div class="flex flex-row gap-4 items-center">
+                <Icon class="text-2xl" icon=icondata::BiShowAltRegular/>
+                <span>Show NSFW Videos</span>
+            </div>
+            <div class="justify-self-end">
+                <Toggle checked=nsfw_enabled node_ref=toggle_ref/>
+            </div>
+        </div>
+    }
+}
+
+#[component]
 pub fn Menu() -> impl IntoView {
     let (is_connected, _) = account_connected_reader();
 
@@ -139,6 +170,7 @@ pub fn Menu() -> impl IntoView {
                 </div>
             </div>
             <div class="flex flex-col py-12 px-8 gap-8 w-full text-lg">
+                <NsfwToggle/>
                 <MenuItem href="/airdrop" text="Airdrop" icon=icondata::TbMoneybag/>
                 <MenuItem
                     href="/refer-earn"
