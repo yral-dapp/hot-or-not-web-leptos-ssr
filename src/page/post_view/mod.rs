@@ -121,7 +121,7 @@ pub fn ScrollingView<NV: Fn() -> NVR + Clone + 'static, NVR>(
             />
 
             <Show when=muted>
-                <div
+                <button
                     class="fixed top-1/2 left-1/2 z-20 cursor-pointer"
                     on:click=move |_| muted.set(false)
                 >
@@ -129,7 +129,7 @@ pub fn ScrollingView<NV: Fn() -> NVR + Clone + 'static, NVR>(
                         class="text-white/80 animate-ping text-4xl"
                         icon=icondata::BiVolumeMuteSolid
                     />
-                </div>
+                </button>
             </Show>
         </div>
     }
