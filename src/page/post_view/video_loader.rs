@@ -35,7 +35,9 @@ pub fn VideoView(idx: usize, muted: RwSignal<bool>) -> impl IntoView {
 
     // Handles autoplay
     create_effect(move |_| {
-        let vid = container_ref().unwrap();
+        let Some(vid) = container_ref() else {
+            return;
+        };
         if idx != current_idx() {
             _ = vid.pause();
             return;
@@ -46,15 +48,17 @@ pub fn VideoView(idx: usize, muted: RwSignal<bool>) -> impl IntoView {
 
     // Handles mute/unmute
     create_effect(move |_| {
-        let vid = container_ref().unwrap();
+        let vid = container_ref()?;
         vid.set_muted(muted());
+        Some(())
     });
 
     create_effect(move |_| {
-        let vid = container_ref().unwrap();
+        let vid = container_ref()?;
         // the attributes in DOM don't seem to be working
         vid.set_muted(muted.get_untracked());
         vid.set_loop(true);
+        Some(())
     });
 
     view! {
