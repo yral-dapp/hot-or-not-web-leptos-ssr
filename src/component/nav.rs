@@ -30,26 +30,30 @@ pub fn NavBar() -> impl IntoView {
         let path = cur_location.pathname.get();
         match path.as_str() {
             "/" => 0,
-            "/upload" => 1,
-            "/menu" => 2,
+            "/upload" => 2,
+            "/wallet" => 3,
+            "/menu" => 4,
             s if s.starts_with("/hot-or-not") => {
                 home_path.set(path);
                 0
             }
-            _ => 2,
+            _ => 4,
         }
     });
 
     view! {
         <div class="flex flex-row justify-between px-4 py-5 w-full bg-transparent fixed left-0 bottom-0 z-50">
             <NavIcon idx=0 href=home_path icon=icondata::TbHome cur_selected=cur_selected/>
+            // TODO: achievements page
+            <NavIcon idx=1 href="/#" icon=icondata::AiTrophyOutlined cur_selected/>
             <NavIcon
-                idx=1
+                idx=2
                 href="/upload"
                 icon=icondata::AiPlusCircleFilled
                 cur_selected=cur_selected
             />
-            <NavIcon idx=2 href="/menu" icon=icondata::AiMenuOutlined cur_selected=cur_selected/>
+            <NavIcon idx=3 href="/wallet" icon=icondata::BiWalletRegular cur_selected=cur_selected/>
+            <NavIcon idx=4 href="/menu" icon=icondata::AiMenuOutlined cur_selected=cur_selected/>
         </div>
     }
 }

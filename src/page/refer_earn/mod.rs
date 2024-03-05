@@ -85,6 +85,8 @@ fn ReferCode() -> impl IntoView {
 
                             // Is refer id supposed to be individual canister id or user id?
 
+                            // Is refer id supposed to be individual canister id or user id?
+
                             <ReferLoading/>
                         }
                     })

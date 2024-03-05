@@ -10,3 +10,4 @@ pub mod refer_earn;
 pub mod root;
 pub mod terms;
 pub mod upload;
+pub mod wallet;
