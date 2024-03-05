@@ -64,13 +64,17 @@ impl ProfileDetails {
             return propic;
         }
 
-        let background_color = color_from_principal(self.principal);
-        format!(
-            "{FALLBACK_PROPIC_BASE}?seed={}&backgroundColor={}&backgroundType=solid",
-            self.principal.to_text(),
-            background_color
-        )
+        propic_from_principal(self.principal)
     }
+}
+
+pub fn propic_from_principal(principal: Principal) -> String {
+    let background_color = color_from_principal(principal);
+    format!(
+        "{FALLBACK_PROPIC_BASE}?seed={}&backgroundColor={}&backgroundType=solid",
+        principal.to_text(),
+        background_color
+    )
 }
 
 #[derive(Clone, Serialize, Deserialize)]

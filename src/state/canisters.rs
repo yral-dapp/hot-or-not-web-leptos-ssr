@@ -111,6 +111,7 @@ pub type AuthCanistersResource =
 async fn create_individual_canister(
     canisters: &Canisters<true>,
     delegation_id: DelegationIdentity,
+    referrer: Option<Principal>,
 ) -> Result<Principal, AuthError> {
     let orchestrator = canisters.orchestrator();
     // TODO: error handling
@@ -132,7 +133,7 @@ async fn create_individual_canister(
     // TODO: error handling
     let user_canister = idx
         .get_requester_principals_canister_id_create_if_not_exists_and_optionally_allow_referrer(
-            None,
+            referrer,
         )
         .await
         .unwrap();
@@ -145,6 +146,7 @@ async fn create_individual_canister(
 
 pub async fn do_canister_auth(
     auth: Option<DelegationIdentity>,
+    referrer: Option<Principal>,
 ) -> Result<Option<Canisters<true>>, AuthError> {
     let Some(delegation_identity) = auth else {
         return Ok(None);
@@ -158,7 +160,7 @@ pub async fn do_canister_auth(
     {
         user_canister
     } else {
-        create_individual_canister(&canisters, delegation_identity).await?
+        create_individual_canister(&canisters, delegation_identity, referrer).await?
     };
 
     Ok(Some(canisters))

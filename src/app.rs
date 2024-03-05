@@ -1,5 +1,5 @@
 use crate::{
-    component::{auth_provider::AuthProvider, nav::NavBar},
+    component::{base_route::BaseRoute, nav::NavBar},
     error_template::{AppError, ErrorTemplate},
     page::{
         about_us::AboutUs,
@@ -17,9 +17,8 @@ use crate::{
     },
     state::{
         auth::{AuthClient, AuthState},
-        canisters::{do_canister_auth, Canisters},
+        canisters::Canisters,
     },
-    utils::MockPartialEq,
 };
 use leptos::*;
 use leptos_meta::*;
@@ -34,10 +33,6 @@ pub fn App() -> impl IntoView {
     let auth_state = AuthState::default();
     provide_context(auth_state.clone());
     provide_context(AuthClient::default());
-    provide_context(Resource::local(
-        move || MockPartialEq(auth_state.identity.get()),
-        |auth| do_canister_auth(auth.0),
-    ));
 
     view! {
         <Stylesheet id="leptos" href="/pkg/hot-or-not-leptos-ssr.css"/>
@@ -55,20 +50,22 @@ pub fn App() -> impl IntoView {
         }>
             <main>
                 <Routes>
-                    <Route path="/" view=RootPage/>
-                    <Route path="/hot-or-not/:canister_id/:post_id" view=PostView/>
-                    <Route path="/profile/:id" view=ProfileView/>
-                    <Route path="/upload" view=UploadPostPage/>
-                    <Route path="/error" view=ServerErrorPage/>
-                    <Route path="/menu" view=Menu/>
-                    <Route path="/airdrop" view=Airdrop/>
-                    <Route path="/refer-earn" view=ReferEarn/>
-                    <Route path="/about-us" view=AboutUs/>
-                    <Route path="/faq" view=Faq/>
-                    <Route path="/terms-of-service" view=TermsOfService/>
-                    <Route path="/privacy-policy" view=PrivacyPolicy/>
+                    <Route path="/" view=BaseRoute>
+                        <Route path="/hot-or-not/:canister_id/:post_id" view=PostView/>
+                        <Route path="/profile/:id" view=ProfileView/>
+                        <Route path="/upload" view=UploadPostPage/>
+                        <Route path="/error" view=ServerErrorPage/>
+                        <Route path="/menu" view=Menu/>
+                        <Route path="/airdrop" view=Airdrop/>
+                        <Route path="/refer-earn" view=ReferEarn/>
+                        <Route path="/about-us" view=AboutUs/>
+                        <Route path="/faq" view=Faq/>
+                        <Route path="/terms-of-service" view=TermsOfService/>
+                        <Route path="/privacy-policy" view=PrivacyPolicy/>
+                        <Route path="" view=RootPage/>
+                    </Route>
                 </Routes>
-                <AuthProvider/>
+
             </main>
             <nav>
                 <NavBar/>
