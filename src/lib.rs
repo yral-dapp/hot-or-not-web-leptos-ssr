@@ -1,3 +1,4 @@
+#![allow(clippy::empty_docs)]
 pub mod app;
 pub mod canister;
 pub mod component;
