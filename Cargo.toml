@@ -28,7 +28,7 @@ candid = "0.10.3"
 ic-agent = { version = "0.33.0", default-features = false, features = ["pem", "reqwest"] }
 serde-wasm-bindgen = { version = "0.6.3" }
 futures = "0.3.30"
-leptos-use = "0.10.2"
+leptos-use = "0.10.3"
 reqwest = { version = "0.11.24", default-features = false, features = ["json"] }
 serde_bytes = "0.11.14"
 hex = "0.4.3"
