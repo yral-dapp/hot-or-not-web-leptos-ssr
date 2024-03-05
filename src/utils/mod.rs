@@ -2,6 +2,7 @@ use web_time::{Duration, SystemTime};
 
 pub mod profile;
 pub mod route;
+pub mod timestamp;
 
 pub fn current_epoch() -> Duration {
     web_time::SystemTime::now()

@@ -1543,6 +1543,7 @@ dependencies = [
  "leptos_router",
  "log",
  "once_cell",
+ "rand_chacha",
  "reqwest",
  "serde",
  "serde-wasm-bindgen",
@@ -1554,6 +1555,7 @@ dependencies = [
  "tower",
  "tower-http",
  "tracing",
+ "uts2ts",
  "wasm-bindgen",
  "web-time",
 ]
@@ -4367,6 +4369,12 @@ name = "utf8-width"
 version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "86bd8d4e895da8537e5315b8254664e6b769c4ff3db18321b297a1e7004392e3"
+
+[[package]]
+name = "uts2ts"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "259b17235452d88d066e35685df3fd9fd3875936eee5451d0533b604201f06a8"
 
 [[package]]
 name = "uuid"

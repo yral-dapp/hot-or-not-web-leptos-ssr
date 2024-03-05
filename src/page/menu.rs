@@ -174,8 +174,8 @@ pub fn Menu() -> impl IntoView {
                 <MenuItem href="/airdrop" text="Airdrop" icon=icondata::TbMoneybag/>
                 <MenuItem
                     href="/refer-earn"
-                    text="How to Earn"
-                    icon=icondata::AiQuestionCircleOutlined
+                    text="Refer & Earn"
+                    icon=icondata::AiDollarCircleOutlined
                 />
                 <MenuItem href="/about-us" text="About us" icon=icondata::AiInfoCircleOutlined/>
                 <MenuItem href="/faq" text="FAQs" icon=icondata::TbMessageDots/>
