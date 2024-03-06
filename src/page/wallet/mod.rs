@@ -75,7 +75,7 @@ pub fn Wallet() -> impl IntoView {
     });
 
     view! {
-        <div class="flex flex-col w-dvw min-h-dvh bg-black gap-12 px-4 py-4">
+        <div class="flex flex-col w-dvw min-h-dvh bg-black gap-12 px-4 pt-4 pb-12">
             <div class="grid grid-cols-2 grid-rows-1 items-center w-full">
                 <Suspense fallback=FallbackGreeter>
                     {move || {

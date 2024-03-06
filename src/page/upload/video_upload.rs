@@ -24,9 +24,9 @@ use web_time::SystemTime;
 #[component]
 pub fn DropBox() -> impl IntoView {
     view! {
-        <div class="flex flex-col items-center justify-self-center justify-center h-full border-2 border-dashed rounded-lg cursor-pointer border-gray-600 hover:bg-gray-600 aspect-[3/4]">
+        <div class="flex flex-col items-center justify-self-center justify-center w-full border-2 border-dashed rounded-lg cursor-pointer border-gray-600 hover:bg-gray-600 aspect-[3/4] lg:aspect-[5/4]">
             <Icon class="w-10 h-10 mb-4 text-gray-400" icon=icondata::BiCloudUploadRegular/>
-            <p class="mb-2 text-sm text-gray-400">
+            <p class="text-center mb-2 mx-2 text-sm text-gray-400">
                 <span class="font-semibold">Click to upload</span>
                 or drag and drop
             </p>
@@ -96,10 +96,10 @@ pub fn PreVideoUpload(file_blob: WriteSignal<Option<FileWithUrl>>) -> impl IntoV
     });
 
     view! {
-        <div class="flex justify-center self-center w-full h-2/5 md:h-1/2 lg:w-auto lg:h-full basis-full lg:basis-5/12">
+        <div class="flex items-center self-center justify-center w-3/4 mb-8 lg:mb-0 lg:pb-12 lg:w-1/2 lg:max-h-full lg:px-8">
             <label
                 for="dropzone-file"
-                class="flex justify-start flex-col h-full cursor-pointer py-2 lg:py-0 lg:px-2"
+                class="flex justify-start flex-col h-full w-full cursor-pointer"
             >
                 <Show when=move || { with!(| file | file.is_none()) }>
                     <DropBox/>
@@ -128,7 +128,7 @@ pub fn PreVideoUpload(file_blob: WriteSignal<Option<FileWithUrl>>) -> impl IntoV
             </label>
         </div>
         <Modal show=modal_show>
-            <span class="text-xl text-white h-full text-center flex flex-col justify-center">
+            <span class="text-lg md:text-xl text-white h-full text-center flex flex-col justify-center">
                 Please ensure that the video is shorter than 60 seconds
             </span>
         </Modal>
@@ -241,7 +241,7 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
     });
 
     view! {
-        <div class="flex flex-col justify-start self-center w-full h-2/5 md:h-1/2 lg:w-auto lg:h-full basis-full lg:basis-5/12">
+        <div class="flex flex-col justify-start self-center w-3/4 mb-8 lg:mb-0 lg:pb-12 lg:max-h-full lg:w-1/2 basis-full lg:basis-5/12">
             <video
                 class="object-contain w-full"
                 muted

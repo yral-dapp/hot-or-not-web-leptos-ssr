@@ -80,7 +80,7 @@ fn ProfileViewInner(user: ProfileDetails, user_canister: Principal) -> impl Into
     let earnings = user.lifetime_earnings;
 
     view! {
-        <div class="min-h-screen bg-black overflow-y-scroll py-10">
+        <div class="min-h-screen bg-black overflow-y-scroll pt-10 pb-12">
             <div class="grid grid-cols-1 gap-5 justify-normal justify-items-center w-full">
                 <img
                     class="h-24 w-24 rounded-full"

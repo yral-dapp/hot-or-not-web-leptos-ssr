@@ -93,9 +93,21 @@ pub fn NavBar() -> impl IntoView {
             _ => 4,
         }
     });
+    let bg_color = move || {
+        if cur_selected() == 0 {
+            "bg-transparent"
+        } else {
+            "bg-black"
+        }
+    };
 
     view! {
-        <div class="flex flex-row justify-between px-6 py-2 w-full bg-black/40 fixed left-0 bottom-0 z-50">
+        <div class=move || {
+            format!(
+                "flex flex-row justify-between px-6 py-2 w-full {} fixed left-0 bottom-0 z-50",
+                bg_color(),
+            )
+        }>
             <NavIcon
                 idx=0
                 href=home_path

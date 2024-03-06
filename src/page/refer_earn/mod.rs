@@ -195,7 +195,7 @@ pub fn ReferEarn() -> impl IntoView {
     let (logged_in, _) = account_connected_reader();
 
     view! {
-        <div class="flex flex-col items-center min-w-dvw min-h-dvh bg-black pt-2 pb-4 gap-6 px-8">
+        <div class="flex flex-col items-center min-w-dvw min-h-dvh bg-black pt-2 pb-12 gap-6 px-8">
             <span class="text-lg font-bold text-white">Refer & Earn</span>
             <Show when=logged_in fallback=ReferView>
                 <ListSwitcher/>
