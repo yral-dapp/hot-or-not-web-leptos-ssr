@@ -1,13 +1,16 @@
 mod history;
 
 use candid::Principal;
-use ic_agent::Identity;
 use leptos::*;
 use leptos_icons::*;
 use leptos_router::create_query_signal;
 use leptos_use::use_window;
 
-use crate::{state::canisters::authenticated_canisters, try_or_redirect_opt};
+use crate::{
+    component::connect::ConnectLogin,
+    state::{auth::account_connected_reader, canisters::authenticated_canisters},
+    try_or_redirect_opt,
+};
 use history::HistoryView;
 
 #[component]
@@ -74,30 +77,24 @@ fn ReferCode() -> impl IntoView {
                         let canisters = try_or_redirect_opt!(canisters)?;
                         Some(
                             view! {
-                                // Is refer id supposed to be individual canister id or user id?
-                                <ReferLoaded user_canister=canisters.identity().sender().unwrap()/>
+                                <ReferLoaded user_canister=canisters.user_canister()/>
                             },
                         )
                     })
                     .unwrap_or_else(|| {
                         view! {
-                            // Is refer id supposed to be individual canister id or user id?
-
-                            // Is refer id supposed to be individual canister id or user id?
-
-                            // Is refer id supposed to be individual canister id or user id?
-
                             <ReferLoading/>
                         }
                     })
             }}
-
         </Suspense>
     }
 }
 
 #[component]
 fn ReferView() -> impl IntoView {
+    let (logged_in, _) = account_connected_reader();
+
     view! {
         <div class="flex flex-col w-full h-full items-center text-white gap-10">
             <img class="shrink-0 h-40 select-none" src="/img/coins-stash.webp"/>
@@ -109,7 +106,9 @@ fn ReferView() -> impl IntoView {
             </div>
             <div class="flex flex-col w-full gap-4 px-4 text-white items-center">
                 <span class="uppercase text-sm md:text-md">Referral Code</span>
-                <ReferCode/>
+                <Show when=logged_in fallback=ConnectLogin>
+                    <ReferCode/>
+                </Show>
             </div>
             <div class="flex flex-col w-full items-center gap-8 mt-4">
                 <span class="font-xl">How does it work?</span>
@@ -198,10 +197,14 @@ fn ListSwitcher() -> impl IntoView {
 
 #[component]
 pub fn ReferEarn() -> impl IntoView {
+    let (logged_in, _) = account_connected_reader();
+
     view! {
         <div class="flex flex-col items-center min-w-dvw min-h-dvh bg-black pt-2 pb-4 gap-6 px-8">
             <span class="text-lg font-bold text-white">Refer & Earn</span>
-            <ListSwitcher/>
+            <Show when=logged_in fallback=ReferView>
+                <ListSwitcher/>
+            </Show>
         </div>
     }
 }
