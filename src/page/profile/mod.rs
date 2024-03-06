@@ -14,7 +14,7 @@ use crate::{
 };
 
 use posts::ProfilePosts;
-use speculation::ProfileSpeculations;
+use speculation::ProfileSpeculationsPlaceHolder;
 
 #[derive(Params, PartialEq)]
 struct ProfileParams {
@@ -64,7 +64,7 @@ fn ListSwitcher(user_canister: Principal) -> impl IntoView {
         <div class="flex flex-col gap-y-12 justify-center w-7/12">
             <Show
                 when=move || current_tab() == 0
-                fallback=move || view! { <ProfileSpeculations user_canister/> }
+                fallback=move || view! { <ProfileSpeculationsPlaceHolder/> }
             >
                 <ProfilePosts user_canister/>
             </Show>

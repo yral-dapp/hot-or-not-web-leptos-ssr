@@ -8,6 +8,7 @@ pub mod ic_symbol;
 pub mod modal;
 pub mod nav;
 pub mod nav_icons;
+pub mod no_more_posts;
 pub mod social;
 pub mod spinner;
 pub mod toggle;
