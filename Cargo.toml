@@ -67,6 +67,9 @@ ssr = [
 ]
 # Fetch mock referral history instead of history via canister
 mock-referral-history = ["rand_chacha", "k256/arithmetic"]
+# Fetch mock wallet transactions instead of history via canister
+mock-wallet-history = ["rand_chacha"]
+mock-history = ["mock-referral-history", "mock-wallet-history"]
 cloudflare = []
 release-bin = ["ssr", "cloudflare"]
 release-lib = ["hydrate", "cloudflare"]
