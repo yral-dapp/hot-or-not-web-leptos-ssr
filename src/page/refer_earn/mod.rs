@@ -75,18 +75,13 @@ fn ReferCode() -> impl IntoView {
                 canisters()
                     .and_then(|canisters| {
                         let canisters = try_or_redirect_opt!(canisters)?;
-                        Some(
-                            view! {
-                                <ReferLoaded user_canister=canisters.user_canister()/>
-                            },
-                        )
+                        Some(view! { <ReferLoaded user_canister=canisters.user_canister()/> })
                     })
                     .unwrap_or_else(|| {
-                        view! {
-                            <ReferLoading/>
-                        }
+                        view! { <ReferLoading/> }
                     })
             }}
+
         </Suspense>
     }
 }

@@ -2,6 +2,7 @@ pub mod about_us;
 pub mod airdrop;
 pub mod err;
 pub mod faq;
+pub mod leaderboard;
 pub mod menu;
 pub mod post_view;
 pub mod privacy;

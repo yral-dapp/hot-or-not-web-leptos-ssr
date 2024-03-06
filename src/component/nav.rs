@@ -1,3 +1,4 @@
+use super::nav_icons::*;
 use leptos::*;
 use leptos_icons::*;
 use leptos_router::*;
@@ -7,6 +8,7 @@ fn NavIcon(
     idx: usize,
     #[prop(into)] href: MaybeSignal<String>,
     #[prop(into)] icon: icondata_core::Icon,
+    #[prop(optional)] filled_icon: Option<icondata_core::Icon>,
     cur_selected: Memo<usize>,
 ) -> impl IntoView {
     view! {
@@ -15,8 +17,58 @@ fn NavIcon(
                 when=move || cur_selected() == idx
                 fallback=move || view! { <Icon icon=icon class="text-white h-6 w-6"/> }
             >
-                <Icon icon=icon class="text-orange-600 h-6 w-6"/>
+                <Icon
+                    icon=filled_icon.unwrap_or(icon)
+                    class="text-orange-600 aspect-square h-6 w-6"
+                />
                 <div class="absolute bottom-0 bg-orange-600 py-1 w-6 blur-md"></div>
+            </Show>
+        </a>
+    }
+}
+
+#[component]
+fn TrophyIcon(idx: usize, cur_selected: Memo<usize>) -> impl IntoView {
+    view! {
+        <a href="/leaderboard" class="flex items-center justify-center">
+            <Show
+                when=move || cur_selected() == idx
+                fallback=move || {
+                    view! { <Icon icon=TrophySymbol class="text-white fill-none h-6 w-6"/> }
+                }
+            >
+
+                <Icon
+                    icon=TrophySymbolFilled
+                    class="text-orange-600 fill-none aspect-square h-6 w-6"
+                />
+                <div class="absolute bottom-0 bg-orange-600 py-1 w-6 blur-md"></div>
+            </Show>
+        </a>
+    }
+}
+
+#[component]
+fn UploadIcon(idx: usize, cur_selected: Memo<usize>) -> impl IntoView {
+    view! {
+        <a href="/upload" class="flex items-center justify-center rounded-fullt text-white">
+            <Show
+                when=move || cur_selected() == idx
+                fallback=move || {
+                    view! {
+                        <Icon
+                            icon=icondata::AiPlusOutlined
+                            class="rounded-full bg-orange-500 h-10 w-10 p-2"
+                        />
+                    }
+                }
+            >
+
+                <Icon
+                    icon=icondata::AiPlusOutlined
+                    class="bg-orange-600 rounded-full aspect-square h-10 w-10 p-2"
+                />
+                <div class="absolute bottom-0 bg-orange-600 py-1 w-10 blur-md"></div>
             </Show>
         </a>
     }
@@ -30,6 +82,7 @@ pub fn NavBar() -> impl IntoView {
         let path = cur_location.pathname.get();
         match path.as_str() {
             "/" => 0,
+            "/leaderboard" => 1,
             "/upload" => 2,
             "/wallet" | "/transactions" => 3,
             "/menu" => 4,
@@ -42,18 +95,24 @@ pub fn NavBar() -> impl IntoView {
     });
 
     view! {
-        <div class="flex flex-row justify-between px-4 py-5 w-full bg-transparent fixed left-0 bottom-0 z-50">
-            <NavIcon idx=0 href=home_path icon=icondata::TbHome cur_selected=cur_selected/>
-            // TODO: achievements page
-            <NavIcon idx=1 href="/#" icon=icondata::AiTrophyOutlined cur_selected/>
+        <div class="flex flex-row justify-between px-6 py-2 w-full bg-black/40 fixed left-0 bottom-0 z-50">
             <NavIcon
-                idx=2
-                href="/upload"
-                icon=icondata::AiPlusCircleFilled
+                idx=0
+                href=home_path
+                icon=HomeSymbol
+                filled_icon=HomeSymbolFilled
                 cur_selected=cur_selected
             />
-            <NavIcon idx=3 href="/wallet" icon=icondata::BiWalletRegular cur_selected=cur_selected/>
-            <NavIcon idx=4 href="/menu" icon=icondata::AiMenuOutlined cur_selected=cur_selected/>
+            <TrophyIcon idx=1 cur_selected/>
+            <UploadIcon idx=2 cur_selected/>
+            <NavIcon
+                idx=3
+                href="/wallet"
+                icon=WalletSymbol
+                filled_icon=WalletSymbolFilled
+                cur_selected=cur_selected
+            />
+            <NavIcon idx=4 href="/menu" icon=MenuSymbol cur_selected=cur_selected/>
         </div>
     }
 }

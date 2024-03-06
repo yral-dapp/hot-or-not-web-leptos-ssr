@@ -61,15 +61,19 @@ pub fn TransactionList(canisters: Canisters<true>) -> impl IntoView {
     view! {
         <div class="flex flex-col w-full items-center">
             <For each=upper_txns key=|t| t.id let:info>
-                <TxnView info />
+                <TxnView info/>
             </For>
-            {move || last_txn().map(|info| {
-                view! {
-                    <div _ref=last_elem class="w-full">
-                        <TxnView info/>
-                    </div>
-                }
-            })}
+            {move || {
+                last_txn()
+                    .map(|info| {
+                        view! {
+                            <div _ref=last_elem class="w-full">
+                                <TxnView info/>
+                            </div>
+                        }
+                    })
+            }}
+
             <Show when=txn_fetch_resource.loading()>
                 <BulletLoader/>
             </Show>
@@ -85,10 +89,16 @@ pub fn Transactions() -> impl IntoView {
         <div class="flex items-center flex-col w-dvw min-h-dvh gap-10 bg-black pt-4 px-4 pb-12">
             <span class="text-xl text-white font-bold">Transactions</span>
             <Suspense fallback=BulletLoader>
-                {move || canisters.get().and_then(|c| {
-                    let canisters = try_or_redirect_opt!(c)?;
-                    Some(view! { <TransactionList canisters /> })
-                }).unwrap_or_else(|| view! { <BulletLoader/> })}
+                {move || {
+                    canisters
+                        .get()
+                        .and_then(|c| {
+                            let canisters = try_or_redirect_opt!(c)?;
+                            Some(view! { <TransactionList canisters/> })
+                        })
+                        .unwrap_or_else(|| view! { <BulletLoader/> })
+                }}
+
             </Suspense>
         </div>
     }
