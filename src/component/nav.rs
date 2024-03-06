@@ -37,6 +37,7 @@ fn TrophyIcon(idx: usize, cur_selected: Memo<usize>) -> impl IntoView {
                     view! { <Icon icon=TrophySymbol class="text-white fill-none h-6 w-6"/> }
                 }
             >
+
                 <Icon
                     icon=TrophySymbolFilled
                     class="text-orange-600 fill-none aspect-square h-6 w-6"
@@ -62,6 +63,7 @@ fn UploadIcon(idx: usize, cur_selected: Memo<usize>) -> impl IntoView {
                     }
                 }
             >
+
                 <Icon
                     icon=icondata::AiPlusOutlined
                     class="bg-orange-600 rounded-full aspect-square h-10 w-10 p-2"

@@ -104,6 +104,7 @@ pub fn Wallet() -> impl IntoView {
                                 }
                             })
                     }}
+
                 </Suspense>
             </div>
             <div class="flex flex-col w-full gap-2">
@@ -127,6 +128,7 @@ pub fn Wallet() -> impl IntoView {
                                 })
                                 .unwrap_or_else(|| vec![view! { <BulletLoader/> }])
                         }}
+
                     </Suspense>
                 </div>
             </div>
