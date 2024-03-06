@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{collections::HashSet, sync::Arc};
 
 use candid::Principal;
 use ic_agent::{identity::DelegatedIdentity, Identity};
@@ -113,12 +113,17 @@ async fn create_individual_canister(
     delegation_id: DelegationIdentity,
     referrer: Option<Principal>,
 ) -> Result<Principal, AuthError> {
+    // TODO: this is temporary
+    let blacklisted = HashSet::from([Principal::from_text("rimrc-piaaa-aaaao-aaljq-cai").unwrap()]);
     let orchestrator = canisters.orchestrator();
     // TODO: error handling
-    let subnet_idxs = orchestrator
+    let subnet_idxs: Vec<_> = orchestrator
         .get_all_available_subnet_orchestrators()
         .await
-        .unwrap();
+        .unwrap()
+        .into_iter()
+        .filter(|subnet| !blacklisted.contains(subnet))
+        .collect();
 
     let mut by = [0u8; 16];
     let principal = canisters.identity().sender().unwrap();
@@ -129,7 +134,6 @@ async fn create_individual_canister(
     let discrim = u128::from_be_bytes(by);
     let subnet_idx = subnet_idxs[(discrim % subnet_idxs.len() as u128) as usize];
     let idx = canisters.user_index_with(subnet_idx);
-    // TOOD: referrer
     // TODO: error handling
     let user_canister = idx
         .get_requester_principals_canister_id_create_if_not_exists_and_optionally_allow_referrer(
@@ -137,6 +141,7 @@ async fn create_individual_canister(
         )
         .await
         .unwrap();
+
     canisters
         .auth_client
         .update_user_metadata(delegation_id, user_canister, "".into())
@@ -151,8 +156,10 @@ pub async fn do_canister_auth(
     let Some(delegation_identity) = auth else {
         return Ok(None);
     };
+
     let auth: DelegatedIdentity = delegation_identity.clone().try_into()?;
     let mut canisters = Canisters::<true>::authenticated(auth);
+
     canisters.user_canister = if let Some(user_canister) = canisters
         .auth_client
         .get_individual_canister_by_user_principal(canisters.identity().sender().unwrap())

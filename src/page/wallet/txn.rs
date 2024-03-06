@@ -146,10 +146,10 @@ pub mod provider {
     #[cfg(not(feature = "mock-wallet-history"))]
     mod canister {
         use super::*;
+        use crate::canister::individual_user_template::Result5;
         use crate::canister::individual_user_template::{
             HotOrNotOutcomePayoutEvent, MintEvent, TokenEvent,
         };
-        use crate::{canister::individual_user_template::Result5, state::canisters::Canisters};
 
         fn event_to_txn(event: (u64, TokenEvent)) -> Option<TxnInfo> {
             let (amount, tag) = match event.1 {
