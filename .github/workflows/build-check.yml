@@ -41,7 +41,7 @@ jobs:
           nix-shell --run "cargo fmt --check"
           nix-shell --run "cargo clippy --no-deps --all-features --release -- -Dwarnings"
       - name: Build the Leptos project to `musl` output
-        run: nix-shell --run 'cargo leptos build --release'
+        run: nix-shell --run 'cargo leptos build --release --lib-features release-lib --bin-features release-bin'
         env:
           LEPTOS_BIN_TARGET_TRIPLE: x86_64-unknown-linux-musl
       - run: touch .empty 
