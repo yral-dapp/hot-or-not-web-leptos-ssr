@@ -31,7 +31,7 @@ pub fn NavBar() -> impl IntoView {
         match path.as_str() {
             "/" => 0,
             "/upload" => 2,
-            "/wallet" => 3,
+            "/wallet" | "/transactions" => 3,
             "/menu" => 4,
             s if s.starts_with("/hot-or-not") => {
                 home_path.set(path);

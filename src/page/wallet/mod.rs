@@ -1,3 +1,4 @@
+pub mod transactions;
 mod txn;
 use leptos::*;
 
@@ -68,7 +69,7 @@ pub fn Wallet() -> impl IntoView {
     let history_resource = create_resource(canisters_reader, move |canisters| async move {
         let canisters = try_or_redirect_opt!(canisters.0?);
         let history_prov = get_history_provider(canisters);
-        let history = history_prov.get_history(0, RECENT_TXN_CNT).await.ok()?;
+        let (history, _) = history_prov.get_history(0, RECENT_TXN_CNT).await.ok()?;
 
         Some(history)
     });
@@ -108,8 +109,7 @@ pub fn Wallet() -> impl IntoView {
             <div class="flex flex-col w-full gap-2">
                 <div class="flex flex-row w-full items-end justify-between">
                     <span class="text-white text-sm md:text-md">Recent Transactions</span>
-                    // TODO: href
-                    <a href="#" class="text-white/50 text-md md:text-lg">
+                    <a href="/transactions" class="text-white/50 text-md md:text-lg">
                         See All
                     </a>
                 </div>

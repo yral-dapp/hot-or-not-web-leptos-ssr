@@ -123,16 +123,18 @@ mod history_provider {
     }
 
     pub trait HistoryProvider {
-        async fn get_history(&self, from: u64, end: u64)
-            -> Result<Vec<HistoryDetails>, AgentError>;
+        async fn get_history(
+            &self,
+            from: u64,
+            end: u64,
+        ) -> Result<(Vec<HistoryDetails>, bool), AgentError>;
     }
 
     pub async fn get_history(
         prov: &impl HistoryProvider,
         from: u64,
     ) -> Result<HistoryRes, AgentError> {
-        let details = prov.get_history(from, from + 10).await?;
-        let list_end = details.len() < 10;
+        let (details, list_end) = prov.get_history(from, from + 10).await?;
         Ok(HistoryRes {
             details,
             cursor: from + 10,
@@ -158,7 +160,7 @@ mod history_provider {
             &self,
             from: u64,
             end: u64,
-        ) -> Result<Vec<HistoryDetails>, AgentError> {
+        ) -> Result<(Vec<HistoryDetails>, bool), AgentError> {
             use crate::canister::individual_user_template::{MintEvent, Result5, TokenEvent};
             use crate::utils::route::failure_redirect;
             let individual = self.authenticated_user();
@@ -169,9 +171,10 @@ mod history_provider {
                 Result5::Ok(history) => history,
                 Result5::Err(_) => {
                     failure_redirect("failed to get posts");
-                    return Ok(vec![]);
+                    return Ok((vec![], true));
                 }
             };
+            let list_end = history.len() < (end - from) as usize;
             let details = history
                 .into_iter()
                 .filter_map(|(_, ev)| {
@@ -194,7 +197,7 @@ mod history_provider {
                     })
                 })
                 .collect();
-            Ok(details)
+            Ok((details, list_end))
         }
     }
 
@@ -218,21 +221,24 @@ mod history_provider {
                 &self,
                 from: u64,
                 end: u64,
-            ) -> Result<Vec<HistoryDetails>, AgentError> {
+            ) -> Result<(Vec<HistoryDetails>, bool), AgentError> {
                 let mut rand_gen = ChaCha8Rng::seed_from_u64(current_epoch().as_nanos() as u64);
-                Ok((from..end)
-                    .map(|_| {
-                        let sk = SecretKey::random(&mut rand_gen);
-                        let epoch_secs = rand_gen.next_u32() as u64;
-                        let identity = Secp256k1Identity::from_private_key(sk);
-                        let amount = rand_gen.next_u64() % 500;
-                        HistoryDetails {
-                            epoch_secs,
-                            referee: identity.sender().unwrap(),
-                            amount,
-                        }
-                    })
-                    .collect())
+                Ok((
+                    (from..end)
+                        .map(|_| {
+                            let sk = SecretKey::random(&mut rand_gen);
+                            let epoch_secs = rand_gen.next_u32() as u64;
+                            let identity = Secp256k1Identity::from_private_key(sk);
+                            let amount = rand_gen.next_u64() % 500;
+                            HistoryDetails {
+                                epoch_secs,
+                                referee: identity.sender().unwrap(),
+                                amount,
+                            }
+                        })
+                        .collect(),
+                    false,
+                ))
             }
         }
     }

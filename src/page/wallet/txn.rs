@@ -124,7 +124,11 @@ pub mod provider {
     use super::*;
 
     pub trait HistoryProvider {
-        async fn get_history(&self, start: u64, end: u64) -> Result<Vec<TxnInfo>, AgentError>;
+        async fn get_history(
+            &self,
+            start: u64,
+            end: u64,
+        ) -> Result<(Vec<TxnInfo>, bool), AgentError>;
     }
 
     pub fn get_history_provider(canisters: Canisters<true>) -> impl HistoryProvider {
@@ -182,7 +186,11 @@ pub mod provider {
         }
 
         impl HistoryProvider for Canisters<true> {
-            async fn get_history(&self, start: u64, end: u64) -> Result<Vec<TxnInfo>, AgentError> {
+            async fn get_history(
+                &self,
+                start: u64,
+                end: u64,
+            ) -> Result<(Vec<TxnInfo>, bool), AgentError> {
                 let user = self.authenticated_user();
                 let history = user
                     .get_user_utility_token_transaction_history_with_pagination(start, end)
@@ -191,7 +199,11 @@ pub mod provider {
                     Result5::Ok(v) => v,
                     Result5::Err(_) => vec![],
                 };
-                Ok(history.into_iter().filter_map(event_to_txn).collect())
+                let list_end = history.len() < (end - start) as usize;
+                Ok((
+                    history.into_iter().filter_map(event_to_txn).collect(),
+                    list_end,
+                ))
             }
         }
     }
@@ -221,15 +233,22 @@ pub mod provider {
         }
 
         impl HistoryProvider for MockHistoryProvider {
-            async fn get_history(&self, from: u64, end: u64) -> Result<Vec<TxnInfo>, AgentError> {
+            async fn get_history(
+                &self,
+                from: u64,
+                end: u64,
+            ) -> Result<(Vec<TxnInfo>, bool), AgentError> {
                 let mut rand_gen = ChaCha8Rng::seed_from_u64(current_epoch().as_nanos() as u64);
-                Ok((from..end)
-                    .map(|_| TxnInfo {
-                        amount: rand_gen.next_u64() % 3001,
-                        tag: tag_from_u32(rand_gen.next_u32()),
-                        id: rand_gen.next_u64(),
-                    })
-                    .collect())
+                Ok((
+                    (from..end)
+                        .map(|_| TxnInfo {
+                            amount: rand_gen.next_u64() % 3001,
+                            tag: tag_from_u32(rand_gen.next_u32()),
+                            id: rand_gen.next_u64(),
+                        })
+                        .collect(),
+                    false,
+                ))
             }
         }
     }

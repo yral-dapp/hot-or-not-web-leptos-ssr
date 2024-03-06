@@ -14,7 +14,7 @@ use crate::{
         root::RootPage,
         terms::TermsOfService,
         upload::UploadPostPage,
-        wallet::*,
+        wallet::{transactions::Transactions, Wallet},
     },
     state::{
         auth::{AuthClient, AuthState},
@@ -64,6 +64,7 @@ pub fn App() -> impl IntoView {
                         <Route path="/terms-of-service" view=TermsOfService/>
                         <Route path="/privacy-policy" view=PrivacyPolicy/>
                         <Route path="/wallet" view=Wallet/>
+                        <Route path="/transactions" view=Transactions/>
                         <Route path="" view=RootPage/>
                     </Route>
                 </Routes>
