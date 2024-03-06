@@ -30,7 +30,7 @@ fn NavIcon(
 #[component]
 fn TrophyIcon(idx: usize, cur_selected: Memo<usize>) -> impl IntoView {
     view! {
-        <a href="/#" class="flex items-center justify-center">
+        <a href="/leaderboard" class="flex items-center justify-center">
             <Show
                 when=move || cur_selected() == idx
                 fallback=move || {
@@ -82,6 +82,7 @@ pub fn NavBar() -> impl IntoView {
         let path = cur_location.pathname.get();
         match path.as_str() {
             "/" => 0,
+            "/leaderboard" => 1,
             "/upload" => 2,
             "/wallet" | "/transactions" => 3,
             "/menu" => 4,
@@ -102,7 +103,6 @@ pub fn NavBar() -> impl IntoView {
                 filled_icon=HomeSymbolFilled
                 cur_selected=cur_selected
             />
-            // TODO: achievements page
             <TrophyIcon idx=1 cur_selected/>
             <UploadIcon idx=2 cur_selected/>
             <NavIcon

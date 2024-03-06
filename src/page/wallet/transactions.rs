@@ -98,6 +98,7 @@ pub fn Transactions() -> impl IntoView {
                         })
                         .unwrap_or_else(|| view! { <BulletLoader/> })
                 }}
+
             </Suspense>
         </div>
     }

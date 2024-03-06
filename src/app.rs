@@ -6,6 +6,7 @@ use crate::{
         airdrop::Airdrop,
         err::ServerErrorPage,
         faq::Faq,
+        leaderboard::Leaderboard,
         menu::Menu,
         post_view::{PostView, PostViewCtx},
         privacy::PrivacyPolicy,
@@ -65,6 +66,7 @@ pub fn App() -> impl IntoView {
                         <Route path="/privacy-policy" view=PrivacyPolicy/>
                         <Route path="/wallet" view=Wallet/>
                         <Route path="/transactions" view=Transactions/>
+                        <Route path="/leaderboard" view=Leaderboard/>
                         <Route path="" view=RootPage/>
                     </Route>
                 </Routes>
