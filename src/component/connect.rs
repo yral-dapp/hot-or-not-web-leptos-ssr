@@ -66,7 +66,7 @@ pub fn ConnectLogin() -> impl IntoView {
                 logging_in.set(true);
             }
 
-            class="font-bold rounded-full bg-orange-600 py-3 w-full text-center text-xl text-white"
+            class="font-bold rounded-full bg-orange-600 py-2 md:py-3 w-full text-center text-lg md:text-xl text-white"
             disabled=move || logging_in() || auth.with(|a| a.is_none())
         >
             {move || if logging_in() { "Connecting..." } else { "Login" }}

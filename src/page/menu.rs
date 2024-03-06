@@ -163,7 +163,7 @@ pub fn Menu() -> impl IntoView {
                         <ProfileInfo/>
                     </div>
                     <Show when=move || !is_connected()>
-                        <div class="w-2/12">
+                        <div class="w-full px-8 md:w-4/12 xl:w-2/12">
                             <ConnectLogin/>
                         </div>
                     </Show>
