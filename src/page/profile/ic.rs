@@ -2,6 +2,7 @@ use std::{hash::Hash, marker::PhantomData};
 
 use futures::Stream;
 use leptos::*;
+use leptos_icons::*;
 
 use crate::{component::bullet_loader::BulletLoader, utils::profile::PROFILE_CHUNK_SZ};
 
@@ -13,6 +14,8 @@ pub fn ProfileStream<T, I: 'static, S, K, KF, N, EF>(
     #[prop(optional)] _ty: PhantomData<T>,
     #[prop(optional)] _ky: PhantomData<K>,
     #[prop(optional)] _child: PhantomData<N>,
+    #[prop(optional)] empty_graphic: Option<icondata::Icon>,
+    #[prop(optional)] empty_text: String,
 ) -> impl IntoView
 where
     S: Stream<Item = Vec<I>> + 'static + Unpin,
@@ -29,6 +32,7 @@ where
     create_effect(move |_| {
         with!(|chunk_loaded| {
             let Some(chunk) = chunk_loaded else {
+                data_loaded.set(true);
                 return;
             };
             if chunk.len() < PROFILE_CHUNK_SZ {
@@ -44,6 +48,12 @@ where
         </div>
         <Show when=move || !data_loaded()>
             <BulletLoader/>
+        </Show>
+        <Show when=move || data_loaded() && data.with(|d| d.is_empty()) && empty_graphic.is_some()>
+            <div class="flex flex-col gap-2 w-full justify-center items-center">
+                <Icon class="w-36 h-36" icon=empty_graphic.unwrap()/>
+                <span class="text-lg text-white">{empty_text.clone()}</span>
+            </div>
         </Show>
     }
 }

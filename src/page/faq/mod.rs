@@ -100,7 +100,7 @@ fn FaqSwitcher() -> impl IntoView {
 #[component]
 pub fn Faq() -> impl IntoView {
     view! {
-        <div class="w-screen min-h-screen px-8 bg-black py-4 text-white flex flex-col items-center">
+        <div class="w-screen min-h-screen px-8 bg-black pt-4 pb-14 text-white flex flex-col items-center">
             <span class="font-bold">FAQs</span>
             <div class="w-full text-lg my-8">Find all your answers here</div>
             <FaqSwitcher/>

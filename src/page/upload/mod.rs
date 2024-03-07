@@ -80,7 +80,7 @@ fn PreUploadView(trigger_upload: WriteSignal<Option<UploadParams>>) -> impl Into
 
     view! {
         <PreVideoUpload file_blob=file_blob.write_only()/>
-        <div class="flex flex-col basis-full lg:basis-7/12 gap-4">
+        <div class="flex flex-col gap-4 lg:basis-7/12">
             <div class="flex flex-col gap-y-2">
                 <Show when=move || { with!(| description_err | ! description_err.is_empty()) }>
                     <span class="text-red-500 text-sm">{desc_err_memo()}</span>
@@ -139,9 +139,9 @@ pub fn UploadPostPage() -> impl IntoView {
     let trigger_upload = create_rw_signal(None::<UploadParams>);
 
     view! {
-        <div class="flex flex-col h-screen items-center overflow-y-scroll gap-6 md:gap-8 lg:gap-16 w-full py-4 md:py-6 px-3 md:px-6 lg:px-10 bg-black text-white">
+        <div class="flex flex-col min-h-dvh w-dvw items-center overflow-y-scroll gap-6 md:gap-8 lg:gap-16 pb-12 pt-4 md:pt-6 px-3 md:px-6 lg:px-10 bg-black text-white">
             <h1 class="font-bold text-lg md:text-xl text-center">Upload</h1>
-            <div class="flex flex-row flex-wrap h-full w-full">
+            <div class="flex flex-col lg:flex-row place-content-center min-h-full w-full">
                 <Show
                     when=move || { with!(| trigger_upload | trigger_upload.is_some()) }
                     fallback=move || {

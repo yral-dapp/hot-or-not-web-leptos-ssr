@@ -5,6 +5,7 @@ use candid::Principal;
 
 use crate::{
     canister::utils::bg_url,
+    component::no_more_posts::NoMorePostsGraphic,
     utils::profile::{posts_stream, PostDetails},
 };
 
@@ -47,7 +48,7 @@ pub fn ProfilePosts(user_canister: Principal) -> impl IntoView {
     let posts_stream = Box::pin(posts_stream(user_canister));
 
     view! {
-        <ProfileStream<PostDetails, _, _, _, _, _, _> base_stream=posts_stream key=|d| d.id children=|details| view! {
+        <ProfileStream<PostDetails, _, _, _, _, _, _> empty_graphic=NoMorePostsGraphic empty_text="No Videos Uploaded yet".into() base_stream=posts_stream key=|d| d.id children=|details| view! {
             <Post details />
         } />
     }
