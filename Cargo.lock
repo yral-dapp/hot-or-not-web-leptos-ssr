@@ -1557,6 +1557,7 @@ dependencies = [
  "tracing",
  "uts2ts",
  "wasm-bindgen",
+ "web-sys",
  "web-time",
 ]
 

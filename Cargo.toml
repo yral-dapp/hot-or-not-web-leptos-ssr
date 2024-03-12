@@ -43,6 +43,7 @@ serde_json = "1.0"
 crc32fast = "1.4.0"
 uts2ts = "0.4.1"
 rand_chacha = { version = "0.3.1", optional = true }
+web-sys = { version = "0.3", features = ["Clipboard", "Navigator", "ShareData"], optional = true }
 
 [build-dependencies]
 serde = { version = "1.0", features = ["derive"] }
@@ -51,7 +52,7 @@ serde_json = "1.0.110"
 convert_case = "0.6.0"
 
 [features]
-hydrate = ["leptos/hydrate", "leptos_meta/hydrate", "leptos_router/hydrate", "ic-agent/wasm-bindgen", "reqwest/native-tls"]
+hydrate = ["leptos/hydrate", "leptos_meta/hydrate", "leptos_router/hydrate", "ic-agent/wasm-bindgen", "reqwest/native-tls", "web-sys"]
 ssr = [
     "dep:axum",
     "dep:tokio",

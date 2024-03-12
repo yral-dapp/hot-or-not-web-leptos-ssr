@@ -1,8 +1,7 @@
 mod error;
+mod overlay;
 mod video_iter;
 mod video_loader;
-
-use std::pin::pin;
 
 use candid::Principal;
 use futures::StreamExt;
@@ -17,14 +16,15 @@ use leptos_use::{
 use crate::{
     component::spinner::FullScreenSpinner,
     consts::NSFW_TOGGLE_STORE,
-    state::canisters::unauth_canisters,
+    state::canisters::{authenticated_canisters, unauth_canisters},
     try_or_redirect,
     utils::route::{failure_redirect, go_to_root},
 };
 use video_iter::{get_post_uid, VideoFetchStream};
 use video_loader::{BgView, VideoView};
 
-use self::video_iter::{FetchCursor, PostDetails};
+use overlay::HomeButtonOverlay;
+use video_iter::{FetchCursor, PostDetails};
 
 #[derive(Params, PartialEq)]
 struct PostParams {
@@ -65,10 +65,11 @@ pub fn ScrollingView<NV: Fn() -> NVR + Clone + 'static, NVR>(
             class="snap-mandatory snap-y overflow-y-scroll h-dvh w-dvw bg-black"
             style:scroll-snap-points-y="repeat(100vh)"
         >
+            <HomeButtonOverlay/>
             <For
                 each=move || video_queue().into_iter().enumerate()
                 key=|(_, details)| (details.canister_id, details.post_id)
-                children=move |(queue_idx, details)| {
+                children=move |(queue_idx, _details)| {
                     let container_ref = create_node_ref::<html::Div>();
                     let next_videos = next_videos.clone();
                     use_intersection_observer_with_options(
@@ -107,11 +108,10 @@ pub fn ScrollingView<NV: Fn() -> NVR + Clone + 'static, NVR>(
                         }
                     });
                     let show_video = create_memo(move |_| queue_idx.abs_diff(current_idx()) <= 20);
-                    let uid = move || details.uid.clone();
                     view! {
                         <div _ref=container_ref class="snap-always snap-end w-full h-full">
                             <Show when=show_video>
-                                <BgView uid=uid()>
+                                <BgView idx=queue_idx>
                                     <VideoView idx=queue_idx muted/>
                                 </BgView>
                             </Show>
@@ -166,17 +166,25 @@ pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
         })
     }
     let (nsfw_enabled, _, _) = use_local_storage::<bool, FromToStringCodec>(NSFW_TOGGLE_STORE);
+    let auth_cans_res = authenticated_canisters();
 
     let fetch_video_action = create_action(move |()| async move {
         loop {
-            let canisters = unauth_canisters();
-            let fetch_stream = VideoFetchStream::new(&canisters, fetch_cursor.get_untracked());
-            let chunks = try_or_redirect!(
-                fetch_stream
-                    .fetch_post_uids_chunked(3, nsfw_enabled.get_untracked())
-                    .await
-            );
-            let mut chunks = pin!(chunks);
+            let auth_canisters = leptos::untrack(|| auth_cans_res.get().transpose());
+            let auth_canisters = try_or_redirect!(auth_canisters).flatten();
+            let cursor = fetch_cursor.get_untracked();
+            let nsfw_enabled = nsfw_enabled.get_untracked();
+            let unauth_canisters = unauth_canisters();
+
+            let chunks = if let Some(canisters) = auth_canisters.as_ref() {
+                let fetch_stream = VideoFetchStream::new(canisters, cursor);
+                fetch_stream.fetch_post_uids_chunked(3, nsfw_enabled).await
+            } else {
+                let fetch_stream = VideoFetchStream::new(&unauth_canisters, cursor);
+                fetch_stream.fetch_post_uids_chunked(3, nsfw_enabled).await
+            };
+
+            let mut chunks = try_or_redirect!(chunks);
             let mut cnt = 0;
             while let Some(chunk) = chunks.next().await {
                 cnt += chunk.len();
@@ -196,9 +204,11 @@ pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
 
         fetch_cursor.update(|c| c.advance());
     });
-    if !recovering_state.get_untracked() {
-        fetch_video_action.dispatch(());
-    }
+    create_effect(move |_| {
+        if !recovering_state.get_untracked() {
+            fetch_video_action.dispatch(());
+        }
+    });
     let next_videos = use_debounce_fn(
         move || {
             if !fetch_video_action.pending().get_untracked() {
@@ -262,7 +272,7 @@ pub fn PostView() -> impl IntoView {
                 }
             }
 
-            let canisters = expect_context();
+            let canisters = unauth_canisters();
             match get_post_uid(&canisters, canister, post_id).await {
                 Ok(Some(uid)) => Some(uid),
                 Err(e) => {

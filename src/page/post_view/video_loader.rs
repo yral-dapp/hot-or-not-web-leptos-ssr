@@ -1,17 +1,21 @@
 use crate::canister::utils::{bg_url, mp4_url};
 use leptos::{html::Video, *};
 
-use super::PostViewCtx;
+use super::{overlay::VideoDetailsOverlay, PostViewCtx};
 
 #[component]
-pub fn BgView(uid: String, children: Children) -> impl IntoView {
+pub fn BgView(idx: usize, children: Children) -> impl IntoView {
+    let PostViewCtx { video_queue, .. } = expect_context();
+    let post = move || video_queue.with(|q| q.get(idx).cloned());
+    let uid = move || post().as_ref().map(|q| q.uid.clone()).unwrap_or_default();
     view! {
         <div class="bg-transparent w-full h-full relative">
             <div
                 class="absolute top-0 left-0 bg-cover bg-center w-full h-full z-[1] blur-lg"
                 style:background-color="rgb(0, 0, 0)"
-                style:background-image=move || format!("url({})", bg_url(&uid))
+                style:background-image=move || format!("url({})", bg_url(uid()))
             ></div>
+            {move || post().map(|post| view! { <VideoDetailsOverlay post/> })}
             {children()}
         </div>
     }
