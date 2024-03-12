@@ -8,8 +8,7 @@ use leptos_icons::*;
 use leptos_router::*;
 
 use crate::{
-    component::spinner::FullScreenSpinner,
-    state::{auth::auth_client, canisters::unauth_canisters},
+    component::spinner::FullScreenSpinner, state::canisters::unauth_canisters,
     utils::profile::ProfileDetails,
 };
 
@@ -120,8 +119,7 @@ pub fn ProfileView() -> impl IntoView {
 
     let user_details = create_resource(principal, |principal| async move {
         let canisters = unauth_canisters();
-        let auth = auth_client();
-        let user_canister = auth
+        let user_canister = canisters
             .get_individual_canister_by_user_principal(principal?)
             .await
             .ok()??;
