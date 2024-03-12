@@ -6,13 +6,6 @@ use serde::{Deserialize, Serialize};
 
 use super::AuthError;
 
-#[derive(Debug, Serialize, Clone)]
-struct PrincipalId {
-    _arr: String,
-    #[serde(rename = "_isPrincipal")]
-    _is_principal: bool,
-}
-
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct DelegationIdentity {
     pub _inner: Vec<Vec<u8>>,
