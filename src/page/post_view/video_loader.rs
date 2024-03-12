@@ -9,7 +9,7 @@ pub fn BgView(idx: usize, children: Children) -> impl IntoView {
     let post = move || video_queue.with(|q| q.get(idx).cloned());
     let uid = move || post().as_ref().map(|q| q.uid.clone()).unwrap_or_default();
     view! {
-        <div class="bg-transparent w-full h-full relative">
+        <div class="bg-transparent w-full h-full relative overflow-hidden">
             <div
                 class="absolute top-0 left-0 bg-cover bg-center w-full h-full z-[1] blur-lg"
                 style:background-color="rgb(0, 0, 0)"
