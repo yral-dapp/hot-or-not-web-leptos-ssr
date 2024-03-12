@@ -10,6 +10,7 @@ use crate::{
     component::connect::ConnectLogin,
     state::{auth::account_connected_reader, canisters::authenticated_canisters},
     try_or_redirect_opt,
+    utils::web::copy_to_clipboard,
 };
 use history::HistoryView;
 
@@ -40,16 +41,11 @@ fn ReferLoaded(user_canister: Principal) -> impl IntoView {
             ))
         })
         .unwrap_or_default();
-    let copy_link = move || {
-        let navigator = window.navigator()?;
-        _ = navigator.clipboard()?.write_text(&refer_link);
-        Some(())
-    };
 
     view! {
         <div class="flex items-center w-fit rounded-full border-dashed border-2 p-3 gap-2 border-orange-500">
             <span class="text-md lg:text-lg text-ellipsis line-clamp-1">{refer_code}</span>
-            <button on:click=move |_| _ = copy_link()>
+            <button on:click=move |_| _ = copy_to_clipboard(&refer_link)>
                 <Icon class="text-xl" icon=icondata::FaCopyRegular/>
             </button>
         </div>

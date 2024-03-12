@@ -1,3 +1,4 @@
+use candid::Principal;
 use once_cell::sync::Lazy;
 use reqwest::Url;
 
@@ -10,6 +11,8 @@ pub static AUTH_URL: Lazy<Url> =
     Lazy::new(|| Url::parse("https://hot-or-not-auth.fly.dev/").unwrap());
 pub const ACCOUNT_CONNECTED_STORE: &str = "account-connected";
 pub const NSFW_TOGGLE_STORE: &str = "nsfw-enabled";
+pub static LEGACY_USER_INDEX: Lazy<Principal> =
+    Lazy::new(|| Principal::from_text("rimrc-piaaa-aaaao-aaljq-cai").unwrap());
 
 pub mod social {
     pub const TELEGRAM: &str = "https://t.me/+c-LTX0Cp-ENmMzI1";

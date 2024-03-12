@@ -36,6 +36,7 @@ jobs:
           nix-shell --run 'rustup target add wasm32-unknown-unknown'
           nix-shell --run "rustup component add rustfmt"
           nix-shell --run "rustup component add clippy"
+          nix-shell --run "cargo install --locked cargo-leptos"
       - name: lint check
         run: |
           nix-shell --run "cargo fmt --check"

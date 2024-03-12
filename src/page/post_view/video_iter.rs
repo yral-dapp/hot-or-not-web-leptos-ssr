@@ -1,10 +1,13 @@
+use std::pin::Pin;
+
 use candid::Principal;
 use futures::{stream::FuturesOrdered, Stream, StreamExt};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    canister::post_cache::{self},
+    canister::{individual_user_template::PostDetailsForFrontend, post_cache},
     state::canisters::Canisters,
+    utils::profile::propic_from_principal,
 };
 
 use super::error::PostViewError;
@@ -31,8 +34,8 @@ impl FetchCursor {
     }
 }
 
-pub async fn get_post_uid(
-    canisters: &Canisters<false>,
+pub async fn get_post_uid<const AUTH: bool>(
+    canisters: &Canisters<AUTH>,
     user_canister: Principal,
     post_id: u64,
 ) -> Result<Option<PostDetails>, PostViewError> {
@@ -48,7 +51,7 @@ pub async fn get_post_uid(
         }
     };
 
-    let post_uuid = post_details.video_uid;
+    let post_uuid = &post_details.video_uid;
     let req_url = format!(
         "https://customer-2p3jflss4r4hmpnz.cloudflarestream.com/{}/manifest/video.m3u8",
         post_uuid,
@@ -58,11 +61,23 @@ pub async fn get_post_uid(
         return Ok(None);
     }
 
-    Ok(Some(PostDetails {
-        canister_id: user_canister,
-        post_id,
-        uid: post_uuid,
-    }))
+    Ok(Some(PostDetails::from_canister_post(
+        AUTH,
+        user_canister,
+        post_details,
+    )))
+}
+
+pub async fn post_liked_by_me(
+    canisters: &Canisters<true>,
+    post_canister: Principal,
+    post_id: u64,
+) -> Result<bool, PostViewError> {
+    let individual = canisters.individual_user(post_canister);
+    let post = individual
+        .get_individual_post_details_by_id(post_id)
+        .await?;
+    Ok(post.liked_by_me)
 }
 
 #[derive(Clone, PartialEq, Debug, Hash, Eq, PartialOrd, Ord, Serialize, Deserialize)]
@@ -70,15 +85,50 @@ pub struct PostDetails {
     pub canister_id: Principal,
     pub post_id: u64,
     pub uid: String,
+    pub description: String,
+    pub views: u64,
+    pub likes: u64,
+    pub display_name: String,
+    pub propic_url: String,
+    /// Whether post is liked by the authenticated
+    /// user or not, None if unknown
+    pub liked_by_user: Option<bool>,
+    pub poster_principal: Principal,
 }
 
-pub struct VideoFetchStream<'a> {
-    canisters: &'a Canisters<false>,
+impl PostDetails {
+    pub fn from_canister_post(
+        authenticated: bool,
+        canister_id: Principal,
+        details: PostDetailsForFrontend,
+    ) -> Self {
+        Self {
+            canister_id,
+            post_id: details.id,
+            uid: details.video_uid,
+            description: details.description,
+            views: details.total_view_count,
+            likes: details.like_count,
+            display_name: details
+                .created_by_display_name
+                .or(details.created_by_unique_user_name)
+                .unwrap_or_else(|| details.created_by_user_principal_id.to_text()),
+            propic_url: details
+                .created_by_profile_photo_url
+                .unwrap_or_else(|| propic_from_principal(details.created_by_user_principal_id)),
+            liked_by_user: authenticated.then_some(details.liked_by_me),
+            poster_principal: details.created_by_user_principal_id,
+        }
+    }
+}
+
+pub struct VideoFetchStream<'a, const AUTH: bool> {
+    canisters: &'a Canisters<AUTH>,
     cursor: FetchCursor,
 }
 
-impl<'a> VideoFetchStream<'a> {
-    pub fn new(canisters: &'a Canisters<false>, cursor: FetchCursor) -> Self {
+impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
+    pub fn new(canisters: &'a Canisters<AUTH>, cursor: FetchCursor) -> Self {
         Self { canisters, cursor }
     }
 
@@ -86,8 +136,10 @@ impl<'a> VideoFetchStream<'a> {
         self,
         chunks: usize,
         allow_nsfw: bool,
-    ) -> Result<impl Stream<Item = Vec<Result<PostDetails, PostViewError>>> + 'a, PostViewError>
-    {
+    ) -> Result<
+        Pin<Box<dyn Stream<Item = Vec<Result<PostDetails, PostViewError>>> + 'a>>,
+        PostViewError,
+    > {
         let post_cache = self.canisters.post_cache();
         let top_posts_fut = post_cache
             .get_top_posts_aggregated_from_canisters_on_this_network_for_hot_or_not_feed_cursor(
@@ -109,6 +161,6 @@ impl<'a> VideoFetchStream<'a> {
             .filter_map(|res| async { res.transpose() })
             .chunks(chunks);
 
-        Ok(chunk_stream)
+        Ok(Box::pin(chunk_stream))
     }
 }

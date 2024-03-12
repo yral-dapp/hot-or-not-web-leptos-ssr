@@ -1,7 +1,7 @@
 use std::{collections::HashSet, sync::Arc};
 
 use candid::Principal;
-use ic_agent::{identity::DelegatedIdentity, Identity};
+use ic_agent::{identity::DelegatedIdentity, AgentError, Identity};
 use leptos::*;
 
 use crate::{
@@ -12,10 +12,12 @@ use crate::{
         user_index::UserIndex,
         AGENT_URL,
     },
+    consts::LEGACY_USER_INDEX,
     utils::MockPartialEq,
 };
 
 use super::auth::{types::DelegationIdentity, AuthClient, AuthError};
+use thiserror::Error;
 
 #[derive(Clone)]
 pub struct Canisters<const AUTH: bool> {
@@ -83,6 +85,20 @@ impl Canisters<true> {
     }
 }
 
+#[derive(Error, Debug, Clone)]
+pub enum CanistersError {
+    #[error("Auth service error: {0}")]
+    Auth(#[from] AuthError),
+    #[error("IC-Agent error: {0}")]
+    Agent(String),
+}
+
+impl From<AgentError> for CanistersError {
+    fn from(e: AgentError) -> Self {
+        CanistersError::Agent(e.to_string())
+    }
+}
+
 impl<const A: bool> Canisters<A> {
     pub fn post_cache(&self) -> PostCache<'_> {
         PostCache(post_cache::CANISTER_ID, &self.agent)
@@ -99,28 +115,47 @@ impl<const A: bool> Canisters<A> {
     pub fn orchestrator(&self) -> PlatformOrchestrator<'_> {
         PlatformOrchestrator(platform_orchestrator::CANISTER_ID, &self.agent)
     }
+
+    pub async fn get_individual_canister_by_user_principal(
+        &self,
+        user_canister: Principal,
+    ) -> Result<Option<Principal>, CanistersError> {
+        let can = self
+            .auth_client
+            .get_individual_canister_by_user_principal(user_canister)
+            .await?;
+        if let Some(can) = can {
+            return Ok(Some(can));
+        }
+        // Fallback to legacy fetch
+        let user_idx = self.user_index_with(*LEGACY_USER_INDEX);
+        let can = user_idx
+            .get_user_canister_id_from_user_principal_id(user_canister)
+            .await?;
+        Ok(can)
+    }
 }
 
 pub fn unauth_canisters() -> Canisters<false> {
     expect_context()
 }
 
-pub type AuthCanistersResource =
-    Resource<MockPartialEq<Option<DelegationIdentity>>, Result<Option<Canisters<true>>, AuthError>>;
+pub type AuthCanistersResource = Resource<
+    MockPartialEq<Option<DelegationIdentity>>,
+    Result<Option<Canisters<true>>, CanistersError>,
+>;
 
 async fn create_individual_canister(
     canisters: &Canisters<true>,
     delegation_id: DelegationIdentity,
     referrer: Option<Principal>,
-) -> Result<Principal, AuthError> {
+) -> Result<Principal, CanistersError> {
     // TODO: this is temporary
     let blacklisted = HashSet::from([Principal::from_text("rimrc-piaaa-aaaao-aaljq-cai").unwrap()]);
     let orchestrator = canisters.orchestrator();
-    // TODO: error handling
     let subnet_idxs: Vec<_> = orchestrator
         .get_all_available_subnet_orchestrators()
-        .await
-        .unwrap()
+        .await?
         .into_iter()
         .filter(|subnet| !blacklisted.contains(subnet))
         .collect();
@@ -134,13 +169,11 @@ async fn create_individual_canister(
     let discrim = u128::from_be_bytes(by);
     let subnet_idx = subnet_idxs[(discrim % subnet_idxs.len() as u128) as usize];
     let idx = canisters.user_index_with(subnet_idx);
-    // TODO: error handling
     let user_canister = idx
         .get_requester_principals_canister_id_create_if_not_exists_and_optionally_allow_referrer(
             referrer,
         )
-        .await
-        .unwrap();
+        .await?;
 
     canisters
         .auth_client
@@ -152,7 +185,7 @@ async fn create_individual_canister(
 pub async fn do_canister_auth(
     auth: Option<DelegationIdentity>,
     referrer: Option<Principal>,
-) -> Result<Option<Canisters<true>>, AuthError> {
+) -> Result<Option<Canisters<true>>, CanistersError> {
     let Some(delegation_identity) = auth else {
         return Ok(None);
     };

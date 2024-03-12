@@ -128,7 +128,7 @@ pub fn PreVideoUpload(file_blob: WriteSignal<Option<FileWithUrl>>) -> impl IntoV
             </label>
         </div>
         <Modal show=modal_show>
-            <span class="text-lg md:text-xl text-white h-full text-center flex flex-col justify-center">
+            <span class="text-lg md:text-xl text-white h-full items-center py-10 text-center w-full flex flex-col justify-center">
                 Please ensure that the video is shorter than 60 seconds
             </span>
         </Modal>
