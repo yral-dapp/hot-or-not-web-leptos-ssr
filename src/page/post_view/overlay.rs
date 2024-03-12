@@ -3,8 +3,8 @@ use crate::{
     state::canisters::{authenticated_canisters, Canisters},
     try_or_redirect_opt,
     utils::{
+        route::failure_redirect,
         web::{copy_to_clipboard, share_url},
-        MockPartialEq,
     },
 };
 use leptos::*;
@@ -15,7 +15,7 @@ use super::video_iter::{post_liked_by_me, PostDetails};
 use candid::Principal;
 
 #[component]
-fn DisabledLikeButton() -> impl IntoView {
+fn LikeButtonPlaceHolder() -> impl IntoView {
     view! {
         <button disabled>
             <Icon
@@ -31,8 +31,8 @@ fn LikeButton(
     canisters: Canisters<true>,
     post_canister: Principal,
     post_id: u64,
-    initial_liked: bool,
     likes: RwSignal<u64>,
+    initial_liked: bool,
 ) -> impl IntoView {
     let liked = create_rw_signal(initial_liked);
     let icon_class = Signal::derive(move || {
@@ -51,17 +51,17 @@ fn LikeButton(
     });
     let like_toggle = create_action(move |&()| {
         let canisters = canisters.clone();
-        batch(move || {
-            if liked() {
-                likes.update(|l| *l -= 1);
-                liked.set(false)
-            } else {
-                likes.update(|l| *l += 1);
-                liked.set(true);
-            }
-        });
 
         async move {
+            batch(move || {
+                if liked.get_untracked() {
+                    likes.update(|l| *l -= 1);
+                    liked.set(false)
+                } else {
+                    likes.update(|l| *l += 1);
+                    liked.set(true);
+                }
+            });
             let individual = canisters.individual_user(post_canister);
             match individual
                 .update_post_toggle_like_status_by_caller(post_id)
@@ -85,11 +85,83 @@ fn LikeButton(
         </svg>
         <button
             on:click=move |_| like_toggle.dispatch(())
-            class="drop-shadow-lg"
+            class="drop-shadow-lg disabled:animate-pulse"
             disabled=like_toggle.pending()
         >
             <Icon class=icon_class style=icon_style icon=icondata::AiHeartFilled/>
         </button>
+    }
+}
+
+#[component]
+fn LikeLoader(
+    canisters: Canisters<true>,
+    post: PostDetails,
+    likes: RwSignal<u64>,
+) -> impl IntoView {
+    let can_c = canisters.clone();
+    let liked = create_resource(
+        || (),
+        move |_| {
+            let canisters = can_c.clone();
+            async move {
+                if let Some(liked) = post.liked_by_user {
+                    return liked;
+                }
+                match post_liked_by_me(&canisters, post.canister_id, post.post_id).await {
+                    Ok(liked) => liked,
+                    Err(e) => {
+                        failure_redirect(e);
+                        false
+                    }
+                }
+            }
+        },
+    );
+    let canisters = store_value(canisters);
+
+    view! {
+        <Suspense fallback=LikeButtonPlaceHolder>
+            {move || {
+                liked()
+                    .map(move |initial_liked| {
+                        view! {
+                            <LikeButton
+                                canisters=canisters.get_value()
+                                post_canister=post.canister_id
+                                post_id=post.post_id
+                                likes
+                                initial_liked
+                            />
+                        }
+                    })
+            }}
+
+        </Suspense>
+    }
+}
+
+#[component]
+fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
+    let auth_cans = authenticated_canisters();
+    let likes = create_rw_signal(post.likes);
+    let post = store_value(post);
+
+    view! {
+        <div class="flex flex-col gap-1 items-center">
+            <Suspense fallback=LikeButtonPlaceHolder>
+                {move || {
+                    auth_cans
+                        .get()
+                        .and_then(|canisters| {
+                            let canisters = try_or_redirect_opt!(canisters)?;
+                            Some(view! { <LikeLoader canisters post=post.get_value() likes/> })
+                        })
+                }}
+
+            </Suspense>
+            <span class="text-sm md:text-md">{likes}</span>
+        </div>
     }
 }
 
@@ -116,20 +188,8 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
         Some(())
     };
 
-    let auth_cans = authenticated_canisters();
-    let auth_cans_reader = move || MockPartialEq(auth_cans.get().transpose());
-    let liked_fetch = create_local_resource(auth_cans_reader, move |cans| async move {
-        let canisters = try_or_redirect_opt!(cans.0)??;
-        if let Some(liked) = post.liked_by_user {
-            return Some((liked, canisters));
-        }
-        let liked = post_liked_by_me(&canisters, post.canister_id, post.post_id)
-            .await
-            .ok()?;
-        Some((liked, canisters))
-    });
     let profile_url = format!("/profile/{}", post.poster_principal.to_text());
-    let likes = create_rw_signal(post.likes);
+    let post_c = post.clone();
 
     view! {
         <div class="flex flex-row flex-nowrap justify-between items-end pb-16 px-2 md:px-6 w-full text-white absolute bottom-0 left-0 bg-transparent z-[4]">
@@ -159,27 +219,7 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
                 <a href="/refer-earn">
                     <Icon class="drop-shadow-lg" icon=icondata::AiGiftFilled/>
                 </a>
-                <div class="flex flex-col gap-1 items-center">
-                    <Suspense fallback=DisabledLikeButton>
-                        {move || {
-                            liked_fetch()
-                                .flatten()
-                                .map(|(liked, canisters)| {
-                                    view! {
-                                        <LikeButton
-                                            likes
-                                            canisters
-                                            post_canister=post.canister_id
-                                            post_id=post.post_id
-                                            initial_liked=liked
-                                        />
-                                    }
-                                })
-                        }}
-
-                    </Suspense>
-                    <span class="text-sm md:text-md">{likes}</span>
-                </div>
+                <LikeAndAuthCanLoader post=post_c/>
                 <button on:click=move |_| _ = share()>
                     <Icon class="drop-shadow-lg" icon=icondata::BsSendFill/>
                 </button>

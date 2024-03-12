@@ -252,25 +252,32 @@ pub fn PostView() -> impl IntoView {
         })
     };
 
+    let PostViewCtx {
+        video_queue,
+        current_idx,
+        ..
+    } = expect_context();
+
+    let cached_post = move || {
+        let Some((canister, post_id)) = canister_and_post() else {
+            go_to_root();
+            return None;
+        };
+
+        let post = video_queue
+            .with_untracked(|q| q.get(current_idx.get_untracked()).cloned())
+            .filter(|post| post.canister_id == canister && post.post_id == post_id);
+
+        post
+    };
+
     let fetch_first_video_uid = create_resource(
         || (),
         move |_| async move {
-            let PostViewCtx {
-                video_queue,
-                current_idx,
-                ..
-            } = expect_context();
             let Some((canister, post_id)) = canister_and_post() else {
                 go_to_root();
                 return None;
             };
-            if let Some(post) =
-                video_queue.with_untracked(|q| q.get(current_idx.get_untracked()).cloned())
-            {
-                if post.canister_id == canister && post.post_id == post_id {
-                    return Some(post);
-                }
-            }
 
             let canisters = unauth_canisters();
             match get_post_uid(&canisters, canister, post_id).await {
@@ -286,11 +293,15 @@ pub fn PostView() -> impl IntoView {
 
     view! {
         <Suspense fallback=FullScreenSpinner>
-
             {move || {
-                fetch_first_video_uid
-                    .get()
-                    .map(|post| view! { <PostViewWithUpdates initial_post=post/> })
+                if let Some(post) = cached_post() {
+                    Some(view! { <PostViewWithUpdates initial_post=Some(post)/> })
+                } else {
+                    fetch_first_video_uid()
+                        .map(|initial_post| {
+                            view! { <PostViewWithUpdates initial_post=initial_post/> }
+                        })
+                }
             }}
 
         </Suspense>

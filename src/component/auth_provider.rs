@@ -35,8 +35,10 @@ pub fn AuthFrame(auth: RwSignal<Option<DelegationIdentity>>) -> impl IntoView {
 pub fn AuthProvider() -> impl IntoView {
     let auth = auth_state().identity;
     view! {
-        <Show when=move || auth.with(|a| a.is_none())>
-            <AuthFrame auth/>
-        </Show>
+        <div class="hidden">
+            <Show when=move || auth.with(|a| a.is_none())>
+                <AuthFrame auth/>
+            </Show>
+        </div>
     }
 }
