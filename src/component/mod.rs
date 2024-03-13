@@ -5,6 +5,7 @@ pub mod bullet_loader;
 pub mod coming_soon;
 pub mod connect;
 pub mod ic_symbol;
+pub mod infinite_scroller;
 pub mod modal;
 pub mod nav;
 pub mod nav_icons;
