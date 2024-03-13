@@ -26,7 +26,7 @@ pub fn Modal(#[prop(into)] show: RwSignal<bool>, children: Children) -> impl Int
                 <div class="flex w-full justify-end items-center p-2">
                     <button
                         on:click=move |_| show.set(false)
-                        class="text-white text-center p-1 text-lg md:text-xl bg-orange-600 rounded-full"
+                        class="text-white text-center p-1 text-lg md:text-xl bg-primary-600 rounded-full"
                     >
                         <Icon icon=icondata::ChCross/>
                     </button>

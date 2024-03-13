@@ -27,7 +27,7 @@ fn Post(details: PostDetails, node_ref: NodeRef<html::Div>) -> impl IntoView {
                 </object>
                 <div class="absolute bottom-1 left-1 grid grid-cols-2 items-center gap-1">
                     <Icon
-                        class="h-5 w-5 p-1 text-orange-500 rounded-full bg-black/30"
+                        class="h-5 w-5 p-1 text-primary-500 rounded-full bg-black/30"
                         icon=icondata::AiHeartOutlined
                     />
                     <span class="text-white text-xs">{details.likes}</span>

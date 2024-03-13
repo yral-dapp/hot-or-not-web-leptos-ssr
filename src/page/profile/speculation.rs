@@ -98,7 +98,7 @@ pub fn Speculation(details: BetDetails, node_ref: NodeRef<html::Div>) -> impl In
             "VOTED",
             details.bet_amount,
             view! {
-                <div class="flex mt-2 w-full place-items-center place-content-center rounded-full bg-orange-500 py-1 text-sm md:py-2">
+                <div class="flex mt-2 w-full place-items-center place-content-center rounded-full bg-primary-500 py-1 text-sm md:py-2">
                     <Icon icon=icondata::FiClock/>
                 </div>
             },

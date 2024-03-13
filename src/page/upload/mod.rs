@@ -126,7 +126,7 @@ fn PreUploadView(trigger_upload: WriteSignal<Option<UploadParams>>) -> impl Into
             <button
                 on:click=move |_| on_submit()
                 disabled=invalid_form
-                class="py-3 w-5/6 md:w-4/6 my-8 self-center disabled:bg-orange-400 disabled:text-white/80 bg-orange-600 rounded-full font-bold text-md md:text-lg lg:text-xl"
+                class="py-3 w-5/6 md:w-4/6 my-8 self-center disabled:bg-primary-400 disabled:text-white/80 bg-primary-600 rounded-full font-bold text-md md:text-lg lg:text-xl"
             >
                 Upload Video
             </button>

@@ -88,7 +88,7 @@ fn ProfileLoaded(user_details: ProfileDetails) -> impl IntoView {
                 {user_details.display_name_or_fallback()}
             </span>
             <a
-                class="text-orange-600 text-md"
+                class="text-primary-600 text-md"
                 href=format!("/profile/{}", user_details.username_or_principal())
             >
                 View Profile

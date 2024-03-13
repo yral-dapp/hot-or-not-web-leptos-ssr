@@ -19,9 +19,9 @@ fn NavIcon(
             >
                 <Icon
                     icon=filled_icon.unwrap_or(icon)
-                    class="text-orange-600 aspect-square h-6 w-6"
+                    class="text-primary-600 aspect-square h-6 w-6"
                 />
-                <div class="absolute bottom-0 bg-orange-600 py-1 w-6 blur-md"></div>
+                <div class="absolute bottom-0 bg-primary-600 py-1 w-6 blur-md"></div>
             </Show>
         </a>
     }
@@ -40,9 +40,9 @@ fn TrophyIcon(idx: usize, cur_selected: Memo<usize>) -> impl IntoView {
 
                 <Icon
                     icon=TrophySymbolFilled
-                    class="text-orange-600 fill-none aspect-square h-6 w-6"
+                    class="text-primary-600 fill-none aspect-square h-6 w-6"
                 />
-                <div class="absolute bottom-0 bg-orange-600 py-1 w-6 blur-md"></div>
+                <div class="absolute bottom-0 bg-primary-600 py-1 w-6 blur-md"></div>
             </Show>
         </a>
     }
@@ -58,7 +58,7 @@ fn UploadIcon(idx: usize, cur_selected: Memo<usize>) -> impl IntoView {
                     view! {
                         <Icon
                             icon=icondata::AiPlusOutlined
-                            class="rounded-full bg-orange-500 h-10 w-10 p-2"
+                            class="rounded-full bg-primary-500 h-10 w-10 p-2"
                         />
                     }
                 }
@@ -66,9 +66,9 @@ fn UploadIcon(idx: usize, cur_selected: Memo<usize>) -> impl IntoView {
 
                 <Icon
                     icon=icondata::AiPlusOutlined
-                    class="bg-orange-600 rounded-full aspect-square h-10 w-10 p-2"
+                    class="bg-primary-600 rounded-full aspect-square h-10 w-10 p-2"
                 />
-                <div class="absolute bottom-0 bg-orange-600 py-1 w-10 blur-md"></div>
+                <div class="absolute bottom-0 bg-primary-600 py-1 w-10 blur-md"></div>
             </Show>
         </a>
     }

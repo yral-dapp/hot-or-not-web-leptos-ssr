@@ -17,7 +17,7 @@ fn FaqItem(#[prop(into)] header: String, #[prop(into)] content: String) -> impl 
                 on:click=move |_| show.update(|s| *s = !*s)
             >
                 <span class="text-lg">{header}</span>
-                <div class="text-orange-600 text-lg justify-self-end">
+                <div class="text-primary-600 text-lg justify-self-end">
                     <Show when=show fallback=|| view! { <Icon icon=icondata::AiPlusOutlined/> }>
                         <Icon icon=icondata::AiMinusOutlined/>
                     </Show>
@@ -46,7 +46,7 @@ fn FaqType<F: FnMut() + 'static>(
                 checked=init_checked
             />
             <span class="text-md text-white/50 peer-checked:text-white">{name}</span>
-            <div class="p-1 rounded-full bg-orange-600 hidden peer-checked:block"></div>
+            <div class="p-1 rounded-full bg-primary-600 hidden peer-checked:block"></div>
         </label>
     }
 }

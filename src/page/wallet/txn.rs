@@ -105,7 +105,7 @@ pub fn TxnView(info: TxnInfo, #[prop(optional)] node_ref: NodeRef<html::Div>) ->
     view! {
         <div _ref=node_ref class="grid grid-cols-2 grid-rows-1 w-full items-center py-4">
             <div class="flex flex-row gap-2">
-                <div class="grid grid-cols-1 place-items-center place-content-center p-2 rounded-full text-orange-600 text-xl lg:text-2xl">
+                <div class="grid grid-cols-1 place-items-center place-content-center p-2 rounded-full text-primary-600 text-xl lg:text-2xl">
                     <Icon icon=info.tag.icondata()/>
                 </div>
                 <div class="flex flex-col">
