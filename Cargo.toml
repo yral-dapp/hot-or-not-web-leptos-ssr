@@ -93,17 +93,11 @@ release-bin = ["ssr", "cloudflare"]
 release-lib = ["hydrate", "cloudflare"]
 
 [patch.crates-io]
-<<<<<<< HEAD
 # release with hyper v1 is not out yet
-
-=======
 reqwest = { git = "https://github.com/seanmonstar/reqwest.git", rev = "e3192638518d577759dd89da489175b8f992b12f" }
 
-
->>>>>>> da8f05a... sticky titles
-
 # https://github.com/seanmonstar/reqwest/pull/2059
-reqwest = { git = "https://github.com/seanmonstar/reqwest.git", branch = "hyper-v1" }
+# reqwest = { git = "https://github.com/seanmonstar/reqwest.git", branch = "hyper-v1" }
 # Defines a size-optimized profile for the WASM bundle in release mode
 [profile.wasm-release]
 inherits = "release"
