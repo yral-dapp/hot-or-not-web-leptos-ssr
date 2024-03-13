@@ -1,6 +1,6 @@
 use leptos::*;
 
-use crate::component::bullet_loader::BulletLoader;
+use crate::component::{bullet_loader::BulletLoader, infinite_scroller::InfiniteScroller};
 use crate::{
     state::canisters::{authenticated_canisters, Canisters},
     try_or_redirect_opt,
@@ -33,52 +33,12 @@ fn HistoryItem(detail: HistoryDetails) -> impl IntoView {
 
 #[component]
 fn AuthenticatedHistory(canisters: Canisters<true>) -> impl IntoView {
-    let data = create_rw_signal(Vec::<HistoryDetails>::new());
-    let cursor = create_rw_signal(0);
-    let loading = create_rw_signal(true);
-    let end = create_rw_signal(false);
-
-    let fetch_more_action = create_action(move |&()| {
-        let canisters = canisters.clone();
-        let history_prov = get_history_provider(canisters);
-        loading.set(true);
-        async move {
-            let cursor_v = cursor.get_untracked();
-            let history = match get_history(&history_prov, cursor_v).await {
-                Ok(h) => h,
-                Err(e) => {
-                    loading.set(false);
-                    end.set(true);
-                    log::warn!("failed to fetch more history, err: {e}");
-                    return;
-                }
-            };
-            batch(|| {
-                data.update(|d| d.extend(history.details));
-                cursor.set(history.cursor);
-                loading.set(false);
-                end.set(history.list_end);
-            });
-        }
-    });
-    fetch_more_action.dispatch(());
-
+    let provider = get_history_provider(canisters);
     view! {
         <div class="flex flex-col justify-center w-full md:w-10/12 lg:w-8/12 gap-4 pb-16">
-            <For each=data key=|d| d.referee let:detail>
+            <InfiniteScroller provider fetch_count=10 let:detail>
                 <HistoryItem detail/>
-            </For>
-            <Show when=move || !end() && !loading()>
-                <button
-                    on:click=move |_| fetch_more_action.dispatch(())
-                    class="text-white text-xl underline"
-                >
-                    Show more..
-                </button>
-            </Show>
-            <Show when=loading>
-                <BulletLoader/>
-            </Show>
+            </InfiniteScroller>
         </div>
     }
 }
@@ -104,15 +64,25 @@ pub fn HistoryView() -> impl IntoView {
 
 mod history_provider {
     use candid::Principal;
-    use ic_agent::AgentError;
 
-    use crate::state::canisters::Canisters;
+    use crate::{
+        component::infinite_scroller::{CursoredDataProvider, KeyedData, PageEntry},
+        state::canisters::Canisters,
+    };
 
     #[derive(Clone, Copy)]
     pub struct HistoryDetails {
         pub epoch_secs: u64,
         pub referee: Principal,
         pub amount: u64,
+    }
+
+    impl KeyedData for HistoryDetails {
+        type Key = Principal;
+
+        fn key(&self) -> Self::Key {
+            self.referee
+        }
     }
 
     #[derive(Default)]
@@ -122,27 +92,9 @@ mod history_provider {
         pub list_end: bool,
     }
 
-    pub trait HistoryProvider {
-        async fn get_history(
-            &self,
-            from: u64,
-            end: u64,
-        ) -> Result<(Vec<HistoryDetails>, bool), AgentError>;
-    }
-
-    pub async fn get_history(
-        prov: &impl HistoryProvider,
-        from: u64,
-    ) -> Result<HistoryRes, AgentError> {
-        let (details, list_end) = prov.get_history(from, from + 10).await?;
-        Ok(HistoryRes {
-            details,
-            cursor: from + 10,
-            list_end,
-        })
-    }
-
-    pub fn get_history_provider(canisters: Canisters<true>) -> impl HistoryProvider {
+    pub fn get_history_provider(
+        canisters: Canisters<true>,
+    ) -> impl CursoredDataProvider<Data = HistoryDetails> + Clone {
         #[cfg(feature = "mock-referral-history")]
         {
             _ = canisters;
@@ -150,59 +102,81 @@ mod history_provider {
         }
         #[cfg(not(feature = "mock-referral-history"))]
         {
-            canisters
+            canister::ReferralHistory(canisters)
         }
     }
 
     #[cfg(not(feature = "mock-referral-history"))]
-    impl HistoryProvider for Canisters<true> {
-        async fn get_history(
-            &self,
-            from: u64,
-            end: u64,
-        ) -> Result<(Vec<HistoryDetails>, bool), AgentError> {
-            use crate::canister::individual_user_template::{MintEvent, Result5, TokenEvent};
-            use crate::utils::route::failure_redirect;
-            let individual = self.authenticated_user();
-            let history = individual
-                .get_user_utility_token_transaction_history_with_pagination(from, end)
-                .await?;
-            let history = match history {
-                Result5::Ok(history) => history,
-                Result5::Err(_) => {
-                    failure_redirect("failed to get posts");
-                    return Ok((vec![], true));
-                }
-            };
-            let list_end = history.len() < (end - from) as usize;
-            let details = history
-                .into_iter()
-                .filter_map(|(_, ev)| {
-                    let TokenEvent::Mint {
-                        timestamp,
-                        details:
-                            MintEvent::Referral {
-                                referee_user_principal_id,
-                                ..
-                            },
-                        amount,
-                    } = ev
-                    else {
-                        return None;
-                    };
-                    Some(HistoryDetails {
-                        epoch_secs: timestamp.secs_since_epoch,
-                        referee: referee_user_principal_id,
-                        amount,
+    mod canister {
+        use super::*;
+        use ic_agent::AgentError;
+
+        #[derive(Clone)]
+        pub struct ReferralHistory(pub Canisters<true>);
+
+        impl CursoredDataProvider for ReferralHistory {
+            type Data = HistoryDetails;
+            type Error = AgentError;
+
+            async fn get_by_cursor(
+                &self,
+                from: usize,
+                end: usize,
+            ) -> Result<PageEntry<HistoryDetails>, AgentError> {
+                use crate::canister::individual_user_template::{MintEvent, Result5, TokenEvent};
+                use crate::utils::route::failure_redirect;
+                let individual = self.0.authenticated_user();
+                let history = individual
+                    .get_user_utility_token_transaction_history_with_pagination(
+                        from as u64,
+                        end as u64,
+                    )
+                    .await?;
+                let history = match history {
+                    Result5::Ok(history) => history,
+                    Result5::Err(_) => {
+                        failure_redirect("failed to get posts");
+                        return Ok(PageEntry {
+                            data: vec![],
+                            end: true,
+                        });
+                    }
+                };
+                let list_end = history.len() < (end - from);
+                let details = history
+                    .into_iter()
+                    .filter_map(|(_, ev)| {
+                        let TokenEvent::Mint {
+                            timestamp,
+                            details:
+                                MintEvent::Referral {
+                                    referee_user_principal_id,
+                                    ..
+                                },
+                            amount,
+                        } = ev
+                        else {
+                            return None;
+                        };
+                        Some(HistoryDetails {
+                            epoch_secs: timestamp.secs_since_epoch,
+                            referee: referee_user_principal_id,
+                            amount,
+                        })
                     })
+                    .collect();
+                Ok(PageEntry {
+                    data: details,
+                    end: list_end,
                 })
-                .collect();
-            Ok((details, list_end))
+            }
         }
     }
 
     #[cfg(feature = "mock-referral-history")]
     mod mock {
+        use std::convert::Infallible;
+
         use ic_agent::{identity::Secp256k1Identity, Identity};
         use k256::SecretKey;
         use rand_chacha::{
@@ -214,31 +188,33 @@ mod history_provider {
 
         use super::*;
 
+        #[derive(Clone, Copy)]
         pub struct MockHistoryProvider;
 
-        impl HistoryProvider for MockHistoryProvider {
-            async fn get_history(
+        impl CursoredDataProvider for MockHistoryProvider {
+            type Data = HistoryDetails;
+            type Error = Infallible;
+
+            async fn get_by_cursor(
                 &self,
-                from: u64,
-                end: u64,
-            ) -> Result<(Vec<HistoryDetails>, bool), AgentError> {
+                from: usize,
+                end: usize,
+            ) -> Result<PageEntry<HistoryDetails>, Infallible> {
                 let mut rand_gen = ChaCha8Rng::seed_from_u64(current_epoch().as_nanos() as u64);
-                Ok((
-                    (from..end)
-                        .map(|_| {
-                            let sk = SecretKey::random(&mut rand_gen);
-                            let epoch_secs = rand_gen.next_u32() as u64;
-                            let identity = Secp256k1Identity::from_private_key(sk);
-                            let amount = rand_gen.next_u64() % 500;
-                            HistoryDetails {
-                                epoch_secs,
-                                referee: identity.sender().unwrap(),
-                                amount,
-                            }
-                        })
-                        .collect(),
-                    false,
-                ))
+                let data = (from..end)
+                    .map(|_| {
+                        let sk = SecretKey::random(&mut rand_gen);
+                        let epoch_secs = rand_gen.next_u32() as u64;
+                        let identity = Secp256k1Identity::from_private_key(sk);
+                        let amount = rand_gen.next_u64() % 500;
+                        HistoryDetails {
+                            epoch_secs,
+                            referee: identity.sender().unwrap(),
+                            amount,
+                        }
+                    })
+                    .collect();
+                Ok(PageEntry { data, end: false })
             }
         }
     }

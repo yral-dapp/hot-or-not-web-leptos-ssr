@@ -141,7 +141,7 @@ pub mod provider {
         }
         #[cfg(not(feature = "mock-wallet-history"))]
         {
-            canisters
+            canister::TxnHistory(canisters)
         }
     }
 
@@ -189,7 +189,10 @@ pub mod provider {
             })
         }
 
-        impl CursoredDataProvider for Canisters<true> {
+        #[derive(Clone)]
+        pub struct TxnHistory(pub Canisters<true>);
+
+        impl CursoredDataProvider for TxnHistory {
             type Data = TxnInfo;
             type Error = AgentError;
 
@@ -198,7 +201,7 @@ pub mod provider {
                 start: usize,
                 end: usize,
             ) -> Result<PageEntry<TxnInfo>, AgentError> {
-                let user = self.authenticated_user();
+                let user = self.0.authenticated_user();
                 let history = user
                     .get_user_utility_token_transaction_history_with_pagination(
                         start as u64,
