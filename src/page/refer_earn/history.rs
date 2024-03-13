@@ -9,9 +9,9 @@ use crate::{
 use history_provider::*;
 
 #[component]
-fn HistoryItem(detail: HistoryDetails, node_ref: NodeRef<html::Div>) -> impl IntoView {
+fn HistoryItem(detail: HistoryDetails, _ref: NodeRef<html::Div>) -> impl IntoView {
     view! {
-        <div _ref=node_ref class="px-2 grid grid-cols-4 grid-rows-1 items-center gap-2 w-full">
+        <div _ref=_ref class="px-2 grid grid-cols-4 grid-rows-1 items-center gap-2 w-full">
             <div class="flex flex-row col-span-3 items-center gap-4 justify-items-start">
                 <img
                     class="aspect-square w-12 md:w-16 lg:w-24 rounded-full"
@@ -39,8 +39,8 @@ fn AuthenticatedHistory(canisters: Canisters<true>) -> impl IntoView {
             <InfiniteScroller
                 provider
                 fetch_count=10
-                children=|detail, node_ref| {
-                    view! { <HistoryItem detail node_ref=node_ref.unwrap_or_default()/> }
+                children=|detail, _ref| {
+                    view! { <HistoryItem detail _ref=_ref.unwrap_or_default()/> }
                 }
             />
 

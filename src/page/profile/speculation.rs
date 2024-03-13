@@ -65,7 +65,7 @@ pub fn FallbackUser() -> impl IntoView {
 }
 
 #[component]
-pub fn Speculation(details: BetDetails, node_ref: NodeRef<html::Div>) -> impl IntoView {
+pub fn Speculation(details: BetDetails, _ref: NodeRef<html::Div>) -> impl IntoView {
     let (bet_res, amt, icon) = match details.outcome {
         BetOutcome::Won(amt) => (
             "RECEIVED",
@@ -124,7 +124,7 @@ pub fn Speculation(details: BetDetails, node_ref: NodeRef<html::Div>) -> impl In
     );
 
     view! {
-        <div _ref=node_ref class="relative w-full basis-1/2 md:basis-1/3 lg:basis-1/4">
+        <div _ref=_ref class="relative w-full basis-1/2 md:basis-1/3 lg:basis-1/4">
             <div class="relative flex flex-col justify-between aspect-[3/5] rounded-md m-2 text-white">
                 <Suspense fallback=|| {
                     view! {
@@ -167,8 +167,8 @@ pub fn ProfileSpeculations(user_canister: Principal) -> impl IntoView {
     view! {
         <ProfileStream
             provider
-            children=|details, node_ref| {
-                view! { <Speculation details node_ref=node_ref.unwrap_or_default()/> }
+            children=|details, _ref| {
+                view! { <Speculation details _ref=_ref.unwrap_or_default()/> }
             }
         />
     }
