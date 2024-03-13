@@ -17,6 +17,6 @@ pub static LEGACY_USER_INDEX: Lazy<Principal> =
 pub mod social {
     pub const TELEGRAM: &str = "https://t.me/+c-LTX0Cp-ENmMzI1";
     pub const DISCORD: &str = "https://discord.gg/GZ9QemnZuj";
-    pub const TWITTER: &str = "https://twitter.com/hotornot_dapp";
+    pub const TWITTER: &str = "https://twitter.com/Yral_app";
     pub const IC_WEBSITE: &str = "https://vyatz-hqaaa-aaaam-qauea-cai.ic0.app";
 }
