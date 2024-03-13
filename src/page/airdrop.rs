@@ -1,11 +1,13 @@
-use crate::component::{airdrop_logo::AirdropLogo, social::*};
+use crate::component::{airdrop_logo::AirdropLogo, social::*, title::Title};
 use leptos::*;
 
 #[component]
 pub fn Airdrop() -> impl IntoView {
     view! {
         <div class="flex flex-col items-center h-screen w-screen pb-12 text-white bg-black">
-            <div class="pt-4 pb-8 text-md font-bold">Airdrop</div>
+            <Title>
+                <div class="pt-4 pb-8 text-md font-bold">Airdrop</div>
+            </Title>
             <div class="max-w-80 px-16 sm:!max-h-80 pb-8">
                 <AirdropLogo/>
             </div>

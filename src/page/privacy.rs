@@ -1,10 +1,14 @@
 use leptos::*;
 
+use crate::component::title::Title;
+
 #[component]
 pub fn PrivacyPolicy() -> impl IntoView {
     view! {
         <div class="w-screen min-h-screen px-8 bg-black pt-4 pb-12 text-white flex flex-col items-center">
-            <span class="font-bold">Privacy Policy</span>
+            <Title>
+                <span class="font-bold">Privacy Policy</span>
+            </Title>
             <div class="flex h-full w-full flex-col space-y-8 overflow-hidden overflow-y-auto py-16">
                 <div class="text-xs">
                     {r#"Thanks for choosing "Hot or Not" . We are pleased to make our Service

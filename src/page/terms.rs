@@ -1,10 +1,14 @@
 use leptos::*;
 
+use crate::component::title::Title;
+
 #[component]
 pub fn TermsOfService() -> impl IntoView {
     view! {
         <div class="w-screen min-h-screen px-8 bg-black pt-4 pb-12 text-white flex flex-col items-center">
-            <span class="font-bold">Terms of service</span>
+            <Title>
+                <span class="font-bold">Terms of service</span>
+            </Title>
             <div class="flex h-full w-full flex-col space-y-8 overflow-hidden overflow-y-auto py-16">
                 <div class="flex flex-col space-y-2">
                     <div class="text-sm">1. Introductions</div>

@@ -1,3 +1,4 @@
+use crate::component::title::Title;
 use crate::component::{connect::ConnectLogin, social::*, toggle::Toggle};
 use crate::consts::{social, NSFW_TOGGLE_STORE};
 use crate::state::auth::account_connected_reader;
@@ -157,7 +158,9 @@ pub fn Menu() -> impl IntoView {
     view! {
         <div class="min-h-screen w-full flex flex-col text-white pt-2 pb-12 bg-black items-center divide-y divide-white/10">
             <div class="flex flex-col items-center w-full gap-20 pb-16">
-                <span class="font-bold text-2xl">Menu</span>
+                <Title>
+                    <span class="font-bold text-2xl">Menu</span>
+                </Title>
                 <div class="flex flex-col items-center w-full gap-4">
                     <div class="flex flex-row justify-center gap-4 items-center px-4 w-full">
                         <ProfileInfo/>

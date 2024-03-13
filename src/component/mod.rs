@@ -11,4 +11,5 @@ pub mod nav_icons;
 pub mod no_more_posts;
 pub mod social;
 pub mod spinner;
+pub mod title;
 pub mod toggle;

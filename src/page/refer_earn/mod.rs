@@ -7,7 +7,7 @@ use leptos_router::create_query_signal;
 use leptos_use::use_window;
 
 use crate::{
-    component::connect::ConnectLogin,
+    component::{connect::ConnectLogin, title::Title},
     state::{auth::account_connected_reader, canisters::authenticated_canisters},
     try_or_redirect_opt,
     utils::web::copy_to_clipboard,
@@ -192,7 +192,9 @@ pub fn ReferEarn() -> impl IntoView {
 
     view! {
         <div class="flex flex-col items-center min-w-dvw min-h-dvh bg-black pt-2 pb-12 gap-6 px-8">
-            <span class="text-lg font-bold text-white">Refer & Earn</span>
+            <Title>
+                <span class="text-lg font-bold text-white">Refer & Earn</span>
+            </Title>
             <Show when=logged_in fallback=ReferView>
                 <ListSwitcher/>
             </Show>
