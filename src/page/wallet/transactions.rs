@@ -15,9 +15,14 @@ pub fn TransactionList(canisters: Canisters<true>) -> impl IntoView {
     let provider = get_history_provider(canisters);
     view! {
         <div class="flex flex-col w-full items-center">
-            <InfiniteScroller provider fetch_count=FETCH_CNT let:info>
-                <TxnView info/>
-            </InfiniteScroller>
+            <InfiniteScroller
+                provider
+                fetch_count=FETCH_CNT
+                children=|info, node_ref| {
+                    view! { <TxnView info node_ref=node_ref.unwrap_or_default()/> }
+                }
+            />
+
         </div>
     }
 }

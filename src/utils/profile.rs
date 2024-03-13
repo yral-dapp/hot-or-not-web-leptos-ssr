@@ -1,14 +1,15 @@
 use candid::Principal;
-use futures::{Future, Stream, StreamExt};
+use ic_agent::AgentError;
 use serde::{Deserialize, Serialize};
 
 use crate::{
     canister::individual_user_template::{
-        BetDirection, BetOutcomeForBetMaker, GetPostsOfUserProfileError, IndividualUserTemplate,
-        PlacedBetDetail, PostDetailsForFrontend, Result4, UserProfileDetailsForFrontend,
+        BetDirection, BetOutcomeForBetMaker, PlacedBetDetail, PostDetailsForFrontend, Result4,
+        UserProfileDetailsForFrontend,
     },
+    component::infinite_scroller::{CursoredDataProvider, KeyedData, PageEntry},
     consts::FALLBACK_PROPIC_BASE,
-    state::canisters::unauth_canisters,
+    state::canisters::Canisters,
 };
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -79,20 +80,30 @@ pub fn propic_from_principal(principal: Principal) -> String {
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct PostDetails {
+    pub creator: Principal,
     pub id: u64,
     pub uid: String,
     pub likes: u64,
     pub views: u64,
 }
 
-impl From<&PostDetailsForFrontend> for PostDetails {
-    fn from(post: &PostDetailsForFrontend) -> Self {
+impl From<PostDetailsForFrontend> for PostDetails {
+    fn from(post: PostDetailsForFrontend) -> Self {
         Self {
+            creator: post.created_by_user_principal_id,
             id: post.id,
             uid: post.video_uid.clone(),
             likes: post.like_count,
             views: post.total_view_count,
         }
+    }
+}
+
+impl KeyedData for PostDetails {
+    type Key = (Principal, u64);
+
+    fn key(&self) -> Self::Key {
+        (self.creator, self.id)
     }
 }
 
@@ -119,8 +130,8 @@ pub struct BetDetails {
     pub bet_amount: u64,
 }
 
-impl From<&PlacedBetDetail> for BetDetails {
-    fn from(bet: &PlacedBetDetail) -> Self {
+impl From<PlacedBetDetail> for BetDetails {
+    fn from(bet: PlacedBetDetail) -> Self {
         let outcome = match bet.outcome_received {
             BetOutcomeForBetMaker::Lost => BetOutcome::Lost,
             BetOutcomeForBetMaker::Draw(w) => BetOutcome::Draw(w),
@@ -141,93 +152,89 @@ impl From<&PlacedBetDetail> for BetDetails {
     }
 }
 
+impl KeyedData for BetDetails {
+    type Key = (Principal, u64);
+
+    fn key(&self) -> Self::Key {
+        (self.canister_id, self.post_id)
+    }
+}
+
 pub const PROFILE_CHUNK_SZ: usize = 10;
 
-trait GetterFn<Arg0>: Fn(Arg0, u64, u64) -> Self::OutputFuture {
-    type OutputFuture: Future<Output = <Self as GetterFn<Arg0>>::Output>;
-    type Output;
+#[derive(Clone)]
+pub struct PostsProvider {
+    canisters: Canisters<false>,
+    user: Principal,
 }
 
-impl<Arg0, F: ?Sized, Fut> GetterFn<Arg0> for F
-where
-    F: Fn(Arg0, u64, u64) -> Fut,
-    Fut: Future,
-{
-    type OutputFuture = Fut;
-    type Output = Fut::Output;
+impl PostsProvider {
+    pub fn new(canisters: Canisters<false>, user: Principal) -> Self {
+        Self { canisters, user }
+    }
 }
 
-fn profile_stream<R, I, C>(
-    principal: Principal,
-    getter: impl for<'x> GetterFn<
-        &'x IndividualUserTemplate<'x>,
-        Output = Result<R, ic_agent::AgentError>,
-    >,
-    conv: C,
-) -> impl Stream<Item = Vec<I>>
-where
-    I: 'static,
-    C: Fn(R) -> Option<Vec<I>> + 'static,
-{
-    let canisters = unauth_canisters();
-    futures::stream::try_unfold(
-        (getter, conv, canisters, 0usize, false),
-        move |(getter, conv, canisters, mut cursor, mut ended)| async move {
-            if ended {
-                return Ok(None);
+impl CursoredDataProvider for PostsProvider {
+    type Data = PostDetails;
+    type Error = AgentError;
+
+    async fn get_by_cursor(
+        &self,
+        start: usize,
+        end: usize,
+    ) -> Result<PageEntry<PostDetails>, AgentError> {
+        let user = self.canisters.individual_user(self.user);
+        let posts = user
+            .get_posts_of_this_user_profile_with_pagination(start as u64, end as u64)
+            .await?;
+        let posts = match posts {
+            Result4::Ok(v) => v,
+            Result4::Err(_) => {
+                log::warn!("failed to get posts");
+                return Ok(PageEntry {
+                    data: vec![],
+                    end: true,
+                });
             }
-            let user = canisters.individual_user(principal);
-
-            let res = getter(&user, cursor as u64, (cursor + PROFILE_CHUNK_SZ) as u64).await?;
-            let data = match conv(res) {
-                Some(data) => data,
-                None => return Ok(None),
-            };
-            cursor += PROFILE_CHUNK_SZ;
-            if data.len() < PROFILE_CHUNK_SZ {
-                ended = true;
-            }
-            Ok(Some((data, (getter, conv, canisters, cursor, ended))))
-        },
-    )
-    .filter_map(move |res: Result<_, ic_agent::AgentError>| async move {
-        match res {
-            Ok(r) => Some(r),
-            Err(e) => {
-                log::warn!("failed to fetch data for {principal} due to {e}");
-                None
-            }
-        }
-    })
+        };
+        let list_end = posts.len() < (end - start);
+        Ok(PageEntry {
+            data: posts.into_iter().map(PostDetails::from).collect(),
+            end: list_end,
+        })
+    }
 }
 
-fn get_posts<'a>(
-    user: &'a IndividualUserTemplate,
-    cursor: u64,
-    limit: u64,
-) -> impl Future<Output = Result<Result4, ic_agent::AgentError>> + 'a {
-    user.get_posts_of_this_user_profile_with_pagination(cursor, limit)
+#[derive(Clone)]
+pub struct BetsProvider {
+    canisters: Canisters<false>,
+    user: Principal,
 }
 
-fn get_speculations<'a>(
-    user: &'a IndividualUserTemplate,
-    cursor: u64,
-    limit: u64,
-) -> impl Future<Output = Result<Vec<PlacedBetDetail>, ic_agent::AgentError>> + 'a {
-    assert_eq!(limit, cursor + 10);
-    user.get_hot_or_not_bets_placed_by_this_profile_with_pagination(cursor)
+impl BetsProvider {
+    pub fn new(canisters: Canisters<false>, user: Principal) -> Self {
+        Self { canisters, user }
+    }
 }
 
-pub fn posts_stream(principal: Principal) -> impl Stream<Item = Vec<PostDetailsForFrontend>> {
-    profile_stream(principal, get_posts, |res| match res {
-        Result4::Ok(posts) => Some(posts),
-        Result4::Err(e) => match e {
-            GetPostsOfUserProfileError::ReachedEndOfItemsList => None,
-            _ => panic!("unexpected error while fetching posts"),
-        },
-    })
-}
+impl CursoredDataProvider for BetsProvider {
+    type Data = BetDetails;
+    type Error = AgentError;
 
-pub fn speculations_stream(principal: Principal) -> impl Stream<Item = Vec<PlacedBetDetail>> {
-    profile_stream(principal, get_speculations, Some)
+    async fn get_by_cursor(
+        &self,
+        start: usize,
+        end: usize,
+    ) -> Result<PageEntry<BetDetails>, AgentError> {
+        let user = self.canisters.individual_user(self.user);
+        assert_eq!(end - start, 10);
+        let bets = user
+            .get_hot_or_not_bets_placed_by_this_profile_with_pagination(start as u64)
+            .await?;
+        let list_end = bets.len() < (end - start);
+        Ok(PageEntry {
+            data: bets.into_iter().map(PlacedBetDetail::into).collect(),
+            end: list_end,
+        })
+    }
 }

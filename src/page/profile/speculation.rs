@@ -7,7 +7,7 @@ use crate::{
     canister::utils::bg_url,
     component::coming_soon::ComingSoonGraphic,
     state::canisters::unauth_canisters,
-    utils::profile::{speculations_stream, BetDetails, BetOutcome, PostDetails, ProfileDetails},
+    utils::profile::{BetDetails, BetOutcome, BetsProvider, PostDetails, ProfileDetails},
 };
 
 #[component]
@@ -65,7 +65,7 @@ pub fn FallbackUser() -> impl IntoView {
 }
 
 #[component]
-pub fn Speculation(details: BetDetails) -> impl IntoView {
+pub fn Speculation(details: BetDetails, node_ref: NodeRef<html::Div>) -> impl IntoView {
     let (bet_res, amt, icon) = match details.outcome {
         BetOutcome::Won(amt) => (
             "RECEIVED",
@@ -119,12 +119,12 @@ pub fn Speculation(details: BetDetails) -> impl IntoView {
             let canister = unauth_canisters();
             let user = canister.individual_user(canister_id);
             let post_details = user.get_individual_post_details_by_id(post_id).await.ok()?;
-            Some(PostDetails::from(&post_details))
+            Some(PostDetails::from(post_details))
         },
     );
 
     view! {
-        <div class="relative w-full basis-1/2 md:basis-1/3 lg:basis-1/4">
+        <div _ref=node_ref class="relative w-full basis-1/2 md:basis-1/3 lg:basis-1/4">
             <div class="relative flex flex-col justify-between aspect-[3/5] rounded-md m-2 text-white">
                 <Suspense fallback=|| {
                     view! {
@@ -162,12 +162,15 @@ pub fn Speculation(details: BetDetails) -> impl IntoView {
 
 #[component]
 pub fn ProfileSpeculations(user_canister: Principal) -> impl IntoView {
-    let bets_stream = Box::pin(speculations_stream(user_canister));
+    let provider = BetsProvider::new(unauth_canisters(), user_canister);
 
     view! {
-        <ProfileStream<BetDetails, _, _, _, _, _, _> base_stream=bets_stream key=|d| (d.canister_id, d.post_id) children=|details| view! {
-            <Speculation details />
-        }/>
+        <ProfileStream
+            provider
+            children=|details, node_ref| {
+                view! { <Speculation details node_ref=node_ref.unwrap_or_default()/> }
+            }
+        />
     }
 }
 
