@@ -25,11 +25,17 @@ tracing = { version = "0.1.37", optional = true }
 http = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 candid = "0.10.3"
-ic-agent = { version = "0.33.0", default-features = false, features = ["pem", "reqwest"] }
+ic-agent = { version = "0.33.0", default-features = false, features = [
+    "pem",
+    "reqwest",
+] }
 serde-wasm-bindgen = { version = "0.6.3" }
 futures = "0.3.30"
 leptos-use = "0.10.2"
-reqwest = { version = "0.11.24", default-features = false, features = ["json", "http2"] }
+reqwest = { version = "0.11.24", default-features = false, features = [
+    "json",
+    "http2",
+] }
 serde_bytes = "0.11.14"
 hex = "0.4.3"
 leptos_icons = "0.3.0"
@@ -43,7 +49,11 @@ serde_json = "1.0"
 crc32fast = "1.4.0"
 uts2ts = "0.4.1"
 rand_chacha = { version = "0.3.1", optional = true }
-web-sys = { version = "0.3", features = ["Clipboard", "Navigator", "ShareData"], optional = true }
+web-sys = { version = "0.3", features = [
+    "Clipboard",
+    "Navigator",
+    "ShareData",
+], optional = true }
 
 [build-dependencies]
 serde = { version = "1.0", features = ["derive"] }
@@ -52,7 +62,14 @@ serde_json = "1.0.110"
 convert_case = "0.6.0"
 
 [features]
-hydrate = ["leptos/hydrate", "leptos_meta/hydrate", "leptos_router/hydrate", "ic-agent/wasm-bindgen", "reqwest/native-tls", "web-sys"]
+hydrate = [
+    "leptos/hydrate",
+    "leptos_meta/hydrate",
+    "leptos_router/hydrate",
+    "ic-agent/wasm-bindgen",
+    "reqwest/native-tls",
+    "web-sys",
+]
 ssr = [
     "dep:axum",
     "dep:tokio",
@@ -77,8 +94,10 @@ release-lib = ["hydrate", "cloudflare"]
 
 [patch.crates-io]
 # release with hyper v1 is not out yet
-reqwest = { git = "https://github.com/seanmonstar/reqwest.git", rev = "e3192638518d577759dd89da489175b8f992b12f"}
+reqwest = { git = "https://github.com/seanmonstar/reqwest.git", rev = "e3192638518d577759dd89da489175b8f992b12f" }
 
+# https://github.com/seanmonstar/reqwest/pull/2059
+# reqwest = { git = "https://github.com/seanmonstar/reqwest.git", branch = "hyper-v1" }
 # Defines a size-optimized profile for the WASM bundle in release mode
 [profile.wasm-release]
 inherits = "release"
@@ -110,7 +129,7 @@ tailwind-config-file = "tailwind.config.js"
 # Enables additional file hashes on outputted css, js, and wasm files
 #
 # Optional: Defaults to false. Can also be set with the LEPTOS_HASH_FILES=false env var
-hash-files = true 
+hash-files = true
 
 # Assets source dir. All files found here will be copied and synchronized to site-root.
 # The assets-dir cannot have a sub directory with the same name/path as site-pkg-dir.
@@ -165,11 +184,11 @@ lib-default-features = false
 lib-profile-release = "wasm-release"
 
 # Pass additional parameters to the cargo process compiling to WASM
-# 
+#
 # Optional. No default
 lib-cargo-args = ""
 
 # Pass additional parameters to the cargo process to build the server
-# 
+#
 # Optional. No default
 bin-cargo-args = ""
