@@ -3,6 +3,7 @@ FROM scratch
 WORKDIR /app
 
 COPY ./target/x86_64-unknown-linux-musl/release/hot-or-not-web-leptos-ssr .
+COPY ./target/x86_64-unknown-linux-musl/release/hash.txt .
 
 COPY ./target/site ./site
 ENV LEPTOS_SITE_ROOT="site"
