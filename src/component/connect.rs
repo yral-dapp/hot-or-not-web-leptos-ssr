@@ -1,14 +1,12 @@
-use std::rc::Rc;
-
-use leptos::*;
+use leptos::{html::Iframe, *};
 use leptos_use::{
-    storage::use_local_storage, use_event_listener, use_interval_fn, use_window,
+    storage::use_local_storage, use_event_listener, use_window,
     utils::FromToStringCodec,
 };
 use reqwest::Url;
 
 use crate::{
-    consts::{self, ACCOUNT_CONNECTED_STORE},
+    consts::{self, ACCOUNT_CONNECTED_STORE, AUTH_URL},
     state::auth::{auth_state, types::SessionResponse},
 };
 
@@ -17,8 +15,10 @@ pub fn ConnectLogin() -> impl IntoView {
     let (_, write_account_connected, _) =
         use_local_storage::<bool, FromToStringCodec>(ACCOUNT_CONNECTED_STORE);
     let logging_in = create_rw_signal(false);
-    let target_close = create_rw_signal(None::<Rc<dyn Fn()>>);
     let auth = auth_state().identity;
+
+    let iframe_ref = create_node_ref::<Iframe>();
+
     create_effect(move |_| {
         if auth.with(|a| a.is_none()) {
             return;
@@ -36,33 +36,19 @@ pub fn ConnectLogin() -> impl IntoView {
             auth.set(Some(identity));
             logging_in.set(false);
             write_account_connected.set(true);
-            target_close
-                .get_untracked()
-                .expect("Target window should be available")();
         });
+    });
+
+    _ = use_event_listener(iframe_ref, ev::load, move |_| {
+        let iframe_node = iframe_ref().unwrap();
+        let iframe_w = iframe_node.content_window().unwrap();
+        _ = iframe_w.post_message(&("login".into()), "*");
     });
 
     view! {
         <button
             on:click=move |ev| {
                 ev.prevent_default();
-                let window = use_window();
-                let window = window.as_ref().unwrap();
-                let target = window
-                    .open_with_url_and_target(consts::AUTH_URL.as_str(), "_blank")
-                    .transpose()
-                    .and_then(|w| w.ok())
-                    .unwrap();
-                let target_c = target.clone();
-                _ = use_interval_fn(
-                    move || {
-                        if target_c.closed().unwrap_or_default() {
-                            logging_in.try_set(false);
-                        }
-                    },
-                    500,
-                );
-                target_close.set(Some(Rc::new(move || _ = target.close())));
                 logging_in.set(true);
             }
 
@@ -72,5 +58,8 @@ pub fn ConnectLogin() -> impl IntoView {
             {move || if logging_in() { "Connecting..." } else { "Login" }}
 
         </button>
+        <Show when=logging_in>
+            <iframe _ref=iframe_ref class="hidden w-0 h-0" src=AUTH_URL.join("auth_init").unwrap().to_string() />
+        </Show>
     }
 }
