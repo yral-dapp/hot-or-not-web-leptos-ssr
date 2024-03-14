@@ -56,7 +56,6 @@ web-sys = { version = "0.3", features = [
     "Clipboard",
     "Navigator",
     "ShareData",
-    "AddEventListenerOptions",
 ], optional = true }
 circular-buffer = "0.1.7"
 redb = { version = "2.0.0", optional = true }
@@ -122,8 +121,8 @@ ssr = [
 ]
 # Fetch mock referral history instead of history via canister
 mock-referral-history = ["dep:rand_chacha", "k256/arithmetic"]
-# Fetch mock wallet transactions instead of history via canister
-mock-wallet-history = ["dep:rand_chacha"]
+
+
 mock-history = ["mock-referral-history", "mock-wallet-history"]
 oauth-ssr = ["dep:openidconnect"]
 oauth-hydrate = []
@@ -150,6 +149,12 @@ release-lib = [
     "ga4",
 ]
 
+mock-wallet-history = ["dep:rand_chacha"]
+[patch.crates-io]
+# release with hyper v1 is not out yet
+
+
+reqwest = { git = "https://github.com/seanmonstar/reqwest.git", rev = "e3192638518d577759dd89da489175b8f992b12f" }
 [profile.wasm-release]
 inherits = "release"
 opt-level = 'z'

@@ -3,6 +3,9 @@ use crate::{
     component::feed_popup::FeedPopUp,
     state::{auth::account_connected_reader, local_storage::use_referrer_store},
 };
+use std::cell::Cell;
+
+use crate::canister::utils::{bg_url, mp4_url};
 use leptos::{html::Video, *};
 
 use super::{overlay::VideoDetailsOverlay, PostViewCtx};
@@ -40,19 +43,22 @@ pub fn BgView(idx: usize, children: Children) -> impl IntoView {
             <Show when=move || { idx == 4 && !is_connected.get() && show_login_popup.get() }>
                 <FeedPopUp
                     on_click=move |_| set_show_login_popup.set(false)
-                    header_text = "Your Rewards are
-                                    Waiting!"
-                    body_text = "SignUp/Login to save your progress and claim your rewards."
-                    login_text = "Login"
+                    header_text="Your Rewards are
+                    Waiting!"
+                    body_text="SignUp/Login to save your progress and claim your rewards."
+                    login_text="Login"
                 />
             </Show>
-            <Show when=move || { referrer_store.get().is_some() && idx == 0 && !is_connected.get() && show_refer_login_popup.get() }>
+            <Show when=move || {
+                referrer_store.get().is_some() && idx == 0 && !is_connected.get()
+                    && show_refer_login_popup.get()
+            }>
                 <FeedPopUp
                     on_click=move |_| set_show_refer_login_popup.set(false)
-                    header_text = "Claim Your Referral
-                                    Rewards Now!"
-                    body_text = "SignUp from this link to get 500 COYNs as referral rewards."
-                    login_text = "Sign Up"
+                    header_text="Claim Your Referral
+                    Rewards Now!"
+                    body_text="SignUp from this link to get 500 COYNs as referral rewards."
+                    login_text="Sign Up"
                 />
             </Show>
             {move || post().map(|post| view! { <VideoDetailsOverlay post/> })}
@@ -106,30 +112,42 @@ pub fn VideoView(idx: usize, muted: RwSignal<bool>) -> impl IntoView {
     // Handle video half completed action
     #[cfg(feature = "hydrate")]
     {
-        use std::cell::Cell;
-        use wasm_bindgen::closure::Closure;
+        use gtag_js::DataLayer;
+        use serde_json::json;
         use wasm_bindgen::JsCast;
+        use web_sys::console;
 
-        use web_sys::{console, AddEventListenerOptions};
-
-        let ran = Cell::new(false);
+        let (has_halfway_action_been_performed, set_has_halfway_action_been_performed) =
+            create_signal(false);
 
         create_effect(move |_| {
             let vid = container_ref()?;
 
-            let closure = Callback::from(move |e: web_sys::Event| {
+            let callback = move |e: web_sys::Event| {
+                if has_halfway_action_been_performed.get() {
+                    return;
+                }
+
                 let target = e.target().unwrap();
                 let video = target.unchecked_into::<web_sys::HtmlVideoElement>();
                 let duration = video.duration() as f64;
                 let current_time = video.current_time() as f64;
 
-                if current_time >= duration / 2.0 {
+                if current_time >= 3.0 {
                     // Video is halfway done, take action here
-                    console::log_1(&"Video halfway done!".into());
-                }
-            });
 
-            vid.on(ev::timeupdate, closure);
+                    let gtag_res = DataLayer::new("G-R925ERNSQE");
+                    let res = gtag_res.push_simple("video_viewed");
+                    // if let Err(e) = res {
+                    //     console::log_1(&format!("Error pushing to gtag: {}", e).into());
+                    // }
+
+                    console::log_1(&"video_viewed!".into());
+                    set_has_halfway_action_been_performed.set(true);
+                }
+            };
+
+            let _ = vid.on(ev::timeupdate, callback);
 
             Some(())
         });
