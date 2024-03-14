@@ -19,7 +19,7 @@ fn WorkButton(#[prop(into)] text: String, #[prop(into)] icon: icondata::Icon) ->
     view! {
         <div class="flex flex-col items-center gap-3">
             <div class="grid h-12 w-12 place-items-center rounded-sm bg-white/10">
-                <Icon class="text-orange-600 text-xl" icon=icon/>
+                <Icon class="text-primary-600 text-xl" icon=icon/>
             </div>
             <span class="text-xs md:text-sm">{text}</span>
         </div>
@@ -43,7 +43,7 @@ fn ReferLoaded(user_canister: Principal) -> impl IntoView {
         .unwrap_or_default();
 
     view! {
-        <div class="flex items-center w-fit rounded-full border-dashed border-2 p-3 gap-2 border-orange-500">
+        <div class="flex items-center w-fit rounded-full border-dashed border-2 p-3 gap-2 border-primary-500">
             <span class="text-md lg:text-lg text-ellipsis line-clamp-1">{refer_code}</span>
             <button on:click=move |_| _ = copy_to_clipboard(&refer_link)>
                 <Icon class="text-xl" icon=icondata::FaCopyRegular/>
@@ -55,7 +55,7 @@ fn ReferLoaded(user_canister: Principal) -> impl IntoView {
 #[component]
 fn ReferLoading() -> impl IntoView {
     view! {
-        <div class="flex border-dashed w-full md:w-2/12 p-1 h-10 md:h-12 border-2 border-orange-500 rounded-full">
+        <div class="flex border-dashed w-full md:w-2/12 p-1 h-10 md:h-12 border-2 border-primary-500 rounded-full">
             <span class="bg-white/30 w-full h-full animate-pulse rounded-full "></span>
         </div>
     }
@@ -136,7 +136,7 @@ fn TabSelector(
     };
     let selector_class = move || {
         if tab_idx == current_tab() {
-            "bg-orange-500 w-2 h-2 rounded-full"
+            "bg-primary-500 w-2 h-2 rounded-full"
         } else {
             "bg-transparent w-2 h-2 rounded-full"
         }

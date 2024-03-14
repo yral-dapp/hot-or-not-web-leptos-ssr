@@ -20,7 +20,7 @@ pub fn Airdrop() -> impl IntoView {
                     registrations. If you have already claimed the airdrop, please
                     login to see your status.
                 </div>
-                <button class="rounded-full w-full bg-orange-600 text-white text-xl px-4 py-2">
+                <button class="rounded-full w-full bg-primary-600 text-white text-xl px-4 py-2">
                     Login
                 </button>
                 <div class="flex flex-row gap-4 pt-4">

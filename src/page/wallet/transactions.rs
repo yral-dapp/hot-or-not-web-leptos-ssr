@@ -18,8 +18,8 @@ pub fn TransactionList(canisters: Canisters<true>) -> impl IntoView {
             <InfiniteScroller
                 provider
                 fetch_count=FETCH_CNT
-                children=|info, node_ref| {
-                    view! { <TxnView info node_ref=node_ref.unwrap_or_default()/> }
+                children=|info, _ref| {
+                    view! { <TxnView info _ref=_ref.unwrap_or_default()/> }
                 }
             />
 

@@ -40,11 +40,7 @@ fn MenuFooter() -> impl IntoView {
                 <Twitter/>
                 <IcWebsite/>
             </div>
-            <svg class="h-14" viewBox="0 0 228 49">
-                <path
-                    stroke="#F15A24"
-                    d="M224 .5H4C2 .5.5 2.1.5 4v41c0 2 1.6 3.5 3.5 3.5h220c2 0 3.5-1.6 3.5-3.5V4c0-2-1.6-3.5-3.5-3.5Z"
-                ></path>
+            <svg class="h-14 rounded-md outline outline-primary-600 outline-1" viewBox="0 0 228 49">
                 <path
                     fill="#F15A24"
                     d="M51.4 12c-3 0-6.1 1.5-9.5 4.5l-4 4.1 3.5 3.8c1-1.2 2.3-2.8 4-4.2 3-2.7 4.9-3.2 6-3.2 4.2 0 7.5 3.3 7.5 7.5 0 4.1-3.4 7.5-7.5 7.5h-.8c1.2.5 2.6.8 3.8.8 7.7 0 9.2-5 9.3-5.4l.3-3C64 17.7 58.3 12 51.4 12Z"
@@ -88,7 +84,7 @@ fn ProfileLoaded(user_details: ProfileDetails) -> impl IntoView {
                 {user_details.display_name_or_fallback()}
             </span>
             <a
-                class="text-orange-600 text-md"
+                class="text-primary-600 text-md"
                 href=format!("/profile/{}", user_details.username_or_principal())
             >
                 View Profile

@@ -37,7 +37,7 @@ fn LikeButton(
     let liked = create_rw_signal(initial_liked);
     let icon_class = Signal::derive(move || {
         if liked() {
-            TextProp::from("fill-[url(#like-gradient)]")
+            TextProp::from("fill-primary-600")
         } else {
             TextProp::from("text-white")
         }
@@ -77,12 +77,6 @@ fn LikeButton(
     });
 
     view! {
-        <svg style="width:0;height:0;position:absolute;" aria-hidden="true" focusable="false">
-            <linearGradient id="like-gradient" x2="0" y2="1">
-                <stop offset="0%" stop-color="#F74909"></stop>
-                <stop offset="100%" stop-color="#FEBE48"></stop>
-            </linearGradient>
-        </svg>
         <button
             on:click=move |_| like_toggle.dispatch(())
             class="drop-shadow-lg disabled:animate-pulse"
@@ -246,7 +240,7 @@ pub fn HomeButtonOverlay() -> impl IntoView {
     view! {
         <div class="flex w-full items-center justify-center pt-4 absolute top-0 left-0 bg-transparent z-[4]">
             <div class="rounded-full p-2 text-white bg-black/20">
-                <div class="flex flex-row items-center gap-1 py-2 px-6 rounded-full bg-orange-500">
+                <div class="flex flex-row items-center gap-1 py-2 px-6 rounded-full bg-primary-500">
                     <Icon class="w-3 h-3" icon=HomeSymbolFilled/>
                     <span>Home</span>
                 </div>

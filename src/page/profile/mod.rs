@@ -42,7 +42,7 @@ fn ListSwitcher(user_canister: Principal) -> impl IntoView {
     });
     let tab_class = move |tab_id: usize| {
         if tab_id == current_tab() {
-            "text-orange-500 border-b-4 border-orange-500 flex justify-center w-full py-2"
+            "text-primary-500 border-b-4 border-primary-500 flex justify-center w-full py-2"
         } else {
             "text-white flex justify-center w-full py-2"
         }
@@ -91,7 +91,7 @@ fn ProfileViewInner(user: ProfileDetails, user_canister: Principal) -> impl Into
                     <div class="text-sm flex flex-row">
                         <p class="text-white">@ {username_or_principal}</p>
                         <p class="text-white text-md font-bold px-1">{" • "}</p>
-                        <p class="text-orange-500">{earnings} Earnings</p>
+                        <p class="text-primary-500">{earnings} Earnings</p>
                     </div>
                 </div>
                 <div class="flex justify-around text-center rounded-full divide-x-2 divide-white/20 bg-white/10 p-4 my-4 w-7/12">

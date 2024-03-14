@@ -10,6 +10,7 @@ ENV LEPTOS_SITE_ROOT="site"
 
 ENV LEPTOS_ENV="production"
 ENV LEPTOS_SITE_ADDR="0.0.0.0:8080"
+ENV LEPTOS_HASH_FILES="true"
 EXPOSE 8080
 
 CMD ["./hot-or-not-web-leptos-ssr"]
