@@ -6,17 +6,18 @@ use candid::Principal;
 use crate::{
     canister::utils::bg_url,
     component::no_more_posts::NoMorePostsGraphic,
-    utils::profile::{posts_stream, PostDetails},
+    state::canisters::unauth_canisters,
+    utils::profile::{PostDetails, PostsProvider},
 };
 
 use super::ic::ProfileStream;
 
 #[component]
-fn Post(details: PostDetails) -> impl IntoView {
+fn Post(details: PostDetails, node_ref: NodeRef<html::Div>) -> impl IntoView {
     let bg = bg_url(&details.uid);
 
     view! {
-        <div class="relative w-full basis-1/3 md:basis-1/4 xl:basis-1/5">
+        <div _ref=node_ref class="relative w-full basis-1/3 md:basis-1/4 xl:basis-1/5">
             <div class="relative aspect-[9/16] h-full rounded-md border-white/20 m-2 border-[1px]">
                 <object type="image/jpeg" class="object-cover w-full h-full" data=bg>
                     <div class="h-full flex text-center flex-col place-content-center items-center text-white">
@@ -45,11 +46,16 @@ fn Post(details: PostDetails) -> impl IntoView {
 
 #[component]
 pub fn ProfilePosts(user_canister: Principal) -> impl IntoView {
-    let posts_stream = Box::pin(posts_stream(user_canister));
+    let provider = PostsProvider::new(unauth_canisters(), user_canister);
 
     view! {
-        <ProfileStream<PostDetails, _, _, _, _, _, _> empty_graphic=NoMorePostsGraphic empty_text="No Videos Uploaded yet".into() base_stream=posts_stream key=|d| d.id children=|details| view! {
-            <Post details />
-        } />
+        <ProfileStream
+            provider
+            empty_graphic=NoMorePostsGraphic
+            empty_text="No Videos Uploaded yet".into()
+            children=|details, node_ref| {
+                view! { <Post details=details node_ref=node_ref.unwrap_or_default()/> }
+            }
+        />
     }
 }

@@ -4,6 +4,8 @@ use leptos::*;
 use leptos_icons::Icon;
 use serde::{Deserialize, Serialize};
 
+use crate::component::infinite_scroller::KeyedData;
+
 #[derive(Clone, Copy)]
 pub enum TxnDirection {
     Bonus,
@@ -83,8 +85,16 @@ pub struct TxnInfo {
     pub id: u64,
 }
 
+impl KeyedData for TxnInfo {
+    type Key = u64;
+
+    fn key(&self) -> Self::Key {
+        self.id
+    }
+}
+
 #[component]
-pub fn TxnView(info: TxnInfo) -> impl IntoView {
+pub fn TxnView(info: TxnInfo, #[prop(optional)] node_ref: NodeRef<html::Div>) -> impl IntoView {
     let direction = TxnDirection::from(info.tag);
     let bal_res = format!(
         "{} {}",
@@ -93,7 +103,7 @@ pub fn TxnView(info: TxnInfo) -> impl IntoView {
     );
 
     view! {
-        <div class="grid grid-cols-2 grid-rows-1 w-full items-center py-4">
+        <div _ref=node_ref class="grid grid-cols-2 grid-rows-1 w-full items-center py-4">
             <div class="flex flex-row gap-2">
                 <div class="grid grid-cols-1 place-items-center place-content-center p-2 rounded-full text-orange-600 text-xl lg:text-2xl">
                     <Icon icon=info.tag.icondata()/>
@@ -117,21 +127,13 @@ pub fn TxnView(info: TxnInfo) -> impl IntoView {
 }
 
 pub mod provider {
-    use ic_agent::AgentError;
-
-    use crate::state::canisters::Canisters;
+    use crate::{component::infinite_scroller::CursoredDataProvider, state::canisters::Canisters};
 
     use super::*;
 
-    pub trait HistoryProvider {
-        async fn get_history(
-            &self,
-            start: u64,
-            end: u64,
-        ) -> Result<(Vec<TxnInfo>, bool), AgentError>;
-    }
-
-    pub fn get_history_provider(canisters: Canisters<true>) -> impl HistoryProvider {
+    pub fn get_history_provider(
+        canisters: Canisters<true>,
+    ) -> impl CursoredDataProvider<Data = TxnInfo> + Clone {
         #[cfg(feature = "mock-wallet-history")]
         {
             _ = canisters;
@@ -139,17 +141,19 @@ pub mod provider {
         }
         #[cfg(not(feature = "mock-wallet-history"))]
         {
-            canisters
+            canister::TxnHistory(canisters)
         }
     }
 
     #[cfg(not(feature = "mock-wallet-history"))]
     mod canister {
-        use super::*;
+        use super::{Canisters, CursoredDataProvider, TxnInfo, TxnTag};
         use crate::canister::individual_user_template::Result5;
         use crate::canister::individual_user_template::{
             HotOrNotOutcomePayoutEvent, MintEvent, TokenEvent,
         };
+        use crate::component::infinite_scroller::PageEntry;
+        use ic_agent::AgentError;
 
         fn event_to_txn(event: (u64, TokenEvent)) -> Option<TxnInfo> {
             let (amount, tag) = match event.1 {
@@ -185,40 +189,52 @@ pub mod provider {
             })
         }
 
-        impl HistoryProvider for Canisters<true> {
-            async fn get_history(
+        #[derive(Clone)]
+        pub struct TxnHistory(pub Canisters<true>);
+
+        impl CursoredDataProvider for TxnHistory {
+            type Data = TxnInfo;
+            type Error = AgentError;
+
+            async fn get_by_cursor(
                 &self,
-                start: u64,
-                end: u64,
-            ) -> Result<(Vec<TxnInfo>, bool), AgentError> {
-                let user = self.authenticated_user();
+                start: usize,
+                end: usize,
+            ) -> Result<PageEntry<TxnInfo>, AgentError> {
+                let user = self.0.authenticated_user();
                 let history = user
-                    .get_user_utility_token_transaction_history_with_pagination(start, end)
+                    .get_user_utility_token_transaction_history_with_pagination(
+                        start as u64,
+                        end as u64,
+                    )
                     .await?;
                 let history = match history {
                     Result5::Ok(v) => v,
                     Result5::Err(_) => vec![],
                 };
-                let list_end = history.len() < (end - start) as usize;
-                Ok((
-                    history.into_iter().filter_map(event_to_txn).collect(),
-                    list_end,
-                ))
+                let list_end = history.len() < (end - start);
+                Ok(PageEntry {
+                    data: history.into_iter().filter_map(event_to_txn).collect(),
+                    end: list_end,
+                })
             }
         }
     }
 
     #[cfg(feature = "mock-wallet-history")]
     mod mock {
+        use std::convert::Infallible;
+
         use rand_chacha::{
             rand_core::{RngCore, SeedableRng},
             ChaCha8Rng,
         };
 
-        use crate::utils::current_epoch;
+        use crate::{component::infinite_scroller::PageEntry, utils::current_epoch};
 
         use super::*;
 
+        #[derive(Clone, Copy)]
         pub struct MockHistoryProvider;
 
         fn tag_from_u32(v: u32) -> TxnTag {
@@ -232,23 +248,24 @@ pub mod provider {
             }
         }
 
-        impl HistoryProvider for MockHistoryProvider {
-            async fn get_history(
+        impl CursoredDataProvider for MockHistoryProvider {
+            type Data = TxnInfo;
+            type Error = Infallible;
+
+            async fn get_by_cursor(
                 &self,
-                from: u64,
-                end: u64,
-            ) -> Result<(Vec<TxnInfo>, bool), AgentError> {
+                from: usize,
+                end: usize,
+            ) -> Result<PageEntry<TxnInfo>, Infallible> {
                 let mut rand_gen = ChaCha8Rng::seed_from_u64(current_epoch().as_nanos() as u64);
-                Ok((
-                    (from..end)
-                        .map(|_| TxnInfo {
-                            amount: rand_gen.next_u64() % 3001,
-                            tag: tag_from_u32(rand_gen.next_u32()),
-                            id: rand_gen.next_u64(),
-                        })
-                        .collect(),
-                    false,
-                ))
+                let data = (from..end)
+                    .map(|_| TxnInfo {
+                        amount: rand_gen.next_u64() % 3001,
+                        tag: tag_from_u32(rand_gen.next_u32()),
+                        id: rand_gen.next_u64(),
+                    })
+                    .collect();
+                Ok(PageEntry { data, end: false })
             }
         }
     }

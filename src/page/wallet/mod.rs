@@ -3,15 +3,12 @@ mod txn;
 use leptos::*;
 
 use crate::{
-    component::bullet_loader::BulletLoader,
+    component::{bullet_loader::BulletLoader, infinite_scroller::CursoredDataProvider},
     state::canisters::authenticated_canisters,
     try_or_redirect_opt,
     utils::{profile::ProfileDetails, MockPartialEq},
 };
-use txn::{
-    provider::{get_history_provider, HistoryProvider},
-    TxnView,
-};
+use txn::{provider::get_history_provider, TxnView};
 
 #[component]
 fn FallbackGreeter() -> impl IntoView {
@@ -39,7 +36,7 @@ fn ProfileGreeter(details: ProfileDetails) -> impl IntoView {
     }
 }
 
-const RECENT_TXN_CNT: u64 = 10;
+const RECENT_TXN_CNT: usize = 10;
 
 #[component]
 fn BalanceFallback() -> impl IntoView {
@@ -69,9 +66,9 @@ pub fn Wallet() -> impl IntoView {
     let history_resource = create_resource(canisters_reader, move |canisters| async move {
         let canisters = try_or_redirect_opt!(canisters.0?);
         let history_prov = get_history_provider(canisters);
-        let (history, _) = history_prov.get_history(0, RECENT_TXN_CNT).await.ok()?;
+        let page = history_prov.get_by_cursor(0, RECENT_TXN_CNT).await.ok()?;
 
-        Some(history)
+        Some(page.data)
     });
 
     view! {
