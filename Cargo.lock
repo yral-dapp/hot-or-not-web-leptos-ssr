@@ -1811,6 +1811,7 @@ dependencies = [
  "futures",
  "gloo",
  "gob-cloudflare",
+ "gloo-events",
  "hex",
  "http 1.1.0",
  "ic-agent",

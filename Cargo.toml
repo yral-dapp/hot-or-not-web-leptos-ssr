@@ -94,6 +94,8 @@ hydrate = [
     "leptos_router/hydrate",
     "ic-agent/wasm-bindgen",
     "dep:web-sys",
+    "reqwest/native-tls",
+    "gloo-events",
 ]
 ssr = [
     "dep:axum",
