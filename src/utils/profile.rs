@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     canister::individual_user_template::{
-        BetDirection, BetOutcomeForBetMaker, PlacedBetDetail, PostDetailsForFrontend, Result4,
+        BetDirection, BetOutcomeForBetMaker, PlacedBetDetail, PostDetailsForFrontend, Result5,
         UserProfileDetailsForFrontend,
     },
     component::infinite_scroller::{CursoredDataProvider, KeyedData, PageEntry},
@@ -188,8 +188,8 @@ impl CursoredDataProvider for PostsProvider {
             .get_posts_of_this_user_profile_with_pagination(start as u64, end as u64)
             .await?;
         let posts = match posts {
-            Result4::Ok(v) => v,
-            Result4::Err(_) => {
+            Result5::Ok(v) => v,
+            Result5::Err(_) => {
                 log::warn!("failed to get posts");
                 return Ok(PageEntry {
                     data: vec![],

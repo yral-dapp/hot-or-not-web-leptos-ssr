@@ -15,6 +15,17 @@ type DefiniteCanisterSettings = record {
   memory_allocation : nat;
   compute_allocation : nat;
 };
+type HttpRequest = record {
+  url : text;
+  method : text;
+  body : vec nat8;
+  headers : vec record { text; text };
+};
+type HttpResponse = record {
+  body : vec nat8;
+  headers : vec record { text; text };
+  status_code : nat16;
+};
 type KnownPrincipalType = variant {
   CanisterIdUserIndex;
   CanisterIdPlatformOrchestrator;
@@ -93,22 +104,28 @@ service : (UserIndexInitArgs) -> {
       opt principal,
     ) -> (principal);
   get_subnet_available_capacity : () -> (nat64) query;
+  get_subnet_backup_capacity : () -> (nat64) query;
   get_user_canister_id_from_unique_user_name : (text) -> (opt principal) query;
   get_user_canister_id_from_user_principal_id : (principal) -> (
       opt principal,
     ) query;
+  get_user_canister_incl_avail_list : () -> (vec principal) query;
+  get_user_canister_list : () -> (vec principal) query;
   get_user_canister_status : (principal) -> (Result_1);
   get_user_index_canister_count : () -> (nat64) query;
   get_user_index_canister_cycle_balance : () -> (nat) query;
   get_well_known_principal_value : (KnownPrincipalType) -> (
       opt principal,
     ) query;
+  http_request : (HttpRequest) -> (HttpResponse) query;
   receive_data_from_backup_canister_and_restore_data_to_heap : (
       principal,
       principal,
       text,
     ) -> ();
+  reclaim_cycles_from_individual_canisters : () -> ();
   reset_user_individual_canisters : (vec principal) -> (Result);
+  return_cycles_to_platform_orchestrator_canister : () -> (Result);
   set_permission_to_upgrade_individual_canisters : (bool) -> (text);
   start_upgrades_for_individual_canisters : (text, vec nat8) -> (text);
   toggle_signups_enabled : () -> (Result_2);
@@ -116,9 +133,10 @@ service : (UserIndexInitArgs) -> {
       text,
       principal,
     ) -> (Result_3);
+  update_profile_owner_for_individual_canisters : () -> ();
   upgrade_specific_individual_user_canister_with_latest_wasm : (
       principal,
-      principal,
+      opt principal,
       opt CanisterInstallMode,
     ) -> (text);
   validate_reset_user_individual_canisters : (vec principal) -> (Result) query;

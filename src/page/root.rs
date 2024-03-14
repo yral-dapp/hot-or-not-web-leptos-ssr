@@ -12,7 +12,13 @@ async fn get_top_post_id() -> Result<Option<(Principal, u64)>, ServerFnError> {
     let post_cache = canisters.post_cache();
 
     let top_items = match post_cache
-        .get_top_posts_aggregated_from_canisters_on_this_network_for_hot_or_not_feed(0, 1)
+        .get_top_posts_aggregated_from_canisters_on_this_network_for_home_feed_cursor(
+            0,
+            1,
+            None,
+            None,
+            Some(post_cache::NsfwFilter::ExcludeNsfw),
+        )
         .await?
     {
         post_cache::Result_::Ok(items) => items,
