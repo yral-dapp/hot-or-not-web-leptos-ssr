@@ -60,77 +60,82 @@ pub fn ScrollingView<NV: Fn() -> NVR + Clone + 'static, NVR>(
     let scroll_root = create_node_ref::<html::Div>();
 
     view! {
-        <div
-            _ref=scroll_root
-            class="snap-mandatory snap-y overflow-y-scroll h-dvh w-dvw bg-black"
-            style:scroll-snap-points-y="repeat(100vh)"
-        >
-            <HomeButtonOverlay/>
-            <For
-                each=move || video_queue().into_iter().enumerate()
-                key=|(_, details)| (details.canister_id, details.post_id)
-                children=move |(queue_idx, _details)| {
-                    let container_ref = create_node_ref::<html::Div>();
-                    let next_videos = next_videos.clone();
-                    use_intersection_observer_with_options(
-                        container_ref,
-                        move |entry, _| {
-                            let Some(visible) = entry
-                                .first()
-                                .filter(|entry| entry.is_intersecting()) else {
+        <div class="h-full w-full overflow-hidden overflow-y-auto">
+            <div
+                _ref=scroll_root
+                class="snap-mandatory snap-y overflow-y-scroll h-dvh w-dvw bg-black"
+                style:scroll-snap-points-y="repeat(100vh)"
+            >
+                <HomeButtonOverlay/>
+                <For
+                    each=move || video_queue().into_iter().enumerate()
+                    key=|(_, details)| (details.canister_id, details.post_id)
+                    children=move |(queue_idx, _details)| {
+                        let container_ref = create_node_ref::<html::Div>();
+                        let next_videos = next_videos.clone();
+                        use_intersection_observer_with_options(
+                            container_ref,
+                            move |entry, _| {
+                                let Some(visible) = entry
+                                    .first()
+                                    .filter(|entry| entry.is_intersecting()) else {
+                                    return;
+                                };
+                                let rect = visible.bounding_client_rect();
+                                if rect.y() == rect.height()
+                                    || queue_idx == current_idx.get_untracked()
+                                {
+                                    return;
+                                }
+                                if video_queue.with_untracked(|q| q.len()).saturating_sub(queue_idx)
+                                    <= 10
+                                {
+                                    next_videos();
+                                }
+                                current_idx.set(queue_idx);
+                            },
+                            UseIntersectionObserverOptions::default()
+                                .thresholds(vec![0.83])
+                                .root(Some(scroll_root)),
+                        );
+                        create_effect(move |_| {
+                            let Some(container) = container_ref() else {
                                 return;
                             };
-                            let rect = visible.bounding_client_rect();
-                            if rect.y() == rect.height() || queue_idx == current_idx.get_untracked()
+                            if current_idx.get_untracked() == queue_idx
+                                && recovering_state.get_untracked()
                             {
-                                return;
+                                container.scroll_into_view();
+                                recovering_state.set(false);
                             }
-                            if video_queue.with_untracked(|q| q.len()).saturating_sub(queue_idx)
-                                <= 10
-                            {
-                                next_videos();
-                            }
-                            current_idx.set(queue_idx);
-                        },
-                        UseIntersectionObserverOptions::default()
-                            .thresholds(vec![0.83])
-                            .root(Some(scroll_root)),
-                    );
-                    create_effect(move |_| {
-                        let Some(container) = container_ref() else {
-                            return;
-                        };
-                        if current_idx.get_untracked() == queue_idx
-                            && recovering_state.get_untracked()
-                        {
-                            container.scroll_into_view();
-                            recovering_state.set(false);
+                        });
+                        let show_video = create_memo(move |_| {
+                            queue_idx.abs_diff(current_idx()) <= 20
+                        });
+                        view! {
+                            <div _ref=container_ref class="snap-always snap-end w-full h-full">
+                                <Show when=show_video>
+                                    <BgView idx=queue_idx>
+                                        <VideoView idx=queue_idx muted/>
+                                    </BgView>
+                                </Show>
+                            </div>
                         }
-                    });
-                    let show_video = create_memo(move |_| queue_idx.abs_diff(current_idx()) <= 20);
-                    view! {
-                        <div _ref=container_ref class="snap-always snap-end w-full h-full">
-                            <Show when=show_video>
-                                <BgView idx=queue_idx>
-                                    <VideoView idx=queue_idx muted/>
-                                </BgView>
-                            </Show>
-                        </div>
                     }
-                }
-            />
+                />
 
-            <Show when=muted>
-                <button
-                    class="fixed top-1/2 left-1/2 z-20 cursor-pointer"
-                    on:click=move |_| muted.set(false)
-                >
-                    <Icon
-                        class="text-white/80 animate-ping text-4xl"
-                        icon=icondata::BiVolumeMuteSolid
-                    />
-                </button>
-            </Show>
+                <Show when=muted>
+                    <button
+                        class="fixed top-1/2 left-1/2 z-20 cursor-pointer"
+                        on:click=move |_| muted.set(false)
+                    >
+                        <Icon
+                            class="text-white/80 animate-ping text-4xl"
+                            icon=icondata::BiVolumeMuteSolid
+                        />
+                    </button>
+                </Show>
+            </div>
         </div>
     }
 }
