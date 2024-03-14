@@ -5,7 +5,10 @@ use futures::{stream::FuturesOrdered, Stream, StreamExt};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    canister::{individual_user_template::PostDetailsForFrontend, post_cache},
+    canister::{
+        individual_user_template::PostDetailsForFrontend,
+        post_cache::{self, NsfwFilter},
+    },
     state::canisters::Canisters,
     utils::profile::propic_from_principal,
 };
@@ -145,11 +148,16 @@ impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
             .get_top_posts_aggregated_from_canisters_on_this_network_for_hot_or_not_feed_cursor(
                 self.cursor.start,
                 self.cursor.limit,
-                if allow_nsfw { None } else { Some(false) },
                 None,
+                None,
+                Some(if allow_nsfw {
+                    NsfwFilter::IncludeNsfw
+                } else {
+                    NsfwFilter::ExcludeNsfw
+                }),
             );
         // TODO: error handling
-        let post_cache::Result1::Ok(top_posts) = top_posts_fut.await? else {
+        let post_cache::Result_::Ok(top_posts) = top_posts_fut.await? else {
             return Err(PostViewError::Canister(
                 "canister refused to send posts".into(),
             ));
