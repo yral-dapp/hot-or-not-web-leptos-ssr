@@ -2,10 +2,7 @@ use crate::{
     component::{base_route::BaseRoute, nav::NavBar},
     error_template::{AppError, ErrorTemplate},
     page::{
-        about_us::AboutUs,
-        airdrop::Airdrop,
         err::ServerErrorPage,
-        faq::Faq,
         leaderboard::Leaderboard,
         menu::Menu,
         post_view::{PostView, PostViewCtx},
