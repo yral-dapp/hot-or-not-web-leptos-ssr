@@ -8,7 +8,8 @@ use leptos_icons::*;
 use leptos_router::*;
 
 use crate::{
-    component::{back_btn::BackButton, spinner::FullScreenSpinner}, state::canisters::unauth_canisters,
+    component::{back_btn::BackButton, spinner::FullScreenSpinner},
+    state::canisters::unauth_canisters,
     utils::profile::ProfileDetails,
 };
 

@@ -1,5 +1,5 @@
 use crate::{
-    component::{modal::Modal},
+    component::modal::Modal,
     state::canisters::{authenticated_canisters, Canisters},
     try_or_redirect_opt,
     utils::{
