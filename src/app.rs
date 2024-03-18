@@ -58,10 +58,7 @@ pub fn App() -> impl IntoView {
                         <Route path="/upload" view=UploadPostPage/>
                         <Route path="/error" view=ServerErrorPage/>
                         <Route path="/menu" view=Menu/>
-                        <Route path="/airdrop" view=Airdrop/>
                         <Route path="/refer-earn" view=ReferEarn/>
-                        <Route path="/about-us" view=AboutUs/>
-                        <Route path="/faq" view=Faq/>
                         <Route path="/terms-of-service" view=TermsOfService/>
                         <Route path="/privacy-policy" view=PrivacyPolicy/>
                         <Route path="/wallet" view=Wallet/>
