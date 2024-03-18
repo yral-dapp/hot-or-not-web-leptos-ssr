@@ -7,6 +7,8 @@ edition = "2021"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
+
+
 axum = { version = "0.7", optional = true, features = ["macros"] }
 console_error_panic_hook = "0.1"
 console_log = "1"
@@ -80,6 +82,7 @@ gob-cloudflare = { git = "https://github.com/go-bazzinga/gob-cloudflare", rev = 
 yral-metadata-client = { git = "https://github.com/go-bazzinga/yral-metadata", rev = "c2c5d254ac273681a66966d62b6f01785679a1be", default-features = false }
 yral-metadata-types = { git = "https://github.com/go-bazzinga/yral-metadata", rev = "c2c5d254ac273681a66966d62b6f01785679a1be", default-features = false }
 
+gloo-utils = { version = "0.2.0", features = ["serde"] }
 [build-dependencies]
 serde = { version = "1.0", features = ["derive"] }
 candid_parser = "0.1.1"
