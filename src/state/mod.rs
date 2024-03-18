@@ -2,6 +2,7 @@ pub mod auth;
 pub mod canisters;
 #[cfg(feature = "cloudflare")]
 pub mod cf;
+pub mod history;
 
 #[cfg(feature = "ssr")]
 pub mod server {

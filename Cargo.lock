@@ -546,6 +546,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "circular-buffer"
+version = "0.1.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "da987586004ae7c43b7df5e3f7693775068522e1086f8d9b2d74c778a0f43313"
+
+[[package]]
 name = "codespan-reporting"
 version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1514,6 +1520,7 @@ dependencies = [
  "axum",
  "candid",
  "candid_parser",
+ "circular-buffer",
  "console_error_panic_hook",
  "console_log",
  "convert_case",
