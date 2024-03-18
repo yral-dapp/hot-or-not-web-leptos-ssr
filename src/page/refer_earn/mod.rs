@@ -7,7 +7,7 @@ use leptos_router::create_query_signal;
 use leptos_use::use_window;
 
 use crate::{
-    component::{connect::ConnectLogin, title::Title},
+    component::{back_btn::BackButton, connect::ConnectLogin, title::Title},
     state::{auth::account_connected_reader, canisters::authenticated_canisters},
     try_or_redirect_opt,
     utils::web::copy_to_clipboard,
@@ -191,13 +191,22 @@ pub fn ReferEarn() -> impl IntoView {
     let (logged_in, _) = account_connected_reader();
 
     view! {
-        <div class="flex flex-col items-center min-w-dvw min-h-dvh bg-black pt-2 pb-12 gap-6 px-8">
-            <Title>
-                <span class="text-lg font-bold text-white">Refer & Earn</span>
+        <div class="flex flex-col items-center min-w-dvw min-h-dvh bg-black pt-2 pb-12 gap-6">
+            // <Title>
+            // <span class="text-lg font-bold text-white">Refer & Earn</span>
+            // </Title>
+            <Title justify_center=false>
+                <div class="flex flex-row justify-between">
+                    <BackButton/>
+                    <span class="text-lg font-bold text-white">Refer & Earn</span>
+                    <div></div>
+                </div>
             </Title>
-            <Show when=logged_in fallback=ReferView>
-                <ListSwitcher/>
-            </Show>
+            <div class="px-8">
+                <Show when=logged_in fallback=ReferView>
+                    <ListSwitcher/>
+                </Show>
+            </div>
         </div>
     }
 }

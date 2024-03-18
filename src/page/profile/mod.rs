@@ -8,7 +8,7 @@ use leptos_icons::*;
 use leptos_router::*;
 
 use crate::{
-    component::spinner::FullScreenSpinner, state::canisters::unauth_canisters,
+    component::{back_btn::BackButton, spinner::FullScreenSpinner}, state::canisters::unauth_canisters,
     utils::profile::ProfileDetails,
 };
 
@@ -79,7 +79,10 @@ fn ProfileViewInner(user: ProfileDetails, user_canister: Principal) -> impl Into
     let earnings = user.lifetime_earnings;
 
     view! {
-        <div class="min-h-screen bg-black overflow-y-scroll pt-10 pb-12">
+        <div class="min-h-screen bg-black text-white overflow-y-scroll pt-10 pb-12">
+            <div class="flex justify-start">
+                <BackButton/>
+            </div>
             <div class="grid grid-cols-1 gap-5 justify-normal justify-items-center w-full">
                 <img
                     class="h-24 w-24 rounded-full"

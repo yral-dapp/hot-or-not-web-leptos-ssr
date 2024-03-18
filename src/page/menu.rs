@@ -158,9 +158,7 @@ pub fn Menu() -> impl IntoView {
                 <Title justify_center=false>
                     <div class="flex flex-row justify-between">
                         <BackButton/>
-                        <div>
-                            <span class="font-bold text-2xl">Menu</span>
-                        </div>
+                        <span class="font-bold text-2xl">Menu</span>
                         <div></div>
                     </div>
                 </Title>

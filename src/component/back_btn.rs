@@ -15,7 +15,7 @@ pub fn BackButton() -> impl IntoView {
 
     view! {
         <button on:click=go_back class="items-center">
-            <Icon class="text-2xl justify-self-end" icon=icondata::AiLeftOutlined/>
+            <Icon icon=icondata::AiLeftOutlined/>
         </button>
     }
 }
