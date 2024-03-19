@@ -8,8 +8,8 @@ use leptos_icons::*;
 use leptos_router::*;
 
 use crate::{
-    component::{back_btn::BackButton, spinner::FullScreenSpinner},
-    state::canisters::unauth_canisters,
+    component::{back_btn::BackButton, connect::ConnectLogin, spinner::FullScreenSpinner},
+    state::{auth::account_connected_reader, canisters::unauth_canisters},
     utils::profile::ProfileDetails,
 };
 
@@ -78,6 +78,7 @@ fn ProfileViewInner(user: ProfileDetails, user_canister: Principal) -> impl Into
     let profile_pic = user.profile_pic_or_random();
     let display_name = user.display_name_or_fallback();
     let earnings = user.lifetime_earnings;
+    let (is_connected, _) = account_connected_reader();
 
     view! {
         <div class="min-h-screen bg-black text-white overflow-y-scroll pt-10 pb-12">
@@ -85,18 +86,31 @@ fn ProfileViewInner(user: ProfileDetails, user_canister: Principal) -> impl Into
                 <BackButton fallback="/".to_string()/>
             </div>
             <div class="grid grid-cols-1 gap-5 justify-normal justify-items-center w-full">
-                <img
-                    class="h-24 w-24 rounded-full"
-                    alt=username_or_principal.clone()
-                    src=profile_pic
-                />
-                <div class="flex flex-col text-center">
-                    <span class="text-md text-white font-bold">{display_name}</span>
-                    <div class="text-sm flex flex-row">
-                        <p class="text-white">@ {username_or_principal}</p>
-                        <p class="text-white text-md font-bold px-1">{" • "}</p>
-                        <p class="text-primary-500">{earnings} Earnings</p>
+                <div
+                    class="flex flex-row w-7/12"
+                    class:justify-center=is_connected()
+                    class:justify-between=!is_connected()
+                >
+                    <div class="flex flex-col items-center">
+                        <img
+                            class="h-24 w-24 rounded-full"
+                            alt=username_or_principal.clone()
+                            src=profile_pic
+                        />
+                        <div class="flex flex-col text-center">
+                            <span class="text-md text-white font-bold">{display_name}</span>
+                            <div class="text-sm flex flex-row">
+                                <p class="text-white">@ {username_or_principal}</p>
+                                <p class="text-white text-md font-bold px-1">{" • "}</p>
+                                <p class="text-primary-500">{earnings} Earnings</p>
+                            </div>
+                        </div>
                     </div>
+                    <Show when=move || !is_connected()>
+                        <div class="md:w-4/12 w-6/12 pt-5 mr-5">
+                            <ConnectLogin/>
+                        </div>
+                    </Show>
                 </div>
                 <div class="flex justify-around text-center rounded-full divide-x-2 divide-white/20 bg-white/10 p-4 my-4 w-7/12">
                     <Stat stat=user.followers_cnt info="Lovers"/>
