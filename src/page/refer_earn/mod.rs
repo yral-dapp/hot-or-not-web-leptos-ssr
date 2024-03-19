@@ -15,13 +15,11 @@ use crate::{
 use history::HistoryView;
 
 #[component]
-fn WorkButton(#[prop(into)] text: String, #[prop(into)] icon: icondata::Icon) -> impl IntoView {
+fn WorkButton(#[prop(into)] text: String, #[prop(into)] head: String) -> impl IntoView {
     view! {
         <div class="flex flex-col items-center gap-3">
-            <div class="grid h-12 w-12 place-items-center rounded-sm bg-white/10">
-                <Icon class="text-primary-600 text-xl" icon=icon/>
-            </div>
-            <span class="text-xs md:text-sm">{text}</span>
+            <div class="grid place-items-center rounded-sm font-semibold">{head}</div>
+            <span class="text-xs md:text-sm whitespace-pre-line">{text}</span>
         </div>
     }
 }
@@ -90,28 +88,32 @@ fn ReferView() -> impl IntoView {
         <div class="flex flex-col w-full h-full items-center text-white gap-10">
             <img class="shrink-0 h-40 select-none" src="/img/coins-stash.webp"/>
             <div class="flex flex-col w-full items-center gap-4 text-center">
-                <span class="font-bold text-2xl">Invite & Win 500 Tokens</span>
-                <span class="text-white/50 text-xs">
-                    Send a referral link to your friends via link and win tokens!
-                </span>
+                <span class="font-bold text-2xl">Invite & Win upto <br/> 500 Coyns</span>
             </div>
             <div class="flex flex-col w-full gap-4 px-4 text-white items-center">
-                <span class="uppercase text-sm md:text-md">Referral Code</span>
+                <span class="uppercase text-sm md:text-md">Referral Link</span>
                 <Show when=logged_in fallback=ConnectLogin>
                     <ReferCode/>
                 </Show>
             </div>
             <div class="flex flex-col w-full items-center gap-8 mt-4">
-                <span class="font-xl">How does it work?</span>
+                <span class="font-xl font-semibold">HOW IT WORKS?</span>
                 <div class="flex flex-row gap-8 text-center">
-                    <WorkButton text="Share your link with a friend" icon=icondata::TbShare3/>
                     <WorkButton
-                        text="Your friends download and log into the app"
-                        icon=icondata::TbCloudDownload
+                        text="Share your link
+                        with a friend"
+                        head="STEP 1"
                     />
                     <WorkButton
-                        text="You both win 500 tokens each"
-                        icon=icondata::AiDollarCircleOutlined
+                        text="Your friend uses
+                        the shared link 
+                        to login"
+                        head="STEP 2"
+                    />
+                    <WorkButton
+                        text="You both win
+                        500 Coyns each"
+                        head="STEP 3"
                     />
                 </div>
             </div>
@@ -192,9 +194,6 @@ pub fn ReferEarn() -> impl IntoView {
 
     view! {
         <div class="flex flex-col items-center min-w-dvw min-h-dvh bg-black pt-2 pb-12 gap-6">
-            // <Title>
-            // <span class="text-lg font-bold text-white">Refer & Earn</span>
-            // </Title>
             <Title justify_center=false>
                 <div class="flex flex-row justify-between">
                     <BackButton fallback="/menu".to_string()/>

@@ -178,11 +178,7 @@ pub fn Menu() -> impl IntoView {
             </div>
             <div class="flex flex-col py-12 px-8 gap-8 w-full text-lg">
                 <NsfwToggle/>
-                <MenuItem
-                    href="/refer-earn"
-                    text="Refer & Earn"
-                    icon=icondata::AiDollarCircleOutlined
-                />
+                <MenuItem href="/refer-earn" text="Refer & Earn" icon=icondata::AiGiftFilled/>
                 <MenuItem href=social::TELEGRAM text="Talk to the team" icon=icondata::BiWhatsapp/>
                 <MenuItem href="/terms-of-service" text="Terms of Service" icon=icondata::TbBook2/>
                 <MenuItem href="/privacy-policy" text="Privacy Policy" icon=icondata::TbLock/>
