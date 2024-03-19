@@ -17,11 +17,13 @@ fn NavIcon(
                 when=move || cur_selected() == idx
                 fallback=move || view! { <Icon icon=icon class="text-white h-6 w-6"/> }
             >
-                <Icon
-                    icon=filled_icon.unwrap_or(icon)
-                    class="text-primary-600 aspect-square h-6 w-6"
-                />
-                <div class="absolute bottom-0 bg-primary-600 py-1 w-6 blur-md"></div>
+                <div class="py-3 border-t-2 border-t-pink-500">
+                    <Icon
+                        icon=filled_icon.unwrap_or(icon)
+                        class="text-white aspect-square h-6 w-6"
+                    />
+                </div>
+            // <div class="absolute bottom-0 bg-primary-600 py-1 w-6 blur-md"></div>
             </Show>
         </a>
     }
@@ -38,11 +40,13 @@ fn TrophyIcon(idx: usize, cur_selected: Memo<usize>) -> impl IntoView {
                 }
             >
 
-                <Icon
-                    icon=TrophySymbolFilled
-                    class="text-primary-600 fill-none aspect-square h-6 w-6"
-                />
-                <div class="absolute bottom-0 bg-primary-600 py-1 w-6 blur-md"></div>
+                <div class="py-3 border-t-2 border-t-pink-500">
+                    <Icon
+                        icon=TrophySymbolFilled
+                        class="text-white fill-none aspect-square h-6 w-6"
+                    />
+                </div>
+            // <div class="absolute bottom-0 bg-primary-600 py-1 w-6 blur-md"></div>
             </Show>
         </a>
     }
@@ -51,26 +55,28 @@ fn TrophyIcon(idx: usize, cur_selected: Memo<usize>) -> impl IntoView {
 #[component]
 fn UploadIcon(idx: usize, cur_selected: Memo<usize>) -> impl IntoView {
     view! {
-        <a href="/upload" class="flex items-center justify-center rounded-fullt text-white">
-            <Show
-                when=move || cur_selected() == idx
-                fallback=move || {
-                    view! {
-                        <Icon
-                            icon=icondata::AiPlusOutlined
-                            class="rounded-full bg-primary-500 h-10 w-10 p-2"
-                        />
+        <div>
+            <a href="/upload" class="flex items-center justify-center rounded-fullt text-white">
+                <Show
+                    when=move || cur_selected() == idx
+                    fallback=move || {
+                        view! {
+                            <Icon
+                                icon=icondata::AiPlusOutlined
+                                class="rounded-full bg-transparent h-10 w-10 p-2 border-2"
+                            />
+                        }
                     }
-                }
-            >
+                >
 
-                <Icon
-                    icon=icondata::AiPlusOutlined
-                    class="bg-primary-600 rounded-full aspect-square h-10 w-10 p-2"
-                />
-                <div class="absolute bottom-0 bg-primary-600 py-1 w-10 blur-md"></div>
-            </Show>
-        </a>
+                    <Icon
+                        icon=icondata::AiPlusOutlined
+                        class="bg-primary-600 rounded-full aspect-square h-10 w-10 p-2"
+                    />
+                    <div class="absolute bottom-0 bg-primary-600 py-1 w-10 blur-md"></div>
+                </Show>
+            </a>
+        </div>
     }
 }
 
