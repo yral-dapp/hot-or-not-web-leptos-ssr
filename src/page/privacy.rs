@@ -1,15 +1,24 @@
 use leptos::*;
 
-use crate::component::title::Title;
+use crate::component::{back_btn::BackButton, title::Title};
 
 #[component]
 pub fn PrivacyPolicy() -> impl IntoView {
     view! {
-        <div class="w-screen min-h-screen px-8 bg-black pt-4 pb-12 text-white flex flex-col items-center">
-            <Title>
-                <span class="font-bold">Privacy Policy</span>
+        <div class="w-screen min-h-screen bg-black pt-4 pb-12 text-white flex flex-col items-center">
+            // <Title>
+            // <span class="font-bold">Privacy Policy</span>
+            // </Title>
+            <Title justify_center=false>
+                <div class="flex flex-row justify-between">
+                    <BackButton fallback="/menu".to_string()/>
+                    <div>
+                        <span class="font-bold">Privacy Policy</span>
+                    </div>
+                    <div></div>
+                </div>
             </Title>
-            <div class="flex h-full w-full flex-col space-y-8 overflow-hidden overflow-y-auto py-16">
+            <div class="px-8 flex h-full w-full flex-col space-y-8 overflow-hidden overflow-y-auto py-16">
                 <div class="text-xs">
                     {r#"Thanks for choosing "Hot or Not" . We are pleased to make our Service
                     available to you. Hot or Not includes the Hot or Not App, website,

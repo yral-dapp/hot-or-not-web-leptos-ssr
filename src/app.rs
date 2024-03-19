@@ -2,10 +2,7 @@ use crate::{
     component::{base_route::BaseRoute, nav::NavBar},
     error_template::{AppError, ErrorTemplate},
     page::{
-        about_us::AboutUs,
-        airdrop::Airdrop,
         err::ServerErrorPage,
-        faq::Faq,
         leaderboard::Leaderboard,
         menu::Menu,
         post_view::{PostView, PostViewCtx},
@@ -20,6 +17,7 @@ use crate::{
     state::{
         auth::{AuthClient, AuthState},
         canisters::Canisters,
+        history::HistoryCtx,
     },
 };
 use leptos::*;
@@ -35,6 +33,15 @@ pub fn App() -> impl IntoView {
     let auth_state = AuthState::default();
     provide_context(auth_state.clone());
     provide_context(AuthClient::default());
+
+    // History Tracking
+    let history_ctx = HistoryCtx::default();
+    provide_context(history_ctx.clone());
+    create_effect(move |_| {
+        let loc = use_location();
+        history_ctx.push(&loc.pathname.get());
+        // leptos::logging::log!("{}", history_ctx.log_history());
+    });
 
     view! {
         <Stylesheet id="leptos" href="/pkg/hot-or-not-leptos-ssr.css"/>
@@ -58,10 +65,7 @@ pub fn App() -> impl IntoView {
                         <Route path="/upload" view=UploadPostPage/>
                         <Route path="/error" view=ServerErrorPage/>
                         <Route path="/menu" view=Menu/>
-                        <Route path="/airdrop" view=Airdrop/>
                         <Route path="/refer-earn" view=ReferEarn/>
-                        <Route path="/about-us" view=AboutUs/>
-                        <Route path="/faq" view=Faq/>
                         <Route path="/terms-of-service" view=TermsOfService/>
                         <Route path="/privacy-policy" view=PrivacyPolicy/>
                         <Route path="/wallet" view=Wallet/>

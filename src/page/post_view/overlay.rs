@@ -1,5 +1,5 @@
 use crate::{
-    component::{modal::Modal, nav_icons::HomeSymbolFilled},
+    component::modal::Modal,
     state::canisters::{authenticated_canisters, Canisters},
     try_or_redirect_opt,
     utils::{
@@ -205,9 +205,7 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
                         </span>
                     </div>
                 </div>
-                <span class="text-sm md:text-md ms-2 md:ms-4 w-full truncate">
-                    {post.description}
-                </span>
+                <ExpandableText description=post.description/>
             </div>
             <div class="flex flex-col gap-6 items-end w-3/12 text-4xl">
                 <a href="/refer-earn">
@@ -236,13 +234,32 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
 }
 
 #[component]
+fn ExpandableText(description: String) -> impl IntoView {
+    let truncated = create_rw_signal(true);
+
+    view! {
+        <span
+            class="text-sm md:text-md ms-2 md:ms-4 w-full"
+            class:truncate=truncated
+
+            on:click=move |_| truncated.update(|e| *e = !*e)
+        >
+            {description}
+        </span>
+    }
+}
+
+#[component]
 pub fn HomeButtonOverlay() -> impl IntoView {
     view! {
         <div class="flex w-full items-center justify-center pt-4 absolute top-0 left-0 bg-transparent z-[4]">
+            // <div class="flex justify-center items-center">
+            // <img src="/img/yral-logo.svg" alt="Logo"/>
+            // </div>
             <div class="rounded-full p-2 text-white bg-black/20">
-                <div class="flex flex-row items-center gap-1 py-2 px-6 rounded-full bg-primary-500">
-                    <Icon class="w-3 h-3" icon=HomeSymbolFilled/>
-                    <span>Home</span>
+                <div class="flex flex-row items-center gap-1 py-2 px-6 rounded-full">
+                    // <Icon class="w-3 h-3" icon=HomeSymbolFilled/>
+                    <span class="font-sans font-semibold">Home Feed</span>
                 </div>
             </div>
         </div>

@@ -1,15 +1,22 @@
 use leptos::*;
 
-use crate::component::title::Title;
+use crate::component::{back_btn::BackButton, title::Title};
 
 #[component]
 pub fn TermsOfService() -> impl IntoView {
     view! {
-        <div class="w-screen min-h-screen px-8 bg-black pt-4 pb-12 text-white flex flex-col items-center">
-            <Title>
-                <span class="font-bold">Terms of service</span>
+        <div class="w-screen min-h-screen bg-black pt-4 pb-12 text-white flex flex-col items-center">
+            // <Title>
+            // <span class="font-bold">Terms of service</span>
+            // </Title>
+            <Title justify_center=false>
+                <div class="flex flex-row justify-between">
+                    <BackButton fallback="/menu".to_string()/>
+                    <span class="font-bold">Terms of service</span>
+                    <div></div>
+                </div>
             </Title>
-            <div class="flex h-full w-full flex-col space-y-8 overflow-hidden overflow-y-auto py-16">
+            <div class="px-8 flex h-full w-full flex-col space-y-8 overflow-hidden overflow-y-auto py-16">
                 <div class="flex flex-col space-y-2">
                     <div class="text-sm">1. Introductions</div>
                     <div class="text-xs">

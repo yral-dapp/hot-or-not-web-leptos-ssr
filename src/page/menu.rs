@@ -1,3 +1,4 @@
+use crate::component::back_btn::BackButton;
 use crate::component::title::Title;
 use crate::component::{connect::ConnectLogin, social::*, toggle::Toggle};
 use crate::consts::{social, NSFW_TOGGLE_STORE};
@@ -154,8 +155,12 @@ pub fn Menu() -> impl IntoView {
     view! {
         <div class="min-h-screen w-full flex flex-col text-white pt-2 pb-12 bg-black items-center divide-y divide-white/10">
             <div class="flex flex-col items-center w-full gap-20 pb-16">
-                <Title>
-                    <span class="font-bold text-2xl">Menu</span>
+                <Title justify_center=false>
+                    <div class="flex flex-row justify-between">
+                        <BackButton fallback="/".to_string()/>
+                        <span class="font-bold text-2xl">Menu</span>
+                        <div></div>
+                    </div>
                 </Title>
                 <div class="flex flex-col items-center w-full gap-4">
                     <div class="flex flex-row justify-center gap-4 items-center px-4 w-full">
@@ -165,19 +170,19 @@ pub fn Menu() -> impl IntoView {
                         <div class="w-full px-8 md:w-4/12 xl:w-2/12">
                             <ConnectLogin/>
                         </div>
+                        <div class="w-full px-8 text-center text-sm font-sans">
+                            {r#"Sign up to safeguard your account and unlock exclusive features."#}
+                        </div>
                     </Show>
                 </div>
             </div>
             <div class="flex flex-col py-12 px-8 gap-8 w-full text-lg">
                 <NsfwToggle/>
-                <MenuItem href="/airdrop" text="Airdrop" icon=icondata::TbMoneybag/>
                 <MenuItem
                     href="/refer-earn"
                     text="Refer & Earn"
                     icon=icondata::AiDollarCircleOutlined
                 />
-                <MenuItem href="/about-us" text="About us" icon=icondata::AiInfoCircleOutlined/>
-                <MenuItem href="/faq" text="FAQs" icon=icondata::TbMessageDots/>
                 <MenuItem href=social::TELEGRAM text="Talk to the team" icon=icondata::BiWhatsapp/>
                 <MenuItem href="/terms-of-service" text="Terms of Service" icon=icondata::TbBook2/>
                 <MenuItem href="/privacy-policy" text="Privacy Policy" icon=icondata::TbLock/>

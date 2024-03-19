@@ -54,6 +54,7 @@ web-sys = { version = "0.3", features = [
     "Navigator",
     "ShareData",
 ], optional = true }
+circular-buffer = "0.1.7"
 
 [build-dependencies]
 serde = { version = "1.0", features = ["derive"] }
