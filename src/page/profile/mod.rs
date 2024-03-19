@@ -82,7 +82,7 @@ fn ProfileViewInner(user: ProfileDetails, user_canister: Principal) -> impl Into
 
     view! {
         <div class="min-h-screen bg-black text-white overflow-y-scroll pt-10 pb-12">
-            <div class="flex justify-start">
+            <div class="flex ml-4">
                 <BackButton fallback="/".to_string()/>
             </div>
             <div class="grid grid-cols-1 gap-5 justify-normal justify-items-center w-full">
