@@ -1,26 +1,23 @@
 use circular_buffer::CircularBuffer;
-use leptos::{RwSignal, SignalGet, SignalUpdate};
+use leptos::{RwSignal, SignalGet, SignalUpdate, SignalWith};
 
 #[derive(Clone)]
 pub struct HistoryCtx {
     history: RwSignal<CircularBuffer<3, String>>,
-    fallback: String,
 }
 
 impl Default for HistoryCtx {
     fn default() -> Self {
         Self {
             history: RwSignal::new(CircularBuffer::<3, String>::new()),
-            fallback: "/".to_string(),
         }
     }
 }
 
 impl HistoryCtx {
-    pub fn new(fallback: String) -> Self {
+    pub fn new() -> Self {
         Self {
             history: RwSignal::new(CircularBuffer::<3, String>::new()),
-            fallback,
         }
     }
 
@@ -28,20 +25,19 @@ impl HistoryCtx {
         self.history.update(move |h| h.push_back(url.to_string()));
     }
 
-    pub fn back(&self) -> Option<String> {
+    pub fn back(&self, fallback: &str) -> String {
         self.history.update(move |h| {
             h.pop_back();
         });
 
-        let history = self.history.get();
-        let url = history.back();
-        if url.is_none() {
-            Some(self.fallback.clone())
-        } else {
+        let url = self.history.with(|h| h.back().cloned());
+        if let Some(url) = url {
             self.history.update(move |h| {
                 h.pop_back();
             });
-            url.cloned()
+            url
+        } else {
+            fallback.to_string()
         }
     }
 

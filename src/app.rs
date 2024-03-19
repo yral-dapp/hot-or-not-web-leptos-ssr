@@ -33,14 +33,13 @@ pub fn App() -> impl IntoView {
     let auth_state = AuthState::default();
     provide_context(auth_state.clone());
     provide_context(AuthClient::default());
-    provide_context(HistoryCtx::default());
 
     // History Tracking
+    let history_ctx = HistoryCtx::default();
+    provide_context(history_ctx.clone());
     create_effect(move |_| {
-        let history_ctx = expect_context::<HistoryCtx>();
         let loc = use_location();
         history_ctx.push(&loc.pathname.get());
-
         // leptos::logging::log!("{}", history_ctx.log_history());
     });
 

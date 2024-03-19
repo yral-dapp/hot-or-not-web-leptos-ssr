@@ -235,14 +235,14 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
 
 #[component]
 fn ExpandableText(description: String) -> impl IntoView {
-    let expanded = create_rw_signal(false);
+    let truncated = create_rw_signal(true);
 
     view! {
         <span
             class="text-sm md:text-md ms-2 md:ms-4 w-full"
-            class:truncate=move || !expanded.get()
+            class:truncate=truncated
 
-            on:click=move |_| expanded.update(|e| *e = !*e)
+            on:click=move |_| truncated.update(|e| *e = !*e)
         >
             {description}
         </span>
