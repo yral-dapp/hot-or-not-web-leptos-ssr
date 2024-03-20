@@ -3,8 +3,8 @@ mod txn;
 use leptos::*;
 
 use crate::{
-    component::{bullet_loader::BulletLoader, infinite_scroller::CursoredDataProvider},
-    state::canisters::authenticated_canisters,
+    component::{back_btn::BackButton, bullet_loader::BulletLoader, connect::ConnectLogin, infinite_scroller::CursoredDataProvider, title::Title},
+    state::{auth::account_connected_reader, canisters::authenticated_canisters},
     try_or_redirect_opt,
     utils::{profile::ProfileDetails, MockPartialEq},
 };
@@ -70,63 +70,78 @@ pub fn Wallet() -> impl IntoView {
 
         Some(page.data)
     });
+    let (is_connected, _) = account_connected_reader();
 
     view! {
-        <div class="flex flex-col w-dvw min-h-dvh bg-black gap-12 px-4 pt-4 pb-12">
-            <div class="grid grid-cols-2 grid-rows-1 items-center w-full">
-                <Suspense fallback=FallbackGreeter>
-                    {move || {
-                        profile_details
-                            .get()
-                            .flatten()
-                            .map(|details| view! { <ProfileGreeter details/> })
-                            .unwrap_or_else(|| view! { <FallbackGreeter/> })
-                    }}
-
-                </Suspense>
-            </div>
-            <div class="flex flex-col w-full items-center mt-12 text-white">
-                <span class="text-md lg:text-lg uppercase">Your Coin Balance</span>
-                <Suspense fallback=BalanceFallback>
-                    {move || {
-                        balance_resource
-                            .get()
-                            .flatten()
-                            .map(|bal| view! { <span class="text-xl lg:text-2xl">{bal}</span> })
-                            .unwrap_or_else(|| {
-                                view! {
-                                    <span class="flex justify-center w-full">
-                                        <BalanceFallback/>
-                                    </span>
-                                }
-                            })
-                    }}
-
-                </Suspense>
-            </div>
-            <div class="flex flex-col w-full gap-2">
-                <div class="flex flex-row w-full items-end justify-between">
-                    <span class="text-white text-sm md:text-md">Recent Transactions</span>
-                    <a href="/transactions" class="text-white/50 text-md md:text-lg">
-                        See All
-                    </a>
+        <div>
+            <div class="top-0 bg-black text-white w-full items-center z-50 pt-4 pl-4">
+                <div class="flex flex-row justify-start">
+                    <BackButton fallback="/".to_string()/>
                 </div>
-                <div class="flex flex-col divide-y divide-white/10">
-                    <Suspense fallback=BulletLoader>
+            </div>
+            <div class="flex flex-col w-dvw min-h-dvh bg-black gap-4 px-4 pt-4 pb-12">
+                <div class="grid grid-cols-2 grid-rows-1 items-center w-full">
+                    <Suspense fallback=FallbackGreeter>
                         {move || {
-                            history_resource
+                            profile_details
                                 .get()
                                 .flatten()
-                                .map(|history| {
-                                    history
-                                        .into_iter()
-                                        .map(|info| view! { <TxnView info/> })
-                                        .collect::<Vec<_>>()
-                                })
-                                .unwrap_or_else(|| vec![view! { <BulletLoader/> }])
+                                .map(|details| view! { <ProfileGreeter details/> })
+                                .unwrap_or_else(|| view! { <FallbackGreeter/> })
                         }}
 
                     </Suspense>
+                </div>
+                <div class="flex flex-col w-full items-center mt-6 text-white">
+                    <span class="text-md lg:text-lg uppercase">Your Coyns Balance</span>
+                    <Suspense fallback=BalanceFallback>
+                        {move || {
+                            balance_resource
+                                .get()
+                                .flatten()
+                                .map(|bal| view! { <span class="text-xl lg:text-2xl">{bal}</span> })
+                                .unwrap_or_else(|| {
+                                    view! {
+                                        <span class="flex justify-center w-full">
+                                            <BalanceFallback/>
+                                        </span>
+                                    }
+                                })
+                        }}
+
+                    </Suspense>
+                </div>
+                <Show when=move || !is_connected()>
+                    <div class="flex flex-col w-full py-5 items-center">
+                        <div class="flex flex-row w-9/12 md:w-5/12 items-center">
+                            <ConnectLogin login_text="Login to claim your COYNs"/>
+                        </div>
+                    </div>
+                </Show>
+                <div class="flex flex-col w-full gap-2">
+                    <div class="flex flex-row w-full items-end justify-between">
+                        <span class="text-white text-sm md:text-md">Recent Transactions</span>
+                        <a href="/transactions" class="text-white/50 text-md md:text-lg">
+                            See All
+                        </a>
+                    </div>
+                    <div class="flex flex-col divide-y divide-white/10">
+                        <Suspense fallback=BulletLoader>
+                            {move || {
+                                history_resource
+                                    .get()
+                                    .flatten()
+                                    .map(|history| {
+                                        history
+                                            .into_iter()
+                                            .map(|info| view! { <TxnView info/> })
+                                            .collect::<Vec<_>>()
+                                    })
+                                    .unwrap_or_else(|| vec![view! { <BulletLoader/> }])
+                            }}
+
+                        </Suspense>
+                    </div>
                 </div>
             </div>
         </div>

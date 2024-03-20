@@ -1,7 +1,10 @@
 use leptos::*;
 
 use crate::{
-    component::{bullet_loader::BulletLoader, infinite_scroller::InfiniteScroller},
+    component::{
+        back_btn::BackButton, bullet_loader::BulletLoader, infinite_scroller::InfiniteScroller,
+        title::Title,
+    },
     state::canisters::{authenticated_canisters, Canisters},
     try_or_redirect_opt,
 };
@@ -33,7 +36,13 @@ pub fn Transactions() -> impl IntoView {
 
     view! {
         <div class="flex items-center flex-col w-dvw min-h-dvh gap-10 bg-black pt-4 px-4 pb-12">
-            <span class="text-xl text-white font-bold">Transactions</span>
+            <Title justify_center=false>
+                <div class="flex flex-row justify-between">
+                    <BackButton fallback="/wallet".to_string()/>
+                    <span class="text-xl text-white font-bold">Transactions</span>
+                    <div></div>
+                </div>
+            </Title>
             <Suspense fallback=BulletLoader>
                 {move || {
                     canisters

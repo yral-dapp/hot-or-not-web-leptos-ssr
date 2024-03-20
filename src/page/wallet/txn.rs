@@ -112,7 +112,7 @@ pub fn TxnView(info: TxnInfo, #[prop(optional)] _ref: NodeRef<html::Div>) -> imp
                     <span class="text-md md:text-lg font-semibold text-white">
                         {info.tag.to_text()}
                     </span>
-                    <span class="text-sm md:text-md text-white/50">{info.amount} Coins</span>
+                    <span class="text-sm md:text-md text-white/50">{info.amount} COYNs</span>
                 </div>
             </div>
             <span class=move || {
@@ -121,7 +121,7 @@ pub fn TxnView(info: TxnInfo, #[prop(optional)] _ref: NodeRef<html::Div>) -> imp
                 } else {
                     "text-red-600 justify-self-end"
                 }
-            }>{bal_res} Coins</span>
+            }>{bal_res} COYNs</span>
         </div>
     }
 }
