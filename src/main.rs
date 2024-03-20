@@ -22,6 +22,8 @@ pub async fn server_fn_handler(
     handle_server_fns_with_context(
         move || {
             provide_context(app_state.canisters.clone());
+            #[cfg(feature = "backend-admin")]
+            provide_context(app_state.admin_canisters.clone());
             #[cfg(feature = "cloudflare")]
             provide_context(app_state.cloudflare.clone());
         },
@@ -39,6 +41,8 @@ pub async fn leptos_routes_handler(
         app_state.routes.clone(),
         move || {
             provide_context(app_state.canisters.clone());
+            #[cfg(feature = "backend-admin")]
+            provide_context(app_state.admin_canisters.clone());
             #[cfg(feature = "cloudflare")]
             provide_context(app_state.cloudflare.clone());
         },
@@ -54,6 +58,20 @@ fn init_cf() -> hot_or_not_web_leptos_ssr::state::cf::CfApi<true> {
         panic!("Cloudlflare credentials are required: CF_TOKEN, CF_ACCOUNT_ID");
     };
     CfApi::<true>::new(creds)
+}
+
+#[cfg(feature = "backend-admin")]
+fn init_admin_canisters() -> hot_or_not_web_leptos_ssr::state::admin_canisters::AdminCanisters {
+    use hot_or_not_web_leptos_ssr::state::admin_canisters::AdminCanisters;
+    use ic_agent::identity::BasicIdentity;
+    use std::env;
+
+    let admin_id_pem =
+        env::var("BACKEND_ADMIN_IDENTITY").expect("`BACKEND_ADMIN_IDENTITY` is required!");
+    let admin_id_pem_by = admin_id_pem.as_bytes();
+    let admin_id =
+        BasicIdentity::from_pem(admin_id_pem_by).expect("Invalid `BACKEND_ADMIN_IDENTITY`");
+    AdminCanisters::new(admin_id)
 }
 
 #[tokio::main]
@@ -74,6 +92,8 @@ async fn main() {
         leptos_options,
         canisters: Canisters::default(),
         routes: routes.clone(),
+        #[cfg(feature = "backend-admin")]
+        admin_canisters: init_admin_canisters(),
         #[cfg(feature = "cloudflare")]
         cloudflare: init_cf(),
     };
