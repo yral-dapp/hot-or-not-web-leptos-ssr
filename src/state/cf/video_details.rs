@@ -1,6 +1,5 @@
 use http::Method;
-use serde::{de, Deserialize, Deserializer, Serialize};
-use serde_json::Value;
+use serde::{Deserialize, Serialize};
 
 use super::{CfReqAuth, CfReqMeta};
 

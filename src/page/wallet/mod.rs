@@ -3,7 +3,10 @@ mod txn;
 use leptos::*;
 
 use crate::{
-    component::{back_btn::BackButton, bullet_loader::BulletLoader, connect::ConnectLogin, infinite_scroller::CursoredDataProvider, title::Title},
+    component::{
+        back_btn::BackButton, bullet_loader::BulletLoader, connect::ConnectLogin,
+        infinite_scroller::CursoredDataProvider,
+    },
     state::{auth::account_connected_reader, canisters::authenticated_canisters},
     try_or_redirect_opt,
     utils::{profile::ProfileDetails, MockPartialEq},
