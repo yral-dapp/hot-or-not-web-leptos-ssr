@@ -92,7 +92,7 @@ fn ReferView() -> impl IntoView {
             </div>
             <div class="flex flex-col w-full gap-4 px-4 text-white items-center">
                 <span class="uppercase text-sm md:text-md">Referral Link</span>
-                <Show when=logged_in fallback=ConnectLogin>
+                <Show when=logged_in fallback=|| view! { <ConnectLogin/> }>
                     <ReferCode/>
                 </Show>
             </div>

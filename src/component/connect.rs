@@ -13,7 +13,9 @@ use crate::{
 };
 
 #[component]
-pub fn ConnectLogin() -> impl IntoView {
+pub fn ConnectLogin(
+    #[prop(optional, default = "Login")] login_text: &'static str,
+) -> impl IntoView {
     let (_, write_account_connected, _) =
         use_local_storage::<bool, FromToStringCodec>(ACCOUNT_CONNECTED_STORE);
     let logging_in = create_rw_signal(false);
@@ -69,7 +71,7 @@ pub fn ConnectLogin() -> impl IntoView {
             class="font-bold rounded-full bg-primary-600 py-2 md:py-3 w-full text-center text-lg md:text-xl text-white"
             disabled=move || logging_in() || auth.with(|a| a.is_none())
         >
-            {move || if logging_in() { "Connecting..." } else { "Login" }}
+            {move || if logging_in() { "Connecting..." } else { login_text }}
 
         </button>
     }

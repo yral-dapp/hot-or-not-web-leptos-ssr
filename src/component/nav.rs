@@ -15,8 +15,15 @@ fn NavIcon(
         <a href=href class="flex items-center justify-center">
             <Show
                 when=move || cur_selected() == idx
-                fallback=move || view! { <Icon icon=icon class="text-white h-6 w-6"/> }
+                fallback=move || {
+                    view! {
+                        <div class="py-3">
+                            <Icon icon=icon class="text-white h-6 w-6"/>
+                        </div>
+                    }
+                }
             >
+
                 <div class="py-3 border-t-2 border-t-pink-500">
                     <Icon
                         icon=filled_icon.unwrap_or(icon)
@@ -36,7 +43,11 @@ fn TrophyIcon(idx: usize, cur_selected: Memo<usize>) -> impl IntoView {
             <Show
                 when=move || cur_selected() == idx
                 fallback=move || {
-                    view! { <Icon icon=TrophySymbol class="text-white fill-none h-6 w-6"/> }
+                    view! {
+                        <div class="py-3">
+                            <Icon icon=TrophySymbol class="text-white fill-none h-6 w-6"/>
+                        </div>
+                    }
                 }
             >
 
@@ -55,28 +66,28 @@ fn TrophyIcon(idx: usize, cur_selected: Memo<usize>) -> impl IntoView {
 #[component]
 fn UploadIcon(idx: usize, cur_selected: Memo<usize>) -> impl IntoView {
     view! {
-        <div>
-            <a href="/upload" class="flex items-center justify-center rounded-fullt text-white">
-                <Show
-                    when=move || cur_selected() == idx
-                    fallback=move || {
-                        view! {
-                            <Icon
-                                icon=icondata::AiPlusOutlined
-                                class="rounded-full bg-transparent h-10 w-10 p-2 border-2"
-                            />
-                        }
+        <a href="/upload" class="flex items-center justify-center rounded-fullt text-white">
+            <Show
+                when=move || cur_selected() == idx
+                fallback=move || {
+                    view! {
+                        <Icon
+                            icon=icondata::AiPlusOutlined
+                            class="rounded-full bg-transparent h-10 w-10 border-2 p-2"
+                        />
                     }
-                >
+                }
+            >
 
+                <div class="border-t-2 border-transparent">
                     <Icon
                         icon=icondata::AiPlusOutlined
                         class="bg-primary-600 rounded-full aspect-square h-10 w-10 p-2"
                     />
-                    <div class="absolute bottom-0 bg-primary-600 py-1 w-10 blur-md"></div>
-                </Show>
-            </a>
-        </div>
+                    <div class="absolute bottom-0 bg-primary-600 w-10 blur-md"></div>
+                </div>
+            </Show>
+        </a>
     }
 }
 
