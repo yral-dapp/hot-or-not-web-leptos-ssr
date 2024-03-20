@@ -148,7 +148,6 @@ pub type AuthCanistersResource = Resource<
 async fn create_individual_canister(
     canisters: &Canisters<true>,
     delegation_id: DelegationIdentity,
-    referrer: Option<Principal>,
 ) -> Result<Principal, CanistersError> {
     // TODO: this is temporary
     let blacklisted = HashSet::from([Principal::from_text("rimrc-piaaa-aaaao-aaljq-cai").unwrap()]);
@@ -170,9 +169,7 @@ async fn create_individual_canister(
     let subnet_idx = subnet_idxs[(discrim % subnet_idxs.len() as u128) as usize];
     let idx = canisters.user_index_with(subnet_idx);
     let user_canister = idx
-        .get_requester_principals_canister_id_create_if_not_exists_and_optionally_allow_referrer(
-            referrer,
-        )
+        .get_requester_principals_canister_id_create_if_not_exists_and_optionally_allow_referrer()
         .await?;
 
     canisters
@@ -184,7 +181,6 @@ async fn create_individual_canister(
 
 pub async fn do_canister_auth(
     auth: Option<DelegationIdentity>,
-    referrer: Option<Principal>,
 ) -> Result<Option<Canisters<true>>, CanistersError> {
     let Some(delegation_identity) = auth else {
         return Ok(None);
@@ -200,7 +196,7 @@ pub async fn do_canister_auth(
     {
         user_canister
     } else {
-        create_individual_canister(&canisters, delegation_identity, referrer).await?
+        create_individual_canister(&canisters, delegation_identity).await?
     };
 
     Ok(Some(canisters))

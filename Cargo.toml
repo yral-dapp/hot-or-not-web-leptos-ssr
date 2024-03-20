@@ -31,7 +31,7 @@ ic-agent = { version = "0.33.0", default-features = false, features = [
 ] }
 serde-wasm-bindgen = { version = "0.6.3" }
 futures = "0.3.30"
-leptos-use = "0.10.2"
+leptos-use = { version = "0.10.5", features = ["serde"] }
 reqwest = { version = "0.11.24", default-features = false, features = [
     "json",
     "http2",
@@ -82,6 +82,7 @@ ssr = [
     "leptos_router/ssr",
     "dep:tracing",
     "leptos-use/ssr",
+    "leptos-use/axum",
     "reqwest/rustls-tls",
 ]
 # Fetch mock referral history instead of history via canister
@@ -90,8 +91,9 @@ mock-referral-history = ["rand_chacha", "k256/arithmetic"]
 mock-wallet-history = ["rand_chacha"]
 mock-history = ["mock-referral-history", "mock-wallet-history"]
 cloudflare = []
-release-bin = ["ssr", "cloudflare"]
-release-lib = ["hydrate", "cloudflare"]
+backend-admin = []
+release-bin = ["ssr", "cloudflare", "backend-admin"]
+release-lib = ["hydrate", "cloudflare", "backend-admin"]
 
 [patch.crates-io]
 # release with hyper v1 is not out yet

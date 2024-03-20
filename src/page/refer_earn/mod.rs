@@ -1,6 +1,7 @@
 mod history;
 
 use candid::Principal;
+use ic_agent::Identity;
 use leptos::*;
 use leptos_icons::*;
 use leptos_router::create_query_signal;
@@ -25,8 +26,8 @@ fn WorkButton(#[prop(into)] text: String, #[prop(into)] head: String) -> impl In
 }
 
 #[component]
-fn ReferLoaded(user_canister: Principal) -> impl IntoView {
-    let refer_code = user_canister.to_text();
+fn ReferLoaded(user_principal: Principal) -> impl IntoView {
+    let refer_code = user_principal.to_text();
     let window = use_window();
     let refer_link = window
         .as_ref()
@@ -35,7 +36,7 @@ fn ReferLoaded(user_canister: Principal) -> impl IntoView {
             Some(format!(
                 "{}/?user_refer={}",
                 origin,
-                user_canister.to_text()
+                user_principal.to_text()
             ))
         })
         .unwrap_or_default();
@@ -69,7 +70,8 @@ fn ReferCode() -> impl IntoView {
                 canisters()
                     .and_then(|canisters| {
                         let canisters = try_or_redirect_opt!(canisters)?;
-                        Some(view! { <ReferLoaded user_canister=canisters.user_canister()/> })
+                        let user_principal = canisters.identity().sender().unwrap();
+                        Some(view! { <ReferLoaded user_principal/> })
                     })
                     .unwrap_or_else(|| {
                         view! { <ReferLoading/> }

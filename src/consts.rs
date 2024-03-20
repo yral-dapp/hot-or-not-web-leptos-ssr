@@ -11,6 +11,7 @@ pub static AUTH_URL: Lazy<Url> =
     Lazy::new(|| Url::parse("https://hot-or-not-auth.fly.dev/").unwrap());
 pub const ACCOUNT_CONNECTED_STORE: &str = "account-connected";
 pub const NSFW_TOGGLE_STORE: &str = "nsfw-enabled";
+pub const REFERRER_STORE: &str = "referrer";
 pub static LEGACY_USER_INDEX: Lazy<Principal> =
     Lazy::new(|| Principal::from_text("rimrc-piaaa-aaaao-aaljq-cai").unwrap());
 
