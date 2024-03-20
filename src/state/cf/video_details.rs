@@ -1,5 +1,6 @@
 use http::Method;
-use serde::{Deserialize, Serialize};
+use serde::{de, Deserialize, Deserializer, Serialize};
+use serde_json::Value;
 
 use super::{CfReqAuth, CfReqMeta};
 
@@ -14,7 +15,7 @@ pub struct VideoDetails {
 pub struct VideoStatus {
     pub error_reason_code: Option<String>,
     pub error_reason_text: Option<String>,
-    pub pct_complete: usize,
+    pub pct_complete: Option<String>,
     pub state: String,
 }
 

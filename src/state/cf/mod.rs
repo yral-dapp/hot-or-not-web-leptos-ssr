@@ -91,13 +91,13 @@ impl<const AUTH: bool> CfApi<AUTH> {
         } else {
             reqb.json(&req)
         };
+
         let resp = reqb.send().await?;
         let status = resp.status();
         if status.is_success() {
             let res: CfSuccessRes<Req::JsonResponse> = resp.json().await?;
             return Ok(res.result);
         }
-
         let err: CfErrRes = resp.json().await?;
         Err(Error::Cloudflare(err.errors))
     }
