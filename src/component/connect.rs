@@ -13,7 +13,7 @@ use crate::{
             auth_state,
             types::{DelegationIdentity, SessionResponse},
         },
-        canisters::{do_canister_auth, unauth_canisters, Canisters},
+        canisters::{do_canister_auth, Canisters},
         local_storage::use_referrer_store,
     },
 };
@@ -29,6 +29,7 @@ async fn issue_referral_rewards(referee_canister: Principal) -> Result<(), Serve
 #[server]
 async fn mark_user_registered(user_principal: Principal) -> Result<(), ServerFnError> {
     use self::server_fn_impl::mark_user_registered_impl;
+    use crate::state::canisters::unauth_canisters;
 
     // TODO: verify that user principal is registered
     let canisters = unauth_canisters();
