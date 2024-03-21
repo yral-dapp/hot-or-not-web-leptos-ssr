@@ -6,7 +6,7 @@ use leptos::*;
 
 use crate::{
     canister::{
-        individual_user_template::IndividualUserTemplate,
+        individual_user_template::{IndividualUserTemplate, Result8},
         platform_orchestrator::{self, PlatformOrchestrator},
         post_cache::{self, PostCache},
         user_index::UserIndex,
@@ -198,6 +198,15 @@ pub async fn do_canister_auth(
     } else {
         create_individual_canister(&canisters, delegation_identity).await?
     };
+    let user = canisters.authenticated_user();
+    match user
+        .update_last_access_time()
+        .await
+        .map_err(|e| e.to_string())
+    {
+        Ok(Result8::Ok(_)) => (),
+        Err(e) | Ok(Result8::Err(e)) => log::warn!("Failed to update last access time: {}", e),
+    }
 
     Ok(Some(canisters))
 }
