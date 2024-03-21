@@ -83,12 +83,14 @@ yral-metadata-client = { git = "https://github.com/go-bazzinga/yral-metadata", r
 yral-metadata-types = { git = "https://github.com/go-bazzinga/yral-metadata", rev = "c2c5d254ac273681a66966d62b6f01785679a1be", default-features = false }
 
 gloo-utils = { version = "0.2.0", features = ["serde"] }
+circular-buffer = "0.1.7"
+
+
 [build-dependencies]
 serde = { version = "1.0", features = ["derive"] }
 candid_parser = "0.1.1"
 serde_json = "1.0.110"
 convert_case = "0.6.0"
-circular-buffer = "0.1.7"
 
 [features]
 hydrate = [
