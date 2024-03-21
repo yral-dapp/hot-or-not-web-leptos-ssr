@@ -22,44 +22,8 @@ use self::set_referrer_impl::set_referrer;
 
 #[server]
 async fn issue_referral_rewards(referee_canister: Principal) -> Result<(), ServerFnError> {
-    use self::server_fn_impl::issue_referral_reward_for;
-    use crate::canister::individual_user_template::KnownPrincipalType;
-    use crate::state::canisters::unauth_canisters;
-
-    let canisters = unauth_canisters();
-    let user = canisters.individual_user(referee_canister);
-
-    let user_details = user.get_profile_details().await?;
-    let ref_details = user_details
-        .referrer_details
-        .ok_or_else(|| ServerFnError::new("Referral details for user not found"))?;
-    let referrer = canisters.individual_user(ref_details.user_canister_id);
-
-    let referrer_index_principal = referrer
-        .get_well_known_principal_value(KnownPrincipalType::CanisterIdUserIndex)
-        .await?
-        .ok_or_else(|| ServerFnError::new("User index not present in referrer"))?;
-    let user_index_principal = user
-        .get_well_known_principal_value(KnownPrincipalType::CanisterIdUserIndex)
-        .await?
-        .ok_or_else(|| ServerFnError::new("User index not present in referee"))?;
-
-    issue_referral_reward_for(
-        user_index_principal,
-        referee_canister,
-        ref_details.profile_owner,
-        user_details.principal_id,
-    )
-    .await?;
-    issue_referral_reward_for(
-        referrer_index_principal,
-        ref_details.user_canister_id,
-        ref_details.profile_owner,
-        user_details.principal_id,
-    )
-    .await?;
-    log::info!("issued referral details");
-    Ok(())
+    use self::server_fn_impl::issue_referral_rewards_impl;
+    issue_referral_rewards_impl(referee_canister).await
 }
 
 #[server]
@@ -210,68 +174,123 @@ mod set_referrer_impl {
 
 #[cfg(feature = "ssr")]
 mod server_fn_impl {
-    use ic_agent::export::Principal;
-    use leptos::ServerFnError;
-
     #[cfg(feature = "backend-admin")]
-    pub async fn issue_referral_reward_for(
-        user_index: Principal,
-        user_canister_id: Principal,
-        referrer_principal_id: Principal,
-        referee_principal_id: Principal,
-    ) -> Result<(), ServerFnError> {
-        use crate::{canister::user_index::Result_, state::admin_canisters::admin_canisters};
-
-        let admin_cans = admin_canisters();
-        let user_idx = admin_cans.user_index_with(user_index);
-        let res = user_idx
-            .issue_rewards_for_referral(
-                user_canister_id,
-                referrer_principal_id,
-                referee_principal_id,
-            )
-            .await?;
-        if let Result_::Err(e) = res {
-            return Err(ServerFnError::new(format!(
-                "failed to issue referral reward {e}"
-            )));
-        }
-        Ok(())
-    }
-
+    pub use backend_admin::*;
     #[cfg(not(feature = "backend-admin"))]
-    pub async fn issue_referral_reward_for(
-        _user_index: Principal,
-        _user_canister_id: Principal,
-        _referrer_principal_id: Principal,
-        _referee_principal_id: Principal,
-    ) -> Result<(), ServerFnError> {
-        Ok(())
-    }
+    pub use mock::*;
 
     #[cfg(feature = "backend-admin")]
-    pub async fn mark_user_registered_impl(user_canister: Principal) -> Result<(), ServerFnError> {
+    mod backend_admin {
+        use candid::Principal;
+        use leptos::ServerFnError;
+
         use crate::{
-            canister::individual_user_template::{Result8, SessionType},
-            state::admin_canisters::admin_canisters,
+            canister::individual_user_template::KnownPrincipalType,
+            state::canisters::unauth_canisters,
         };
 
-        let admin_cans = admin_canisters();
-        let user = admin_cans.individual_user_for(user_canister);
-        user.update_session_type(SessionType::RegisteredSession)
-            .await
-            .map_err(ServerFnError::from)
-            .and_then(|res| match res {
-                Result8::Ok(_) => Ok(()),
-                Result8::Err(e) => Err(ServerFnError::new(format!(
-                    "failed to mark user as registered {e}"
-                ))),
-            })?;
-        Ok(())
+        pub async fn issue_referral_rewards_impl(
+            referee_canister: Principal,
+        ) -> Result<(), ServerFnError> {
+            let canisters = unauth_canisters();
+            let user = canisters.individual_user(referee_canister);
+
+            let user_details = user.get_profile_details().await?;
+            let ref_details = user_details
+                .referrer_details
+                .ok_or_else(|| ServerFnError::new("Referral details for user not found"))?;
+            let referrer = canisters.individual_user(ref_details.user_canister_id);
+
+            let referrer_index_principal = referrer
+                .get_well_known_principal_value(KnownPrincipalType::CanisterIdUserIndex)
+                .await?
+                .ok_or_else(|| ServerFnError::new("User index not present in referrer"))?;
+            let user_index_principal = user
+                .get_well_known_principal_value(KnownPrincipalType::CanisterIdUserIndex)
+                .await?
+                .ok_or_else(|| ServerFnError::new("User index not present in referee"))?;
+
+            issue_referral_reward_for(
+                user_index_principal,
+                referee_canister,
+                ref_details.profile_owner,
+                user_details.principal_id,
+            )
+            .await?;
+            issue_referral_reward_for(
+                referrer_index_principal,
+                ref_details.user_canister_id,
+                ref_details.profile_owner,
+                user_details.principal_id,
+            )
+            .await?;
+
+            Ok(())
+        }
+
+        async fn issue_referral_reward_for(
+            user_index: Principal,
+            user_canister_id: Principal,
+            referrer_principal_id: Principal,
+            referee_principal_id: Principal,
+        ) -> Result<(), ServerFnError> {
+            use crate::{canister::user_index::Result_, state::admin_canisters::admin_canisters};
+
+            let admin_cans = admin_canisters();
+            let user_idx = admin_cans.user_index_with(user_index);
+            let res = user_idx
+                .issue_rewards_for_referral(
+                    user_canister_id,
+                    referrer_principal_id,
+                    referee_principal_id,
+                )
+                .await?;
+            if let Result_::Err(e) = res {
+                return Err(ServerFnError::new(format!(
+                    "failed to issue referral reward {e}"
+                )));
+            }
+            Ok(())
+        }
+
+        pub async fn mark_user_registered_impl(
+            user_canister: Principal,
+        ) -> Result<(), ServerFnError> {
+            use crate::{
+                canister::individual_user_template::{Result8, SessionType},
+                state::admin_canisters::admin_canisters,
+            };
+
+            let admin_cans = admin_canisters();
+            let user = admin_cans.individual_user_for(user_canister);
+            user.update_session_type(SessionType::RegisteredSession)
+                .await
+                .map_err(ServerFnError::from)
+                .and_then(|res| match res {
+                    Result8::Ok(_) => Ok(()),
+                    Result8::Err(e) => Err(ServerFnError::new(format!(
+                        "failed to mark user as registered {e}"
+                    ))),
+                })?;
+            Ok(())
+        }
     }
 
     #[cfg(not(feature = "backend-admin"))]
-    pub async fn mark_user_registered_impl(_user_canister: Principal) -> Result<(), ServerFnError> {
-        Ok(())
+    mod mock {
+        use candid::Principal;
+        use leptos::ServerFnError;
+
+        pub async fn issue_referral_rewards_impl(
+            _referee_canister: Principal,
+        ) -> Result<(), ServerFnError> {
+            Ok(())
+        }
+
+        pub async fn mark_user_registered_impl(
+            _user_canister: Principal,
+        ) -> Result<(), ServerFnError> {
+            Ok(())
+        }
     }
 }
