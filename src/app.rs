@@ -14,7 +14,13 @@ use crate::{
         upload::UploadPostPage,
         wallet::{transactions::Transactions, Wallet},
     },
-    state::{auth::AuthState, canisters::Canisters, history::HistoryCtx},
+    state::{
+        auth::{AuthClient, AuthState},
+        canisters::{authenticated_canisters, unauth_canisters, Canisters},
+        history::HistoryCtx,
+    },
+    try_or_redirect_opt,
+    utils::{profile::ProfileDetails, MockPartialEq},
 };
 use leptos::*;
 use leptos_meta::*;
