@@ -90,13 +90,6 @@ mod history_provider {
         }
     }
 
-    #[derive(Default)]
-    pub struct HistoryRes {
-        pub details: Vec<HistoryDetails>,
-        pub cursor: u64,
-        pub list_end: bool,
-    }
-
     pub fn get_history_provider(
         canisters: Canisters<true>,
     ) -> impl CursoredDataProvider<Data = HistoryDetails> + Clone {
