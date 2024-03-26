@@ -125,6 +125,13 @@ impl PostDetails {
     }
 }
 
+type PostsStream<'a> = Pin<Box<dyn Stream<Item = Vec<Result<PostDetails, PostViewError>>> + 'a>>;
+
+pub struct FetchVideosRes<'a> {
+    pub posts_stream: PostsStream<'a>,
+    pub end: bool,
+}
+
 pub struct VideoFetchStream<'a, const AUTH: bool> {
     canisters: &'a Canisters<AUTH>,
     cursor: FetchCursor,
@@ -139,10 +146,7 @@ impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
         self,
         chunks: usize,
         allow_nsfw: bool,
-    ) -> Result<
-        Pin<Box<dyn Stream<Item = Vec<Result<PostDetails, PostViewError>>> + 'a>>,
-        PostViewError,
-    > {
+    ) -> Result<FetchVideosRes<'a>, PostViewError> {
         let post_cache = self.canisters.post_cache();
         let top_posts_fut = post_cache
             .get_top_posts_aggregated_from_canisters_on_this_network_for_hot_or_not_feed_cursor(
@@ -156,12 +160,22 @@ impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
                     NsfwFilter::ExcludeNsfw
                 }),
             );
-        // TODO: error handling
-        let post_cache::Result_::Ok(top_posts) = top_posts_fut.await? else {
-            return Err(PostViewError::Canister(
-                "canister refused to send posts".into(),
-            ));
+        let top_posts = match top_posts_fut.await? {
+            post_cache::Result_::Ok(top_posts) => top_posts,
+            post_cache::Result_::Err(post_cache::TopPostsFetchError::ReachedEndOfItemsList) => {
+                return Ok(FetchVideosRes {
+                    posts_stream: Box::pin(futures::stream::empty()),
+                    end: true,
+                })
+            }
+            post_cache::Result_::Err(_) => {
+                return Err(PostViewError::Canister(
+                    "canister refused to send posts".into(),
+                ))
+            }
         };
+
+        let end = top_posts.len() < self.cursor.limit as usize;
         let chunk_stream = top_posts
             .into_iter()
             .map(move |item| get_post_uid(self.canisters, item.publisher_canister_id, item.post_id))
@@ -169,6 +183,9 @@ impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
             .filter_map(|res| async { res.transpose() })
             .chunks(chunks);
 
-        Ok(Box::pin(chunk_stream))
+        Ok(FetchVideosRes {
+            posts_stream: Box::pin(chunk_stream),
+            end,
+        })
     }
 }

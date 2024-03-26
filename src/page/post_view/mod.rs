@@ -41,6 +41,7 @@ pub struct PostViewCtx {
     // but ideally this should be cleaned up
     video_queue: RwSignal<Vec<PostDetails>>,
     current_idx: RwSignal<usize>,
+    queue_end: RwSignal<bool>,
 }
 
 // Infinite Scrolling View
@@ -53,6 +54,7 @@ pub fn ScrollingView<NV: Fn() -> NVR + Clone + 'static, NVR>(
     let PostViewCtx {
         video_queue,
         current_idx,
+        queue_end,
         ..
     } = expect_context();
 
@@ -124,6 +126,12 @@ pub fn ScrollingView<NV: Fn() -> NVR + Clone + 'static, NVR>(
                     }
                 />
 
+                <Show when=queue_end>
+                    <div class="h-full w-full bg-inherit z-[21] flex snap-always snap-end justify-center items-center text-xl text-white/80">
+                        <span>You have reached the end!</span>
+                    </div>
+                </Show>
+
                 <Show when=muted>
                     <button
                         class="fixed top-1/2 left-1/2 z-20 cursor-pointer"
@@ -146,13 +154,14 @@ pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
         fetch_cursor,
         video_queue,
         current_idx,
+        queue_end,
     } = expect_context();
 
     let recovering_state = create_rw_signal(false);
     if let Some(initial_post) = initial_post {
         fetch_cursor.update_untracked(|f| {
             // we've already fetched the first posts
-            if f.start > 1 {
+            if f.start > 1 || queue_end.get_untracked() {
                 recovering_state.set(true);
                 return;
             }
@@ -177,7 +186,9 @@ pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
         loop {
             let auth_canisters = leptos::untrack(|| auth_cans_res.get().transpose());
             let auth_canisters = try_or_redirect!(auth_canisters).flatten();
-            let cursor = fetch_cursor.get_untracked();
+            let Some(cursor) = fetch_cursor.try_get_untracked() else {
+                return;
+            };
             let nsfw_enabled = nsfw_enabled.get_untracked();
             let unauth_canisters = unauth_canisters();
 
@@ -189,7 +200,9 @@ pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
                 fetch_stream.fetch_post_uids_chunked(3, nsfw_enabled).await
             };
 
-            let mut chunks = try_or_redirect!(chunks);
+            let res = try_or_redirect!(chunks);
+            queue_end.set(res.end);
+            let mut chunks = res.posts_stream;
             let mut cnt = 0;
             while let Some(chunk) = chunks.next().await {
                 cnt += chunk.len();
@@ -200,11 +213,10 @@ pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
                     }
                 });
             }
-            if cnt < 8 {
-                fetch_cursor.update(|c| c.advance());
-            } else {
+            if res.end || cnt >= 8 {
                 break;
             }
+            fetch_cursor.update(|c| c.advance());
         }
 
         fetch_cursor.update(|c| c.advance());
@@ -216,7 +228,7 @@ pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
     });
     let next_videos = use_debounce_fn(
         move || {
-            if !fetch_video_action.pending().get_untracked() {
+            if !fetch_video_action.pending().get_untracked() && !queue_end.get_untracked() {
                 log::debug!("trigger rerender");
                 fetch_video_action.dispatch(())
             }
