@@ -149,7 +149,7 @@ impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
     ) -> Result<FetchVideosRes<'a>, PostViewError> {
         let post_cache = self.canisters.post_cache();
         let top_posts_fut = post_cache
-            .get_top_posts_aggregated_from_canisters_on_this_network_for_hot_or_not_feed_cursor(
+            .get_top_posts_aggregated_from_canisters_on_this_network_for_home_feed_cursor(
                 self.cursor.start,
                 self.cursor.limit,
                 None,
