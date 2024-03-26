@@ -1,13 +1,12 @@
 use super::{
-    cf_upload::{get_upload_info, get_video_status, upload_video_stream},
+    cf_upload::{get_upload_info, get_video_status, publish_video, upload_video_stream},
     UploadParams,
 };
 use crate::{
-    canister::individual_user_template::{PostDetailsFromFrontend, Result_},
     component::modal::Modal,
     state::canisters::{authenticated_canisters, Canisters},
     try_or_redirect, try_or_redirect_opt,
-    utils::route::{failure_redirect, go_to_root},
+    utils::route::go_to_root,
 };
 use candid::Principal;
 use futures::StreamExt;
@@ -216,25 +215,15 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
         let description = description.clone();
         let uid = uid.clone();
         async move {
-            let user = canisters.authenticated_user();
-            let res = user
-                .add_post_v_2(PostDetailsFromFrontend {
-                    hashtags,
-                    description,
-                    video_uid: uid,
-                    creator_consent_for_inclusion_in_hot_or_not: params.enable_hot_or_not,
-                    is_nsfw: params.is_nsfw,
-                })
-                .await;
-            let res = try_or_redirect!(res);
-            let post_id = match res {
-                Result_::Ok(p) => p,
-                Result_::Err(e) => {
-                    failure_redirect(e);
-                    return;
-                }
-            };
-            let res = user.update_post_as_ready_to_view(post_id).await;
+            let res = publish_video(
+                canisters,
+                hashtags,
+                description,
+                uid,
+                params.enable_hot_or_not,
+                params.is_nsfw,
+            )
+            .await;
             try_or_redirect!(res);
             publishing.set(false);
         }

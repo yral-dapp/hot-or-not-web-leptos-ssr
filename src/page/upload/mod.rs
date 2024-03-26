@@ -29,14 +29,23 @@ fn PreUploadView(trigger_upload: WriteSignal<Option<UploadParams>>) -> impl Into
     let hashtags_err = create_rw_signal(String::new());
     let hashtags_err_memo = create_memo(move |_| hashtags_err());
     let file_blob = create_rw_signal(None::<FileWithUrl>);
+    let desc = create_node_ref::<Textarea>();
     let invalid_form = create_memo(move |_| {
-        with!(|desc_err_memo, hashtags_err_memo, file_blob| {
-            !desc_err_memo.is_empty() || !hashtags_err_memo.is_empty() || file_blob.is_none()
+        with!(|desc_err_memo, hashtags_err_memo, file_blob, hashtags| {
+            // Description error
+            !desc_err_memo.is_empty()
+                // Hashtags error
+                || !hashtags_err_memo.is_empty()
+                // File is not uploaded
+                || file_blob.is_none()
+                // Hashtags are empty
+                || hashtags.is_empty()
+                // Description is empty
+                || desc().map(|d| d.value().is_empty()).unwrap_or(true)
         })
     });
-    let desc = create_node_ref::<Textarea>();
     let hashtag_inp = create_node_ref::<Input>();
-    let enable_hot_or_not = create_node_ref::<Input>();
+    // let enable_hot_or_not = create_node_ref::<Input>();
     let is_nsfw = create_node_ref::<Input>();
     let on_submit = move || {
         let description = desc.get_untracked().unwrap().value();
@@ -48,10 +57,7 @@ fn PreUploadView(trigger_upload: WriteSignal<Option<UploadParams>>) -> impl Into
             file_blob,
             hashtags,
             description,
-            enable_hot_or_not: enable_hot_or_not
-                .get_untracked()
-                .map(|v| v.checked())
-                .unwrap_or_default(),
+            enable_hot_or_not: false,
             is_nsfw: is_nsfw
                 .get_untracked()
                 .map(|v| v.checked())
@@ -120,7 +126,7 @@ fn PreUploadView(trigger_upload: WriteSignal<Option<UploadParams>>) -> impl Into
                 />
             </div>
             <div class="flex flex-col gap-y-2">
-                <ToggleWithLabel node_ref=enable_hot_or_not lab="Participate in Hot or Not"/>
+                // <ToggleWithLabel node_ref=enable_hot_or_not lab="Participate in Hot or Not"/>
                 <ToggleWithLabel lab="NSFW"/>
             </div>
             <button

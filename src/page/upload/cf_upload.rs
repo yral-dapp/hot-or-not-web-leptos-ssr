@@ -2,12 +2,12 @@ use candid::Principal;
 #[cfg(all(feature = "cloudflare", feature = "ssr"))]
 use cf_impl::server_func::*;
 #[cfg(feature = "cloudflare")]
-pub use cf_impl::upload_video_stream;
+pub use cf_impl::{publish_video, upload_video_stream};
 use leptos::*;
 #[cfg(all(not(feature = "cloudflare"), feature = "ssr"))]
 use mock_impl::server_func::*;
 #[cfg(not(feature = "cloudflare"))]
-pub use mock_impl::upload_video_stream;
+pub use mock_impl::{publish_video, upload_video_stream};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
@@ -44,6 +44,13 @@ pub async fn get_video_status(uid: String) -> Result<String, ServerFnError> {
 
 #[cfg(feature = "cloudflare")]
 mod cf_impl {
+    use leptos::ServerFnError;
+
+    use crate::{
+        canister::individual_user_template::{PostDetailsFromFrontend, Result_},
+        state::canisters::Canisters,
+    };
+
     use super::UploadInfo;
 
     #[cfg(feature = "ssr")]
@@ -112,11 +119,39 @@ mod cf_impl {
         }
         Ok(())
     }
+
+    pub async fn publish_video(
+        canisters: Canisters<true>,
+        hashtags: Vec<String>,
+        description: String,
+        uid: String,
+        enable_hot_or_not: bool,
+        is_nsfw: bool,
+    ) -> Result<(), ServerFnError> {
+        let user = canisters.authenticated_user();
+        let res = user
+            .add_post_v_2(PostDetailsFromFrontend {
+                hashtags,
+                description,
+                video_uid: uid,
+                creator_consent_for_inclusion_in_hot_or_not: enable_hot_or_not,
+                is_nsfw,
+            })
+            .await?;
+        let post_id = match res {
+            Result_::Ok(p) => p,
+            Result_::Err(e) => return Err(ServerFnError::new(e)),
+        };
+        user.update_post_as_ready_to_view(post_id).await?;
+        Ok(())
+    }
 }
 
 #[cfg(not(feature = "cloudflare"))]
 mod mock_impl {
     use super::UploadInfo;
+    use crate::state::canisters::Canisters;
+    use leptos::ServerFnError;
 
     #[cfg(feature = "ssr")]
     pub mod server_func {
@@ -148,6 +183,19 @@ mod mock_impl {
         _upload_res: &UploadInfo,
         _file: &gloo::file::File,
     ) -> Result<(), gloo::net::Error> {
+        use gloo::timers::future::TimeoutFuture;
+        TimeoutFuture::new(1000).await;
+        Ok(())
+    }
+
+    pub async fn publish_video(
+        _canisters: Canisters<true>,
+        _hashtags: Vec<String>,
+        _description: String,
+        _uid: String,
+        _enable_hot_or_not: bool,
+        _is_nsfw: bool,
+    ) -> Result<(), ServerFnError> {
         use gloo::timers::future::TimeoutFuture;
         TimeoutFuture::new(1000).await;
         Ok(())
