@@ -201,7 +201,6 @@ pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
             };
 
             let res = try_or_redirect!(chunks);
-            queue_end.set(res.end);
             let mut chunks = res.posts_stream;
             let mut cnt = 0;
             while let Some(chunk) = chunks.next().await {
@@ -214,6 +213,7 @@ pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
                 });
             }
             if res.end || cnt >= 8 {
+                queue_end.set(res.end);
                 break;
             }
             fetch_cursor.update(|c| c.advance());
