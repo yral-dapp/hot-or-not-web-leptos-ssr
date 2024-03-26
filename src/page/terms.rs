@@ -12,40 +12,25 @@ pub fn TermsOfService() -> impl IntoView {
             <Title justify_center=false>
                 <div class="flex flex-row justify-between">
                     <BackButton fallback="/menu".to_string()/>
-                    <span class="font-bold">Terms of service</span>
+                    <span class="font-bold">Terms of Service</span>
                     <div></div>
                 </div>
             </Title>
             <div class="px-8 flex h-full w-full flex-col space-y-8 overflow-hidden overflow-y-auto py-16">
                 <div class="flex flex-col space-y-2">
-                    <div class="text-sm">1. Introductions</div>
-                    <div class="text-xs">
-                        {r#"Thanks for choosing Hot or Not, an online social platform. This is an
-                        agreement between "you", a "user" of “Hot or Not”, and GoBazzinga
-                        Inc., a company incorporated in the United States of America ("we",
-                        "us", "our"). The platform “Hot or Not” has been developed by
-                        GoBazzinga Inc. and we operate all features of Hot or Not and tokens
-                        in the application. "Coyn token" refers to the blockchain-based unit
-                        known as 'Coyn' built upon the Internet Computers protocol. Subject to
-                        the foregoing, we are pleased to make our services available to you,
-                        which include the Hot or Not Web App, website, social and interactive
-                        features, which include image posting, video posting and other
-                        associated services ("Services"). These images, videos, clips,
-                        interactions etc. on Hot or Not posted by the users shall be the
-                        "Content". If you install, use, access Hot or Not or any of its
-                        features, you have read and accepted these terms and conditions. You
-                        have also accepted the Hot or Not [privacy policy link], and our [
-                        community guidelines link], and other terms which are available on the
-                        Hot or Not App, Hot or Not Website, and otherwise. Please make sure to
-                        read these documents. By using Hot or Not, you are entering into a
-                        binding contract(s) with us. Your contract with us includes the Terms
-                        and conditions, privacy policy and community guidelines etc. If you
-                        don't agree with and accept the above, please do not use, install,
-                        access Hot or Not or any of its features."""#}
+                <div class="text-sm font-semibold">Introductions</div>
+                    <div class="text-xs whitespace-pre-line">
+                        {r#"Thanks for choosing Yral, an online social platform. This is an agreement between "you", a "user" of “Yral”, and GoBazzinga Inc., a company incorporated in the United States of America ("we", "us", "our''). The platform “Yral” has been developed by GoBazzinga Inc. and we operate all features of Yral and tokens in the application.
+
+                            "Coyn token" refers to the blockchain-based unit known as 'Coyn' built upon the Internet Computer protocol.
+
+                            Subject to the foregoing, we are pleased to make our services available to you, which include the Yral Web App, website, social and interactive features, which include image posting, video posting and other associated services ("Services"). These images, videos, clips, interactions etc. on Yral posted by the users shall be the "Content".
+
+                            If you install, use, access Yral or any of its features, you have read and accepted these terms and conditions. You have also accepted the Yral [privacy policy link], and other terms which are available on the Yral App, Yral Website, and otherwise. Please make sure to read these documents. By using Yral, you are entering into a binding contract(s) with us. Your contract with us includes the Terms and conditions and privacy policy etc. If you don’t agree with and accept the above, please do not use, install, access Yral or any of its features."""#}
                     </div>
                 </div>
                 <div class="flex flex-col space-y-2">
-                    <div class="text-sm">2. Account and Registration</div>
+                    <div class="text-sm font-semibold">Account and Registration</div>
                     <div class="text-xs">
                         You must be over the age of 13, and you must be represented by a legal
                         guardian if you are below the age of 18, to register for our Services.
@@ -80,7 +65,7 @@ pub fn TermsOfService() -> impl IntoView {
                     </div>
                 </div>
                 <div class="flex flex-col space-y-2">
-                    <div class="text-sm">3. Content posted by you</div>
+                    <div class="text-sm font-semibold">Content posted by you</div>
                     <div class="text-xs">
                         {r#"By posting any Content on or through our Services, you hereby grant us
                         a non-exclusive, fully paid and royalty-free, worldwide, limited
@@ -103,7 +88,7 @@ pub fn TermsOfService() -> impl IntoView {
                         copyrights, contractual rights, intellectual property rights or any
                         other rights of any person, and (iii) the posting of your Content does
                         not result in a breach of contract between you and a third party (iv)
-                        Your actions on Hot or Not shall not be in violation of applicable law
+                        Your actions on Yral shall not be in violation of applicable law
                         or regulation. We are not responsible for any Content posted by you or
                         any consequences thereof. You agree that you shall not host, display,
                         upload, modify, publish, transmit, store, update or share any
@@ -156,15 +141,15 @@ pub fn TermsOfService() -> impl IntoView {
                             </li>
                             {r#"You acknowledge and agree that the Content uploaded is the sole responsibility
                             of the user who has uploaded such Content and the views expressed are
-                            their own. Hot or Not is not responsible for the Content posted by you.
+                            their own. Yral is not responsible for the Content posted by you.
                             You shall be solely responsible for the Content posted, shared, modified,
                             uploaded, transmitted, updated and hosted by you. You agree that your
-                            use of Hot or Not's services will conform to the Community Guidelines.
+                            use of Yral's services will conform to the Community Guidelines.
                             You agree that in case of non-compliance with applicable laws, or with
-                            these terms and conditions, or with the Hot or Not privacy policy or
+                            these terms and conditions, or with the Yral privacy policy or
                             with our community Guidelines, we have the right to terminate your access
-                            or usage rights to Hot or Not immediately and remove non-compliant content
-                            from Hot or Not. You hereby agree that you will never use Hot or Not
+                            or usage rights to Yral immediately and remove non-compliant content
+                            from Yral. You hereby agree that you will never use Yral
                             in violation of any applicable law. If any violation of these Terms is
                             brought to our actual knowledge by an affected person, we shall act within
                             thirty-six hours and where applicable, work with the user or owner of
@@ -179,7 +164,7 @@ pub fn TermsOfService() -> impl IntoView {
                     </div>
                 </div>
                 <div class="flex flex-col space-y-2">
-                    <div class="text-sm">{r#"4. Children's Privacy"""#}</div>
+                    <div class="text-sm font-semibold">{r#"Children's Privacy"""#}</div>
                     <div class="text-xs">
                         These Services are not for any child under the age of 13. We do not
                         knowingly collect personally identifiable information from children
@@ -193,7 +178,7 @@ pub fn TermsOfService() -> impl IntoView {
                     </div>
                 </div>
                 <div class="flex flex-col space-y-2">
-                    <div class="text-sm">5. Devices and Software</div>
+                    <div class="text-sm font-semibold">Devices and Software</div>
                     <div class="text-xs">
                         You must have certain devices, software, and data connections to use
                         our Services, which we otherwise do not supply. For as long as you use
@@ -202,7 +187,7 @@ pub fn TermsOfService() -> impl IntoView {
                     </div>
                 </div>
                 <div class="flex flex-col space-y-2">
-                    <div class="text-sm">6. Device Storage Permission</div>
+                    <div class="text-sm font-semibold">Device Storage Permission</div>
                     <div class="text-xs">
                         You provide us storage permission (Read and write) by which we are
                         able to upload your content to our server and display it to users. You
@@ -211,25 +196,20 @@ pub fn TermsOfService() -> impl IntoView {
                     </div>
                 </div>
                 <div class="flex flex-col space-y-2">
-                    <div class="text-sm">7. Privacy policy and user data</div>
+                    <div class="text-sm font-semibold">Privacy policy and user data</div>
                     <div class="text-xs">
-                        Hot or Not cares about your privacy. You can access our privacy policy
+                        yral.com cares about your privacy. You can access our privacy policy
                         from the menu.
                     </div>
                 </div>
                 <div class="flex flex-col space-y-2">
-                    <div class="text-sm">8. Changes to these Terms</div>
+                    <div class="text-sm font-semibold">Changes to these Terms</div>
                     <div class="text-xs">
-                        {r#"We may amend or update these Terms. We may update the “Last Modified”
-                        date at the top of these Terms. Your continued use of Hot or Not
-                        confirms your acceptance of these Terms, as amended. If you do not
-                        agree with or accept these Terms, as amended, you must stop using Hot
-                        or Not. Please review these Terms from time to time. These changes are
-                        effective immediately after they are posted on this page."""#}
+                        {r#"We may amend or update these Terms. We may update the “Last Modified” date at the top of these Terms. Your continued use of Yral confirms your acceptance of these Terms, as amended. If you do not agree with or accept these Terms, as amended, you must stop using Yral. Please review these Terms from time to time. These changes are effective immediately after they are posted on this page."""#}
                     </div>
                 </div>
                 <div class="flex flex-col space-y-2">
-                    <div class="text-sm">9. Indemnity</div>
+                    <div class="text-sm font-semibold">Indemnity</div>
                     <div class="text-xs">
                         {r#"You agree to defend, indemnify, and hold harmless us, our parent(s),
                         subsidiaries, and affiliates, and each of their respective officers,
@@ -242,7 +222,7 @@ pub fn TermsOfService() -> impl IntoView {
                     </div>
                 </div>
                 <div class="flex flex-col space-y-2">
-                    <div class="text-sm">10. Exclusion of Warranties</div>
+                    <div class="text-sm font-semibold">Exclusion of Warranties</div>
                     <div class="text-xs">
                         {r#"The Services are provided to you on an 'as is' basis and we do not
                         represent or warrant that the use of the Services will be
@@ -253,7 +233,7 @@ pub fn TermsOfService() -> impl IntoView {
                     </div>
                 </div>
                 <div class="flex flex-col space-y-2">
-                    <div class="text-sm">11. Limitation of liability</div>
+                    <div class="text-sm font-semibold">Limitation of liability</div>
                     <div class="text-xs">
                         We shall not be liable to you for any loss or damages or claims
                         including but not limited to the following:
@@ -283,7 +263,7 @@ pub fn TermsOfService() -> impl IntoView {
                     </div>
                 </div>
                 <div class="flex flex-col space-y-2">
-                    <div class="text-sm">12. Governing Law</div>
+                    <div class="text-sm font-semibold">Governing Law</div>
                     <div class="text-xs">
                         The validity, construction and enforceability of these Terms and
                         conditions , privacy policy and community guidelines shall be governed
@@ -292,7 +272,7 @@ pub fn TermsOfService() -> impl IntoView {
                     </div>
                 </div>
                 <div class="flex flex-col space-y-2">
-                    <div class="text-sm">13. Severability</div>
+                    <div class="text-sm font-semibold">Severability</div>
                     <div class="text-xs">
                         If any provision of this Agreement is invalid or unenforceable or
                         prohibited by law, it shall be treated for all purposes as severed
@@ -302,13 +282,13 @@ pub fn TermsOfService() -> impl IntoView {
                     </div>
                 </div>
                 <div class="flex flex-col space-y-2">
-                    <div class="text-sm">14. Grievance Redressal</div>
+                    <div class="text-sm font-semibold">Grievance Redressal</div>
                     <div class="text-xs">
                         If you wish to complain about our Services / the use of our services
                         by others, please contact our Resident Grievance Officer, whose
                         details are below: <div class="pl-4 pt-2">Name: Utkarsh Goyal</div>
                         <div class="pl-4">Designation: Director</div>
-                        <div class="pb-2 pl-4">Email ID: utkarsh@gobazzinga.io</div>
+                        <div class="pb-2 pl-4">Email ID: support@gobazzinga.io</div>
                         We will endeavour to redress the complaint within three months from the
                         date of receipt of the complaint.
                     </div>
