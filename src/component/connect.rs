@@ -82,7 +82,9 @@ pub fn ConnectLogin(
             // This is some redundant work, but saves us 100+ lines of resource handling
             let canisters = do_canister_auth(Some(identity)).await?.unwrap();
 
-            handle_user_login(canisters, referrer_store.get_untracked()).await?;
+            if let Err(e) = handle_user_login(canisters, referrer_store.get_untracked()).await {
+                log::warn!("failed to handle user login, err {e}. skipping");
+            }
             logging_in.set(false);
             write_account_connected.set(true);
             Ok::<_, ServerFnError>(())
@@ -258,12 +260,18 @@ mod server_fn_impl {
             user_canister: Principal,
         ) -> Result<(), ServerFnError> {
             use crate::{
-                canister::individual_user_template::{Result8, SessionType},
+                canister::individual_user_template::{Result6, Result8, SessionType},
                 state::admin_canisters::admin_canisters,
             };
 
             let admin_cans = admin_canisters();
             let user = admin_cans.individual_user_for(user_canister);
+            if matches!(
+                user.get_session_type().await?,
+                Result6::Ok(SessionType::RegisteredSession)
+            ) {
+                return Ok(());
+            }
             user.update_session_type(SessionType::RegisteredSession)
                 .await
                 .map_err(ServerFnError::from)
