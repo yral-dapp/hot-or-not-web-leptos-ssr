@@ -47,7 +47,7 @@ pub fn App() -> impl IntoView {
         <Stylesheet id="leptos" href="/pkg/hot-or-not-leptos-ssr.css"/>
 
         // sets the document title
-        <Title text="Welcome to Leptos"/>
+        <Title text="Yral"/>
 
         <Link rel="manifest" href="/app.webmanifest"/>
 
