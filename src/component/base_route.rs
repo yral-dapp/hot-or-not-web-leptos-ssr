@@ -6,9 +6,11 @@ use super::auth_provider::AuthProvider;
 use crate::{
     state::{
         auth::AuthState,
-        canisters::{authenticated_canisters, do_canister_auth, AuthCanistersResource},
+        canisters::{do_canister_auth, AuthCanistersResource},
         local_storage::use_referrer_store,
-    }, try_or_redirect_opt, utils::{profile::ProfileDetails, MockPartialEq}
+    },
+    try_or_redirect_opt,
+    utils::{profile::ProfileDetails, MockPartialEq},
 };
 
 #[derive(Params, PartialEq, Clone)]
@@ -43,7 +45,6 @@ pub fn BaseRoute() -> impl IntoView {
     );
 
     provide_context(auth_cans_res);
-
 
     // User profile and canister details
     let canisters = auth_cans_res;

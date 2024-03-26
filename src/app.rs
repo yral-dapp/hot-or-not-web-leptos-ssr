@@ -16,16 +16,13 @@ use crate::{
     },
     state::{
         auth::{AuthClient, AuthState},
-        canisters::{authenticated_canisters, unauth_canisters, Canisters},
+        canisters::Canisters,
         history::HistoryCtx,
     },
-    try_or_redirect_opt,
-    utils::{profile::ProfileDetails, MockPartialEq},
 };
 use leptos::*;
 use leptos_meta::*;
 use leptos_router::*;
-use serde_json::json;
 
 #[component]
 fn NotFound() -> impl IntoView {

@@ -3,12 +3,10 @@ mod validators;
 mod video_upload;
 
 use crate::{
-    component::toggle::ToggleWithLabel,
-    state::canisters::{Canisters, CanistersError},
-    utils::{event_streaming::send_event, profile::ProfileDetails, MockPartialEq},
+    component::toggle::ToggleWithLabel, state::canisters::AuthProfileCanisterResource,
+    utils::event_streaming::send_event,
 };
 
-use candid::Principal;
 use leptos::{
     html::{Input, Textarea},
     *,
@@ -51,13 +49,10 @@ fn PreUploadView(trigger_upload: WriteSignal<Option<UploadParams>>) -> impl Into
         })
     });
     let hashtag_inp = create_node_ref::<Input>();
-    // let enable_hot_or_not = create_node_ref::<Input>();
+    let enable_hot_or_not = create_node_ref::<Input>();
     let is_nsfw = create_node_ref::<Input>();
 
-    let profile_and_canister_details: Resource<
-        MockPartialEq<Option<Result<Canisters<true>, CanistersError>>>,
-        Option<(ProfileDetails, Principal)>,
-    > = expect_context();
+    let profile_and_canister_details: AuthProfileCanisterResource = expect_context();
     let user_id = move || {
         profile_and_canister_details()
             .flatten()

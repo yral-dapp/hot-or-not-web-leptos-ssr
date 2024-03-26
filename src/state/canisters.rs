@@ -17,6 +17,8 @@ use crate::{
     },
     consts::{FALLBACK_USER_INDEX, METADATA_API_BASE},
     utils::MockPartialEq,
+    consts::LEGACY_USER_INDEX,
+    utils::{profile::ProfileDetails, MockPartialEq},
 };
 
 #[derive(Clone)]
@@ -142,6 +144,11 @@ pub fn unauth_canisters() -> Canisters<false> {
 pub type AuthCanistersResource = Resource<
     MockPartialEq<Option<DelegatedIdentityWire>>,
     Result<Option<Canisters<true>>, ServerFnError>,
+>;
+
+pub type AuthProfileCanisterResource = Resource<
+    MockPartialEq<Option<Result<Canisters<true>, CanistersError>>>,
+    Option<(ProfileDetails, Principal)>,
 >;
 
 async fn create_individual_canister(

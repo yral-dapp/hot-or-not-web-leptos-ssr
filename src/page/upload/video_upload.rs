@@ -4,15 +4,9 @@ use super::{
 };
 use crate::{
     component::modal::Modal,
-    state::canisters::{authenticated_canisters, Canisters, CanistersError},
+    state::canisters::{authenticated_canisters, AuthProfileCanisterResource, Canisters},
     try_or_redirect, try_or_redirect_opt,
-    utils::route::go_to_root,
-    utils::{
-        event_streaming::send_event,
-        profile::ProfileDetails,
-        route::{failure_redirect, go_to_root},
-        MockPartialEq,
-    },
+    utils::{event_streaming::send_event, route::go_to_root},
 };
 use candid::Principal;
 use futures::StreamExt;
@@ -62,10 +56,7 @@ pub fn PreVideoUpload(file_blob: WriteSignal<Option<FileWithUrl>>) -> impl IntoV
     let video_ref = create_node_ref::<Video>();
     let modal_show = create_rw_signal(false);
 
-    let profile_and_canister_details: Resource<
-        MockPartialEq<Option<Result<Canisters<true>, CanistersError>>>,
-        Option<(ProfileDetails, Principal)>,
-    > = expect_context();
+    let profile_and_canister_details: AuthProfileCanisterResource = expect_context();
     let user_id = move || {
         profile_and_canister_details()
             .flatten()
@@ -210,10 +201,7 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
     let up_hashtags = hashtags.clone();
     let up_desc = description.clone();
 
-    let profile_and_canister_details: Resource<
-        MockPartialEq<Option<Result<Canisters<true>, CanistersError>>>,
-        Option<(ProfileDetails, Principal)>,
-    > = expect_context();
+    let profile_and_canister_details: AuthProfileCanisterResource = expect_context();
     let user_id = move || {
         profile_and_canister_details()
             .flatten()
@@ -235,15 +223,15 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
                 .duration_since(SystemTime::UNIX_EPOCH)
                 .unwrap()
                 .as_millis();
-            let upload_info = try_or_redirect_opt!(
-                get_upload_info(
-                    Principal::anonymous(),
-                    hashtags,
-                    description,
-                    time_ms.to_string()
-                )
-                .await
-            );
+            let res = get_upload_info(
+                Principal::anonymous(),
+                hashtags,
+                description,
+                time_ms.to_string(),
+            )
+            .await;
+
+            let upload_info = try_or_redirect_opt!(res);
             try_or_redirect_opt!(upload_video_stream(&upload_info, &file_blob).await);
             uploading.set(false);
 
@@ -283,12 +271,12 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
             try_or_redirect!(res);
             publishing.set(false);
 
-            // video_upload_successul - analytics
+            // video_upload_successful - analytics
             #[cfg(feature = "hydrate")]
             {
                 create_effect(move |_| {
                     send_event(
-                        "video_upload_successul",
+                        "video_upload_successful",
                         &json!({
                             "user_id":user_id(),
                             "display_name": display_name(),

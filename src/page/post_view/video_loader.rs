@@ -1,6 +1,7 @@
 use crate::{
     canister::utils::{bg_url, mp4_url},
     component::feed_popup::FeedPopUp,
+    state::canisters::AuthProfileCanisterResource,
     state::canisters::{Canisters, CanistersError},
     state::{auth::account_connected_reader, local_storage::use_referrer_store},
     utils::{profile::ProfileDetails, MockPartialEq},
@@ -78,13 +79,9 @@ pub fn VideoView(idx: usize, muted: RwSignal<bool>) -> impl IntoView {
         ..
     } = expect_context();
 
-    let profile_and_canister_details: Resource<
-        MockPartialEq<Option<Result<Canisters<true>, CanistersError>>>,
-        Option<(ProfileDetails, Principal)>,
-    > = expect_context();
+    let profile_and_canister_details: AuthProfileCanisterResource = expect_context();
 
-    let vid_details =
-        create_memo(move |_| with!(|video_queue| video_queue.get(idx).map(|q| q.clone())));
+    let vid_details = create_memo(move |_| with!(|video_queue| video_queue.get(idx).cloned()));
 
     let publisher_user_id = move || vid_details().as_ref().map(|q| q.poster_principal);
     let user_id = move || {
@@ -163,7 +160,7 @@ pub fn VideoView(idx: usize, muted: RwSignal<bool>) -> impl IntoView {
                 let target = e.target().unwrap();
                 let video = target.unchecked_into::<web_sys::HtmlVideoElement>();
                 // let duration = video.duration() as f64;
-                let current_time = video.current_time() as f64;
+                let current_time = video.current_time();
 
                 if current_time >= 3.0 {
                     // Video is halfway done, take action here

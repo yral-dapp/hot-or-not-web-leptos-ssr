@@ -17,12 +17,8 @@ use crate::{
     component::spinner::FullScreenSpinner,
     consts::NSFW_TOGGLE_STORE,
     state::canisters::{authenticated_canisters, unauth_canisters},
-    try_or_redirect, try_or_redirect_opt,
-    utils::{
-        profile::ProfileDetails,
-        route::{failure_redirect, go_to_root},
-        MockPartialEq,
-    },
+    try_or_redirect,
+    utils::route::{failure_redirect, go_to_root},
 };
 use video_iter::{get_post_uid, VideoFetchStream};
 use video_loader::{BgView, VideoView};
@@ -263,7 +259,6 @@ pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
 
 #[component]
 pub fn PostView() -> impl IntoView {
-
     let params = use_params::<PostParams>();
     let canister_and_post = move || {
         params.with_untracked(|p| {
