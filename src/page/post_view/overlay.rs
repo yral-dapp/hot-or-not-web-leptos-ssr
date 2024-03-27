@@ -225,13 +225,12 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
 
     let post_details = post.clone();
 
+    let auth_cans = authenticated_canisters();
     let (is_connected, _) = account_connected_reader();
-    let auth_cans = authenticated_canisters().get().unwrap().unwrap().unwrap();
 
     let is_loggedin = is_connected.get_untracked();
 
     let share = create_action(move |&()| {
-        let canisters = auth_cans.clone();
         let post_details = post_details.clone();
         async move {
             let url = video_url();
@@ -247,6 +246,7 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
             let view_count = post_details.views;
             let like_count = post_details.likes;
 
+            let canisters = auth_cans.get().unwrap().unwrap().unwrap();
             let user = canisters.authenticated_user();
             let user_details = user.get_profile_details().await.unwrap();
             let profile_details = ProfileDetails::from(user_details);
