@@ -5,8 +5,6 @@ use reqwest::Url;
 pub const CF_STREAM_BASE: &str = "https://customer-2p3jflss4r4hmpnz.cloudflarestream.com";
 pub const FALLBACK_PROPIC_BASE: &str = "https://api.dicebear.com/7.x/big-smile/svg";
 pub const CF_WATERMARK_UID: &str = "c094ef579b950a6a5ae3e482268b81ca";
-pub static CF_BASE_URL: Lazy<Url> =
-    Lazy::new(|| Url::parse("https://api.cloudflare.com/client/v4/").unwrap());
 pub static AUTH_URL: Lazy<Url> = Lazy::new(|| Url::parse("https://auth.yral.com/").unwrap());
 pub const ACCOUNT_CONNECTED_STORE: &str = "account-connected";
 pub const NSFW_TOGGLE_STORE: &str = "nsfw-enabled";

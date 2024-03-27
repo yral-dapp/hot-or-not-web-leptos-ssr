@@ -61,12 +61,13 @@ pub async fn leptos_routes_handler(
 }
 
 #[cfg(feature = "cloudflare")]
-fn init_cf() -> hot_or_not_web_leptos_ssr::state::cf::CfApi<true> {
-    use hot_or_not_web_leptos_ssr::state::cf::{CfApi, CfCredentials};
-    let Some(creds) = CfCredentials::from_env("CF_TOKEN", "CF_ACCOUNT_ID") else {
-        panic!("Cloudlflare credentials are required: CF_TOKEN, CF_ACCOUNT_ID");
+fn init_cf() -> gob_cloudflare::CloudflareAuth {
+    use gob_cloudflare::{CloudflareAuth, Credentials};
+    let creds = Credentials {
+        token: env::var("CF_TOKEN").expect("`CF_TOKEN` is required!"),
+        account_id: env::var("CF_ACCOUNT_ID").expect("`CF_ACCOUNT_ID` is required!"),
     };
-    CfApi::<true>::new(creds)
+    CloudflareAuth::new(creds)
 }
 
 #[cfg(feature = "backend-admin")]

@@ -1496,6 +1496,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "gob-cloudflare"
+version = "0.1.0"
+source = "git+https://github.com/go-bazzinga/gob-cloudflare?rev=fda95a106912c76a798bf4545cce47f42660f775#fda95a106912c76a798bf4545cce47f42660f775"
+dependencies = [
+ "reqwest 0.12.2",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "url",
+]
+
+[[package]]
 name = "group"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1640,6 +1652,7 @@ dependencies = [
  "enum_dispatch",
  "futures",
  "gloo",
+ "gob-cloudflare",
  "hex",
  "http 1.1.0",
  "ic-agent",
@@ -3492,6 +3505,7 @@ dependencies = [
  "js-sys",
  "log",
  "mime",
+ "mime_guess",
  "native-tls",
  "once_cell",
  "percent-encoding",

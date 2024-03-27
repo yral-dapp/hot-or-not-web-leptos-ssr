@@ -2,8 +2,6 @@
 pub mod admin_canisters;
 pub mod auth;
 pub mod canisters;
-#[cfg(feature = "cloudflare")]
-pub mod cf;
 pub mod history;
 pub mod local_storage;
 
@@ -24,7 +22,7 @@ pub mod server {
         #[cfg(feature = "backend-admin")]
         pub admin_canisters: super::admin_canisters::AdminCanisters,
         #[cfg(feature = "cloudflare")]
-        pub cloudflare: super::cf::CfApi<true>,
+        pub cloudflare: gob_cloudflare::CloudflareAuth,
         pub kv: KVStoreImpl,
         pub routes: Vec<RouteListing>,
         pub cookie_key: Key,
