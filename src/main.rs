@@ -1,3 +1,5 @@
+use std::env;
+
 use axum::{
     body::Body as AxumBody,
     extract::{Path, State},
@@ -5,9 +7,12 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use axum::{routing::get, Router};
-use hot_or_not_web_leptos_ssr::fallback::file_and_error_handler;
+use axum_extra::extract::cookie::Key;
 use hot_or_not_web_leptos_ssr::state::canisters::Canisters;
 use hot_or_not_web_leptos_ssr::{app::App, state::server::AppState};
+use hot_or_not_web_leptos_ssr::{
+    auth::server_impl::store::KVStoreImpl, fallback::file_and_error_handler,
+};
 use leptos::{get_configuration, logging::log, provide_context};
 use leptos_axum::handle_server_fns_with_context;
 use leptos_axum::{generate_route_list, LeptosRoutes};
@@ -26,6 +31,8 @@ pub async fn server_fn_handler(
             provide_context(app_state.admin_canisters.clone());
             #[cfg(feature = "cloudflare")]
             provide_context(app_state.cloudflare.clone());
+            provide_context(app_state.kv.clone());
+            provide_context(app_state.cookie_key.clone());
         },
         request,
     )
@@ -45,6 +52,8 @@ pub async fn leptos_routes_handler(
             provide_context(app_state.admin_canisters.clone());
             #[cfg(feature = "cloudflare")]
             provide_context(app_state.cloudflare.clone());
+            provide_context(app_state.kv.clone());
+            provide_context(app_state.cookie_key.clone());
         },
         App,
     );
@@ -64,7 +73,6 @@ fn init_cf() -> hot_or_not_web_leptos_ssr::state::cf::CfApi<true> {
 fn init_admin_canisters() -> hot_or_not_web_leptos_ssr::state::admin_canisters::AdminCanisters {
     use hot_or_not_web_leptos_ssr::state::admin_canisters::AdminCanisters;
     use ic_agent::identity::BasicIdentity;
-    use std::env;
 
     let admin_id_pem =
         env::var("BACKEND_ADMIN_IDENTITY").expect("`BACKEND_ADMIN_IDENTITY` is required!");
@@ -74,9 +82,35 @@ fn init_admin_canisters() -> hot_or_not_web_leptos_ssr::state::admin_canisters::
     AdminCanisters::new(admin_id)
 }
 
+fn init_kv() -> KVStoreImpl {
+    #[cfg(feature = "cloudflare")]
+    {
+        unimplemented!("Cloudflare KV is not implemented")
+    }
+
+    #[cfg(not(feature = "cloudflare"))]
+    {
+        use hot_or_not_web_leptos_ssr::auth::server_impl::store::redb_kv::ReDBKV;
+        KVStoreImpl::ReDB(ReDBKV::new().expect("Failed to initialize ReDB"))
+    }
+}
+
+fn init_cookie_key() -> Key {
+    let cookie_key_str = env::var("COOKIE_KEY").expect("`COOKIE_KEY` is required!");
+    let cookie_key_raw =
+        hex::decode(cookie_key_str).expect("Invalid `COOKIE_KEY` (must be length 128 hex)");
+    Key::from(&cookie_key_raw)
+}
+
+#[cfg(feature = "oauth-provider")]
+fn init_google_oauth() -> oauth2::basic::BasicClient {
+    unimplemented!("Google OAuth is not implemented")
+}
+
 #[tokio::main]
 async fn main() {
     simple_logger::init_with_level(log::Level::Debug).expect("couldn't initialize logging");
+    dotenv::dotenv().expect("couldn't load .env file");
 
     // Setting get_configuration(None) means we'll be using cargo-leptos's env values
     // For deployment these variables are:
@@ -96,6 +130,10 @@ async fn main() {
         admin_canisters: init_admin_canisters(),
         #[cfg(feature = "cloudflare")]
         cloudflare: init_cf(),
+        kv: init_kv(),
+        cookie_key: init_cookie_key(),
+        #[cfg(feature = "oauth-provider")]
+        google_oauth: init_google_oauth(),
     };
 
     // build our application with a route

@@ -1,27 +1,11 @@
+use super::overlay::ShadowOverlay;
 use leptos::*;
 use leptos_icons::*;
 
 #[component]
-pub fn Modal(#[prop(into)] show: RwSignal<bool>, children: Children) -> impl IntoView {
+pub fn Modal(#[prop(into)] show: RwSignal<bool>, children: ChildrenFn) -> impl IntoView {
     view! {
-        <div
-            on:click={
-                #[cfg(feature = "hydrate")]
-                {
-                    move |ev| {
-                        use web_sys::HtmlElement;
-                        let target = event_target::<HtmlElement>(&ev);
-                        if target.class_list().contains("modal-bg") {
-                            show.set(false);
-                        }
-                    }
-                }
-                #[cfg(not(feature = "hydrate"))] { |_| () }
-            }
-
-            class="cursor-pointer modal-bg w-dvw h-dvh absolute left-0 top-0 bg-black/60 z-[99] justify-center items-center"
-            style:display=move || if show() { "flex" } else { "none" }
-        >
+        <ShadowOverlay show>
             <div class="mx-4 py-4 px-8 max-w-full max-h-full items-center cursor-auto flex-col flex justify-around bg-neutral-900 rounded-md divide-y-2 divide-neutral-800">
                 <div class="flex w-full justify-end items-center p-2">
                     <button
@@ -33,6 +17,6 @@ pub fn Modal(#[prop(into)] show: RwSignal<bool>, children: Children) -> impl Int
                 </div>
                 <div class="py-4 w-full">{children()}</div>
             </div>
-        </div>
+        </ShadowOverlay>
     }
 }

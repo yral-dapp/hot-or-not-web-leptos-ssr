@@ -9,8 +9,11 @@ pub mod local_storage;
 
 #[cfg(feature = "ssr")]
 pub mod server {
+    use crate::auth::server_impl::store::KVStoreImpl;
+
     use super::canisters::Canisters;
     use axum::extract::FromRef;
+    use axum_extra::extract::cookie::Key;
     use leptos::LeptosOptions;
     use leptos_router::RouteListing;
 
@@ -22,6 +25,10 @@ pub mod server {
         pub admin_canisters: super::admin_canisters::AdminCanisters,
         #[cfg(feature = "cloudflare")]
         pub cloudflare: super::cf::CfApi<true>,
+        pub kv: KVStoreImpl,
         pub routes: Vec<RouteListing>,
+        pub cookie_key: Key,
+        #[cfg(feature = "oauth-provider")]
+        pub google_oauth: oauth2::basic::BasicClient,
     }
 }
