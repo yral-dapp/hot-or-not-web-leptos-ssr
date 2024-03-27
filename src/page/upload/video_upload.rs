@@ -1,3 +1,5 @@
+use std::error::Error;
+
 use super::{
     cf_upload::{get_upload_info, get_video_status, publish_video, upload_video_stream},
     UploadParams,
@@ -14,6 +16,7 @@ use gloo::{file::ObjectUrl, timers::future::IntervalStream};
 use leptos::{
     ev::durationchange,
     html::{Input, Video},
+    leptos_dom::logging::console_log,
     *,
 };
 use leptos_icons::*;
@@ -199,6 +202,10 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
     let file_blob = file_blob.file.clone();
 
     let up_hashtags = hashtags.clone();
+    let hashtags_len = hashtags.len();
+    let is_nsfw = params.is_nsfw;
+    let enable_hot_or_not = params.enable_hot_or_not;
+
     let up_desc = description.clone();
 
     let profile_and_canister_details: AuthProfileCanisterResource = expect_context();
@@ -223,6 +230,7 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
                 .duration_since(SystemTime::UNIX_EPOCH)
                 .unwrap()
                 .as_millis();
+
             let res = get_upload_info(
                 Principal::anonymous(),
                 hashtags,
@@ -230,15 +238,72 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
                 time_ms.to_string(),
             )
             .await;
-
+            if res.is_err() {
+                let e = res.as_ref().err().unwrap().to_string();
+                create_effect(move |_| {
+                    send_event(
+                        "video_upload_unsuccessful",
+                        &json!({
+                            "user_id": user_id(),
+                            "display_name": display_name(),
+                            "canister_id": canister_id(),
+                            "creator_category": "NA",
+                            "hashtag_count": hashtags_len,
+                            "is_NSFW": is_nsfw,
+                            "is_hotorNot": enable_hot_or_not,
+                            "fail_reason": e,
+                        }),
+                    );
+                });
+            }
             let upload_info = try_or_redirect_opt!(res);
-            try_or_redirect_opt!(upload_video_stream(&upload_info, &file_blob).await);
+
+            let res = upload_video_stream(&upload_info, &file_blob).await;
+            if res.is_err() {
+                let e = res.as_ref().err().unwrap().to_string();
+                create_effect(move |_| {
+                    send_event(
+                        "video_upload_unsuccessful",
+                        &json!({
+                            "user_id": user_id(),
+                            "display_name": display_name(),
+                            "canister_id": canister_id(),
+                            "creator_category": "NA",
+                            "hashtag_count": hashtags_len,
+                            "is_NSFW": is_nsfw,
+                            "is_hotorNot": enable_hot_or_not,
+                            "fail_reason": e,
+                        }),
+                    );
+                });
+            }
+            try_or_redirect_opt!(res);
+
             uploading.set(false);
 
             let mut check_status = IntervalStream::new(4000);
             while (check_status.next().await).is_some() {
                 let uid = upload_info.uid.clone();
-                let status = try_or_redirect_opt!(get_video_status(uid).await);
+                let res = get_video_status(uid).await;
+                if res.is_err() {
+                    let e = res.as_ref().err().unwrap().to_string();
+                    create_effect(move |_| {
+                        send_event(
+                            "video_upload_unsuccessful",
+                            &json!({
+                                "user_id": user_id(),
+                                "display_name": display_name(),
+                                "canister_id": canister_id(),
+                                "creator_category": "NA",
+                                "hashtag_count": hashtags_len,
+                                "is_NSFW": is_nsfw,
+                                "is_hotorNot": enable_hot_or_not,
+                                "fail_reason": e,
+                            }),
+                        );
+                    });
+                }
+                let status = try_or_redirect_opt!(res);
                 if status == "ready" {
                     break;
                 }
@@ -268,28 +333,46 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
                 params.is_nsfw,
             )
             .await;
-            try_or_redirect!(res);
-            publishing.set(false);
-
-            // video_upload_successful - analytics
-            #[cfg(feature = "hydrate")]
-            {
+            if res.is_err() {
+                let e = res.as_ref().err().unwrap().to_string();
                 create_effect(move |_| {
                     send_event(
-                        "video_upload_successful",
+                        "video_upload_unsuccessful",
                         &json!({
-                            "user_id":user_id(),
+                            "user_id": user_id(),
                             "display_name": display_name(),
                             "canister_id": canister_id(),
                             "creator_category": "NA",
                             "hashtag_count": hashtags_len,
-                            "is_NSFW": params.is_nsfw,
-                            "is_hotorNot": params.enable_hot_or_not,
-                            "is_filter_used": false,
+                            "is_NSFW": is_nsfw,
+                            "is_hotorNot": enable_hot_or_not,
+                            "fail_reason": e,
                         }),
                     );
                 });
             }
+            try_or_redirect_opt!(res);
+
+            publishing.set(false);
+
+            // video_upload_successful - analytics
+            create_effect(move |_| {
+                send_event(
+                    "video_upload_successful",
+                    &json!({
+                        "user_id":user_id(),
+                        "display_name": display_name(),
+                        "canister_id": canister_id(),
+                        "creator_category": "NA",
+                        "hashtag_count": hashtags_len,
+                        "is_NSFW": params.is_nsfw,
+                        "is_hotorNot": params.enable_hot_or_not,
+                        "is_filter_used": false,
+                    }),
+                );
+            });
+
+            Some(())
         }
     });
 

@@ -1,9 +1,13 @@
 use crate::{
     canister::utils::{bg_url, mp4_url},
     component::feed_popup::FeedPopUp,
+    component::spinner::FullScreenSpinner,
     state::canisters::AuthProfileCanisterResource,
     state::canisters::{Canisters, CanistersError},
-    state::{auth::account_connected_reader, local_storage::use_referrer_store},
+    state::{
+        auth::account_connected_reader, canisters::AuthProfileCanisterResource,
+        local_storage::use_referrer_store,
+    },
     utils::{profile::ProfileDetails, MockPartialEq},
 };
 use std::cell::Cell;
@@ -12,6 +16,9 @@ use candid::Principal;
 use leptos::{html::Video, *};
 
 use super::{overlay::VideoDetailsOverlay, PostViewCtx};
+use crate::utils::event_streaming::send_event;
+use serde_json::json;
+use wasm_bindgen::JsCast;
 
 #[component]
 pub fn BgView(idx: usize, children: Children) -> impl IntoView {
@@ -80,6 +87,7 @@ pub fn VideoView(idx: usize, muted: RwSignal<bool>) -> impl IntoView {
     } = expect_context();
 
     let profile_and_canister_details: AuthProfileCanisterResource = expect_context();
+    let (is_connected, _) = account_connected_reader();
 
     let vid_details = create_memo(move |_| with!(|video_queue| video_queue.get(idx).cloned()));
 
@@ -89,7 +97,7 @@ pub fn VideoView(idx: usize, muted: RwSignal<bool>) -> impl IntoView {
             .flatten()
             .map(|(q, _)| q.principal)
     };
-    let is_loggedin = move || user_id().is_some();
+    let is_loggedin = move || is_connected();
     let display_name = move || {
         profile_and_canister_details()
             .flatten()
@@ -141,80 +149,75 @@ pub fn VideoView(idx: usize, muted: RwSignal<bool>) -> impl IntoView {
     });
 
     // video_viewed - analytics
-    #[cfg(feature = "hydrate")]
-    {
-        use crate::utils::event_streaming::send_event;
-        use serde_json::json;
-        use wasm_bindgen::JsCast;
+    let (video_watched, set_video_watched) = create_signal(false);
 
-        let (video_watched, set_video_watched) = create_signal(false);
+    create_effect(move |_| {
+        let vid = container_ref()?;
 
-        create_effect(move |_| {
-            let vid = container_ref()?;
+        let callback = move |e: web_sys::Event| {
+            if video_watched.get() {
+                return;
+            }
 
-            let callback = move |e: web_sys::Event| {
-                if video_watched.get() {
-                    return;
-                }
+            let target = e.target().unwrap();
+            let video = target.unchecked_into::<web_sys::HtmlVideoElement>();
+            // let duration = video.duration() as f64;
+            let current_time = video.current_time();
 
-                let target = e.target().unwrap();
-                let video = target.unchecked_into::<web_sys::HtmlVideoElement>();
-                // let duration = video.duration() as f64;
-                let current_time = video.current_time();
+            if current_time >= 3.0 {
+                // Video is halfway done, take action here
 
-                if current_time >= 3.0 {
-                    // Video is halfway done, take action here
+                send_event(
+                    "video_viewed",
+                    &json!({
+                        "publisher_user_id":publisher_user_id(),
+                        "user_id":user_id(),
+                        "is_loggedIn": is_loggedin(),
+                        "display_name": display_name(),
+                        "canister_id": canister_id(),
+                        "video_id": video_id(),
+                        "video_category": "NA",
+                        "creator_category": "NA",
+                        "hashtag_count": hastag_count(),
+                        "is_NSFW": is_nsfw(),
+                        "is_hotorNot": is_hotornot(),
+                        "feed_type": "NA",
+                        "view_count": view_count(),
+                        "like_count": like_count(),
+                        "share_count": 0,
+                    }),
+                );
+                set_video_watched.set(true);
+            }
+        };
 
-                    send_event(
-                        "video_viewed",
-                        &json!({
-                            "publisher_user_id":publisher_user_id(),
-                            "user_id":user_id(),
-                            "is_loggedIn": is_loggedin(),
-                            "display_name": display_name(),
-                            "canister_id": canister_id(),
-                            "video_id": video_id(),
-                            "video_category": "NA",
-                            "creator_category": "NA",
-                            "hashtag_count": hastag_count(),
-                            "is_NSFW": is_nsfw(),
-                            "is_hotorNot": is_hotornot(),
-                            "feed_type": "NA",
-                            "view_count": view_count(),
-                            "like_count": like_count(),
-                            "share_count": 0,
-                        }),
-                    );
-                    set_video_watched.set(true);
-                }
-            };
+        let _ = vid.on(ev::timeupdate, callback);
 
-            let _ = vid.on(ev::timeupdate, callback);
-
-            Some(())
-        });
-    }
+        Some(())
+    });
 
     view! {
-        <label class="w-full h-full absolute top-0 left-0 grid grid-cols-1 justify-items-center items-center cursor-pointer z-[3]">
-            <input
-                on:change=move |_| muted.update(|m| *m = !*m)
-                type="checkbox"
-                value=""
-                class="sr-only"
-            />
-            <video
-                _ref=container_ref
-                class="object-contain h-dvh max-h-dvh cursor-pointer"
-                poster=view_bg_url
-                src=view_video_url
-                loop
-                muted
-                playsinline
-                disablepictureinpicture
-                disableremoteplayback
-                preload="auto"
-            ></video>
-        </label>
+        <Suspense>
+            <label class="w-full h-full absolute top-0 left-0 grid grid-cols-1 justify-items-center items-center cursor-pointer z-[3]">
+                <input
+                    on:change=move |_| muted.update(|m| *m = !*m)
+                    type="checkbox"
+                    value=""
+                    class="sr-only"
+                />
+                <video
+                    _ref=container_ref
+                    class="object-contain h-dvh max-h-dvh cursor-pointer"
+                    poster=view_bg_url
+                    src=view_video_url
+                    loop
+                    muted
+                    playsinline
+                    disablepictureinpicture
+                    disableremoteplayback
+                    preload="auto"
+                ></video>
+            </label>
+        </Suspense>
     }
 }

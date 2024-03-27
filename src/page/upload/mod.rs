@@ -66,20 +66,17 @@ fn PreUploadView(trigger_upload: WriteSignal<Option<UploadParams>>) -> impl Into
     let canister_id = move || profile_and_canister_details().flatten().map(|(_, q)| q);
 
     // video_upload_initiated - analytics
-    #[cfg(feature = "hydrate")]
-    {
-        create_effect(move |_| {
-            send_event(
-                "video_upload_initiated",
-                &json!({
-                    "user_id":user_id(),
-                    "display_name": display_name(),
-                    "canister_id": canister_id(),
-                    "creator_category": "NA",
-                }),
-            );
-        });
-    }
+    create_effect(move |_| {
+        send_event(
+            "video_upload_initiated",
+            &json!({
+                "user_id":user_id(),
+                "display_name": display_name(),
+                "canister_id": canister_id(),
+                "creator_category": "NA",
+            }),
+        );
+    });
 
     let on_submit = move || {
         // video_upload_upload_button_clicked - analytics
@@ -93,23 +90,20 @@ fn PreUploadView(trigger_upload: WriteSignal<Option<UploadParams>>) -> impl Into
             .map(|v| v.checked())
             .unwrap_or_default();
 
-        #[cfg(feature = "hydrate")]
-        {
-            create_effect(move |_| {
-                send_event(
-                    "video_upload_upload_button_clicked",
-                    &json!({
-                        "user_id":user_id(),
-                        "display_name": display_name(),
-                        "canister_id": canister_id(),
-                        "creator_category": "NA",
-                        "hashtag_count": hashtag_count,
-                        "is_NSFW": is_nsfw_val,
-                        "is_hotorNot": is_hotornot_val,
-                    }),
-                );
-            });
-        }
+        create_effect(move |_| {
+            send_event(
+                "video_upload_upload_button_clicked",
+                &json!({
+                    "user_id":user_id(),
+                    "display_name": display_name(),
+                    "canister_id": canister_id(),
+                    "creator_category": "NA",
+                    "hashtag_count": hashtag_count,
+                    "is_NSFW": is_nsfw_val,
+                    "is_hotorNot": is_hotornot_val,
+                }),
+            );
+        });
 
         let description = desc.get_untracked().unwrap().value();
         let hashtags = hashtags.get_untracked();

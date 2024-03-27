@@ -1,8 +1,14 @@
 use crate::{
     component::modal::Modal,
-    state::canisters::{authenticated_canisters, Canisters},
+    page::post_view::PostViewCtx,
+    state::{
+        auth::account_connected_reader,
+        canisters::{authenticated_canisters, AuthProfileCanisterResource, Canisters},
+    },
     try_or_redirect_opt,
     utils::{
+        event_streaming::send_event,
+        profile::ProfileDetails,
         route::failure_redirect,
         web::{copy_to_clipboard, share_url},
     },
@@ -10,6 +16,7 @@ use crate::{
 use leptos::*;
 use leptos_icons::*;
 use leptos_use::use_window;
+use serde_json::json;
 
 use super::video_iter::{post_liked_by_me, PostDetails};
 use candid::Principal;
@@ -29,8 +36,7 @@ fn LikeButtonPlaceHolder() -> impl IntoView {
 #[component]
 fn LikeButton(
     canisters: Canisters<true>,
-    post_canister: Principal,
-    post_id: u64,
+    post_details: PostDetails,
     likes: RwSignal<u64>,
     initial_liked: bool,
 ) -> impl IntoView {
@@ -49,10 +55,30 @@ fn LikeButton(
             None
         }
     });
+    let post_canister = post_details.canister_id;
+    let post_id = post_details.post_id;
+
     let like_toggle = create_action(move |&()| {
         let canisters = canisters.clone();
+        // let canister_id = canisters.user_canister();
+        let (is_connected, _) = account_connected_reader();
+
+        let publisher_user_id = post_details.poster_principal;
+        let video_id = post_details.uid.clone();
+        let hastag_count = post_details.hastags.len();
+        let is_nsfw = post_details.is_nsfw;
+        let is_hotornot = post_details.hot_or_not_feed_ranking_score.is_some();
+        let view_count = post_details.views;
 
         async move {
+            let user = canisters.authenticated_user();
+            let user_details = user.get_profile_details().await.unwrap();
+            let profile_details = ProfileDetails::from(user_details);
+
+            let user_id = profile_details.principal;
+            let display_name = profile_details.display_name;
+            let canister_id = canisters.user_canister();
+
             batch(move || {
                 if liked.get_untracked() {
                     likes.update(|l| *l -= 1);
@@ -60,6 +86,30 @@ fn LikeButton(
                 } else {
                     likes.update(|l| *l += 1);
                     liked.set(true);
+
+                    // like_video - analytics
+                    create_effect(move |_| {
+                        send_event(
+                            "like_video",
+                            &json!({
+                                "publisher_user_id":publisher_user_id,
+                                "user_id":user_id,
+                                "is_loggedIn": is_connected.get_untracked(),
+                                "display_name": display_name,
+                                "canister_id": canister_id,
+                                "video_id": video_id,
+                                "video_category": "NA",
+                                "creator_category": "NA",
+                                "hashtag_count": hastag_count,
+                                "is_NSFW": is_nsfw,
+                                "is_hotorNot": is_hotornot,
+                                "feed_type": "NA",
+                                "view_count": view_count,
+                                "like_count": likes.get_untracked(),
+                                "share_count": 0,
+                            }),
+                        );
+                    });
                 }
             });
             let individual = canisters.individual_user(post_canister);
@@ -113,6 +163,7 @@ fn LikeLoader(
         },
     );
     let canisters = store_value(canisters);
+    let post = store_value(post);
 
     view! {
         <Suspense fallback=LikeButtonPlaceHolder>
@@ -122,8 +173,7 @@ fn LikeLoader(
                         view! {
                             <LikeButton
                                 canisters=canisters.get_value()
-                                post_canister=post.canister_id
-                                post_id=post.post_id
+                                post_details=post.get_value()
                                 likes
                                 initial_liked
                             />
@@ -173,14 +223,63 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
             .unwrap_or_default()
     };
 
-    let share = move || {
-        let url = video_url();
-        if share_url(&url).is_some() {
-            return Some(());
+    let post_details = post.clone();
+
+    let (is_connected, _) = account_connected_reader();
+    let auth_cans = authenticated_canisters().get().unwrap().unwrap().unwrap();
+
+    let is_loggedin = is_connected.get_untracked();
+
+    let share = create_action(move |&()| {
+        let canisters = auth_cans.clone();
+        let post_details = post_details.clone();
+        async move {
+            let url = video_url();
+            if share_url(&url).is_some() {
+                return;
+            }
+            show_share.set(true);
+            let publisher_user_id = post_details.poster_principal;
+            let video_id = post_details.uid.clone();
+            let hastag_count = post_details.hastags.len();
+            let is_nsfw = post_details.is_nsfw;
+            let is_hotornot = post_details.hot_or_not_feed_ranking_score.is_some();
+            let view_count = post_details.views;
+            let like_count = post_details.likes;
+
+            let user = canisters.authenticated_user();
+            let user_details = user.get_profile_details().await.unwrap();
+            let profile_details = ProfileDetails::from(user_details);
+
+            let user_id = profile_details.principal;
+            let display_name = profile_details.display_name;
+            let canister_id = canisters.user_canister();
+
+            // share_video - analytics
+            create_effect(move |_| {
+                send_event(
+                    "share_video",
+                    &json!({
+                        "publisher_user_id":publisher_user_id,
+                        "user_id":user_id,
+                        "is_loggedIn": is_loggedin,
+                        "display_name": display_name,
+                        "canister_id": canister_id,
+                        "video_id": video_id,
+                        "video_category": "NA",
+                        "creator_category": "NA",
+                        "hashtag_count": hastag_count,
+                        "is_NSFW": is_nsfw,
+                        "is_hotorNot": is_hotornot,
+                        "feed_type": "NA",
+                        "view_count": view_count,
+                        "like_count": like_count,
+                        "share_count": 0,
+                    }),
+                );
+            });
         }
-        show_share.set(true);
-        Some(())
-    };
+    });
 
     let profile_url = format!("/profile/{}", post.poster_principal.to_text());
     let post_c = post.clone();
@@ -212,7 +311,7 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
                     <Icon class="drop-shadow-lg" icon=icondata::AiGiftFilled/>
                 </a>
                 <LikeAndAuthCanLoader post=post_c/>
-                <button on:click=move |_| _ = share()>
+                <button on:click=move |_| share.dispatch(())>
                     <Icon class="drop-shadow-lg" icon=icondata::BsSendFill/>
                 </button>
             </div>
