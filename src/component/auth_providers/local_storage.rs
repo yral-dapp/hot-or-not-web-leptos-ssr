@@ -5,7 +5,7 @@ use leptos_use::{storage::use_local_storage, utils::JsonCodec};
 
 use crate::auth::DelegatedIdentityWire;
 
-use super::LoginProvCtx;
+use super::{LoginProvButton, LoginProvCtx, ProviderKind};
 
 const IDENTITY_JWK_STORE: &str = "id-jwk-insecure";
 
@@ -36,27 +36,31 @@ async fn perform_local_storage_auth(
 }
 
 #[component]
-pub fn LocalStorageProvider(ctx: LoginProvCtx) -> impl IntoView {
+pub fn LocalStorageProvider() -> impl IntoView {
     let (jwk_identity, set_jwk_identity, _) =
         use_local_storage::<Option<JwkEcKey>, JsonCodec>(IDENTITY_JWK_STORE);
 
+    let ctx: LoginProvCtx = expect_context();
+
     let do_login_action = create_action(move |()| async move {
-        ctx.processing.set(true);
         let secp256k1_key = jwk_identity.get_untracked();
         let (delegation, jwk) = perform_local_storage_auth(secp256k1_key).await?;
         set_jwk_identity(Some(jwk));
-        ctx.processing.set(false);
         ctx.login_complete.set(delegation);
         Ok::<_, ServerFnError>(())
     });
 
     view! {
-        <button
+        <LoginProvButton
+            prov=ProviderKind::LocalStorage
             class="rounded-full bg-neutral-700 p-4"
-            on:click=move |_| do_login_action.dispatch(())
+            on_click=move |_| {
+                do_login_action.dispatch(());
+            }
         >
+
             <span class="text-white">Local Storage</span>
             <span class="text-red-600">(insecure)</span>
-        </button>
+        </LoginProvButton>
     }
 }

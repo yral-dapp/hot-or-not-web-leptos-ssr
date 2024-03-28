@@ -1,3 +1,5 @@
+#[cfg(any(feature = "oauth-ssr", feature = "oauth-hydrate"))]
+mod google;
 #[cfg(feature = "local-auth")]
 mod local_storage;
 
@@ -14,6 +16,7 @@ use crate::{
         canisters::{do_canister_auth, Canisters},
         local_storage::use_referrer_store,
     },
+    utils::MockPartialEq,
 };
 
 #[server]
@@ -61,51 +64,114 @@ async fn handle_user_login(
     Ok(())
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ProviderKind {
+    #[cfg(feature = "local-auth")]
+    LocalStorage,
+    #[cfg(any(feature = "oauth-ssr", feature = "oauth-hydrate"))]
+    Google,
+}
+
+#[derive(Clone, Copy)]
 pub struct LoginProvCtx {
-    pub processing: RwSignal<bool>,
+    /// Setting processing should only be done on login cancellation
+    /// and inside [LoginProvButton]
+    /// stores the current provider handling the login
+    pub processing: ReadSignal<Option<ProviderKind>>,
+    pub set_processing: SignalSetter<Option<ProviderKind>>,
     pub login_complete: SignalSetter<DelegatedIdentityWire>,
 }
 
+/// Login providers must use this button to trigger the login action
+/// automatically sets the processing state to true
 #[component]
-pub fn LoginProviders(show_modal: RwSignal<bool>) -> impl IntoView {
-    let auth = auth_state();
+fn LoginProvButton<Cb: Fn(ev::MouseEvent) + 'static>(
+    prov: ProviderKind,
+    #[prop(into)] class: Oco<'static, str>,
+    on_click: Cb,
+    children: Children,
+) -> impl IntoView {
+    let ctx: LoginProvCtx = expect_context();
+
+    view! {
+        <button
+            disabled=move || ctx.processing.get().is_some()
+            class=class
+            on:click=move |ev| {
+                ctx.set_processing.set(Some(prov));
+                on_click(ev);
+            }
+        >
+
+            {children()}
+        </button>
+    }
+}
+
+#[component]
+pub fn LoginProviders(show_modal: RwSignal<bool>, lock_closing: RwSignal<bool>) -> impl IntoView {
     let (_, write_account_connected, _) =
         use_local_storage::<bool, FromToStringCodec>(ACCOUNT_CONNECTED_STORE);
+    let auth = auth_state();
 
-    let (referrer_store, _, _) = use_referrer_store();
-    let handle_user_login_action = create_action(move |identity: &DelegatedIdentityWire| {
-        let identity = identity.clone();
-        async move {
+    let new_identity = create_rw_signal::<Option<DelegatedIdentityWire>>(None);
+
+    let processing = create_rw_signal(None);
+
+    create_local_resource(
+        move || MockPartialEq(new_identity()),
+        move |identity| async move {
+            let Some(identity) = identity.0 else {
+                return Ok(());
+            };
+
+            let (referrer_store, _, _) = use_referrer_store();
+            let referrer = referrer_store.get_untracked();
+
             // This is some redundant work, but saves us 100+ lines of resource handling
-            let canisters = do_canister_auth(Some(identity)).await?.unwrap();
+            let canisters = do_canister_auth(Some(identity.clone())).await?.unwrap();
 
-            if let Err(e) = handle_user_login(canisters, referrer_store.get_untracked()).await {
+            if let Err(e) = handle_user_login(canisters, referrer).await {
                 log::warn!("failed to handle user login, err {e}. skipping");
             }
             Ok::<_, ServerFnError>(())
-        }
-    });
+        },
+    );
 
     let ctx = LoginProvCtx {
-        processing: RwSignal::new(false),
+        processing: processing.read_only(),
+        set_processing: SignalSetter::map(move |val: Option<ProviderKind>| {
+            lock_closing.set(val.is_some());
+            processing.set(val);
+        }),
         login_complete: SignalSetter::map(move |val: DelegatedIdentityWire| {
+            new_identity.set(Some(val.clone()));
             write_account_connected(true);
-            handle_user_login_action.dispatch(val.clone());
             auth.identity.set(Some(val));
-            show_modal.set(false)
+            show_modal.set(false);
         }),
     };
+    provide_context(ctx);
 
     view! {
-        <div class="flex w-full gap-4">
+        <div class="flex flex-col py-12 px-16 items-center gap-2 bg-neutral-900 text-white cursor-auto">
+            <h1 class="text-xl">Login to Yral</h1>
+            <img class="h-32 w-32 object-contain my-8" src="/img/logo.webp"/>
+            <span class="text-md">Continue with</span>
+            <div class="flex w-full gap-4">
 
-            {
-                #[cfg(feature = "local-auth")]
-                view! {
-                    <local_storage::LocalStorageProvider ctx></local_storage::LocalStorageProvider>
+                {
+                    #[cfg(feature = "local-auth")]
+                    view! {
+                        <local_storage::LocalStorageProvider></local_storage::LocalStorageProvider>
+                    }
                 }
-            }
+                {
+                    #[cfg(any(feature = "oauth-ssr", feature = "oauth-hydrate"))]
+                    view! { <google::GoogleAuthProvider></google::GoogleAuthProvider> }
+                }
 
+            </div>
         </div>
     }
 }

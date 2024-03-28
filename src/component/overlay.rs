@@ -1,7 +1,12 @@
 use leptos::*;
 
 #[component]
-pub fn ShadowOverlay(#[prop(into)] show: RwSignal<bool>, children: ChildrenFn) -> impl IntoView {
+pub fn ShadowOverlay(
+    #[prop(into)] show: RwSignal<bool>,
+    #[prop(into, optional)] lock_closing: RwSignal<bool>,
+    children: ChildrenFn,
+) -> impl IntoView {
+    let _lock_closing = lock_closing;
     view! {
         <Show when=show>
             <div
@@ -11,7 +16,7 @@ pub fn ShadowOverlay(#[prop(into)] show: RwSignal<bool>, children: ChildrenFn) -
                         move |ev| {
                             use web_sys::HtmlElement;
                             let target = event_target::<HtmlElement>(&ev);
-                            if target.class_list().contains("modal-bg") {
+                            if target.class_list().contains("modal-bg") && !_lock_closing() {
                                 show.set(false);
                             }
                         }

@@ -54,6 +54,13 @@ pub fn App() -> impl IntoView {
         }>
             <main>
                 <Routes>
+                    // auth redirect routes exist outside main context
+
+                    {#[cfg(any(feature = "oauth-ssr", feature = "oauth-hydrate"))]
+                    {
+                        use crate::page::google_redirect::GoogleRedirect;
+                        view! { <Route path="/auth/google_redirect" view=GoogleRedirect/> }
+                    }}
                     <Route path="/" view=BaseRoute>
                         <Route path="/hot-or-not/:canister_id/:post_id" view=PostView/>
                         <Route path="/profile/:id" view=ProfileView/>

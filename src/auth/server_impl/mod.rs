@@ -1,5 +1,6 @@
+#[cfg(feature = "oauth-ssr")]
+pub mod google;
 pub mod store;
-// pub mod google;
 
 use axum::response::IntoResponse;
 use axum_extra::extract::{
@@ -18,7 +19,7 @@ use rand_chacha::rand_core::OsRng;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    consts::auth::{DELEGATION_EXPIRY, REFRESH_EXPIRY, REFRESH_TOKEN_COOKIE},
+    consts::auth::{DELEGATION_MAX_AGE, REFRESH_MAX_AGE, REFRESH_TOKEN_COOKIE},
     utils::current_epoch,
 };
 
@@ -30,7 +31,7 @@ impl DelegatedIdentityWire {
     pub fn delegate(from: &impl Identity) -> Self {
         let to_secret = k256::SecretKey::random(&mut OsRng);
         let to_identity = Secp256k1Identity::from_private_key(to_secret.clone());
-        let expiry = current_epoch() + DELEGATION_EXPIRY;
+        let expiry = current_epoch() + DELEGATION_MAX_AGE;
         let expiry_ns = expiry.as_nanos() as u64;
         let delegation = Delegation {
             pubkey: to_identity.public_key().unwrap(),
@@ -48,6 +49,18 @@ impl DelegatedIdentityWire {
             to_secret: to_secret.to_jwk(),
             delegation_chain: vec![signed_delegation],
         }
+    }
+}
+
+fn set_cookies(resp: &ResponseOptions, jar: impl IntoResponse) {
+    let resp_jar = jar.into_response();
+    for cookie in resp_jar
+        .headers()
+        .get_all(header::SET_COOKIE)
+        .into_iter()
+        .cloned()
+    {
+        resp.append_header(header::SET_COOKIE, cookie);
     }
 }
 
@@ -106,24 +119,22 @@ pub async fn update_user_identity(
     mut jar: SignedCookieJar,
     identity: impl Identity,
 ) -> Result<DelegatedIdentityWire, ServerFnError> {
-    let refresh_expiry = current_epoch() + REFRESH_EXPIRY;
+    let refresh_max_age = REFRESH_MAX_AGE;
     let refresh_token = RefreshToken {
         principal: identity.sender().unwrap(),
-        expiry_epoch_ms: refresh_expiry.as_millis(),
+        expiry_epoch_ms: (current_epoch() + refresh_max_age).as_millis(),
     };
     let refresh_token_enc = serde_json::to_string(&refresh_token)?;
 
     let refresh_cookie = Cookie::build((REFRESH_TOKEN_COOKIE, refresh_token_enc))
         .http_only(true)
         .secure(true)
+        .path("/")
         .same_site(SameSite::None)
-        .max_age(refresh_expiry.try_into().unwrap());
+        .max_age(refresh_max_age.try_into().unwrap());
 
     jar = jar.add(refresh_cookie);
-    let resp_jar = jar.into_response();
-    for cookie in resp_jar.headers().values().cloned() {
-        response_opts.insert_header(header::SET_COOKIE, cookie);
-    }
+    set_cookies(response_opts, jar);
 
     Ok(DelegatedIdentityWire::delegate(&identity))
 }

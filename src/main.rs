@@ -33,6 +33,8 @@ pub async fn server_fn_handler(
             provide_context(app_state.cloudflare.clone());
             provide_context(app_state.kv.clone());
             provide_context(app_state.cookie_key.clone());
+            #[cfg(feature = "oauth-ssr")]
+            provide_context(app_state.google_oauth.clone());
         },
         request,
     )
@@ -54,6 +56,8 @@ pub async fn leptos_routes_handler(
             provide_context(app_state.cloudflare.clone());
             provide_context(app_state.kv.clone());
             provide_context(app_state.cookie_key.clone());
+            #[cfg(feature = "oauth-ssr")]
+            provide_context(app_state.google_oauth.clone());
         },
         App,
     );
@@ -103,9 +107,31 @@ fn init_cookie_key() -> Key {
     Key::from(&cookie_key_raw)
 }
 
-#[cfg(feature = "oauth-provider")]
-fn init_google_oauth() -> oauth2::basic::BasicClient {
-    unimplemented!("Google OAuth is not implemented")
+#[cfg(feature = "oauth-ssr")]
+fn init_google_oauth() -> openidconnect::core::CoreClient {
+    use hot_or_not_web_leptos_ssr::consts::google::{
+        GOOGLE_AUTH_URL, GOOGLE_ISSUER_URL, GOOGLE_TOKEN_URL,
+    };
+    use openidconnect::{
+        core::CoreClient, AuthUrl, ClientId, ClientSecret, IssuerUrl, RedirectUrl, TokenUrl,
+    };
+
+    let client_id = env::var("GOOGLE_CLIENT_ID").expect("`GOOGLE_CLIENT_ID` is required!");
+    let client_secret =
+        env::var("GOOGLE_CLIENT_SECRET").expect("`GOOGLE_CLIENT_SECRET` is required!");
+    let redirect_uri = env::var("GOOGLE_REDIRECT_URL").expect("`GOOGLE_REDIRECT_URL` is required!");
+
+    CoreClient::new(
+        ClientId::new(client_id),
+        Some(ClientSecret::new(client_secret)),
+        IssuerUrl::new(GOOGLE_ISSUER_URL.to_string()).unwrap(),
+        AuthUrl::new(GOOGLE_AUTH_URL.to_string()).unwrap(),
+        Some(TokenUrl::new(GOOGLE_TOKEN_URL.to_string()).unwrap()),
+        None,
+        // We don't validate id_tokens against Google's public keys
+        Default::default(),
+    )
+    .set_redirect_uri(RedirectUrl::new(redirect_uri).unwrap())
 }
 
 #[tokio::main]
@@ -133,7 +159,7 @@ async fn main() {
         cloudflare: init_cf(),
         kv: init_kv(),
         cookie_key: init_cookie_key(),
-        #[cfg(feature = "oauth-provider")]
+        #[cfg(feature = "oauth-ssr")]
         google_oauth: init_google_oauth(),
     };
 

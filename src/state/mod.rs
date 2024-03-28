@@ -26,7 +26,7 @@ pub mod server {
         pub kv: KVStoreImpl,
         pub routes: Vec<RouteListing>,
         pub cookie_key: Key,
-        #[cfg(feature = "oauth-provider")]
-        pub google_oauth: oauth2::basic::BasicClient,
+        #[cfg(feature = "oauth-ssr")]
+        pub google_oauth: openidconnect::core::CoreClient,
     }
 }
