@@ -46,12 +46,12 @@ fn ReferLoaded(user_principal: Principal) -> impl IntoView {
             ))
         })
         .unwrap_or_default();
+    let (logged_in, _) = account_connected_reader();
+    let profile_and_canister_details: AuthProfileCanisterResource = expect_context();
 
-    let click_copy = move |_| {
+    let click_copy = move || {
         let _ = copy_to_clipboard(&refer_link);
 
-        let (logged_in, _) = account_connected_reader();
-        let profile_and_canister_details: AuthProfileCanisterResource = expect_context();
         let user_id = move || {
             profile_and_canister_details()
                 .flatten()
@@ -84,7 +84,7 @@ fn ReferLoaded(user_principal: Principal) -> impl IntoView {
     view! {
         <div class="flex items-center w-fit rounded-full border-dashed border-2 p-3 gap-2 border-primary-500">
             <span class="text-md lg:text-lg text-ellipsis line-clamp-1">{refer_code}</span>
-            <button on:click=move |_| _ = copy_to_clipboard(&refer_link)>
+            <button on:click=move |_| click_copy()>
                 <Icon class="text-xl" icon=icondata::FaCopyRegular/>
             </button>
         </div>
