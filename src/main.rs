@@ -88,12 +88,21 @@ fn init_admin_canisters() -> hot_or_not_web_leptos_ssr::state::admin_canisters::
 }
 
 fn init_kv() -> KVStoreImpl {
-    #[cfg(feature = "cloudflare")]
+    #[cfg(feature = "cloudflare-kv")]
     {
-        unimplemented!("Cloudflare KV is not implemented")
+        use gob_cloudflare::{api::kv::KvNamespace, CloudflareAuth, Credentials};
+        use hot_or_not_web_leptos_ssr::auth::server_impl::store::cloudflare::CloudflareKV;
+        let creds = Credentials {
+            token: env::var("CF_KV_TOKEN").expect("`CF_KV_TOKEN` is required!"),
+            account_id: env::var("CF_ACCOUNT_ID").expect("`CF_ACCOUNT_ID` is required!"),
+        };
+        let namespace =
+            KvNamespace::new(env::var("CF_KV_NAMESPACE").expect("`CF_KV_NAMESPACE` is required!"));
+        let cf = CloudflareAuth::new(creds);
+        KVStoreImpl::Cf(CloudflareKV::new(cf, namespace))
     }
 
-    #[cfg(not(feature = "cloudflare"))]
+    #[cfg(not(feature = "cloudflare-kv"))]
     {
         use hot_or_not_web_leptos_ssr::auth::server_impl::store::redb_kv::ReDBKV;
         KVStoreImpl::ReDB(ReDBKV::new().expect("Failed to initialize ReDB"))

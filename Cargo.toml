@@ -60,10 +60,9 @@ enum_dispatch = { version = "0.3.12", optional = true }
 axum-extra = { version = "0.9.3", optional = true, features = ["cookie", "cookie-signed", "cookie-private"] }
 openidconnect = { version = "3.5.0", optional = true }
 dotenv = { version = "0.15.0", optional = true }
-gob-cloudflare = { git = "https://github.com/go-bazzinga/gob-cloudflare", rev = "59033087bcc2f307f8458da86ee2893209b992ef", default-features = false, optional = true }
-yral-metadata-client = { git = "https://github.com/go-bazzinga/yral-metadata", rev = "8cc177108f894e164062055d494280f0dab78b22", default-features = false }
-yral-metadata-types = { git = "https://github.com/go-bazzinga/yral-metadata", rev = "8cc177108f894e164062055d494280f0dab78b22", default-features = false }
-yral-identity = { git = "https://github.com/go-bazzinga/yral-identity", default-features = false, features = ["ic-agent"], rev = "6ed9acfd9d98a16db457ea1e2ebf2ba76626c426" }
+gob-cloudflare = { git = "https://github.com/go-bazzinga/gob-cloudflare", rev = "c847ba87ecc73a33520b24bd62503420d7e23e3e", default-features = false, optional = true }
+yral-metadata-client = { git = "https://github.com/go-bazzinga/yral-metadata", rev = "03bd3af79a8202583b928e2ad63fbdda4e0f9c65", default-features = false }
+yral-metadata-types = { git = "https://github.com/go-bazzinga/yral-metadata", rev = "03bd3af79a8202583b928e2ad63fbdda4e0f9c65", default-features = false }
 
 [build-dependencies]
 serde = { version = "1.0", features = ["derive"] }
@@ -80,7 +79,6 @@ hydrate = [
     "reqwest/native-tls",
     "gob-cloudflare/native-tls",
     "dep:web-sys",
-    "yral-identity/wasm-bindgen"
 ]
 ssr = [
     "dep:axum",
@@ -95,6 +93,7 @@ ssr = [
     "leptos-use/ssr",
     "leptos-use/axum",
     "reqwest/rustls-tls",
+    "dep:gob-cloudflare",
     "gob-cloudflare/rustls-tls",
     "dep:redb",
     "dep:enum_dispatch",
@@ -110,10 +109,11 @@ mock-history = ["mock-referral-history", "mock-wallet-history"]
 oauth-ssr = ["dep:openidconnect"]
 oauth-hydrate = []
 local-auth = []
-cloudflare = ["gob-cloudflare"]
+cloudflare-kv = []
+cloudflare = ["dep:gob-cloudflare"]
 backend-admin = []
-release-bin = ["ssr", "cloudflare", "backend-admin", "oauth-ssr"]
-release-lib = ["hydrate", "cloudflare", "backend-admin", "oauth-hydrate"]
+release-bin = ["ssr", "cloudflare", "cloudflare-kv", "backend-admin", "oauth-ssr"]
+release-lib = ["hydrate", "cloudflare", "cloudflare-kv", "backend-admin", "oauth-hydrate"]
 
 [profile.wasm-release]
 inherits = "release"

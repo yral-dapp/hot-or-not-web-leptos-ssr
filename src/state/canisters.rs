@@ -15,7 +15,7 @@ use crate::{
         user_index::UserIndex,
         AGENT_URL,
     },
-    consts::FALLBACK_USER_INDEX,
+    consts::{FALLBACK_USER_INDEX, METADATA_API_BASE},
     utils::MockPartialEq,
 };
 
@@ -36,7 +36,7 @@ impl Default for Canisters<false> {
                 .build()
                 .unwrap(),
             id: None,
-            metadata_client: MetadataClient::default(),
+            metadata_client: MetadataClient::with_base_url(METADATA_API_BASE.clone()),
             user_canister: Principal::anonymous(),
             expiry: 0,
         }
@@ -59,7 +59,7 @@ impl Canisters<true> {
                 .with_arc_identity(id.clone())
                 .build()
                 .unwrap(),
-            metadata_client: MetadataClient::default(),
+            metadata_client: MetadataClient::with_base_url(METADATA_API_BASE.clone()),
             id: Some(id),
             user_canister: Principal::anonymous(),
             expiry,
