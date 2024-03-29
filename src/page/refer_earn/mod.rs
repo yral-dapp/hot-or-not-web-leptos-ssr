@@ -108,7 +108,7 @@ fn ReferView() -> impl IntoView {
                     />
                     <WorkButton
                         text="Your friend uses
-                        the shared link 
+                        the shared link
                         to login"
                         head="STEP 2"
                     />
@@ -184,9 +184,11 @@ fn ListSwitcher() -> impl IntoView {
                 set_cur_tab=set_cur_tab
             />
         </div>
-        <Show when=move || current_tab() == 0 fallback=HistoryView>
-            <ReferView/>
-        </Show>
+        <div class="flex flex-row justify-center">
+            <Show when=move || current_tab() == 0 fallback=HistoryView>
+                <ReferView/>
+            </Show>
+        </div>
     }
 }
 
@@ -203,7 +205,7 @@ pub fn ReferEarn() -> impl IntoView {
                     <div></div>
                 </div>
             </Title>
-            <div class="px-8">
+            <div class="px-8 w-full sm:w-7/12">
                 <Show when=logged_in fallback=ReferView>
                     <ListSwitcher/>
                 </Show>

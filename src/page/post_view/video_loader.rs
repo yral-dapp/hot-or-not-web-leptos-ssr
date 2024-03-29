@@ -21,7 +21,6 @@ pub fn BgView(idx: usize, children: Children) -> impl IntoView {
     let (show_login_popup, set_show_login_popup) = create_signal(true);
 
     create_effect(move |_| {
-        logging::log!("current_idx: {}", current_idx.get());
         if current_idx.get() == 5 {
             set_show_login_popup.update(|n| *n = false);
         }
