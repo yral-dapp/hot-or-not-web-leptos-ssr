@@ -26,7 +26,12 @@ impl KVStore for CloudflareKV {
     }
 
     async fn write(&self, key: String, value: String) -> Result<(), KVError> {
-        let req = self.namespace.write_kv(key).value(value).metadata(&()).unwrap();
+        let req = self
+            .namespace
+            .write_kv(key)
+            .value(value)
+            .metadata(&())
+            .unwrap();
         self.client.send_auth_multipart(req).await?;
         Ok(())
     }
