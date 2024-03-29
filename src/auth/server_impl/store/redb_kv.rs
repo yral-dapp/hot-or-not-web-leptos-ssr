@@ -48,20 +48,6 @@ impl KVStore for ReDBKV {
         .unwrap()
     }
 
-    async fn read_metadata_raw(&self, key: String) -> Result<Option<String>, KVError> {
-        self.spawn_blocking(move |db| {
-            let read_txn = db.begin_read()?;
-            let metadata = {
-                let table = read_txn.open_table(RAW_METADATA_TABLE)?;
-                let v = table.get(key.as_str())?;
-                v.map(|ag| ag.value().to_string())
-            };
-            Ok(metadata)
-        })
-        .await
-        .unwrap()
-    }
-
     async fn write(&self, key: String, value: String) -> Result<(), KVError> {
         self.spawn_blocking(move |db| {
             let write_txn = db.begin_write()?;
@@ -71,20 +57,6 @@ impl KVStore for ReDBKV {
             }
             write_txn.commit()?;
             Ok::<_, redb::Error>(())
-        })
-        .await
-        .unwrap()
-    }
-
-    async fn write_metadata_raw(&self, key: String, metadata: String) -> Result<(), KVError> {
-        self.spawn_blocking(move |db| {
-            let write_txn = db.begin_write()?;
-            {
-                let mut table = write_txn.open_table(RAW_METADATA_TABLE)?;
-                table.insert(key.as_str(), metadata.as_str())?;
-            }
-            write_txn.commit()?;
-            Ok(())
         })
         .await
         .unwrap()

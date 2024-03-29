@@ -3,9 +3,11 @@ use std::{collections::HashSet, sync::Arc};
 use candid::Principal;
 use ic_agent::{identity::DelegatedIdentity, AgentError, Identity};
 use leptos::*;
+use yral_metadata_client::MetadataClient;
+use yral_metadata_types::UserMetadata;
 
 use crate::{
-    auth::{get_user_metadata, set_user_metadata, DelegatedIdentityWire, UserMetadata},
+    auth::DelegatedIdentityWire,
     canister::{
         individual_user_template::{IndividualUserTemplate, Result8},
         platform_orchestrator::{self, PlatformOrchestrator},
@@ -21,6 +23,7 @@ use crate::{
 pub struct Canisters<const AUTH: bool> {
     agent: ic_agent::Agent,
     id: Option<Arc<DelegatedIdentity>>,
+    metadata_client: MetadataClient,
     user_canister: Principal,
     expiry: u64,
 }
@@ -33,6 +36,7 @@ impl Default for Canisters<false> {
                 .build()
                 .unwrap(),
             id: None,
+            metadata_client: MetadataClient::default(),
             user_canister: Principal::anonymous(),
             expiry: 0,
         }
@@ -55,6 +59,7 @@ impl Canisters<true> {
                 .with_arc_identity(id.clone())
                 .build()
                 .unwrap(),
+            metadata_client: MetadataClient::default(),
             id: Some(id),
             user_canister: Principal::anonymous(),
             expiry,
@@ -101,7 +106,10 @@ impl<const A: bool> Canisters<A> {
         &self,
         user_principal: Principal,
     ) -> Result<Option<Principal>, ServerFnError> {
-        let meta = get_user_metadata(user_principal).await?;
+        let meta = self
+            .metadata_client
+            .get_user_metadata(user_principal)
+            .await?;
         if let Some(meta) = meta {
             return Ok(Some(meta.user_canister_id));
         }
@@ -155,14 +163,16 @@ async fn create_individual_canister(
         .get_requester_principals_canister_id_create_if_not_exists_and_optionally_allow_referrer()
         .await?;
 
-    set_user_metadata(
-        principal,
-        UserMetadata {
-            user_canister_id: user_canister,
-            user_name: "".into(),
-        },
-    )
-    .await?;
+    canisters
+        .metadata_client
+        .set_user_metadata(
+            canisters.identity(),
+            UserMetadata {
+                user_canister_id: user_canister,
+                user_name: "".into(),
+            },
+        )
+        .await?;
 
     Ok(user_canister)
 }

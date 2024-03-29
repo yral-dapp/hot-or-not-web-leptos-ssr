@@ -1,7 +1,6 @@
 #[cfg(feature = "ssr")]
 pub mod server_impl;
 
-use candid::Principal;
 use ic_agent::identity::{DelegatedIdentity, Secp256k1Identity, SignedDelegation};
 use k256::elliptic_curve::JwkEcKey;
 use leptos::{server, ServerFnError};
@@ -34,28 +33,7 @@ impl TryFrom<DelegatedIdentityWire> for DelegatedIdentity {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct UserMetadata {
-    pub user_canister_id: Principal,
-    pub user_name: String,
-}
-
 #[server]
 pub async fn extract_or_generate_identity() -> Result<DelegatedIdentityWire, ServerFnError> {
     server_impl::extract_or_generate_identity_impl().await
-}
-
-#[server]
-pub async fn set_user_metadata(
-    principal: Principal,
-    metadata: UserMetadata,
-) -> Result<(), ServerFnError> {
-    server_impl::set_user_metadata_impl(principal, metadata).await
-}
-
-#[server]
-pub async fn get_user_metadata(
-    principal: Principal,
-) -> Result<Option<UserMetadata>, ServerFnError> {
-    server_impl::get_user_metadata_impl(principal).await
 }

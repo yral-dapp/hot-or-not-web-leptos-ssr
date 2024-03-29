@@ -25,7 +25,7 @@ use crate::{
 
 use self::store::{KVStore, KVStoreImpl};
 
-use super::{DelegatedIdentityWire, UserMetadata};
+use super::DelegatedIdentityWire;
 
 impl DelegatedIdentityWire {
     pub fn delegate(from: &impl Identity) -> Self {
@@ -154,22 +154,4 @@ pub async fn extract_or_generate_identity_impl() -> Result<DelegatedIdentityWire
     let delegated = update_user_identity(&resp, jar, base_identity).await?;
 
     Ok(delegated)
-}
-
-// TODO(IMP): signing
-pub async fn set_user_metadata_impl(
-    principal: Principal,
-    metadata: UserMetadata,
-) -> Result<(), ServerFnError> {
-    let kv: KVStoreImpl = expect_context();
-    kv.write_json_metadata(principal.to_text(), metadata)
-        .await?;
-    Ok(())
-}
-
-pub async fn get_user_metadata_impl(
-    principal: Principal,
-) -> Result<Option<UserMetadata>, ServerFnError> {
-    let kv: KVStoreImpl = expect_context();
-    Ok(kv.read_json_metadata(principal.to_text()).await?)
 }

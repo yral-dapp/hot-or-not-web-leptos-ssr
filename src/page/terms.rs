@@ -18,15 +18,15 @@ pub fn TermsOfService() -> impl IntoView {
             </Title>
             <div class="px-8 flex h-full w-full flex-col space-y-8 overflow-hidden overflow-y-auto py-16">
                 <div class="flex flex-col space-y-2">
-                <div class="text-sm font-semibold">Introductions</div>
+                    <div class="text-sm font-semibold">Introductions</div>
                     <div class="text-xs whitespace-pre-line">
                         {r#"Thanks for choosing Yral, an online social platform. This is an agreement between "you", a "user" of “Yral”, and GoBazzinga Inc., a company incorporated in the United States of America ("we", "us", "our''). The platform “Yral” has been developed by GoBazzinga Inc. and we operate all features of Yral and tokens in the application.
-
-                            "Coyn token" refers to the blockchain-based unit known as 'Coyn' built upon the Internet Computer protocol.
-
-                            Subject to the foregoing, we are pleased to make our services available to you, which include the Yral Web App, website, social and interactive features, which include image posting, video posting and other associated services ("Services"). These images, videos, clips, interactions etc. on Yral posted by the users shall be the "Content".
-
-                            If you install, use, access Yral or any of its features, you have read and accepted these terms and conditions. You have also accepted the Yral [privacy policy link], and other terms which are available on the Yral App, Yral Website, and otherwise. Please make sure to read these documents. By using Yral, you are entering into a binding contract(s) with us. Your contract with us includes the Terms and conditions and privacy policy etc. If you don’t agree with and accept the above, please do not use, install, access Yral or any of its features."""#}
+                        
+                           "Coyn token" refers to the blockchain-based unit known as 'Coyn' built upon the Internet Computer protocol.
+                        
+                           Subject to the foregoing, we are pleased to make our services available to you, which include the Yral Web App, website, social and interactive features, which include image posting, video posting and other associated services ("Services"). These images, videos, clips, interactions etc. on Yral posted by the users shall be the "Content".
+                        
+                           If you install, use, access Yral or any of its features, you have read and accepted these terms and conditions. You have also accepted the Yral [privacy policy link], and other terms which are available on the Yral App, Yral Website, and otherwise. Please make sure to read these documents. By using Yral, you are entering into a binding contract(s) with us. Your contract with us includes the Terms and conditions and privacy policy etc. If you don’t agree with and accept the above, please do not use, install, access Yral or any of its features."""#}
                     </div>
                 </div>
                 <div class="flex flex-col space-y-2">
