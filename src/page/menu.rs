@@ -171,7 +171,7 @@ pub fn Menu() -> impl IntoView {
                             <ConnectLogin/>
                         </div>
                         <div class="w-full px-8 text-center text-sm font-sans">
-                            {r#"Sign up to safeguard your account and unlock exclusive features."#}
+                            {r#"Your Yral account has been setup. Login with Google to not lose progress."#}
                         </div>
                     </Show>
                 </div>

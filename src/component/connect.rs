@@ -120,6 +120,7 @@ pub fn ConnectLogin(
         <button
             on:click=move |ev| {
                 ev.prevent_default();
+                ev.stop_propagation();
                 logging_in.set(true);
             }
 

@@ -1,13 +1,32 @@
-use crate::canister::utils::{bg_url, mp4_url};
+use crate::{
+    canister::utils::{bg_url, mp4_url},
+    component::connect::ConnectLogin,
+    state::auth::account_connected_reader,
+};
 use leptos::{html::Video, *};
 
 use super::{overlay::VideoDetailsOverlay, PostViewCtx};
 
 #[component]
 pub fn BgView(idx: usize, children: Children) -> impl IntoView {
-    let PostViewCtx { video_queue, .. } = expect_context();
+    let PostViewCtx {
+        video_queue,
+        current_idx,
+        ..
+    } = expect_context();
     let post = move || video_queue.with(|q| q.get(idx).cloned());
     let uid = move || post().as_ref().map(|q| q.uid.clone()).unwrap_or_default();
+
+    let (is_connected, _) = account_connected_reader();
+    let (show_login_popup, set_show_login_popup) = create_signal(true);
+
+    create_effect(move |_| {
+        if current_idx.get() == 5 {
+            set_show_login_popup.update(|n| *n = false);
+        }
+        Some(())
+    });
+
     view! {
         <div class="bg-transparent w-full h-full relative overflow-hidden">
             <div
@@ -15,6 +34,23 @@ pub fn BgView(idx: usize, children: Children) -> impl IntoView {
                 style:background-color="rgb(0, 0, 0)"
                 style:background-image=move || format!("url({})", bg_url(uid()))
             ></div>
+            <Show when=move|| {idx==4 && !is_connected.get() && show_login_popup.get()}>
+                <div class="h-full w-full absolute bg-black opacity-90 z-50 flex flex-col justify-center">
+                    <div class="flex flex-row justify-center">
+                        <div class="flex flex-col justify-center w-9/12 sm:w-4/12 relative">
+                            <img class="h-28 w-28 absolute -left-4 -top-10" src="/img/coins/coin-topleft.svg" />
+                            <img class="h-18 w-18 absolute -right-2 -top-14" src="/img/coins/coin-topright.svg" />
+                            <img class="h-18 w-18 absolute -bottom-14 -left-8" src="/img/coins/coin-bottomleft.svg" />
+                            <img class="h-18 w-18 absolute -bottom-12 -right-2" src="/img/coins/coin-bottomright.svg" />
+                            <span class="text-white text-3xl text-center text-bold p-2">Your Rewards are <br/> Waiting!</span>
+                            <span class="text-white text-center p-2 pb-4">SignUp/Login to save your progress and claim your rewards.</span>
+                            <div class="flex justify-center">
+                                <div class="w-7/12 sm:w-4/12 z-[60]"><ConnectLogin /></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </Show>
             {move || post().map(|post| view! { <VideoDetailsOverlay post/> })}
             {children()}
         </div>

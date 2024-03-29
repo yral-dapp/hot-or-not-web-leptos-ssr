@@ -60,7 +60,7 @@ impl TxnTag {
         use TxnTag::*;
         match self {
             BetPlaced => "Bet Placement",
-            SignupBonus => "Sign Up Bonus",
+            SignupBonus => "Joining Bonus",
             Referral => "Referral Reward",
             Winnings => "Bet Winnings",
             Commission => "Bet Commission",
