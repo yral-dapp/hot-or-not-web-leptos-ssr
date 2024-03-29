@@ -146,7 +146,7 @@ fn init_google_oauth() -> openidconnect::core::CoreClient {
 #[tokio::main]
 async fn main() {
     simple_logger::init_with_level(log::Level::Debug).expect("couldn't initialize logging");
-    dotenv::dotenv().expect("couldn't load .env file");
+    dotenv::dotenv().ok();
 
     // Setting get_configuration(None) means we'll be using cargo-leptos's env values
     // For deployment these variables are:

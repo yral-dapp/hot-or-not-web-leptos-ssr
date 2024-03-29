@@ -78,6 +78,7 @@ hydrate = [
     "ic-agent/wasm-bindgen",
     "reqwest/native-tls",
     "gob-cloudflare/native-tls",
+    "yral-metadata-client/native-tls",
     "dep:web-sys",
 ]
 ssr = [
@@ -95,6 +96,7 @@ ssr = [
     "reqwest/rustls-tls",
     "dep:gob-cloudflare",
     "gob-cloudflare/rustls-tls",
+    "yral-metadata-client/rustls-tls",
     "dep:redb",
     "dep:enum_dispatch",
     "axum-extra",
