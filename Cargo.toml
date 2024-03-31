@@ -76,9 +76,6 @@ hydrate = [
     "leptos_meta/hydrate",
     "leptos_router/hydrate",
     "ic-agent/wasm-bindgen",
-    "reqwest/native-tls",
-    "gob-cloudflare/native-tls",
-    "yral-metadata-client/native-tls",
     "dep:web-sys",
 ]
 ssr = [
