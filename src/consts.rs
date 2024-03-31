@@ -11,7 +11,7 @@ pub const REFERRER_STORE: &str = "referrer";
 pub static FALLBACK_USER_INDEX: Lazy<Principal> =
     Lazy::new(|| Principal::from_text("znhy2-2qaaa-aaaag-acofq-cai").unwrap());
 pub static METADATA_API_BASE: Lazy<Url> =
-    Lazy::new(|| Url::parse("https://yral-metadata-rupansh.fly.dev").unwrap());
+    Lazy::new(|| Url::parse("https://yral-metadata.fly.dev").unwrap());
 
 pub mod social {
     pub const TELEGRAM: &str = "https://t.me/+c-LTX0Cp-ENmMzI1";

@@ -87,22 +87,15 @@ fn init_admin_canisters() -> hot_or_not_web_leptos_ssr::state::admin_canisters::
     AdminCanisters::new(admin_id)
 }
 
-fn init_kv() -> KVStoreImpl {
-    #[cfg(feature = "cloudflare-kv")]
+async fn init_kv() -> KVStoreImpl {
+    #[cfg(feature = "redis-kv")]
     {
-        use gob_cloudflare::{api::kv::KvNamespace, CloudflareAuth, Credentials};
-        use hot_or_not_web_leptos_ssr::auth::server_impl::store::cloudflare::CloudflareKV;
-        let creds = Credentials {
-            token: env::var("CF_KV_TOKEN").expect("`CF_KV_TOKEN` is required!"),
-            account_id: env::var("CF_ACCOUNT_ID").expect("`CF_ACCOUNT_ID` is required!"),
-        };
-        let namespace =
-            KvNamespace::new(env::var("CF_KV_NAMESPACE").expect("`CF_KV_NAMESPACE` is required!"));
-        let cf = CloudflareAuth::new(creds);
-        KVStoreImpl::Cf(CloudflareKV::new(cf, namespace))
+        use hot_or_not_web_leptos_ssr::auth::server_impl::store::redis_kv::RedisKV;
+        let redis_url = env::var("REDIS_URL").expect("`REDIS_URL` is required!");
+        KVStoreImpl::Redis(RedisKV::new(&redis_url).await.unwrap())
     }
 
-    #[cfg(not(feature = "cloudflare-kv"))]
+    #[cfg(not(feature = "redis-kv"))]
     {
         use hot_or_not_web_leptos_ssr::auth::server_impl::store::redb_kv::ReDBKV;
         KVStoreImpl::ReDB(ReDBKV::new().expect("Failed to initialize ReDB"))
@@ -166,7 +159,7 @@ async fn main() {
         admin_canisters: init_admin_canisters(),
         #[cfg(feature = "cloudflare")]
         cloudflare: init_cf(),
-        kv: init_kv(),
+        kv: init_kv().await,
         cookie_key: init_cookie_key(),
         #[cfg(feature = "oauth-ssr")]
         google_oauth: init_google_oauth(),

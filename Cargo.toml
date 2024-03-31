@@ -60,9 +60,12 @@ enum_dispatch = { version = "0.3.12", optional = true }
 axum-extra = { version = "0.9.3", optional = true, features = ["cookie", "cookie-signed", "cookie-private"] }
 openidconnect = { version = "3.5.0", optional = true }
 dotenv = { version = "0.15.0", optional = true }
+redis = { version = "0.25.2", features = ["tokio-rustls-comp", "aio", "ahash", "connection-manager", "keep-alive"], default-features = false, optional = true }
+bb8 = { version = "0.8.3", optional = true }
+bb8-redis = { version = "0.15.0", optional = true }
 gob-cloudflare = { git = "https://github.com/go-bazzinga/gob-cloudflare", rev = "c847ba87ecc73a33520b24bd62503420d7e23e3e", default-features = false, optional = true }
-yral-metadata-client = { git = "https://github.com/go-bazzinga/yral-metadata", rev = "03bd3af79a8202583b928e2ad63fbdda4e0f9c65", default-features = false }
-yral-metadata-types = { git = "https://github.com/go-bazzinga/yral-metadata", rev = "03bd3af79a8202583b928e2ad63fbdda4e0f9c65", default-features = false }
+yral-metadata-client = { git = "https://github.com/go-bazzinga/yral-metadata", rev = "337a395489fb3c2f16f7b4d9ac4694610c540e14", default-features = false }
+yral-metadata-types = { git = "https://github.com/go-bazzinga/yral-metadata", rev = "337a395489fb3c2f16f7b4d9ac4694610c540e14", default-features = false }
 
 [build-dependencies]
 serde = { version = "1.0", features = ["derive"] }
@@ -91,14 +94,15 @@ ssr = [
     "leptos-use/ssr",
     "leptos-use/axum",
     "reqwest/rustls-tls",
-    "dep:gob-cloudflare",
-    "gob-cloudflare/rustls-tls",
+    "dep:redis",
     "yral-metadata-client/rustls-tls",
     "dep:redb",
     "dep:enum_dispatch",
     "axum-extra",
     "dep:rand_chacha",
     "dep:dotenv",
+    "bb8",
+    "bb8-redis",
 ]
 # Fetch mock referral history instead of history via canister
 mock-referral-history = ["dep:rand_chacha", "k256/arithmetic"]
@@ -108,11 +112,11 @@ mock-history = ["mock-referral-history", "mock-wallet-history"]
 oauth-ssr = ["dep:openidconnect"]
 oauth-hydrate = []
 local-auth = []
-cloudflare-kv = []
+redis-kv = []
 cloudflare = ["dep:gob-cloudflare"]
 backend-admin = []
-release-bin = ["ssr", "cloudflare", "cloudflare-kv", "backend-admin", "oauth-ssr"]
-release-lib = ["hydrate", "cloudflare", "cloudflare-kv", "backend-admin", "oauth-hydrate"]
+release-bin = ["ssr", "cloudflare", "gob-cloudflare/rustls-tls", "redis-kv", "backend-admin", "oauth-ssr"]
+release-lib = ["hydrate", "cloudflare", "redis-kv", "backend-admin", "oauth-hydrate"]
 
 [profile.wasm-release]
 inherits = "release"

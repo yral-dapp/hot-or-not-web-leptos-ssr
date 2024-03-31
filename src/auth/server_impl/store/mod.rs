@@ -1,7 +1,8 @@
-pub mod cloudflare;
 pub mod redb_kv;
+pub mod redis_kv;
 
 use enum_dispatch::enum_dispatch;
+use redis::RedisError;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -10,8 +11,10 @@ pub enum KVError {
     Deser(#[from] serde_json::Error),
     #[error(transparent)]
     ReDB(#[from] redb::Error),
-    #[error("`{0}`")]
-    Cf(#[from] gob_cloudflare::Error),
+    #[error("{0}")]
+    Redis(#[from] RedisError),
+    #[error("{0}")]
+    Bb8(#[from] bb8::RunError<RedisError>),
 }
 
 #[enum_dispatch]
@@ -24,5 +27,5 @@ pub(crate) trait KVStore: Send {
 #[enum_dispatch(KVStore)]
 pub enum KVStoreImpl {
     ReDB(redb_kv::ReDBKV),
-    Cf(cloudflare::CloudflareKV),
+    Redis(redis_kv::RedisKV),
 }
