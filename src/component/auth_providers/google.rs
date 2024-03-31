@@ -2,15 +2,9 @@ use leptos::*;
 use leptos_icons::*;
 use leptos_use::{use_event_listener, use_interval_fn, use_window};
 
-use crate::{page::google_redirect::GoogleAuthMessage, try_or_redirect, utils::icon::icon_gen};
+use crate::{page::google_redirect::GoogleAuthMessage, utils::icon::icon_gen};
 
 use super::{LoginProvButton, LoginProvCtx, ProviderKind};
-
-#[server]
-async fn google_auth_url() -> Result<String, ServerFnError> {
-    use crate::auth::server_impl::google::google_auth_url_impl;
-    google_auth_url_impl().await
-}
 
 icon_gen!(
     GoogleLogoSymbol,
@@ -21,27 +15,25 @@ icon_gen!(
 #[component]
 pub fn GoogleAuthProvider() -> impl IntoView {
     let ctx: LoginProvCtx = expect_context();
-    let current_text = create_rw_signal("Google Sign-In");
+    let current_text = move || {
+        if ctx.processing.get() == Some(ProviderKind::Google) {
+            "Signing In..."
+        } else {
+            "Google Sign-In"
+        }
+    };
     let done_guard = create_rw_signal(false);
     let close_popup_store = store_value::<Option<Callback<()>>>(None);
     let close_popup =
         move || _ = close_popup_store.with_value(|cb| cb.as_ref().map(|close_cb| close_cb(())));
 
-    create_effect(move |_| {
-        let cur_text = if ctx.processing.get() == Some(ProviderKind::Google) {
-            "Signing In..."
-        } else {
-            "Google Sign-In"
-        };
-        current_text.set(cur_text);
-    });
-
-    let redirect_action = create_action(move |&()| async move {
-        let redirect_url = try_or_redirect!(google_auth_url().await);
-
+    let on_click = move || {
+        let window = window();
+        let origin = window.origin();
+        let redirect_uri = format!("{origin}/auth/perform_google_redirect");
         // Open a popup window with the redirect URL
-        let target = window()
-            .open_with_url(&redirect_url)
+        let target = window
+            .open_with_url(&redirect_uri)
             .transpose()
             .and_then(|w| w.ok())
             .unwrap();
@@ -59,7 +51,7 @@ pub fn GoogleAuthProvider() -> impl IntoView {
         );
 
         _ = use_event_listener(use_window(), ev::message, move |msg| {
-            if msg.origin() != window().origin() {
+            if msg.origin() != origin {
                 return;
             }
 
@@ -82,13 +74,13 @@ pub fn GoogleAuthProvider() -> impl IntoView {
             _ = target_c.close();
             ctx.login_complete.set(res);
         });
-    });
+    };
 
     view! {
         <LoginProvButton
             prov=ProviderKind::Google
             class="flex flex-row items-center justify-between gap-2 rounded-full bg-neutral-600 pr-4"
-            on_click=move |_| redirect_action.dispatch(())
+            on_click=move |_| on_click()
         >
             <div class="grid grid-cols-1 place-items-center bg-white p-2 rounded-full">
                 <Icon class="text-xl rounded-full" icon=GoogleLogoSymbol/>
