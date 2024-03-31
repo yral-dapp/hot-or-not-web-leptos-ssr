@@ -89,7 +89,7 @@ fn ProfileViewInner(user: ProfileDetails, user_canister: Principal) -> impl Into
                 <div
                     class="flex flex-row w-11/12 sm:w-7/12"
                     class:justify-center=is_connected
-                    class:justify-between={move || !is_connected()}
+                    class:justify-between=move || !is_connected()
                 >
                     <div class="flex flex-col items-center">
                         <img

@@ -56,16 +56,15 @@ mod cf_impl {
     #[cfg(feature = "ssr")]
     pub mod server_func {
         use candid::Principal;
+        use gob_cloudflare::{
+            api::stream_videos::{CreateDownloads, DirectUpload, VideoDetails},
+            CloudflareAuth,
+        };
         use leptos::{expect_context, ServerFnError};
 
+        use crate::consts::CF_WATERMARK_UID;
+
         use super::UploadInfo;
-        use crate::{
-            consts::CF_WATERMARK_UID,
-            state::cf::{
-                direct_upload::DirectUpload, enable_mp4::EnableMp4, video_details::VideoDetails,
-                CfApi, CfReqAuth,
-            },
-        };
         use std::time::Duration;
 
         pub async fn get_upload_info_impl(
@@ -74,17 +73,16 @@ mod cf_impl {
             description: String,
             file_name: String,
         ) -> Result<UploadInfo, ServerFnError> {
-            let cf_api: CfApi<true> = expect_context();
-            let res = DirectUpload::default()
+            let cf_api: CloudflareAuth = expect_context();
+            let req = DirectUpload::default()
                 .creator(creator.to_text())
                 .add_meta("hashtags", hashtags.join(","))
                 .add_meta("description", description)
                 .add_meta("fileName", file_name)
                 .add_meta("uploadType", "challenge")
                 .watermark(CF_WATERMARK_UID)
-                .max_duration(Duration::from_secs(60))
-                .send(&cf_api)
-                .await?;
+                .max_duration(Duration::from_secs(60));
+            let res = cf_api.send_auth(req).await?;
 
             Ok(UploadInfo {
                 uid: res.uid,
@@ -93,14 +91,17 @@ mod cf_impl {
         }
 
         pub async fn get_video_status_impl(uid: String) -> Result<String, ServerFnError> {
-            let cf_api: CfApi<true> = expect_context();
-            let res = VideoDetails::new(uid.clone()).send(&cf_api).await?;
-            let state = res.status.state.as_str();
-            if state == "ready" {
-                EnableMp4::new(uid).send(&cf_api).await?;
+            let cf_api: CloudflareAuth = expect_context();
+            let req = VideoDetails::new(uid.clone());
+            let res = cf_api.send_auth(req).await?;
+            let state = res.status.state;
+            if state != "ready" {
+                return Ok(state);
             }
+            let req = CreateDownloads::new(uid);
+            _ = cf_api.send_auth(req).await?;
 
-            Ok(res.status.state)
+            Ok(state)
         }
     }
 

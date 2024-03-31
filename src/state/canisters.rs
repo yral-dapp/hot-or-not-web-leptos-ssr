@@ -3,8 +3,11 @@ use std::{collections::HashSet, sync::Arc};
 use candid::Principal;
 use ic_agent::{identity::DelegatedIdentity, AgentError, Identity};
 use leptos::*;
+use yral_metadata_client::MetadataClient;
+use yral_metadata_types::UserMetadata;
 
 use crate::{
+    auth::DelegatedIdentityWire,
     canister::{
         individual_user_template::{IndividualUserTemplate, Result8},
         platform_orchestrator::{self, PlatformOrchestrator},
@@ -12,18 +15,15 @@ use crate::{
         user_index::UserIndex,
         AGENT_URL,
     },
-    consts::LEGACY_USER_INDEX,
+    consts::{FALLBACK_USER_INDEX, METADATA_API_BASE},
     utils::MockPartialEq,
 };
-
-use super::auth::{types::DelegationIdentity, AuthClient, AuthError};
-use thiserror::Error;
 
 #[derive(Clone)]
 pub struct Canisters<const AUTH: bool> {
     agent: ic_agent::Agent,
-    auth_client: AuthClient,
     id: Option<Arc<DelegatedIdentity>>,
+    metadata_client: MetadataClient,
     user_canister: Principal,
     expiry: u64,
 }
@@ -36,7 +36,7 @@ impl Default for Canisters<false> {
                 .build()
                 .unwrap(),
             id: None,
-            auth_client: AuthClient::default(),
+            metadata_client: MetadataClient::with_base_url(METADATA_API_BASE.clone()),
             user_canister: Principal::anonymous(),
             expiry: 0,
         }
@@ -59,8 +59,8 @@ impl Canisters<true> {
                 .with_arc_identity(id.clone())
                 .build()
                 .unwrap(),
+            metadata_client: MetadataClient::with_base_url(METADATA_API_BASE.clone()),
             id: Some(id),
-            auth_client: AuthClient::default(),
             user_canister: Principal::anonymous(),
             expiry,
         }
@@ -85,20 +85,6 @@ impl Canisters<true> {
     }
 }
 
-#[derive(Error, Debug, Clone)]
-pub enum CanistersError {
-    #[error("Auth service error: {0}")]
-    Auth(#[from] AuthError),
-    #[error("IC-Agent error: {0}")]
-    Agent(String),
-}
-
-impl From<AgentError> for CanistersError {
-    fn from(e: AgentError) -> Self {
-        CanistersError::Agent(e.to_string())
-    }
-}
-
 impl<const A: bool> Canisters<A> {
     pub fn post_cache(&self) -> PostCache<'_> {
         PostCache(post_cache::CANISTER_ID, &self.agent)
@@ -118,21 +104,34 @@ impl<const A: bool> Canisters<A> {
 
     pub async fn get_individual_canister_by_user_principal(
         &self,
-        user_canister: Principal,
-    ) -> Result<Option<Principal>, CanistersError> {
-        let can = self
-            .auth_client
-            .get_individual_canister_by_user_principal(user_canister)
+        user_principal: Principal,
+    ) -> Result<Option<Principal>, ServerFnError> {
+        let meta = self
+            .metadata_client
+            .get_user_metadata(user_principal)
             .await?;
-        if let Some(can) = can {
-            return Ok(Some(can));
+        if let Some(meta) = meta {
+            return Ok(Some(meta.user_canister_id));
         }
-        // Fallback to legacy fetch
-        let user_idx = self.user_index_with(*LEGACY_USER_INDEX);
+        // Fallback to oldest user index
+        let user_idx = self.user_index_with(*FALLBACK_USER_INDEX);
         let can = user_idx
-            .get_user_canister_id_from_user_principal_id(user_canister)
+            .get_user_canister_id_from_user_principal_id(user_principal)
             .await?;
         Ok(can)
+    }
+
+    async fn subnet_indexes(&self) -> Result<Vec<Principal>, AgentError> {
+        // TODO: this is temporary
+        let blacklisted =
+            HashSet::from([Principal::from_text("rimrc-piaaa-aaaao-aaljq-cai").unwrap()]);
+        let orchestrator = self.orchestrator();
+        Ok(orchestrator
+            .get_all_available_subnet_orchestrators()
+            .await?
+            .into_iter()
+            .filter(|subnet| !blacklisted.contains(subnet))
+            .collect())
     }
 }
 
@@ -141,23 +140,15 @@ pub fn unauth_canisters() -> Canisters<false> {
 }
 
 pub type AuthCanistersResource = Resource<
-    MockPartialEq<Option<DelegationIdentity>>,
-    Result<Option<Canisters<true>>, CanistersError>,
+    MockPartialEq<Option<DelegatedIdentityWire>>,
+    Result<Option<Canisters<true>>, ServerFnError>,
 >;
 
 async fn create_individual_canister(
     canisters: &Canisters<true>,
-    delegation_id: DelegationIdentity,
-) -> Result<Principal, CanistersError> {
-    // TODO: this is temporary
-    let blacklisted = HashSet::from([Principal::from_text("rimrc-piaaa-aaaao-aaljq-cai").unwrap()]);
-    let orchestrator = canisters.orchestrator();
-    let subnet_idxs: Vec<_> = orchestrator
-        .get_all_available_subnet_orchestrators()
-        .await?
-        .into_iter()
-        .filter(|subnet| !blacklisted.contains(subnet))
-        .collect();
+    _delegation_id: DelegatedIdentityWire,
+) -> Result<Principal, ServerFnError> {
+    let subnet_idxs = canisters.subnet_indexes().await?;
 
     let mut by = [0u8; 16];
     let principal = canisters.identity().sender().unwrap();
@@ -173,15 +164,22 @@ async fn create_individual_canister(
         .await?;
 
     canisters
-        .auth_client
-        .update_user_metadata(delegation_id, user_canister, "".into())
+        .metadata_client
+        .set_user_metadata(
+            canisters.identity(),
+            UserMetadata {
+                user_canister_id: user_canister,
+                user_name: "".into(),
+            },
+        )
         .await?;
+
     Ok(user_canister)
 }
 
 pub async fn do_canister_auth(
-    auth: Option<DelegationIdentity>,
-) -> Result<Option<Canisters<true>>, CanistersError> {
+    auth: Option<DelegatedIdentityWire>,
+) -> Result<Option<Canisters<true>>, ServerFnError> {
     let Some(delegation_identity) = auth else {
         return Ok(None);
     };
@@ -190,7 +188,6 @@ pub async fn do_canister_auth(
     let mut canisters = Canisters::<true>::authenticated(auth);
 
     canisters.user_canister = if let Some(user_canister) = canisters
-        .auth_client
         .get_individual_canister_by_user_principal(canisters.identity().sender().unwrap())
         .await?
     {

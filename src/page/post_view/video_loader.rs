@@ -34,18 +34,36 @@ pub fn BgView(idx: usize, children: Children) -> impl IntoView {
                 style:background-color="rgb(0, 0, 0)"
                 style:background-image=move || format!("url({})", bg_url(uid()))
             ></div>
-            <Show when=move|| {idx==4 && !is_connected.get() && show_login_popup.get()}>
+            <Show when=move || { idx == 4 && !is_connected.get() && show_login_popup.get() }>
                 <div class="h-full w-full absolute bg-black opacity-90 z-50 flex flex-col justify-center">
                     <div class="flex flex-row justify-center">
                         <div class="flex flex-col justify-center w-9/12 sm:w-4/12 relative">
-                            <img class="h-28 w-28 absolute -left-4 -top-10" src="/img/coins/coin-topleft.svg" />
-                            <img class="h-18 w-18 absolute -right-2 -top-14" src="/img/coins/coin-topright.svg" />
-                            <img class="h-18 w-18 absolute -bottom-14 -left-8" src="/img/coins/coin-bottomleft.svg" />
-                            <img class="h-18 w-18 absolute -bottom-12 -right-2" src="/img/coins/coin-bottomright.svg" />
-                            <span class="text-white text-3xl text-center text-bold p-2">Your Rewards are <br/> Waiting!</span>
-                            <span class="text-white text-center p-2 pb-4">SignUp/Login to save your progress and claim your rewards.</span>
+                            <img
+                                class="h-28 w-28 absolute -left-4 -top-10"
+                                src="/img/coins/coin-topleft.svg"
+                            />
+                            <img
+                                class="h-18 w-18 absolute -right-2 -top-14"
+                                src="/img/coins/coin-topright.svg"
+                            />
+                            <img
+                                class="h-18 w-18 absolute -bottom-14 -left-8"
+                                src="/img/coins/coin-bottomleft.svg"
+                            />
+                            <img
+                                class="h-18 w-18 absolute -bottom-12 -right-2"
+                                src="/img/coins/coin-bottomright.svg"
+                            />
+                            <span class="text-white text-3xl text-center text-bold p-2">
+                                Your Rewards are <br/> Waiting!
+                            </span>
+                            <span class="text-white text-center p-2 pb-4">
+                                SignUp/Login to save your progress and claim your rewards.
+                            </span>
                             <div class="flex justify-center">
-                                <div class="w-7/12 sm:w-4/12 z-[60]"><ConnectLogin /></div>
+                                <div class="w-7/12 sm:w-4/12 z-[60]">
+                                    <ConnectLogin/>
+                                </div>
                             </div>
                         </div>
                     </div>

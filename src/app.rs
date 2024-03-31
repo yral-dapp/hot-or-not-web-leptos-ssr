@@ -14,11 +14,7 @@ use crate::{
         upload::UploadPostPage,
         wallet::{transactions::Transactions, Wallet},
     },
-    state::{
-        auth::{AuthClient, AuthState},
-        canisters::Canisters,
-        history::HistoryCtx,
-    },
+    state::{auth::AuthState, canisters::Canisters, history::HistoryCtx},
 };
 use leptos::*;
 use leptos_meta::*;
@@ -32,7 +28,6 @@ pub fn App() -> impl IntoView {
     provide_context(PostViewCtx::default());
     let auth_state = AuthState::default();
     provide_context(auth_state.clone());
-    provide_context(AuthClient::default());
 
     // History Tracking
     let history_ctx = HistoryCtx::default();
@@ -59,6 +54,13 @@ pub fn App() -> impl IntoView {
         }>
             <main>
                 <Routes>
+                    // auth redirect routes exist outside main context
+
+                    {#[cfg(any(feature = "oauth-ssr", feature = "oauth-hydrate"))]
+                    {
+                        use crate::page::google_redirect::GoogleRedirect;
+                        view! { <Route path="/auth/google_redirect" view=GoogleRedirect/> }
+                    }}
                     <Route path="/" view=BaseRoute>
                         <Route path="/hot-or-not/:canister_id/:post_id" view=PostView/>
                         <Route path="/profile/:id" view=ProfileView/>

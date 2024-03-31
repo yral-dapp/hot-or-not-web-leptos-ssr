@@ -1,34 +1,21 @@
 use crate::{
-    consts::AUTH_URL,
-    state::auth::{
-        auth_state,
-        types::{DelegationIdentity, SessionResponse},
-    },
+    auth::{extract_or_generate_identity, DelegatedIdentityWire},
+    state::auth::auth_state,
+    try_or_redirect,
 };
 use leptos::*;
-use leptos_use::{use_event_listener, use_window};
-use reqwest::Url;
 
 #[component]
-pub fn AuthFrame(auth: RwSignal<Option<DelegationIdentity>>) -> impl IntoView {
-    _ = use_event_listener(use_window(), ev::message, move |m| {
-        if Url::parse(&m.origin())
-            .map(|u| u.origin() != AUTH_URL.origin())
-            .unwrap_or_default()
-        {
-            return;
-        }
-        let data = m.data().as_string().unwrap();
-        let res: SessionResponse = serde_json::from_str(&data).unwrap();
-        let identity = res.delegation_identity;
-        auth.set(Some(identity))
-    });
-    view! {
-        <iframe
-            class="h-0 w-0 hidden"
-            src=AUTH_URL.join("/anonymous_identity").unwrap().to_string()
-        ></iframe>
-    }
+pub fn AuthFrame(auth: RwSignal<Option<DelegatedIdentityWire>>) -> impl IntoView {
+    let auth_res = create_local_resource(
+        || (),
+        move |_| async move {
+            let identity = try_or_redirect!(extract_or_generate_identity().await);
+            auth.set(Some(identity));
+        },
+    );
+
+    view! { <Suspense>{move || auth_res.get().map(|_| ())}</Suspense> }
 }
 
 #[component]

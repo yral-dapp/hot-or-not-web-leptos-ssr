@@ -21,19 +21,18 @@ pub fn PrivacyPolicy() -> impl IntoView {
             <div class="px-8 flex h-full w-full flex-col space-y-8 overflow-hidden overflow-y-auto py-16">
                 <div class="text-xs whitespace-pre-line">
                     {r#"Thank you for choosing "Yral." We are delighted to provide our Service to you. "Yral" encompasses the Yral App, website, features, and associated services. It offers image and video posting capabilities along with various social and interactive features. This Privacy Policy outlines our information practices.
-
-                        By installing, using, or accessing "Yral" or any of its features, you acknowledge that you have read and accepted the terms of this Policy. Additionally, you agree to the "Yral" Terms of Service, and other applicable terms available on the "Yral" App and Website. If you do not agree with these terms, please refrain from using "Yral" or any of its features.
-
-                        This Policy applies to information provided by users while using "Yral" and not to information obtained by "Yral" from other sources. Information acquired from third-party websites, apps, landing pages, etc., accessed through "Yral" by users, will be subject to the privacy policies and terms of those respective platforms.
-
-                        You also warrant and represent that any registration information and other information that you submit or otherwise provide to Yral is true, accurate and complete, and you agree to keep it that way at all times.
-"#}
+                    
+                       By installing, using, or accessing "Yral" or any of its features, you acknowledge that you have read and accepted the terms of this Policy. Additionally, you agree to the "Yral" Terms of Service, and other applicable terms available on the "Yral" App and Website. If you do not agree with these terms, please refrain from using "Yral" or any of its features.
+                    
+                       This Policy applies to information provided by users while using "Yral" and not to information obtained by "Yral" from other sources. Information acquired from third-party websites, apps, landing pages, etc., accessed through "Yral" by users, will be subject to the privacy policies and terms of those respective platforms.
+                    
+                       You also warrant and represent that any registration information and other information that you submit or otherwise provide to Yral is true, accurate and complete, and you agree to keep it that way at all times.
+                    "#}
                 </div>
                 <div class="flex flex-col space-y-2">
                     <div class="text-sm font-semibold">Information We Collect</div>
                     <div class="text-xs">
-                        The below information is collected by Yral:
-                        <ul class="list-decimal pl-6">
+                        The below information is collected by Yral: <ul class="list-decimal pl-6">
                             <li>
                                 Information collected with a prompt: <ul class="list-disc pl-4">
                                     <li>
@@ -199,18 +198,13 @@ pub fn PrivacyPolicy() -> impl IntoView {
                     <div class="text-sm font-semibold">To manage access to your Google account</div>
                     <div class="text-xs">
                         <ul class="list-decimal pl-6">
+                            <li>Visit your Google Account settings.</li>
+                            <li>Navigate to the "Security" section.</li>
                             <li>
-                                Visit your Google Account settings.
+                                Look for the "Third-party apps with account access"
+                                or similar option. Here, you can view and manage the apps connected to your Google account.
                             </li>
-                            <li>
-                                Navigate to the "Security" section.
-                            </li>
-                            <li>
-                                Look for the "Third-party apps with account access" or similar option. Here, you can view and manage the apps connected to your Google account.
-                            </li>
-                            <li>
-                                Locate "Yral" in the list of connected apps.
-                            </li>
+                            <li>Locate "Yral" in the list of connected apps.</li>
                             <li>
                                 You can adjust permissions or revoke access to your Google account as needed.
                             </li>
@@ -232,7 +226,9 @@ pub fn PrivacyPolicy() -> impl IntoView {
                     </div>
                 </div>
                 <div class="flex flex-col space-y-2">
-                    <div class="text-sm font-semibold">Assignment, Change Of Control, And Transfer</div>
+                    <div class="text-sm font-semibold">
+                        Assignment, Change Of Control, And Transfer
+                    </div>
                     <div class="text-xs">
                         All of our rights and obligations under this Policy, the Terms of
                         Service and the Community Guidelines are freely assignable by us to

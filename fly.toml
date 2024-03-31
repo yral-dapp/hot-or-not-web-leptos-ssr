@@ -18,3 +18,5 @@ processes = ["app"]
 
 [env]
 CF_ACCOUNT_ID="a209c523d2d9646cc56227dbe6ce3ede"
+GOOGLE_REDIRECT_URL="https://yral.com/auth/google_redirect"
+GOOGLE_CLIENT_ID="804814798298-gckvp3hv9sskee5c646b7794k8qolsd7.apps.googleusercontent.com"

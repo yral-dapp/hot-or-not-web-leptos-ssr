@@ -18,31 +18,59 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
-      - name: Install Nix packages
-        uses: DeterminateSystems/nix-installer-action@main
-      - name: Cache Nix packages
-        uses: DeterminateSystems/magic-nix-cache-action@main
-      - name: Cache rust dependencies and build output
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/
-            target/
-          key: cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: Rust Setup
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "nightly"
+          targets: "x86_64-unknown-linux-musl,wasm32-unknown-unknown"
+          components: "clippy,rustfmt"
+
+      - uses: cargo-bins/cargo-binstall@main
+      - name: cargo-leptos setup
+        run: cargo binstall --no-confirm cargo-leptos 
+
+      - name: Cache rust dependencies and build output
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: pnpm/action-setup@v3
+        name: Install pnpm
+        with:
+          version: 8
+          run_install: false
+
+      - name: Get pnpm store directory
+        shell: bash
         run: |
-          nix-shell --run "rustup default nightly"
-          nix-shell --run "rustup target add x86_64-unknown-linux-musl"
-          nix-shell --run 'rustup target add wasm32-unknown-unknown'
-          nix-shell --run "rustup component add rustfmt"
-          nix-shell --run "rustup component add clippy"
-          nix-shell --run "cargo install --locked cargo-leptos"
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - uses: actions/cache@v4
+        name: Setup pnpm cache
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install npm deps 
+        run: pnpm install
+  
+      - uses: awalsh128/cache-apt-pkgs-action@v1
+        with:
+          packages: musl-tools # provides musl-gcc
+          version: 1.0
+
       - name: lint check
         run: |
-          nix-shell --run "cargo fmt --check"
-          nix-shell --run "cargo clippy --no-deps --all-features --release -- -Dwarnings"
+          cargo fmt --check
+          cargo clippy --no-deps --all-features --release -- -Dwarnings
+  
       - name: Build the Leptos project to `musl` output
-        run: nix-shell --run 'cargo leptos build --release --lib-features release-lib --bin-features release-bin'
+        run: cargo leptos build --release --lib-features release-lib --bin-features release-bin
         env:
           LEPTOS_BIN_TARGET_TRIPLE: x86_64-unknown-linux-musl
       - run: touch .empty 

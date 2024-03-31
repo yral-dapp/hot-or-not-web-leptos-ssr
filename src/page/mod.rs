@@ -2,6 +2,8 @@ pub mod about_us;
 pub mod airdrop;
 pub mod err;
 pub mod faq;
+#[cfg(any(feature = "oauth-ssr", feature = "oauth-hydrate"))]
+pub mod google_redirect;
 pub mod leaderboard;
 pub mod menu;
 pub mod post_view;
