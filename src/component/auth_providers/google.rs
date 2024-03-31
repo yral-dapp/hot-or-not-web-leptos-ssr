@@ -2,7 +2,7 @@ use leptos::*;
 use leptos_icons::*;
 use leptos_use::{use_event_listener, use_interval_fn, use_window};
 
-use crate::{page::google_redirect::GoogleAuthMessage, try_or_redirect_opt, utils::icon::icon_gen};
+use crate::{page::google_redirect::GoogleAuthMessage, try_or_redirect, utils::icon::icon_gen};
 
 use super::{LoginProvButton, LoginProvCtx, ProviderKind};
 
@@ -19,14 +19,26 @@ icon_gen!(
 );
 
 #[component]
-fn PopupHandler(redirect_url: String) -> impl IntoView {
+pub fn GoogleAuthProvider() -> impl IntoView {
     let ctx: LoginProvCtx = expect_context();
+    let current_text = create_rw_signal("Google Sign-In");
     let done_guard = create_rw_signal(false);
     let close_popup_store = store_value::<Option<Callback<()>>>(None);
     let close_popup =
         move || _ = close_popup_store.with_value(|cb| cb.as_ref().map(|close_cb| close_cb(())));
 
     create_effect(move |_| {
+        let cur_text = if ctx.processing.get() == Some(ProviderKind::Google) {
+            "Signing In..."
+        } else {
+            "Google Sign-In"
+        };
+        current_text.set(cur_text);
+    });
+
+    let redirect_action = create_action(move |&()| async move {
+        let redirect_url = try_or_redirect!(google_auth_url().await);
+
         // Open a popup window with the redirect URL
         let target = window()
             .open_with_url(&redirect_url)
@@ -46,79 +58,42 @@ fn PopupHandler(redirect_url: String) -> impl IntoView {
             500,
         );
 
-        // Set Callback for closing opened window
-        close_popup_store.set_value(Some(Callback::new(move |_| {
-            _ = target_c.close();
-        })));
-
-        Some(())
-    });
-
-    _ = use_event_listener(use_window(), ev::message, move |msg| {
-        if msg.origin() != window().origin() {
-            return;
-        }
-
-        let Some(data) = msg.data().as_string() else {
-            log::warn!("received invalid message: {:?}", msg.data());
-            return;
-        };
-        let res = match serde_json::from_str::<GoogleAuthMessage>(&data)
-            .map_err(|e| e.to_string())
-            .and_then(|r| r)
-        {
-            Ok(res) => res,
-            Err(e) => {
-                log::warn!("error processing {:?}. msg {data}", e);
-                close_popup();
+        _ = use_event_listener(use_window(), ev::message, move |msg| {
+            if msg.origin() != window().origin() {
                 return;
             }
-        };
-        done_guard.set(true);
-        close_popup();
-        ctx.login_complete.set(res);
+
+            let Some(data) = msg.data().as_string() else {
+                log::warn!("received invalid message: {:?}", msg.data());
+                return;
+            };
+            let res = match serde_json::from_str::<GoogleAuthMessage>(&data)
+                .map_err(|e| e.to_string())
+                .and_then(|r| r)
+            {
+                Ok(res) => res,
+                Err(e) => {
+                    log::warn!("error processing {:?}. msg {data}", e);
+                    close_popup();
+                    return;
+                }
+            };
+            done_guard.set(true);
+            _ = target_c.close();
+            ctx.login_complete.set(res);
+        });
     });
-
-    view! { Signing In... }
-}
-
-#[component]
-fn RedirectUriLoader() -> impl IntoView {
-    let redirect_url_res = Resource::once(google_auth_url);
-    view! {
-        <Suspense fallback=|| {
-            view! { Signing In... }
-        }>
-            {move || {
-                let redirect_url = try_or_redirect_opt!(redirect_url_res() ?);
-                Some(view! { <PopupHandler redirect_url/> })
-            }}
-
-        </Suspense>
-    }
-}
-
-#[component]
-pub fn GoogleAuthProvider() -> impl IntoView {
-    let ctx: LoginProvCtx = expect_context();
 
     view! {
         <LoginProvButton
             prov=ProviderKind::Google
             class="flex flex-row items-center justify-between gap-2 rounded-full bg-neutral-600 pr-4"
-            on_click=|_| ()
+            on_click=move |_| redirect_action.dispatch(())
         >
             <div class="grid grid-cols-1 place-items-center bg-white p-2 rounded-full">
                 <Icon class="text-xl rounded-full" icon=GoogleLogoSymbol/>
             </div>
-            <span class="text-white">
-                <Show
-                    when=move || ctx.processing.get() == Some(ProviderKind::Google)
-                    fallback=|| view! { Google Sign-In }
-                >
-                    <RedirectUriLoader/>
-                </Show>
-            </span>
+            <span class="text-white">{current_text}</span>
         </LoginProvButton>
     }
 }

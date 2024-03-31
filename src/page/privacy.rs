@@ -22,11 +22,11 @@ pub fn PrivacyPolicy() -> impl IntoView {
                 <div class="text-xs whitespace-pre-line">
                     {r#"Thank you for choosing "Yral." We are delighted to provide our Service to you. "Yral" encompasses the Yral App, website, features, and associated services. It offers image and video posting capabilities along with various social and interactive features. This Privacy Policy outlines our information practices.
                     
-                       By installing, using, or accessing "Yral" or any of its features, you acknowledge that you have read and accepted the terms of this Policy. Additionally, you agree to the "Yral" Terms of Service, and other applicable terms available on the "Yral" App and Website. If you do not agree with these terms, please refrain from using "Yral" or any of its features.
+                      By installing, using, or accessing "Yral" or any of its features, you acknowledge that you have read and accepted the terms of this Policy. Additionally, you agree to the "Yral" Terms of Service, and other applicable terms available on the "Yral" App and Website. If you do not agree with these terms, please refrain from using "Yral" or any of its features.
                     
-                       This Policy applies to information provided by users while using "Yral" and not to information obtained by "Yral" from other sources. Information acquired from third-party websites, apps, landing pages, etc., accessed through "Yral" by users, will be subject to the privacy policies and terms of those respective platforms.
+                      This Policy applies to information provided by users while using "Yral" and not to information obtained by "Yral" from other sources. Information acquired from third-party websites, apps, landing pages, etc., accessed through "Yral" by users, will be subject to the privacy policies and terms of those respective platforms.
                     
-                       You also warrant and represent that any registration information and other information that you submit or otherwise provide to Yral is true, accurate and complete, and you agree to keep it that way at all times.
+                      You also warrant and represent that any registration information and other information that you submit or otherwise provide to Yral is true, accurate and complete, and you agree to keep it that way at all times.
                     "#}
                 </div>
                 <div class="flex flex-col space-y-2">
