@@ -5393,7 +5393,7 @@ dependencies = [
 [[package]]
 name = "yral-metadata-client"
 version = "0.1.0"
-source = "git+https://github.com/go-bazzinga/yral-metadata?rev=337a395489fb3c2f16f7b4d9ac4694610c540e14#337a395489fb3c2f16f7b4d9ac4694610c540e14"
+source = "git+https://github.com/go-bazzinga/yral-metadata?rev=c2c5d254ac273681a66966d62b6f01785679a1be#c2c5d254ac273681a66966d62b6f01785679a1be"
 dependencies = [
  "ic-agent",
  "reqwest 0.12.2",
@@ -5405,7 +5405,7 @@ dependencies = [
 [[package]]
 name = "yral-metadata-types"
 version = "0.1.0"
-source = "git+https://github.com/go-bazzinga/yral-metadata?rev=337a395489fb3c2f16f7b4d9ac4694610c540e14#337a395489fb3c2f16f7b4d9ac4694610c540e14"
+source = "git+https://github.com/go-bazzinga/yral-metadata?rev=c2c5d254ac273681a66966d62b6f01785679a1be#c2c5d254ac273681a66966d62b6f01785679a1be"
 dependencies = [
  "candid",
  "serde",

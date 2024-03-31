@@ -64,8 +64,8 @@ redis = { version = "0.25.2", features = ["tokio-rustls-comp", "aio", "ahash", "
 bb8 = { version = "0.8.3", optional = true }
 bb8-redis = { version = "0.15.0", optional = true }
 gob-cloudflare = { git = "https://github.com/go-bazzinga/gob-cloudflare", rev = "c847ba87ecc73a33520b24bd62503420d7e23e3e", default-features = false, optional = true }
-yral-metadata-client = { git = "https://github.com/go-bazzinga/yral-metadata", rev = "337a395489fb3c2f16f7b4d9ac4694610c540e14", default-features = false }
-yral-metadata-types = { git = "https://github.com/go-bazzinga/yral-metadata", rev = "337a395489fb3c2f16f7b4d9ac4694610c540e14", default-features = false }
+yral-metadata-client = { git = "https://github.com/go-bazzinga/yral-metadata", rev = "c2c5d254ac273681a66966d62b6f01785679a1be", default-features = false }
+yral-metadata-types = { git = "https://github.com/go-bazzinga/yral-metadata", rev = "c2c5d254ac273681a66966d62b6f01785679a1be", default-features = false }
 
 [build-dependencies]
 serde = { version = "1.0", features = ["derive"] }
