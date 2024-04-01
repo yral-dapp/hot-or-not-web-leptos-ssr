@@ -3,8 +3,8 @@ use leptos_router::use_navigate;
 use leptos_use::{storage::use_local_storage, utils::FromToStringCodec};
 
 use crate::{
-    auth::logout_identity, consts::ACCOUNT_CONNECTED_STORE, state::auth::auth_state,
-    try_or_redirect,
+    auth::logout_identity, component::loading::Loading, consts::ACCOUNT_CONNECTED_STORE,
+    state::auth::auth_state, try_or_redirect,
 };
 
 #[component]
@@ -27,12 +27,10 @@ pub fn Logout() -> impl IntoView {
     );
 
     view! {
-        <Suspense>
-            {move || auth_res.get().map(|_| ())}
-        </Suspense>
-        <div class="h-dvh w-dvw bg-black flex flex-col justify-center items-center gap-10">
-            <img class="h-56 w-56 object-contain animate-pulse" src="/img/logo.webp"/>
-            <span class="text-2xl text-white/60">Logging out...</span>
-        </div>
+        <Loading text="Logging out...".to_string()>
+            <Suspense>
+                {move || auth_res.get().map(|_| ())}
+            </Suspense>
+        </Loading>
     }
 }

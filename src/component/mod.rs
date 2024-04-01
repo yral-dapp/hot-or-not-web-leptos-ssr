@@ -8,6 +8,7 @@ pub mod coming_soon;
 pub mod connect;
 pub mod ic_symbol;
 pub mod infinite_scroller;
+pub mod loading;
 pub mod login_modal;
 pub mod logout;
 pub mod modal;
