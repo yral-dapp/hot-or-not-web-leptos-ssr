@@ -155,3 +155,14 @@ pub async fn extract_or_generate_identity_impl() -> Result<DelegatedIdentityWire
 
     Ok(delegated)
 }
+
+pub async fn logout_identity_impl() -> Result<DelegatedIdentityWire, ServerFnError> {
+    let key: Key = expect_context();
+    let kv: KVStoreImpl = expect_context();
+    let jar: SignedCookieJar = extract_with_state(&key).await?;
+    let base_identity = generate_and_save_identity(&kv).await?;
+
+    let resp: ResponseOptions = expect_context();
+    let delegated = update_user_identity(&resp, jar, base_identity).await?;
+    Ok(delegated)
+}

@@ -2,7 +2,7 @@ use leptos::*;
 use leptos_router::*;
 use serde::{Deserialize, Serialize};
 
-use crate::{auth::DelegatedIdentityWire, utils::route::go_to_root};
+use crate::{auth::DelegatedIdentityWire, component::loading::Loading, utils::route::go_to_root};
 
 pub type GoogleAuthMessage = Result<DelegatedIdentityWire, String>;
 
@@ -65,15 +65,12 @@ pub fn GoogleRedirect() -> impl IntoView {
     });
 
     view! {
-        <Suspense>
-            {move || {
-                identity_resource().map(|identity_res| view! { <IdentitySender identity_res/> })
-            }}
-
-        </Suspense>
-        <div class="h-dvh w-dvw bg-black flex flex-col justify-center items-center gap-10">
-            <img class="h-56 w-56 object-contain animate-pulse" src="/img/logo.webp"/>
-            <span class="text-2xl text-white/60">Good things come to those who wait...</span>
-        </div>
+        <Loading text="Logging out...".to_string()>
+                <Suspense>
+                    {move || {
+                        identity_resource().map(|identity_res| view! { <IdentitySender identity_res/> })
+                    }}
+                </Suspense>
+        </Loading>
     }
 }
