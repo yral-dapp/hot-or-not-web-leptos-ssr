@@ -182,7 +182,7 @@ pub fn Menu() -> impl IntoView {
                 <MenuItem href=social::TELEGRAM text="Talk to the team" icon=icondata::BiWhatsapp/>
                 <MenuItem href="/terms-of-service" text="Terms of Service" icon=icondata::TbBook2/>
                 <MenuItem href="/privacy-policy" text="Privacy Policy" icon=icondata::TbLock/>
-                <Show when=move || is_connected()>
+                <Show when=is_connected>
                     <MenuItem href="/logout" text="Logout" icon=icondata::FiLogOut/>
                 </Show>
             // <MenuItem href="/install-app" text="Install App" icon=icondata::TbDownload/>
