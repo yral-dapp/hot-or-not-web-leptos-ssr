@@ -80,7 +80,9 @@ pub fn GoogleAuthProvider() -> impl IntoView {
         <LoginProvButton
             prov=ProviderKind::Google
             class="flex flex-row items-center justify-between gap-2 rounded-full bg-neutral-600 pr-4"
-            on_click=move |_| on_click()
+            on_click=|ev| {
+                ev.stop_propagation();
+            }
         >
             <div class="grid grid-cols-1 place-items-center bg-white p-2 rounded-full">
                 <Icon class="text-xl rounded-full" icon=GoogleLogoSymbol/>

@@ -1,5 +1,5 @@
 use crate::{
-    component::{base_route::BaseRoute, nav::NavBar},
+    component::{base_route::BaseRoute, logout::Logout, nav::NavBar},
     error_template::{AppError, ErrorTemplate},
     page::{
         err::ServerErrorPage,
@@ -100,6 +100,7 @@ pub fn App() -> impl IntoView {
                         <Route path="/wallet" view=Wallet/>
                         <Route path="/transactions" view=Transactions/>
                         <Route path="/leaderboard" view=Leaderboard/>
+                        <Route path="/logout" view=Logout/>
                         <Route path="" view=RootPage/>
                     </Route>
                 </Routes>

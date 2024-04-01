@@ -54,7 +54,8 @@ pub fn LocalStorageProvider() -> impl IntoView {
         <LoginProvButton
             prov=ProviderKind::LocalStorage
             class="rounded-full bg-neutral-700 p-4"
-            on_click=move |_| {
+            on_click=move |ev| {
+                ev.stop_propagation();
                 do_login_action.dispatch(());
             }
         >

@@ -35,7 +35,7 @@ pub fn BgView(idx: usize, children: Children) -> impl IntoView {
                 style:background-image=move || format!("url({})", bg_url(uid()))
             ></div>
             <Show when=move || { idx == 4 && !is_connected.get() && show_login_popup.get() }>
-                <div class="h-full w-full absolute bg-black opacity-90 z-50 flex flex-col justify-center">
+            <div class="h-full w-full absolute bg-black opacity-90 z-50 flex flex-col justify-center" on:click=move |_| set_show_login_popup.set(false)>
                     <div class="flex flex-row justify-center">
                         <div class="flex flex-col justify-center w-9/12 sm:w-4/12 relative">
                             <img
