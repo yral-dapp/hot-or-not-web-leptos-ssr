@@ -6,6 +6,7 @@ pub mod base_route;
 pub mod bullet_loader;
 pub mod coming_soon;
 pub mod connect;
+pub mod feed_popup;
 pub mod ic_symbol;
 pub mod infinite_scroller;
 pub mod loading;
