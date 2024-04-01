@@ -104,9 +104,7 @@ pub async fn try_extract_identity(
     fetch_identity_from_kv(kv, principal).await
 }
 
-pub async fn generate_and_save_identity(
-    kv: &KVStoreImpl,
-) -> Result<Secp256k1Identity, ServerFnError> {
+async fn generate_and_save_identity(kv: &KVStoreImpl) -> Result<Secp256k1Identity, ServerFnError> {
     let base_identity_key = k256::SecretKey::random(&mut OsRng);
     let base_identity = Secp256k1Identity::from_private_key(base_identity_key.clone());
     let principal = base_identity.sender().unwrap();

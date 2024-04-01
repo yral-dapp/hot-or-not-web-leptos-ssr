@@ -26,5 +26,13 @@ pub fn Logout() -> impl IntoView {
         },
     );
 
-    view! { <Suspense>{move || auth_res.get().map(|_| ())}</Suspense> }
+    view! {
+        <Suspense>
+            {move || auth_res.get().map(|_| ())}
+        </Suspense>
+        <div class="h-dvh w-dvw bg-black flex flex-col justify-center items-center gap-10">
+            <img class="h-56 w-56 object-contain animate-pulse" src="/img/logo.webp"/>
+            <span class="text-2xl text-white/60">Logging out...</span>
+        </div>
+    }
 }
