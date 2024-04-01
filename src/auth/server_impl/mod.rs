@@ -104,7 +104,7 @@ pub async fn try_extract_identity(
     fetch_identity_from_kv(kv, principal).await
 }
 
-async fn generate_and_save_identity(kv: &KVStoreImpl) -> Result<Secp256k1Identity, ServerFnError> {
+pub async fn generate_and_save_identity(kv: &KVStoreImpl) -> Result<Secp256k1Identity, ServerFnError> {
     let base_identity_key = k256::SecretKey::random(&mut OsRng);
     let base_identity = Secp256k1Identity::from_private_key(base_identity_key.clone());
     let principal = base_identity.sender().unwrap();
@@ -153,5 +153,16 @@ pub async fn extract_or_generate_identity_impl() -> Result<DelegatedIdentityWire
     let resp: ResponseOptions = expect_context();
     let delegated = update_user_identity(&resp, jar, base_identity).await?;
 
+    Ok(delegated)
+}
+
+pub async fn logout_identity_impl() -> Result<DelegatedIdentityWire, ServerFnError> {
+    let key: Key = expect_context();
+    let kv: KVStoreImpl = expect_context();
+    let jar: SignedCookieJar = extract_with_state(&key).await?;
+    let base_identity = generate_and_save_identity(&kv).await?;
+
+    let resp: ResponseOptions = expect_context();
+    let delegated = update_user_identity(&resp, jar, base_identity).await?;
     Ok(delegated)
 }

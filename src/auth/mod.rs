@@ -37,3 +37,9 @@ impl TryFrom<DelegatedIdentityWire> for DelegatedIdentity {
 pub async fn extract_or_generate_identity() -> Result<DelegatedIdentityWire, ServerFnError> {
     server_impl::extract_or_generate_identity_impl().await
 }
+
+
+#[server]
+pub async fn logout_identity() -> Result<DelegatedIdentityWire, ServerFnError> {
+    server_impl::logout_identity_impl().await
+}

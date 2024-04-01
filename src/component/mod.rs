@@ -9,6 +9,7 @@ pub mod connect;
 pub mod ic_symbol;
 pub mod infinite_scroller;
 pub mod login_modal;
+pub mod logout;
 pub mod modal;
 pub mod nav;
 pub mod nav_icons;
