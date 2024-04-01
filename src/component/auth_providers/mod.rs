@@ -89,13 +89,14 @@ fn LoginProvButton<Cb: Fn(ev::MouseEvent) + 'static>(
     prov: ProviderKind,
     #[prop(into)] class: Oco<'static, str>,
     on_click: Cb,
+    #[prop(optional, into)] disabled: MaybeSignal<bool>,
     children: Children,
 ) -> impl IntoView {
     let ctx: LoginProvCtx = expect_context();
 
     view! {
         <button
-            disabled=move || ctx.processing.get().is_some()
+            disabled=move || ctx.processing.get().is_some() || disabled()
             class=class
             on:click=move |ev| {
                 ctx.set_processing.set(Some(prov));

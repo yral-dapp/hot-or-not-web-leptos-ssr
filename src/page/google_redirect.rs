@@ -7,6 +7,14 @@ use crate::{auth::DelegatedIdentityWire, component::loading::Loading, utils::rou
 pub type GoogleAuthMessage = Result<DelegatedIdentityWire, String>;
 
 #[server]
+async fn google_auth_redirector() -> Result<(), ServerFnError> {
+    use crate::auth::server_impl::google::google_auth_url_impl;
+    let url = google_auth_url_impl().await?;
+    leptos_axum::redirect(&url);
+    Ok(())
+}
+
+#[server]
 async fn perform_google_auth(oauth: OAuthQuery) -> Result<DelegatedIdentityWire, ServerFnError> {
     use crate::auth::server_impl::google::perform_google_auth_impl;
     perform_google_auth_impl(oauth.state, oauth.code).await
@@ -58,7 +66,7 @@ async fn handle_oauth_query(query: Result<OAuthQuery, ParamsError>) -> GoogleAut
 }
 
 #[component]
-pub fn GoogleRedirect() -> impl IntoView {
+pub fn GoogleRedirectHandler() -> impl IntoView {
     let query = use_query::<OAuthQuery>();
     let identity_resource = create_blocking_resource(query, |query_res| async move {
         handle_oauth_query(query_res).await
@@ -72,5 +80,30 @@ pub fn GoogleRedirect() -> impl IntoView {
                     }}
                 </Suspense>
         </Loading>
+    }
+}
+
+#[component]
+pub fn GoogleRedirector() -> impl IntoView {
+    let google_redirect = create_blocking_resource(|| (), |_| google_auth_redirector());
+    let do_close = create_rw_signal(false);
+    create_effect(move |_| {
+        if !do_close() {
+            return;
+        }
+        let window = window();
+        _ = window.close();
+    });
+
+    view! {
+        <Suspense>
+            {move || {
+                if let Some(Err(_)) = google_redirect() {
+                    do_close.set(true);
+                }
+                None::<()>
+            }}
+
+        </Suspense>
     }
 }

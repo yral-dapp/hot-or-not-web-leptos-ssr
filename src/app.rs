@@ -21,6 +21,41 @@ use leptos_meta::*;
 use leptos_router::*;
 
 #[component]
+fn NotFound() -> impl IntoView {
+    let mut outside_errors = Errors::default();
+    outside_errors.insert_with_default_key(AppError::NotFound);
+    view! { <ErrorTemplate outside_errors/> }
+}
+
+#[component(transparent)]
+fn GoogleAuthRedirectHandlerRoute() -> impl IntoView {
+    let path = "/auth/google_redirect";
+    #[cfg(any(feature = "oauth-ssr", feature = "oauth-hydrate"))]
+    {
+        use crate::page::google_redirect::GoogleRedirectHandler;
+        view! { <Route path view=GoogleRedirectHandler/> }
+    }
+    #[cfg(not(any(feature = "oauth-ssr", feature = "oauth-hydrate")))]
+    {
+        view! { <Route path view=NotFound/> }
+    }
+}
+
+#[component(transparent)]
+fn GoogleAuthRedirectorRoute() -> impl IntoView {
+    let path = "/auth/perform_google_redirect";
+    #[cfg(any(feature = "oauth-ssr", feature = "oauth-hydrate"))]
+    {
+        use crate::page::google_redirect::GoogleRedirector;
+        view! { <Route path view=GoogleRedirector/> }
+    }
+    #[cfg(not(any(feature = "oauth-ssr", feature = "oauth-hydrate")))]
+    {
+        view! { <Route path view=NotFound/> }
+    }
+}
+
+#[component]
 pub fn App() -> impl IntoView {
     // Provides context that manages stylesheets, titles, meta tags, etc.
     provide_meta_context();
@@ -47,20 +82,12 @@ pub fn App() -> impl IntoView {
         <Link rel="manifest" href="/app.webmanifest"/>
 
         // content for this welcome page
-        <Router fallback=|| {
-            let mut outside_errors = Errors::default();
-            outside_errors.insert_with_default_key(AppError::NotFound);
-            view! { <ErrorTemplate outside_errors/> }.into_view()
-        }>
+        <Router fallback=|| view! { <NotFound/> }.into_view()>
             <main>
                 <Routes>
                     // auth redirect routes exist outside main context
-
-                    {#[cfg(any(feature = "oauth-ssr", feature = "oauth-hydrate"))]
-                    {
-                        use crate::page::google_redirect::GoogleRedirect;
-                        view! { <Route path="/auth/google_redirect" view=GoogleRedirect/> }
-                    }}
+                    <GoogleAuthRedirectHandlerRoute/>
+                    <GoogleAuthRedirectorRoute/>
                     <Route path="/" view=BaseRoute>
                         <Route path="/hot-or-not/:canister_id/:post_id" view=PostView/>
                         <Route path="/profile/:id" view=ProfileView/>
