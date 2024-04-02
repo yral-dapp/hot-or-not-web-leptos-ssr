@@ -136,6 +136,7 @@ release-bin = [
     "redis-kv",
     "backend-admin",
     "oauth-ssr",
+    "ga4",
 ]
 release-lib = [
     "hydrate",
@@ -143,6 +144,7 @@ release-lib = [
     "redis-kv",
     "backend-admin",
     "oauth-hydrate",
+    "ga4",
 ]
 
 [profile.wasm-release]
