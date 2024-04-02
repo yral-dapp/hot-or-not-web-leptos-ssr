@@ -1,10 +1,14 @@
 use crate::{
     canister::utils::{bg_url, mp4_url},
     component::feed_popup::FeedPopUp,
-    state::canisters::AuthProfileCanisterResource,
-    state::{auth::account_connected_reader, local_storage::use_referrer_store},
+    state::{
+        auth::account_connected_reader, canisters::AuthProfileCanisterResource,
+        local_storage::use_referrer_store,
+    },
+    utils::event_streaming::send_event_warehouse,
 };
-use leptos::{html::Video, *};
+use leptos::{ev::beforeunload, html::Video, *};
+use leptos_use::use_event_listener;
 
 use super::{overlay::VideoDetailsOverlay, PostViewCtx};
 use crate::utils::event_streaming::send_event;
@@ -88,7 +92,6 @@ pub fn VideoView(idx: usize, muted: RwSignal<bool>) -> impl IntoView {
             .flatten()
             .map(|(q, _)| q.principal)
     };
-    let is_loggedin = move || is_connected();
     let display_name = move || {
         profile_and_canister_details()
             .flatten()
@@ -139,18 +142,16 @@ pub fn VideoView(idx: usize, muted: RwSignal<bool>) -> impl IntoView {
         Some(())
     });
 
-    // video_viewed - analytics
-    let (video_watched, set_video_watched) = create_signal(false);
+    #[cfg(feature = "hydrate")]
+    {
+        // video_viewed - analytics
+        let (video_watched, set_video_watched) = create_signal(false);
 
-    create_effect(move |_| {
-        let vid = container_ref()?;
-
-        let callback = move |e: web_sys::Event| {
+        let _ = use_event_listener(container_ref, ev::timeupdate, move |evt| {
             if video_watched.get() {
                 return;
             }
-
-            let target = e.target().unwrap();
+            let target = evt.target().unwrap();
             let video = target.unchecked_into::<web_sys::HtmlVideoElement>();
             // let duration = video.duration() as f64;
             let current_time = video.current_time();
@@ -163,7 +164,7 @@ pub fn VideoView(idx: usize, muted: RwSignal<bool>) -> impl IntoView {
                     &json!({
                         "publisher_user_id":publisher_user_id(),
                         "user_id":user_id(),
-                        "is_loggedIn": is_loggedin(),
+                        "is_loggedIn": is_connected(),
                         "display_name": display_name(),
                         "canister_id": canister_id(),
                         "video_id": video_id(),
@@ -180,12 +181,46 @@ pub fn VideoView(idx: usize, muted: RwSignal<bool>) -> impl IntoView {
                 );
                 set_video_watched.set(true);
             }
-        };
+        });
 
-        let _ = vid.on(ev::timeupdate, callback);
+        // video duration watched - warehousing
 
-        Some(())
-    });
+        let _ = use_event_listener(container_ref, ev::pause, move |evt| {
+            let target = evt.target().unwrap();
+            let video = target.unchecked_into::<web_sys::HtmlVideoElement>();
+            let duration = video.duration() as f64;
+            let current_time = video.current_time();
+            if current_time < 1.0 {
+                return;
+            }
+
+            let percentage_watched = (current_time / duration) * 100.0;
+
+            send_event_warehouse(
+                "video_duration_watched",
+                &json!({
+                    "publisher_user_id":publisher_user_id(),
+                    "user_id":user_id(),
+                    "is_loggedIn": is_connected(),
+                    "display_name": display_name(),
+                    "canister_id": canister_id(),
+                    "video_id": video_id(),
+                    "video_category": "NA",
+                    "creator_category": "NA",
+                    "hashtag_count": hastag_count(),
+                    "is_NSFW": is_nsfw(),
+                    "is_hotorNot": is_hotornot(),
+                    "feed_type": "NA",
+                    "view_count": view_count(),
+                    "like_count": like_count(),
+                    "share_count": 0,
+                    "percentage_watched": percentage_watched,
+                    "absolute_watched": current_time,
+                    "video_duration": duration,
+                }),
+            );
+        });
+    }
 
     view! {
         <Suspense>

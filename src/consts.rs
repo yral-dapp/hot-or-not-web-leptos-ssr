@@ -16,6 +16,9 @@ pub static FALLBACK_USER_INDEX: Lazy<Principal> =
     Lazy::new(|| Principal::from_text("znhy2-2qaaa-aaaag-acofq-cai").unwrap());
 pub static METADATA_API_BASE: Lazy<Url> =
     Lazy::new(|| Url::parse("https://yral-metadata.fly.dev").unwrap());
+pub static BIGQUERY_INGESTION_URL: Lazy<Url> = Lazy::new(|| {
+    Url::parse("https://bigquery.googleapis.com/bigquery/v2/projects/beta-exp/datasets/test_bigquery_ds/tables/test_bigquery_ds_table/insertAll").unwrap()
+});
 
 pub mod social {
     pub const TELEGRAM: &str = "https://t.me/+c-LTX0Cp-ENmMzI1";

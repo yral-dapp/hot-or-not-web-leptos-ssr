@@ -146,7 +146,7 @@ pub type AuthCanistersResource = Resource<
 >;
 
 pub type AuthProfileCanisterResource = Resource<
-    MockPartialEq<Option<Result<Canisters<true>, CanistersError>>>,
+    MockPartialEq<Option<Result<Canisters<true>, ServerFnError>>>,
     Option<(ProfileDetails, Principal)>,
 >;
 
