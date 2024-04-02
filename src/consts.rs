@@ -19,7 +19,7 @@ pub mod social {
     pub const TWITTER: &str = "https://twitter.com/Yral_app";
     pub const IC_WEBSITE: &str = "https://vyatz-hqaaa-aaaam-qauea-cai.ic0.app";
 }
-// TODO: test line
+// TODO: test line 1
 pub mod auth {
     use web_time::Duration;
 
