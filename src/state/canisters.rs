@@ -16,9 +16,8 @@ use crate::{
         AGENT_URL,
     },
     consts::{FALLBACK_USER_INDEX, METADATA_API_BASE},
+    utils::profile::ProfileDetails,
     utils::MockPartialEq,
-    consts::LEGACY_USER_INDEX,
-    utils::{profile::ProfileDetails, MockPartialEq},
 };
 
 #[derive(Clone)]

@@ -14,11 +14,7 @@ use crate::{
         upload::UploadPostPage,
         wallet::{transactions::Transactions, Wallet},
     },
-    state::{
-        auth::{AuthClient, AuthState},
-        canisters::Canisters,
-        history::HistoryCtx,
-    },
+    state::{auth::AuthState, canisters::Canisters, history::HistoryCtx},
 };
 use leptos::*;
 use leptos_meta::*;

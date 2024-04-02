@@ -11,7 +11,7 @@ use serde_json::json;
 use crate::state::history::HistoryCtx;
 use crate::utils::event_streaming::send_event;
 use crate::{
-    component::{back_btn::BackButton, connect::ConnectLogin, title::Title},
+    component::{back_btn::BackButton, title::Title},
     state::{
         auth::account_connected_reader,
         canisters::{authenticated_canisters, AuthProfileCanisterResource},

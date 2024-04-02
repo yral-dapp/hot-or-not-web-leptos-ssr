@@ -1,18 +1,9 @@
 use crate::{
     canister::utils::{bg_url, mp4_url},
     component::feed_popup::FeedPopUp,
-    component::spinner::FullScreenSpinner,
     state::canisters::AuthProfileCanisterResource,
-    state::canisters::{Canisters, CanistersError},
-    state::{
-        auth::account_connected_reader, canisters::AuthProfileCanisterResource,
-        local_storage::use_referrer_store,
-    },
-    utils::{profile::ProfileDetails, MockPartialEq},
+    state::{auth::account_connected_reader, local_storage::use_referrer_store},
 };
-use std::cell::Cell;
-
-use candid::Principal;
 use leptos::{html::Video, *};
 
 use super::{overlay::VideoDetailsOverlay, PostViewCtx};

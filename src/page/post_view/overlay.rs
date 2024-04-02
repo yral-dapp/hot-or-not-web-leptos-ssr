@@ -1,9 +1,8 @@
 use crate::{
     component::modal::Modal,
-    page::post_view::PostViewCtx,
     state::{
         auth::account_connected_reader,
-        canisters::{authenticated_canisters, AuthProfileCanisterResource, Canisters},
+        canisters::{authenticated_canisters, Canisters},
     },
     try_or_redirect_opt,
     utils::{
@@ -19,7 +18,6 @@ use leptos_use::use_window;
 use serde_json::json;
 
 use super::video_iter::{post_liked_by_me, PostDetails};
-use candid::Principal;
 
 #[component]
 fn LikeButtonPlaceHolder() -> impl IntoView {

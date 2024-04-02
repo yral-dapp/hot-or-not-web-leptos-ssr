@@ -1,5 +1,3 @@
-use std::error::Error;
-
 use super::{
     cf_upload::{get_upload_info, get_video_status, publish_video, upload_video_stream},
     UploadParams,
@@ -7,7 +5,7 @@ use super::{
 use crate::{
     component::modal::Modal,
     state::canisters::{authenticated_canisters, AuthProfileCanisterResource, Canisters},
-    try_or_redirect, try_or_redirect_opt,
+    try_or_redirect_opt,
     utils::{event_streaming::send_event, route::go_to_root},
 };
 use candid::Principal;
@@ -16,7 +14,6 @@ use gloo::{file::ObjectUrl, timers::future::IntervalStream};
 use leptos::{
     ev::durationchange,
     html::{Input, Video},
-    leptos_dom::logging::console_log,
     *,
 };
 use leptos_icons::*;
