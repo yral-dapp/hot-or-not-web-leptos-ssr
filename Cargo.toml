@@ -43,7 +43,10 @@ icondata = "0.3.0"
 gloo = { version = "0.11.0", features = ["futures", "net", "net"] }
 once_cell = "1.19.0"
 web-time = "1.0.0"
-k256 = { version = "0.13.3", default-features = false, features = ["std", "jwk"] }
+k256 = { version = "0.13.3", default-features = false, features = [
+    "std",
+    "jwk",
+] }
 icondata_core = "0.1.0"
 serde_json = "1.0"
 crc32fast = "1.4.0"
@@ -57,10 +60,20 @@ web-sys = { version = "0.3", features = [
 circular-buffer = "0.1.7"
 redb = { version = "2.0.0", optional = true }
 enum_dispatch = { version = "0.3.12", optional = true }
-axum-extra = { version = "0.9.3", optional = true, features = ["cookie", "cookie-signed", "cookie-private"] }
+axum-extra = { version = "0.9.3", optional = true, features = [
+    "cookie",
+    "cookie-signed",
+    "cookie-private",
+] }
 openidconnect = { version = "3.5.0", optional = true }
 dotenv = { version = "0.15.0", optional = true }
-redis = { version = "0.25.2", features = ["tokio-rustls-comp", "aio", "ahash", "connection-manager", "keep-alive"], default-features = false, optional = true }
+redis = { version = "0.25.2", features = [
+    "tokio-rustls-comp",
+    "aio",
+    "ahash",
+    "connection-manager",
+    "keep-alive",
+], default-features = false, optional = true }
 bb8 = { version = "0.8.3", optional = true }
 bb8-redis = { version = "0.15.0", optional = true }
 gob-cloudflare = { git = "https://github.com/go-bazzinga/gob-cloudflare", rev = "c847ba87ecc73a33520b24bd62503420d7e23e3e", default-features = false, optional = true }
@@ -115,8 +128,22 @@ local-auth = []
 redis-kv = []
 cloudflare = ["dep:gob-cloudflare"]
 backend-admin = []
-release-bin = ["ssr", "cloudflare", "gob-cloudflare/rustls-tls", "redis-kv", "backend-admin", "oauth-ssr"]
-release-lib = ["hydrate", "cloudflare", "redis-kv", "backend-admin", "oauth-hydrate"]
+ga4 = []
+release-bin = [
+    "ssr",
+    "cloudflare",
+    "gob-cloudflare/rustls-tls",
+    "redis-kv",
+    "backend-admin",
+    "oauth-ssr",
+]
+release-lib = [
+    "hydrate",
+    "cloudflare",
+    "redis-kv",
+    "backend-admin",
+    "oauth-hydrate",
+]
 
 [profile.wasm-release]
 inherits = "release"
