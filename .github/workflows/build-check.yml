@@ -27,7 +27,7 @@ jobs:
 
       - uses: cargo-bins/cargo-binstall@main
       - name: cargo-leptos setup
-        run: cargo binstall --no-confirm cargo-leptos 
+        run: cargo binstall --no-confirm cargo-leptos --version 0.2.16
 
       - name: Cache rust dependencies and build output
         uses: Swatinem/rust-cache@v2
@@ -56,9 +56,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
-      - name: Install npm deps 
+      - name: Install npm deps
         run: pnpm install
-  
+
       - uses: awalsh128/cache-apt-pkgs-action@v1
         with:
           packages: musl-tools # provides musl-gcc
@@ -68,12 +68,12 @@ jobs:
         run: |
           cargo fmt --check
           cargo clippy --no-deps --all-features --release -- -Dwarnings
-  
+
       - name: Build the Leptos project to `musl` output
         run: cargo leptos build --release --lib-features release-lib --bin-features release-bin
         env:
           LEPTOS_BIN_TARGET_TRIPLE: x86_64-unknown-linux-musl
-      - run: touch .empty 
+      - run: touch .empty
       - name: Archive production artifacts
         uses: actions/upload-artifact@v3
         if: ${{ inputs.publish-artifact }}
