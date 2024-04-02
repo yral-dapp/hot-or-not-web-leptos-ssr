@@ -81,6 +81,25 @@ pub fn App() -> impl IntoView {
 
         <Link rel="manifest" href="/app.webmanifest"/>
 
+
+        // GA4 Global Site Tag (gtag.js) - Google Analytics
+        // TODO: Add GA4 feature
+        // {
+        //     #[cfg(feature = "ga4")]
+        //     {
+        <Script async_="true" src="https://www.googletagmanager.com/gtag/js?id=G-PLNNETMSLM"/>
+        <Script>
+                {r#"
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', 'G-PLNNETMSLM');
+                "#}
+        </Script>
+        //     }
+        // }
+
+
         // content for this welcome page
         <Router fallback=|| view! { <NotFound/> }.into_view()>
             <main>
