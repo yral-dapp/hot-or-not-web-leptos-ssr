@@ -73,6 +73,12 @@ pub fn App() -> impl IntoView {
         // leptos::logging::log!("{}", history_ctx.log_history());
     });
 
+    let enable_ga4_script = create_rw_signal(false);
+    #[cfg(feature = "ga4")]
+    {
+        enable_ga4_script.set(true);
+    }
+
     view! {
         <Stylesheet id="leptos" href="/pkg/hot-or-not-leptos-ssr.css"/>
 
@@ -80,6 +86,19 @@ pub fn App() -> impl IntoView {
         <Title text="Yral"/>
 
         <Link rel="manifest" href="/app.webmanifest"/>
+
+        // GA4 Global Site Tag (gtag.js) - Google Analytics
+        <Show when=enable_ga4_script>
+            <Script async_="true" src="https://www.googletagmanager.com/gtag/js?id=G-PLNNETMSLM"/>
+            <Script>
+                    {r#"
+                    window.dataLayer = window.dataLayer || [];
+                    function gtag(){dataLayer.push(arguments);}
+                    gtag('js', new Date());
+                    gtag('config', 'G-PLNNETMSLM');
+                    "#}
+            </Script>
+        </Show>
 
         // content for this welcome page
         <Router fallback=|| view! { <NotFound/> }.into_view()>
