@@ -81,6 +81,16 @@ pub fn App() -> impl IntoView {
 
         <Link rel="manifest" href="/app.webmanifest"/>
 
+        <Script async_="true" src="https://www.googletagmanager.com/gtag/js?id=G-PLNNETMSLM"/>
+        <Script>
+            {r#"
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-PLNNETMSLM');
+            "#}
+        </Script>
+
         // content for this welcome page
         <Router fallback=|| view! { <NotFound/> }.into_view()>
             <main>
