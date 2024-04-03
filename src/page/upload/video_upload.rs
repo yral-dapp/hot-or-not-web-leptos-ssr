@@ -106,6 +106,7 @@ pub fn PreVideoUpload(file_blob: WriteSignal<Option<FileWithUrl>>) -> impl IntoV
                 <video
                     _ref=video_ref
                     class="object-contain w-full"
+                    playsinline
                     muted
                     autoplay
                     loop
