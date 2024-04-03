@@ -46,39 +46,43 @@ fn ReferLoaded(user_principal: Principal) -> impl IntoView {
             ))
         })
         .unwrap_or_default();
-    let (logged_in, _) = account_connected_reader();
-    let profile_and_canister_details: AuthProfileCanisterResource = expect_context();
 
     let click_copy = move || {
         let _ = copy_to_clipboard(&refer_link);
 
-        let user_id = move || {
-            profile_and_canister_details()
-                .flatten()
-                .map(|(q, _)| q.principal)
-        };
-        let display_name = move || {
-            profile_and_canister_details()
-                .flatten()
-                .map(|(q, _)| q.display_name)
-        };
-        let canister_id = move || profile_and_canister_details().flatten().map(|(_, q)| q);
-        let history_ctx: HistoryCtx = expect_context();
-        let prev_site = history_ctx.prev_url();
+        #[cfg(all(feature = "hydrate", feature = "ga4"))]
+        {
+            let (logged_in, _) = account_connected_reader();
+            let profile_and_canister_details: AuthProfileCanisterResource = expect_context();
 
-        // refer_share_link - analytics
-        create_effect(move |_| {
-            send_event(
-                "refer_share_link",
-                &json!({
-                    "user_id":user_id(),
-                    "is_loggedIn": logged_in.get_untracked(),
-                    "display_name": display_name(),
-                    "canister_id": canister_id(),
-                    "refer_location": prev_site,
-                }),
-            );
-        });
+            let user_id = move || {
+                profile_and_canister_details()
+                    .flatten()
+                    .map(|(q, _)| q.principal)
+            };
+            let display_name = move || {
+                profile_and_canister_details()
+                    .flatten()
+                    .map(|(q, _)| q.display_name)
+            };
+            let canister_id = move || profile_and_canister_details().flatten().map(|(_, q)| q);
+            let history_ctx: HistoryCtx = expect_context();
+            let prev_site = history_ctx.prev_url();
+
+            // refer_share_link - analytics
+            create_effect(move |_| {
+                send_event(
+                    "refer_share_link",
+                    &json!({
+                        "user_id":user_id(),
+                        "is_loggedIn": logged_in.get_untracked(),
+                        "display_name": display_name(),
+                        "canister_id": canister_id(),
+                        "refer_location": prev_site,
+                    }),
+                );
+            });
+        }
     };
 
     view! {
@@ -126,34 +130,37 @@ fn ReferCode() -> impl IntoView {
 fn ReferView() -> impl IntoView {
     let (logged_in, _) = account_connected_reader();
 
-    let profile_and_canister_details: AuthProfileCanisterResource = expect_context();
-    let user_id = move || {
-        profile_and_canister_details()
-            .flatten()
-            .map(|(q, _)| q.principal)
-    };
-    let display_name = move || {
-        profile_and_canister_details()
-            .flatten()
-            .map(|(q, _)| q.display_name)
-    };
-    let canister_id = move || profile_and_canister_details().flatten().map(|(_, q)| q);
-    let history_ctx: HistoryCtx = expect_context();
-    let prev_site = history_ctx.prev_url();
+    #[cfg(all(feature = "hydrate", feature = "ga4"))]
+    {
+        let profile_and_canister_details: AuthProfileCanisterResource = expect_context();
+        let user_id = move || {
+            profile_and_canister_details()
+                .flatten()
+                .map(|(q, _)| q.principal)
+        };
+        let display_name = move || {
+            profile_and_canister_details()
+                .flatten()
+                .map(|(q, _)| q.display_name)
+        };
+        let canister_id = move || profile_and_canister_details().flatten().map(|(_, q)| q);
+        let history_ctx: HistoryCtx = expect_context();
+        let prev_site = history_ctx.prev_url();
 
-    // refer - analytics
-    create_effect(move |_| {
-        send_event(
-            "refer",
-            &json!({
-                "user_id":user_id(),
-                "is_loggedIn": logged_in.get_untracked(),
-                "display_name": display_name(),
-                "canister_id": canister_id(),
-                "refer_location": prev_site,
-            }),
-        );
-    });
+        // refer - analytics
+        create_effect(move |_| {
+            send_event(
+                "refer",
+                &json!({
+                    "user_id":user_id(),
+                    "is_loggedIn": logged_in.get_untracked(),
+                    "display_name": display_name(),
+                    "canister_id": canister_id(),
+                    "refer_location": prev_site,
+                }),
+            );
+        });
+    }
 
     view! {
         <div class="flex flex-col w-full h-full items-center text-white gap-10">

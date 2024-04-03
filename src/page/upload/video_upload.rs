@@ -69,7 +69,7 @@ pub fn PreVideoUpload(file_blob: WriteSignal<Option<FileWithUrl>>) -> impl IntoV
     };
     let canister_id = move || profile_and_canister_details().flatten().map(|(_, q)| q);
 
-    #[cfg(feature = "hydrate")]
+    #[cfg(all(feature = "hydrate", feature = "ga4"))]
     {
         use leptos::ev::change;
         _ = use_event_listener(file_ref, change, move |ev| {
@@ -235,53 +235,8 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
                 time_ms.to_string(),
             )
             .await;
-            if res.is_err() {
-                let e = res.as_ref().err().unwrap().to_string();
-                create_effect(move |_| {
-                    send_event(
-                        "video_upload_unsuccessful",
-                        &json!({
-                            "user_id": user_id(),
-                            "display_name": display_name(),
-                            "canister_id": canister_id(),
-                            "creator_category": "NA",
-                            "hashtag_count": hashtags_len,
-                            "is_NSFW": is_nsfw,
-                            "is_hotorNot": enable_hot_or_not,
-                            "fail_reason": e,
-                        }),
-                    );
-                });
-            }
-            let upload_info = try_or_redirect_opt!(res);
-
-            let res = upload_video_stream(&upload_info, &file_blob).await;
-            if res.is_err() {
-                let e = res.as_ref().err().unwrap().to_string();
-                create_effect(move |_| {
-                    send_event(
-                        "video_upload_unsuccessful",
-                        &json!({
-                            "user_id": user_id(),
-                            "display_name": display_name(),
-                            "canister_id": canister_id(),
-                            "creator_category": "NA",
-                            "hashtag_count": hashtags_len,
-                            "is_NSFW": is_nsfw,
-                            "is_hotorNot": enable_hot_or_not,
-                            "fail_reason": e,
-                        }),
-                    );
-                });
-            }
-            try_or_redirect_opt!(res);
-
-            uploading.set(false);
-
-            let mut check_status = IntervalStream::new(4000);
-            while (check_status.next().await).is_some() {
-                let uid = upload_info.uid.clone();
-                let res = get_video_status(uid).await;
+            #[cfg(all(feature = "hydrate", feature = "ga4"))]
+            {
                 if res.is_err() {
                     let e = res.as_ref().err().unwrap().to_string();
                     create_effect(move |_| {
@@ -299,6 +254,60 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
                             }),
                         );
                     });
+                }
+            }
+            let upload_info = try_or_redirect_opt!(res);
+
+            let res = upload_video_stream(&upload_info, &file_blob).await;
+            #[cfg(all(feature = "hydrate", feature = "ga4"))]
+            {
+                if res.is_err() {
+                    let e = res.as_ref().err().unwrap().to_string();
+                    create_effect(move |_| {
+                        send_event(
+                            "video_upload_unsuccessful",
+                            &json!({
+                                "user_id": user_id(),
+                                "display_name": display_name(),
+                                "canister_id": canister_id(),
+                                "creator_category": "NA",
+                                "hashtag_count": hashtags_len,
+                                "is_NSFW": is_nsfw,
+                                "is_hotorNot": enable_hot_or_not,
+                                "fail_reason": e,
+                            }),
+                        );
+                    });
+                }
+            }
+            try_or_redirect_opt!(res);
+
+            uploading.set(false);
+
+            let mut check_status = IntervalStream::new(4000);
+            while (check_status.next().await).is_some() {
+                let uid = upload_info.uid.clone();
+                let res = get_video_status(uid).await;
+                #[cfg(all(feature = "hydrate", feature = "ga4"))]
+                {
+                    if res.is_err() {
+                        let e = res.as_ref().err().unwrap().to_string();
+                        create_effect(move |_| {
+                            send_event(
+                                "video_upload_unsuccessful",
+                                &json!({
+                                    "user_id": user_id(),
+                                    "display_name": display_name(),
+                                    "canister_id": canister_id(),
+                                    "creator_category": "NA",
+                                    "hashtag_count": hashtags_len,
+                                    "is_NSFW": is_nsfw,
+                                    "is_hotorNot": enable_hot_or_not,
+                                    "fail_reason": e,
+                                }),
+                            );
+                        });
+                    }
                 }
                 let status = try_or_redirect_opt!(res);
                 if status == "ready" {
@@ -330,44 +339,52 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
                 params.is_nsfw,
             )
             .await;
-            if res.is_err() {
-                let e = res.as_ref().err().unwrap().to_string();
-                create_effect(move |_| {
-                    send_event(
-                        "video_upload_unsuccessful",
-                        &json!({
-                            "user_id": user_id(),
-                            "display_name": display_name(),
-                            "canister_id": canister_id(),
-                            "creator_category": "NA",
-                            "hashtag_count": hashtags_len,
-                            "is_NSFW": is_nsfw,
-                            "is_hotorNot": enable_hot_or_not,
-                            "fail_reason": e,
-                        }),
-                    );
-                });
+
+            #[cfg(all(feature = "hydrate", feature = "ga4"))]
+            {
+                if res.is_err() {
+                    let e = res.as_ref().err().unwrap().to_string();
+                    create_effect(move |_| {
+                        send_event(
+                            "video_upload_unsuccessful",
+                            &json!({
+                                "user_id": user_id(),
+                                "display_name": display_name(),
+                                "canister_id": canister_id(),
+                                "creator_category": "NA",
+                                "hashtag_count": hashtags_len,
+                                "is_NSFW": is_nsfw,
+                                "is_hotorNot": enable_hot_or_not,
+                                "fail_reason": e,
+                            }),
+                        );
+                    });
+                }
             }
             try_or_redirect_opt!(res);
 
             publishing.set(false);
 
-            // video_upload_successful - analytics
-            create_effect(move |_| {
-                send_event(
-                    "video_upload_successful",
-                    &json!({
-                        "user_id":user_id(),
-                        "display_name": display_name(),
-                        "canister_id": canister_id(),
-                        "creator_category": "NA",
-                        "hashtag_count": hashtags_len,
-                        "is_NSFW": params.is_nsfw,
-                        "is_hotorNot": params.enable_hot_or_not,
-                        "is_filter_used": false,
-                    }),
-                );
-            });
+            #[cfg(all(feature = "hydrate", feature = "ga4"))]
+            {
+                // video_upload_successful - analytics
+                create_effect(move |_| {
+                    send_event(
+                        "video_upload_successful",
+                        &json!({
+                            "user_id":user_id(),
+                            "publisher_user_id": user_id(),
+                            "display_name": display_name(),
+                            "canister_id": canister_id(),
+                            "creator_category": "NA",
+                            "hashtag_count": hashtags_len,
+                            "is_NSFW": params.is_nsfw,
+                            "is_hotorNot": params.enable_hot_or_not,
+                            "is_filter_used": false,
+                        }),
+                    );
+                });
+            }
 
             Some(())
         }

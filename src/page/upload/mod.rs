@@ -79,31 +79,34 @@ fn PreUploadView(trigger_upload: WriteSignal<Option<UploadParams>>) -> impl Into
     });
 
     let on_submit = move || {
-        // video_upload_upload_button_clicked - analytics
-        let hashtag_count = hashtag_inp.get_untracked().unwrap().value().len();
-        let is_nsfw_val = is_nsfw
-            .get_untracked()
-            .map(|v| v.checked())
-            .unwrap_or_default();
-        let is_hotornot_val = enable_hot_or_not
-            .get_untracked()
-            .map(|v| v.checked())
-            .unwrap_or_default();
+        #[cfg(all(feature = "hydrate", feature = "ga4"))]
+        {
+            // video_upload_upload_button_clicked - analytics
+            let hashtag_count = hashtag_inp.get_untracked().unwrap().value().len();
+            let is_nsfw_val = is_nsfw
+                .get_untracked()
+                .map(|v| v.checked())
+                .unwrap_or_default();
+            let is_hotornot_val = enable_hot_or_not
+                .get_untracked()
+                .map(|v| v.checked())
+                .unwrap_or_default();
 
-        create_effect(move |_| {
-            send_event(
-                "video_upload_upload_button_clicked",
-                &json!({
-                    "user_id":user_id(),
-                    "display_name": display_name(),
-                    "canister_id": canister_id(),
-                    "creator_category": "NA",
-                    "hashtag_count": hashtag_count,
-                    "is_NSFW": is_nsfw_val,
-                    "is_hotorNot": is_hotornot_val,
-                }),
-            );
-        });
+            create_effect(move |_| {
+                send_event(
+                    "video_upload_upload_button_clicked",
+                    &json!({
+                        "user_id":user_id(),
+                        "display_name": display_name(),
+                        "canister_id": canister_id(),
+                        "creator_category": "NA",
+                        "hashtag_count": hashtag_count,
+                        "is_NSFW": is_nsfw_val,
+                        "is_hotorNot": is_hotornot_val,
+                    }),
+                );
+            });
+        }
 
         let description = desc.get_untracked().unwrap().value();
         let hashtags = hashtags.get_untracked();
