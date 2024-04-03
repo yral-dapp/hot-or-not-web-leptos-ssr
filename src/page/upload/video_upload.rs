@@ -233,6 +233,7 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
         <div class="flex flex-col justify-start self-center w-3/4 mb-8 lg:mb-0 lg:pb-12 lg:max-h-full lg:w-1/2 basis-full lg:basis-5/12">
             <video
                 class="object-contain w-full"
+                playsinline
                 muted
                 autoplay
                 loop
