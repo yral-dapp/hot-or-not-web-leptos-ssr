@@ -1,9 +1,13 @@
+use std::env;
+
 use gloo_utils::format::JsValueSerdeExt;
 use leptos::{server, spawn_local, ServerFnError, *};
 // use leptos_workers::worker;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
+use serde_json::{json, Value};
 use wasm_bindgen::prelude::*;
+
+use crate::consts::GTAG_MEASUREMENT_ID;
 
 #[wasm_bindgen]
 extern "C" {
@@ -53,6 +57,21 @@ pub fn send_event(event_name: &str, params: &serde_json::Value) {
     gtag("event", event_name, &JsValue::from_serde(params).unwrap());
 }
 
+pub fn send_user_id(user_id: String) {
+    let gtag_measurement_id = GTAG_MEASUREMENT_ID.as_ref();
+
+    logging::log!("user_id: {}", user_id);
+
+    gtag(
+        "config",
+        gtag_measurement_id,
+        &JsValue::from_serde(&json!({
+            "user_id": user_id,
+        }))
+        .unwrap(),
+    );
+}
+
 pub fn send_event_warehouse(event_name: &str, params: &serde_json::Value) {
     let data = serde_json::json!({
         "kind": "bigquery#tableDataInsertAllRequest",
@@ -75,11 +94,10 @@ pub fn send_event_warehouse(event_name: &str, params: &serde_json::Value) {
 async fn get_access_token() -> String {
     use yup_oauth2::ServiceAccountAuthenticator;
 
+    let sa_key_file = env::var("SA_KEY_FILE").unwrap();
+
     // Load your service account key
-    let sa_key =
-        yup_oauth2::read_service_account_key("/Users/komalsai/Downloads/clientsecret.json") // TODO: change this to read from env var
-            .await
-            .expect("clientsecret.json");
+    let sa_key = yup_oauth2::parse_service_account_key(sa_key_file).expect("clientsecret.json");
 
     let auth = ServiceAccountAuthenticator::builder(sa_key)
         .build()

@@ -19,6 +19,9 @@ pub static METADATA_API_BASE: Lazy<Url> =
 pub static BIGQUERY_INGESTION_URL: Lazy<Url> = Lazy::new(|| {
     Url::parse("https://bigquery.googleapis.com/bigquery/v2/projects/beta-exp/datasets/test_bigquery_ds/tables/test_bigquery_ds_table/insertAll").unwrap()
 });
+// G-6W5Q2MRX0E to test locally
+// TODO: rewind to G-PLNNETMSLM
+pub static GTAG_MEASUREMENT_ID: Lazy<&str> = Lazy::new(|| "G-6W5Q2MRX0E");
 
 pub mod social {
     pub const TELEGRAM: &str = "https://t.me/+c-LTX0Cp-ENmMzI1";

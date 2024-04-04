@@ -1,5 +1,6 @@
 use crate::{
     component::{base_route::BaseRoute, logout::Logout, nav::NavBar},
+    consts::GTAG_MEASUREMENT_ID,
     error_template::{AppError, ErrorTemplate},
     page::{
         err::ServerErrorPage,
@@ -84,6 +85,8 @@ pub fn App() -> impl IntoView {
         provide_context(EventHistory::default());
     }
 
+    let gtag_measurement_id = GTAG_MEASUREMENT_ID.to_string();
+
     view! {
         <Stylesheet id="leptos" href="/pkg/hot-or-not-leptos-ssr.css"/>
 
@@ -96,7 +99,7 @@ pub fn App() -> impl IntoView {
         // G-6W5Q2MRX0E to test locally
         // TODO: rewind to G-PLNNETMSLM
         <Show when=enable_ga4_script>
-            <Script async_="true" src="https://www.googletagmanager.com/gtag/js?id=G-6W5Q2MRX0E"/>
+            <Script async_="true" src={format!("https://www.googletagmanager.com/gtag/js?id={}", gtag_measurement_id)}/>
             <Script>
                     {r#"
                     window.dataLayer = window.dataLayer || [];

@@ -161,10 +161,12 @@ pub fn LoginProviders(show_modal: RwSignal<bool>, lock_closing: RwSignal<bool>) 
 
             #[cfg(all(feature = "hydrate", feature = "ga4"))]
             {
-                use crate::utils::event_streaming::send_event;
+                use crate::utils::event_streaming::{send_event, send_user_id};
 
                 let user_id = canisters.identity().sender().unwrap();
                 let canister_id = canisters.user_canister();
+
+                send_user_id(user_id.to_string());
 
                 // login_successful - analytics
                 send_event(

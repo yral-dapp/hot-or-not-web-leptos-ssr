@@ -1,4 +1,5 @@
 use candid::Principal;
+use ic_agent::identity::DelegatedIdentity;
 use leptos::*;
 use leptos_router::*;
 
@@ -12,6 +13,8 @@ use crate::{
     try_or_redirect_opt,
     utils::{profile::ProfileDetails, MockPartialEq},
 };
+
+use ic_agent::Identity;
 
 #[derive(Params, PartialEq, Clone)]
 struct Referrer {
@@ -38,6 +41,23 @@ pub fn BaseRoute() -> impl IntoView {
         let refp = referrer_principal();
         set_referrer_store.set(refp);
     });
+
+    // // user_id gtag
+    // #[cfg(all(feature = "hydrate", feature = "ga4"))]
+    // {
+    //     use crate::utils::event_streaming::send_user_id;
+
+    //     if let Some(delegation_identity) = auth_state.identity.get() {
+    //         let auth: DelegatedIdentity = delegation_identity
+    //             .clone()
+    //             .try_into()
+    //             .expect("DelegatedIdentity try_into failed");
+    //         let user_id = auth.sender().unwrap();
+    //         create_effect(move |_| {
+    //             send_user_id(user_id.to_string());
+    //         });
+    //     };
+    // }
 
     let auth_cans_res: AuthCanistersResource = Resource::local(
         move || MockPartialEq(auth_state.identity.get()),
