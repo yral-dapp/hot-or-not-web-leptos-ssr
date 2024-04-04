@@ -1,10 +1,12 @@
 use crate::{
-    canister::utils::{bg_url, mp4_url},
+    canister::{individual_user_template::PostViewDetailsFromFrontend, utils::{bg_url, mp4_url}},
     component::feed_popup::FeedPopUp,
-    state::{auth::account_connected_reader, local_storage::use_referrer_store},
+    state::{auth::{account_connected_reader, auth_state, AuthState}, canisters::{authenticated_canisters, unauth_canisters}, local_storage::use_referrer_store}, try_or_redirect, try_or_redirect_opt,
 };
+use gloo::console::info;
 use leptos::{html::Video, *};
-
+use leptos_use::use_event_listener;
+use wasm_bindgen::JsCast;
 use super::{overlay::VideoDetailsOverlay, PostViewCtx};
 
 #[component]
@@ -74,6 +76,7 @@ pub fn VideoView(idx: usize, muted: RwSignal<bool>) -> impl IntoView {
         create_memo(move |_| with!(|video_queue| video_queue.get(idx).map(|q| q.uid.clone())));
     let view_bg_url = move || uid().map(bg_url);
     let view_video_url = move || uid().map(mp4_url);
+    
 
     // Handles autoplay
     create_effect(move |_| {
@@ -103,7 +106,52 @@ pub fn VideoView(idx: usize, muted: RwSignal<bool>) -> impl IntoView {
         Some(())
     });
 
+    #[cfg(all(feature = "hydrate"))]
+    {
+        let (watched_percentage , set_watched_percentage) = create_signal(0 as u8);
+        let (watched_count, set_watched_count) = create_signal(0 as u8);    
+
+        let _ = use_event_listener(container_ref, ev::timeupdate, move |event| {
+            let target = event.target().unwrap();
+            let video = target.unchecked_into::<web_sys::HtmlVideoElement>();
+            let duration = video.duration();
+            let current_time = video.current_time();
+    
+            set_watched_percentage.update(|watched_percentage| {
+                *watched_percentage = (100.0 * (current_time/duration)) as u8;
+            });
+
+            if current_time == 0.0 {
+                set_watched_count.update(|count| *count += 1);
+            }
+
+        });
+
+        let post = move || video_queue.get_untracked().get(idx).cloned();
+        let canister_id = move || post().as_ref().map(|q| q.canister_id).unwrap();
+        let post_id = move || post().as_ref().map(|q| q.post_id).unwrap();
+
+        let send_view_detail_action = create_action(move |()| async move {
+            let canisters = unauth_canisters();
+            let payload = match watched_count.get_untracked() {
+                0 => PostViewDetailsFromFrontend::WatchedPartially { percentage_watched: watched_percentage.get_untracked()},
+                _ => PostViewDetailsFromFrontend::WatchedMultipleTimes { percentage_watched: watched_percentage.get_untracked(), watch_count: watched_count.get_untracked() }
+
+            };
+            canisters.individual_user(canister_id()).update_post_add_view_details(post_id(), payload).await
+        });
+
+        create_effect(move |_| {
+            if current_idx() != idx {
+                send_view_detail_action.dispatch(());          
+                log::warn!("SEND {} {}", watched_count(), watched_percentage())
+            }
+
+        });
+    }
+
     view! {
+
         <label class="w-full h-full absolute top-0 left-0 grid grid-cols-1 justify-items-center items-center cursor-pointer z-[3]">
             <input
                 on:change=move |_| muted.update(|m| *m = !*m)
