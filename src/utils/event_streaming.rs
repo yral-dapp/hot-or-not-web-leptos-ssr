@@ -1,5 +1,7 @@
 use gloo_utils::format::JsValueSerdeExt;
-use leptos::{server, spawn_local, ServerFnError};
+use leptos::{server, spawn_local, ServerFnError, *};
+// use leptos_workers::worker;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use wasm_bindgen::prelude::*;
 
@@ -9,12 +11,46 @@ extern "C" {
     pub fn gtag(cmd: &str, event_name: &str, params: &JsValue);
 }
 
+// #[derive(Clone, Serialize, Deserialize, Debug)]
+// pub enum EventType {
+//     GA4Event,
+//     WarehouseEvent,
+//     All,
+// }
+
+// #[derive(Clone, Serialize, Deserialize, Debug)]
+// pub struct EventRequest {
+//     event_name: String,
+//     params: Value,
+//     event_type: EventType,
+// }
+
+// impl EventRequest {
+//     pub fn new(event_name: String, params: Value, event_type: EventType) -> Self {
+//         Self {
+//             event_name,
+//             params,
+//             event_type,
+//         }
+//     }
+// }
+
+#[derive(Clone, Default)]
+pub struct EventHistory {
+    pub event_name: RwSignal<String>,
+}
+
 pub fn send_event(event_name: &str, params: &serde_json::Value) {
-    // gtag GA4
-    gtag("event", event_name, &JsValue::from_serde(params).unwrap());
+    let event_history: EventHistory = expect_context();
+
+    logging::log!("prev Event: {}", event_history.event_name.get());
+    event_history.event_name.set(event_name.to_string());
 
     // Warehouse
     send_event_warehouse(event_name, params);
+
+    // gtag GA4
+    gtag("event", event_name, &JsValue::from_serde(params).unwrap());
 }
 
 pub fn send_event_warehouse(event_name: &str, params: &serde_json::Value) {

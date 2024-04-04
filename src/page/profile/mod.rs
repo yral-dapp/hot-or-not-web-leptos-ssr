@@ -108,7 +108,7 @@ fn ProfileViewInner(user: ProfileDetails, user_canister: Principal) -> impl Into
                     </div>
                     <Show when=move || !is_connected()>
                         <div class="md:w-4/12 w-6/12 pt-5 mr-5">
-                            <ConnectLogin/>
+                            <ConnectLogin cta_location="profile"/>
                         </div>
                     </Show>
                 </div>

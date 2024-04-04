@@ -58,6 +58,9 @@ web-sys = { version = "0.3", features = [
     "Clipboard",
     "Navigator",
     "ShareData",
+    "Window",
+    "Document",
+    "Worker",
 ], optional = true }
 circular-buffer = "0.1.7"
 redb = { version = "2.0.0", optional = true }
@@ -85,7 +88,7 @@ yral-metadata-types = { git = "https://github.com/go-bazzinga/yral-metadata", re
 gloo-utils = { version = "0.2.0", features = ["serde"] }
 google-bigquery2 = { version = "5.0.3", optional = true }
 yup-oauth2 = { version = "8.3.3", optional = true }
-
+wasm-bindgen-futures = "0.4.42"
 
 [build-dependencies]
 serde = { version = "1.0", features = ["derive"] }
@@ -204,7 +207,7 @@ hash-files = true
 assets-dir = "public"
 
 # The IP and port (ex: 127.0.0.1:3000) where the server serves the content. Use it in your server setup.
-site-addr = "127.0.0.1:3000"
+site-addr = "0.0.0.0:3000" # TODO: change to 127.0.0.1:3000
 
 # The port to use for automatic reload monitoring
 reload-port = 3001

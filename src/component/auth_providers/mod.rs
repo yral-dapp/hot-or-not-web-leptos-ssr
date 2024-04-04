@@ -7,6 +7,7 @@ use candid::Principal;
 use ic_agent::Identity;
 use leptos::*;
 use leptos_use::{storage::use_local_storage, utils::FromToStringCodec};
+use serde_json::json;
 
 use crate::{
     auth::DelegatedIdentityWire,
@@ -94,6 +95,27 @@ fn LoginProvButton<Cb: Fn(ev::MouseEvent) + 'static>(
 ) -> impl IntoView {
     let ctx: LoginProvCtx = expect_context();
 
+    let click_action = create_action(move |()| async move {
+        #[cfg(all(feature = "hydrate", feature = "ga4"))]
+        {
+            use crate::utils::event_streaming::send_event;
+
+            // login_method_selected - analytics
+            send_event(
+                "login_method_selected",
+                &json!({
+                    "login_method": match prov {
+                        #[cfg(feature = "local-auth")]
+                        ProviderKind::LocalStorage => "local_storage",
+                        #[cfg(any(feature = "oauth-ssr", feature = "oauth-hydrate"))]
+                        ProviderKind::Google => "google",
+                    },
+                    "attempt_count": 1,
+                }),
+            );
+        }
+    });
+
     view! {
         <button
             disabled=move || ctx.processing.get().is_some() || disabled()
@@ -101,6 +123,7 @@ fn LoginProvButton<Cb: Fn(ev::MouseEvent) + 'static>(
             on:click=move |ev| {
                 ctx.set_processing.set(Some(prov));
                 on_click(ev);
+                click_action.dispatch(());
             }
         >
 
@@ -132,9 +155,29 @@ pub fn LoginProviders(show_modal: RwSignal<bool>, lock_closing: RwSignal<bool>) 
             // This is some redundant work, but saves us 100+ lines of resource handling
             let canisters = do_canister_auth(Some(identity.clone())).await?.unwrap();
 
-            if let Err(e) = handle_user_login(canisters, referrer).await {
+            if let Err(e) = handle_user_login(canisters.clone(), referrer).await {
                 log::warn!("failed to handle user login, err {e}. skipping");
             }
+
+            #[cfg(all(feature = "hydrate", feature = "ga4"))]
+            {
+                use crate::utils::event_streaming::send_event;
+
+                let user_id = canisters.identity().sender().unwrap();
+                let canister_id = canisters.user_canister();
+
+                // login_successful - analytics
+                send_event(
+                    "login_successful",
+                    &json!({
+                        "login_method": "google", // TODO: change this when more providers are added
+                        "user_id": user_id.to_string(),
+                        "canister_id": canister_id.to_string(),
+                        "is_new_user": false,                   // TODO: add this info
+                    }),
+                );
+            }
+
             Ok::<_, ServerFnError>(())
         },
     );

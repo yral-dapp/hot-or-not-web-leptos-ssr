@@ -15,10 +15,12 @@ use crate::{
         wallet::{transactions::Transactions, Wallet},
     },
     state::{auth::AuthState, canisters::Canisters, history::HistoryCtx},
+    utils::event_streaming::EventHistory,
 };
 use leptos::*;
 use leptos_meta::*;
 use leptos_router::*;
+use wasm_bindgen::prelude::wasm_bindgen;
 
 #[component]
 fn NotFound() -> impl IntoView {
@@ -73,10 +75,13 @@ pub fn App() -> impl IntoView {
         // leptos::logging::log!("{}", history_ctx.log_history());
     });
 
+    // Analytics
     let enable_ga4_script = create_rw_signal(false);
     #[cfg(feature = "ga4")]
     {
         enable_ga4_script.set(true);
+
+        provide_context(EventHistory::default());
     }
 
     view! {
