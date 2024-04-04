@@ -47,30 +47,32 @@ fn ReferLoaded(user_principal: Principal) -> impl IntoView {
         })
         .unwrap_or_default();
 
-    let click_copy = move || {
-        let _ = copy_to_clipboard(&refer_link);
+    let profile_and_canister_details: AuthProfileCanisterResource = expect_context();
 
-        #[cfg(all(feature = "hydrate", feature = "ga4"))]
-        {
-            let (logged_in, _) = account_connected_reader();
-            let profile_and_canister_details: AuthProfileCanisterResource = expect_context();
+    let click_copy = create_action(move |()| {
+        let refer_link = refer_link.clone();
+        async move {
+            let _ = copy_to_clipboard(&refer_link);
 
-            let user_id = move || {
-                profile_and_canister_details()
-                    .flatten()
-                    .map(|(q, _)| q.principal)
-            };
-            let display_name = move || {
-                profile_and_canister_details()
-                    .flatten()
-                    .map(|(q, _)| q.display_name)
-            };
-            let canister_id = move || profile_and_canister_details().flatten().map(|(_, q)| q);
-            let history_ctx: HistoryCtx = expect_context();
-            let prev_site = history_ctx.prev_url();
+            #[cfg(all(feature = "hydrate", feature = "ga4"))]
+            {
+                let (logged_in, _) = account_connected_reader();
 
-            // refer_share_link - analytics
-            create_effect(move |_| {
+                let user_id = move || {
+                    profile_and_canister_details()
+                        .flatten()
+                        .map(|(q, _)| q.principal)
+                };
+                let display_name = move || {
+                    profile_and_canister_details()
+                        .flatten()
+                        .map(|(q, _)| q.display_name)
+                };
+                let canister_id = move || profile_and_canister_details().flatten().map(|(_, q)| q);
+                let history_ctx: HistoryCtx = expect_context();
+                let prev_site = history_ctx.prev_url();
+
+                // refer_share_link - analytics
                 send_event(
                     "refer_share_link",
                     &json!({
@@ -81,14 +83,14 @@ fn ReferLoaded(user_principal: Principal) -> impl IntoView {
                         "refer_location": prev_site,
                     }),
                 );
-            });
+            }
         }
-    };
+    });
 
     view! {
         <div class="flex items-center w-fit rounded-full border-dashed border-2 p-3 gap-2 border-primary-500">
             <span class="text-md lg:text-lg text-ellipsis line-clamp-1">{refer_code}</span>
-            <button on:click=move |_| click_copy()>
+            <button on:click=move |_| click_copy.dispatch(())>
                 <Icon class="text-xl" icon=icondata::FaCopyRegular/>
             </button>
         </div>

@@ -47,6 +47,7 @@ pub struct EventHistory {
 pub fn send_event(event_name: &str, params: &serde_json::Value) {
     let event_history: EventHistory = expect_context();
 
+    // TODO: rm this
     logging::log!("prev Event: {}", event_history.event_name.get());
     event_history.event_name.set(event_name.to_string());
 
@@ -60,6 +61,7 @@ pub fn send_event(event_name: &str, params: &serde_json::Value) {
 pub fn send_user_id(user_id: String) {
     let gtag_measurement_id = GTAG_MEASUREMENT_ID.as_ref();
 
+    // TODO: rm this
     logging::log!("user_id: {}", user_id);
 
     gtag(
