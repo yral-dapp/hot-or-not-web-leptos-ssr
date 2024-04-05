@@ -11,7 +11,7 @@ use crate::{
     },
 };
 use leptos::{html::Video, *};
-use leptos_use::use_event_listener;
+use leptos_use::{use_debounce_fn, use_event_listener, watch_debounced};
 use wasm_bindgen::JsCast;
 
 #[component]
@@ -110,53 +110,69 @@ pub fn VideoView(idx: usize, muted: RwSignal<bool>) -> impl IntoView {
         Some(())
     });
 
-    #[cfg(feature = "hydrate")]
-    {
-        let (watched_percentage, set_watched_percentage) = create_signal(0_u8);
-        let (watched_count, set_watched_count) = create_signal(0_u8);
+    let watched_percentage_signal = create_rw_signal(0_u8);
+    let watched_count_signal = create_rw_signal(0_u8);
 
-        let _ = use_event_listener(container_ref, ev::timeupdate, move |event| {
-            let target = event.target().unwrap();
-            let video = target.unchecked_into::<web_sys::HtmlVideoElement>();
+    let mut video_previous_current_time = 0.0;
+    let _ = use_event_listener(container_ref, ev::timeupdate, move |event| {
+        if let Some(video) = container_ref() {
             let duration = video.duration();
             let current_time = video.current_time();
 
-            set_watched_percentage.update(|watched_percentage| {
+            if current_time < video_previous_current_time {
+                watched_count_signal.update(|watched_count| *watched_count += 1);
+            }
+            watched_percentage_signal.update(|watched_percentage| {
                 *watched_percentage = (100.0 * (current_time / duration)) as u8;
             });
+            video_previous_current_time = current_time;
+        }
+    });
 
-            if current_time == 0.0 {
-                set_watched_count.update(|count| *count += 1);
-            }
-        });
+    let post = video_queue.with_untracked(|vq| vq.get(idx).cloned());
+    let canister_id = post.as_ref().map(|post| post.canister_id).unwrap();
+    let post_id = post.as_ref().map(|post| post.post_id).unwrap();
 
-        let post = move || video_queue.get_untracked().get(idx).cloned();
-        let canister_id = move || post().as_ref().map(|q| q.canister_id).unwrap();
-        let post_id = move || post().as_ref().map(|q| q.post_id).unwrap();
+    let send_view_detail_action = create_action(move |()| async move {
+        let canisters = unauth_canisters();
+        let watched_percentage = watched_percentage_signal.get_untracked();
+        let watched_count = watched_count_signal.get_untracked();
+        let payload = match watched_count {
+            0 => PostViewDetailsFromFrontend::WatchedPartially {
+                percentage_watched: watched_percentage,
+            },
+            _ => PostViewDetailsFromFrontend::WatchedMultipleTimes {
+                percentage_watched: watched_percentage,
+                watch_count: watched_count,
+            },
+        };
+        let send_view_res = canisters
+            .individual_user(canister_id)
+            .update_post_add_view_details(post_id, payload)
+            .await;
 
-        let send_view_detail_action = create_action(move |()| async move {
-            let canisters = unauth_canisters();
-            let payload = match watched_count.get_untracked() {
-                0 => PostViewDetailsFromFrontend::WatchedPartially {
-                    percentage_watched: watched_percentage.get_untracked(),
-                },
-                _ => PostViewDetailsFromFrontend::WatchedMultipleTimes {
-                    percentage_watched: watched_percentage.get_untracked(),
-                    watch_count: watched_count.get_untracked(),
-                },
-            };
-            canisters
-                .individual_user(canister_id())
-                .update_post_add_view_details(post_id(), payload)
-                .await
-        });
+        match send_view_res {
+            Ok(()) => {}
+            Err(e) => log::warn!("failed to send view details: {:?}", e),
+        }
 
-        create_effect(move |_| {
-            if current_idx() != idx {
+        watched_count_signal.update(|watched_count| *watched_count = 0);
+        watched_percentage_signal.update(|watched_percentage| *watched_percentage = 0);
+    });
+
+    let send_view_details_guard = create_memo(move |_| {
+        current_idx() != idx && (watched_percentage_signal() != 0 || watched_count_signal() != 0)
+    });
+
+    watch_debounced(
+        watched_percentage_signal,
+        move |_, _, _| {
+            if send_view_details_guard() {
                 send_view_detail_action.dispatch(());
             }
-        });
-    }
+        },
+        2000.0,
+    );
 
     view! {
 
