@@ -69,7 +69,7 @@ pub fn PreVideoUpload(file_blob: WriteSignal<Option<FileWithUrl>>) -> impl IntoV
     };
     let canister_id = move || profile_and_canister_details().flatten().map(|(_, q)| q);
 
-    #[cfg(all(feature = "hydrate", feature = "ga4"))]
+    #[cfg(feature = "hydrate")]
     {
         use leptos::ev::change;
         _ = use_event_listener(file_ref, change, move |ev| {
@@ -80,8 +80,9 @@ pub fn PreVideoUpload(file_blob: WriteSignal<Option<FileWithUrl>>) -> impl IntoV
                 let inp_file = input.files()?.get(0)?;
                 file.set(Some(FileWithUrl::new(inp_file.into())));
 
-                // video_upload_video_selected - analytics
-                create_effect(move |_| {
+                #[cfg(feature = "ga4")]
+                {
+                    // video_upload_video_selected - analytics
                     send_event(
                         "video_upload_video_selected",
                         &json!({
@@ -91,7 +92,7 @@ pub fn PreVideoUpload(file_blob: WriteSignal<Option<FileWithUrl>>) -> impl IntoV
                             "creator_category": "NA",
                         }),
                     );
-                });
+                }
 
                 Some(())
             });
@@ -239,21 +240,20 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
             {
                 if res.is_err() {
                     let e = res.as_ref().err().unwrap().to_string();
-                    create_effect(move |_| {
-                        send_event(
-                            "video_upload_unsuccessful",
-                            &json!({
-                                "user_id": user_id(),
-                                "display_name": display_name(),
-                                "canister_id": canister_id(),
-                                "creator_category": "NA",
-                                "hashtag_count": hashtags_len,
-                                "is_NSFW": is_nsfw,
-                                "is_hotorNot": enable_hot_or_not,
-                                "fail_reason": e,
-                            }),
-                        );
-                    });
+
+                    send_event(
+                        "video_upload_unsuccessful",
+                        &json!({
+                            "user_id": user_id(),
+                            "display_name": display_name(),
+                            "canister_id": canister_id(),
+                            "creator_category": "NA",
+                            "hashtag_count": hashtags_len,
+                            "is_NSFW": is_nsfw,
+                            "is_hotorNot": enable_hot_or_not,
+                            "fail_reason": e,
+                        }),
+                    );
                 }
             }
             let upload_info = try_or_redirect_opt!(res);
@@ -263,21 +263,20 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
             {
                 if res.is_err() {
                     let e = res.as_ref().err().unwrap().to_string();
-                    create_effect(move |_| {
-                        send_event(
-                            "video_upload_unsuccessful",
-                            &json!({
-                                "user_id": user_id(),
-                                "display_name": display_name(),
-                                "canister_id": canister_id(),
-                                "creator_category": "NA",
-                                "hashtag_count": hashtags_len,
-                                "is_NSFW": is_nsfw,
-                                "is_hotorNot": enable_hot_or_not,
-                                "fail_reason": e,
-                            }),
-                        );
-                    });
+
+                    send_event(
+                        "video_upload_unsuccessful",
+                        &json!({
+                            "user_id": user_id(),
+                            "display_name": display_name(),
+                            "canister_id": canister_id(),
+                            "creator_category": "NA",
+                            "hashtag_count": hashtags_len,
+                            "is_NSFW": is_nsfw,
+                            "is_hotorNot": enable_hot_or_not,
+                            "fail_reason": e,
+                        }),
+                    );
                 }
             }
             try_or_redirect_opt!(res);
@@ -292,21 +291,20 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
                 {
                     if res.is_err() {
                         let e = res.as_ref().err().unwrap().to_string();
-                        create_effect(move |_| {
-                            send_event(
-                                "video_upload_unsuccessful",
-                                &json!({
-                                    "user_id": user_id(),
-                                    "display_name": display_name(),
-                                    "canister_id": canister_id(),
-                                    "creator_category": "NA",
-                                    "hashtag_count": hashtags_len,
-                                    "is_NSFW": is_nsfw,
-                                    "is_hotorNot": enable_hot_or_not,
-                                    "fail_reason": e,
-                                }),
-                            );
-                        });
+
+                        send_event(
+                            "video_upload_unsuccessful",
+                            &json!({
+                                "user_id": user_id(),
+                                "display_name": display_name(),
+                                "canister_id": canister_id(),
+                                "creator_category": "NA",
+                                "hashtag_count": hashtags_len,
+                                "is_NSFW": is_nsfw,
+                                "is_hotorNot": enable_hot_or_not,
+                                "fail_reason": e,
+                            }),
+                        );
                     }
                 }
                 let status = try_or_redirect_opt!(res);
@@ -344,21 +342,20 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
             {
                 if res.is_err() {
                     let e = res.as_ref().err().unwrap().to_string();
-                    create_effect(move |_| {
-                        send_event(
-                            "video_upload_unsuccessful",
-                            &json!({
-                                "user_id": user_id(),
-                                "display_name": display_name(),
-                                "canister_id": canister_id(),
-                                "creator_category": "NA",
-                                "hashtag_count": hashtags_len,
-                                "is_NSFW": is_nsfw,
-                                "is_hotorNot": enable_hot_or_not,
-                                "fail_reason": e,
-                            }),
-                        );
-                    });
+
+                    send_event(
+                        "video_upload_unsuccessful",
+                        &json!({
+                            "user_id": user_id(),
+                            "display_name": display_name(),
+                            "canister_id": canister_id(),
+                            "creator_category": "NA",
+                            "hashtag_count": hashtags_len,
+                            "is_NSFW": is_nsfw,
+                            "is_hotorNot": enable_hot_or_not,
+                            "fail_reason": e,
+                        }),
+                    );
                 }
             }
             try_or_redirect_opt!(res);
@@ -368,22 +365,21 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
             #[cfg(all(feature = "hydrate", feature = "ga4"))]
             {
                 // video_upload_successful - analytics
-                create_effect(move |_| {
-                    send_event(
-                        "video_upload_successful",
-                        &json!({
-                            "user_id":user_id(),
-                            "publisher_user_id": user_id(),
-                            "display_name": display_name(),
-                            "canister_id": canister_id(),
-                            "creator_category": "NA",
-                            "hashtag_count": hashtags_len,
-                            "is_NSFW": params.is_nsfw,
-                            "is_hotorNot": params.enable_hot_or_not,
-                            "is_filter_used": false,
-                        }),
-                    );
-                });
+
+                send_event(
+                    "video_upload_successful",
+                    &json!({
+                        "user_id":user_id(),
+                        "publisher_user_id": user_id(),
+                        "display_name": display_name(),
+                        "canister_id": canister_id(),
+                        "creator_category": "NA",
+                        "hashtag_count": hashtags_len,
+                        "is_NSFW": params.is_nsfw,
+                        "is_hotorNot": params.enable_hot_or_not,
+                        "is_filter_used": false,
+                    }),
+                );
             }
 
             Some(())
