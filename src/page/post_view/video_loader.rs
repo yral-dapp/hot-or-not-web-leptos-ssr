@@ -6,13 +6,10 @@ use crate::{
     },
     component::feed_popup::FeedPopUp,
     state::{
-        auth::{account_connected_reader, auth_state, AuthState},
-        canisters::{authenticated_canisters, unauth_canisters},
+        auth::account_connected_reader, canisters::unauth_canisters,
         local_storage::use_referrer_store,
     },
-    try_or_redirect, try_or_redirect_opt,
 };
-use gloo::console::info;
 use leptos::{html::Video, *};
 use leptos_use::use_event_listener;
 use wasm_bindgen::JsCast;
@@ -113,10 +110,10 @@ pub fn VideoView(idx: usize, muted: RwSignal<bool>) -> impl IntoView {
         Some(())
     });
 
-    #[cfg(all(feature = "hydrate"))]
+    #[cfg(feature = "hydrate")]
     {
-        let (watched_percentage, set_watched_percentage) = create_signal(0 as u8);
-        let (watched_count, set_watched_count) = create_signal(0 as u8);
+        let (watched_percentage, set_watched_percentage) = create_signal(0_u8);
+        let (watched_count, set_watched_count) = create_signal(0_u8);
 
         let _ = use_event_listener(container_ref, ev::timeupdate, move |event| {
             let target = event.target().unwrap();
