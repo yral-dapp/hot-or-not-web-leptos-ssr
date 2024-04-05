@@ -41,6 +41,10 @@ impl HistoryCtx {
         }
     }
 
+    pub fn prev_url(&self) -> Option<String> {
+        self.history.with(|h| h.back().cloned())
+    }
+
     pub fn log_history(&self) -> String {
         let history = self.history.get();
         let history_str = history

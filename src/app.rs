@@ -15,6 +15,7 @@ use crate::{
         wallet::{transactions::Transactions, Wallet},
     },
     state::{auth::AuthState, canisters::Canisters, history::HistoryCtx},
+    utils::event_streaming::EventHistory,
 };
 use leptos::*;
 use leptos_meta::*;
@@ -73,10 +74,13 @@ pub fn App() -> impl IntoView {
         // leptos::logging::log!("{}", history_ctx.log_history());
     });
 
+    // Analytics
     let enable_ga4_script = create_rw_signal(false);
     #[cfg(feature = "ga4")]
     {
         enable_ga4_script.set(true);
+
+        provide_context(EventHistory::default());
     }
 
     view! {
@@ -88,8 +92,9 @@ pub fn App() -> impl IntoView {
         <Link rel="manifest" href="/app.webmanifest"/>
 
         // GA4 Global Site Tag (gtag.js) - Google Analytics
+        // G-6W5Q2MRX0E to test locally
         <Show when=enable_ga4_script>
-            <Script async_="true" src="https://www.googletagmanager.com/gtag/js?id=G-PLNNETMSLM"/>
+            <Script async_="true" src={concat!("https://www.googletagmanager.com/gtag/js?id=", "G-PLNNETMSLM")}/>
             <Script>
                     {r#"
                     window.dataLayer = window.dataLayer || [];

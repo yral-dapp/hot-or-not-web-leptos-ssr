@@ -6,10 +6,17 @@ use leptos::*;
 use leptos_icons::*;
 use leptos_router::create_query_signal;
 use leptos_use::use_window;
+use serde_json::json;
 
+use crate::component::connect::ConnectLogin;
+use crate::state::history::HistoryCtx;
+use crate::utils::event_streaming::send_event;
 use crate::{
-    component::{back_btn::BackButton, connect::ConnectLogin, title::Title},
-    state::{auth::account_connected_reader, canisters::authenticated_canisters},
+    component::{back_btn::BackButton, title::Title},
+    state::{
+        auth::account_connected_reader,
+        canisters::{authenticated_canisters, AuthProfileCanisterResource},
+    },
     try_or_redirect_opt,
     utils::web::copy_to_clipboard,
 };
@@ -41,10 +48,50 @@ fn ReferLoaded(user_principal: Principal) -> impl IntoView {
         })
         .unwrap_or_default();
 
+    let profile_and_canister_details: AuthProfileCanisterResource = expect_context();
+
+    let click_copy = create_action(move |()| {
+        let refer_link = refer_link.clone();
+        async move {
+            let _ = copy_to_clipboard(&refer_link);
+
+            #[cfg(all(feature = "hydrate", feature = "ga4"))]
+            {
+                let (logged_in, _) = account_connected_reader();
+
+                let user_id = move || {
+                    profile_and_canister_details()
+                        .flatten()
+                        .map(|(q, _)| q.principal)
+                };
+                let display_name = move || {
+                    profile_and_canister_details()
+                        .flatten()
+                        .map(|(q, _)| q.display_name)
+                };
+                let canister_id = move || profile_and_canister_details().flatten().map(|(_, q)| q);
+                let history_ctx: HistoryCtx = expect_context();
+                let prev_site = history_ctx.prev_url();
+
+                // refer_share_link - analytics
+                send_event(
+                    "refer_share_link",
+                    &json!({
+                        "user_id":user_id(),
+                        "is_loggedIn": logged_in.get_untracked(),
+                        "display_name": display_name(),
+                        "canister_id": canister_id(),
+                        "refer_location": prev_site,
+                    }),
+                );
+            }
+        }
+    });
+
     view! {
         <div class="flex items-center w-fit rounded-full border-dashed border-2 p-3 gap-2 border-primary-500">
             <span class="text-md lg:text-lg text-ellipsis line-clamp-1">{refer_code}</span>
-            <button on:click=move |_| _ = copy_to_clipboard(&refer_link)>
+            <button on:click=move |_| click_copy.dispatch(())>
                 <Icon class="text-xl" icon=icondata::FaCopyRegular/>
             </button>
         </div>
@@ -86,6 +133,38 @@ fn ReferCode() -> impl IntoView {
 fn ReferView() -> impl IntoView {
     let (logged_in, _) = account_connected_reader();
 
+    #[cfg(all(feature = "hydrate", feature = "ga4"))]
+    {
+        let profile_and_canister_details: AuthProfileCanisterResource = expect_context();
+        let user_id = move || {
+            profile_and_canister_details()
+                .flatten()
+                .map(|(q, _)| q.principal)
+        };
+        let display_name = move || {
+            profile_and_canister_details()
+                .flatten()
+                .map(|(q, _)| q.display_name)
+        };
+        let canister_id = move || profile_and_canister_details().flatten().map(|(_, q)| q);
+        let history_ctx: HistoryCtx = expect_context();
+        let prev_site = history_ctx.prev_url();
+
+        // refer - analytics
+        create_effect(move |_| {
+            send_event(
+                "refer",
+                &json!({
+                    "user_id":user_id(),
+                    "is_loggedIn": logged_in.get_untracked(),
+                    "display_name": display_name(),
+                    "canister_id": canister_id(),
+                    "refer_location": prev_site,
+                }),
+            );
+        });
+    }
+
     view! {
         <div class="flex flex-col w-full h-full items-center text-white gap-10">
             <img class="shrink-0 h-40 select-none" src="/img/coins-stash.webp"/>
@@ -94,7 +173,7 @@ fn ReferView() -> impl IntoView {
             </div>
             <div class="flex flex-col w-full gap-2 px-4 text-white items-center">
                 <span class="uppercase text-sm md:text-md">Referral Link</span>
-                <Show when=logged_in fallback=|| view! { <ConnectLogin/> }>
+                <Show when=logged_in fallback=|| view! { <ConnectLogin cta_location="refer"/> }>
                     <ReferCode/>
                 </Show>
             </div>
