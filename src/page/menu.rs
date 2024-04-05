@@ -3,17 +3,15 @@ use crate::component::title::Title;
 use crate::component::{connect::ConnectLogin, social::*, toggle::Toggle};
 use crate::consts::{social, NSFW_TOGGLE_STORE};
 use crate::state::auth::account_connected_reader;
-use crate::state::canisters::{authenticated_canisters, AuthProfileCanisterResource};
+use crate::state::canisters::authenticated_canisters;
 use crate::try_or_redirect_opt;
 use crate::utils::profile::ProfileDetails;
 use crate::utils::MockPartialEq;
-use leptos::ev::MouseEvent;
 use leptos::html::Input;
 use leptos::*;
 use leptos_icons::*;
 use leptos_use::use_event_listener;
 use leptos_use::{storage::use_local_storage, utils::FromToStringCodec};
-use serde_json::json;
 
 #[component]
 fn MenuItem(
@@ -153,7 +151,6 @@ fn NsfwToggle() -> impl IntoView {
 #[component]
 pub fn Menu() -> impl IntoView {
     let (is_connected, _) = account_connected_reader();
-    let profile_and_canister_details: AuthProfileCanisterResource = expect_context();
 
     view! {
         <div class="min-h-screen w-full flex flex-col text-white pt-2 pb-12 bg-black items-center divide-y divide-white/10">

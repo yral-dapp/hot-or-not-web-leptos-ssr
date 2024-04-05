@@ -21,7 +21,6 @@ use crate::{
 use leptos::*;
 use leptos_meta::*;
 use leptos_router::*;
-use wasm_bindgen::prelude::wasm_bindgen;
 
 #[component]
 fn NotFound() -> impl IntoView {

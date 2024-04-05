@@ -1,5 +1,4 @@
 use candid::Principal;
-use ic_agent::identity::DelegatedIdentity;
 use leptos::*;
 use leptos_router::*;
 
@@ -13,8 +12,6 @@ use crate::{
     try_or_redirect_opt,
     utils::{profile::ProfileDetails, MockPartialEq},
 };
-
-use ic_agent::Identity;
 
 #[derive(Params, PartialEq, Clone)]
 struct Referrer {
