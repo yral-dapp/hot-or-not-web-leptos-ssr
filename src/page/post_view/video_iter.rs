@@ -33,7 +33,7 @@ impl Default for FetchCursor {
 impl FetchCursor {
     pub fn advance(&mut self) {
         self.start += self.limit;
-        self.limit = 20;
+        self.limit = 50;
     }
 }
 
