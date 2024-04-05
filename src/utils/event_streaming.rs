@@ -47,8 +47,6 @@ pub struct EventHistory {
 pub fn send_event(event_name: &str, params: &serde_json::Value) {
     let event_history: EventHistory = expect_context();
 
-    // TODO: rm this
-    logging::log!("prev Event: {}", event_history.event_name.get());
     event_history.event_name.set(event_name.to_string());
 
     // Warehouse
@@ -60,9 +58,6 @@ pub fn send_event(event_name: &str, params: &serde_json::Value) {
 
 pub fn send_user_id(user_id: String) {
     let gtag_measurement_id = GTAG_MEASUREMENT_ID.as_ref();
-
-    // TODO: rm this
-    logging::log!("user_id: {}", user_id);
 
     gtag(
         "config",
@@ -96,7 +91,7 @@ pub fn send_event_warehouse(event_name: &str, params: &serde_json::Value) {
 async fn get_access_token() -> String {
     use yup_oauth2::ServiceAccountAuthenticator;
 
-    let sa_key_file = env::var("SA_KEY_FILE").unwrap();
+    let sa_key_file = env::var("GOOGLE_SA_KEY_FILE").unwrap();
 
     // Load your service account key
     let sa_key = yup_oauth2::parse_service_account_key(sa_key_file).expect("clientsecret.json");

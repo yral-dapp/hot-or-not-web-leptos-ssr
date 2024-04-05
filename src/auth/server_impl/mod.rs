@@ -126,12 +126,11 @@ pub async fn update_user_identity(
     };
     let refresh_token_enc = serde_json::to_string(&refresh_token)?;
 
-    // TODO: revert secure to true and same_site to None
     let refresh_cookie = Cookie::build((REFRESH_TOKEN_COOKIE, refresh_token_enc))
         .http_only(true)
-        // .secure(true)
+        .secure(true)
         .path("/")
-        .same_site(SameSite::Lax)
+        .same_site(SameSite::None)
         .max_age(refresh_max_age.try_into().unwrap());
 
     jar = jar.add(refresh_cookie);

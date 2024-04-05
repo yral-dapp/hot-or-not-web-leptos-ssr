@@ -97,7 +97,6 @@ pub fn App() -> impl IntoView {
 
         // GA4 Global Site Tag (gtag.js) - Google Analytics
         // G-6W5Q2MRX0E to test locally
-        // TODO: rewind to G-PLNNETMSLM
         <Show when=enable_ga4_script>
             <Script async_="true" src={format!("https://www.googletagmanager.com/gtag/js?id={}", gtag_measurement_id)}/>
             <Script>
@@ -105,7 +104,7 @@ pub fn App() -> impl IntoView {
                     window.dataLayer = window.dataLayer || [];
                     function gtag(){dataLayer.push(arguments);}
                     gtag('js', new Date());
-                    gtag('config', 'G-6W5Q2MRX0E');
+                    gtag('config', 'G-PLNNETMSLM');
                     "#}
             </Script>
         </Show>

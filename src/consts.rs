@@ -8,8 +8,6 @@ pub const CF_WATERMARK_UID: &str = "c094ef579b950a6a5ae3e482268b81ca";
 pub const ACCOUNT_CONNECTED_STORE: &str = "account-connected-1";
 pub static CF_BASE_URL: Lazy<Url> =
     Lazy::new(|| Url::parse("https://api.cloudflare.com/client/v4/").unwrap());
-pub static AUTH_URL: Lazy<Url> =
-    Lazy::new(|| Url::parse("https://hot-or-not-auth-rupansh.fly.dev/").unwrap()); // TODO: https://auth.yral.com/
 pub const NSFW_TOGGLE_STORE: &str = "nsfw-enabled";
 pub const REFERRER_STORE: &str = "referrer";
 pub static FALLBACK_USER_INDEX: Lazy<Principal> =
@@ -20,8 +18,7 @@ pub static BIGQUERY_INGESTION_URL: Lazy<Url> = Lazy::new(|| {
     Url::parse("https://bigquery.googleapis.com/bigquery/v2/projects/beta-exp/datasets/test_bigquery_ds/tables/test_bigquery_ds_table/insertAll").unwrap()
 });
 // G-6W5Q2MRX0E to test locally
-// TODO: rewind to G-PLNNETMSLM
-pub static GTAG_MEASUREMENT_ID: Lazy<&str> = Lazy::new(|| "G-6W5Q2MRX0E");
+pub static GTAG_MEASUREMENT_ID: Lazy<&str> = Lazy::new(|| "G-PLNNETMSLM");
 
 pub mod social {
     pub const TELEGRAM: &str = "https://t.me/+c-LTX0Cp-ENmMzI1";
@@ -29,7 +26,7 @@ pub mod social {
     pub const TWITTER: &str = "https://twitter.com/Yral_app";
     pub const IC_WEBSITE: &str = "https://vyatz-hqaaa-aaaam-qauea-cai.ic0.app";
 }
-// TODO: test line 1
+
 pub mod auth {
     use web_time::Duration;
 
