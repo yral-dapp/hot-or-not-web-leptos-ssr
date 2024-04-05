@@ -1,6 +1,5 @@
 use crate::{
     component::{base_route::BaseRoute, logout::Logout, nav::NavBar},
-    consts::GTAG_MEASUREMENT_ID,
     error_template::{AppError, ErrorTemplate},
     page::{
         err::ServerErrorPage,
@@ -83,8 +82,6 @@ pub fn App() -> impl IntoView {
 
         provide_context(EventHistory::default());
     }
-
-    let gtag_measurement_id = GTAG_MEASUREMENT_ID.to_string();
 
     view! {
         <Stylesheet id="leptos" href="/pkg/hot-or-not-leptos-ssr.css"/>
