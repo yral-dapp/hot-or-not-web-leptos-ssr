@@ -168,7 +168,6 @@ mod mock_impl {
             _description: String,
             _file_name: String,
         ) -> Result<UploadInfo, ServerFnError> {
-            // return Err(ServerFnError::ServerError("server mock error".to_string()));
             Ok(UploadInfo {
                 uid: "mock".into(),
                 upload_url: "http://mock.com".into(),
@@ -186,7 +185,6 @@ mod mock_impl {
         _file: &gloo::file::File,
     ) -> Result<(), gloo::net::Error> {
         use gloo::timers::future::TimeoutFuture;
-        // return Err(gloo::net::Error::GlooError("mock error".to_string()));
         TimeoutFuture::new(1000).await;
         Ok(())
     }
@@ -199,7 +197,6 @@ mod mock_impl {
         _enable_hot_or_not: bool,
         _is_nsfw: bool,
     ) -> Result<(), ServerFnError> {
-        // return Err(ServerFnError::ServerError("server mock error".to_string()));
         use gloo::timers::future::TimeoutFuture;
         TimeoutFuture::new(1000).await;
         Ok(())

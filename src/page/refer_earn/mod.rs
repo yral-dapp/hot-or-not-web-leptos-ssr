@@ -8,6 +8,7 @@ use leptos_router::create_query_signal;
 use leptos_use::use_window;
 use serde_json::json;
 
+use crate::component::connect::ConnectLogin;
 use crate::state::history::HistoryCtx;
 use crate::utils::event_streaming::send_event;
 use crate::{
@@ -172,9 +173,9 @@ fn ReferView() -> impl IntoView {
             </div>
             <div class="flex flex-col w-full gap-2 px-4 text-white items-center">
                 <span class="uppercase text-sm md:text-md">Referral Link</span>
-                // <Show when=logged_in fallback=|| view! { <ConnectLogin/> }>
+                <Show when=logged_in fallback=|| view! { <ConnectLogin cta_location="refer"/> }>
                     <ReferCode/>
-                // </Show>
+                </Show>
             </div>
             <div class="flex flex-col w-full items-center gap-8 mt-4">
                 <span class="font-xl font-semibold">HOW IT WORKS?</span>

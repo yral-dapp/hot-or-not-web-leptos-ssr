@@ -39,23 +39,6 @@ pub fn BaseRoute() -> impl IntoView {
         set_referrer_store.set(refp);
     });
 
-    // // user_id gtag
-    // #[cfg(all(feature = "hydrate", feature = "ga4"))]
-    // {
-    //     use crate::utils::event_streaming::send_user_id;
-
-    //     if let Some(delegation_identity) = auth_state.identity.get() {
-    //         let auth: DelegatedIdentity = delegation_identity
-    //             .clone()
-    //             .try_into()
-    //             .expect("DelegatedIdentity try_into failed");
-    //         let user_id = auth.sender().unwrap();
-    //         create_effect(move |_| {
-    //             send_user_id(user_id.to_string());
-    //         });
-    //     };
-    // }
-
     let auth_cans_res: AuthCanistersResource = Resource::local(
         move || MockPartialEq(auth_state.identity.get()),
         move |auth| do_canister_auth(auth.0),
