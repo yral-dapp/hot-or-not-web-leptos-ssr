@@ -11,8 +11,7 @@ use crate::{
     },
 };
 use leptos::{html::Video, *};
-use leptos_use::{use_debounce_fn, use_event_listener, watch_debounced};
-use wasm_bindgen::JsCast;
+use leptos_use::{use_event_listener, watch_debounced};
 
 #[component]
 pub fn BgView(idx: usize, children: Children) -> impl IntoView {
@@ -47,19 +46,22 @@ pub fn BgView(idx: usize, children: Children) -> impl IntoView {
             <Show when=move || { idx == 4 && !is_connected.get() && show_login_popup.get() }>
                 <FeedPopUp
                     on_click=move |_| set_show_login_popup.set(false)
-                    header_text = "Your Rewards are
-                                    Waiting!"
-                    body_text = "SignUp/Login to save your progress and claim your rewards."
-                    login_text = "Login"
+                    header_text="Your Rewards are
+                    Waiting!"
+                    body_text="SignUp/Login to save your progress and claim your rewards."
+                    login_text="Login"
                 />
             </Show>
-            <Show when=move || { referrer_store.get().is_some() && idx == 0 && !is_connected.get() && show_refer_login_popup.get() }>
+            <Show when=move || {
+                referrer_store.get().is_some() && idx == 0 && !is_connected.get()
+                    && show_refer_login_popup.get()
+            }>
                 <FeedPopUp
                     on_click=move |_| set_show_refer_login_popup.set(false)
-                    header_text = "Claim Your Referral
-                                    Rewards Now!"
-                    body_text = "SignUp from this link to get 500 COYNs as referral rewards."
-                    login_text = "Sign Up"
+                    header_text="Claim Your Referral
+                    Rewards Now!"
+                    body_text="SignUp from this link to get 500 COYNs as referral rewards."
+                    login_text="Sign Up"
                 />
             </Show>
             {move || post().map(|post| view! { <VideoDetailsOverlay post/> })}
@@ -175,7 +177,6 @@ pub fn VideoView(idx: usize, muted: RwSignal<bool>) -> impl IntoView {
     );
 
     view! {
-
         <label class="w-full h-full absolute top-0 left-0 grid grid-cols-1 justify-items-center items-center cursor-pointer z-[3]">
             <input
                 on:change=move |_| muted.update(|m| *m = !*m)
