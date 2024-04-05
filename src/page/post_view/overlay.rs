@@ -88,28 +88,28 @@ fn LikeButton(
                         let user_id = profile_details.principal;
                         let display_name = profile_details.display_name;
                         // like_video - analytics
-                        create_effect(move |_| {
-                            send_event(
-                                "like_video",
-                                &json!({
-                                    "publisher_user_id":publisher_user_id,
-                                    "user_id":user_id,
-                                    "is_loggedIn": is_connected.get_untracked(),
-                                    "display_name": display_name,
-                                    "canister_id": canister_id,
-                                    "video_id": video_id,
-                                    "video_category": "NA",
-                                    "creator_category": "NA",
-                                    "hashtag_count": hastag_count,
-                                    "is_NSFW": is_nsfw,
-                                    "is_hotorNot": is_hotornot,
-                                    "feed_type": "NA",
-                                    "view_count": view_count,
-                                    "like_count": likes.get_untracked(),
-                                    "share_count": 0,
-                                }),
-                            );
-                        });
+                        // create_effect(move |_| {
+                        send_event(
+                            "like_video",
+                            &json!({
+                                "publisher_user_id":publisher_user_id,
+                                "user_id":user_id,
+                                "is_loggedIn": is_connected.get_untracked(),
+                                "display_name": display_name,
+                                "canister_id": canister_id,
+                                "video_id": video_id,
+                                "video_category": "NA",
+                                "creator_category": "NA",
+                                "hashtag_count": hastag_count,
+                                "is_NSFW": is_nsfw,
+                                "is_hotorNot": is_hotornot,
+                                "feed_type": "NA",
+                                "view_count": view_count,
+                                "like_count": likes.get_untracked(),
+                                "share_count": 0,
+                            }),
+                        );
+                        // });
                     }
                 }
             });
@@ -260,28 +260,28 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
                 let canister_id = canisters.user_canister();
 
                 // share_video - analytics
-                create_effect(move |_| {
-                    send_event(
-                        "share_video",
-                        &json!({
-                            "publisher_user_id":publisher_user_id,
-                            "user_id":user_id,
-                            "is_loggedIn": is_loggedin,
-                            "display_name": display_name,
-                            "canister_id": canister_id,
-                            "video_id": video_id,
-                            "video_category": "NA",
-                            "creator_category": "NA",
-                            "hashtag_count": hastag_count,
-                            "is_NSFW": is_nsfw,
-                            "is_hotorNot": is_hotornot,
-                            "feed_type": "NA",
-                            "view_count": view_count,
-                            "like_count": like_count,
-                            "share_count": 0,
-                        }),
-                    );
-                });
+                // create_effect(move |_| {
+                send_event(
+                    "share_video",
+                    &json!({
+                        "publisher_user_id":publisher_user_id,
+                        "user_id":user_id,
+                        "is_loggedIn": is_loggedin,
+                        "display_name": display_name,
+                        "canister_id": canister_id,
+                        "video_id": video_id,
+                        "video_category": "NA",
+                        "creator_category": "NA",
+                        "hashtag_count": hastag_count,
+                        "is_NSFW": is_nsfw,
+                        "is_hotorNot": is_hotornot,
+                        "feed_type": "NA",
+                        "view_count": view_count,
+                        "like_count": like_count,
+                        "share_count": 0,
+                    }),
+                );
+                // });
             }
         }
     });
