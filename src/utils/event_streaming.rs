@@ -67,7 +67,7 @@ pub fn send_user_id(user_id: String) {
     );
 }
 
-pub fn send_event_warehouse(event_name: &str, params: &serde_json::Value) {
+pub fn send_event_warehouse(_event_name: &str, _params: &serde_json::Value) {
     // let data = serde_json::json!({
     //     "kind": "bigquery#tableDataInsertAllRequest",
     //     "rows": [
