@@ -22,7 +22,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libssl-dev
+          sudo apt-get install -y libssl-dev pkg-config
 
       - name: Rust Setup
         uses: dtolnay/rust-toolchain@master
@@ -64,9 +64,6 @@ jobs:
 
       - name: Install npm deps
         run: pnpm install
-
-      - name: Install libssl-dev
-        run: apt-get install libssl-dev
 
       - uses: awalsh128/cache-apt-pkgs-action@v1
         with:
