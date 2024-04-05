@@ -166,7 +166,7 @@ pub fn VideoView(idx: usize, muted: RwSignal<bool>) -> impl IntoView {
         current_idx() != idx && (watched_percentage_signal() != 0 || watched_count_signal() != 0)
     });
 
-    watch_debounced(
+    let _ = watch_debounced(
         watched_percentage_signal,
         move |_, _, _| {
             if send_view_details_guard() {
