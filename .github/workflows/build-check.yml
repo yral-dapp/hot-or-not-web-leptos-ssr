@@ -19,11 +19,6 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      # - name: Install dependencies
-      #   run: |
-      #     sudo apt-get update
-      #     sudo apt-get install libssl-dev libudev-dev pkg-config
-
       - name: Rust Setup
         uses: dtolnay/rust-toolchain@master
         with:
