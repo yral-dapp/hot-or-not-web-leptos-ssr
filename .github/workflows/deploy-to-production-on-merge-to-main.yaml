@@ -38,7 +38,7 @@ jobs:
           REDIS_URL: ${{ secrets.AUTH_FLY_IO_UPSTASH_REDIS_DATABASE_CONNECTION_STRING }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_SIGNING_OAUTH_CLIENT_CREDENTIAL_CLIENT_SECRET }}
           FLY_API_TOKEN: ${{ secrets.HOT_OR_NOT_WEB_LEPTOS_SSR_FLY_IO_GITHUB_ACTION }}
-          GOOGLE_SA_KEY: ${{ secrets.GOOGLE_SA_KEY_YRAL_INTELLIGENCE }}
+          GOOGLE_SA_KEY: ${{ secrets.GOOGLE_SA_KEY_HOT_OR_NOT_INTELLIGENCE }}
       - name: Deploy a docker container to Fly.io
         run: flyctl deploy --remote-only
         env:
