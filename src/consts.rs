@@ -15,7 +15,7 @@ pub static FALLBACK_USER_INDEX: Lazy<Principal> =
 pub static METADATA_API_BASE: Lazy<Url> =
     Lazy::new(|| Url::parse("https://yral-metadata.fly.dev").unwrap());
 pub static BIGQUERY_INGESTION_URL: Lazy<Url> = Lazy::new(|| {
-    Url::parse("https://bigquery.googleapis.com/bigquery/v2/projects/beta-exp/datasets/test_bigquery_ds/tables/test_bigquery_ds_table/insertAll").unwrap()
+    Url::parse("https://bigquery.googleapis.com/bigquery/v2/projects/yral-intelligence/datasets/events_ds/tables/events_table/insertAll").unwrap()
 });
 // G-6W5Q2MRX0E to test locally
 pub static GTAG_MEASUREMENT_ID: Lazy<&str> = Lazy::new(|| "G-PLNNETMSLM");

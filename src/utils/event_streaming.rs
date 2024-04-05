@@ -89,10 +89,10 @@ pub fn send_event_warehouse(event_name: &str, params: &serde_json::Value) {
 async fn get_access_token() -> String {
     use yup_oauth2::ServiceAccountAuthenticator;
 
-    let sa_key_file = env::var("GOOGLE_SA_KEY_FILE").unwrap();
+    let sa_key_file = env::var("GOOGLE_SA_KEY").expect("GOOGLE_SA_KEY is required");
 
     // Load your service account key
-    let sa_key = yup_oauth2::parse_service_account_key(sa_key_file).expect("clientsecret.json");
+    let sa_key = yup_oauth2::parse_service_account_key(sa_key_file).expect("GOOGLE_SA_KEY.json");
 
     let auth = ServiceAccountAuthenticator::builder(sa_key)
         .build()
