@@ -87,7 +87,7 @@ yral-metadata-types = { git = "https://github.com/go-bazzinga/yral-metadata", re
 
 gloo-utils = { version = "0.2.0", features = ["serde"] }
 google-bigquery2 = { version = "5.0.3", optional = true }
-yup-oauth2 = { version = "8.3.3", features = ["hyper-tls"], optional = true }
+yup-oauth2 = { version = "8.3.3", features = ["hyper-rustls"], optional = true }
 wasm-bindgen-futures = "0.4.42"
 
 [build-dependencies]
