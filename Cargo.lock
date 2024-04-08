@@ -1417,11 +1417,11 @@ dependencies = [
  "gloo-events",
  "gloo-file",
  "gloo-history",
- "gloo-net 0.5.0",
+ "gloo-net",
  "gloo-render",
  "gloo-storage",
  "gloo-timers",
- "gloo-utils 0.2.0",
+ "gloo-utils",
  "gloo-worker",
 ]
 
@@ -1431,7 +1431,7 @@ version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2a17868f56b4a24f677b17c8cb69958385102fa879418052d60b50bc1727e261"
 dependencies = [
- "gloo-utils 0.2.0",
+ "gloo-utils",
  "js-sys",
  "serde",
  "wasm-bindgen",
@@ -1479,32 +1479,12 @@ checksum = "903f432be5ba34427eac5e16048ef65604a82061fe93789f2212afc73d8617d6"
 dependencies = [
  "getrandom",
  "gloo-events",
- "gloo-utils 0.2.0",
+ "gloo-utils",
  "serde",
  "serde-wasm-bindgen",
  "serde_urlencoded",
  "thiserror",
  "wasm-bindgen",
- "web-sys",
-]
-
-[[package]]
-name = "gloo-net"
-version = "0.2.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9902a044653b26b99f7e3693a42f171312d9be8b26b5697bd1e43ad1f8a35e10"
-dependencies = [
- "futures-channel",
- "futures-core",
- "futures-sink",
- "gloo-utils 0.1.7",
- "js-sys",
- "pin-project",
- "serde",
- "serde_json",
- "thiserror",
- "wasm-bindgen",
- "wasm-bindgen-futures",
  "web-sys",
 ]
 
@@ -1517,7 +1497,7 @@ dependencies = [
  "futures-channel",
  "futures-core",
  "futures-sink",
- "gloo-utils 0.2.0",
+ "gloo-utils",
  "http 0.2.12",
  "js-sys",
  "pin-project",
@@ -1545,7 +1525,7 @@ version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fbc8031e8c92758af912f9bc08fbbadd3c6f3cfcbf6b64cdf3d6a81f0139277a"
 dependencies = [
- "gloo-utils 0.2.0",
+ "gloo-utils",
  "js-sys",
  "serde",
  "serde_json",
@@ -1564,19 +1544,6 @@ dependencies = [
  "futures-core",
  "js-sys",
  "wasm-bindgen",
-]
-
-[[package]]
-name = "gloo-utils"
-version = "0.1.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "037fcb07216cb3a30f7292bd0176b050b7b9a052ba830ef7d5d65f6dc64ba58e"
-dependencies = [
- "js-sys",
- "serde",
- "serde_json",
- "wasm-bindgen",
- "web-sys",
 ]
 
 [[package]]
@@ -1600,7 +1567,7 @@ checksum = "085f262d7604911c8150162529cefab3782e91adb20202e8658f7275d2aefe5d"
 dependencies = [
  "bincode",
  "futures",
- "gloo-utils 0.2.0",
+ "gloo-utils",
  "gloo-worker-macros",
  "js-sys",
  "pinned",
@@ -1830,7 +1797,7 @@ dependencies = [
  "enum_dispatch",
  "futures",
  "gloo",
- "gloo-utils 0.2.0",
+ "gloo-utils",
  "gob-cloudflare",
  "google-bigquery2",
  "hex",
@@ -2626,7 +2593,7 @@ dependencies = [
  "default-struct-builder",
  "futures-util",
  "gloo-timers",
- "gloo-utils 0.2.0",
+ "gloo-utils",
  "http 1.1.0",
  "js-sys",
  "lazy_static",
@@ -2743,9 +2710,9 @@ dependencies = [
 
 [[package]]
 name = "leptos_integration_utils"
-version = "0.6.9"
+version = "0.6.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ff00799857159434d31b6bd1898e21c63f69f39289621da5a554fcab1c3e7300"
+checksum = "046984e2ca5e2136eb1021ced1f1dc1725b4045f4a370d28f2594b23604477ac"
 dependencies = [
  "futures",
  "leptos",
@@ -2780,9 +2747,9 @@ dependencies = [
 
 [[package]]
 name = "leptos_meta"
-version = "0.6.9"
+version = "0.6.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "12b9dac59a2f88f5235dbe17cfa81b738a6f47238a64e4f23b921f1a90a9bf11"
+checksum = "5a85d2f3e3c4eb7ffb8a97abe6c79eefcb0a2c6ae5bacd7645b5a5df1ba0a212"
 dependencies = [
  "cfg-if",
  "indexmap 2.2.6",
@@ -2821,13 +2788,13 @@ dependencies = [
 
 [[package]]
 name = "leptos_router"
-version = "0.6.9"
+version = "0.6.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9460a5dc184fa05d8eb635b687ad3220d02d2d23d6f49c3bf146aa71e427f423"
+checksum = "2e42ebcdc1663ab03f249b91c367daa00f164d84c5f30eaec492bd45dffd3148"
 dependencies = [
  "cached 0.45.1",
  "cfg-if",
- "gloo-net 0.2.6",
+ "gloo-net",
  "itertools 0.12.1",
  "js-sys",
  "lazy_static",
@@ -4422,7 +4389,7 @@ dependencies = [
  "const_format",
  "dashmap",
  "futures",
- "gloo-net 0.5.0",
+ "gloo-net",
  "http 1.1.0",
  "http-body-util",
  "hyper 1.2.0",
