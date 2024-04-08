@@ -1,20 +1,16 @@
-use super::{overlay::VideoDetailsOverlay, PostViewCtx};
 use crate::{
-    canister::{
-        individual_user_template::PostViewDetailsFromFrontend,
-        utils::{bg_url, mp4_url},
-    },
+    canister::utils::{bg_url, mp4_url},
     component::feed_popup::FeedPopUp,
     state::{
-        auth::account_connected_reader,
-        canisters::{unauth_canisters, AuthProfileCanisterResource},
+        auth::account_connected_reader, canisters::AuthProfileCanisterResource,
         local_storage::use_referrer_store,
     },
     utils::event_streaming::send_event_warehouse,
 };
 use leptos::{html::Video, *};
-use leptos_use::{use_event_listener, watch_debounced};
+use leptos_use::use_event_listener;
 
+use super::{overlay::VideoDetailsOverlay, PostViewCtx};
 use crate::utils::event_streaming::send_event;
 use serde_json::json;
 use wasm_bindgen::JsCast;
@@ -120,74 +116,6 @@ pub fn VideoView(idx: usize, muted: RwSignal<bool>) -> impl IntoView {
         Some(())
     });
 
-    let watched_percentage = create_rw_signal(0_u8);
-    let watched_count = create_rw_signal(0_u8);
-
-    let video_previous_current_time = store_value(0.0);
-    let _ = use_event_listener(container_ref, ev::timeupdate, move |_event| {
-        let Some(video) = container_ref() else {
-            return;
-        };
-
-        let duration = video.duration();
-        let current_time = video.current_time();
-
-        if current_time < video_previous_current_time() {
-            watched_count.update(|wc| *wc += 1);
-        }
-        watched_percentage.update(|watched_percentage| {
-            *watched_percentage = (100.0 * (current_time / duration)) as u8;
-        });
-
-        video_previous_current_time.update_value(|v| *v = current_time);
-    });
-
-    let post = Signal::derive(move || video_queue.with(|q| q.get(idx).cloned()));
-
-    let send_view_detail_action = create_action(move |()| async move {
-        let canisters = unauth_canisters();
-        let current_watched_percentage = watched_percentage.get_untracked();
-        let current_watched_count = watched_count.get_untracked();
-        let payload = match current_watched_count {
-            0 => PostViewDetailsFromFrontend::WatchedPartially {
-                percentage_watched: current_watched_percentage,
-            },
-            _ => PostViewDetailsFromFrontend::WatchedMultipleTimes {
-                percentage_watched: current_watched_percentage,
-                watch_count: current_watched_count,
-            },
-        };
-        watched_count.update(|wc| *wc = 0);
-        watched_percentage.update(|watched_percentage| *watched_percentage = 0);
-        let post_id = post.get_untracked().as_ref().map(|p| p.post_id).unwrap();
-        let canister_id = post
-            .get_untracked()
-            .as_ref()
-            .map(|p| p.canister_id)
-            .unwrap();
-        let send_view_res = canisters
-            .individual_user(canister_id)
-            .update_post_add_view_details(post_id, payload)
-            .await;
-
-        if let Err(err) = send_view_res {
-            log::warn!("failed to send view details: {:?}", err);
-        }
-    });
-
-    let send_view_details_guard = create_memo(move |_| {
-        current_idx() != idx && (watched_percentage() != 0 || watched_count() != 0)
-    });
-
-    let _ = watch_debounced(
-        watched_percentage,
-        move |_, _, _| {
-            if send_view_details_guard() {
-                send_view_detail_action.dispatch(());
-            }
-        },
-        2000.0,
-    );
     #[cfg(all(feature = "hydrate", feature = "ga4"))]
     {
         let profile_and_canister_details: AuthProfileCanisterResource = expect_context();
