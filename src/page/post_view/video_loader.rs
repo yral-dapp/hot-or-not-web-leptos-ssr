@@ -1,10 +1,11 @@
 use std::cmp::Ordering;
 
-use leptos::{*, html::Video};
-use leptos_use::{use_event_listener, watch_debounced};
+use leptos::{html::Video, *};
+use leptos_use::use_event_listener;
 use serde_json::json;
 use wasm_bindgen::JsCast;
 
+use crate::utils::event_streaming::send_event;
 use crate::{
     canister::{
         individual_user_template::PostViewDetailsFromFrontend,
@@ -13,12 +14,11 @@ use crate::{
     component::feed_popup::FeedPopUp,
     state::{
         auth::account_connected_reader,
-        canisters::{AuthProfileCanisterResource, unauth_canisters},
+        canisters::{unauth_canisters, AuthProfileCanisterResource},
         local_storage::use_referrer_store,
     },
     utils::event_streaming::send_event_warehouse,
 };
-use crate::utils::event_streaming::send_event;
 
 use super::{overlay::VideoDetailsOverlay, PostViewCtx};
 
@@ -129,22 +129,22 @@ pub fn VideoView(idx: usize, muted: RwSignal<bool>) -> impl IntoView {
 
     let post = Signal::derive(move || video_queue.with(|q| q.get(idx).cloned()));
 
-    let send_view_detail_action = create_action(move |(percentage_watched, watch_count): &(u8, u8)|
-        {
-            let percentage_watched = percentage_watched.clone();
-            let watch_count = watch_count.clone();
+    let send_view_detail_action =
+        create_action(move |(percentage_watched, watch_count): &(u8, u8)| {
+            let percentage_watched = *percentage_watched;
+            let watch_count = *watch_count;
 
             async move {
                 let canisters = unauth_canisters();
 
                 let payload = match percentage_watched.cmp(&95) {
-                    Ordering::Less => PostViewDetailsFromFrontend::WatchedPartially {
-                        percentage_watched
-                    },
+                    Ordering::Less => {
+                        PostViewDetailsFromFrontend::WatchedPartially { percentage_watched }
+                    }
                     _ => PostViewDetailsFromFrontend::WatchedMultipleTimes {
                         percentage_watched,
                         watch_count,
-                    }
+                    },
                 };
 
                 let post_id = post.get_untracked().as_ref().map(|p| p.post_id).unwrap();
@@ -167,7 +167,7 @@ pub fn VideoView(idx: usize, muted: RwSignal<bool>) -> impl IntoView {
 
     let video_views_watch_multiple = create_rw_signal(false);
 
-    let _ = use_event_listener(container_ref, ev::pause, move |evt| {
+    let _ = use_event_listener(container_ref, ev::pause, move |_evt| {
         let Some(video) = container_ref() else {
             return;
         };
@@ -179,10 +179,10 @@ pub fn VideoView(idx: usize, muted: RwSignal<bool>) -> impl IntoView {
         }
 
         let percentage_watched = ((current_time / duration) * 100.0) as u8;
-        send_view_detail_action.dispatch((percentage_watched, 0 as u8));
+        send_view_detail_action.dispatch((percentage_watched, 0_u8));
     });
 
-    let _ = use_event_listener(container_ref, ev::timeupdate, move |evt| {
+    let _ = use_event_listener(container_ref, ev::timeupdate, move |_evt| {
         let Some(video) = container_ref() else {
             return;
         };
@@ -196,7 +196,7 @@ pub fn VideoView(idx: usize, muted: RwSignal<bool>) -> impl IntoView {
         }
 
         if percentage_watched >= 95 && !video_views_watch_multiple.get() {
-            send_view_detail_action.dispatch((percentage_watched, 0 as u8));
+            send_view_detail_action.dispatch((percentage_watched, 0_u8));
 
             video_views_watch_multiple.set(true);
         }
