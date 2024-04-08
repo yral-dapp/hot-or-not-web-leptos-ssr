@@ -117,7 +117,7 @@ pub fn Wallet() -> impl IntoView {
                 <Show when=move || !is_connected()>
                     <div class="flex flex-col w-full py-5 items-center">
                         <div class="flex flex-row w-9/12 md:w-5/12 items-center">
-                            <ConnectLogin login_text="Login to claim your COYNs" cta_location="wallet"/>
+                            <ConnectLogin login_text="Login to claim your COYNs"/>
                         </div>
                     </div>
                 </Show>
