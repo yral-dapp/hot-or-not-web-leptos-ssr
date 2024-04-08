@@ -17,3 +17,6 @@ redb-kv.db
 
 # dotenv
 .env
+
+# ide config
+.idea/
