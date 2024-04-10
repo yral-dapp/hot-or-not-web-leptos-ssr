@@ -30,15 +30,19 @@ jobs:
 
           - name: Install Node.js
             uses: actions/setup-node@v4
-            with:
+            with: 
                 node-version: 20
+          - run: npm install
+
+          - name: add env value
+            run: export COOKIE_KEY=1267b291500365c42043e04bc69cf24a31495bd8936fc8d6794283675e288fad755971922d45cf1ca0b438df4fc847f39cb0b2aceb3a45673eff231cddb88dc9
 
           - name: Build and run Locally
             run: cargo leptos build --release
           - run: cargo leptos watch
 
           - name: Install Lighthouse
-            run: npm install && npm install -g @lhci/cli@0.13.x
+            run: npm install -g @lhci/cli@0.13.x
 
           - name: Run Lighthouse
             run: lhci autorun
