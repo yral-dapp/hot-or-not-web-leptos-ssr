@@ -13,8 +13,6 @@ jobs:
         steps:
           - name: Checkout repo
             uses: actions/checkout@v3
-                  actions/setup-node@v3
-
 
           - name: Rust Setup
             uses: dtolnay/rust-toolchain@master
