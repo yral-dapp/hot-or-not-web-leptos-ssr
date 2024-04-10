@@ -251,13 +251,3 @@ lib-default-features = false
 #
 # Optional. Defaults to "release".
 lib-profile-release = "wasm-release"
-
-# Pass additional parameters to the cargo process compiling to WASM
-#
-# Optional. No default
-lib-cargo-args = ""
-
-# Pass additional parameters to the cargo process to build the server
-#
-# Optional. No default
-bin-cargo-args = ""
