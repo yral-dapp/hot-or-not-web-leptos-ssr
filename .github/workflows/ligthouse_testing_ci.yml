@@ -39,7 +39,9 @@ jobs:
           
           - name: Build and run Locally
             run: cargo leptos build --release
-          - run: cargo leptos watch
+
+          - name: Start server in the background
+            run: cargo leptos watch &
 
           - name: Install Lighthouse
             run: npm install -g @lhci/cli@0.13.x
