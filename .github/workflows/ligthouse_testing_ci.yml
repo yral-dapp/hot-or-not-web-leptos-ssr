@@ -36,12 +36,6 @@ jobs:
             with: 
                 node-version: 20
           - run: npm install
-          
-          - name: Build and run Locally
-            run: cargo leptos build --release
-
-          - name: Start server in the background
-            run: cargo leptos watch &
 
           - name: Install Lighthouse
             run: npm install -g @lhci/cli@0.13.x
