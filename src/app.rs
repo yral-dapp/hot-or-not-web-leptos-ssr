@@ -1,5 +1,6 @@
 use crate::{
     component::{base_route::BaseRoute, logout::Logout, nav::NavBar},
+    consts,
     error_template::{AppError, ErrorTemplate},
     page::{
         err::ServerErrorPage,
@@ -20,40 +21,13 @@ use crate::{
 use leptos::*;
 use leptos_meta::*;
 use leptos_router::*;
+use yral_auth_client::AuthClient;
 
 #[component]
 fn NotFound() -> impl IntoView {
     let mut outside_errors = Errors::default();
     outside_errors.insert_with_default_key(AppError::NotFound);
     view! { <ErrorTemplate outside_errors/> }
-}
-
-#[component(transparent)]
-fn GoogleAuthRedirectHandlerRoute() -> impl IntoView {
-    let path = "/auth/google_redirect";
-    #[cfg(any(feature = "oauth-ssr", feature = "oauth-hydrate"))]
-    {
-        use crate::page::google_redirect::GoogleRedirectHandler;
-        view! { <Route path view=GoogleRedirectHandler/> }
-    }
-    #[cfg(not(any(feature = "oauth-ssr", feature = "oauth-hydrate")))]
-    {
-        view! { <Route path view=NotFound/> }
-    }
-}
-
-#[component(transparent)]
-fn GoogleAuthRedirectorRoute() -> impl IntoView {
-    let path = "/auth/perform_google_redirect";
-    #[cfg(any(feature = "oauth-ssr", feature = "oauth-hydrate"))]
-    {
-        use crate::page::google_redirect::GoogleRedirector;
-        view! { <Route path view=GoogleRedirector/> }
-    }
-    #[cfg(not(any(feature = "oauth-ssr", feature = "oauth-hydrate")))]
-    {
-        view! { <Route path view=NotFound/> }
-    }
 }
 
 #[component]
@@ -64,6 +38,7 @@ pub fn App() -> impl IntoView {
     provide_context(PostViewCtx::default());
     let auth_state = AuthState::default();
     provide_context(auth_state.clone());
+    provide_context(AuthClient::with_base_url(consts::AUTH_API_BASE.clone()));
 
     // History Tracking
     let history_ctx = HistoryCtx::default();
@@ -111,9 +86,6 @@ pub fn App() -> impl IntoView {
         <Router fallback=|| view! { <NotFound/> }.into_view()>
             <main>
                 <Routes>
-                    // auth redirect routes exist outside main context
-                    <GoogleAuthRedirectHandlerRoute/>
-                    <GoogleAuthRedirectorRoute/>
                     <Route path="/" view=BaseRoute>
                         <Route path="/hot-or-not/:canister_id/:post_id" view=PostView/>
                         <Route path="/profile/:id" view=ProfileView/>

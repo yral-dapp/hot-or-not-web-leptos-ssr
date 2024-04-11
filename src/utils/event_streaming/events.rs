@@ -8,9 +8,9 @@ use serde_json::json;
 use wasm_bindgen::JsCast;
 
 use crate::canister::individual_user_template::UserProfileDetailsForFrontend;
-use crate::component::auth_providers::ProviderKind;
 use crate::state::canisters::Canisters;
 use crate::state::history::HistoryCtx;
+#[cfg(feature = "ga4")]
 use crate::utils::event_streaming::{send_event, send_event_warehouse, send_user_id};
 use crate::utils::profile::ProfileDetails;
 use crate::{
@@ -32,7 +32,8 @@ pub enum AnalyticsEvent {
     Refer(Refer),
     ReferShareLink(ReferShareLink),
     LoginSuccessful(LoginSuccessful),
-    LoginMethodSelected(LoginMethodSelected),
+    // TODO: migrate this to yral-auth
+    // LoginMethodSelected(LoginMethodSelected),
     LoginJoinOverlayViewed(LoginJoinOverlayViewed),
     LoginCta(LoginCta),
     LogoutClicked(LogoutClicked),
@@ -579,29 +580,30 @@ impl LoginSuccessful {
     }
 }
 
-#[derive(Default)]
-pub struct LoginMethodSelected;
+// TODO: move this to yral-auth
+// #[derive(Default)]
+// pub struct LoginMethodSelected;
 
-impl LoginMethodSelected {
-    pub fn send_event(&self, prov: ProviderKind) {
-        #[cfg(all(feature = "hydrate", feature = "ga4"))]
-        {
-            // login_method_selected - analytics
-            send_event(
-                "login_method_selected",
-                &json!({
-                    "login_method": match prov {
-                        #[cfg(feature = "local-auth")]
-                        ProviderKind::LocalStorage => "local_storage",
-                        #[cfg(any(feature = "oauth-ssr", feature = "oauth-hydrate"))]
-                        ProviderKind::Google => "google",
-                    },
-                    "attempt_count": 1,
-                }),
-            );
-        }
-    }
-}
+// impl LoginMethodSelected {
+//     pub fn send_event(&self, prov: ProviderKind) {
+//         #[cfg(all(feature = "hydrate", feature = "ga4"))]
+//         {
+//             // login_method_selected - analytics
+//             send_event(
+//                 "login_method_selected",
+//                 &json!({
+//                     "login_method": match prov {
+//                         #[cfg(feature = "local-auth")]
+//                         ProviderKind::LocalStorage => "local_storage",
+//                         #[cfg(any(feature = "oauth-ssr", feature = "oauth-hydrate"))]
+//                         ProviderKind::Google => "google",
+//                     },
+//                     "attempt_count": 1,
+//                 }),
+//             );
+//         }
+//     }
+// }
 
 #[derive(Default)]
 pub struct LoginJoinOverlayViewed;

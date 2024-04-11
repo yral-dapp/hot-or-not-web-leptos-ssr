@@ -1,11 +1,16 @@
 use leptos::{create_effect, create_signal, expect_context, Effect, ReadSignal, RwSignal};
 use leptos_use::{storage::use_local_storage, utils::FromToStringCodec};
 
-use crate::{auth::DelegatedIdentityWire, consts::ACCOUNT_CONNECTED_STORE};
+use crate::consts::ACCOUNT_CONNECTED_STORE;
+use yral_auth_client::{types::DelegatedIdentityWire, AuthClient};
 
 #[derive(Default, Clone)]
 pub struct AuthState {
     pub identity: RwSignal<Option<DelegatedIdentityWire>>,
+}
+
+pub fn auth_client() -> AuthClient {
+    expect_context()
 }
 
 pub fn auth_state() -> AuthState {

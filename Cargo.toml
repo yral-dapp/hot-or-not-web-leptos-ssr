@@ -63,27 +63,9 @@ web-sys = { version = "0.3", features = [
     "Worker",
 ], optional = true }
 circular-buffer = "0.1.7"
-redb = { version = "2.0.0", optional = true }
-enum_dispatch = { version = "0.3.12", optional = true }
-axum-extra = { version = "0.9.3", optional = true, features = [
-    "cookie",
-    "cookie-signed",
-    "cookie-private",
-] }
-openidconnect = { version = "3.5.0", optional = true }
 dotenv = { version = "0.15.0", optional = true }
-redis = { version = "0.25.2", features = [
-    "tokio-rustls-comp",
-    "aio",
-    "ahash",
-    "connection-manager",
-    "keep-alive",
-], default-features = false, optional = true }
-bb8 = { version = "0.8.3", optional = true }
-bb8-redis = { version = "0.15.0", optional = true }
 gob-cloudflare = { git = "https://github.com/go-bazzinga/gob-cloudflare", rev = "c847ba87ecc73a33520b24bd62503420d7e23e3e", default-features = false, optional = true }
-yral-metadata-client = { git = "https://github.com/go-bazzinga/yral-metadata", rev = "c2c5d254ac273681a66966d62b6f01785679a1be", default-features = false }
-yral-metadata-types = { git = "https://github.com/go-bazzinga/yral-metadata", rev = "c2c5d254ac273681a66966d62b6f01785679a1be", default-features = false }
+yral-auth-client = { git = "https://github.com/go-bazzinga/yral-auth", rev = "89d435add36660040e6340dc0bf3d84c458f7e5a", default-features = false }
 
 gloo-utils = { version = "0.2.0", features = ["serde"] }
 tonic = { version = "0.11.0", features = [
@@ -121,15 +103,9 @@ ssr = [
     "leptos-use/ssr",
     "leptos-use/axum",
     "reqwest/rustls-tls",
-    "dep:redis",
-    "yral-metadata-client/rustls-tls",
-    "dep:redb",
-    "dep:enum_dispatch",
-    "axum-extra",
+    "yral-auth-client/rustls-tls",
     "dep:rand_chacha",
     "dep:dotenv",
-    "bb8",
-    "bb8-redis",
     "tonic",
     "prost",
 ]
@@ -138,10 +114,6 @@ mock-referral-history = ["dep:rand_chacha", "k256/arithmetic"]
 
 
 mock-history = ["mock-referral-history", "mock-wallet-history"]
-oauth-ssr = ["dep:openidconnect"]
-oauth-hydrate = []
-local-auth = []
-redis-kv = []
 cloudflare = ["dep:gob-cloudflare"]
 backend-admin = []
 ga4 = []
@@ -149,26 +121,18 @@ release-bin = [
     "ssr",
     "cloudflare",
     "gob-cloudflare/rustls-tls",
-    "redis-kv",
     "backend-admin",
-    "oauth-ssr",
     "ga4",
 ]
 release-lib = [
     "hydrate",
     "cloudflare",
-    "redis-kv",
     "backend-admin",
-    "oauth-hydrate",
     "ga4",
 ]
 
 mock-wallet-history = ["dep:rand_chacha"]
-[patch.crates-io]
-# release with hyper v1 is not out yet
 
-
-reqwest = { git = "https://github.com/seanmonstar/reqwest.git", rev = "e3192638518d577759dd89da489175b8f992b12f" }
 [profile.wasm-release]
 inherits = "release"
 opt-level = 'z'

@@ -1,16 +1,17 @@
 use crate::{
-    auth::{extract_or_generate_identity, DelegatedIdentityWire},
-    state::auth::auth_state,
+    state::auth::{auth_client, auth_state},
     try_or_redirect,
 };
 use leptos::*;
+use yral_auth_client::types::DelegatedIdentityWire;
 
 #[component]
 pub fn AuthFrame(auth: RwSignal<Option<DelegatedIdentityWire>>) -> impl IntoView {
     let auth_res = create_local_resource(
         || (),
         move |_| async move {
-            let identity = try_or_redirect!(extract_or_generate_identity().await);
+            let auth_c = auth_client();
+            let identity = try_or_redirect!(auth_c.extract_or_generate_identity().await);
             auth.set(Some(identity));
         },
     );

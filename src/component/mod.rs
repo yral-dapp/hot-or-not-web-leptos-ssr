@@ -1,6 +1,5 @@
 pub mod airdrop_logo;
 pub mod auth_provider;
-pub mod auth_providers;
 pub mod back_btn;
 pub mod base_route;
 pub mod bullet_loader;
@@ -10,7 +9,6 @@ pub mod feed_popup;
 pub mod ic_symbol;
 pub mod infinite_scroller;
 pub mod loading;
-pub mod login_modal;
 pub mod logout;
 pub mod modal;
 pub mod nav;

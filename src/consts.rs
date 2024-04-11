@@ -12,10 +12,9 @@ pub const NSFW_TOGGLE_STORE: &str = "nsfw-enabled";
 pub const REFERRER_STORE: &str = "referrer";
 pub static FALLBACK_USER_INDEX: Lazy<Principal> =
     Lazy::new(|| Principal::from_text("znhy2-2qaaa-aaaag-acofq-cai").unwrap());
-pub static METADATA_API_BASE: Lazy<Url> =
-    Lazy::new(|| Url::parse("https://yral-metadata.fly.dev").unwrap());
 pub static OFF_CHAIN_AGENT_GRPC_URL: Lazy<Url> =
     Lazy::new(|| Url::parse("https://icp-off-chain-agent.fly.dev:443").unwrap());
+pub static AUTH_API_BASE: Lazy<Url> = Lazy::new(|| Url::parse("http://127.0.0.1:3000/").unwrap());
 // G-6W5Q2MRX0E to test locally | G-PLNNETMSLM
 pub static GTAG_MEASUREMENT_ID: Lazy<&str> = Lazy::new(|| "G-PLNNETMSLM");
 

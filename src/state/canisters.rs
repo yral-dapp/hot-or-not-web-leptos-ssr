@@ -3,11 +3,12 @@ use std::{collections::HashSet, sync::Arc};
 use candid::Principal;
 use ic_agent::{identity::DelegatedIdentity, AgentError, Identity};
 use leptos::*;
-use yral_metadata_client::MetadataClient;
-use yral_metadata_types::UserMetadata;
+use yral_auth_client::{
+    types::{metadata::UserMetadata, DelegatedIdentityWire},
+    AuthClient,
+};
 
 use crate::{
-    auth::DelegatedIdentityWire,
     canister::{
         individual_user_template::{IndividualUserTemplate, Result8},
         platform_orchestrator::{self, PlatformOrchestrator},
@@ -15,7 +16,7 @@ use crate::{
         user_index::UserIndex,
         AGENT_URL,
     },
-    consts::{FALLBACK_USER_INDEX, METADATA_API_BASE},
+    consts::{AUTH_API_BASE, FALLBACK_USER_INDEX},
     utils::profile::ProfileDetails,
     utils::MockPartialEq,
 };
@@ -24,7 +25,7 @@ use crate::{
 pub struct Canisters<const AUTH: bool> {
     agent: ic_agent::Agent,
     id: Option<Arc<DelegatedIdentity>>,
-    metadata_client: MetadataClient,
+    metadata_client: AuthClient,
     user_canister: Principal,
     expiry: u64,
 }
@@ -37,7 +38,7 @@ impl Default for Canisters<false> {
                 .build()
                 .unwrap(),
             id: None,
-            metadata_client: MetadataClient::with_base_url(METADATA_API_BASE.clone()),
+            metadata_client: AuthClient::with_base_url(AUTH_API_BASE.clone()),
             user_canister: Principal::anonymous(),
             expiry: 0,
         }
@@ -60,7 +61,7 @@ impl Canisters<true> {
                 .with_arc_identity(id.clone())
                 .build()
                 .unwrap(),
-            metadata_client: MetadataClient::with_base_url(METADATA_API_BASE.clone()),
+            metadata_client: AuthClient::with_base_url(AUTH_API_BASE.clone()),
             id: Some(id),
             user_canister: Principal::anonymous(),
             expiry,

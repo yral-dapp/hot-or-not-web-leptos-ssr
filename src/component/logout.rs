@@ -3,10 +3,12 @@ use leptos_router::use_navigate;
 use leptos_use::{storage::use_local_storage, utils::FromToStringCodec};
 
 use crate::{
-    auth::logout_identity,
     component::loading::Loading,
     consts::ACCOUNT_CONNECTED_STORE,
-    state::{auth::auth_state, canisters::AuthProfileCanisterResource},
+    state::{
+        auth::{auth_client, auth_state},
+        canisters::AuthProfileCanisterResource,
+    },
     try_or_redirect,
     utils::event_streaming::events::{LogoutClicked, LogoutConfirmation},
 };
@@ -20,7 +22,8 @@ pub fn Logout() -> impl IntoView {
     let auth_res = create_local_resource(
         || (),
         move |_| async move {
-            let _ = try_or_redirect!(logout_identity().await);
+            let auth_c = auth_client();
+            let _ = try_or_redirect!(auth_c.logout_identity().await);
 
             LogoutConfirmation.send_event(profile_and_canister_details);
 
