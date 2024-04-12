@@ -1,5 +1,7 @@
 name: Generate lighthouse test report on PR
 on:
+    push:
+      branches: [ lighthouse_testing_pipeline ]
     pull_request:
         branches: [ main ]
     # paths:
