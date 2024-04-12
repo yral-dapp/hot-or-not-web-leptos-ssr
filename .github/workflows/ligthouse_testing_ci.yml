@@ -1,7 +1,7 @@
 name: Generate lighthouse test report on PR
 on:
     pull_request:
-        branches: [ main, lighthouse_testing_pipeline ]
+        branches: [ main ]
     # paths:
     #     - "estate_dao_nft/**"
 
