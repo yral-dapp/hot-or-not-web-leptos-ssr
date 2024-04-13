@@ -2,9 +2,7 @@ name: Generate lighthouse test report on PR
 on:
     pull_request:
         branches: [ main ]
-    # paths:
-    #     - "estate_dao_nft/**"
-
+        
 jobs:
     build-check:
         runs-on: ubuntu-latest
@@ -48,6 +46,6 @@ jobs:
                   issue_number: context.issue.number,
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  # body: '👋 Thanks for reporting!'
-                  body: [View the full report]({{ lighthouse.reportURL }})
+                  body: '👋 Thanks for reporting!'
+                  body: ({{ lighthouse.reportURL }})
                 })
