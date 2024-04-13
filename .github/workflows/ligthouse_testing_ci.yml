@@ -44,8 +44,8 @@ jobs:
             run: lhci autorun
 
           - uses: peter-evans/sticky-pull-request-comment@v2
-            env:
-              GITHUB_TOKEN: ${{ secrets.LIGHTHOUSE_BOT_TOKEN }}
+            # env:
+            #   GITHUB_TOKEN: ${{ secrets.LIGHTHOUSE_BOT_TOKEN }}
             with:
               number-of-comments: 1 # Creates or updates a single comment
               comment-title: Lighthouse CI Results 
