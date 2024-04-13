@@ -1,7 +1,5 @@
 name: Generate lighthouse test report on PR
 on:
-    push:
-      branches: [ lighthouse_testing_pipeline ]
     pull_request:
         branches: [ main ]
     # paths:
@@ -42,3 +40,13 @@ jobs:
 
           - name: Run Lighthouse
             run: lhci autorun
+
+          - uses: actions/github-script@v6
+            with:
+              script: |
+                github.rest.issues.createComment({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: '👋 Thanks for reporting!'
+                })
