@@ -1,9 +1,6 @@
 name: Deploy to Fly on push to main
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
 
 jobs:
   build_check:
