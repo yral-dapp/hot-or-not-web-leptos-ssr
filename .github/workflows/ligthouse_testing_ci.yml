@@ -5,7 +5,6 @@ on:
         
 jobs:
     lighthouseci:
-    build-check:
         runs-on: ubuntu-latest
         env: 
             COOKIE_KEY: '1267b291500365c42043e04bc69cf24a31495bd8936fc8d6794283675e288fad755971922d45cf1ca0b438df4fc847f39cb0b2aceb3a45673eff231cddb88dc9'
@@ -38,7 +37,7 @@ jobs:
             run: npm install -g @lhci/cli@0.13.x
 
           - name: Run Lighthouse
-          - run: lhci autorun
+            run: lhci autorun
             env: 
                 LHCI_GITHUB_APP_TOKEN: ${{ secrets.LIGHTHOUSE_BOT_TOKEN }}
 
