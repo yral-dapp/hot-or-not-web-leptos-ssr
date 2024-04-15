@@ -2,7 +2,7 @@ use std::env;
 
 use gloo_utils::format::JsValueSerdeExt;
 use leptos::*;
-use serde_json::{json, Value};
+use serde_json::json;
 use wasm_bindgen::prelude::*;
 
 use crate::consts::{GTAG_MEASUREMENT_ID, OFF_CHAIN_AGENT_GRPC_URL};
@@ -44,29 +44,29 @@ pub fn send_user_id(user_id: String) {
         &JsValue::from_serde(&json!({
             "user_id": user_id,
         }))
-            .unwrap(),
+        .unwrap(),
     );
 }
 
-pub fn send_event_warehouse(_event_name: &str, _params: &serde_json::Value) {
-    // let event_name = event_name.to_string();
-    // let params_str = params.to_string();
-    //
-    // spawn_local(async move {
-    //     stream_to_offchain_agent(event_name, params_str).await.unwrap();
-    // });
+pub fn send_event_warehouse(event_name: &str, params: &serde_json::Value) {
+    let event_name = event_name.to_string();
+    let params_str = params.to_string();
+
+    spawn_local(async move {
+        stream_to_offchain_agent(event_name, params_str)
+            .await
+            .unwrap();
+    });
 }
 
 #[server]
-pub async fn stream_to_offchain_agent(event_name: String, params: String) -> Result<(), ServerFnError> {
+pub async fn stream_to_offchain_agent(event: String, params: String) -> Result<(), ServerFnError> {
     use tonic::metadata::MetadataValue;
-    use tonic::Request;
     use tonic::transport::Channel;
+    use tonic::Request;
 
     let off_chain_agent_url = OFF_CHAIN_AGENT_GRPC_URL.as_ref();
-    let channel = Channel::from_static(off_chain_agent_url)
-        .connect()
-        .await?;
+    let channel = Channel::from_static(off_chain_agent_url).connect().await?;
 
     let off_chain_agent_grpc_auth_token = env::var("GRPC_AUTH_TOKEN").expect("GRPC_AUTH_TOKEN");
 
@@ -81,13 +81,9 @@ pub async fn stream_to_offchain_agent(event_name: String, params: String) -> Res
             },
         );
 
-    let request = tonic::Request::new(warehouse_events::WarehouseEvent {
-        event: event_name,
-        params,
-    });
+    let request = tonic::Request::new(warehouse_events::WarehouseEvent { event, params });
 
-    let response = client.send_event(request).await?;
-    println!("RESPONSE={:?}", response);
+    client.send_event(request).await?;
 
     Ok(())
 }
