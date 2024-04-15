@@ -4,6 +4,7 @@ on:
         branches: [ main ]
         
 jobs:
+    lighthouseci:
     build-check:
         runs-on: ubuntu-latest
         env: 
@@ -37,10 +38,9 @@ jobs:
             run: npm install -g @lhci/cli@0.13.x
 
           - name: Run Lighthouse
-            run: lhci autorun
-
-            env:
-              LHCI_GITHUB_APP_TOKEN: ${{ secrets.LIGHTHOUSE_BOT_TOKEN }}
+          - run: lhci autorun
+            env: 
+                LHCI_GITHUB_APP_TOKEN: ${{ secrets.LIGHTHOUSE_BOT_TOKEN }}
 
           # - uses: actions/github-script@v6
           #   with:
