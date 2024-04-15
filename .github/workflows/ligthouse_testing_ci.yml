@@ -39,7 +39,7 @@ jobs:
           - name: Run Lighthouse
             run: lhci autorun
             env: 
-                LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+                LHCI_GITHUB_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
 
           # - uses: actions/github-script@v6
           #   with:
