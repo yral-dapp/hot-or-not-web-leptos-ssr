@@ -1,7 +1,8 @@
+use std::{collections::HashMap, env, ffi::OsStr, fs, io, path::PathBuf};
+
 use candid_parser::Principal;
 use convert_case::{Case, Casing};
 use serde::Deserialize;
-use std::{collections::HashMap, env, ffi::OsStr, fs, io, path::PathBuf};
 
 #[derive(Deserialize)]
 struct CanId {
@@ -12,6 +13,19 @@ fn read_candid_ids() -> io::Result<HashMap<String, CanId>> {
     let can_ids_file = fs::File::open("did/canister_ids.json")?;
     let reader = io::BufReader::new(can_ids_file);
     Ok(serde_json::from_reader(reader).expect("invalid candid ids"))
+}
+
+fn build_gprc_client() -> Result<(), Box<dyn std::error::Error>> {
+    let proto_file = "contracts/projects/warehouse_events/warehouse_events.proto";
+    let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
+
+    tonic_build::configure()
+        .build_client(true)
+        .build_server(false)
+        .out_dir(out_dir)
+        .compile(&[proto_file], &["proto"])?;
+
+    Ok(())
 }
 
 fn main() -> io::Result<()> {
@@ -72,5 +86,12 @@ fn main() -> io::Result<()> {
     // but can't, due to https://github.com/rust-lang/rfcs/issues/752
     let binding_mod_file = PathBuf::from(&out_dir).join("did").join("mod.rs");
     fs::write(binding_mod_file, did_mod_contents)?;
+
+    // Build GRPC client
+    match build_gprc_client() {
+        Ok(_) => (),
+        Err(e) => panic!("Failed to build GRPC client: {e}"),
+    }
+
     Ok(())
 }

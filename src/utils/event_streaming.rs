@@ -5,37 +5,18 @@ use leptos::*;
 use serde_json::{json, Value};
 use wasm_bindgen::prelude::*;
 
-use crate::consts::GTAG_MEASUREMENT_ID;
+use crate::consts::{GTAG_MEASUREMENT_ID, OFF_CHAIN_AGENT_GRPC_URL};
+
+#[cfg(feature = "ssr")]
+pub mod warehouse_events {
+    tonic::include_proto!("warehouse_events");
+}
 
 #[wasm_bindgen]
 extern "C" {
     #[wasm_bindgen(js_name = gtag)]
     pub fn gtag(cmd: &str, event_name: &str, params: &JsValue);
 }
-
-// #[derive(Clone, Serialize, Deserialize, Debug)]
-// pub enum EventType {
-//     GA4Event,
-//     WarehouseEvent,
-//     All,
-// }
-
-// #[derive(Clone, Serialize, Deserialize, Debug)]
-// pub struct EventRequest {
-//     event_name: String,
-//     params: Value,
-//     event_type: EventType,
-// }
-
-// impl EventRequest {
-//     pub fn new(event_name: String, params: Value, event_type: EventType) -> Self {
-//         Self {
-//             event_name,
-//             params,
-//             event_type,
-//         }
-//     }
-// }
 
 #[derive(Clone, Default)]
 pub struct EventHistory {
@@ -63,79 +44,50 @@ pub fn send_user_id(user_id: String) {
         &JsValue::from_serde(&json!({
             "user_id": user_id,
         }))
-        .unwrap(),
+            .unwrap(),
     );
 }
 
 pub fn send_event_warehouse(_event_name: &str, _params: &serde_json::Value) {
-    // let data = serde_json::json!({
-    //     "kind": "bigquery#tableDataInsertAllRequest",
-    //     "rows": [
-    //         {
-    //             "json": {
-    //                 "event": event_name.to_string(),
-    //                 "params": params.to_string()
-    //             }
-    //         }
-    //     ]
-    // });
-
+    // let event_name = event_name.to_string();
+    // let params_str = params.to_string();
+    //
     // spawn_local(async move {
-    //     stream_to_bigquery(data).await.unwrap();
+    //     stream_to_offchain_agent(event_name, params_str).await.unwrap();
     // });
-}
-
-#[cfg(feature = "ssr")]
-async fn get_access_token() -> String {
-    use yup_oauth2::ServiceAccountAuthenticator;
-
-    let sa_key_file = env::var("GOOGLE_SA_KEY").expect("GOOGLE_SA_KEY is required");
-
-    // Load your service account key
-    let sa_key = yup_oauth2::parse_service_account_key(sa_key_file).expect("GOOGLE_SA_KEY.json");
-
-    let auth = ServiceAccountAuthenticator::builder(sa_key)
-        .build()
-        .await
-        .unwrap();
-
-    let scopes = &["https://www.googleapis.com/auth/bigquery.insertdata"];
-    let token = auth.token(scopes).await.unwrap();
-
-    match token.token() {
-        Some(t) => t.to_string(),
-        _ => panic!("No access token found"),
-    }
-}
-
-#[cfg(feature = "ssr")]
-async fn stream_to_bigquery_impl(data: Value) -> Result<(), Box<dyn std::error::Error>> {
-    use reqwest::Client;
-
-    use crate::consts::BIGQUERY_INGESTION_URL;
-
-    println!("Data: {:?}", data);
-
-    let token = get_access_token().await;
-    let client = Client::new();
-    let request_url = BIGQUERY_INGESTION_URL.to_string();
-    let response = client
-        .post(request_url)
-        .bearer_auth(token)
-        .json(&data)
-        .send()
-        .await?;
-
-    match response.status().is_success() {
-        true => Ok(()),
-        false => Err(format!("Failed to stream data - {:?}", response.text().await?).into()),
-    }
 }
 
 #[server]
-async fn stream_to_bigquery(data: Value) -> Result<(), ServerFnError> {
-    match stream_to_bigquery_impl(data).await {
-        Ok(_) => Ok(()),
-        Err(e) => Err(ServerFnError::new(e.to_string())),
-    }
+pub async fn stream_to_offchain_agent(event_name: String, params: String) -> Result<(), ServerFnError> {
+    use tonic::metadata::MetadataValue;
+    use tonic::Request;
+    use tonic::transport::Channel;
+
+    let off_chain_agent_url = OFF_CHAIN_AGENT_GRPC_URL.as_ref();
+    let channel = Channel::from_static(off_chain_agent_url)
+        .connect()
+        .await?;
+
+    let off_chain_agent_grpc_auth_token = env::var("GRPC_AUTH_TOKEN").expect("GRPC_AUTH_TOKEN");
+
+    let token: MetadataValue<_> = format!("Bearer {}", off_chain_agent_grpc_auth_token).parse()?;
+
+    let mut client =
+        warehouse_events::warehouse_events_client::WarehouseEventsClient::with_interceptor(
+            channel,
+            move |mut req: Request<()>| {
+                req.metadata_mut().insert("authorization", token.clone());
+                Ok(req)
+            },
+        );
+
+    let request = tonic::Request::new(warehouse_events::WarehouseEvent {
+        event: event_name,
+        params,
+    });
+
+    let response = client.send_event(request).await?;
+    println!("RESPONSE={:?}", response);
+
+    Ok(())
 }
