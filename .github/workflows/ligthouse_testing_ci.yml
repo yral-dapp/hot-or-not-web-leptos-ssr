@@ -1,7 +1,7 @@
 name: Generate lighthouse test report on PR
 on:
     pull_request:
-        branches: [ main ]
+        branches: [ main, lighthouse_testing_pipeline ]
         
 jobs:
     lighthouseci:
@@ -39,7 +39,7 @@ jobs:
           - name: Run Lighthouse
             run: lhci autorun
             env: 
-                LHCI_GITHUB_APP_TOKEN: ${{ secrets.LIGHTHOUSE_BOT_TOKEN }}
+                LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
 
           # - uses: actions/github-script@v6
           #   with:
