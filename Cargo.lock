@@ -4992,7 +4992,6 @@ dependencies = [
  "percent-encoding",
  "pin-project",
  "prost",
- "rustls-native-certs",
  "rustls-pemfile 2.1.1",
  "rustls-pki-types",
  "tokio",
@@ -5002,6 +5001,7 @@ dependencies = [
  "tower-layer",
  "tower-service",
  "tracing",
+ "webpki-roots 0.26.1",
 ]
 
 [[package]]
