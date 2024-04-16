@@ -7,8 +7,10 @@ module.exports = {
             target: 'temporary-public-storage',
         },
         assert: {
-            "categories:performance": ["warn", {"minScore": 0.3}],
-            "categories:accessibility": ["warn", {"minScore": 0.5}]
+            assertions: {
+                "categories:performance": ["warn", {"minScore": 0.3}],
+                "categories:accessibility": ["warn", {"minScore": 0.5}]
+            },
         },
     },
 };
