@@ -23,6 +23,7 @@ pub struct EventHistory {
     pub event_name: RwSignal<String>,
 }
 
+#[cfg(feature = "ga4")]
 pub fn send_event(event_name: &str, params: &serde_json::Value) {
     let event_history: EventHistory = expect_context();
 
@@ -35,6 +36,7 @@ pub fn send_event(event_name: &str, params: &serde_json::Value) {
     gtag("event", event_name, &JsValue::from_serde(params).unwrap());
 }
 
+#[cfg(feature = "ga4")]
 pub fn send_user_id(user_id: String) {
     let gtag_measurement_id = GTAG_MEASUREMENT_ID.as_ref();
 
@@ -48,6 +50,7 @@ pub fn send_user_id(user_id: String) {
     );
 }
 
+#[cfg(feature = "ga4")]
 pub fn send_event_warehouse(event_name: &str, params: &serde_json::Value) {
     let event_name = event_name.to_string();
     let params_str = params.to_string();
@@ -59,6 +62,7 @@ pub fn send_event_warehouse(event_name: &str, params: &serde_json::Value) {
     });
 }
 
+#[cfg(feature = "ga4")]
 #[server]
 pub async fn stream_to_offchain_agent(event: String, params: String) -> Result<(), ServerFnError> {
     use tonic::metadata::MetadataValue;
