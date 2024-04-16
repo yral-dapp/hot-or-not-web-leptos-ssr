@@ -71,8 +71,6 @@ pub fn PreVideoUpload(file_blob: WriteSignal<Option<FileWithUrl>>) -> impl IntoV
 
     #[cfg(feature = "hydrate")]
     {
-        use crate::utils::event_streaming::send_event;
-
         use leptos::ev::change;
         _ = use_event_listener(file_ref, change, move |ev| {
             use wasm_bindgen::JsCast;
@@ -84,6 +82,7 @@ pub fn PreVideoUpload(file_blob: WriteSignal<Option<FileWithUrl>>) -> impl IntoV
 
                 #[cfg(feature = "ga4")]
                 {
+                    use crate::utils::event_streaming::send_event;
                     // video_upload_video_selected - analytics
                     send_event(
                         "video_upload_video_selected",

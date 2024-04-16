@@ -86,9 +86,7 @@ pub fn Logout() -> impl IntoView {
 
     view! {
         <Loading text="Logging out...".to_string()>
-            <Suspense>
-                {move || auth_res.get().map(|_| ())}
-            </Suspense>
+            <Suspense>{move || auth_res.get().map(|_| ())}</Suspense>
         </Loading>
     }
 }
