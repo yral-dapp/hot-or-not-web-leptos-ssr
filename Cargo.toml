@@ -86,7 +86,10 @@ yral-metadata-client = { git = "https://github.com/go-bazzinga/yral-metadata", r
 yral-metadata-types = { git = "https://github.com/go-bazzinga/yral-metadata", rev = "c2c5d254ac273681a66966d62b6f01785679a1be", default-features = false }
 
 gloo-utils = { version = "0.2.0", features = ["serde"] }
-tonic = { version = "0.11.0",features = ["tls", "tls-roots"] , optional = true }
+tonic = { version = "0.11.0", features = [
+    "tls",
+    "tls-webpki-roots",
+], optional = true }
 prost = { version = "0.12.4", optional = true }
 
 [build-dependencies]
@@ -128,7 +131,7 @@ ssr = [
     "bb8",
     "bb8-redis",
     "tonic",
-    "prost"
+    "prost",
 ]
 # Fetch mock referral history instead of history via canister
 mock-referral-history = ["dep:rand_chacha", "k256/arithmetic"]

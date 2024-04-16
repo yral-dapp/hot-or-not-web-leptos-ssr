@@ -51,15 +51,15 @@ pub fn send_user_id(user_id: String) {
 }
 
 #[cfg(feature = "ga4")]
-pub fn send_event_warehouse(_event_name: &str, _params: &serde_json::Value) {
-    // let event_name = event_name.to_string();
-    // let params_str = params.to_string();
+pub fn send_event_warehouse(event_name: &str, params: &serde_json::Value) {
+    let event_name = event_name.to_string();
+    let params_str = params.to_string();
 
-    // spawn_local(async move {
-    //     stream_to_offchain_agent(event_name, params_str)
-    //         .await
-    //         .unwrap();
-    // });
+    spawn_local(async move {
+        stream_to_offchain_agent(event_name, params_str)
+            .await
+            .unwrap();
+    });
 }
 
 #[cfg(feature = "ga4")]
