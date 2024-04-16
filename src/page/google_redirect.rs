@@ -74,11 +74,12 @@ pub fn GoogleRedirectHandler() -> impl IntoView {
 
     view! {
         <Loading text="Logging out...".to_string()>
-                <Suspense>
-                    {move || {
-                        identity_resource().map(|identity_res| view! { <IdentitySender identity_res/> })
-                    }}
-                </Suspense>
+            <Suspense>
+                {move || {
+                    identity_resource().map(|identity_res| view! { <IdentitySender identity_res/> })
+                }}
+
+            </Suspense>
         </Loading>
     }
 }

@@ -85,6 +85,7 @@ pub fn GoogleAuthProvider() -> impl IntoView {
                 on_click()
             }
         >
+
             <div class="grid grid-cols-1 place-items-center bg-white p-2 rounded-full">
                 <Icon class="text-xl rounded-full" icon=GoogleLogoSymbol/>
             </div>

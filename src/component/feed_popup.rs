@@ -10,7 +10,10 @@ pub fn FeedPopUp<F: Fn(MouseEvent) + 'static>(
     login_text: &'static str,
 ) -> impl IntoView {
     view! {
-        <div class="h-full w-full absolute bg-black opacity-90 z-50 flex flex-col justify-center" on:click=on_click>
+        <div
+            class="h-full w-full absolute bg-black opacity-90 z-50 flex flex-col justify-center"
+            on:click=on_click
+        >
             <div class="flex flex-row justify-center">
                 <div class="flex flex-col justify-center w-9/12 sm:w-4/12 relative">
                     <img
@@ -32,12 +35,10 @@ pub fn FeedPopUp<F: Fn(MouseEvent) + 'static>(
                     <span class="text-white text-3xl text-center text-bold p-2 whitespace-pre-line">
                         {header_text}
                     </span>
-                    <span class="text-white text-center p-2 pb-4">
-                        {body_text}
-                    </span>
+                    <span class="text-white text-center p-2 pb-4">{body_text}</span>
                     <div class="flex justify-center">
                         <div class="w-7/12 sm:w-4/12 z-[60]">
-                            <ConnectLogin login_text={login_text} cta_location="feed_popup"/>
+                            <ConnectLogin login_text=login_text cta_location="feed_popup"/>
                         </div>
                     </div>
                 </div>
