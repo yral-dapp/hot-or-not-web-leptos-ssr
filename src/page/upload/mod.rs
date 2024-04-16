@@ -2,10 +2,7 @@ mod cf_upload;
 mod validators;
 mod video_upload;
 
-use crate::{
-    component::toggle::ToggleWithLabel, state::canisters::AuthProfileCanisterResource,
-    utils::event_streaming::send_event,
-};
+use crate::{component::toggle::ToggleWithLabel, state::canisters::AuthProfileCanisterResource};
 
 use leptos::{
     html::{Input, Textarea},
@@ -65,22 +62,29 @@ fn PreUploadView(trigger_upload: WriteSignal<Option<UploadParams>>) -> impl Into
     };
     let canister_id = move || profile_and_canister_details().flatten().map(|(_, q)| q);
 
-    // video_upload_initiated - analytics
-    create_effect(move |_| {
-        send_event(
-            "video_upload_initiated",
-            &json!({
-                "user_id":user_id(),
-                "display_name": display_name(),
-                "canister_id": canister_id(),
-                "creator_category": "NA",
-            }),
-        );
-    });
+    #[cfg(all(feature = "hydrate", feature = "ga4"))]
+    {
+        use crate::utils::event_streaming::send_event;
+
+        // video_upload_initiated - analytics
+        create_effect(move |_| {
+            send_event(
+                "video_upload_initiated",
+                &json!({
+                    "user_id":user_id(),
+                    "display_name": display_name(),
+                    "canister_id": canister_id(),
+                    "creator_category": "NA",
+                }),
+            );
+        });
+    }
 
     let on_submit = move || {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
         {
+            use crate::utils::event_streaming::send_event;
+
             // video_upload_upload_button_clicked - analytics
             let hashtag_count = hashtag_inp.get_untracked().unwrap().value().len();
             let is_nsfw_val = is_nsfw

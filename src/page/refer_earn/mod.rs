@@ -10,7 +10,6 @@ use serde_json::json;
 
 use crate::component::connect::ConnectLogin;
 use crate::state::history::HistoryCtx;
-use crate::utils::event_streaming::send_event;
 use crate::{
     component::{back_btn::BackButton, title::Title},
     state::{
@@ -57,6 +56,8 @@ fn ReferLoaded(user_principal: Principal) -> impl IntoView {
 
             #[cfg(all(feature = "hydrate", feature = "ga4"))]
             {
+                use crate::utils::event_streaming::send_event;
+
                 let (logged_in, _) = account_connected_reader();
 
                 let user_id = move || {
@@ -135,6 +136,8 @@ fn ReferView() -> impl IntoView {
 
     #[cfg(all(feature = "hydrate", feature = "ga4"))]
     {
+        use crate::utils::event_streaming::send_event;
+
         let profile_and_canister_details: AuthProfileCanisterResource = expect_context();
         let user_id = move || {
             profile_and_canister_details()

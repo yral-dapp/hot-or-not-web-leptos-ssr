@@ -5,7 +5,6 @@ use leptos_use::use_event_listener;
 use serde_json::json;
 use wasm_bindgen::JsCast;
 
-use crate::utils::event_streaming::send_event;
 use crate::{
     canister::{
         individual_user_template::PostViewDetailsFromFrontend,
@@ -17,7 +16,6 @@ use crate::{
         canisters::{unauth_canisters, AuthProfileCanisterResource},
         local_storage::use_referrer_store,
     },
-    utils::event_streaming::send_event_warehouse,
 };
 
 use super::{overlay::VideoDetailsOverlay, PostViewCtx};
@@ -204,6 +202,8 @@ pub fn VideoView(idx: usize, muted: RwSignal<bool>) -> impl IntoView {
 
     #[cfg(all(feature = "hydrate", feature = "ga4"))]
     {
+        use crate::utils::event_streaming::{send_event, send_event_warehouse};
+
         let profile_and_canister_details: AuthProfileCanisterResource = expect_context();
         let (is_connected, _) = account_connected_reader();
 

@@ -71,7 +71,6 @@ pub fn App() -> impl IntoView {
     create_effect(move |_| {
         let loc = use_location();
         history_ctx.push(&loc.pathname.get());
-        // leptos::logging::log!("{}", history_ctx.log_history());
     });
 
     // Analytics
