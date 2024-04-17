@@ -45,12 +45,6 @@ async fn handle_user_login(canisters: Canisters<true>) -> Result<(), ServerFnErr
     let user_principal = canisters.identity().sender().unwrap();
     mark_user_registered(user_principal).await?;
 
-    let (referrer_store, _, _) = use_referrer_store();
-
-    let Some(_referrer_principal) = referrer_store.get_untracked() else {
-        return Ok(());
-    };
-
     issue_referral_rewards(canisters.user_canister()).await?;
 
     Ok(())
@@ -346,41 +340,5 @@ mod server_fn_impl {
         ) -> Result<(), ServerFnError> {
             Ok(())
         }
-    }
-}
-
-mod set_referrer_impl {
-    use crate::state::canisters::Canisters;
-    use candid::Principal;
-    use leptos::ServerFnError;
-
-    #[cfg(feature = "backend-admin")]
-    pub async fn _set_referrer(
-        canisters: &Canisters<true>,
-        referrer: Principal,
-        referrer_canister: Principal,
-    ) -> Result<(), ServerFnError> {
-        use crate::canister::individual_user_template::{Result8, UserCanisterDetails};
-
-        let user = canisters.authenticated_user();
-        user.update_referrer_details(UserCanisterDetails {
-            user_canister_id: referrer_canister,
-            profile_owner: referrer,
-        })
-        .await
-        .map_err(ServerFnError::from)
-        .and_then(|res| match res {
-            Result8::Ok(_) => Ok(()),
-            Result8::Err(e) => Err(ServerFnError::new(format!("failed to set referrer {e}"))),
-        })
-    }
-
-    #[cfg(not(feature = "backend-admin"))]
-    pub async fn set_referrer(
-        _canisters: &Canisters<true>,
-        _referrer: Principal,
-        _referrer_canister: Principal,
-    ) -> Result<(), ServerFnError> {
-        Ok(())
     }
 }
