@@ -58,12 +58,11 @@ pub fn send_event_warehouse(event_name: &str, params: &serde_json::Value) {
     let event_name = event_name.to_string();
     let params_str = params.to_string();
 
-    // TODO: uncomment
-    // spawn_local(async move {
-    //     stream_to_offchain_agent(event_name, params_str)
-    //         .await
-    //         .unwrap();
-    // });
+    spawn_local(async move {
+        stream_to_offchain_agent(event_name, params_str)
+            .await
+            .unwrap();
+    });
 }
 
 #[cfg(feature = "ga4")]
