@@ -1,9 +1,6 @@
 use crate::{
     component::modal::Modal,
-    state::{
-        auth::account_connected_reader,
-        canisters::{authenticated_canisters, Canisters},
-    },
+    state::canisters::{authenticated_canisters, Canisters},
     try_or_redirect_opt,
     utils::{
         route::failure_redirect,
@@ -13,7 +10,6 @@ use crate::{
 use leptos::*;
 use leptos_icons::*;
 use leptos_use::use_window;
-use serde_json::json;
 
 use super::video_iter::{post_liked_by_me, PostDetails};
 

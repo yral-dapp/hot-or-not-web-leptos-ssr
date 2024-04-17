@@ -2,8 +2,6 @@ use std::cmp::Ordering;
 
 use leptos::{html::Video, *};
 use leptos_use::use_event_listener;
-use serde_json::json;
-use wasm_bindgen::JsCast;
 
 use crate::{
     canister::{
@@ -12,8 +10,7 @@ use crate::{
     },
     component::feed_popup::FeedPopUp,
     state::{
-        auth::account_connected_reader,
-        canisters::{unauth_canisters, AuthProfileCanisterResource},
+        auth::account_connected_reader, canisters::unauth_canisters,
         local_storage::use_referrer_store,
     },
 };

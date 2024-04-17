@@ -1,7 +1,6 @@
 use leptos::*;
 use leptos_router::use_navigate;
 use leptos_use::{storage::use_local_storage, utils::FromToStringCodec};
-use serde_json::json;
 
 use crate::{
     auth::logout_identity,

@@ -1,10 +1,6 @@
 use leptos::*;
-use serde_json::json;
 
-use crate::{
-    state::{auth::auth_state, canisters::AuthProfileCanisterResource},
-    utils::event_streaming::EventHistory,
-};
+use crate::state::auth::auth_state;
 
 use super::login_modal::LoginModal;
 

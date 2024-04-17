@@ -7,7 +7,6 @@ use candid::Principal;
 use ic_agent::Identity;
 use leptos::*;
 use leptos_use::{storage::use_local_storage, utils::FromToStringCodec};
-use serde_json::json;
 
 use crate::{
     auth::DelegatedIdentityWire,
