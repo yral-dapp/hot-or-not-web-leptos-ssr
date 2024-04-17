@@ -6,7 +6,7 @@ use super::auth_provider::AuthProvider;
 use crate::{
     state::{
         auth::AuthState,
-        canisters::{do_canister_auth, AuthCanistersResource}, local_storage::use_referrer_store,
+        canisters::{do_canister_auth, AuthCanistersResource},
     },
     try_or_redirect_opt,
     utils::{profile::ProfileDetails, MockPartialEq},
