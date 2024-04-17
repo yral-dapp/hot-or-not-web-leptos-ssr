@@ -18,41 +18,15 @@ pub fn ConnectLogin(
 
     #[cfg(all(feature = "hydrate", feature = "ga4"))]
     {
-        use crate::utils::event_streaming::send_event;
-
-        let event_history: EventHistory = expect_context();
-        let profile_and_canister_details: AuthProfileCanisterResource = expect_context();
-        let user_id = move || {
-            profile_and_canister_details()
-                .flatten()
-                .map(|(q, _)| q.principal)
-        };
-
-        create_effect(move |_| {
-            send_event(
-                "login_join_overlay_viewed",
-                &json!({
-                    "user_id_viewer": user_id(),
-                    "previous_event": event_history.event_name.get(),
-                }),
-            );
-        });
+        use crate::utils::event_streaming::events::LoginJoinOverlayViewed;
+        LoginJoinOverlayViewed.send_event();
     }
 
     let login_click_action = create_action(move |()| async move {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
         {
-            use crate::utils::event_streaming::send_event;
-
-            let event_history: EventHistory = expect_context();
-
-            send_event(
-                "login_cta",
-                &json!({
-                    "previous_event": event_history.event_name.get(),
-                    "cta_location": cta_location,
-                }),
-            );
+            use crate::utils::event_streaming::events::LoginCta;
+            LoginCta.send_event();
         }
     });
 

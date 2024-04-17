@@ -6,7 +6,6 @@ use crate::{
     },
     try_or_redirect_opt,
     utils::{
-        profile::ProfileDetails,
         route::failure_redirect,
         web::{copy_to_clipboard, share_url},
     },
@@ -57,15 +56,8 @@ fn LikeButton(
 
     let like_toggle = create_action(move |&()| {
         let canisters = canisters.clone();
-        // let canister_id = canisters.user_canister();
-        let (is_connected, _) = account_connected_reader();
 
-        let publisher_user_id = post_details.poster_principal;
-        let video_id = post_details.uid.clone();
-        let hastag_count = post_details.hastags.len();
-        let is_nsfw = post_details.is_nsfw;
-        let is_hotornot = post_details.hot_or_not_feed_ranking_score.is_some();
-        let view_count = post_details.views;
+        let post_details = post_details.clone();
 
         async move {
             let user = canisters.authenticated_user();
@@ -82,35 +74,8 @@ fn LikeButton(
 
                     #[cfg(all(feature = "hydrate", feature = "ga4"))]
                     {
-                        use crate::utils::event_streaming::send_event;
-
-                        let profile_details = ProfileDetails::from(user_details);
-
-                        let user_id = profile_details.principal;
-                        let display_name = profile_details.display_name;
-                        // like_video - analytics
-                        // create_effect(move |_| {
-                        send_event(
-                            "like_video",
-                            &json!({
-                                "publisher_user_id":publisher_user_id,
-                                "user_id":user_id,
-                                "is_loggedIn": is_connected.get_untracked(),
-                                "display_name": display_name,
-                                "canister_id": canister_id,
-                                "video_id": video_id,
-                                "video_category": "NA",
-                                "creator_category": "NA",
-                                "hashtag_count": hastag_count,
-                                "is_NSFW": is_nsfw,
-                                "is_hotorNot": is_hotornot,
-                                "feed_type": "NA",
-                                "view_count": view_count,
-                                "like_count": likes.get_untracked(),
-                                "share_count": 0,
-                            }),
-                        );
-                        // });
+                        use crate::utils::event_streaming::events::LikeVideo;
+                        LikeVideo.send_event(user_details, post_details, canister_id, likes);
                     }
                 }
             });
@@ -228,9 +193,6 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
     let post_details = post.clone();
 
     let auth_cans = authenticated_canisters();
-    let (is_connected, _) = account_connected_reader();
-
-    let is_loggedin = is_connected.get_untracked();
 
     let share = create_action(move |&()| {
         let post_details = post_details.clone();
@@ -243,48 +205,14 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
 
             #[cfg(all(feature = "hydrate", feature = "ga4"))]
             {
-                use crate::utils::event_streaming::send_event;
-
-                let publisher_user_id = post_details.poster_principal;
-                let video_id = post_details.uid.clone();
-                let hastag_count = post_details.hastags.len();
-                let is_nsfw = post_details.is_nsfw;
-                let is_hotornot = post_details.hot_or_not_feed_ranking_score.is_some();
-                let view_count = post_details.views;
-                let like_count = post_details.likes;
+                use crate::utils::event_streaming::events::ShareVideo;
 
                 let canisters = auth_cans.get().unwrap().unwrap().unwrap();
                 let user = canisters.authenticated_user();
                 let user_details = user.get_profile_details().await.unwrap();
-                let profile_details = ProfileDetails::from(user_details);
-
-                let user_id = profile_details.principal;
-                let display_name = profile_details.display_name;
                 let canister_id = canisters.user_canister();
 
-                // share_video - analytics
-                // create_effect(move |_| {
-                send_event(
-                    "share_video",
-                    &json!({
-                        "publisher_user_id":publisher_user_id,
-                        "user_id":user_id,
-                        "is_loggedIn": is_loggedin,
-                        "display_name": display_name,
-                        "canister_id": canister_id,
-                        "video_id": video_id,
-                        "video_category": "NA",
-                        "creator_category": "NA",
-                        "hashtag_count": hastag_count,
-                        "is_NSFW": is_nsfw,
-                        "is_hotorNot": is_hotornot,
-                        "feed_type": "NA",
-                        "view_count": view_count,
-                        "like_count": like_count,
-                        "share_count": 0,
-                    }),
-                );
-                // });
+                ShareVideo.send_event(post_details, user_details, canister_id);
             }
         }
     });

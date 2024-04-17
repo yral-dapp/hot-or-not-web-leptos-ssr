@@ -17,28 +17,8 @@ pub fn Logout() -> impl IntoView {
 
     #[cfg(all(feature = "hydrate", feature = "ga4"))]
     {
-        use crate::utils::event_streaming::send_event;
-
-        let user_id = move || {
-            profile_and_canister_details()
-                .flatten()
-                .map(|(q, _)| q.principal)
-        };
-        let display_name = move || {
-            profile_and_canister_details()
-                .flatten()
-                .map(|(q, _)| q.display_name)
-        };
-        let canister_id = move || profile_and_canister_details().flatten().map(|(_, q)| q);
-
-        send_event(
-            "logout_clicked",
-            &json!({
-                "user_id_viewer": user_id(),
-                "display_name": display_name(),
-                "canister_id": canister_id(),
-            }),
-        );
+        use crate::utils::event_streaming::events::LogoutClicked;
+        LogoutClicked.send_event(profile_and_canister_details);
     }
 
     let auth_res = create_local_resource(
@@ -48,28 +28,8 @@ pub fn Logout() -> impl IntoView {
 
             #[cfg(all(feature = "hydrate", feature = "ga4"))]
             {
-                use crate::utils::event_streaming::send_event;
-
-                let user_id = move || {
-                    profile_and_canister_details()
-                        .flatten()
-                        .map(|(q, _)| q.principal)
-                };
-                let display_name = move || {
-                    profile_and_canister_details()
-                        .flatten()
-                        .map(|(q, _)| q.display_name)
-                };
-                let canister_id = move || profile_and_canister_details().flatten().map(|(_, q)| q);
-
-                send_event(
-                    "logout_confirmation",
-                    &json!({
-                        "user_id_viewer": user_id(),
-                        "display_name": display_name(),
-                        "canister_id": canister_id(),
-                    }),
-                );
+                use crate::utils::event_streaming::events::LogoutConfirmation;
+                LogoutConfirmation.send_event(profile_and_canister_details);
             }
 
             let auth = auth_state().identity;

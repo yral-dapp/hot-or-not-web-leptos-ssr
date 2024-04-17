@@ -1,8 +1,16 @@
+use candid::Principal;
+use leptos::html::Input;
+use leptos::{create_effect, ReadSignal, RwSignal, SignalGetUntracked};
 use leptos::{create_signal, ev, expect_context, html::Video, Memo, NodeRef, SignalGet, SignalSet};
 use leptos_use::use_event_listener;
 use serde_json::json;
 use wasm_bindgen::JsCast;
 
+use crate::canister::individual_user_template::UserProfileDetailsForFrontend;
+use crate::component::auth_providers::ProviderKind;
+use crate::state::history::HistoryCtx;
+use crate::utils::event_streaming::{send_event, send_event_warehouse};
+use crate::utils::profile::ProfileDetails;
 use crate::{
     page::post_view::video_iter::PostDetails,
     state::{auth::account_connected_reader, canisters::AuthProfileCanisterResource},
@@ -10,6 +18,21 @@ use crate::{
 
 pub enum AnalyticsEvent {
     VideoWatched(VideoWatched),
+    LikeVideo(LikeVideo),
+    ShareVideo(ShareVideo),
+    VideoUploadInitiated(VideoUploadInitiated),
+    VideoUploadUploadButtonClicked(VideoUploadUploadButtonClicked),
+    VideoUploadVideoSelected(VideoUploadVideoSelected),
+    VideoUploadUnsuccessful(VideoUploadUnsuccessful),
+    VideoUploadSuccessful(VideoUploadSuccessful),
+    Refer(Refer),
+    ReferShareLink(ReferShareLink),
+    LoginSuccessful(LoginSuccessful),
+    LoginMethodSelected(LoginMethodSelected),
+    LoginJoinOverlayViewed(LoginJoinOverlayViewed),
+    LoginCta(LoginCta),
+    LogoutClicked(LogoutClicked),
+    LogoutConfirmation(LogoutConfirmation),
 }
 
 #[derive(Default)]
@@ -21,8 +44,6 @@ impl VideoWatched {
         vid_details: Memo<Option<PostDetails>>,
         container_ref: NodeRef<Video>,
     ) {
-        use crate::utils::event_streaming::{send_event, send_event_warehouse};
-
         let profile_and_canister_details: AuthProfileCanisterResource = expect_context();
         let (is_connected, _) = account_connected_reader();
 
@@ -158,5 +179,492 @@ impl VideoWatched {
                 }),
             );
         });
+    }
+}
+
+#[derive(Default)]
+pub struct LikeVideo;
+
+impl LikeVideo {
+    pub fn send_event(
+        &self,
+        user_details: UserProfileDetailsForFrontend,
+        post_details: PostDetails,
+        canister_id: Principal,
+        likes: RwSignal<u64>,
+    ) {
+        let publisher_user_id = post_details.poster_principal;
+        let video_id = post_details.uid.clone();
+        let hastag_count = post_details.hastags.len();
+        let is_nsfw = post_details.is_nsfw;
+        let is_hotornot = post_details.hot_or_not_feed_ranking_score.is_some();
+        let view_count = post_details.views;
+
+        let profile_details = ProfileDetails::from(user_details);
+
+        let user_id = profile_details.principal;
+        let display_name = profile_details.display_name;
+        let (is_connected, _) = account_connected_reader();
+        // like_video - analytics
+
+        send_event(
+            "like_video",
+            &json!({
+                "publisher_user_id":publisher_user_id,
+                "user_id":user_id,
+                "is_loggedIn": is_connected(),
+                "display_name": display_name,
+                "canister_id": canister_id,
+                "video_id": video_id,
+                "video_category": "NA",
+                "creator_category": "NA",
+                "hashtag_count": hastag_count,
+                "is_NSFW": is_nsfw,
+                "is_hotorNot": is_hotornot,
+                "feed_type": "NA",
+                "view_count": view_count,
+                "like_count": likes.get(),
+                "share_count": 0,
+            }),
+        );
+    }
+}
+
+#[derive(Default)]
+pub struct ShareVideo;
+
+impl ShareVideo {
+    pub fn send_event(
+        &self,
+        post_details: PostDetails,
+        user_details: UserProfileDetailsForFrontend,
+        canister_id: Principal,
+    ) {
+        let publisher_user_id = post_details.poster_principal;
+        let video_id = post_details.uid.clone();
+        let hastag_count = post_details.hastags.len();
+        let is_nsfw = post_details.is_nsfw;
+        let is_hotornot = post_details.hot_or_not_feed_ranking_score.is_some();
+        let view_count = post_details.views;
+        let like_count = post_details.likes;
+
+        let profile_details = ProfileDetails::from(user_details);
+        let user_id = profile_details.principal;
+        let display_name = profile_details.display_name;
+        let (is_connected, _) = account_connected_reader();
+        // share_video - analytics
+        send_event(
+            "share_video",
+            &json!({
+                "publisher_user_id":publisher_user_id,
+                "user_id":user_id,
+                "is_loggedIn": is_connected.get(),
+                "display_name": display_name,
+                "canister_id": canister_id,
+                "video_id": video_id,
+                "video_category": "NA",
+                "creator_category": "NA",
+                "hashtag_count": hastag_count,
+                "is_NSFW": is_nsfw,
+                "is_hotorNot": is_hotornot,
+                "feed_type": "NA",
+                "view_count": view_count,
+                "like_count": like_count,
+                "share_count": 0,
+            }),
+        );
+    }
+}
+
+#[derive(Default)]
+pub struct VideoUploadInitiated;
+
+impl VideoUploadInitiated {
+    pub fn send_event(
+        &self,
+        user_id: Option<Principal>,
+        display_name: Option<Option<String>>,
+        canister_id: Option<Principal>,
+    ) {
+        // video_upload_initiated - analytics
+
+        let display_name = display_name.unwrap_or_default().unwrap_or_default();
+        create_effect(move |_| {
+            send_event(
+                "video_upload_initiated",
+                &json!({
+                    "user_id":user_id,
+                    "display_name": display_name,
+                    "canister_id": canister_id,
+                    "creator_category": "NA",
+                }),
+            );
+        });
+    }
+}
+
+#[derive(Default)]
+pub struct VideoUploadUploadButtonClicked;
+
+impl VideoUploadUploadButtonClicked {
+    pub fn send_event(
+        &self,
+        hashtag_inp: NodeRef<Input>,
+        is_nsfw: NodeRef<Input>,
+        enable_hot_or_not: NodeRef<Input>,
+        user_id: Option<Principal>,
+        display_name: Option<Option<String>>,
+        canister_id: Option<Principal>,
+    ) {
+        // video_upload_upload_button_clicked - analytics
+
+        let display_name = display_name.unwrap_or_default().unwrap_or_default();
+
+        let hashtag_count = hashtag_inp.get_untracked().unwrap().value().len();
+        let is_nsfw_val = is_nsfw
+            .get_untracked()
+            .map(|v| v.checked())
+            .unwrap_or_default();
+        let is_hotornot_val = enable_hot_or_not
+            .get_untracked()
+            .map(|v| v.checked())
+            .unwrap_or_default();
+
+        create_effect(move |_| {
+            send_event(
+                "video_upload_upload_button_clicked",
+                &json!({
+                    "user_id":user_id,
+                    "display_name": display_name,
+                    "canister_id": canister_id,
+                    "creator_category": "NA",
+                    "hashtag_count": hashtag_count,
+                    "is_NSFW": is_nsfw_val,
+                    "is_hotorNot": is_hotornot_val,
+                }),
+            );
+        });
+    }
+}
+
+#[derive(Default)]
+pub struct VideoUploadVideoSelected;
+
+impl VideoUploadVideoSelected {
+    pub fn send_event(
+        &self,
+        user_id: Option<Principal>,
+        display_name: Option<Option<String>>,
+        canister_id: Option<Principal>,
+    ) {
+        // video_upload_video_selected - analytics
+
+        let display_name = display_name.unwrap_or_default().unwrap_or_default();
+
+        send_event(
+            "video_upload_video_selected",
+            &json!({
+                "user_id":user_id,
+                "display_name": display_name,
+                "canister_id": canister_id,
+                "creator_category": "NA",
+            }),
+        )
+    }
+}
+
+#[derive(Default)]
+pub struct VideoUploadUnsuccessful;
+
+impl VideoUploadUnsuccessful {
+    #[allow(clippy::too_many_arguments)]
+    pub fn send_event(
+        &self,
+        error: String,
+        hashtags_len: usize,
+        is_nsfw: bool,
+        enable_hot_or_not: bool,
+        user_id: Option<Principal>,
+        display_name: Option<Option<String>>,
+        canister_id: Option<Principal>,
+    ) {
+        // video_upload_unsuccessful - analytics
+
+        let display_name = display_name.unwrap_or_default().unwrap_or_default();
+
+        send_event(
+            "video_upload_unsuccessful",
+            &json!({
+                "user_id": user_id,
+                "display_name": display_name,
+                "canister_id": canister_id,
+                "creator_category": "NA",
+                "hashtag_count": hashtags_len,
+                "is_NSFW": is_nsfw,
+                "is_hotorNot": enable_hot_or_not,
+                "fail_reason": error,
+            }),
+        );
+    }
+}
+
+#[derive(Default)]
+pub struct VideoUploadSuccessful;
+
+impl VideoUploadSuccessful {
+    pub fn send_event(
+        &self,
+        hashtags_len: usize,
+        is_nsfw: bool,
+        enable_hot_or_not: bool,
+        user_id: Option<Principal>,
+        display_name: Option<Option<String>>,
+        canister_id: Option<Principal>,
+    ) {
+        // video_upload_successful - analytics
+
+        send_event(
+            "video_upload_successful",
+            &json!({
+                "user_id":user_id,
+                "publisher_user_id": user_id,
+                "display_name": display_name,
+                "canister_id": canister_id,
+                "creator_category": "NA",
+                "hashtag_count": hashtags_len,
+                "is_NSFW": is_nsfw,
+                "is_hotorNot": enable_hot_or_not,
+                "is_filter_used": false,
+            }),
+        );
+    }
+}
+
+#[derive(Default)]
+pub struct Refer;
+
+impl Refer {
+    pub fn send_event(&self, logged_in: ReadSignal<bool>) {
+        // refer - analytics
+
+        let profile_and_canister_details: AuthProfileCanisterResource = expect_context();
+        let user_id = move || {
+            profile_and_canister_details()
+                .flatten()
+                .map(|(q, _)| q.principal)
+        };
+        let display_name = move || {
+            profile_and_canister_details()
+                .flatten()
+                .map(|(q, _)| q.display_name)
+        };
+        let canister_id = move || profile_and_canister_details().flatten().map(|(_, q)| q);
+        let history_ctx: HistoryCtx = expect_context();
+        let prev_site = history_ctx.prev_url();
+
+        // refer - analytics
+        create_effect(move |_| {
+            send_event(
+                "refer",
+                &json!({
+                    "user_id":user_id(),
+                    "is_loggedIn": logged_in.get(),
+                    "display_name": display_name(),
+                    "canister_id": canister_id(),
+                    "refer_location": prev_site,
+                }),
+            );
+        });
+    }
+}
+
+#[derive(Default)]
+pub struct ReferShareLink;
+
+impl ReferShareLink {
+    pub fn send_event(
+        &self,
+        profile_and_canister_details: AuthProfileCanisterResource,
+        logged_in: ReadSignal<bool>,
+    ) {
+        // refer_share_link - analytics
+
+        let user_id = move || {
+            profile_and_canister_details()
+                .flatten()
+                .map(|(q, _)| q.principal)
+        };
+        let display_name = move || {
+            profile_and_canister_details()
+                .flatten()
+                .map(|(q, _)| q.display_name)
+        };
+        let canister_id = move || profile_and_canister_details().flatten().map(|(_, q)| q);
+        let history_ctx: HistoryCtx = expect_context();
+        let prev_site = history_ctx.prev_url();
+
+        // refer_share_link - analytics
+        send_event(
+            "refer_share_link",
+            &json!({
+                "user_id":user_id(),
+                "is_loggedIn": logged_in.get(),
+                "display_name": display_name(),
+                "canister_id": canister_id(),
+                "refer_location": prev_site,
+            }),
+        );
+    }
+}
+
+#[derive(Default)]
+pub struct LoginSuccessful;
+
+impl LoginSuccessful {
+    pub fn send_event(&self, canisters: Canisters<true>) {
+        // login_successful - analytics
+
+        let user_id = canisters.identity().sender().unwrap();
+        let canister_id = canisters.user_canister();
+
+        send_user_id(user_id.to_string());
+
+        // login_successful - analytics
+        send_event(
+            "login_successful",
+            &json!({
+                "login_method": "google", // TODO: change this when more providers are added
+                "user_id": user_id.to_string(),
+                "canister_id": canister_id.to_string(),
+                "is_new_user": false,                   // TODO: add this info
+            }),
+        );
+    }
+}
+
+#[derive(Default)]
+pub struct LoginMethodSelected;
+
+impl LoginMethodSelected {
+    pub fn send_event(&self, prov: ProviderKind) {
+        // login_method_selected - analytics
+        send_event(
+            "login_method_selected",
+            &json!({
+                "login_method": match prov {
+                    #[cfg(feature = "local-auth")]
+                    ProviderKind::LocalStorage => "local_storage",
+                    #[cfg(any(feature = "oauth-ssr", feature = "oauth-hydrate"))]
+                    ProviderKind::Google => "google",
+                },
+                "attempt_count": 1,
+            }),
+        );
+    }
+}
+
+#[derive(Default)]
+pub struct LoginJoinOverlayViewed;
+
+impl LoginJoinOverlayViewed {
+    pub fn send_event(&self) {
+        // login_join_overlay_viewed - analytics
+
+        let event_history: EventHistory = expect_context();
+        let profile_and_canister_details: AuthProfileCanisterResource = expect_context();
+        let user_id = move || {
+            profile_and_canister_details()
+                .flatten()
+                .map(|(q, _)| q.principal)
+        };
+
+        create_effect(move |_| {
+            send_event(
+                "login_join_overlay_viewed",
+                &json!({
+                    "user_id_viewer": user_id(),
+                    "previous_event": event_history.event_name.get(),
+                }),
+            );
+        })
+    }
+}
+
+#[derive(Default)]
+pub struct LoginCta;
+
+impl LoginCta {
+    pub fn send_event(&self) {
+        // login_cta - analytics
+
+        let event_history: EventHistory = expect_context();
+
+        send_event(
+            "login_cta",
+            &json!({
+                "previous_event": event_history.event_name.get(),
+                "cta_location": cta_location,
+            }),
+        );
+    }
+}
+
+#[derive(Default)]
+pub struct LogoutClicked;
+
+impl LogoutClicked {
+    pub fn send_event(&self, profile_and_canister_details: AuthProfileCanisterResource) {
+        // logout_clicked - analytics
+
+        let user_id = move || {
+            profile_and_canister_details()
+                .flatten()
+                .map(|(q, _)| q.principal)
+        };
+        let display_name = move || {
+            profile_and_canister_details()
+                .flatten()
+                .map(|(q, _)| q.display_name)
+        };
+        let canister_id = move || profile_and_canister_details().flatten().map(|(_, q)| q);
+
+        send_event(
+            "logout_clicked",
+            &json!({
+                "user_id_viewer": user_id(),
+                "display_name": display_name(),
+                "canister_id": canister_id(),
+            }),
+        );
+    }
+}
+
+#[derive(Default)]
+pub struct LogoutConfirmation;
+
+impl LogoutConfirmation {
+    pub fn send_event(&self, profile_and_canister_details: AuthProfileCanisterResource) {
+        // logout_confirmation - analytics
+
+        let user_id = move || {
+            profile_and_canister_details()
+                .flatten()
+                .map(|(q, _)| q.principal)
+        };
+        let display_name = move || {
+            profile_and_canister_details()
+                .flatten()
+                .map(|(q, _)| q.display_name)
+        };
+        let canister_id = move || profile_and_canister_details().flatten().map(|(_, q)| q);
+
+        send_event(
+            "logout_confirmation",
+            &json!({
+                "user_id_viewer": user_id(),
+                "display_name": display_name(),
+                "canister_id": canister_id(),
+            }),
+        );
     }
 }

@@ -18,7 +18,6 @@ use leptos::{
 };
 use leptos_icons::*;
 use leptos_use::use_event_listener;
-use serde_json::json;
 use web_time::SystemTime;
 
 #[component]
@@ -82,17 +81,8 @@ pub fn PreVideoUpload(file_blob: WriteSignal<Option<FileWithUrl>>) -> impl IntoV
 
                 #[cfg(feature = "ga4")]
                 {
-                    use crate::utils::event_streaming::send_event;
-                    // video_upload_video_selected - analytics
-                    send_event(
-                        "video_upload_video_selected",
-                        &json!({
-                            "user_id":user_id(),
-                            "display_name": display_name(),
-                            "canister_id": canister_id(),
-                            "creator_category": "NA",
-                        }),
-                    );
+                    use crate::utils::event_streaming::events::VideoUploadVideoSelected;
+                    VideoUploadVideoSelected.send_event(user_id(), display_name(), canister_id());
                 }
 
                 Some(())
@@ -205,8 +195,6 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
     let is_nsfw = params.is_nsfw;
     let enable_hot_or_not = params.enable_hot_or_not;
 
-    let up_desc = description.clone();
-
     let profile_and_canister_details: AuthProfileCanisterResource = expect_context();
     let user_id = move || {
         profile_and_canister_details()
@@ -219,6 +207,8 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
             .map(|(q, _)| q.display_name)
     };
     let canister_id = move || profile_and_canister_details().flatten().map(|(_, q)| q);
+
+    let up_desc = description.clone();
 
     let upload_action = create_action(move |_: &()| {
         let hashtags = up_hashtags.clone();
@@ -239,23 +229,18 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
             .await;
             #[cfg(all(feature = "hydrate", feature = "ga4"))]
             {
-                use crate::utils::event_streaming::send_event;
+                use crate::utils::event_streaming::events::VideoUploadUnsuccessful;
 
                 if res.is_err() {
                     let e = res.as_ref().err().unwrap().to_string();
-
-                    send_event(
-                        "video_upload_unsuccessful",
-                        &json!({
-                            "user_id": user_id(),
-                            "display_name": display_name(),
-                            "canister_id": canister_id(),
-                            "creator_category": "NA",
-                            "hashtag_count": hashtags_len,
-                            "is_NSFW": is_nsfw,
-                            "is_hotorNot": enable_hot_or_not,
-                            "fail_reason": e,
-                        }),
+                    VideoUploadUnsuccessful.send_event(
+                        e,
+                        hashtags_len,
+                        is_nsfw,
+                        enable_hot_or_not,
+                        user_id(),
+                        display_name(),
+                        canister_id(),
                     );
                 }
             }
@@ -264,23 +249,18 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
             let res = upload_video_stream(&upload_info, &file_blob).await;
             #[cfg(all(feature = "hydrate", feature = "ga4"))]
             {
-                use crate::utils::event_streaming::send_event;
+                use crate::utils::event_streaming::events::VideoUploadUnsuccessful;
 
                 if res.is_err() {
                     let e = res.as_ref().err().unwrap().to_string();
-
-                    send_event(
-                        "video_upload_unsuccessful",
-                        &json!({
-                            "user_id": user_id(),
-                            "display_name": display_name(),
-                            "canister_id": canister_id(),
-                            "creator_category": "NA",
-                            "hashtag_count": hashtags_len,
-                            "is_NSFW": is_nsfw,
-                            "is_hotorNot": enable_hot_or_not,
-                            "fail_reason": e,
-                        }),
+                    VideoUploadUnsuccessful.send_event(
+                        e,
+                        hashtags_len,
+                        is_nsfw,
+                        enable_hot_or_not,
+                        user_id(),
+                        display_name(),
+                        canister_id(),
                     );
                 }
             }
@@ -294,23 +274,18 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
                 let res = get_video_status(uid).await;
                 #[cfg(all(feature = "hydrate", feature = "ga4"))]
                 {
-                    use crate::utils::event_streaming::send_event;
+                    use crate::utils::event_streaming::events::VideoUploadUnsuccessful;
 
                     if res.is_err() {
                         let e = res.as_ref().err().unwrap().to_string();
-
-                        send_event(
-                            "video_upload_unsuccessful",
-                            &json!({
-                                "user_id": user_id(),
-                                "display_name": display_name(),
-                                "canister_id": canister_id(),
-                                "creator_category": "NA",
-                                "hashtag_count": hashtags_len,
-                                "is_NSFW": is_nsfw,
-                                "is_hotorNot": enable_hot_or_not,
-                                "fail_reason": e,
-                            }),
+                        VideoUploadUnsuccessful.send_event(
+                            e,
+                            hashtags_len,
+                            is_nsfw,
+                            enable_hot_or_not,
+                            user_id(),
+                            display_name(),
+                            canister_id(),
                         );
                     }
                 }
@@ -347,23 +322,18 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
 
             #[cfg(all(feature = "hydrate", feature = "ga4"))]
             {
-                use crate::utils::event_streaming::send_event;
+                use crate::utils::event_streaming::events::VideoUploadUnsuccessful;
 
                 if res.is_err() {
                     let e = res.as_ref().err().unwrap().to_string();
-
-                    send_event(
-                        "video_upload_unsuccessful",
-                        &json!({
-                            "user_id": user_id(),
-                            "display_name": display_name(),
-                            "canister_id": canister_id(),
-                            "creator_category": "NA",
-                            "hashtag_count": hashtags_len,
-                            "is_NSFW": is_nsfw,
-                            "is_hotorNot": enable_hot_or_not,
-                            "fail_reason": e,
-                        }),
+                    VideoUploadUnsuccessful.send_event(
+                        e,
+                        hashtags_len,
+                        is_nsfw,
+                        enable_hot_or_not,
+                        user_id(),
+                        display_name(),
+                        canister_id(),
                     );
                 }
             }
@@ -373,22 +343,15 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
 
             #[cfg(all(feature = "hydrate", feature = "ga4"))]
             {
-                use crate::utils::event_streaming::send_event;
-                // video_upload_successful - analytics
+                use crate::utils::event_streaming::events::VideoUploadSuccessful;
 
-                send_event(
-                    "video_upload_successful",
-                    &json!({
-                        "user_id":user_id(),
-                        "publisher_user_id": user_id(),
-                        "display_name": display_name(),
-                        "canister_id": canister_id(),
-                        "creator_category": "NA",
-                        "hashtag_count": hashtags_len,
-                        "is_NSFW": params.is_nsfw,
-                        "is_hotorNot": params.enable_hot_or_not,
-                        "is_filter_used": false,
-                    }),
+                VideoUploadSuccessful.send_event(
+                    hashtags_len,
+                    is_nsfw,
+                    enable_hot_or_not,
+                    user_id(),
+                    display_name(),
+                    canister_id(),
                 );
             }
 

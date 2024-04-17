@@ -7,7 +7,7 @@ use wasm_bindgen::prelude::*;
 
 use crate::consts::{GTAG_MEASUREMENT_ID, OFF_CHAIN_AGENT_GRPC_URL};
 
-#[cfg(all(feature = "hydrate", feature = "ga4"))]
+// #[cfg(all(feature = "hydrate", feature = "ga4"))]
 pub mod events;
 
 #[cfg(feature = "ssr")]
@@ -58,11 +58,12 @@ pub fn send_event_warehouse(event_name: &str, params: &serde_json::Value) {
     let event_name = event_name.to_string();
     let params_str = params.to_string();
 
-    spawn_local(async move {
-        stream_to_offchain_agent(event_name, params_str)
-            .await
-            .unwrap();
-    });
+    // TODO: uncomment
+    // spawn_local(async move {
+    //     stream_to_offchain_agent(event_name, params_str)
+    //         .await
+    //         .unwrap();
+    // });
 }
 
 #[cfg(feature = "ga4")]
