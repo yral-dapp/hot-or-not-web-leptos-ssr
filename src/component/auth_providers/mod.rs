@@ -21,13 +21,9 @@ use crate::{
 };
 
 #[server]
-async fn issue_referral_rewards(
-    referee_canister: Principal,
-    referrer_canister: Principal,
-    referrer_principal: Principal,
-) -> Result<(), ServerFnError> {
+async fn issue_referral_rewards(referee_canister: Principal) -> Result<(), ServerFnError> {
     use self::server_fn_impl::issue_referral_rewards_impl;
-    issue_referral_rewards_impl(referee_canister, referrer_canister, referrer_principal).await
+    issue_referral_rewards_impl(referee_canister).await
 }
 
 #[server]
@@ -49,22 +45,13 @@ async fn handle_user_login(canisters: Canisters<true>) -> Result<(), ServerFnErr
     let user_principal = canisters.identity().sender().unwrap();
     mark_user_registered(user_principal).await?;
 
-    let referrer = canisters
-        .authenticated_user()
-        .get_profile_details()
-        .await?
-        .referrer_details;
+    let (referrer_store, _, _) = use_referrer_store();
 
-    let Some(referrer_details) = referrer else {
+    let Some(_referrer_principal) = referrer_store.get_untracked() else {
         return Ok(());
     };
 
-    issue_referral_rewards(
-        canisters.user_canister(),
-        referrer_details.user_canister_id,
-        referrer_details.profile_owner,
-    )
-    .await?;
+    issue_referral_rewards(canisters.user_canister()).await?;
 
     Ok(())
 }
@@ -247,12 +234,16 @@ mod server_fn_impl {
 
         pub async fn issue_referral_rewards_impl(
             referee_canister: Principal,
-            referrer_canister: Principal,
-            referrer_principal: Principal,
         ) -> Result<(), ServerFnError> {
             let canisters = unauth_canisters();
             let user = canisters.individual_user(referee_canister);
-            let referrer = canisters.individual_user(referrer_canister);
+            let referrer_details = user
+                .get_profile_details()
+                .await?
+                .referrer_details
+                .ok_or(ServerFnError::new("Referrer details not found"))?;
+
+            let referrer = canisters.individual_user(referrer_details.user_canister_id);
 
             let user_details = user.get_profile_details().await?;
 
@@ -268,14 +259,14 @@ mod server_fn_impl {
             issue_referral_reward_for(
                 user_index_principal,
                 referee_canister,
-                referrer_principal,
+                referrer_details.profile_owner,
                 user_details.principal_id,
             )
             .await?;
             issue_referral_reward_for(
                 referrer_index_principal,
-                referrer_canister,
-                referrer_principal,
+                referrer_details.user_canister_id,
+                referrer_details.profile_owner,
                 user_details.principal_id,
             )
             .await?;
@@ -364,7 +355,7 @@ mod set_referrer_impl {
     use leptos::ServerFnError;
 
     #[cfg(feature = "backend-admin")]
-    pub async fn set_referrer(
+    pub async fn _set_referrer(
         canisters: &Canisters<true>,
         referrer: Principal,
         referrer_canister: Principal,
