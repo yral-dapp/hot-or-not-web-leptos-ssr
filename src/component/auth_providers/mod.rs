@@ -21,9 +21,13 @@ use crate::{
 };
 
 #[server]
-async fn issue_referral_rewards(referee_canister: Principal) -> Result<(), ServerFnError> {
+async fn issue_referral_rewards(
+    referee_canister: Principal,
+    referrer_canister: Principal,
+    referrer_principal: Principal,
+) -> Result<(), ServerFnError> {
     use self::server_fn_impl::issue_referral_rewards_impl;
-    issue_referral_rewards_impl(referee_canister).await
+    issue_referral_rewards_impl(referee_canister, referrer_canister, referrer_principal).await
 }
 
 #[server]
@@ -41,26 +45,26 @@ async fn mark_user_registered(user_principal: Principal) -> Result<(), ServerFnE
     Ok(())
 }
 
-async fn handle_user_login(
-    canisters: Canisters<true>,
-    referrer: Option<Principal>,
-) -> Result<(), ServerFnError> {
-    use self::set_referrer_impl::set_referrer;
-
+async fn handle_user_login(canisters: Canisters<true>) -> Result<(), ServerFnError> {
     let user_principal = canisters.identity().sender().unwrap();
     mark_user_registered(user_principal).await?;
-    let Some(referrer) = referrer else {
-        return Ok(());
-    };
-    let Some(referrer_canister) = canisters
-        .get_individual_canister_by_user_principal(referrer)
-        .await?
-    else {
-        return Ok(());
-    };
-    set_referrer(&canisters, referrer, referrer_canister).await?;
 
-    issue_referral_rewards(canisters.user_canister()).await?;
+    let referrer = canisters
+        .authenticated_user()
+        .get_profile_details()
+        .await?
+        .referrer_details;
+
+    let Some(referrer_details) = referrer else {
+        return Ok(());
+    };
+
+    issue_referral_rewards(
+        canisters.user_canister(),
+        referrer_details.user_canister_id,
+        referrer_details.profile_owner,
+    )
+    .await?;
 
     Ok(())
 }
@@ -153,9 +157,11 @@ pub fn LoginProviders(show_modal: RwSignal<bool>, lock_closing: RwSignal<bool>) 
             let referrer = referrer_store.get_untracked();
 
             // This is some redundant work, but saves us 100+ lines of resource handling
-            let canisters = do_canister_auth(Some(identity.clone())).await?.unwrap();
+            let canisters = do_canister_auth(Some(identity.clone()), referrer)
+                .await?
+                .unwrap();
 
-            if let Err(e) = handle_user_login(canisters.clone(), referrer).await {
+            if let Err(e) = handle_user_login(canisters.clone()).await {
                 log::warn!("failed to handle user login, err {e}. skipping");
             }
 
@@ -241,15 +247,14 @@ mod server_fn_impl {
 
         pub async fn issue_referral_rewards_impl(
             referee_canister: Principal,
+            referrer_canister: Principal,
+            referrer_principal: Principal,
         ) -> Result<(), ServerFnError> {
             let canisters = unauth_canisters();
             let user = canisters.individual_user(referee_canister);
+            let referrer = canisters.individual_user(referrer_canister);
 
             let user_details = user.get_profile_details().await?;
-            let ref_details = user_details
-                .referrer_details
-                .ok_or_else(|| ServerFnError::new("Referral details for user not found"))?;
-            let referrer = canisters.individual_user(ref_details.user_canister_id);
 
             let referrer_index_principal = referrer
                 .get_well_known_principal_value(KnownPrincipalType::CanisterIdUserIndex)
@@ -263,14 +268,14 @@ mod server_fn_impl {
             issue_referral_reward_for(
                 user_index_principal,
                 referee_canister,
-                ref_details.profile_owner,
+                referrer_principal,
                 user_details.principal_id,
             )
             .await?;
             issue_referral_reward_for(
                 referrer_index_principal,
-                ref_details.user_canister_id,
-                ref_details.profile_owner,
+                referrer_canister,
+                referrer_principal,
                 user_details.principal_id,
             )
             .await?;
@@ -339,6 +344,8 @@ mod server_fn_impl {
 
         pub async fn issue_referral_rewards_impl(
             _referee_canister: Principal,
+            _referrer_canister: Principal,
+            _referrer_principal: Principal,
         ) -> Result<(), ServerFnError> {
             Ok(())
         }
