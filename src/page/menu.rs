@@ -18,9 +18,10 @@ fn MenuItem(
     #[prop(into)] text: String,
     #[prop(into)] href: String,
     #[prop(into)] icon: icondata::Icon,
+    #[prop(into, optional)] target: String,
 ) -> impl IntoView {
     view! {
-        <a href=href class="grid grid-cols-2 items-center w-full">
+        <a href=href class="grid grid-cols-2 items-center w-full" target=target>
             <div class="flex flex-row gap-4 items-center">
                 <Icon class="text-2xl" icon=icon/>
                 <span>{text}</span>
@@ -179,7 +180,7 @@ pub fn Menu() -> impl IntoView {
             <div class="flex flex-col py-12 px-8 gap-8 w-full text-lg">
                 <NsfwToggle/>
                 <MenuItem href="/refer-earn" text="Refer & Earn" icon=icondata::AiGiftFilled/>
-                <MenuItem href=social::TELEGRAM text="Talk to the team" icon=icondata::BiWhatsapp/>
+                <MenuItem href=social::TELEGRAM text="Talk to the team" icon=icondata::BiWhatsapp target="_blank"/>
                 <MenuItem href="/terms-of-service" text="Terms of Service" icon=icondata::TbBook2/>
                 <MenuItem href="/privacy-policy" text="Privacy Policy" icon=icondata::TbLock/>
                 <Show when=is_connected>
