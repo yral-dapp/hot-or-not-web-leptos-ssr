@@ -6,7 +6,7 @@ use crate::{
     component::modal::Modal,
     state::canisters::{authenticated_canisters, AuthProfileCanisterResource, Canisters},
     try_or_redirect_opt,
-    utils::{event_streaming::send_event, route::go_to_root},
+    utils::route::go_to_root,
 };
 use candid::Principal;
 use futures::StreamExt;
@@ -82,6 +82,7 @@ pub fn PreVideoUpload(file_blob: WriteSignal<Option<FileWithUrl>>) -> impl IntoV
 
                 #[cfg(feature = "ga4")]
                 {
+                    use crate::utils::event_streaming::send_event;
                     // video_upload_video_selected - analytics
                     send_event(
                         "video_upload_video_selected",
@@ -238,6 +239,8 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
             .await;
             #[cfg(all(feature = "hydrate", feature = "ga4"))]
             {
+                use crate::utils::event_streaming::send_event;
+
                 if res.is_err() {
                     let e = res.as_ref().err().unwrap().to_string();
 
@@ -261,6 +264,8 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
             let res = upload_video_stream(&upload_info, &file_blob).await;
             #[cfg(all(feature = "hydrate", feature = "ga4"))]
             {
+                use crate::utils::event_streaming::send_event;
+
                 if res.is_err() {
                     let e = res.as_ref().err().unwrap().to_string();
 
@@ -289,6 +294,8 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
                 let res = get_video_status(uid).await;
                 #[cfg(all(feature = "hydrate", feature = "ga4"))]
                 {
+                    use crate::utils::event_streaming::send_event;
+
                     if res.is_err() {
                         let e = res.as_ref().err().unwrap().to_string();
 
@@ -340,6 +347,8 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
 
             #[cfg(all(feature = "hydrate", feature = "ga4"))]
             {
+                use crate::utils::event_streaming::send_event;
+
                 if res.is_err() {
                     let e = res.as_ref().err().unwrap().to_string();
 
@@ -364,6 +373,7 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
 
             #[cfg(all(feature = "hydrate", feature = "ga4"))]
             {
+                use crate::utils::event_streaming::send_event;
                 // video_upload_successful - analytics
 
                 send_event(

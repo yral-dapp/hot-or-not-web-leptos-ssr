@@ -6,7 +6,6 @@ use crate::{
     },
     try_or_redirect_opt,
     utils::{
-        event_streaming::send_event,
         profile::ProfileDetails,
         route::failure_redirect,
         web::{copy_to_clipboard, share_url},
@@ -83,6 +82,8 @@ fn LikeButton(
 
                     #[cfg(all(feature = "hydrate", feature = "ga4"))]
                     {
+                        use crate::utils::event_streaming::send_event;
+
                         let profile_details = ProfileDetails::from(user_details);
 
                         let user_id = profile_details.principal;
@@ -242,6 +243,8 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
 
             #[cfg(all(feature = "hydrate", feature = "ga4"))]
             {
+                use crate::utils::event_streaming::send_event;
+
                 let publisher_user_id = post_details.poster_principal;
                 let video_id = post_details.uid.clone();
                 let hastag_count = post_details.hastags.len();

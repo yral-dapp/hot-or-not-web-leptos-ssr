@@ -86,15 +86,18 @@ yral-metadata-client = { git = "https://github.com/go-bazzinga/yral-metadata", r
 yral-metadata-types = { git = "https://github.com/go-bazzinga/yral-metadata", rev = "c2c5d254ac273681a66966d62b6f01785679a1be", default-features = false }
 
 gloo-utils = { version = "0.2.0", features = ["serde"] }
-google-bigquery2 = { version = "5.0.3", optional = true }
-yup-oauth2 = { version = "8.3.3", features = ["hyper-rustls"], optional = true }
-wasm-bindgen-futures = "0.4.42"
+tonic = { version = "0.11.0", features = [
+    "tls",
+    "tls-webpki-roots",
+], optional = true }
+prost = { version = "0.12.4", optional = true }
 
 [build-dependencies]
 serde = { version = "1.0", features = ["derive"] }
 candid_parser = "0.1.1"
 serde_json = "1.0.110"
 convert_case = "0.6.0"
+tonic-build = "0.11.0"
 
 [features]
 hydrate = [
@@ -127,8 +130,8 @@ ssr = [
     "dep:dotenv",
     "bb8",
     "bb8-redis",
-    "google-bigquery2",
-    "yup-oauth2",
+    "tonic",
+    "prost",
 ]
 # Fetch mock referral history instead of history via canister
 mock-referral-history = ["dep:rand_chacha", "k256/arithmetic"]
@@ -161,8 +164,6 @@ release-lib = [
 ]
 
 mock-wallet-history = ["dep:rand_chacha"]
-google-bigquery2 = ["dep:google-bigquery2"]
-yup-oauth2 = ["dep:yup-oauth2"]
 [patch.crates-io]
 # release with hyper v1 is not out yet
 
@@ -252,12 +253,3 @@ lib-default-features = false
 # Optional. Defaults to "release".
 lib-profile-release = "wasm-release"
 
-# Pass additional parameters to the cargo process compiling to WASM
-#
-# Optional. No default
-lib-cargo-args = ""
-
-# Pass additional parameters to the cargo process to build the server
-#
-# Optional. No default
-bin-cargo-args = ""
