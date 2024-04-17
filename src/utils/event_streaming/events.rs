@@ -1,4 +1,5 @@
 use candid::Principal;
+use ic_agent::Identity;
 use leptos::html::Input;
 use leptos::{create_effect, ReadSignal, RwSignal, SignalGetUntracked};
 use leptos::{create_signal, ev, expect_context, html::Video, Memo, NodeRef, SignalGet, SignalSet};
@@ -8,13 +9,16 @@ use wasm_bindgen::JsCast;
 
 use crate::canister::individual_user_template::UserProfileDetailsForFrontend;
 use crate::component::auth_providers::ProviderKind;
+use crate::state::canisters::Canisters;
 use crate::state::history::HistoryCtx;
-use crate::utils::event_streaming::{send_event, send_event_warehouse};
+use crate::utils::event_streaming::{send_event, send_event_warehouse, send_user_id};
 use crate::utils::profile::ProfileDetails;
 use crate::{
     page::post_view::video_iter::PostDetails,
     state::{auth::account_connected_reader, canisters::AuthProfileCanisterResource},
 };
+
+use super::EventHistory;
 
 pub enum AnalyticsEvent {
     VideoWatched(VideoWatched),
@@ -586,7 +590,7 @@ impl LoginJoinOverlayViewed {
                     "previous_event": event_history.event_name.get(),
                 }),
             );
-        })
+        });
     }
 }
 
@@ -594,7 +598,7 @@ impl LoginJoinOverlayViewed {
 pub struct LoginCta;
 
 impl LoginCta {
-    pub fn send_event(&self) {
+    pub fn send_event(&self, cta_location: String) {
         // login_cta - analytics
 
         let event_history: EventHistory = expect_context();

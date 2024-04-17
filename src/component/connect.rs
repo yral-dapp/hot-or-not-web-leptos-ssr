@@ -26,7 +26,7 @@ pub fn ConnectLogin(
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
         {
             use crate::utils::event_streaming::events::LoginCta;
-            LoginCta.send_event();
+            LoginCta.send_event(cta_location.to_string());
         }
     });
 
