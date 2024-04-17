@@ -1,6 +1,6 @@
 mod error;
 mod overlay;
-mod video_iter;
+pub mod video_iter;
 mod video_loader;
 
 use candid::Principal;

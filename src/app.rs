@@ -91,18 +91,18 @@ pub fn App() -> impl IntoView {
         <Link rel="manifest" href="/app.webmanifest"/>
 
         // GA4 Global Site Tag (gtag.js) - Google Analytics
-        // G-6W5Q2MRX0E to test locally
+        // G-6W5Q2MRX0E to test locally | TODO: G-PLNNETMSLM
         <Show when=enable_ga4_script>
             <Script
                 async_="true"
-                src=concat!("https://www.googletagmanager.com/gtag/js?id=", "G-PLNNETMSLM")
+                src=concat!("https://www.googletagmanager.com/gtag/js?id=", "G-6W5Q2MRX0E")
             />
             <Script>
                 {r#"
                 window.dataLayer = window.dataLayer || [];
                 function gtag(){dataLayer.push(arguments);}
                 gtag('js', new Date());
-                gtag('config', 'G-PLNNETMSLM');
+                gtag('config', 'G-6W5Q2MRX0E');
                 "#}
             </Script>
         </Show>
