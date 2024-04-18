@@ -11,7 +11,8 @@ async fn generate_claim_for_migration() -> Result<Option<SignedRefreshTokenClaim
     use axum_extra::extract::cookie::{Key, SignedCookieJar};
     use candid::Principal;
     use hmac::{Hmac, Mac};
-    use leptos_axum::{extract_with_state, ResponseOptions};
+    use http::{header, HeaderMap};
+    use leptos_axum::{extract, extract_with_state, ResponseOptions};
     use serde::Deserialize;
     use web_time::Duration;
     use yral_auth_client::types::RefreshTokenClaim;
@@ -27,7 +28,8 @@ async fn generate_claim_for_migration() -> Result<Option<SignedRefreshTokenClaim
     let Some(cookie) = jar.get("user-identity") else {
         return Ok(None);
     };
-    let Some(host) = cookie.domain() else {
+    let headers: HeaderMap = extract().await?;
+    let Some(host) = headers.get(header::HOST).map(|h| h.to_str()).transpose()? else {
         return Ok(None);
     };
 
