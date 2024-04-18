@@ -37,9 +37,9 @@ jobs:
             run: npm install -g @lhci/cli@0.13.x
 
           - name: Run Lighthouse
-            run: lhci autorun --upload.githubToken="$LHCI_GITHUB_TOKEN" || echo "LHCI failed!"
+            run: lhci autorun --upload.githubToken="$LHCI_GITHUB_APP_TOKEN" || echo "LHCI failed!"
             env: 
-                LHCI_GITHUB_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+                LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
 
           # - uses: actions/github-script@v6
           #   with:
