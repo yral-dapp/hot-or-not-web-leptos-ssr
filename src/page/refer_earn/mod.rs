@@ -6,10 +6,9 @@ use leptos::*;
 use leptos_icons::*;
 use leptos_router::create_query_signal;
 use leptos_use::use_window;
-use serde_json::json;
 
 use crate::component::connect::ConnectLogin;
-use crate::state::history::HistoryCtx;
+use crate::utils::event_streaming::events::{Refer, ReferShareLink};
 use crate::{
     component::{back_btn::BackButton, title::Title},
     state::{
@@ -48,44 +47,14 @@ fn ReferLoaded(user_principal: Principal) -> impl IntoView {
         .unwrap_or_default();
 
     let profile_and_canister_details: AuthProfileCanisterResource = expect_context();
+    let (logged_in, _) = account_connected_reader();
 
     let click_copy = create_action(move |()| {
         let refer_link = refer_link.clone();
         async move {
             let _ = copy_to_clipboard(&refer_link);
 
-            #[cfg(all(feature = "hydrate", feature = "ga4"))]
-            {
-                use crate::utils::event_streaming::send_event;
-
-                let (logged_in, _) = account_connected_reader();
-
-                let user_id = move || {
-                    profile_and_canister_details()
-                        .flatten()
-                        .map(|(q, _)| q.principal)
-                };
-                let display_name = move || {
-                    profile_and_canister_details()
-                        .flatten()
-                        .map(|(q, _)| q.display_name)
-                };
-                let canister_id = move || profile_and_canister_details().flatten().map(|(_, q)| q);
-                let history_ctx: HistoryCtx = expect_context();
-                let prev_site = history_ctx.prev_url();
-
-                // refer_share_link - analytics
-                send_event(
-                    "refer_share_link",
-                    &json!({
-                        "user_id":user_id(),
-                        "is_loggedIn": logged_in.get_untracked(),
-                        "display_name": display_name(),
-                        "canister_id": canister_id(),
-                        "refer_location": prev_site,
-                    }),
-                );
-            }
+            ReferShareLink.send_event(profile_and_canister_details, logged_in);
         }
     });
 
@@ -134,39 +103,7 @@ fn ReferCode() -> impl IntoView {
 fn ReferView() -> impl IntoView {
     let (logged_in, _) = account_connected_reader();
 
-    #[cfg(all(feature = "hydrate", feature = "ga4"))]
-    {
-        use crate::utils::event_streaming::send_event;
-
-        let profile_and_canister_details: AuthProfileCanisterResource = expect_context();
-        let user_id = move || {
-            profile_and_canister_details()
-                .flatten()
-                .map(|(q, _)| q.principal)
-        };
-        let display_name = move || {
-            profile_and_canister_details()
-                .flatten()
-                .map(|(q, _)| q.display_name)
-        };
-        let canister_id = move || profile_and_canister_details().flatten().map(|(_, q)| q);
-        let history_ctx: HistoryCtx = expect_context();
-        let prev_site = history_ctx.prev_url();
-
-        // refer - analytics
-        create_effect(move |_| {
-            send_event(
-                "refer",
-                &json!({
-                    "user_id":user_id(),
-                    "is_loggedIn": logged_in.get_untracked(),
-                    "display_name": display_name(),
-                    "canister_id": canister_id(),
-                    "refer_location": prev_site,
-                }),
-            );
-        });
-    }
+    Refer.send_event(logged_in);
 
     view! {
         <div class="flex flex-col w-full h-full items-center text-white gap-10">

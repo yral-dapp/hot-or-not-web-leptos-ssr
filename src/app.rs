@@ -91,7 +91,7 @@ pub fn App() -> impl IntoView {
         <Link rel="manifest" href="/app.webmanifest"/>
 
         // GA4 Global Site Tag (gtag.js) - Google Analytics
-        // G-6W5Q2MRX0E to test locally
+        // G-6W5Q2MRX0E to test locally | G-PLNNETMSLM
         <Show when=enable_ga4_script>
             <Script
                 async_="true"

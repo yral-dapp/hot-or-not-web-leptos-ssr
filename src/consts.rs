@@ -16,7 +16,7 @@ pub static METADATA_API_BASE: Lazy<Url> =
     Lazy::new(|| Url::parse("https://yral-metadata.fly.dev").unwrap());
 pub static OFF_CHAIN_AGENT_GRPC_URL: Lazy<Url> =
     Lazy::new(|| Url::parse("https://icp-off-chain-agent.fly.dev:443").unwrap());
-// G-6W5Q2MRX0E to test locally
+// G-6W5Q2MRX0E to test locally | G-PLNNETMSLM
 pub static GTAG_MEASUREMENT_ID: Lazy<&str> = Lazy::new(|| "G-PLNNETMSLM");
 
 pub mod social {

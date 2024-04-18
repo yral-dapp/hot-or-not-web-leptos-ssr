@@ -7,7 +7,6 @@ use candid::Principal;
 use ic_agent::Identity;
 use leptos::*;
 use leptos_use::{storage::use_local_storage, utils::FromToStringCodec};
-use serde_json::json;
 
 use crate::{
     auth::DelegatedIdentityWire,
@@ -17,7 +16,10 @@ use crate::{
         canisters::{do_canister_auth, Canisters},
         local_storage::use_referrer_store,
     },
-    utils::MockPartialEq,
+    utils::{
+        event_streaming::events::{LoginMethodSelected, LoginSuccessful},
+        MockPartialEq,
+    },
 };
 
 #[server]
@@ -96,24 +98,7 @@ fn LoginProvButton<Cb: Fn(ev::MouseEvent) + 'static>(
     let ctx: LoginProvCtx = expect_context();
 
     let click_action = create_action(move |()| async move {
-        #[cfg(all(feature = "hydrate", feature = "ga4"))]
-        {
-            use crate::utils::event_streaming::send_event;
-
-            // login_method_selected - analytics
-            send_event(
-                "login_method_selected",
-                &json!({
-                    "login_method": match prov {
-                        #[cfg(feature = "local-auth")]
-                        ProviderKind::LocalStorage => "local_storage",
-                        #[cfg(any(feature = "oauth-ssr", feature = "oauth-hydrate"))]
-                        ProviderKind::Google => "google",
-                    },
-                    "attempt_count": 1,
-                }),
-            );
-        }
+        LoginMethodSelected.send_event(prov);
     });
 
     view! {
@@ -159,26 +144,7 @@ pub fn LoginProviders(show_modal: RwSignal<bool>, lock_closing: RwSignal<bool>) 
                 log::warn!("failed to handle user login, err {e}. skipping");
             }
 
-            #[cfg(all(feature = "hydrate", feature = "ga4"))]
-            {
-                use crate::utils::event_streaming::{send_event, send_user_id};
-
-                let user_id = canisters.identity().sender().unwrap();
-                let canister_id = canisters.user_canister();
-
-                send_user_id(user_id.to_string());
-
-                // login_successful - analytics
-                send_event(
-                    "login_successful",
-                    &json!({
-                        "login_method": "google", // TODO: change this when more providers are added
-                        "user_id": user_id.to_string(),
-                        "canister_id": canister_id.to_string(),
-                        "is_new_user": false,                   // TODO: add this info
-                    }),
-                );
-            }
+            LoginSuccessful.send_event(canisters);
 
             Ok::<_, ServerFnError>(())
         },

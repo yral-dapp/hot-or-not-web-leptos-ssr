@@ -1,9 +1,8 @@
 use leptos::*;
-use serde_json::json;
 
 use crate::{
-    state::{auth::auth_state, canisters::AuthProfileCanisterResource},
-    utils::event_streaming::EventHistory,
+    state::auth::auth_state,
+    utils::event_streaming::events::{LoginCta, LoginJoinOverlayViewed},
 };
 
 use super::login_modal::LoginModal;
@@ -16,44 +15,10 @@ pub fn ConnectLogin(
     let auth = auth_state();
     let show_login = create_rw_signal(false);
 
-    #[cfg(all(feature = "hydrate", feature = "ga4"))]
-    {
-        use crate::utils::event_streaming::send_event;
-
-        let event_history: EventHistory = expect_context();
-        let profile_and_canister_details: AuthProfileCanisterResource = expect_context();
-        let user_id = move || {
-            profile_and_canister_details()
-                .flatten()
-                .map(|(q, _)| q.principal)
-        };
-
-        create_effect(move |_| {
-            send_event(
-                "login_join_overlay_viewed",
-                &json!({
-                    "user_id_viewer": user_id(),
-                    "previous_event": event_history.event_name.get(),
-                }),
-            );
-        });
-    }
+    LoginJoinOverlayViewed.send_event();
 
     let login_click_action = create_action(move |()| async move {
-        #[cfg(all(feature = "hydrate", feature = "ga4"))]
-        {
-            use crate::utils::event_streaming::send_event;
-
-            let event_history: EventHistory = expect_context();
-
-            send_event(
-                "login_cta",
-                &json!({
-                    "previous_event": event_history.event_name.get(),
-                    "cta_location": cta_location,
-                }),
-            );
-        }
+        LoginCta.send_event(cta_location.to_string());
     });
 
     view! {
