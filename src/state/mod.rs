@@ -10,6 +10,7 @@ pub mod server {
 
     use super::canisters::Canisters;
     use axum::extract::FromRef;
+    use axum_extra::extract::cookie::Key;
     use leptos::LeptosOptions;
     use leptos_router::RouteListing;
 
@@ -22,5 +23,6 @@ pub mod server {
         #[cfg(feature = "cloudflare")]
         pub cloudflare: gob_cloudflare::CloudflareAuth,
         pub routes: Vec<RouteListing>,
+        pub cookie_key: Key,
     }
 }

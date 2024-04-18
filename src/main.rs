@@ -5,6 +5,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use axum::{routing::get, Router};
+use axum_extra::extract::cookie::Key;
 use hot_or_not_web_leptos_ssr::fallback::file_and_error_handler;
 use hot_or_not_web_leptos_ssr::state::canisters::Canisters;
 use hot_or_not_web_leptos_ssr::{app::App, state::server::AppState};
@@ -26,6 +27,7 @@ pub async fn server_fn_handler(
             provide_context(app_state.admin_canisters.clone());
             #[cfg(feature = "cloudflare")]
             provide_context(app_state.cloudflare.clone());
+            provide_context(app_state.cookie_key.clone());
         },
         request,
     )
@@ -45,6 +47,7 @@ pub async fn leptos_routes_handler(
             provide_context(app_state.admin_canisters.clone());
             #[cfg(feature = "cloudflare")]
             provide_context(app_state.cloudflare.clone());
+            provide_context(app_state.cookie_key.clone());
         },
         App,
     );
@@ -76,6 +79,15 @@ fn init_admin_canisters() -> hot_or_not_web_leptos_ssr::state::admin_canisters::
     AdminCanisters::new(admin_id)
 }
 
+fn init_cookie_key() -> Key {
+    use std::env;
+
+    let cookie_key_str = env::var("COOKIE_KEY").expect("`COOKIE_KEY` is required!");
+    let cookie_key_raw =
+        hex::decode(cookie_key_str).expect("Invalid `COOKIE_KEY` (must be length 128 hex)");
+    Key::from(&cookie_key_raw)
+}
+
 #[tokio::main]
 async fn main() {
     simple_logger::init_with_level(log::Level::Debug).expect("couldn't initialize logging");
@@ -99,6 +111,7 @@ async fn main() {
         admin_canisters: init_admin_canisters(),
         #[cfg(feature = "cloudflare")]
         cloudflare: init_cf(),
+        cookie_key: init_cookie_key(),
     };
 
     // build our application with a route

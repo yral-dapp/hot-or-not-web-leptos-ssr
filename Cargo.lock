@@ -254,6 +254,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "axum-extra"
+version = "0.9.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0be6ea09c9b96cb5076af0de2e383bd2bc0c18f827cf1967bdd353e0b910d733"
+dependencies = [
+ "axum 0.7.5",
+ "axum-core 0.4.3",
+ "bytes",
+ "cookie",
+ "futures-util",
+ "http 1.1.0",
+ "http-body 1.0.0",
+ "http-body-util",
+ "mime",
+ "pin-project-lite",
+ "serde",
+ "tower",
+ "tower-layer",
+ "tower-service",
+ "tracing",
+]
+
+[[package]]
 name = "axum-macros"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -681,7 +704,12 @@ version = "0.18.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4ddef33a339a91ea89fb53151bd0a4689cfce27055c291dfa69945475d22c747"
 dependencies = [
+ "base64 0.22.0",
+ "hmac",
  "percent-encoding",
+ "rand",
+ "sha2 0.10.8",
+ "subtle",
  "time",
  "version_check",
 ]
@@ -1553,6 +1581,7 @@ name = "hot-or-not-web-leptos-ssr"
 version = "0.1.0"
 dependencies = [
  "axum 0.7.5",
+ "axum-extra",
  "candid",
  "candid_parser",
  "circular-buffer",
@@ -1566,6 +1595,7 @@ dependencies = [
  "gloo-utils",
  "gob-cloudflare",
  "hex",
+ "hmac",
  "http 1.1.0",
  "ic-agent",
  "icondata",
@@ -1586,6 +1616,7 @@ dependencies = [
  "serde-wasm-bindgen",
  "serde_bytes",
  "serde_json",
+ "sha2 0.10.8",
  "simple_logger",
  "thiserror",
  "tokio",
@@ -1594,6 +1625,7 @@ dependencies = [
  "tower",
  "tower-http",
  "tracing",
+ "url",
  "uts2ts",
  "wasm-bindgen",
  "web-sys",
