@@ -3,6 +3,7 @@ use std::cmp::Ordering;
 use leptos::{html::Video, *};
 use leptos_use::use_event_listener;
 
+use crate::utils::event_streaming::events::VideoWatched;
 use crate::{
     canister::{
         individual_user_template::PostViewDetailsFromFrontend,
@@ -197,11 +198,7 @@ pub fn VideoView(idx: usize, muted: RwSignal<bool>) -> impl IntoView {
         }
     });
 
-    #[cfg(all(feature = "hydrate", feature = "ga4"))]
-    {
-        use crate::utils::event_streaming::events::VideoWatched;
-        VideoWatched.send_event(vid_details, container_ref);
-    }
+    VideoWatched.send_event(vid_details, container_ref);
 
     view! {
         <label class="w-full h-full absolute top-0 left-0 grid grid-cols-1 justify-items-center items-center cursor-pointer z-[3]">

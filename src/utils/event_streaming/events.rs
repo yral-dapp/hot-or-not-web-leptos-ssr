@@ -48,48 +48,119 @@ impl VideoWatched {
         vid_details: Memo<Option<PostDetails>>,
         container_ref: NodeRef<Video>,
     ) {
-        let profile_and_canister_details: AuthProfileCanisterResource = expect_context();
-        let (is_connected, _) = account_connected_reader();
+        #[cfg(all(feature = "hydrate", feature = "ga4"))]
+        {
+            let profile_and_canister_details: AuthProfileCanisterResource = expect_context();
+            let (is_connected, _) = account_connected_reader();
 
-        let publisher_user_id = move || vid_details().as_ref().map(|q| q.poster_principal);
-        let user_id = move || {
-            profile_and_canister_details()
-                .flatten()
-                .map(|(q, _)| q.principal)
-        };
-        let display_name = move || {
-            profile_and_canister_details()
-                .flatten()
-                .map(|(q, _)| q.display_name)
-        };
-        let canister_id = move || profile_and_canister_details().flatten().map(|(_, q)| q);
-        let video_id = move || vid_details().as_ref().map(|q| q.uid.clone());
-        let hastag_count = move || vid_details().as_ref().map(|q| q.hastags.len());
-        let is_nsfw = move || vid_details().as_ref().map(|q| q.is_nsfw);
-        let is_hotornot = move || {
-            vid_details()
-                .as_ref()
-                .map(|q| q.hot_or_not_feed_ranking_score.is_some())
-        };
-        let view_count = move || vid_details().as_ref().map(|q| q.views);
-        let like_count = move || vid_details().as_ref().map(|q| q.likes);
+            let publisher_user_id = move || vid_details().as_ref().map(|q| q.poster_principal);
+            let user_id = move || {
+                profile_and_canister_details()
+                    .flatten()
+                    .map(|(q, _)| q.principal)
+            };
+            let display_name = move || {
+                profile_and_canister_details()
+                    .flatten()
+                    .map(|(q, _)| q.display_name)
+            };
+            let canister_id = move || profile_and_canister_details().flatten().map(|(_, q)| q);
+            let video_id = move || vid_details().as_ref().map(|q| q.uid.clone());
+            let hastag_count = move || vid_details().as_ref().map(|q| q.hastags.len());
+            let is_nsfw = move || vid_details().as_ref().map(|q| q.is_nsfw);
+            let is_hotornot = move || {
+                vid_details()
+                    .as_ref()
+                    .map(|q| q.hot_or_not_feed_ranking_score.is_some())
+            };
+            let view_count = move || vid_details().as_ref().map(|q| q.views);
+            let like_count = move || vid_details().as_ref().map(|q| q.likes);
 
-        // video_viewed - analytics
-        let (video_watched, set_video_watched) = create_signal(false);
-        let (full_video_watched, set_full_video_watched) = create_signal(false);
+            // video_viewed - analytics
+            let (video_watched, set_video_watched) = create_signal(false);
+            let (full_video_watched, set_full_video_watched) = create_signal(false);
 
-        let _ = use_event_listener(container_ref, ev::timeupdate, move |evt| {
-            let target = evt.target().unwrap();
-            let video = target.unchecked_into::<web_sys::HtmlVideoElement>();
-            let duration = video.duration();
-            let current_time = video.current_time();
+            let _ = use_event_listener(container_ref, ev::timeupdate, move |evt| {
+                let target = evt.target().unwrap();
+                let video = target.unchecked_into::<web_sys::HtmlVideoElement>();
+                let duration = video.duration();
+                let current_time = video.current_time();
 
-            if current_time < 0.95 * duration {
-                set_full_video_watched.set(false);
-            }
+                if current_time < 0.95 * duration {
+                    set_full_video_watched.set(false);
+                }
 
-            // send bigquery event when video is watched > 95%
-            if current_time >= 0.95 * duration && !full_video_watched.get() {
+                // send bigquery event when video is watched > 95%
+                if current_time >= 0.95 * duration && !full_video_watched.get() {
+                    send_event_warehouse(
+                        "video_duration_watched",
+                        &json!({
+                            "publisher_user_id":publisher_user_id(),
+                            "user_id":user_id(),
+                            "is_loggedIn": is_connected(),
+                            "display_name": display_name(),
+                            "canister_id": canister_id(),
+                            "video_id": video_id(),
+                            "video_category": "NA",
+                            "creator_category": "NA",
+                            "hashtag_count": hastag_count(),
+                            "is_NSFW": is_nsfw(),
+                            "is_hotorNot": is_hotornot(),
+                            "feed_type": "NA",
+                            "view_count": view_count(),
+                            "like_count": like_count(),
+                            "share_count": 0,
+                            "percentage_watched": 100.0,
+                            "absolute_watched": duration,
+                            "video_duration": duration,
+                        }),
+                    );
+
+                    set_full_video_watched.set(true);
+                }
+
+                if video_watched.get() {
+                    return;
+                }
+
+                if current_time >= 3.0 {
+                    send_event(
+                        "video_viewed",
+                        &json!({
+                            "publisher_user_id":publisher_user_id(),
+                            "user_id":user_id(),
+                            "is_loggedIn": is_connected(),
+                            "display_name": display_name(),
+                            "canister_id": canister_id(),
+                            "video_id": video_id(),
+                            "video_category": "NA",
+                            "creator_category": "NA",
+                            "hashtag_count": hastag_count(),
+                            "is_NSFW": is_nsfw(),
+                            "is_hotorNot": is_hotornot(),
+                            "feed_type": "NA",
+                            "view_count": view_count(),
+                            "like_count": like_count(),
+                            "share_count": 0,
+                        }),
+                    );
+                    set_video_watched.set(true);
+                }
+            });
+
+            // video duration watched - warehousing
+
+            let _ = use_event_listener(container_ref, ev::pause, move |evt| {
+                let target = evt.target().unwrap();
+                let video = target.unchecked_into::<web_sys::HtmlVideoElement>();
+                let duration = video.duration();
+                let current_time = video.current_time();
+                if current_time < 1.0 {
+                    return;
+                }
+
+                let percentage_watched = (current_time / duration) * 100.0;
+
                 send_event_warehouse(
                     "video_duration_watched",
                     &json!({
@@ -108,81 +179,13 @@ impl VideoWatched {
                         "view_count": view_count(),
                         "like_count": like_count(),
                         "share_count": 0,
-                        "percentage_watched": 100.0,
-                        "absolute_watched": duration,
+                        "percentage_watched": percentage_watched,
+                        "absolute_watched": current_time,
                         "video_duration": duration,
                     }),
                 );
-
-                set_full_video_watched.set(true);
-            }
-
-            if video_watched.get() {
-                return;
-            }
-
-            if current_time >= 3.0 {
-                send_event(
-                    "video_viewed",
-                    &json!({
-                        "publisher_user_id":publisher_user_id(),
-                        "user_id":user_id(),
-                        "is_loggedIn": is_connected(),
-                        "display_name": display_name(),
-                        "canister_id": canister_id(),
-                        "video_id": video_id(),
-                        "video_category": "NA",
-                        "creator_category": "NA",
-                        "hashtag_count": hastag_count(),
-                        "is_NSFW": is_nsfw(),
-                        "is_hotorNot": is_hotornot(),
-                        "feed_type": "NA",
-                        "view_count": view_count(),
-                        "like_count": like_count(),
-                        "share_count": 0,
-                    }),
-                );
-                set_video_watched.set(true);
-            }
-        });
-
-        // video duration watched - warehousing
-
-        let _ = use_event_listener(container_ref, ev::pause, move |evt| {
-            let target = evt.target().unwrap();
-            let video = target.unchecked_into::<web_sys::HtmlVideoElement>();
-            let duration = video.duration();
-            let current_time = video.current_time();
-            if current_time < 1.0 {
-                return;
-            }
-
-            let percentage_watched = (current_time / duration) * 100.0;
-
-            send_event_warehouse(
-                "video_duration_watched",
-                &json!({
-                    "publisher_user_id":publisher_user_id(),
-                    "user_id":user_id(),
-                    "is_loggedIn": is_connected(),
-                    "display_name": display_name(),
-                    "canister_id": canister_id(),
-                    "video_id": video_id(),
-                    "video_category": "NA",
-                    "creator_category": "NA",
-                    "hashtag_count": hastag_count(),
-                    "is_NSFW": is_nsfw(),
-                    "is_hotorNot": is_hotornot(),
-                    "feed_type": "NA",
-                    "view_count": view_count(),
-                    "like_count": like_count(),
-                    "share_count": 0,
-                    "percentage_watched": percentage_watched,
-                    "absolute_watched": current_time,
-                    "video_duration": duration,
-                }),
-            );
-        });
+            });
+        }
     }
 }
 
@@ -197,40 +200,43 @@ impl LikeVideo {
         canister_id: Principal,
         likes: RwSignal<u64>,
     ) {
-        let publisher_user_id = post_details.poster_principal;
-        let video_id = post_details.uid.clone();
-        let hastag_count = post_details.hastags.len();
-        let is_nsfw = post_details.is_nsfw;
-        let is_hotornot = post_details.hot_or_not_feed_ranking_score.is_some();
-        let view_count = post_details.views;
+        #[cfg(all(feature = "hydrate", feature = "ga4"))]
+        {
+            let publisher_user_id = post_details.poster_principal;
+            let video_id = post_details.uid.clone();
+            let hastag_count = post_details.hastags.len();
+            let is_nsfw = post_details.is_nsfw;
+            let is_hotornot = post_details.hot_or_not_feed_ranking_score.is_some();
+            let view_count = post_details.views;
 
-        let profile_details = ProfileDetails::from(user_details);
+            let profile_details = ProfileDetails::from(user_details);
 
-        let user_id = profile_details.principal;
-        let display_name = profile_details.display_name;
-        let (is_connected, _) = account_connected_reader();
-        // like_video - analytics
+            let user_id = profile_details.principal;
+            let display_name = profile_details.display_name;
+            let (is_connected, _) = account_connected_reader();
+            // like_video - analytics
 
-        send_event(
-            "like_video",
-            &json!({
-                "publisher_user_id":publisher_user_id,
-                "user_id":user_id,
-                "is_loggedIn": is_connected(),
-                "display_name": display_name,
-                "canister_id": canister_id,
-                "video_id": video_id,
-                "video_category": "NA",
-                "creator_category": "NA",
-                "hashtag_count": hastag_count,
-                "is_NSFW": is_nsfw,
-                "is_hotorNot": is_hotornot,
-                "feed_type": "NA",
-                "view_count": view_count,
-                "like_count": likes.get(),
-                "share_count": 0,
-            }),
-        );
+            send_event(
+                "like_video",
+                &json!({
+                    "publisher_user_id":publisher_user_id,
+                    "user_id":user_id,
+                    "is_loggedIn": is_connected(),
+                    "display_name": display_name,
+                    "canister_id": canister_id,
+                    "video_id": video_id,
+                    "video_category": "NA",
+                    "creator_category": "NA",
+                    "hashtag_count": hastag_count,
+                    "is_NSFW": is_nsfw,
+                    "is_hotorNot": is_hotornot,
+                    "feed_type": "NA",
+                    "view_count": view_count,
+                    "like_count": likes.get(),
+                    "share_count": 0,
+                }),
+            );
+        }
     }
 }
 
@@ -244,39 +250,42 @@ impl ShareVideo {
         user_details: UserProfileDetailsForFrontend,
         canister_id: Principal,
     ) {
-        let publisher_user_id = post_details.poster_principal;
-        let video_id = post_details.uid.clone();
-        let hastag_count = post_details.hastags.len();
-        let is_nsfw = post_details.is_nsfw;
-        let is_hotornot = post_details.hot_or_not_feed_ranking_score.is_some();
-        let view_count = post_details.views;
-        let like_count = post_details.likes;
+        #[cfg(all(feature = "hydrate", feature = "ga4"))]
+        {
+            let publisher_user_id = post_details.poster_principal;
+            let video_id = post_details.uid.clone();
+            let hastag_count = post_details.hastags.len();
+            let is_nsfw = post_details.is_nsfw;
+            let is_hotornot = post_details.hot_or_not_feed_ranking_score.is_some();
+            let view_count = post_details.views;
+            let like_count = post_details.likes;
 
-        let profile_details = ProfileDetails::from(user_details);
-        let user_id = profile_details.principal;
-        let display_name = profile_details.display_name;
-        let (is_connected, _) = account_connected_reader();
-        // share_video - analytics
-        send_event(
-            "share_video",
-            &json!({
-                "publisher_user_id":publisher_user_id,
-                "user_id":user_id,
-                "is_loggedIn": is_connected.get(),
-                "display_name": display_name,
-                "canister_id": canister_id,
-                "video_id": video_id,
-                "video_category": "NA",
-                "creator_category": "NA",
-                "hashtag_count": hastag_count,
-                "is_NSFW": is_nsfw,
-                "is_hotorNot": is_hotornot,
-                "feed_type": "NA",
-                "view_count": view_count,
-                "like_count": like_count,
-                "share_count": 0,
-            }),
-        );
+            let profile_details = ProfileDetails::from(user_details);
+            let user_id = profile_details.principal;
+            let display_name = profile_details.display_name;
+            let (is_connected, _) = account_connected_reader();
+            // share_video - analytics
+            send_event(
+                "share_video",
+                &json!({
+                    "publisher_user_id":publisher_user_id,
+                    "user_id":user_id,
+                    "is_loggedIn": is_connected.get(),
+                    "display_name": display_name,
+                    "canister_id": canister_id,
+                    "video_id": video_id,
+                    "video_category": "NA",
+                    "creator_category": "NA",
+                    "hashtag_count": hastag_count,
+                    "is_NSFW": is_nsfw,
+                    "is_hotorNot": is_hotornot,
+                    "feed_type": "NA",
+                    "view_count": view_count,
+                    "like_count": like_count,
+                    "share_count": 0,
+                }),
+            );
+        }
     }
 }
 
@@ -290,20 +299,23 @@ impl VideoUploadInitiated {
         display_name: Option<Option<String>>,
         canister_id: Option<Principal>,
     ) {
-        // video_upload_initiated - analytics
+        #[cfg(all(feature = "hydrate", feature = "ga4"))]
+        {
+            // video_upload_initiated - analytics
 
-        let display_name = display_name.unwrap_or_default().unwrap_or_default();
-        create_effect(move |_| {
-            send_event(
-                "video_upload_initiated",
-                &json!({
-                    "user_id":user_id,
-                    "display_name": display_name,
-                    "canister_id": canister_id,
-                    "creator_category": "NA",
-                }),
-            );
-        });
+            let display_name = display_name.unwrap_or_default().unwrap_or_default();
+            create_effect(move |_| {
+                send_event(
+                    "video_upload_initiated",
+                    &json!({
+                        "user_id":user_id,
+                        "display_name": display_name,
+                        "canister_id": canister_id,
+                        "creator_category": "NA",
+                    }),
+                );
+            });
+        }
     }
 }
 
@@ -320,34 +332,37 @@ impl VideoUploadUploadButtonClicked {
         display_name: Option<Option<String>>,
         canister_id: Option<Principal>,
     ) {
-        // video_upload_upload_button_clicked - analytics
+        #[cfg(all(feature = "hydrate", feature = "ga4"))]
+        {
+            // video_upload_upload_button_clicked - analytics
 
-        let display_name = display_name.unwrap_or_default().unwrap_or_default();
+            let display_name = display_name.unwrap_or_default().unwrap_or_default();
 
-        let hashtag_count = hashtag_inp.get_untracked().unwrap().value().len();
-        let is_nsfw_val = is_nsfw
-            .get_untracked()
-            .map(|v| v.checked())
-            .unwrap_or_default();
-        let is_hotornot_val = enable_hot_or_not
-            .get_untracked()
-            .map(|v| v.checked())
-            .unwrap_or_default();
+            let hashtag_count = hashtag_inp.get_untracked().unwrap().value().len();
+            let is_nsfw_val = is_nsfw
+                .get_untracked()
+                .map(|v| v.checked())
+                .unwrap_or_default();
+            let is_hotornot_val = enable_hot_or_not
+                .get_untracked()
+                .map(|v| v.checked())
+                .unwrap_or_default();
 
-        create_effect(move |_| {
-            send_event(
-                "video_upload_upload_button_clicked",
-                &json!({
-                    "user_id":user_id,
-                    "display_name": display_name,
-                    "canister_id": canister_id,
-                    "creator_category": "NA",
-                    "hashtag_count": hashtag_count,
-                    "is_NSFW": is_nsfw_val,
-                    "is_hotorNot": is_hotornot_val,
-                }),
-            );
-        });
+            create_effect(move |_| {
+                send_event(
+                    "video_upload_upload_button_clicked",
+                    &json!({
+                        "user_id":user_id,
+                        "display_name": display_name,
+                        "canister_id": canister_id,
+                        "creator_category": "NA",
+                        "hashtag_count": hashtag_count,
+                        "is_NSFW": is_nsfw_val,
+                        "is_hotorNot": is_hotornot_val,
+                    }),
+                );
+            });
+        }
     }
 }
 
@@ -361,19 +376,22 @@ impl VideoUploadVideoSelected {
         display_name: Option<Option<String>>,
         canister_id: Option<Principal>,
     ) {
-        // video_upload_video_selected - analytics
+        #[cfg(all(feature = "hydrate", feature = "ga4"))]
+        {
+            // video_upload_video_selected - analytics
 
-        let display_name = display_name.unwrap_or_default().unwrap_or_default();
+            let display_name = display_name.unwrap_or_default().unwrap_or_default();
 
-        send_event(
-            "video_upload_video_selected",
-            &json!({
-                "user_id":user_id,
-                "display_name": display_name,
-                "canister_id": canister_id,
-                "creator_category": "NA",
-            }),
-        )
+            send_event(
+                "video_upload_video_selected",
+                &json!({
+                    "user_id":user_id,
+                    "display_name": display_name,
+                    "canister_id": canister_id,
+                    "creator_category": "NA",
+                }),
+            )
+        }
     }
 }
 
@@ -392,23 +410,26 @@ impl VideoUploadUnsuccessful {
         display_name: Option<Option<String>>,
         canister_id: Option<Principal>,
     ) {
-        // video_upload_unsuccessful - analytics
+        #[cfg(all(feature = "hydrate", feature = "ga4"))]
+        {
+            // video_upload_unsuccessful - analytics
 
-        let display_name = display_name.unwrap_or_default().unwrap_or_default();
+            let display_name = display_name.unwrap_or_default().unwrap_or_default();
 
-        send_event(
-            "video_upload_unsuccessful",
-            &json!({
-                "user_id": user_id,
-                "display_name": display_name,
-                "canister_id": canister_id,
-                "creator_category": "NA",
-                "hashtag_count": hashtags_len,
-                "is_NSFW": is_nsfw,
-                "is_hotorNot": enable_hot_or_not,
-                "fail_reason": error,
-            }),
-        );
+            send_event(
+                "video_upload_unsuccessful",
+                &json!({
+                    "user_id": user_id,
+                    "display_name": display_name,
+                    "canister_id": canister_id,
+                    "creator_category": "NA",
+                    "hashtag_count": hashtags_len,
+                    "is_NSFW": is_nsfw,
+                    "is_hotorNot": enable_hot_or_not,
+                    "fail_reason": error,
+                }),
+            );
+        }
     }
 }
 
@@ -425,22 +446,25 @@ impl VideoUploadSuccessful {
         display_name: Option<Option<String>>,
         canister_id: Option<Principal>,
     ) {
-        // video_upload_successful - analytics
+        #[cfg(all(feature = "hydrate", feature = "ga4"))]
+        {
+            // video_upload_successful - analytics
 
-        send_event(
-            "video_upload_successful",
-            &json!({
-                "user_id":user_id,
-                "publisher_user_id": user_id,
-                "display_name": display_name,
-                "canister_id": canister_id,
-                "creator_category": "NA",
-                "hashtag_count": hashtags_len,
-                "is_NSFW": is_nsfw,
-                "is_hotorNot": enable_hot_or_not,
-                "is_filter_used": false,
-            }),
-        );
+            send_event(
+                "video_upload_successful",
+                &json!({
+                    "user_id":user_id,
+                    "publisher_user_id": user_id,
+                    "display_name": display_name,
+                    "canister_id": canister_id,
+                    "creator_category": "NA",
+                    "hashtag_count": hashtags_len,
+                    "is_NSFW": is_nsfw,
+                    "is_hotorNot": enable_hot_or_not,
+                    "is_filter_used": false,
+                }),
+            );
+        }
     }
 }
 
@@ -449,36 +473,39 @@ pub struct Refer;
 
 impl Refer {
     pub fn send_event(&self, logged_in: ReadSignal<bool>) {
-        // refer - analytics
+        #[cfg(all(feature = "hydrate", feature = "ga4"))]
+        {
+            // refer - analytics
 
-        let profile_and_canister_details: AuthProfileCanisterResource = expect_context();
-        let user_id = move || {
-            profile_and_canister_details()
-                .flatten()
-                .map(|(q, _)| q.principal)
-        };
-        let display_name = move || {
-            profile_and_canister_details()
-                .flatten()
-                .map(|(q, _)| q.display_name)
-        };
-        let canister_id = move || profile_and_canister_details().flatten().map(|(_, q)| q);
-        let history_ctx: HistoryCtx = expect_context();
-        let prev_site = history_ctx.prev_url();
+            let profile_and_canister_details: AuthProfileCanisterResource = expect_context();
+            let user_id = move || {
+                profile_and_canister_details()
+                    .flatten()
+                    .map(|(q, _)| q.principal)
+            };
+            let display_name = move || {
+                profile_and_canister_details()
+                    .flatten()
+                    .map(|(q, _)| q.display_name)
+            };
+            let canister_id = move || profile_and_canister_details().flatten().map(|(_, q)| q);
+            let history_ctx: HistoryCtx = expect_context();
+            let prev_site = history_ctx.prev_url();
 
-        // refer - analytics
-        create_effect(move |_| {
-            send_event(
-                "refer",
-                &json!({
-                    "user_id":user_id(),
-                    "is_loggedIn": logged_in.get(),
-                    "display_name": display_name(),
-                    "canister_id": canister_id(),
-                    "refer_location": prev_site,
-                }),
-            );
-        });
+            // refer - analytics
+            create_effect(move |_| {
+                send_event(
+                    "refer",
+                    &json!({
+                        "user_id":user_id(),
+                        "is_loggedIn": logged_in.get(),
+                        "display_name": display_name(),
+                        "canister_id": canister_id(),
+                        "refer_location": prev_site,
+                    }),
+                );
+            });
+        }
     }
 }
 
@@ -491,33 +518,36 @@ impl ReferShareLink {
         profile_and_canister_details: AuthProfileCanisterResource,
         logged_in: ReadSignal<bool>,
     ) {
-        // refer_share_link - analytics
+        #[cfg(all(feature = "hydrate", feature = "ga4"))]
+        {
+            // refer_share_link - analytics
 
-        let user_id = move || {
-            profile_and_canister_details()
-                .flatten()
-                .map(|(q, _)| q.principal)
-        };
-        let display_name = move || {
-            profile_and_canister_details()
-                .flatten()
-                .map(|(q, _)| q.display_name)
-        };
-        let canister_id = move || profile_and_canister_details().flatten().map(|(_, q)| q);
-        let history_ctx: HistoryCtx = expect_context();
-        let prev_site = history_ctx.prev_url();
+            let user_id = move || {
+                profile_and_canister_details()
+                    .flatten()
+                    .map(|(q, _)| q.principal)
+            };
+            let display_name = move || {
+                profile_and_canister_details()
+                    .flatten()
+                    .map(|(q, _)| q.display_name)
+            };
+            let canister_id = move || profile_and_canister_details().flatten().map(|(_, q)| q);
+            let history_ctx: HistoryCtx = expect_context();
+            let prev_site = history_ctx.prev_url();
 
-        // refer_share_link - analytics
-        send_event(
-            "refer_share_link",
-            &json!({
-                "user_id":user_id(),
-                "is_loggedIn": logged_in.get(),
-                "display_name": display_name(),
-                "canister_id": canister_id(),
-                "refer_location": prev_site,
-            }),
-        );
+            // refer_share_link - analytics
+            send_event(
+                "refer_share_link",
+                &json!({
+                    "user_id":user_id(),
+                    "is_loggedIn": logged_in.get(),
+                    "display_name": display_name(),
+                    "canister_id": canister_id(),
+                    "refer_location": prev_site,
+                }),
+            );
+        }
     }
 }
 
@@ -526,23 +556,26 @@ pub struct LoginSuccessful;
 
 impl LoginSuccessful {
     pub fn send_event(&self, canisters: Canisters<true>) {
-        // login_successful - analytics
+        #[cfg(all(feature = "hydrate", feature = "ga4"))]
+        {
+            // login_successful - analytics
 
-        let user_id = canisters.identity().sender().unwrap();
-        let canister_id = canisters.user_canister();
+            let user_id = canisters.identity().sender().unwrap();
+            let canister_id = canisters.user_canister();
 
-        send_user_id(user_id.to_string());
+            send_user_id(user_id.to_string());
 
-        // login_successful - analytics
-        send_event(
-            "login_successful",
-            &json!({
-                "login_method": "google", // TODO: change this when more providers are added
-                "user_id": user_id.to_string(),
-                "canister_id": canister_id.to_string(),
-                "is_new_user": false,                   // TODO: add this info
-            }),
-        );
+            // login_successful - analytics
+            send_event(
+                "login_successful",
+                &json!({
+                    "login_method": "google", // TODO: change this when more providers are added
+                    "user_id": user_id.to_string(),
+                    "canister_id": canister_id.to_string(),
+                    "is_new_user": false,                   // TODO: add this info
+                }),
+            );
+        }
     }
 }
 
@@ -551,19 +584,22 @@ pub struct LoginMethodSelected;
 
 impl LoginMethodSelected {
     pub fn send_event(&self, prov: ProviderKind) {
-        // login_method_selected - analytics
-        send_event(
-            "login_method_selected",
-            &json!({
-                "login_method": match prov {
-                    #[cfg(feature = "local-auth")]
-                    ProviderKind::LocalStorage => "local_storage",
-                    #[cfg(any(feature = "oauth-ssr", feature = "oauth-hydrate"))]
-                    ProviderKind::Google => "google",
-                },
-                "attempt_count": 1,
-            }),
-        );
+        #[cfg(all(feature = "hydrate", feature = "ga4"))]
+        {
+            // login_method_selected - analytics
+            send_event(
+                "login_method_selected",
+                &json!({
+                    "login_method": match prov {
+                        #[cfg(feature = "local-auth")]
+                        ProviderKind::LocalStorage => "local_storage",
+                        #[cfg(any(feature = "oauth-ssr", feature = "oauth-hydrate"))]
+                        ProviderKind::Google => "google",
+                    },
+                    "attempt_count": 1,
+                }),
+            );
+        }
     }
 }
 
@@ -572,25 +608,28 @@ pub struct LoginJoinOverlayViewed;
 
 impl LoginJoinOverlayViewed {
     pub fn send_event(&self) {
-        // login_join_overlay_viewed - analytics
+        #[cfg(all(feature = "hydrate", feature = "ga4"))]
+        {
+            // login_join_overlay_viewed - analytics
 
-        let event_history: EventHistory = expect_context();
-        let profile_and_canister_details: AuthProfileCanisterResource = expect_context();
-        let user_id = move || {
-            profile_and_canister_details()
-                .flatten()
-                .map(|(q, _)| q.principal)
-        };
+            let event_history: EventHistory = expect_context();
+            let profile_and_canister_details: AuthProfileCanisterResource = expect_context();
+            let user_id = move || {
+                profile_and_canister_details()
+                    .flatten()
+                    .map(|(q, _)| q.principal)
+            };
 
-        create_effect(move |_| {
-            send_event(
-                "login_join_overlay_viewed",
-                &json!({
-                    "user_id_viewer": user_id(),
-                    "previous_event": event_history.event_name.get(),
-                }),
-            );
-        });
+            create_effect(move |_| {
+                send_event(
+                    "login_join_overlay_viewed",
+                    &json!({
+                        "user_id_viewer": user_id(),
+                        "previous_event": event_history.event_name.get(),
+                    }),
+                );
+            });
+        }
     }
 }
 
@@ -599,17 +638,20 @@ pub struct LoginCta;
 
 impl LoginCta {
     pub fn send_event(&self, cta_location: String) {
-        // login_cta - analytics
+        #[cfg(all(feature = "hydrate", feature = "ga4"))]
+        {
+            // login_cta - analytics
 
-        let event_history: EventHistory = expect_context();
+            let event_history: EventHistory = expect_context();
 
-        send_event(
-            "login_cta",
-            &json!({
-                "previous_event": event_history.event_name.get(),
-                "cta_location": cta_location,
-            }),
-        );
+            send_event(
+                "login_cta",
+                &json!({
+                    "previous_event": event_history.event_name.get(),
+                    "cta_location": cta_location,
+                }),
+            );
+        }
     }
 }
 
@@ -618,28 +660,31 @@ pub struct LogoutClicked;
 
 impl LogoutClicked {
     pub fn send_event(&self, profile_and_canister_details: AuthProfileCanisterResource) {
-        // logout_clicked - analytics
+        #[cfg(all(feature = "hydrate", feature = "ga4"))]
+        {
+            // logout_clicked - analytics
 
-        let user_id = move || {
-            profile_and_canister_details()
-                .flatten()
-                .map(|(q, _)| q.principal)
-        };
-        let display_name = move || {
-            profile_and_canister_details()
-                .flatten()
-                .map(|(q, _)| q.display_name)
-        };
-        let canister_id = move || profile_and_canister_details().flatten().map(|(_, q)| q);
+            let user_id = move || {
+                profile_and_canister_details()
+                    .flatten()
+                    .map(|(q, _)| q.principal)
+            };
+            let display_name = move || {
+                profile_and_canister_details()
+                    .flatten()
+                    .map(|(q, _)| q.display_name)
+            };
+            let canister_id = move || profile_and_canister_details().flatten().map(|(_, q)| q);
 
-        send_event(
-            "logout_clicked",
-            &json!({
-                "user_id_viewer": user_id(),
-                "display_name": display_name(),
-                "canister_id": canister_id(),
-            }),
-        );
+            send_event(
+                "logout_clicked",
+                &json!({
+                    "user_id_viewer": user_id(),
+                    "display_name": display_name(),
+                    "canister_id": canister_id(),
+                }),
+            );
+        }
     }
 }
 
@@ -648,27 +693,30 @@ pub struct LogoutConfirmation;
 
 impl LogoutConfirmation {
     pub fn send_event(&self, profile_and_canister_details: AuthProfileCanisterResource) {
-        // logout_confirmation - analytics
+        #[cfg(all(feature = "hydrate", feature = "ga4"))]
+        {
+            // logout_confirmation - analytics
 
-        let user_id = move || {
-            profile_and_canister_details()
-                .flatten()
-                .map(|(q, _)| q.principal)
-        };
-        let display_name = move || {
-            profile_and_canister_details()
-                .flatten()
-                .map(|(q, _)| q.display_name)
-        };
-        let canister_id = move || profile_and_canister_details().flatten().map(|(_, q)| q);
+            let user_id = move || {
+                profile_and_canister_details()
+                    .flatten()
+                    .map(|(q, _)| q.principal)
+            };
+            let display_name = move || {
+                profile_and_canister_details()
+                    .flatten()
+                    .map(|(q, _)| q.display_name)
+            };
+            let canister_id = move || profile_and_canister_details().flatten().map(|(_, q)| q);
 
-        send_event(
-            "logout_confirmation",
-            &json!({
-                "user_id_viewer": user_id(),
-                "display_name": display_name(),
-                "canister_id": canister_id(),
-            }),
-        );
+            send_event(
+                "logout_confirmation",
+                &json!({
+                    "user_id_viewer": user_id(),
+                    "display_name": display_name(),
+                    "canister_id": canister_id(),
+                }),
+            );
+        }
     }
 }

@@ -3,6 +3,7 @@ use crate::{
     state::canisters::{authenticated_canisters, Canisters},
     try_or_redirect_opt,
     utils::{
+        event_streaming::events::LikeVideo,
         route::failure_redirect,
         web::{copy_to_clipboard, share_url},
     },
@@ -68,11 +69,7 @@ fn LikeButton(
                     likes.update(|l| *l += 1);
                     liked.set(true);
 
-                    #[cfg(all(feature = "hydrate", feature = "ga4"))]
-                    {
-                        use crate::utils::event_streaming::events::LikeVideo;
-                        LikeVideo.send_event(user_details, post_details, canister_id, likes);
-                    }
+                    LikeVideo.send_event(user_details, post_details, canister_id, likes);
                 }
             });
             let individual = canisters.individual_user(post_canister);

@@ -7,7 +7,6 @@ use wasm_bindgen::prelude::*;
 
 use crate::consts::{GTAG_MEASUREMENT_ID, OFF_CHAIN_AGENT_GRPC_URL};
 
-#[cfg(all(feature = "hydrate", feature = "ga4"))]
 pub mod events;
 
 #[cfg(feature = "ssr")]

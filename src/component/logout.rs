@@ -8,28 +8,21 @@ use crate::{
     consts::ACCOUNT_CONNECTED_STORE,
     state::{auth::auth_state, canisters::AuthProfileCanisterResource},
     try_or_redirect,
+    utils::event_streaming::events::{LogoutClicked, LogoutConfirmation},
 };
 
 #[component]
 pub fn Logout() -> impl IntoView {
     let profile_and_canister_details: AuthProfileCanisterResource = expect_context();
 
-    #[cfg(all(feature = "hydrate", feature = "ga4"))]
-    {
-        use crate::utils::event_streaming::events::LogoutClicked;
-        LogoutClicked.send_event(profile_and_canister_details);
-    }
+    LogoutClicked.send_event(profile_and_canister_details);
 
     let auth_res = create_local_resource(
         || (),
         move |_| async move {
             let _ = try_or_redirect!(logout_identity().await);
 
-            #[cfg(all(feature = "hydrate", feature = "ga4"))]
-            {
-                use crate::utils::event_streaming::events::LogoutConfirmation;
-                LogoutConfirmation.send_event(profile_and_canister_details);
-            }
+            LogoutConfirmation.send_event(profile_and_canister_details);
 
             let auth = auth_state().identity;
             auth.set(None);

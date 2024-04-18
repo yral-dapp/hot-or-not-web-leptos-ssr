@@ -8,6 +8,7 @@ use leptos_router::create_query_signal;
 use leptos_use::use_window;
 
 use crate::component::connect::ConnectLogin;
+use crate::utils::event_streaming::events::{Refer, ReferShareLink};
 use crate::{
     component::{back_btn::BackButton, title::Title},
     state::{
@@ -53,12 +54,7 @@ fn ReferLoaded(user_principal: Principal) -> impl IntoView {
         async move {
             let _ = copy_to_clipboard(&refer_link);
 
-            #[cfg(all(feature = "hydrate", feature = "ga4"))]
-            {
-                use crate::utils::event_streaming::events::ReferShareLink;
-
-                ReferShareLink.send_event(profile_and_canister_details, logged_in);
-            }
+            ReferShareLink.send_event(profile_and_canister_details, logged_in);
         }
     });
 
@@ -107,12 +103,7 @@ fn ReferCode() -> impl IntoView {
 fn ReferView() -> impl IntoView {
     let (logged_in, _) = account_connected_reader();
 
-    #[cfg(all(feature = "hydrate", feature = "ga4"))]
-    {
-        use crate::utils::event_streaming::events::Refer;
-
-        Refer.send_event(logged_in);
-    }
+    Refer.send_event(logged_in);
 
     view! {
         <div class="flex flex-col w-full h-full items-center text-white gap-10">

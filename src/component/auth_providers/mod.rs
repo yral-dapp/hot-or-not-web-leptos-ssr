@@ -16,7 +16,10 @@ use crate::{
         canisters::{do_canister_auth, Canisters},
         local_storage::use_referrer_store,
     },
-    utils::MockPartialEq,
+    utils::{
+        event_streaming::events::{LoginMethodSelected, LoginSuccessful},
+        MockPartialEq,
+    },
 };
 
 #[server]
@@ -95,11 +98,7 @@ fn LoginProvButton<Cb: Fn(ev::MouseEvent) + 'static>(
     let ctx: LoginProvCtx = expect_context();
 
     let click_action = create_action(move |()| async move {
-        #[cfg(all(feature = "hydrate", feature = "ga4"))]
-        {
-            use crate::utils::event_streaming::events::LoginMethodSelected;
-            LoginMethodSelected.send_event(prov);
-        }
+        LoginMethodSelected.send_event(prov);
     });
 
     view! {
@@ -145,11 +144,7 @@ pub fn LoginProviders(show_modal: RwSignal<bool>, lock_closing: RwSignal<bool>) 
                 log::warn!("failed to handle user login, err {e}. skipping");
             }
 
-            #[cfg(all(feature = "hydrate", feature = "ga4"))]
-            {
-                use crate::utils::event_streaming::events::LoginSuccessful;
-                LoginSuccessful.send_event(canisters);
-            }
+            LoginSuccessful.send_event(canisters);
 
             Ok::<_, ServerFnError>(())
         },
