@@ -6,8 +6,6 @@ on:
 jobs:
     lhci:
         runs-on: ubuntu-latest
-        env: 
-            COOKIE_KEY: '1267b291500365c42043e04bc69cf24a31495bd8936fc8d6794283675e288fad755971922d45cf1ca0b438df4fc847f39cb0b2aceb3a45673eff231cddb88dc9'
 
         steps:
           - name: Checkout repo
@@ -32,22 +30,22 @@ jobs:
             with: 
                 node-version: 20
           - run: npm install
+          
+          - name: Build and run Locally
+            run: cargo leptos build --release
 
-          - name: Install Lighthouse
-            run: npm install -g @lhci/cli@0.13.x
+          - name: Start server in the background
+            env: 
+                COOKIE_KEY: '1267b291500365c42043e04bc69cf24a31495bd8936fc8d6794283675e288fad755971922d45cf1ca0b438df4fc847f39cb0b2aceb3a45673eff231cddb88dc9'
+            run: cargo leptos watch &
 
-          - name: Run Lighthouse
-            run: lhci autorun --upload.githubToken="$LHCI_GITHUB_TOKEN" || echo "LHCI failed!"
+          - name: Wait for background process to finish
+            run: wait $!
+            
+          - name: Install and run Lighthouse
+            run: 
+                npm install -g @lhci/cli@0.13.x
+                lhci autorun --upload.githubToken="$LHCI_GITHUB_TOKEN" || echo "LHCI failed!"
             env: 
                 LHCI_GITHUB_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
 
-          # - uses: actions/github-script@v6
-          #   with:
-          #     script: |
-          #       github.rest.issues.createComment({
-          #         issue_number: context.issue.number,
-          #         owner: context.repo.owner,
-          #         repo: context.repo.repo,
-          #         body: '👋 Thanks for reporting!'
-          #         body: ({{ lighthouse.reportURL }})
-          #       })
