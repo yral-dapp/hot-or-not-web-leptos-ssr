@@ -628,6 +628,10 @@ impl LoginJoinOverlayViewed {
                         "previous_event": event_history.event_name.get(),
                     }),
                 );
+
+                if let Some(user_id) = user_id() {
+                    send_user_id(user_id.to_string());
+                }
             });
         }
     }
