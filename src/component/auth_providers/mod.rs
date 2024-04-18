@@ -45,6 +45,12 @@ async fn handle_user_login(canisters: Canisters<true>) -> Result<(), ServerFnErr
     let user_principal = canisters.identity().sender().unwrap();
     mark_user_registered(user_principal).await?;
 
+    let (referrer_store, _, _) = use_referrer_store();
+
+     let Some(_referrer_principal) = referrer_store.get_untracked() else {
+         return Ok(());
+     };
+
     issue_referral_rewards(canisters.user_canister()).await?;
 
     Ok(())
