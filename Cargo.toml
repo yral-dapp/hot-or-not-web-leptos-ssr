@@ -164,11 +164,7 @@ release-lib = [
 ]
 
 mock-wallet-history = ["dep:rand_chacha"]
-[patch.crates-io]
-# release with hyper v1 is not out yet
 
-
-reqwest = { git = "https://github.com/seanmonstar/reqwest.git", rev = "e3192638518d577759dd89da489175b8f992b12f" }
 [profile.wasm-release]
 inherits = "release"
 opt-level = 'z'

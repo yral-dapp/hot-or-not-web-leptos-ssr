@@ -4,9 +4,6 @@ use crate::component::{connect::ConnectLogin, social::*, toggle::Toggle};
 use crate::consts::{social, NSFW_TOGGLE_STORE};
 use crate::state::auth::account_connected_reader;
 use crate::state::canisters::authenticated_canisters;
-use crate::try_or_redirect_opt;
-use crate::utils::profile::ProfileDetails;
-use crate::utils::MockPartialEq;
 use leptos::html::Input;
 use leptos::*;
 use leptos_icons::*;
@@ -65,18 +62,10 @@ fn MenuFooter() -> impl IntoView {
 }
 
 #[component]
-fn ProfileLoading() -> impl IntoView {
-    view! {
-        <div class="w-48 md:w-36 lg:w-24 aspect-square overflow-clip rounded-full bg-white/20 animate-pulse"></div>
-        <div class="flex flex-col gap-2 animate-pulse">
-            <div class="w-64 h-4 bg-white/20 rounded-full"></div>
-            <div class="w-48 h-3 bg-white/20 rounded-full"></div>
-        </div>
-    }
-}
+fn ProfileInfo() -> impl IntoView {
+    let canisters = authenticated_canisters();
+    let user_details = canisters.profile_details();
 
-#[component]
-fn ProfileLoaded(user_details: ProfileDetails) -> impl IntoView {
     view! {
         <div class="w-48 md:w-36 lg:w-24 aspect-square overflow-clip rounded-full">
             <img class="h-full w-full object-cover" src=user_details.profile_pic_or_random()/>
@@ -92,32 +81,6 @@ fn ProfileLoaded(user_details: ProfileDetails) -> impl IntoView {
                 View Profile
             </a>
         </div>
-    }
-}
-
-#[component]
-fn ProfileInfo() -> impl IntoView {
-    let canisters = authenticated_canisters();
-    let profile_details = create_resource(
-        move || MockPartialEq(canisters.get().and_then(|c| c.transpose())),
-        move |canisters| async move {
-            let canisters = try_or_redirect_opt!(canisters.0?);
-            let user = canisters.authenticated_user();
-            let user_details = user.get_profile_details().await.ok()?;
-            Some(ProfileDetails::from(user_details))
-        },
-    );
-
-    view! {
-        <Suspense fallback=ProfileLoading>
-            {move || {
-                profile_details()
-                    .flatten()
-                    .map(|user_details| view! { <ProfileLoaded user_details/> })
-                    .unwrap_or_else(|| view! { <ProfileLoading/> })
-            }}
-
-        </Suspense>
     }
 }
 
@@ -180,7 +143,12 @@ pub fn Menu() -> impl IntoView {
             <div class="flex flex-col py-12 px-8 gap-8 w-full text-lg">
                 <NsfwToggle/>
                 <MenuItem href="/refer-earn" text="Refer & Earn" icon=icondata::AiGiftFilled/>
-                <MenuItem href=social::TELEGRAM text="Talk to the team" icon=icondata::BiWhatsapp target="_blank"/>
+                <MenuItem
+                    href=social::TELEGRAM
+                    text="Talk to the team"
+                    icon=icondata::BiWhatsapp
+                    target="_blank"
+                />
                 <MenuItem href="/terms-of-service" text="Terms of Service" icon=icondata::TbBook2/>
                 <MenuItem href="/privacy-policy" text="Privacy Policy" icon=icondata::TbLock/>
                 <Show when=is_connected>

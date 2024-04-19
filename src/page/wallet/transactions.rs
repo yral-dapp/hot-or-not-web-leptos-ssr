@@ -1,12 +1,8 @@
 use leptos::*;
 
 use crate::{
-    component::{
-        back_btn::BackButton, bullet_loader::BulletLoader, infinite_scroller::InfiniteScroller,
-        title::Title,
-    },
+    component::{back_btn::BackButton, infinite_scroller::InfiniteScroller, title::Title},
     state::canisters::{authenticated_canisters, Canisters},
-    try_or_redirect_opt,
 };
 
 use super::txn::{provider::get_history_provider, TxnView};
@@ -43,18 +39,7 @@ pub fn Transactions() -> impl IntoView {
                     <div></div>
                 </div>
             </Title>
-            <Suspense fallback=BulletLoader>
-                {move || {
-                    canisters
-                        .get()
-                        .and_then(|c| {
-                            let canisters = try_or_redirect_opt!(c)?;
-                            Some(view! { <TransactionList canisters/> })
-                        })
-                        .unwrap_or_else(|| view! { <BulletLoader/> })
-                }}
-
-            </Suspense>
+            <TransactionList canisters/>
         </div>
     }
 }

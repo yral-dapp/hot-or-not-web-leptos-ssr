@@ -4,7 +4,7 @@ use super::{
 };
 use crate::{
     component::modal::Modal,
-    state::canisters::{authenticated_canisters, AuthProfileCanisterResource, Canisters},
+    state::canisters::authenticated_canisters,
     try_or_redirect_opt,
     utils::{
         event_streaming::events::{
@@ -60,31 +60,27 @@ pub fn PreVideoUpload(file_blob: WriteSignal<Option<FileWithUrl>>) -> impl IntoV
     let video_ref = create_node_ref::<Video>();
     let modal_show = create_rw_signal(false);
 
-    let profile_and_canister_details: AuthProfileCanisterResource = expect_context();
-    let user_id = move || {
-        profile_and_canister_details()
-            .flatten()
-            .map(|(q, _)| q.principal)
-    };
-    let display_name = move || {
-        profile_and_canister_details()
-            .flatten()
-            .map(|(q, _)| q.display_name)
-    };
-    let canister_id = move || profile_and_canister_details().flatten().map(|(_, q)| q);
-
     #[cfg(feature = "hydrate")]
     {
+        let canisters = authenticated_canisters();
+        let details = canisters.profile_details();
+        let user_canister = canisters.user_canister();
+
         use leptos::ev::change;
         _ = use_event_listener(file_ref, change, move |ev| {
             use wasm_bindgen::JsCast;
             use web_sys::HtmlInputElement;
-            ev.target().and_then(|target| {
+            let display_name = details.display_name.clone();
+            ev.target().and_then(move |target| {
                 let input: &HtmlInputElement = target.dyn_ref()?;
                 let inp_file = input.files()?.get(0)?;
                 file.set(Some(FileWithUrl::new(inp_file.into())));
 
-                VideoUploadVideoSelected.send_event(user_id(), display_name(), canister_id());
+                VideoUploadVideoSelected.send_event(
+                    details.principal,
+                    display_name.clone(),
+                    user_canister,
+                );
 
                 Some(())
             });
@@ -196,25 +192,20 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
     let is_nsfw = params.is_nsfw;
     let enable_hot_or_not = params.enable_hot_or_not;
 
-    let profile_and_canister_details: AuthProfileCanisterResource = expect_context();
-    let user_id = move || {
-        profile_and_canister_details()
-            .flatten()
-            .map(|(q, _)| q.principal)
-    };
-    let display_name = move || {
-        profile_and_canister_details()
-            .flatten()
-            .map(|(q, _)| q.display_name)
-    };
-    let canister_id = move || profile_and_canister_details().flatten().map(|(_, q)| q);
+    let canisters = authenticated_canisters();
+    let details = canisters.profile_details();
+    let user_id = details.principal;
+    let display_name = details.display_name;
+    let canister_id = canisters.user_canister();
 
     let up_desc = description.clone();
 
+    let display_c = display_name.clone();
     let upload_action = create_action(move |_: &()| {
         let hashtags = up_hashtags.clone();
         let description = up_desc.clone();
         let file_blob = file_blob.clone();
+        let display_name = display_c.clone();
         async move {
             let time_ms = SystemTime::now()
                 .duration_since(SystemTime::UNIX_EPOCH)
@@ -236,9 +227,9 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
                     hashtags_len,
                     is_nsfw,
                     enable_hot_or_not,
-                    user_id(),
-                    display_name(),
-                    canister_id(),
+                    user_id,
+                    display_name.clone(),
+                    canister_id,
                 );
             }
 
@@ -253,9 +244,9 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
                     hashtags_len,
                     is_nsfw,
                     enable_hot_or_not,
-                    user_id(),
-                    display_name(),
-                    canister_id(),
+                    user_id,
+                    display_name.clone(),
+                    canister_id,
                 );
             }
 
@@ -275,9 +266,9 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
                         hashtags_len,
                         is_nsfw,
                         enable_hot_or_not,
-                        user_id(),
-                        display_name(),
-                        canister_id(),
+                        user_id,
+                        display_name.clone(),
+                        canister_id,
                     );
                 }
 
@@ -293,14 +284,15 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
     });
     upload_action.dispatch(());
 
-    let canisters = authenticated_canisters();
     let upload_uid = upload_action.value();
-    let publish_action = create_action(move |(canisters, uid): &(Canisters<true>, String)| {
+    let display_c = display_name.clone();
+    let publish_action = create_action(move |uid: &String| {
         let canisters = canisters.clone();
         let hashtags = hashtags.clone();
         let hashtags_len = hashtags.len();
         let description = description.clone();
         let uid = uid.clone();
+        let display_name = display_c.clone();
         async move {
             let res = publish_video(
                 canisters,
@@ -319,9 +311,9 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
                     hashtags_len,
                     is_nsfw,
                     enable_hot_or_not,
-                    user_id(),
-                    display_name(),
-                    canister_id(),
+                    user_id,
+                    display_name.clone(),
+                    canister_id,
                 );
             }
 
@@ -333,9 +325,9 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
                 hashtags_len,
                 is_nsfw,
                 enable_hot_or_not,
-                user_id(),
-                display_name(),
-                canister_id(),
+                user_id,
+                display_name.clone(),
+                canister_id,
             );
 
             Some(())
@@ -363,15 +355,12 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
             </div>
             <div class="flex flex-row gap-4">
                 <ProgressItem initial_text="Publishing" done_text="Published" loading=publishing/>
-                <Suspense>
-                    {move || {
-                        let uid = upload_uid().flatten()?;
-                        let canisters = try_or_redirect_opt!(canisters.get() ?.transpose() ?);
-                        publish_action.dispatch((canisters, uid));
-                        Some(())
-                    }}
+                {move || {
+                    let uid = upload_uid().flatten()?;
+                    publish_action.dispatch(uid);
+                    Some(())
+                }}
 
-                </Suspense>
             </div>
             <button
                 on:click=|_| go_to_root()

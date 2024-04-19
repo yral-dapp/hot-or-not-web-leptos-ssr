@@ -1,10 +1,8 @@
 use crate::{
     component::modal::Modal,
-    state::canisters::{authenticated_canisters, Canisters},
-    try_or_redirect_opt,
+    state::canisters::authenticated_canisters,
     utils::{
         event_streaming::events::LikeVideo,
-        route::failure_redirect,
         web::{copy_to_clipboard, share_url},
     },
 };
@@ -12,7 +10,7 @@ use leptos::*;
 use leptos_icons::*;
 use leptos_use::use_window;
 
-use super::video_iter::{post_liked_by_me, PostDetails};
+use super::video_iter::PostDetails;
 
 #[component]
 fn LikeButtonPlaceHolder() -> impl IntoView {
@@ -28,11 +26,11 @@ fn LikeButtonPlaceHolder() -> impl IntoView {
 
 #[component]
 fn LikeButton(
-    canisters: Canisters<true>,
     post_details: PostDetails,
     likes: RwSignal<u64>,
     initial_liked: bool,
 ) -> impl IntoView {
+    let canisters = authenticated_canisters();
     let liked = create_rw_signal(initial_liked);
     let icon_class = Signal::derive(move || {
         if liked() {
@@ -98,72 +96,20 @@ fn LikeButton(
 }
 
 #[component]
-fn LikeLoader(
-    canisters: Canisters<true>,
-    post: PostDetails,
-    likes: RwSignal<u64>,
-) -> impl IntoView {
-    let can_c = canisters.clone();
-    let liked = create_resource(
-        || (),
-        move |_| {
-            let canisters = can_c.clone();
-            async move {
-                if let Some(liked) = post.liked_by_user {
-                    return liked;
-                }
-                match post_liked_by_me(&canisters, post.canister_id, post.post_id).await {
-                    Ok(liked) => liked,
-                    Err(e) => {
-                        failure_redirect(e);
-                        false
-                    }
-                }
-            }
-        },
-    );
-    let canisters = store_value(canisters);
-    let post = store_value(post);
+fn LikeLoader(post: PostDetails, likes: RwSignal<u64>) -> impl IntoView {
+    let initial_liked = post.liked_by_user;
 
-    view! {
-        <Suspense fallback=LikeButtonPlaceHolder>
-            {move || {
-                liked()
-                    .map(move |initial_liked| {
-                        view! {
-                            <LikeButton
-                                canisters=canisters.get_value()
-                                post_details=post.get_value()
-                                likes
-                                initial_liked
-                            />
-                        }
-                    })
-            }}
-
-        </Suspense>
-    }
+    view! { <LikeButton post_details=post likes initial_liked/> }
 }
 
 #[component]
 fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
-    let auth_cans = authenticated_canisters();
     let likes = create_rw_signal(post.likes);
     let post = store_value(post);
 
     view! {
         <div class="flex flex-col gap-1 items-center">
-            <Suspense fallback=LikeButtonPlaceHolder>
-                {move || {
-                    auth_cans
-                        .get()
-                        .and_then(|canisters| {
-                            let canisters = try_or_redirect_opt!(canisters)?;
-                            Some(view! { <LikeLoader canisters post=post.get_value() likes/> })
-                        })
-                }}
-
-            </Suspense>
+            <LikeLoader post=post.get_value() likes/>
             <span class="text-sm md:text-md">{likes}</span>
         </div>
     }
@@ -189,6 +135,7 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
 
     let share = create_action(move |&()| {
         let post_details = post_details.clone();
+        let canisters = auth_cans.clone();
         async move {
             let url = video_url();
             if share_url(&url).is_some() {
@@ -200,9 +147,7 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
             {
                 use crate::utils::event_streaming::events::ShareVideo;
 
-                let canisters = auth_cans.get().unwrap().unwrap().unwrap();
-                let user = canisters.authenticated_user();
-                let user_details = user.get_profile_details().await.unwrap();
+                let user_details = canisters.profile_details();
                 let canister_id = canisters.user_canister();
 
                 ShareVideo.send_event(post_details, user_details, canister_id);

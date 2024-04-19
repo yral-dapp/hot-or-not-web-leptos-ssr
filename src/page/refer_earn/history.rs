@@ -1,9 +1,8 @@
 use leptos::*;
 
-use crate::component::{bullet_loader::BulletLoader, infinite_scroller::InfiniteScroller};
+use crate::component::infinite_scroller::InfiniteScroller;
 use crate::{
-    state::canisters::{authenticated_canisters, Canisters},
-    try_or_redirect_opt,
+    state::canisters::authenticated_canisters,
     utils::{profile::propic_from_principal, timestamp::get_day_month},
 };
 use history_provider::*;
@@ -32,7 +31,8 @@ fn HistoryItem(detail: HistoryDetails, _ref: NodeRef<html::Div>) -> impl IntoVie
 }
 
 #[component]
-fn AuthenticatedHistory(canisters: Canisters<true>) -> impl IntoView {
+pub fn HistoryView() -> impl IntoView {
+    let canisters = authenticated_canisters();
     let provider = get_history_provider(canisters);
     view! {
         <div class="flex flex-col justify-center w-full md:w-10/12 lg:w-8/12 gap-4 pb-16">
@@ -45,25 +45,6 @@ fn AuthenticatedHistory(canisters: Canisters<true>) -> impl IntoView {
             />
 
         </div>
-    }
-}
-
-#[component]
-pub fn HistoryView() -> impl IntoView {
-    let canisters = authenticated_canisters();
-
-    view! {
-        <Suspense fallback=BulletLoader>
-            {move || {
-                canisters()
-                    .and_then(|canisters| {
-                        let canisters = try_or_redirect_opt!(canisters)?;
-                        Some(view! { <AuthenticatedHistory canisters=canisters/> })
-                    })
-                    .unwrap_or_else(|| view! { <BulletLoader/> })
-            }}
-
-        </Suspense>
     }
 }
 

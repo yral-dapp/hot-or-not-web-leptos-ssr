@@ -14,7 +14,7 @@ use crate::{
         upload::UploadPostPage,
         wallet::{transactions::Transactions, Wallet},
     },
-    state::{auth::AuthState, canisters::Canisters, history::HistoryCtx},
+    state::{canisters::Canisters, history::HistoryCtx},
     utils::event_streaming::EventHistory,
 };
 use leptos::*;
@@ -62,8 +62,6 @@ pub fn App() -> impl IntoView {
     provide_meta_context();
     provide_context(Canisters::default());
     provide_context(PostViewCtx::default());
-    let auth_state = AuthState::default();
-    provide_context(auth_state.clone());
 
     // History Tracking
     let history_ctx = HistoryCtx::default();
@@ -114,7 +112,7 @@ pub fn App() -> impl IntoView {
                     // auth redirect routes exist outside main context
                     <GoogleAuthRedirectHandlerRoute/>
                     <GoogleAuthRedirectorRoute/>
-                    <Route path="/" view=BaseRoute>
+                    <Route path="" view=BaseRoute>
                         <Route path="/hot-or-not/:canister_id/:post_id" view=PostView/>
                         <Route path="/profile/:id" view=ProfileView/>
                         <Route path="/upload" view=UploadPostPage/>

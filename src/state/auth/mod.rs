@@ -1,12 +1,23 @@
-use leptos::{create_effect, create_signal, expect_context, Effect, ReadSignal, RwSignal};
+use leptos::*;
 use leptos_use::{storage::use_local_storage, utils::FromToStringCodec};
 
-use crate::{auth::DelegatedIdentityWire, consts::ACCOUNT_CONNECTED_STORE};
+use crate::{
+    auth::{extract_or_generate_identity, DelegatedIdentityWire},
+    consts::ACCOUNT_CONNECTED_STORE,
+    try_or_redirect_opt,
+};
 
-#[derive(Default, Clone)]
-pub struct AuthState {
-    pub identity: RwSignal<Option<DelegatedIdentityWire>>,
+pub fn auth_resource() -> Resource<(), Option<DelegatedIdentityWire>> {
+    create_blocking_resource(
+        || (),
+        |_| async move {
+            let id = try_or_redirect_opt!(extract_or_generate_identity().await);
+            Some(id)
+        },
+    )
 }
+
+pub type AuthState = RwSignal<DelegatedIdentityWire>;
 
 pub fn auth_state() -> AuthState {
     expect_context()

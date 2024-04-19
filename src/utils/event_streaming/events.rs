@@ -9,15 +9,12 @@ use wasm_bindgen::JsCast;
 
 use crate::canister::individual_user_template::UserProfileDetailsForFrontend;
 use crate::component::auth_providers::ProviderKind;
-use crate::state::canisters::Canisters;
+use crate::state::canisters::{authenticated_canisters, Canisters};
 use crate::state::history::HistoryCtx;
 #[cfg(feature = "ga4")]
 use crate::utils::event_streaming::{send_event, send_event_warehouse, send_user_id};
 use crate::utils::profile::ProfileDetails;
-use crate::{
-    page::post_view::video_iter::PostDetails,
-    state::{auth::account_connected_reader, canisters::AuthProfileCanisterResource},
-};
+use crate::{page::post_view::video_iter::PostDetails, state::auth::account_connected_reader};
 
 use super::EventHistory;
 
@@ -51,21 +48,14 @@ impl VideoWatched {
     ) {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
         {
-            let profile_and_canister_details: AuthProfileCanisterResource = expect_context();
+            let canisters = authenticated_canisters();
+            let details = canisters.profile_details();
             let (is_connected, _) = account_connected_reader();
 
             let publisher_user_id = move || vid_details().as_ref().map(|q| q.poster_principal);
-            let user_id = move || {
-                profile_and_canister_details()
-                    .flatten()
-                    .map(|(q, _)| q.principal)
-            };
-            let display_name = move || {
-                profile_and_canister_details()
-                    .flatten()
-                    .map(|(q, _)| q.display_name)
-            };
-            let canister_id = move || profile_and_canister_details().flatten().map(|(_, q)| q);
+            let user_id = details.principal;
+            let display_name = details.display_name;
+            let canister_id = canisters.user_canister();
             let video_id = move || vid_details().as_ref().map(|q| q.uid.clone());
             let hastag_count = move || vid_details().as_ref().map(|q| q.hastags.len());
             let is_nsfw = move || vid_details().as_ref().map(|q| q.is_nsfw);
@@ -81,6 +71,7 @@ impl VideoWatched {
             let (video_watched, set_video_watched) = create_signal(false);
             let (full_video_watched, set_full_video_watched) = create_signal(false);
 
+            let display_c = display_name.clone();
             let _ = use_event_listener(container_ref, ev::timeupdate, move |evt| {
                 let target = evt.target().unwrap();
                 let video = target.unchecked_into::<web_sys::HtmlVideoElement>();
@@ -97,10 +88,10 @@ impl VideoWatched {
                         "video_duration_watched",
                         &json!({
                             "publisher_user_id":publisher_user_id(),
-                            "user_id":user_id(),
+                            "user_id": user_id,
                             "is_loggedIn": is_connected(),
-                            "display_name": display_name(),
-                            "canister_id": canister_id(),
+                            "display_name": display_c,
+                            "canister_id": canister_id,
                             "video_id": video_id(),
                             "video_category": "NA",
                             "creator_category": "NA",
@@ -129,10 +120,10 @@ impl VideoWatched {
                         "video_viewed",
                         &json!({
                             "publisher_user_id":publisher_user_id(),
-                            "user_id":user_id(),
+                            "user_id":user_id,
                             "is_loggedIn": is_connected(),
-                            "display_name": display_name(),
-                            "canister_id": canister_id(),
+                            "display_name": display_c.clone(),
+                            "canister_id": canister_id,
                             "video_id": video_id(),
                             "video_category": "NA",
                             "creator_category": "NA",
@@ -151,6 +142,7 @@ impl VideoWatched {
 
             // video duration watched - warehousing
 
+            let display_c = display_name.clone();
             let _ = use_event_listener(container_ref, ev::pause, move |evt| {
                 let target = evt.target().unwrap();
                 let video = target.unchecked_into::<web_sys::HtmlVideoElement>();
@@ -166,10 +158,10 @@ impl VideoWatched {
                     "video_duration_watched",
                     &json!({
                         "publisher_user_id":publisher_user_id(),
-                        "user_id":user_id(),
+                        "user_id":user_id,
                         "is_loggedIn": is_connected(),
-                        "display_name": display_name(),
-                        "canister_id": canister_id(),
+                        "display_name": display_c,
+                        "canister_id": canister_id,
                         "video_id": video_id(),
                         "video_category": "NA",
                         "creator_category": "NA",
@@ -248,7 +240,7 @@ impl ShareVideo {
     pub fn send_event(
         &self,
         post_details: PostDetails,
-        user_details: UserProfileDetailsForFrontend,
+        profile_details: ProfileDetails,
         canister_id: Principal,
     ) {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
@@ -261,7 +253,6 @@ impl ShareVideo {
             let view_count = post_details.views;
             let like_count = post_details.likes;
 
-            let profile_details = ProfileDetails::from(user_details);
             let user_id = profile_details.principal;
             let display_name = profile_details.display_name;
             let (is_connected, _) = account_connected_reader();
@@ -296,15 +287,15 @@ pub struct VideoUploadInitiated;
 impl VideoUploadInitiated {
     pub fn send_event(
         &self,
-        user_id: Option<Principal>,
-        display_name: Option<Option<String>>,
-        canister_id: Option<Principal>,
+        user_id: Principal,
+        display_name: Option<String>,
+        canister_id: Principal,
     ) {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
         {
             // video_upload_initiated - analytics
 
-            let display_name = display_name.unwrap_or_default().unwrap_or_default();
+            let display_name = display_name.unwrap_or_default();
             create_effect(move |_| {
                 send_event(
                     "video_upload_initiated",
@@ -329,15 +320,15 @@ impl VideoUploadUploadButtonClicked {
         hashtag_inp: NodeRef<Input>,
         is_nsfw: NodeRef<Input>,
         enable_hot_or_not: NodeRef<Input>,
-        user_id: Option<Principal>,
-        display_name: Option<Option<String>>,
-        canister_id: Option<Principal>,
+        user_id: Principal,
+        display_name: Option<String>,
+        canister_id: Principal,
     ) {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
         {
             // video_upload_upload_button_clicked - analytics
 
-            let display_name = display_name.unwrap_or_default().unwrap_or_default();
+            let display_name = display_name.unwrap_or_default();
 
             let hashtag_count = hashtag_inp.get_untracked().unwrap().value().len();
             let is_nsfw_val = is_nsfw
@@ -373,15 +364,15 @@ pub struct VideoUploadVideoSelected;
 impl VideoUploadVideoSelected {
     pub fn send_event(
         &self,
-        user_id: Option<Principal>,
-        display_name: Option<Option<String>>,
-        canister_id: Option<Principal>,
+        user_id: Principal,
+        display_name: Option<String>,
+        canister_id: Principal,
     ) {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
         {
             // video_upload_video_selected - analytics
 
-            let display_name = display_name.unwrap_or_default().unwrap_or_default();
+            let display_name = display_name.unwrap_or_default();
 
             send_event(
                 "video_upload_video_selected",
@@ -407,15 +398,15 @@ impl VideoUploadUnsuccessful {
         hashtags_len: usize,
         is_nsfw: bool,
         enable_hot_or_not: bool,
-        user_id: Option<Principal>,
-        display_name: Option<Option<String>>,
-        canister_id: Option<Principal>,
+        user_id: Principal,
+        display_name: Option<String>,
+        canister_id: Principal,
     ) {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
         {
             // video_upload_unsuccessful - analytics
 
-            let display_name = display_name.unwrap_or_default().unwrap_or_default();
+            let display_name = display_name.unwrap_or_default();
 
             send_event(
                 "video_upload_unsuccessful",
@@ -443,9 +434,9 @@ impl VideoUploadSuccessful {
         hashtags_len: usize,
         is_nsfw: bool,
         enable_hot_or_not: bool,
-        user_id: Option<Principal>,
-        display_name: Option<Option<String>>,
-        canister_id: Option<Principal>,
+        user_id: Principal,
+        display_name: Option<String>,
+        canister_id: Principal,
     ) {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
         {
@@ -478,18 +469,13 @@ impl Refer {
         {
             // refer - analytics
 
-            let profile_and_canister_details: AuthProfileCanisterResource = expect_context();
-            let user_id = move || {
-                profile_and_canister_details()
-                    .flatten()
-                    .map(|(q, _)| q.principal)
-            };
-            let display_name = move || {
-                profile_and_canister_details()
-                    .flatten()
-                    .map(|(q, _)| q.display_name)
-            };
-            let canister_id = move || profile_and_canister_details().flatten().map(|(_, q)| q);
+            let canisters = authenticated_canisters();
+
+            let details = canisters.profile_details();
+            let user_id = details.principal;
+            let display_name = details.display_name;
+            let canister_id = canisters.user_canister();
+
             let history_ctx: HistoryCtx = expect_context();
             let prev_site = history_ctx.prev_url();
 
@@ -498,10 +484,10 @@ impl Refer {
                 send_event(
                     "refer",
                     &json!({
-                        "user_id":user_id(),
+                        "user_id":user_id,
                         "is_loggedIn": logged_in.get(),
-                        "display_name": display_name(),
-                        "canister_id": canister_id(),
+                        "display_name": display_name,
+                        "canister_id": canister_id,
                         "refer_location": prev_site,
                     }),
                 );
@@ -514,26 +500,18 @@ impl Refer {
 pub struct ReferShareLink;
 
 impl ReferShareLink {
-    pub fn send_event(
-        &self,
-        profile_and_canister_details: AuthProfileCanisterResource,
-        logged_in: ReadSignal<bool>,
-    ) {
+    pub fn send_event(&self, logged_in: ReadSignal<bool>) {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
         {
             // refer_share_link - analytics
 
-            let user_id = move || {
-                profile_and_canister_details()
-                    .flatten()
-                    .map(|(q, _)| q.principal)
-            };
-            let display_name = move || {
-                profile_and_canister_details()
-                    .flatten()
-                    .map(|(q, _)| q.display_name)
-            };
-            let canister_id = move || profile_and_canister_details().flatten().map(|(_, q)| q);
+            let canisters = authenticated_canisters();
+            let details = canisters.profile_details();
+
+            let user_id = details.principal;
+            let display_name = details.display_name;
+            let canister_id = canisters.user_canister();
+
             let history_ctx: HistoryCtx = expect_context();
             let prev_site = history_ctx.prev_url();
 
@@ -541,10 +519,10 @@ impl ReferShareLink {
             send_event(
                 "refer_share_link",
                 &json!({
-                    "user_id":user_id(),
+                    "user_id":user_id,
                     "is_loggedIn": logged_in.get(),
-                    "display_name": display_name(),
-                    "canister_id": canister_id(),
+                    "display_name": display_name,
+                    "canister_id": canister_id,
                     "refer_location": prev_site,
                 }),
             );
@@ -612,28 +590,20 @@ impl LoginJoinOverlayViewed {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
         {
             // login_join_overlay_viewed - analytics
-
+            let canisters = authenticated_canisters();
             let event_history: EventHistory = expect_context();
-            let profile_and_canister_details: AuthProfileCanisterResource = expect_context();
-            let user_id = move || {
-                profile_and_canister_details()
-                    .flatten()
-                    .map(|(q, _)| q.principal)
-            };
 
-            create_effect(move |_| {
-                send_event(
-                    "login_join_overlay_viewed",
-                    &json!({
-                        "user_id_viewer": user_id(),
-                        "previous_event": event_history.event_name.get(),
-                    }),
-                );
+            let user_id = canisters.profile_details().principal;
 
-                if let Some(user_id) = user_id() {
-                    send_user_id(user_id.to_string());
-                }
-            });
+            send_event(
+                "login_join_overlay_viewed",
+                &json!({
+                    "user_id_viewer": user_id,
+                    "previous_event": event_history.event_name.get(),
+                }),
+            );
+
+            send_user_id(user_id.to_string());
         }
     }
 }
@@ -664,29 +634,23 @@ impl LoginCta {
 pub struct LogoutClicked;
 
 impl LogoutClicked {
-    pub fn send_event(&self, profile_and_canister_details: AuthProfileCanisterResource) {
+    pub fn send_event(&self) {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
         {
+            let canisters = authenticated_canisters();
+            let details = canisters.profile_details();
             // logout_clicked - analytics
 
-            let user_id = move || {
-                profile_and_canister_details()
-                    .flatten()
-                    .map(|(q, _)| q.principal)
-            };
-            let display_name = move || {
-                profile_and_canister_details()
-                    .flatten()
-                    .map(|(q, _)| q.display_name)
-            };
-            let canister_id = move || profile_and_canister_details().flatten().map(|(_, q)| q);
+            let user_id = details.principal;
+            let display_name = details.display_name;
+            let canister_id = canisters.user_canister();
 
             send_event(
                 "logout_clicked",
                 &json!({
-                    "user_id_viewer": user_id(),
-                    "display_name": display_name(),
-                    "canister_id": canister_id(),
+                    "user_id_viewer": user_id,
+                    "display_name": display_name,
+                    "canister_id": canister_id,
                 }),
             );
         }
@@ -697,29 +661,23 @@ impl LogoutClicked {
 pub struct LogoutConfirmation;
 
 impl LogoutConfirmation {
-    pub fn send_event(&self, profile_and_canister_details: AuthProfileCanisterResource) {
+    pub fn send_event(&self) {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
         {
-            // logout_confirmation - analytics
+            let canisters = authenticated_canisters();
+            let details = canisters.profile_details();
 
-            let user_id = move || {
-                profile_and_canister_details()
-                    .flatten()
-                    .map(|(q, _)| q.principal)
-            };
-            let display_name = move || {
-                profile_and_canister_details()
-                    .flatten()
-                    .map(|(q, _)| q.display_name)
-            };
-            let canister_id = move || profile_and_canister_details().flatten().map(|(_, q)| q);
+            let user_id = details.principal;
+            let display_name = details.display_name;
+            let canister_id = canisters.user_canister();
+            // logout_confirmation - analytics
 
             send_event(
                 "logout_confirmation",
                 &json!({
-                    "user_id_viewer": user_id(),
-                    "display_name": display_name(),
-                    "canister_id": canister_id(),
+                    "user_id_viewer": user_id,
+                    "display_name": display_name,
+                    "canister_id": canister_id,
                 }),
             );
         }

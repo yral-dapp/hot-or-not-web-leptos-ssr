@@ -138,7 +138,8 @@ pub fn LoginProviders(show_modal: RwSignal<bool>, lock_closing: RwSignal<bool>) 
             let referrer = referrer_store.get_untracked();
 
             // This is some redundant work, but saves us 100+ lines of resource handling
-            let canisters = do_canister_auth(Some(identity.clone())).await?.unwrap();
+            let canisters: Canisters<true> =
+                do_canister_auth(identity.clone()).await?.try_into()?;
 
             if let Err(e) = handle_user_login(canisters.clone(), referrer).await {
                 log::warn!("failed to handle user login, err {e}. skipping");
@@ -159,7 +160,7 @@ pub fn LoginProviders(show_modal: RwSignal<bool>, lock_closing: RwSignal<bool>) 
         login_complete: SignalSetter::map(move |val: DelegatedIdentityWire| {
             new_identity.set(Some(val.clone()));
             write_account_connected(true);
-            auth.identity.set(Some(val));
+            auth.set(val);
             show_modal.set(false);
         }),
     };

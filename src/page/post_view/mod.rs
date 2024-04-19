@@ -16,7 +16,7 @@ use leptos_use::{
 use crate::{
     component::spinner::FullScreenSpinner,
     consts::NSFW_TOGGLE_STORE,
-    state::canisters::{authenticated_canisters, unauth_canisters},
+    state::canisters::authenticated_canisters,
     try_or_redirect,
     utils::route::{failure_redirect, go_to_root},
 };
@@ -180,46 +180,41 @@ pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
         })
     }
     let (nsfw_enabled, _, _) = use_local_storage::<bool, FromToStringCodec>(NSFW_TOGGLE_STORE);
-    let auth_cans_res = authenticated_canisters();
 
-    let fetch_video_action = create_action(move |()| async move {
-        loop {
-            let auth_canisters = leptos::untrack(|| auth_cans_res.get().transpose());
-            let auth_canisters = try_or_redirect!(auth_canisters).flatten();
-            let Some(cursor) = fetch_cursor.try_get_untracked() else {
-                return;
-            };
-            let nsfw_enabled = nsfw_enabled.get_untracked();
-            let unauth_canisters = unauth_canisters();
+    let canisters = authenticated_canisters();
+    let fetch_video_action = create_action(move |()| {
+        let canisters = canisters.clone();
+        async move {
+            loop {
+                let Some(cursor) = fetch_cursor.try_get_untracked() else {
+                    return;
+                };
+                let nsfw_enabled = nsfw_enabled.get_untracked();
 
-            let chunks = if let Some(canisters) = auth_canisters.as_ref() {
-                let fetch_stream = VideoFetchStream::new(canisters, cursor);
-                fetch_stream.fetch_post_uids_chunked(3, nsfw_enabled).await
-            } else {
-                let fetch_stream = VideoFetchStream::new(&unauth_canisters, cursor);
-                fetch_stream.fetch_post_uids_chunked(3, nsfw_enabled).await
-            };
+                let fetch_stream = VideoFetchStream::new(&canisters, cursor);
+                let chunks = fetch_stream.fetch_post_uids_chunked(3, nsfw_enabled).await;
 
-            let res = try_or_redirect!(chunks);
-            let mut chunks = res.posts_stream;
-            let mut cnt = 0;
-            while let Some(chunk) = chunks.next().await {
-                cnt += chunk.len();
-                video_queue.update(|q| {
-                    for uid in chunk {
-                        let uid = try_or_redirect!(uid);
-                        q.push(uid);
-                    }
-                });
+                let res = try_or_redirect!(chunks);
+                let mut chunks = res.posts_stream;
+                let mut cnt = 0;
+                while let Some(chunk) = chunks.next().await {
+                    cnt += chunk.len();
+                    video_queue.update(|q| {
+                        for uid in chunk {
+                            let uid = try_or_redirect!(uid);
+                            q.push(uid);
+                        }
+                    });
+                }
+                if res.end || cnt >= 8 {
+                    queue_end.set(res.end);
+                    break;
+                }
+                fetch_cursor.update(|c| c.advance());
             }
-            if res.end || cnt >= 8 {
-                queue_end.set(res.end);
-                break;
-            }
+
             fetch_cursor.update(|c| c.advance());
         }
-
-        fetch_cursor.update(|c| c.advance());
     });
     create_effect(move |_| {
         if !recovering_state.get_untracked() {
@@ -269,41 +264,27 @@ pub fn PostView() -> impl IntoView {
         })
     };
 
-    let PostViewCtx {
-        video_queue,
-        current_idx,
-        ..
-    } = expect_context();
-
-    let cached_post = move || {
-        let Some((canister, post_id)) = canister_and_post() else {
-            go_to_root();
-            return None;
-        };
-
-        let post = video_queue
-            .with_untracked(|q| q.get(current_idx.get_untracked()).cloned())
-            .filter(|post| post.canister_id == canister && post.post_id == post_id);
-
-        post
-    };
+    let PostViewCtx { .. } = expect_context();
+    let canisters = authenticated_canisters();
 
     let fetch_first_video_uid = create_resource(
         || (),
-        move |_| async move {
-            let Some((canister, post_id)) = canister_and_post() else {
-                go_to_root();
-                return None;
-            };
+        move |_| {
+            let canisters = canisters.clone();
+            async move {
+                let Some((canister, post_id)) = canister_and_post() else {
+                    go_to_root();
+                    return None;
+                };
 
-            let canisters = unauth_canisters();
-            match get_post_uid(&canisters, canister, post_id).await {
-                Ok(Some(uid)) => Some(uid),
-                Err(e) => {
-                    failure_redirect(e);
-                    None
+                match get_post_uid(&canisters, canister, post_id).await {
+                    Ok(Some(uid)) => Some(uid),
+                    Err(e) => {
+                        failure_redirect(e);
+                        None
+                    }
+                    Ok(None) => None,
                 }
-                Ok(None) => None,
             }
         },
     );
@@ -311,14 +292,10 @@ pub fn PostView() -> impl IntoView {
     view! {
         <Suspense fallback=FullScreenSpinner>
             {move || {
-                if let Some(post) = cached_post() {
-                    Some(view! { <PostViewWithUpdates initial_post=Some(post)/> })
-                } else {
-                    fetch_first_video_uid()
-                        .map(|initial_post| {
-                            view! { <PostViewWithUpdates initial_post=initial_post/> }
-                        })
-                }
+                fetch_first_video_uid()
+                    .map(|initial_post| {
+                        view! { <PostViewWithUpdates initial_post=initial_post/> }
+                    })
             }}
 
         </Suspense>

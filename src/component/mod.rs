@@ -1,5 +1,4 @@
 pub mod airdrop_logo;
-pub mod auth_provider;
 pub mod auth_providers;
 pub mod back_btn;
 pub mod base_route;

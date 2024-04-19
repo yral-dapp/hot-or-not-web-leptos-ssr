@@ -4,7 +4,7 @@ mod video_upload;
 
 use crate::{
     component::toggle::ToggleWithLabel,
-    state::canisters::AuthProfileCanisterResource,
+    state::canisters::authenticated_canisters,
     utils::event_streaming::events::{VideoUploadInitiated, VideoUploadUploadButtonClicked},
 };
 
@@ -52,29 +52,23 @@ fn PreUploadView(trigger_upload: WriteSignal<Option<UploadParams>>) -> impl Into
     let enable_hot_or_not = create_node_ref::<Input>();
     let is_nsfw = create_node_ref::<Input>();
 
-    let profile_and_canister_details: AuthProfileCanisterResource = expect_context();
-    let user_id = move || {
-        profile_and_canister_details()
-            .flatten()
-            .map(|(q, _)| q.principal)
-    };
-    let display_name = move || {
-        profile_and_canister_details()
-            .flatten()
-            .map(|(q, _)| q.display_name)
-    };
-    let canister_id = move || profile_and_canister_details().flatten().map(|(_, q)| q);
+    let canisters = authenticated_canisters();
+    let details = canisters.profile_details();
 
-    VideoUploadInitiated.send_event(user_id(), display_name(), canister_id());
+    VideoUploadInitiated.send_event(
+        details.principal,
+        details.display_name.clone(),
+        canisters.user_canister(),
+    );
 
     let on_submit = move || {
         VideoUploadUploadButtonClicked.send_event(
             hashtag_inp,
             is_nsfw,
             enable_hot_or_not,
-            user_id(),
-            display_name(),
-            canister_id(),
+            details.principal,
+            details.display_name.clone(),
+            canisters.user_canister(),
         );
 
         let description = desc.get_untracked().unwrap().value();

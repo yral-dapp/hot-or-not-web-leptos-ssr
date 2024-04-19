@@ -11,11 +11,7 @@ use crate::component::connect::ConnectLogin;
 use crate::utils::event_streaming::events::{Refer, ReferShareLink};
 use crate::{
     component::{back_btn::BackButton, title::Title},
-    state::{
-        auth::account_connected_reader,
-        canisters::{authenticated_canisters, AuthProfileCanisterResource},
-    },
-    try_or_redirect_opt,
+    state::{auth::account_connected_reader, canisters::authenticated_canisters},
     utils::web::copy_to_clipboard,
 };
 use history::HistoryView;
@@ -46,7 +42,6 @@ fn ReferLoaded(user_principal: Principal) -> impl IntoView {
         })
         .unwrap_or_default();
 
-    let profile_and_canister_details: AuthProfileCanisterResource = expect_context();
     let (logged_in, _) = account_connected_reader();
 
     let click_copy = create_action(move |()| {
@@ -54,7 +49,7 @@ fn ReferLoaded(user_principal: Principal) -> impl IntoView {
         async move {
             let _ = copy_to_clipboard(&refer_link);
 
-            ReferShareLink.send_event(profile_and_canister_details, logged_in);
+            ReferShareLink.send_event(logged_in);
         }
     });
 
@@ -69,34 +64,11 @@ fn ReferLoaded(user_principal: Principal) -> impl IntoView {
 }
 
 #[component]
-fn ReferLoading() -> impl IntoView {
-    view! {
-        <div class="flex border-dashed w-full md:w-2/12 p-1 h-10 md:h-12 border-2 border-primary-500 rounded-full">
-            <span class="bg-white/30 w-full h-full animate-pulse rounded-full "></span>
-        </div>
-    }
-}
-
-#[component]
 fn ReferCode() -> impl IntoView {
     let canisters = authenticated_canisters();
+    let user_principal = canisters.identity().sender().unwrap();
 
-    view! {
-        <Suspense fallback=ReferLoading>
-            {move || {
-                canisters()
-                    .and_then(|canisters| {
-                        let canisters = try_or_redirect_opt!(canisters)?;
-                        let user_principal = canisters.identity().sender().unwrap();
-                        Some(view! { <ReferLoaded user_principal/> })
-                    })
-                    .unwrap_or_else(|| {
-                        view! { <ReferLoading/> }
-                    })
-            }}
-
-        </Suspense>
-    }
+    view! { <ReferLoaded user_principal/> }
 }
 
 #[component]
