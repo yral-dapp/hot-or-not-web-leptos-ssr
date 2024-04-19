@@ -11,6 +11,7 @@ use crate::canister::individual_user_template::UserProfileDetailsForFrontend;
 use crate::component::auth_providers::ProviderKind;
 use crate::state::canisters::Canisters;
 use crate::state::history::HistoryCtx;
+#[cfg(feature = "ga4")]
 use crate::utils::event_streaming::{send_event, send_event_warehouse, send_user_id};
 use crate::utils::profile::ProfileDetails;
 use crate::{
