@@ -1,9 +1,10 @@
 use crate::component::back_btn::BackButton;
+use crate::component::canisters_prov::AuthCansProvider;
 use crate::component::title::Title;
 use crate::component::{connect::ConnectLogin, social::*, toggle::Toggle};
 use crate::consts::{social, NSFW_TOGGLE_STORE};
 use crate::state::auth::account_connected_reader;
-use crate::state::canisters::authenticated_canisters;
+use crate::utils::profile::ProfileDetails;
 use leptos::html::Input;
 use leptos::*;
 use leptos_icons::*;
@@ -62,10 +63,18 @@ fn MenuFooter() -> impl IntoView {
 }
 
 #[component]
-fn ProfileInfo() -> impl IntoView {
-    let canisters = authenticated_canisters();
-    let user_details = canisters.profile_details();
+fn ProfileLoading() -> impl IntoView {
+    view! {
+        <div class="w-48 md:w-36 lg:w-24 aspect-square overflow-clip rounded-full bg-white/20 animate-pulse"></div>
+        <div class="flex flex-col gap-2 animate-pulse">
+            <div class="w-64 h-4 bg-white/20 rounded-full"></div>
+            <div class="w-48 h-3 bg-white/20 rounded-full"></div>
+        </div>
+    }
+}
 
+#[component]
+fn ProfileLoaded(user_details: ProfileDetails) -> impl IntoView {
     view! {
         <div class="w-48 md:w-36 lg:w-24 aspect-square overflow-clip rounded-full">
             <img class="h-full w-full object-cover" src=user_details.profile_pic_or_random()/>
@@ -81,6 +90,15 @@ fn ProfileInfo() -> impl IntoView {
                 View Profile
             </a>
         </div>
+    }
+}
+
+#[component]
+fn ProfileInfo() -> impl IntoView {
+    view! {
+        <AuthCansProvider fallback=ProfileLoading let:canisters>
+            <ProfileLoaded user_details=canisters.profile_details()/>
+        </AuthCansProvider>
     }
 }
 

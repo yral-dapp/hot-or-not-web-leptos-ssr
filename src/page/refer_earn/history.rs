@@ -1,8 +1,10 @@
 use leptos::*;
 
+use crate::component::bullet_loader::BulletLoader;
+use crate::component::canisters_prov::AuthCansProvider;
 use crate::component::infinite_scroller::InfiniteScroller;
 use crate::{
-    state::canisters::authenticated_canisters,
+    state::canisters::Canisters,
     utils::{profile::propic_from_principal, timestamp::get_day_month},
 };
 use history_provider::*;
@@ -31,8 +33,7 @@ fn HistoryItem(detail: HistoryDetails, _ref: NodeRef<html::Div>) -> impl IntoVie
 }
 
 #[component]
-pub fn HistoryView() -> impl IntoView {
-    let canisters = authenticated_canisters();
+fn AuthenticatedHistory(canisters: Canisters<true>) -> impl IntoView {
     let provider = get_history_provider(canisters);
     view! {
         <div class="flex flex-col justify-center w-full md:w-10/12 lg:w-8/12 gap-4 pb-16">
@@ -45,6 +46,15 @@ pub fn HistoryView() -> impl IntoView {
             />
 
         </div>
+    }
+}
+
+#[component]
+pub fn HistoryView() -> impl IntoView {
+    view! {
+        <AuthCansProvider fallback=BulletLoader let:canisters>
+            <AuthenticatedHistory canisters/>
+        </AuthCansProvider>
     }
 }
 

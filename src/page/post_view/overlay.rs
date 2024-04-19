@@ -1,8 +1,9 @@
 use crate::{
-    component::modal::Modal,
-    state::canisters::authenticated_canisters,
+    component::{canisters_prov::WithAuthCans, modal::Modal},
+    state::canisters::Canisters,
     utils::{
-        event_streaming::events::LikeVideo,
+        event_streaming::events::{LikeVideo, ShareVideo},
+        route::failure_redirect,
         web::{copy_to_clipboard, share_url},
     },
 };
@@ -10,7 +11,7 @@ use leptos::*;
 use leptos_icons::*;
 use leptos_use::use_window;
 
-use super::video_iter::PostDetails;
+use super::video_iter::{post_liked_by_me, PostDetails};
 
 #[component]
 fn LikeButtonPlaceHolder() -> impl IntoView {
@@ -26,11 +27,11 @@ fn LikeButtonPlaceHolder() -> impl IntoView {
 
 #[component]
 fn LikeButton(
+    canisters: Canisters<true>,
     post_details: PostDetails,
     likes: RwSignal<u64>,
     initial_liked: bool,
 ) -> impl IntoView {
-    let canisters = authenticated_canisters();
     let liked = create_rw_signal(initial_liked);
     let icon_class = Signal::derive(move || {
         if liked() {
@@ -55,10 +56,6 @@ fn LikeButton(
         let post_details = post_details.clone();
 
         async move {
-            let user = canisters.authenticated_user();
-            let user_details = user.get_profile_details().await.unwrap();
-            let canister_id = canisters.user_canister();
-
             batch(move || {
                 if liked.get_untracked() {
                     likes.update(|l| *l -= 1);
@@ -67,7 +64,7 @@ fn LikeButton(
                     likes.update(|l| *l += 1);
                     liked.set(true);
 
-                    LikeVideo.send_event(user_details, post_details, canister_id, likes);
+                    LikeVideo.send_event(post_details, likes);
                 }
             });
             let individual = canisters.individual_user(post_canister);
@@ -97,9 +94,28 @@ fn LikeButton(
 
 #[component]
 fn LikeLoader(post: PostDetails, likes: RwSignal<u64>) -> impl IntoView {
-    let initial_liked = post.liked_by_user;
+    let liked = post.liked_by_user;
+    let canister_id = post.canister_id;
+    let post_id = post.post_id;
+    let liked_fetch = move |cans: Canisters<true>| async move {
+        if let Some(liked) = liked {
+            return liked;
+        }
 
-    view! { <LikeButton post_details=post likes initial_liked/> }
+        match post_liked_by_me(&cans, canister_id, post_id).await {
+            Ok(liked) => liked,
+            Err(e) => {
+                failure_redirect(e);
+                false
+            }
+        }
+    };
+
+    view! {
+        <WithAuthCans with=liked_fetch fallback=LikeButtonPlaceHolder let:d>
+            <LikeButton canisters=d.0 post_details=post.clone() likes initial_liked=d.1/>
+        </WithAuthCans>
+    }
 }
 
 #[component]
@@ -131,29 +147,15 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
 
     let post_details = post.clone();
 
-    let auth_cans = authenticated_canisters();
-
-    let share = create_action(move |&()| {
+    let share = move || {
         let post_details = post_details.clone();
-        let canisters = auth_cans.clone();
-        async move {
-            let url = video_url();
-            if share_url(&url).is_some() {
-                return;
-            }
-            show_share.set(true);
-
-            #[cfg(all(feature = "hydrate", feature = "ga4"))]
-            {
-                use crate::utils::event_streaming::events::ShareVideo;
-
-                let user_details = canisters.profile_details();
-                let canister_id = canisters.user_canister();
-
-                ShareVideo.send_event(post_details, user_details, canister_id);
-            }
+        let url = video_url();
+        if share_url(&url).is_some() {
+            return;
         }
-    });
+        show_share.set(true);
+        ShareVideo.send_event(post_details);
+    };
 
     let profile_url = format!("/profile/{}", post.poster_principal.to_text());
     let post_c = post.clone();
@@ -185,7 +187,7 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
                     <Icon class="drop-shadow-lg" icon=icondata::AiGiftFilled/>
                 </a>
                 <LikeAndAuthCanLoader post=post_c/>
-                <button on:click=move |_| share.dispatch(())>
+                <button on:click=move |_| share()>
                     <Icon class="drop-shadow-lg" icon=icondata::BsSendFill/>
                 </button>
             </div>

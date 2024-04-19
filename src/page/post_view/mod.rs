@@ -14,9 +14,9 @@ use leptos_use::{
 };
 
 use crate::{
-    component::spinner::FullScreenSpinner,
+    component::{canisters_prov::AuthCansProvider, spinner::FullScreenSpinner},
     consts::NSFW_TOGGLE_STORE,
-    state::canisters::authenticated_canisters,
+    state::canisters::{unauth_canisters, Canisters},
     try_or_redirect,
     utils::route::{failure_redirect, go_to_root},
 };
@@ -180,41 +180,45 @@ pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
         })
     }
     let (nsfw_enabled, _, _) = use_local_storage::<bool, FromToStringCodec>(NSFW_TOGGLE_STORE);
+    let auth_canisters = create_rw_signal(None::<Canisters<true>>);
 
-    let canisters = authenticated_canisters();
-    let fetch_video_action = create_action(move |()| {
-        let canisters = canisters.clone();
-        async move {
-            loop {
-                let Some(cursor) = fetch_cursor.try_get_untracked() else {
-                    return;
-                };
-                let nsfw_enabled = nsfw_enabled.get_untracked();
+    let fetch_video_action = create_action(move |()| async move {
+        loop {
+            let Some(cursor) = fetch_cursor.try_get_untracked() else {
+                return;
+            };
+            let auth_canisters = auth_canisters.get_untracked();
+            let nsfw_enabled = nsfw_enabled.get_untracked();
+            let unauth_canisters = unauth_canisters();
 
-                let fetch_stream = VideoFetchStream::new(&canisters, cursor);
-                let chunks = fetch_stream.fetch_post_uids_chunked(3, nsfw_enabled).await;
+            let chunks = if let Some(canisters) = auth_canisters.as_ref() {
+                let fetch_stream = VideoFetchStream::new(canisters, cursor);
+                fetch_stream.fetch_post_uids_chunked(3, nsfw_enabled).await
+            } else {
+                let fetch_stream = VideoFetchStream::new(&unauth_canisters, cursor);
+                fetch_stream.fetch_post_uids_chunked(3, nsfw_enabled).await
+            };
 
-                let res = try_or_redirect!(chunks);
-                let mut chunks = res.posts_stream;
-                let mut cnt = 0;
-                while let Some(chunk) = chunks.next().await {
-                    cnt += chunk.len();
-                    video_queue.update(|q| {
-                        for uid in chunk {
-                            let uid = try_or_redirect!(uid);
-                            q.push(uid);
-                        }
-                    });
-                }
-                if res.end || cnt >= 8 {
-                    queue_end.set(res.end);
-                    break;
-                }
-                fetch_cursor.update(|c| c.advance());
+            let res = try_or_redirect!(chunks);
+            let mut chunks = res.posts_stream;
+            let mut cnt = 0;
+            while let Some(chunk) = chunks.next().await {
+                cnt += chunk.len();
+                video_queue.update(|q| {
+                    for uid in chunk {
+                        let uid = try_or_redirect!(uid);
+                        q.push(uid);
+                    }
+                });
             }
-
+            if res.end || cnt >= 8 {
+                queue_end.set(res.end);
+                break;
+            }
             fetch_cursor.update(|c| c.advance());
         }
+
+        fetch_cursor.update(|c| c.advance());
     });
     create_effect(move |_| {
         if !recovering_state.get_untracked() {
@@ -249,7 +253,12 @@ pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
         );
     });
 
-    view! { <ScrollingView next_videos recovering_state/> }
+    view! {
+        <ScrollingView next_videos recovering_state/>
+        <AuthCansProvider let:cans>
+            {move || auth_canisters.set(Some(cans.clone()))}
+        </AuthCansProvider>
+    }
 }
 
 #[component]
@@ -265,7 +274,7 @@ pub fn PostView() -> impl IntoView {
     };
 
     let PostViewCtx { .. } = expect_context();
-    let canisters = authenticated_canisters();
+    let canisters = unauth_canisters();
 
     let fetch_first_video_uid = create_resource(
         || (),

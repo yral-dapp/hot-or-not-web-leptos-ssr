@@ -17,14 +17,14 @@ use crate::{
         AGENT_URL,
     },
     consts::{FALLBACK_USER_INDEX, METADATA_API_BASE},
-    utils::profile::ProfileDetails,
+    utils::{profile::ProfileDetails, MockPartialEq},
 };
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct AuthCanistersWire {
     id: DelegatedIdentityWire,
-    user_canister: Principal,
-    profile_details: ProfileDetails,
+    pub user_canister: Principal,
+    pub profile_details: ProfileDetails,
     expiry: u64,
 }
 
@@ -234,16 +234,19 @@ pub async fn do_canister_auth(
         Err(e) | Ok(Result8::Err(e)) => log::warn!("Failed to update last access time: {}", e),
     }
     canisters.profile_details = Some(user.get_profile_details().await?.into());
-    let expiry = canisters.expiry_ns();
+    let expiry = canisters.expiry;
 
     Ok(AuthCanistersWire {
         id: auth,
         user_canister: canisters.user_canister,
-        profile_details: canisters.profile_details.unwrap(),
+        profile_details: canisters.profile_details.clone().unwrap(),
         expiry,
     })
 }
 
-pub fn authenticated_canisters() -> Canisters<true> {
+pub type AuthCansResource =
+    Resource<MockPartialEq<DelegatedIdentityWire>, Option<AuthCanistersWire>>;
+
+pub fn authenticated_canisters() -> AuthCansResource {
     expect_context()
 }

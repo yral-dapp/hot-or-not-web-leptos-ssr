@@ -1,13 +1,12 @@
 use candid::Principal;
 use ic_agent::Identity;
 use leptos::html::Input;
-use leptos::{create_effect, ReadSignal, RwSignal};
+use leptos::{create_effect, ReadSignal, RwSignal, SignalGetUntracked};
 use leptos::{create_signal, ev, expect_context, html::Video, Memo, NodeRef, SignalGet, SignalSet};
 use leptos_use::use_event_listener;
 use serde_json::json;
 use wasm_bindgen::JsCast;
 
-use crate::canister::individual_user_template::UserProfileDetailsForFrontend;
 use crate::component::auth_providers::ProviderKind;
 use crate::state::canisters::{authenticated_canisters, Canisters};
 use crate::state::history::HistoryCtx;
@@ -37,6 +36,38 @@ pub enum AnalyticsEvent {
     LogoutConfirmation(LogoutConfirmation),
 }
 
+#[cfg(feature = "ga4")]
+#[derive(Clone)]
+struct UserDetails {
+    details: ProfileDetails,
+    canister_id: Principal,
+}
+
+#[cfg(feature = "ga4")]
+impl UserDetails {
+    fn try_get() -> Option<Self> {
+        let cans_res = authenticated_canisters();
+        let canisters = cans_res.get().flatten()?;
+        let details = canisters.profile_details;
+
+        Some(Self {
+            details,
+            canister_id: canisters.user_canister,
+        })
+    }
+}
+
+#[cfg(feature = "ga4")]
+macro_rules! user_details_or_ret {
+    () => {
+        if let Some(user) = UserDetails::try_get() {
+            user
+        } else {
+            return;
+        }
+    };
+}
+
 #[derive(Default)]
 pub struct VideoWatched;
 
@@ -48,14 +79,9 @@ impl VideoWatched {
     ) {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
         {
-            let canisters = authenticated_canisters();
-            let details = canisters.profile_details();
             let (is_connected, _) = account_connected_reader();
 
             let publisher_user_id = move || vid_details().as_ref().map(|q| q.poster_principal);
-            let user_id = details.principal;
-            let display_name = details.display_name;
-            let canister_id = canisters.user_canister();
             let video_id = move || vid_details().as_ref().map(|q| q.uid.clone());
             let hastag_count = move || vid_details().as_ref().map(|q| q.hastags.len());
             let is_nsfw = move || vid_details().as_ref().map(|q| q.is_nsfw);
@@ -71,8 +97,9 @@ impl VideoWatched {
             let (video_watched, set_video_watched) = create_signal(false);
             let (full_video_watched, set_full_video_watched) = create_signal(false);
 
-            let display_c = display_name.clone();
             let _ = use_event_listener(container_ref, ev::timeupdate, move |evt| {
+                let user = user_details_or_ret!();
+
                 let target = evt.target().unwrap();
                 let video = target.unchecked_into::<web_sys::HtmlVideoElement>();
                 let duration = video.duration();
@@ -88,10 +115,10 @@ impl VideoWatched {
                         "video_duration_watched",
                         &json!({
                             "publisher_user_id":publisher_user_id(),
-                            "user_id": user_id,
+                            "user_id": user.details.principal,
                             "is_loggedIn": is_connected(),
-                            "display_name": display_c,
-                            "canister_id": canister_id,
+                            "display_name": user.details.display_name.clone(),
+                            "canister_id": user.canister_id,
                             "video_id": video_id(),
                             "video_category": "NA",
                             "creator_category": "NA",
@@ -120,10 +147,10 @@ impl VideoWatched {
                         "video_viewed",
                         &json!({
                             "publisher_user_id":publisher_user_id(),
-                            "user_id":user_id,
+                            "user_id": user.details.principal,
                             "is_loggedIn": is_connected(),
-                            "display_name": display_c.clone(),
-                            "canister_id": canister_id,
+                            "display_name": user.details.display_name,
+                            "canister_id": user.canister_id,
                             "video_id": video_id(),
                             "video_category": "NA",
                             "creator_category": "NA",
@@ -141,9 +168,9 @@ impl VideoWatched {
             });
 
             // video duration watched - warehousing
-
-            let display_c = display_name.clone();
             let _ = use_event_listener(container_ref, ev::pause, move |evt| {
+                let user = user_details_or_ret!();
+
                 let target = evt.target().unwrap();
                 let video = target.unchecked_into::<web_sys::HtmlVideoElement>();
                 let duration = video.duration();
@@ -158,10 +185,10 @@ impl VideoWatched {
                     "video_duration_watched",
                     &json!({
                         "publisher_user_id":publisher_user_id(),
-                        "user_id":user_id,
+                        "user_id": user.details.principal,
                         "is_loggedIn": is_connected(),
-                        "display_name": display_c,
-                        "canister_id": canister_id,
+                        "display_name": user.details.display_name.clone(),
+                        "canister_id": user.canister_id,
                         "video_id": video_id(),
                         "video_category": "NA",
                         "creator_category": "NA",
@@ -186,13 +213,7 @@ impl VideoWatched {
 pub struct LikeVideo;
 
 impl LikeVideo {
-    pub fn send_event(
-        &self,
-        user_details: UserProfileDetailsForFrontend,
-        post_details: PostDetails,
-        canister_id: Principal,
-        likes: RwSignal<u64>,
-    ) {
+    pub fn send_event(&self, post_details: PostDetails, likes: RwSignal<u64>) {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
         {
             let publisher_user_id = post_details.poster_principal;
@@ -202,21 +223,18 @@ impl LikeVideo {
             let is_hotornot = post_details.hot_or_not_feed_ranking_score.is_some();
             let view_count = post_details.views;
 
-            let profile_details = ProfileDetails::from(user_details);
-
-            let user_id = profile_details.principal;
-            let display_name = profile_details.display_name;
             let (is_connected, _) = account_connected_reader();
             // like_video - analytics
 
+            let user = user_details_or_ret!();
             send_event(
                 "like_video",
                 &json!({
                     "publisher_user_id":publisher_user_id,
-                    "user_id":user_id,
+                    "user_id": user.details.principal,
                     "is_loggedIn": is_connected(),
-                    "display_name": display_name,
-                    "canister_id": canister_id,
+                    "display_name": user.details.display_name,
+                    "canister_id": user.canister_id,
                     "video_id": video_id,
                     "video_category": "NA",
                     "creator_category": "NA",
@@ -237,12 +255,7 @@ impl LikeVideo {
 pub struct ShareVideo;
 
 impl ShareVideo {
-    pub fn send_event(
-        &self,
-        post_details: PostDetails,
-        profile_details: ProfileDetails,
-        canister_id: Principal,
-    ) {
+    pub fn send_event(&self, post_details: PostDetails) {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
         {
             let publisher_user_id = post_details.poster_principal;
@@ -253,18 +266,19 @@ impl ShareVideo {
             let view_count = post_details.views;
             let like_count = post_details.likes;
 
-            let user_id = profile_details.principal;
-            let display_name = profile_details.display_name;
             let (is_connected, _) = account_connected_reader();
+
+            let user = user_details_or_ret!();
+
             // share_video - analytics
             send_event(
                 "share_video",
                 &json!({
                     "publisher_user_id":publisher_user_id,
-                    "user_id":user_id,
+                    "user_id": user.details.principal,
                     "is_loggedIn": is_connected.get(),
-                    "display_name": display_name,
-                    "canister_id": canister_id,
+                    "display_name": user.details.display_name,
+                    "canister_id": user.canister_id,
                     "video_id": video_id,
                     "video_category": "NA",
                     "creator_category": "NA",
@@ -285,28 +299,20 @@ impl ShareVideo {
 pub struct VideoUploadInitiated;
 
 impl VideoUploadInitiated {
-    pub fn send_event(
-        &self,
-        user_id: Principal,
-        display_name: Option<String>,
-        canister_id: Principal,
-    ) {
+    pub fn send_event(&self) {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
         {
             // video_upload_initiated - analytics
-
-            let display_name = display_name.unwrap_or_default();
-            create_effect(move |_| {
-                send_event(
-                    "video_upload_initiated",
-                    &json!({
-                        "user_id":user_id,
-                        "display_name": display_name,
-                        "canister_id": canister_id,
-                        "creator_category": "NA",
-                    }),
-                );
-            });
+            let user = user_details_or_ret!();
+            send_event(
+                "video_upload_initiated",
+                &json!({
+                    "user_id": user.details.principal,
+                    "display_name": user.details.display_name,
+                    "canister_id": user.canister_id,
+                    "creator_category": "NA",
+                }),
+            );
         }
     }
 }
@@ -320,15 +326,11 @@ impl VideoUploadUploadButtonClicked {
         hashtag_inp: NodeRef<Input>,
         is_nsfw: NodeRef<Input>,
         enable_hot_or_not: NodeRef<Input>,
-        user_id: Principal,
-        display_name: Option<String>,
-        canister_id: Principal,
     ) {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
         {
             // video_upload_upload_button_clicked - analytics
-
-            let display_name = display_name.unwrap_or_default();
+            let user = user_details_or_ret!();
 
             let hashtag_count = hashtag_inp.get_untracked().unwrap().value().len();
             let is_nsfw_val = is_nsfw
@@ -344,9 +346,9 @@ impl VideoUploadUploadButtonClicked {
                 send_event(
                     "video_upload_upload_button_clicked",
                     &json!({
-                        "user_id":user_id,
-                        "display_name": display_name,
-                        "canister_id": canister_id,
+                        "user_id": user.details.principal,
+                        "display_name": user.details.display_name.clone().unwrap_or_default(),
+                        "canister_id": user.canister_id,
                         "creator_category": "NA",
                         "hashtag_count": hashtag_count,
                         "is_NSFW": is_nsfw_val,
@@ -362,24 +364,18 @@ impl VideoUploadUploadButtonClicked {
 pub struct VideoUploadVideoSelected;
 
 impl VideoUploadVideoSelected {
-    pub fn send_event(
-        &self,
-        user_id: Principal,
-        display_name: Option<String>,
-        canister_id: Principal,
-    ) {
+    pub fn send_event(&self) {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
         {
             // video_upload_video_selected - analytics
-
-            let display_name = display_name.unwrap_or_default();
+            let user = user_details_or_ret!();
 
             send_event(
                 "video_upload_video_selected",
                 &json!({
-                    "user_id":user_id,
-                    "display_name": display_name,
-                    "canister_id": canister_id,
+                    "user_id": user.details.principal,
+                    "display_name": user.details.display_name.unwrap_or_default(),
+                    "canister_id": user.canister_id,
                     "creator_category": "NA",
                 }),
             )
@@ -398,22 +394,18 @@ impl VideoUploadUnsuccessful {
         hashtags_len: usize,
         is_nsfw: bool,
         enable_hot_or_not: bool,
-        user_id: Principal,
-        display_name: Option<String>,
-        canister_id: Principal,
     ) {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
         {
             // video_upload_unsuccessful - analytics
-
-            let display_name = display_name.unwrap_or_default();
+            let user = user_details_or_ret!();
 
             send_event(
                 "video_upload_unsuccessful",
                 &json!({
-                    "user_id": user_id,
-                    "display_name": display_name,
-                    "canister_id": canister_id,
+                    "user_id": user.details.principal,
+                    "display_name": user.details.display_name.unwrap_or_default(),
+                    "canister_id": user.canister_id,
                     "creator_category": "NA",
                     "hashtag_count": hashtags_len,
                     "is_NSFW": is_nsfw,
@@ -429,26 +421,18 @@ impl VideoUploadUnsuccessful {
 pub struct VideoUploadSuccessful;
 
 impl VideoUploadSuccessful {
-    pub fn send_event(
-        &self,
-        hashtags_len: usize,
-        is_nsfw: bool,
-        enable_hot_or_not: bool,
-        user_id: Principal,
-        display_name: Option<String>,
-        canister_id: Principal,
-    ) {
+    pub fn send_event(&self, hashtags_len: usize, is_nsfw: bool, enable_hot_or_not: bool) {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
         {
             // video_upload_successful - analytics
-
+            let user = user_details_or_ret!();
             send_event(
                 "video_upload_successful",
                 &json!({
-                    "user_id":user_id,
-                    "publisher_user_id": user_id,
-                    "display_name": display_name,
-                    "canister_id": canister_id,
+                    "user_id": user.details.principal,
+                    "publisher_user_id": user.details.principal,
+                    "display_name": user.details.display_name,
+                    "canister_id": user.canister_id,
                     "creator_category": "NA",
                     "hashtag_count": hashtags_len,
                     "is_NSFW": is_nsfw,
@@ -469,12 +453,11 @@ impl Refer {
         {
             // refer - analytics
 
-            let canisters = authenticated_canisters();
-
-            let details = canisters.profile_details();
+            let user = user_details_or_ret!();
+            let details = user.details;
             let user_id = details.principal;
             let display_name = details.display_name;
-            let canister_id = canisters.user_canister();
+            let canister_id = user.canister_id;
 
             let history_ctx: HistoryCtx = expect_context();
             let prev_site = history_ctx.prev_url();
@@ -504,13 +487,12 @@ impl ReferShareLink {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
         {
             // refer_share_link - analytics
-
-            let canisters = authenticated_canisters();
-            let details = canisters.profile_details();
+            let user = user_details_or_ret!();
+            let details = user.details;
 
             let user_id = details.principal;
             let display_name = details.display_name;
-            let canister_id = canisters.user_canister();
+            let canister_id = user.canister_id;
 
             let history_ctx: HistoryCtx = expect_context();
             let prev_site = history_ctx.prev_url();
@@ -590,16 +572,16 @@ impl LoginJoinOverlayViewed {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
         {
             // login_join_overlay_viewed - analytics
-            let canisters = authenticated_canisters();
+            let user = user_details_or_ret!();
             let event_history: EventHistory = expect_context();
 
-            let user_id = canisters.profile_details().principal;
+            let user_id = user.details.principal;
 
             send_event(
                 "login_join_overlay_viewed",
                 &json!({
                     "user_id_viewer": user_id,
-                    "previous_event": event_history.event_name.get(),
+                    "previous_event": event_history.event_name.get_untracked(),
                 }),
             );
 
@@ -637,13 +619,13 @@ impl LogoutClicked {
     pub fn send_event(&self) {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
         {
-            let canisters = authenticated_canisters();
-            let details = canisters.profile_details();
+            let user = user_details_or_ret!();
+            let details = user.details;
             // logout_clicked - analytics
 
             let user_id = details.principal;
             let display_name = details.display_name;
-            let canister_id = canisters.user_canister();
+            let canister_id = user.canister_id;
 
             send_event(
                 "logout_clicked",
@@ -664,12 +646,12 @@ impl LogoutConfirmation {
     pub fn send_event(&self) {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
         {
-            let canisters = authenticated_canisters();
-            let details = canisters.profile_details();
+            let user = user_details_or_ret!();
+            let details = user.details;
 
             let user_id = details.principal;
             let display_name = details.display_name;
-            let canister_id = canisters.user_canister();
+            let canister_id = user.canister_id;
             // logout_confirmation - analytics
 
             send_event(

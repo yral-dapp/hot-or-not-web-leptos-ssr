@@ -4,10 +4,13 @@ use leptos::*;
 
 use crate::{
     component::{
-        back_btn::BackButton, bullet_loader::BulletLoader, connect::ConnectLogin,
-        infinite_scroller::CursoredDataProvider,
+        back_btn::BackButton,
+        bullet_loader::BulletLoader,
+        canisters_prov::{AuthCansProvider, WithAuthCans},
+        connect::ConnectLogin,
+        infinite_scroller::{CursoredDataProvider, KeyedData},
     },
-    state::{auth::account_connected_reader, canisters::authenticated_canisters},
+    state::{auth::account_connected_reader, canisters::Canisters},
     utils::profile::ProfileDetails,
 };
 use txn::{provider::get_history_provider, TxnView};
@@ -27,6 +30,17 @@ fn ProfileGreeter(details: ProfileDetails) -> impl IntoView {
     }
 }
 
+#[component]
+fn FallbackGreeter() -> impl IntoView {
+    view! {
+        <div class="flex flex-col">
+            <span class="text-white/50 text-md">Welcome!</span>
+            <div class="w-3/4 rounded-full py-2 bg-white/40 animate-pulse"></div>
+        </div>
+        <div class="w-16 aspect-square overflow-clip rounded-full justify-self-end bg-white/40 animate-pulse"></div>
+    }
+}
+
 const RECENT_TXN_CNT: usize = 10;
 
 #[component]
@@ -35,39 +49,49 @@ fn BalanceFallback() -> impl IntoView {
 }
 
 #[component]
-pub fn Wallet() -> impl IntoView {
-    let canisters = authenticated_canisters();
-    let profile_details = canisters.profile_details();
-    let history_prov = get_history_provider(canisters.clone());
-
+fn BalanceFetch(cans: Canisters<true>) -> impl IntoView {
     let balance_resource = create_resource(
         || (),
         move |_| {
-            let canisters = canisters.clone();
+            let canisters = cans.clone();
             async move {
                 let user = canisters.authenticated_user();
-                let balance = user
-                    .get_utility_token_balance()
+
+                user.get_utility_token_balance()
                     .await
                     .map(|b| b.to_string())
-                    .unwrap_or("Error".to_string());
-                Some(balance)
+                    .unwrap_or("Error".to_string())
             }
         },
     );
 
-    let history_resource = create_resource(
-        || (),
-        move |_| {
-            let history_prov = history_prov.clone();
-            async move {
-                let page = history_prov.get_by_cursor(0, RECENT_TXN_CNT).await.ok()?;
+    view! {
+        {move || {
+            balance_resource().map(|bal| view! { <span class="text-xl lg:text-2xl">{bal}</span> })
+        }}
+    }
+}
 
-                Some(page.data)
-            }
-        },
-    );
+#[component]
+pub fn Wallet() -> impl IntoView {
     let (is_connected, _) = account_connected_reader();
+
+    let balance_fetch = |cans: Canisters<true>| async move {
+        let user = cans.authenticated_user();
+
+        user.get_utility_token_balance()
+            .await
+            .map(|b| b.to_string())
+            .unwrap_or("Error".to_string())
+    };
+    let history_fetch = |cans: Canisters<true>| {
+        let history_prov = get_history_provider(cans);
+        async move {
+            let page = history_prov.get_by_cursor(0, RECENT_TXN_CNT).await;
+
+            page.map(|p| p.data).unwrap_or(vec![])
+        }
+    };
 
     view! {
         <div>
@@ -78,26 +102,15 @@ pub fn Wallet() -> impl IntoView {
             </div>
             <div class="flex flex-col w-dvw min-h-dvh bg-black gap-4 px-4 pt-4 pb-12">
                 <div class="grid grid-cols-2 grid-rows-1 items-center w-full">
-                    <ProfileGreeter details=profile_details/>
+                    <AuthCansProvider fallback=FallbackGreeter let:cans>
+                        <ProfileGreeter details=cans.profile_details()/>
+                    </AuthCansProvider>
                 </div>
                 <div class="flex flex-col w-full items-center mt-6 text-white">
                     <span class="text-md lg:text-lg uppercase">Your Coyns Balance</span>
-                    <Suspense fallback=BalanceFallback>
-                        {move || {
-                            balance_resource
-                                .get()
-                                .flatten()
-                                .map(|bal| view! { <span class="text-xl lg:text-2xl">{bal}</span> })
-                                .unwrap_or_else(|| {
-                                    view! {
-                                        <span class="flex justify-center w-full">
-                                            <BalanceFallback/>
-                                        </span>
-                                    }
-                                })
-                        }}
-
-                    </Suspense>
+                    <WithAuthCans fallback=BalanceFallback with=balance_fetch let:bal>
+                        <span class="text-xl lg:text-2xl">{bal.1}</span>
+                    </WithAuthCans>
                 </div>
                 <Show when=move || !is_connected()>
                     <div class="flex flex-col w-full py-5 items-center">
@@ -117,21 +130,11 @@ pub fn Wallet() -> impl IntoView {
                         </a>
                     </div>
                     <div class="flex flex-col divide-y divide-white/10">
-                        <Suspense fallback=BulletLoader>
-                            {move || {
-                                history_resource
-                                    .get()
-                                    .flatten()
-                                    .map(|history| {
-                                        history
-                                            .into_iter()
-                                            .map(|info| view! { <TxnView info/> })
-                                            .collect::<Vec<_>>()
-                                    })
-                                    .unwrap_or_else(|| vec![view! { <BulletLoader/> }])
-                            }}
-
-                        </Suspense>
+                        <WithAuthCans fallback=BulletLoader with=history_fetch let:history>
+                            <For each=move || history.1.clone() key=|inf| inf.key() let:info>
+                                <TxnView info/>
+                            </For>
+                        </WithAuthCans>
                     </div>
                 </div>
             </div>

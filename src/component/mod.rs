@@ -3,6 +3,7 @@ pub mod auth_providers;
 pub mod back_btn;
 pub mod base_route;
 pub mod bullet_loader;
+pub mod canisters_prov;
 pub mod coming_soon;
 pub mod connect;
 pub mod feed_popup;

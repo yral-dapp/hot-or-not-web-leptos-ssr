@@ -7,11 +7,12 @@ use leptos_icons::*;
 use leptos_router::create_query_signal;
 use leptos_use::use_window;
 
+use crate::component::canisters_prov::AuthCansProvider;
 use crate::component::connect::ConnectLogin;
 use crate::utils::event_streaming::events::{Refer, ReferShareLink};
 use crate::{
     component::{back_btn::BackButton, title::Title},
-    state::{auth::account_connected_reader, canisters::authenticated_canisters},
+    state::auth::account_connected_reader,
     utils::web::copy_to_clipboard,
 };
 use history::HistoryView;
@@ -64,11 +65,21 @@ fn ReferLoaded(user_principal: Principal) -> impl IntoView {
 }
 
 #[component]
-fn ReferCode() -> impl IntoView {
-    let canisters = authenticated_canisters();
-    let user_principal = canisters.identity().sender().unwrap();
+fn ReferLoading() -> impl IntoView {
+    view! {
+        <div class="flex border-dashed w-full md:w-2/12 p-1 h-10 md:h-12 border-2 border-primary-500 rounded-full">
+            <span class="bg-white/30 w-full h-full animate-pulse rounded-full "></span>
+        </div>
+    }
+}
 
-    view! { <ReferLoaded user_principal/> }
+#[component]
+fn ReferCode() -> impl IntoView {
+    view! {
+        <AuthCansProvider fallback=ReferLoading let:cans>
+            <ReferLoaded user_principal=cans.identity().sender().unwrap()/>
+        </AuthCansProvider>
+    }
 }
 
 #[component]

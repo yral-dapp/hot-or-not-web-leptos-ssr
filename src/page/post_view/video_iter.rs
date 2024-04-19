@@ -37,8 +37,8 @@ impl FetchCursor {
     }
 }
 
-pub async fn get_post_uid(
-    canisters: &Canisters<true>,
+pub async fn get_post_uid<const AUTH: bool>(
+    canisters: &Canisters<AUTH>,
     user_canister: Principal,
     post_id: u64,
 ) -> Result<Option<PostDetails>, PostViewError> {
@@ -65,6 +65,7 @@ pub async fn get_post_uid(
     }
 
     Ok(Some(PostDetails::from_canister_post(
+        AUTH,
         user_canister,
         post_details,
     )))
@@ -92,7 +93,9 @@ pub struct PostDetails {
     pub likes: u64,
     pub display_name: String,
     pub propic_url: String,
-    pub liked_by_user: bool,
+    /// Whether post is liked by the authenticated
+    /// user or not, None if unknown
+    pub liked_by_user: Option<bool>,
     pub poster_principal: Principal,
     pub hastags: Vec<String>,
     pub is_nsfw: bool,
@@ -100,7 +103,11 @@ pub struct PostDetails {
 }
 
 impl PostDetails {
-    pub fn from_canister_post(canister_id: Principal, details: PostDetailsForFrontend) -> Self {
+    pub fn from_canister_post(
+        authenticated: bool,
+        canister_id: Principal,
+        details: PostDetailsForFrontend,
+    ) -> Self {
         Self {
             canister_id,
             post_id: details.id,
@@ -115,7 +122,7 @@ impl PostDetails {
             propic_url: details
                 .created_by_profile_photo_url
                 .unwrap_or_else(|| propic_from_principal(details.created_by_user_principal_id)),
-            liked_by_user: details.liked_by_me,
+            liked_by_user: authenticated.then_some(details.liked_by_me),
             poster_principal: details.created_by_user_principal_id,
             hastags: details.hashtags,
             is_nsfw: details.is_nsfw,
@@ -131,13 +138,13 @@ pub struct FetchVideosRes<'a> {
     pub end: bool,
 }
 
-pub struct VideoFetchStream<'a> {
-    canisters: &'a Canisters<true>,
+pub struct VideoFetchStream<'a, const AUTH: bool> {
+    canisters: &'a Canisters<AUTH>,
     cursor: FetchCursor,
 }
 
-impl<'a> VideoFetchStream<'a> {
-    pub fn new(canisters: &'a Canisters<true>, cursor: FetchCursor) -> Self {
+impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
+    pub fn new(canisters: &'a Canisters<AUTH>, cursor: FetchCursor) -> Self {
         Self { canisters, cursor }
     }
 

@@ -7,7 +7,7 @@ use crate::{
     component::spinner::FullScreenSpinner,
     state::{
         auth::{auth_resource, AuthState},
-        canisters::{do_canister_auth, Canisters},
+        canisters::{do_canister_auth, AuthCansResource},
         local_storage::use_referrer_store,
     },
     try_or_redirect_opt,
@@ -20,8 +20,12 @@ struct Referrer {
 }
 
 #[component]
-fn CtxProvider(auth: AuthState, canisters: Canisters<true>, children: Children) -> impl IntoView {
-    provide_context(canisters);
+fn CtxProvider(
+    auth: AuthState,
+    canisters_res: AuthCansResource,
+    children: Children,
+) -> impl IntoView {
+    provide_context(canisters_res);
 
     let referrer_query = use_query::<Referrer>();
     let referrer_principal = move || {
@@ -49,27 +53,16 @@ fn CanistersProvider(id: DelegatedIdentityWire) -> impl IntoView {
 
     let canisters_res = create_resource(
         move || MockPartialEq(auth()),
-        move |id| do_canister_auth(id.0),
+        move |id| async move {
+            let cans = try_or_redirect_opt!(do_canister_auth(id.0).await);
+            Some(cans)
+        },
     );
 
     view! {
-        <Suspense fallback=FullScreenSpinner>
-            {move || {
-                canisters_res()
-                    .and_then(|cans| {
-                        let cans = try_or_redirect_opt!(cans);
-                        let canisters: Canisters<true> = try_or_redirect_opt!(cans.try_into());
-                        Some(
-                            view! {
-                                <CtxProvider auth canisters>
-                                    <Outlet/>
-                                </CtxProvider>
-                            },
-                        )
-                    })
-            }}
-
-        </Suspense>
+        <CtxProvider auth canisters_res>
+            <Outlet/>
+        </CtxProvider>
     }
 }
 
