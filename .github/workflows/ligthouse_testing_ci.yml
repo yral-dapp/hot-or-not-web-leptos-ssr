@@ -42,4 +42,6 @@ jobs:
                 LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
 
           - name: run playwright
-            run: npx playwright test --project=chromium
+            run: 
+              npx playwright install    
+              npx playwright test --project=chromium
