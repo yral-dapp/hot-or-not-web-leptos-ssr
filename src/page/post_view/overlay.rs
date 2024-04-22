@@ -14,7 +14,7 @@ use leptos_use::use_window;
 use super::video_iter::{post_liked_by_me, PostDetails};
 
 #[component]
-fn LikeButtonPlaceHolder() -> impl IntoView {
+fn LikeButtonPlaceHolder(likes: u64) -> impl IntoView {
     view! {
         <button disabled>
             <Icon
@@ -22,6 +22,7 @@ fn LikeButtonPlaceHolder() -> impl IntoView {
                 icon=icondata::AiHeartFilled
             />
         </button>
+        <span class="text-sm md:text-md">{likes}</span>
     }
 }
 
@@ -89,6 +90,7 @@ fn LikeButton(
         >
             <Icon class=icon_class style=icon_style icon=icondata::AiHeartFilled/>
         </button>
+        <span class="text-sm md:text-md">{likes}</span>
     }
 }
 
@@ -112,7 +114,11 @@ fn LikeLoader(post: PostDetails, likes: RwSignal<u64>) -> impl IntoView {
     };
 
     view! {
-        <WithAuthCans with=liked_fetch fallback=LikeButtonPlaceHolder let:d>
+        <WithAuthCans
+            with=liked_fetch
+            fallback=move || view! { <LikeButtonPlaceHolder likes=likes.get_untracked()/> }
+            let:d
+        >
             <LikeButton canisters=d.0 post_details=post.clone() likes initial_liked=d.1/>
         </WithAuthCans>
     }
@@ -121,12 +127,10 @@ fn LikeLoader(post: PostDetails, likes: RwSignal<u64>) -> impl IntoView {
 #[component]
 fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
     let likes = create_rw_signal(post.likes);
-    let post = store_value(post);
 
     view! {
         <div class="flex flex-col gap-1 items-center">
-            <LikeLoader post=post.get_value() likes/>
-            <span class="text-sm md:text-md">{likes}</span>
+            <LikeLoader post likes/>
         </div>
     }
 }

@@ -40,7 +40,7 @@ where
     DF: Fn(Canisters<true>) -> DFut + 'static + Clone,
 {
     let can_c = cans.clone();
-    let with_res = create_resource(
+    let with_res = create_blocking_resource(
         || (),
         move |_| {
             let cans = can_c.clone();
