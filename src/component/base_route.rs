@@ -49,12 +49,15 @@ fn CtxProvider(
 
 #[component]
 fn CanistersProvider(id: DelegatedIdentityWire) -> impl IntoView {
-    let auth = AuthState::new(id);
+    let auth = use_context().unwrap_or_else(move || AuthState::new(id));
+    let canisters_store = create_rw_signal(None);
+    provide_context(canisters_store);
 
     let canisters_res = create_resource(
         move || MockPartialEq(auth()),
         move |id| async move {
             let cans = try_or_redirect_opt!(do_canister_auth(id.0).await);
+            canisters_store.set(Some(cans.clone()));
             Some(cans)
         },
     );

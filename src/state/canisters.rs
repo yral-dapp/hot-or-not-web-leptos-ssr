@@ -250,3 +250,7 @@ pub type AuthCansResource =
 pub fn authenticated_canisters() -> AuthCansResource {
     expect_context()
 }
+
+pub fn auth_canisters_store() -> RwSignal<Option<Canisters<true>>> {
+    expect_context()
+}

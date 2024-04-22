@@ -1,14 +1,14 @@
 use candid::Principal;
 use ic_agent::Identity;
 use leptos::html::Input;
-use leptos::{create_effect, ReadSignal, RwSignal, SignalGetUntracked};
+use leptos::{create_effect, use_context, ReadSignal, RwSignal, SignalGetUntracked};
 use leptos::{create_signal, ev, expect_context, html::Video, Memo, NodeRef, SignalGet, SignalSet};
 use leptos_use::use_event_listener;
 use serde_json::json;
 use wasm_bindgen::JsCast;
 
 use crate::component::auth_providers::ProviderKind;
-use crate::state::canisters::{authenticated_canisters, Canisters};
+use crate::state::canisters::Canisters;
 use crate::state::history::HistoryCtx;
 #[cfg(feature = "ga4")]
 use crate::utils::event_streaming::{send_event, send_event_warehouse, send_user_id};
@@ -46,13 +46,13 @@ struct UserDetails {
 #[cfg(feature = "ga4")]
 impl UserDetails {
     fn try_get() -> Option<Self> {
-        let cans_res = authenticated_canisters();
-        let canisters = cans_res.get().flatten()?;
-        let details = canisters.profile_details;
+        let cans_store: RwSignal<Option<Canisters<true>>> = use_context()?;
+        let canisters = cans_store.get_untracked()?;
+        let details = canisters.profile_details();
 
         Some(Self {
             details,
-            canister_id: canisters.user_canister,
+            canister_id: canisters.user_canister(),
         })
     }
 }
@@ -460,21 +460,19 @@ impl Refer {
             let canister_id = user.canister_id;
 
             let history_ctx: HistoryCtx = expect_context();
-            let prev_site = history_ctx.prev_url();
+            let prev_site = history_ctx.prev_url_untracked();
 
             // refer - analytics
-            create_effect(move |_| {
-                send_event(
-                    "refer",
-                    &json!({
-                        "user_id":user_id,
-                        "is_loggedIn": logged_in.get(),
-                        "display_name": display_name,
-                        "canister_id": canister_id,
-                        "refer_location": prev_site,
-                    }),
-                );
-            });
+            send_event(
+                "refer",
+                &json!({
+                    "user_id":user_id,
+                    "is_loggedIn": logged_in.get_untracked(),
+                    "display_name": display_name,
+                    "canister_id": canister_id,
+                    "refer_location": prev_site,
+                }),
+            );
         }
     }
 }
@@ -495,14 +493,14 @@ impl ReferShareLink {
             let canister_id = user.canister_id;
 
             let history_ctx: HistoryCtx = expect_context();
-            let prev_site = history_ctx.prev_url();
+            let prev_site = history_ctx.prev_url_untracked();
 
             // refer_share_link - analytics
             send_event(
                 "refer_share_link",
                 &json!({
                     "user_id":user_id,
-                    "is_loggedIn": logged_in.get(),
+                    "is_loggedIn": logged_in.get_untracked(),
                     "display_name": display_name,
                     "canister_id": canister_id,
                     "refer_location": prev_site,
@@ -604,7 +602,7 @@ impl LoginCta {
             send_event(
                 "login_cta",
                 &json!({
-                    "previous_event": event_history.event_name.get(),
+                    "previous_event": event_history.event_name.get_untracked(),
                     "cta_location": cta_location,
                 }),
             );
