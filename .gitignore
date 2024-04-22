@@ -20,3 +20,10 @@ redb-kv.db
 
 # ide config
 .idea/
+
+# lighthousece reports
+.lighthouseci/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
