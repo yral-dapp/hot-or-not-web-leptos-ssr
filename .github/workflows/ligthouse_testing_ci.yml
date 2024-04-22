@@ -44,4 +44,4 @@ jobs:
           - name: run playwright
             run: 
               npx playwright install    
-              npx playwright test --project=chromium
+              npx playwright test
