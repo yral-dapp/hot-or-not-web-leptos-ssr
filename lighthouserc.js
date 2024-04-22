@@ -1,7 +1,7 @@
 module.exports = {
     ci: {
         collect: {
-        url: ['http://127.0.0.1:3000'],
+        url: ['https://yral.com/'],
         },
         upload: {
             target: 'temporary-public-storage',
