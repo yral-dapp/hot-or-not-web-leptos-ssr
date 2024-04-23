@@ -19,7 +19,6 @@ use crate::{
     utils::{profile::ProfileDetails, MockPartialEq},
 };
 
-
 #[derive(Clone)]
 pub struct Canisters<const AUTH: bool> {
     agent: ic_agent::Agent,
