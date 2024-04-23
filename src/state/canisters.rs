@@ -8,7 +8,7 @@ use yral_metadata_client::MetadataClient;
 use yral_metadata_types::UserMetadata;
 
 use crate::{
-    auth::DelegatedIdentityWire,
+    auth::{DelegatedIdentityWire, TempRefreshToken},
     canister::{
         individual_user_template::{IndividualUserTemplate, Result8},
         platform_orchestrator::{self, PlatformOrchestrator},
@@ -244,8 +244,10 @@ pub async fn do_canister_auth(
     })
 }
 
-pub type AuthCansResource =
-    Resource<MockPartialEq<DelegatedIdentityWire>, Option<AuthCanistersWire>>;
+pub type AuthCansResource = Resource<
+    MockPartialEq<Option<DelegatedIdentityWire>>,
+    Result<(AuthCanistersWire, Option<TempRefreshToken>), ServerFnError>,
+>;
 
 pub fn authenticated_canisters() -> AuthCansResource {
     expect_context()

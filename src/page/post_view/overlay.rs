@@ -1,6 +1,6 @@
 use crate::{
     component::{canisters_prov::WithAuthCans, modal::Modal},
-    state::canisters::Canisters,
+    state::canisters::{auth_canisters_store, Canisters},
     utils::{
         event_streaming::events::{LikeVideo, ShareVideo},
         route::failure_redirect,
@@ -14,56 +14,45 @@ use leptos_use::use_window;
 use super::video_iter::{post_liked_by_me, PostDetails};
 
 #[component]
-fn LikeButtonPlaceHolder(likes: u64) -> impl IntoView {
-    view! {
-        <button disabled>
-            <Icon
-                class="drop-shadow-lg text-neutral-400 animate-pulse"
-                icon=icondata::AiHeartFilled
-            />
-        </button>
-        <span class="text-sm md:text-md">{likes}</span>
-    }
-}
+fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
+    let likes = create_rw_signal(post.likes);
 
-#[component]
-fn LikeButton(
-    canisters: Canisters<true>,
-    post_details: PostDetails,
-    likes: RwSignal<u64>,
-    initial_liked: bool,
-) -> impl IntoView {
-    let liked = create_rw_signal(initial_liked);
+    let liked = create_rw_signal(None::<bool>);
     let icon_class = Signal::derive(move || {
-        if liked() {
-            TextProp::from("fill-primary-600")
+        if liked().unwrap_or_default() {
+            Some(TextProp::from("fill-primary-600"))
         } else {
-            TextProp::from("text-white")
+            None
         }
     });
     let icon_style = Signal::derive(move || {
-        if liked() {
+        if liked().unwrap_or_default() {
             Some(TextProp::from("filter: drop-shadow(2px 0 0 white) drop-shadow(-2px 0 0 white) drop-shadow(0 2px 0 white) drop-shadow(0 -2px 0 white);"))
         } else {
             None
         }
     });
-    let post_canister = post_details.canister_id;
-    let post_id = post_details.post_id;
+
+    let post_canister = post.canister_id;
+    let post_id = post.post_id;
+    let initial_liked = post.liked_by_user;
+    let canisters = auth_canisters_store();
 
     let like_toggle = create_action(move |&()| {
-        let canisters = canisters.clone();
-
-        let post_details = post_details.clone();
+        let post_details = post.clone();
 
         async move {
+            let Some(canisters) = canisters.get_untracked() else {
+                log::warn!("Trying to toggle like without auth");
+                return;
+            };
             batch(move || {
-                if liked.get_untracked() {
+                if liked.get_untracked().unwrap_or_default() {
                     likes.update(|l| *l -= 1);
-                    liked.set(false)
+                    liked.set(Some(false));
                 } else {
                     likes.update(|l| *l += 1);
-                    liked.set(true);
+                    liked.set(Some(true));
 
                     LikeVideo.send_event(post_details, likes);
                 }
@@ -76,35 +65,18 @@ fn LikeButton(
                 Ok(_) => (),
                 Err(e) => {
                     log::warn!("Error toggling like status: {:?}", e);
-                    liked.update(|l| *l = !*l);
+                    liked.update(|l| _ = l.as_mut().map(|l| *l = !*l));
                 }
             }
         }
     });
 
-    view! {
-        <button
-            on:click=move |_| like_toggle.dispatch(())
-            class="drop-shadow-lg disabled:animate-pulse"
-            disabled=like_toggle.pending()
-        >
-            <Icon class=icon_class style=icon_style icon=icondata::AiHeartFilled/>
-        </button>
-        <span class="text-sm md:text-md">{likes}</span>
-    }
-}
-
-#[component]
-fn LikeLoader(post: PostDetails, likes: RwSignal<u64>) -> impl IntoView {
-    let liked = post.liked_by_user;
-    let canister_id = post.canister_id;
-    let post_id = post.post_id;
     let liked_fetch = move |cans: Canisters<true>| async move {
-        if let Some(liked) = liked {
+        if let Some(liked) = initial_liked {
             return liked;
         }
 
-        match post_liked_by_me(&cans, canister_id, post_id).await {
+        match post_liked_by_me(&cans, post_canister, post_id).await {
             Ok(liked) => liked,
             Err(e) => {
                 failure_redirect(e);
@@ -113,25 +85,22 @@ fn LikeLoader(post: PostDetails, likes: RwSignal<u64>) -> impl IntoView {
         }
     };
 
-    view! {
-        <WithAuthCans
-            with=liked_fetch
-            fallback=move || view! { <LikeButtonPlaceHolder likes=likes.get_untracked()/> }
-            let:d
-        >
-            <LikeButton canisters=d.0 post_details=post.clone() likes initial_liked=d.1/>
-        </WithAuthCans>
-    }
-}
-
-#[component]
-fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
-    let likes = create_rw_signal(post.likes);
+    let liking = like_toggle.pending();
 
     view! {
         <div class="flex flex-col gap-1 items-center">
-            <LikeLoader post likes/>
+            <button
+                on:click=move |_| like_toggle.dispatch(())
+                class="drop-shadow-lg disabled:text-neutral-400 disabled:animate-pulse"
+                disabled=move || liking() || liked.with(|l| l.is_none())
+            >
+                <Icon class=icon_class style=icon_style icon=icondata::AiHeartFilled/>
+            </button>
+            <span class="text-sm md:text-md">{likes}</span>
         </div>
+        <WithAuthCans with=liked_fetch let:d>
+            {move || liked.set(Some(d.1))}
+        </WithAuthCans>
     }
 }
 

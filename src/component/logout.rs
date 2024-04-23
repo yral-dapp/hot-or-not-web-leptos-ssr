@@ -23,7 +23,7 @@ pub fn Logout() -> impl IntoView {
             LogoutConfirmation.send_event();
 
             let auth = auth_state();
-            auth.set(id);
+            auth.set(Some(id));
 
             let (_, write_account_connected, _) =
                 use_local_storage::<bool, FromToStringCodec>(ACCOUNT_CONNECTED_STORE);

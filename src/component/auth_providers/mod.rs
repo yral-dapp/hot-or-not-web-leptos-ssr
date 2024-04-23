@@ -160,7 +160,7 @@ pub fn LoginProviders(show_modal: RwSignal<bool>, lock_closing: RwSignal<bool>) 
         login_complete: SignalSetter::map(move |val: DelegatedIdentityWire| {
             new_identity.set(Some(val.clone()));
             write_account_connected(true);
-            auth.set(val);
+            auth.set(Some(val));
             show_modal.set(false);
         }),
     };

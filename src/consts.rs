@@ -33,6 +33,8 @@ pub mod auth {
     pub const DELEGATION_MAX_AGE: Duration = Duration::from_secs(60 * 60 * 24 * 7);
     /// Refresh expiry, 30 days
     pub const REFRESH_MAX_AGE: Duration = Duration::from_secs(60 * 60 * 24 * 30);
+    /// Temporary refresh token, 5 minutes
+    pub const TEMP_REFRESH_MAX_AGE: Duration = Duration::from_secs(60 * 5);
     pub const REFRESH_TOKEN_COOKIE: &str = "user-identity";
 }
 

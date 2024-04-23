@@ -3,14 +3,13 @@ use leptos::*;
 use leptos_router::*;
 
 use crate::{
-    auth::DelegatedIdentityWire,
-    component::spinner::FullScreenSpinner,
+    auth::{extract_or_generate_identity, upgrade_temp_refresh_token, TempRefreshToken},
     state::{
-        auth::{auth_resource, AuthState},
-        canisters::{do_canister_auth, AuthCansResource},
+        auth::AuthState,
+        canisters::{do_canister_auth, AuthCansResource, Canisters},
         local_storage::use_referrer_store,
     },
-    try_or_redirect_opt,
+    try_or_redirect,
     utils::MockPartialEq,
 };
 
@@ -48,40 +47,47 @@ fn CtxProvider(
 }
 
 #[component]
-fn CanistersProvider(id: DelegatedIdentityWire) -> impl IntoView {
-    let auth = use_context().unwrap_or_else(move || AuthState::new(id));
-    let canisters_store = create_rw_signal(None);
+pub fn BaseRoute() -> impl IntoView {
+    let auth = AuthState::default();
+    let canisters_store = create_rw_signal(None::<Canisters<true>>);
     provide_context(canisters_store);
 
+    let temp_refresh_token = create_rw_signal(None::<TempRefreshToken>);
     let canisters_res = create_resource(
         move || MockPartialEq(auth()),
-        move |id| async move {
-            let cans = try_or_redirect_opt!(do_canister_auth(id.0).await);
-            canisters_store.set(Some(cans.clone()));
-            Some(cans)
+        move |auth_id| async move {
+            let (id, temp_tok) = if let Some(id) = auth_id.0 {
+                (id, None)
+            } else {
+                let (id, temp_tok) = extract_or_generate_identity().await?;
+                (id, Some(temp_tok))
+            };
+            let cans = do_canister_auth(id).await?;
+            Ok((cans, temp_tok))
         },
     );
+    let _refresh_token_upgrade =
+        create_local_resource(temp_refresh_token, |temp_token| async move {
+            let Some(temp_token) = temp_token else {
+                return;
+            };
+            if let Err(e) = upgrade_temp_refresh_token(temp_token).await {
+                log::warn!("failed to upgrade temp refresh token: {e}... ignoring");
+            }
+        });
 
     view! {
         <CtxProvider auth canisters_res>
             <Outlet/>
         </CtxProvider>
-    }
-}
-
-/// Base route is technically rendered **adjacent** to all routes
-/// do not use it for any parent -> child communication, such as passing global context
-#[component]
-pub fn BaseRoute() -> impl IntoView {
-    let id_res = auth_resource();
-
-    view! {
-        <Suspense fallback=FullScreenSpinner>
+        <Suspense>
             {move || {
-                id_res()
-                    .flatten()
-                    .map(move |id| {
-                        view! { <CanistersProvider id/> }
+                canisters_res()
+                    .map(|res| {
+                        let (cans, temp_tok) = try_or_redirect!(res);
+                        let cans = try_or_redirect!(cans.try_into());
+                        canisters_store.set(Some(cans));
+                        temp_refresh_token.set(temp_tok);
                     })
             }}
 

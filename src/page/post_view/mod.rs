@@ -14,7 +14,7 @@ use leptos_use::{
 };
 
 use crate::{
-    component::{canisters_prov::AuthCansProvider, spinner::FullScreenSpinner},
+    component::spinner::FullScreenSpinner,
     consts::NSFW_TOGGLE_STORE,
     state::canisters::{unauth_canisters, Canisters},
     try_or_redirect,
@@ -180,7 +180,7 @@ pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
         })
     }
     let (nsfw_enabled, _, _) = use_local_storage::<bool, FromToStringCodec>(NSFW_TOGGLE_STORE);
-    let auth_canisters = create_rw_signal(None::<Canisters<true>>);
+    let auth_canisters: RwSignal<Option<Canisters<true>>> = expect_context();
 
     let fetch_video_action = create_action(move |()| async move {
         loop {
@@ -253,12 +253,7 @@ pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
         );
     });
 
-    view! {
-        <ScrollingView next_videos recovering_state/>
-        <AuthCansProvider let:cans>
-            {move || auth_canisters.set(Some(cans.clone()))}
-        </AuthCansProvider>
-    }
+    view! { <ScrollingView next_videos recovering_state/> }
 }
 
 #[component]

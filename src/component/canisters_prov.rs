@@ -14,21 +14,23 @@ where
 {
     let cans_res = authenticated_canisters();
     let children = store_value(children);
-    view! {
-        <Suspense fallback>
-            {move || {
-                let cans_wire = cans_res().flatten()?;
-                Some((children.get_value())(cans_wire.try_into().unwrap()))
-            }}
+    let loader = move || {
+        let (cans_wire, _) = cans_res()?.ok()?;
+        let cans = cans_wire.try_into().ok()?;
+        Some((children.get_value())(cans).into_view())
+    };
+    let fallback = store_value(fallback);
 
-        </Suspense>
+    view! {
+        <Suspense fallback=fallback
+            .get_value()>{move || loader().unwrap_or_else(|| fallback.get_value().run())}</Suspense>
     }
 }
 
 #[component]
 fn DataLoader<N, EF, D, DFut, DF>(
     cans: Canisters<true>,
-    fallback: ViewFn,
+    fallback: StoredValue<ViewFn>,
     with: DF,
     children: EF,
 ) -> impl IntoView
@@ -40,7 +42,7 @@ where
     DF: Fn(Canisters<true>) -> DFut + 'static + Clone,
 {
     let can_c = cans.clone();
-    let with_res = create_blocking_resource(
+    let with_res = create_resource(
         || (),
         move |_| {
             let cans = can_c.clone();
@@ -53,15 +55,21 @@ where
     let children = store_value(children);
 
     view! {
-        <Suspense fallback>
-            {move || with_res().map(move |d| (children.get_value())((cans.get_value(), d)))}
+        <Suspense fallback=fallback
+            .get_value()>
+            {move || {
+                with_res()
+                    .map(move |d| (children.get_value())((cans.get_value(), d)).into_view())
+                    .unwrap_or_else(move || fallback.get_value().run())
+            }}
+
         </Suspense>
     }
 }
 
 #[component]
 pub fn WithAuthCans<N, EF, D, DFut, DF>(
-    #[prop(into)] fallback: ViewFn,
+    #[prop(into, optional)] fallback: ViewFn,
     with: DF,
     children: EF,
 ) -> impl IntoView
@@ -76,24 +84,19 @@ where
     let fallback = store_value(fallback);
     let children = store_value(children);
     let with = store_value(with);
+
+    let loader = move || {
+        let (cans_wire, _) = cans_res()?.ok()?;
+        let cans: Canisters<true> = cans_wire.try_into().ok()?;
+        Some(
+            view! { <DataLoader cans fallback with=with.get_value() children=children.get_value()/> },
+        )
+    };
+
     view! {
         <Suspense fallback=fallback
             .get_value()>
-            {move || {
-                let cans_wire = cans_res().flatten()?;
-                let cans: Canisters<true> = cans_wire.try_into().unwrap();
-                Some(
-                    view! {
-                        <DataLoader
-                            cans
-                            fallback=fallback.get_value()
-                            with=with.get_value()
-                            children=children.get_value()
-                        />
-                    },
-                )
-            }}
-
+            {move || loader().unwrap_or_else(move || fallback.get_value().run())}
         </Suspense>
     }
 }

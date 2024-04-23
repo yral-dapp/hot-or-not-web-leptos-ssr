@@ -1832,6 +1832,7 @@ dependencies = [
  "gloo-utils",
  "gob-cloudflare",
  "hex",
+ "hmac",
  "http 1.1.0",
  "ic-agent",
  "icondata",
