@@ -9,16 +9,17 @@ use yral_metadata_types::UserMetadata;
 use crate::{
     auth::DelegatedIdentityWire,
     canister::{
-        individual_user_template::{IndividualUserTemplate, Result8},
+        individual_user_template::{IndividualUserTemplate, Result8, UserCanisterDetails},
         platform_orchestrator::{self, PlatformOrchestrator},
         post_cache::{self, PostCache},
         user_index::UserIndex,
         AGENT_URL,
     },
     consts::{FALLBACK_USER_INDEX, METADATA_API_BASE},
-    utils::profile::ProfileDetails,
-    utils::MockPartialEq,
+    utils::{profile::ProfileDetails, MockPartialEq},
 };
+
+use super::local_storage::use_referrer_store;
 
 #[derive(Clone)]
 pub struct Canisters<const AUTH: bool> {
@@ -185,6 +186,7 @@ async fn create_individual_canister(
 
 pub async fn do_canister_auth(
     auth: Option<DelegatedIdentityWire>,
+    referrer: Option<Principal>,
 ) -> Result<Option<Canisters<true>>, ServerFnError> {
     let Some(delegation_identity) = auth else {
         return Ok(None);
@@ -201,7 +203,25 @@ pub async fn do_canister_auth(
     } else {
         create_individual_canister(&canisters, delegation_identity).await?
     };
+
+    let (_, set_referrer_store, _) = use_referrer_store();
     let user = canisters.authenticated_user();
+
+    if let Some(referrer_principal_id) = referrer {
+        let referrer_canister = canisters
+            .get_individual_canister_by_user_principal(referrer_principal_id)
+            .await?;
+        if let Some(referrer_canister_id) = referrer_canister {
+            user.update_referrer_details(UserCanisterDetails {
+                user_canister_id: referrer_canister_id,
+                profile_owner: referrer_principal_id,
+            })
+            .await?;
+        }
+
+        set_referrer_store.set(Some(referrer_principal_id));
+    }
+
     match user
         .update_last_access_time()
         .await

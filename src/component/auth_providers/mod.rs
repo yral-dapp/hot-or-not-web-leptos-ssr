@@ -43,24 +43,15 @@ async fn mark_user_registered(user_principal: Principal) -> Result<(), ServerFnE
     Ok(())
 }
 
-async fn handle_user_login(
-    canisters: Canisters<true>,
-    referrer: Option<Principal>,
-) -> Result<(), ServerFnError> {
-    use self::set_referrer_impl::set_referrer;
-
+async fn handle_user_login(canisters: Canisters<true>) -> Result<(), ServerFnError> {
     let user_principal = canisters.identity().sender().unwrap();
     mark_user_registered(user_principal).await?;
-    let Some(referrer) = referrer else {
+
+    let (referrer_store, _, _) = use_referrer_store();
+
+    let Some(_referrer_principal) = referrer_store.get_untracked() else {
         return Ok(());
     };
-    let Some(referrer_canister) = canisters
-        .get_individual_canister_by_user_principal(referrer)
-        .await?
-    else {
-        return Ok(());
-    };
-    set_referrer(&canisters, referrer, referrer_canister).await?;
 
     issue_referral_rewards(canisters.user_canister()).await?;
 
@@ -138,9 +129,11 @@ pub fn LoginProviders(show_modal: RwSignal<bool>, lock_closing: RwSignal<bool>) 
             let referrer = referrer_store.get_untracked();
 
             // This is some redundant work, but saves us 100+ lines of resource handling
-            let canisters = do_canister_auth(Some(identity.clone())).await?.unwrap();
+            let canisters = do_canister_auth(Some(identity.clone()), referrer)
+                .await?
+                .unwrap();
 
-            if let Err(e) = handle_user_login(canisters.clone(), referrer).await {
+            if let Err(e) = handle_user_login(canisters.clone()).await {
                 log::warn!("failed to handle user login, err {e}. skipping");
             }
 
@@ -210,12 +203,15 @@ mod server_fn_impl {
         ) -> Result<(), ServerFnError> {
             let canisters = unauth_canisters();
             let user = canisters.individual_user(referee_canister);
+            let referrer_details = user
+                .get_profile_details()
+                .await?
+                .referrer_details
+                .ok_or(ServerFnError::new("Referrer details not found"))?;
+
+            let referrer = canisters.individual_user(referrer_details.user_canister_id);
 
             let user_details = user.get_profile_details().await?;
-            let ref_details = user_details
-                .referrer_details
-                .ok_or_else(|| ServerFnError::new("Referral details for user not found"))?;
-            let referrer = canisters.individual_user(ref_details.user_canister_id);
 
             let referrer_index_principal = referrer
                 .get_well_known_principal_value(KnownPrincipalType::CanisterIdUserIndex)
@@ -229,14 +225,14 @@ mod server_fn_impl {
             issue_referral_reward_for(
                 user_index_principal,
                 referee_canister,
-                ref_details.profile_owner,
+                referrer_details.profile_owner,
                 user_details.principal_id,
             )
             .await?;
             issue_referral_reward_for(
                 referrer_index_principal,
-                ref_details.user_canister_id,
-                ref_details.profile_owner,
+                referrer_details.user_canister_id,
+                referrer_details.profile_owner,
                 user_details.principal_id,
             )
             .await?;
@@ -305,6 +301,8 @@ mod server_fn_impl {
 
         pub async fn issue_referral_rewards_impl(
             _referee_canister: Principal,
+            _referrer_canister: Principal,
+            _referrer_principal: Principal,
         ) -> Result<(), ServerFnError> {
             Ok(())
         }
@@ -314,41 +312,5 @@ mod server_fn_impl {
         ) -> Result<(), ServerFnError> {
             Ok(())
         }
-    }
-}
-
-mod set_referrer_impl {
-    use crate::state::canisters::Canisters;
-    use candid::Principal;
-    use leptos::ServerFnError;
-
-    #[cfg(feature = "backend-admin")]
-    pub async fn set_referrer(
-        canisters: &Canisters<true>,
-        referrer: Principal,
-        referrer_canister: Principal,
-    ) -> Result<(), ServerFnError> {
-        use crate::canister::individual_user_template::{Result8, UserCanisterDetails};
-
-        let user = canisters.authenticated_user();
-        user.update_referrer_details(UserCanisterDetails {
-            user_canister_id: referrer_canister,
-            profile_owner: referrer,
-        })
-        .await
-        .map_err(ServerFnError::from)
-        .and_then(|res| match res {
-            Result8::Ok(_) => Ok(()),
-            Result8::Err(e) => Err(ServerFnError::new(format!("failed to set referrer {e}"))),
-        })
-    }
-
-    #[cfg(not(feature = "backend-admin"))]
-    pub async fn set_referrer(
-        _canisters: &Canisters<true>,
-        _referrer: Principal,
-        _referrer_canister: Principal,
-    ) -> Result<(), ServerFnError> {
-        Ok(())
     }
 }
