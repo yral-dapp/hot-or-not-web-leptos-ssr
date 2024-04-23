@@ -19,7 +19,6 @@ use crate::{
     utils::{profile::ProfileDetails, MockPartialEq},
 };
 
-use super::local_storage::use_referrer_store;
 
 #[derive(Clone)]
 pub struct Canisters<const AUTH: bool> {
@@ -204,7 +203,6 @@ pub async fn do_canister_auth(
         create_individual_canister(&canisters, delegation_identity).await?
     };
 
-    let (_, set_referrer_store, _) = use_referrer_store();
     let user = canisters.authenticated_user();
 
     if let Some(referrer_principal_id) = referrer {
@@ -218,8 +216,6 @@ pub async fn do_canister_auth(
             })
             .await?;
         }
-
-        set_referrer_store.set(Some(referrer_principal_id));
     }
 
     match user

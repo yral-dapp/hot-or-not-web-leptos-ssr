@@ -7,6 +7,7 @@ use crate::{
     state::{
         auth::AuthState,
         canisters::{do_canister_auth, AuthCanistersResource},
+        local_storage::use_referrer_store,
     },
     try_or_redirect_opt,
     utils::{profile::ProfileDetails, MockPartialEq},
@@ -28,6 +29,14 @@ pub fn BaseRoute() -> impl IntoView {
             .and_then(|r| Principal::from_text(r.user_refer).ok())
     });
     let auth_state = expect_context::<AuthState>();
+
+    let (referrer_store, set_referrer_store, _) = use_referrer_store();
+    create_effect(move |_| {
+        if referrer_store.get_untracked().is_some() {
+            return;
+        }
+        set_referrer_store(referrer_principal.get_untracked())
+    });
 
     let auth_cans_res: AuthCanistersResource = Resource::local(
         move || MockPartialEq(auth_state.identity.get()),
