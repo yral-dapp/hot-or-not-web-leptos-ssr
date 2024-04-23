@@ -43,13 +43,14 @@ async fn mark_user_registered(user_principal: Principal) -> Result<(), ServerFnE
     Ok(())
 }
 
-async fn handle_user_login(canisters: Canisters<true>) -> Result<(), ServerFnError> {
+async fn handle_user_login(
+    canisters: Canisters<true>,
+    referrer: Option<Principal>,
+) -> Result<(), ServerFnError> {
     let user_principal = canisters.identity().sender().unwrap();
     mark_user_registered(user_principal).await?;
 
-    let (referrer_store, _, _) = use_referrer_store();
-
-    let Some(_referrer_principal) = referrer_store.get_untracked() else {
+    let Some(_referrer_principal) = referrer else {
         return Ok(());
     };
 
@@ -133,7 +134,7 @@ pub fn LoginProviders(show_modal: RwSignal<bool>, lock_closing: RwSignal<bool>) 
                 .await?
                 .unwrap();
 
-            if let Err(e) = handle_user_login(canisters.clone()).await {
+            if let Err(e) = handle_user_login(canisters.clone(), referrer).await {
                 log::warn!("failed to handle user login, err {e}. skipping");
             }
 
@@ -301,8 +302,6 @@ mod server_fn_impl {
 
         pub async fn issue_referral_rewards_impl(
             _referee_canister: Principal,
-            _referrer_canister: Principal,
-            _referrer_principal: Principal,
         ) -> Result<(), ServerFnError> {
             Ok(())
         }
