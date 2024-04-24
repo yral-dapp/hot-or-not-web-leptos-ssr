@@ -45,22 +45,30 @@ jobs:
             run: npx playwright install    
 
           - name: run playwright
-            id: playwright-test
+            id: tests
             run: TESTPARAM=${{ secrets.TEST_GMAIL_PASSWORD }} npx playwright test --project=firefox
     
-          - name: Check test outcome and comment on PR
-            if: ${{ always() }}
-            uses: actions/github-script@v5
-            with:
-              github-token: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
-              script: |
-                const prNumber = context.payload.pull_request.number;
-                const testOutcome = context.job.outputs.playwright-test;
-                const commentBody = testOutcome === '3 passed' ? 'Test passed!' : 'Test failed. Please check logs for details.';
+          # - name: Check test outcome and comment on PR
+          #   if: ${{ always() }}
+          #   uses: actions/github-script@v5
+          #   with:
+          #     github-token: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+          #     script: |
+          #       const prNumber = context.payload.pull_request.number;
+          #       const testOutcome = context.job.outputs.playwright-test;
+          #       const commentBody = testOutcome === '3 passed' ? 'Test passed!' : 'Test failed. Please check logs for details.';
     
-                await github.issues.createComment({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  issue_number: prNumber,
-                  body: commentBody
-                });
+          #       await github.issues.createComment({
+          #         owner: context.repo.owner,
+          #         repo: context.repo.repo,
+          #         issue_number: prNumber,
+          #         body: commentBody
+          #       });
+
+          - name: Check test result and comment
+            uses: peter-evans/create-or-update-comment@v1
+            with:
+              token: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+              issue-number: ${{ github.event.pull_request.number }}
+              body: |
+                ${{ steps.tests.outcome == '3 passed' && 'Test passed :heavy_check_mark:' || 'Test failed, Please check logs for details.' }}
