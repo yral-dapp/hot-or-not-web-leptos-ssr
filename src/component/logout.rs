@@ -14,6 +14,7 @@ use crate::{
 #[component]
 pub fn Logout() -> impl IntoView {
     LogoutClicked.send_event();
+    let auth = auth_state();
 
     let auth_res = create_local_resource(
         || (),
@@ -22,7 +23,6 @@ pub fn Logout() -> impl IntoView {
 
             LogoutConfirmation.send_event();
 
-            let auth = auth_state();
             auth.set(Some(id));
 
             let (_, write_account_connected, _) =
