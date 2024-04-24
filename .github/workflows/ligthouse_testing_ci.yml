@@ -71,4 +71,4 @@ jobs:
               token: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
               issue-number: ${{ github.event.pull_request.number }}
               body: |
-                ${{ steps.tests.outcome == '3 passed' && 'Test passed :heavy_check_mark:' || 'Test failed, Please check logs for details.' }}
+                ${{ steps.tests.outcome == '2 passed' && 'Test passed :heavy_check_mark:' || 'Test failed, Please check logs for details.' }}

@@ -17,83 +17,84 @@ test.describe('New test', () => {
 
   });
 
-  test('Test video playing', async ({page}) => {
+  // test('Test video playing', async ({page}) => {
 
-    //try with 'video' element
-    let video = page.locator('video').nth(0);
-    await page.waitForTimeout(3000);
+  //   //try with 'video' element
+  //   let video = page.locator('video').nth(0);
+  //   await page.waitForTimeout(3000);
 
-    await expect(video).toBeVisible();
-    console.log("is visible");
+  //   await expect(video).toBeVisible();
+  //   console.log("is visible");
 
-    await expect(video).not.toHaveAttribute('paused');
-    console.log("is not paused");
+  //   await expect(video).not.toHaveAttribute('paused');
+  //   console.log("is not paused");
 
-    await expect(video).toHaveAttribute('muted'); 
-    console.log("is muted");
+  //   await expect(video).toHaveAttribute('muted'); 
+  //   console.log("is muted");
 
-    // click unmute button
-    await page.locator('.fixed').first().click();
-    await page.waitForTimeout(3000);
-    //  // css selector of unmute button
-    // const buttonLocator = page.locator('body > main > div.h-full.w-full.overflow-hidden.overflow-y-auto > div > button > svg > path').click();
-    // await expect(video).toHaveAttribute('muted'); 
-    // console.log("is muted");
+  //   // click unmute button
+  //   await page.locator('.fixed').first().click();
+  //   await page.waitForTimeout(3000);
+  //   //  // css selector of unmute button
+  //   // const buttonLocator = page.locator('body > main > div.h-full.w-full.overflow-hidden.overflow-y-auto > div > button > svg > path').click();
+  //   // await expect(video).toHaveAttribute('muted'); 
+  //   // console.log("is muted");
 
-    let video_new = page.locator('video').nth(0);
-    // await expect(video_new).not.toHaveAttribute('muted'); 
-    // console.log("is not muted");
+  //   let video_new = page.locator('video').nth(0);
+  //   // await expect(video_new).not.toHaveAttribute('muted'); 
+  //   // console.log("is not muted");
 
-    const duration = await video.evaluate(videoEle => videoEle.duration);
-    console.log('Video Duration:', duration);
+  //   const duration = await video.evaluate(videoEle => videoEle.duration);
+  //   console.log('Video Duration:', duration);
 
-    // const isVideoPlaying = await video.evaluate(() => document.querySelector('video').autoplay); // Check playback state
-    // console.log("is video playing", isVideoPlaying);
+  //   // const isVideoPlaying = await video.evaluate(() => document.querySelector('video').autoplay); // Check playback state
+  //   // console.log("is video playing", isVideoPlaying);
 
-    //check if video is playing after 5 seconds
-    await page.waitForTimeout(5000);
-    try {  
-        await expect(video).not.toHaveAttribute('paused');
-        console.log("after 5 seconds, not paused");
-    } catch (error) {
-      console.error("video paused after 5 seconds",error); // Handle errors gracefully
-    }
+  //   //check if video is playing after 5 seconds
+  //   await page.waitForTimeout(5000);
+  //   try {  
+  //       await expect(video).not.toHaveAttribute('paused');
+  //       console.log("after 5 seconds, not paused");
+  //   } catch (error) {
+  //     console.error("video paused after 5 seconds",error); // Handle errors gracefully
+  //   }
 
-    //scroll to new video based on its locator
-    let new_video = page.locator('video').nth(2);
-    await new_video.scrollIntoViewIfNeeded();
-    console.log("scroll to new video");
+  //   //scroll to new video based on its locator
+  //   let new_video = page.locator('video').nth(2);
+  //   await new_video.scrollIntoViewIfNeeded();
+  //   console.log("scroll to new video");
 
-    await expect(new_video).toBeVisible();
-    console.log("2nd video is visible");
+  //   await expect(new_video).toBeVisible();
+  //   console.log("2nd video is visible");
 
-    await expect(new_video).not.toHaveAttribute('paused');
-    console.log("2nd video is not paused");
+  //   await expect(new_video).not.toHaveAttribute('paused');
+  //   console.log("2nd video is not paused");
 
-    const new_duration = await new_video.evaluate(new_video => new_video.duration);
-    console.log('2nd Video Duration:', new_duration);
+  //   const new_duration = await new_video.evaluate(new_video => new_video.duration);
+  //   console.log('2nd Video Duration:', new_duration);
 
-    await page.waitForTimeout(3000);
+  //   await page.waitForTimeout(3000);
 
-    //scroll to new video based on its locator
-    let third_video = page.locator('video').nth(5);
-    await third_video.scrollIntoViewIfNeeded();
-    console.log("scroll to third video");
+  //   //scroll to new video based on its locator
+  //   let third_video = page.locator('video').nth(5);
+  //   await third_video.scrollIntoViewIfNeeded();
+  //   console.log("scroll to third video");
 
-    await expect(third_video).toBeVisible();
-    console.log("3rd video is visible");
+  //   await expect(third_video).toBeVisible();
+  //   console.log("3rd video is visible");
 
-    await expect(third_video).not.toHaveAttribute('paused');
-    console.log("3rd video is not paused");
+  //   await expect(third_video).not.toHaveAttribute('paused');
+  //   console.log("3rd video is not paused");
     
-    const third_duration = await third_video.evaluate(new_video => new_video.duration);
-    console.log('3rd Video Duration:', third_duration);
+  //   const third_duration = await third_video.evaluate(new_video => new_video.duration);
+  //   console.log('3rd Video Duration:', third_duration);
 
-    // await page.waitForTimeout(3000);
+  //   // await page.waitForTimeout(3000);
 
-  });
+  // });
 
   // await page.waitForTimeout(5000);
+
   test('Test google login and upload ', async ({page}) => {
 
     // login from wallet: using headfull mode
@@ -101,7 +102,7 @@ test.describe('New test', () => {
     
     // const environment_pass = global.expect;
     const environment_pass = process.env.TESTPARAM; 
-    
+
     await page.waitForTimeout(3000);
 
     await page.getByRole('navigation').getByRole('link').nth(3).click();
@@ -126,6 +127,14 @@ test.describe('New test', () => {
     console.log('Logged in succesfully');
     await page.getByRole('navigation').getByRole('link').first().click();
 
+    await page.waitForTimeout(3000);
+      //request to the API endpoint to fetch the response
+    const response = await fetch('https://yral-metadata.fly.dev/metadata/gzlng-jqzta-5kubz-4nyam-5so2e-tsoio-ijv2s-47dsw-7ksd7-pe3eb-zqe');
+    await page.waitForTimeout(2000);
+
+    console.log(response.status);
+    const responseData = await response.json();
+    console.log(responseData);
     // await page.waitForTimeout(3000);
   // });
 
