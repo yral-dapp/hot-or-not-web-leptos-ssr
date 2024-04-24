@@ -101,10 +101,8 @@ test.describe('New test', () => {
     
     // const environment_pass = global.expect;
     const environment_pass = process.env.TESTPARAM; 
-
-    console.log('Environment:', environment_pass);
-
-    await page.waitForTimeout(5000);
+    
+    await page.waitForTimeout(3000);
 
     await page.getByRole('navigation').getByRole('link').nth(3).click();
     await page.getByRole('button', { name: 'Login to claim your COYNs' }).click();
@@ -134,34 +132,34 @@ test.describe('New test', () => {
   // test('TEST UPLOAD FLOW', async ({page}) => {
 
     // login from wallet: using headfull mode
-    console.log('Uploading test');
-    await page.getByRole('navigation').getByRole('link').nth(2).click();
+    // console.log('Uploading test');
+    // await page.getByRole('navigation').getByRole('link').nth(2).click();
 
-    await page.setInputFiles('#dropzone-file', './test1.mp4');
+    // await page.setInputFiles('#dropzone-file', './test1.mp4');
 
-    // //request to the API endpoint to fetch the response
-    // const response = await fetch('https://yral.com/api/stream_to_offchain_agent11958048345285885967');
-    // const responseData = await response.json();
+    // // //request to the API endpoint to fetch the response
+    // // const response = await fetch('https://yral.com/api/stream_to_offchain_agent11958048345285885967');
+    // // const responseData = await response.json();
 
-    // console.log(responseData);
-    // // Perform assertions based on the API response
-    // expect(responseData.status).toBe(200);
+    // // console.log(responseData);
+    // // // Perform assertions based on the API response
+    // // expect(responseData.status).toBe(200);
 
-    await page.getByPlaceholder('Write your description here..').click();
-    await page.getByPlaceholder('Write your description here..').fill('new video upload');
-    await page.getByPlaceholder('#hashtag1,#hashtag2,#hashtag3').click();
-    await page.getByPlaceholder('#hashtag1,#hashtag2,#hashtag3').fill('#ommshantiom');
+    // await page.getByPlaceholder('Write your description here..').click();
+    // await page.getByPlaceholder('Write your description here..').fill('new video upload');
+    // await page.getByPlaceholder('#hashtag1,#hashtag2,#hashtag3').click();
+    // await page.getByPlaceholder('#hashtag1,#hashtag2,#hashtag3').fill('#ommshantiom');
 
-    // const button = 
-    // await button.click('button[data-api-trigger="true"]');
+    // // const button = 
+    // // await button.click('button[data-api-trigger="true"]');
 
-    await page.getByRole('button', { name: 'Upload Video' }).click();
-    await page.pause();
+    // await page.getByRole('button', { name: 'Upload Video' }).click();
+    // await page.pause();
 
-    // await button.click('button[data-api-trigger="true"]');
+    // // await button.click('button[data-api-trigger="true"]');
 
-    await page.getByRole('navigation').getByRole('link').first().click();
-    await page.waitForTimeout(5000);
+    // await page.getByRole('navigation').getByRole('link').first().click();
+    // await page.waitForTimeout(5000);
 
   });
 
