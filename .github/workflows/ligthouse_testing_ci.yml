@@ -45,6 +45,7 @@ jobs:
             run: npx playwright install    
 
           - name: run playwright
+            id: playwright-test
             run: TESTPARAM=${{ secrets.TEST_GMAIL_PASSWORD }} npx playwright test --project=firefox
     
           - name: Check test outcome and comment on PR
@@ -55,7 +56,7 @@ jobs:
               script: |
                 const prNumber = context.payload.pull_request.number;
                 const testOutcome = context.job.outputs.playwright-test;
-                const commentBody = testOutcome === 'passed' ? 'Test passed!' : 'Test failed. Please check logs for details.';
+                const commentBody = testOutcome === '3 passed' ? 'Test passed!' : 'Test failed. Please check logs for details.';
     
                 await github.issues.createComment({
                   owner: context.repo.owner,
