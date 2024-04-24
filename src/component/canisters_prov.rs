@@ -15,8 +15,7 @@ where
     let cans_res = authenticated_canisters();
     let children = store_value(children);
     let loader = move || {
-        let (cans_wire, _) = cans_res()?.ok()?;
-        let cans = cans_wire.try_into().ok()?;
+        let cans = cans_res()?.ok()?;
         Some((children.get_value())(cans).into_view())
     };
     let fallback = store_value(fallback);
@@ -86,8 +85,7 @@ where
     let with = store_value(with);
 
     let loader = move || {
-        let (cans_wire, _) = cans_res()?.ok()?;
-        let cans: Canisters<true> = cans_wire.try_into().ok()?;
+        let cans = cans_res()?.ok()?;
         Some(
             view! { <DataLoader cans fallback with=with.get_value() children=children.get_value()/> },
         )

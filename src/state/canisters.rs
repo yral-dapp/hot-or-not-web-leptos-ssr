@@ -3,12 +3,11 @@ use std::{collections::HashSet, sync::Arc};
 use candid::Principal;
 use ic_agent::{identity::DelegatedIdentity, AgentError, Identity};
 use leptos::*;
-use serde::{Deserialize, Serialize};
 use yral_metadata_client::MetadataClient;
 use yral_metadata_types::UserMetadata;
 
 use crate::{
-    auth::{DelegatedIdentityWire, TempRefreshToken},
+    auth::DelegatedIdentityWire,
     canister::{
         individual_user_template::{IndividualUserTemplate, Result8},
         platform_orchestrator::{self, PlatformOrchestrator},
@@ -19,35 +18,6 @@ use crate::{
     consts::{FALLBACK_USER_INDEX, METADATA_API_BASE},
     utils::{profile::ProfileDetails, MockPartialEq},
 };
-
-#[derive(Serialize, Deserialize, Clone)]
-pub struct AuthCanistersWire {
-    id: DelegatedIdentityWire,
-    pub user_canister: Principal,
-    pub profile_details: ProfileDetails,
-    expiry: u64,
-}
-
-impl TryFrom<AuthCanistersWire> for Canisters<true> {
-    type Error = ServerFnError;
-
-    fn try_from(value: AuthCanistersWire) -> Result<Self, Self::Error> {
-        let id: DelegatedIdentity = value.id.try_into()?;
-        let id = Arc::new(id);
-        Ok(Self {
-            agent: ic_agent::Agent::builder()
-                .with_url(AGENT_URL)
-                .with_arc_identity(id.clone())
-                .build()
-                .unwrap(),
-            metadata_client: MetadataClient::with_base_url(METADATA_API_BASE.clone()),
-            id: Some(id),
-            user_canister: value.user_canister,
-            expiry: value.expiry,
-            profile_details: Some(value.profile_details),
-        })
-    }
-}
 
 #[derive(Clone)]
 pub struct Canisters<const AUTH: bool> {
@@ -212,7 +182,7 @@ async fn create_individual_canister(
 
 pub async fn do_canister_auth(
     auth: DelegatedIdentityWire,
-) -> Result<AuthCanistersWire, ServerFnError> {
+) -> Result<Canisters<true>, ServerFnError> {
     let id: DelegatedIdentity = auth.clone().try_into()?;
     let mut canisters = Canisters::<true>::authenticated(id);
 
@@ -234,20 +204,12 @@ pub async fn do_canister_auth(
         Err(e) | Ok(Result8::Err(e)) => log::warn!("Failed to update last access time: {}", e),
     }
     canisters.profile_details = Some(user.get_profile_details().await?.into());
-    let expiry = canisters.expiry;
 
-    Ok(AuthCanistersWire {
-        id: auth,
-        user_canister: canisters.user_canister,
-        profile_details: canisters.profile_details.clone().unwrap(),
-        expiry,
-    })
+    Ok(canisters)
 }
 
-pub type AuthCansResource = Resource<
-    MockPartialEq<Option<DelegatedIdentityWire>>,
-    Result<(AuthCanistersWire, Option<TempRefreshToken>), ServerFnError>,
->;
+pub type AuthCansResource =
+    Resource<MockPartialEq<Option<DelegatedIdentityWire>>, Result<Canisters<true>, ServerFnError>>;
 
 pub fn authenticated_canisters() -> AuthCansResource {
     expect_context()

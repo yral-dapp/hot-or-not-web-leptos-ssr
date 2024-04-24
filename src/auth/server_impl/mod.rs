@@ -8,27 +8,23 @@ use axum_extra::extract::{
     SignedCookieJar,
 };
 use candid::Principal;
-use hmac::{Hmac, Mac};
 use http::header;
 use ic_agent::{
     identity::{Delegation, Secp256k1Identity, SignedDelegation},
     Identity,
 };
-use k256::sha2::Sha256;
 use leptos::{expect_context, ServerFnError};
 use leptos_axum::{extract_with_state, ResponseOptions};
 use rand_chacha::rand_core::OsRng;
 
 use crate::{
-    consts::auth::{
-        DELEGATION_MAX_AGE, REFRESH_MAX_AGE, REFRESH_TOKEN_COOKIE, TEMP_REFRESH_MAX_AGE,
-    },
+    consts::auth::{DELEGATION_MAX_AGE, REFRESH_MAX_AGE, REFRESH_TOKEN_COOKIE},
     utils::current_epoch,
 };
 
 use self::store::{KVStore, KVStoreImpl};
 
-use super::{DelegatedIdentityWire, RefreshToken, RefreshTokenKind, TempRefreshToken};
+use super::{DelegatedIdentityWire, RefreshToken};
 
 impl DelegatedIdentityWire {
     pub fn delegate(from: &impl Identity) -> Self {
@@ -120,7 +116,6 @@ pub async fn update_user_identity(
     let refresh_token = RefreshToken {
         principal: identity.sender().unwrap(),
         expiry_epoch_ms: (current_epoch() + refresh_max_age).as_millis(),
-        kind: RefreshTokenKind::Upgraded,
     };
     let refresh_token_enc = serde_json::to_string(&refresh_token)?;
 
@@ -138,8 +133,7 @@ pub async fn update_user_identity(
     Ok(DelegatedIdentityWire::delegate(&identity))
 }
 
-pub async fn extract_or_generate_identity_impl(
-) -> Result<(DelegatedIdentityWire, TempRefreshToken), ServerFnError> {
+pub async fn extract_or_generate_identity_impl() -> Result<DelegatedIdentityWire, ServerFnError> {
     let key: Key = expect_context();
     let jar: SignedCookieJar = extract_with_state(&key).await?;
     let kv: KVStoreImpl = expect_context();
@@ -150,62 +144,10 @@ pub async fn extract_or_generate_identity_impl(
         generate_and_save_identity(&kv).await?
     };
 
-    let temp_refresh_token = RefreshToken {
-        principal: base_identity.sender().unwrap(),
-        expiry_epoch_ms: (current_epoch() + TEMP_REFRESH_MAX_AGE).as_millis(),
-        kind: RefreshTokenKind::Temporary,
-    };
-    let s_key = key.signing();
-    let raw = serde_json::to_vec(&temp_refresh_token)?;
-    let mut mac = Hmac::<Sha256>::new_from_slice(s_key)?;
-    mac.update(&raw);
-    let s_temp_refresh_token = TempRefreshToken {
-        inner: temp_refresh_token,
-        digest: mac.finalize().into_bytes().to_vec(),
-    };
-
     let resp: ResponseOptions = expect_context();
     let delegated = update_user_identity(&resp, jar, base_identity).await?;
 
-    Ok((delegated, s_temp_refresh_token))
-}
-
-pub async fn upgrade_temp_refresh_token_impl(token: TempRefreshToken) -> Result<(), ServerFnError> {
-    if token.inner.expiry_epoch_ms < current_epoch().as_millis() {
-        return Err(ServerFnError::new("Expired token"));
-    }
-    if token.inner.kind != RefreshTokenKind::Temporary {
-        return Err(ServerFnError::new("Invalid token kind"));
-    }
-
-    let key: Key = expect_context();
-    let mut jar: SignedCookieJar = extract_with_state(&key).await?;
-
-    let s_key = key.signing();
-    let mut mac = Hmac::<Sha256>::new_from_slice(s_key)?;
-    let raw_claim = serde_json::to_vec(&token.inner)?;
-    mac.update(&raw_claim);
-    mac.verify_slice(&token.digest)?;
-
-    let resp: ResponseOptions = expect_context();
-    let refresh_token = RefreshToken {
-        principal: token.inner.principal,
-        expiry_epoch_ms: (current_epoch() + REFRESH_MAX_AGE).as_millis(),
-        kind: RefreshTokenKind::Upgraded,
-    };
-    let refresh_token_enc = serde_json::to_string(&refresh_token)?;
-    let refresh_cookie = Cookie::build((REFRESH_TOKEN_COOKIE, refresh_token_enc))
-        .http_only(true)
-        .secure(true)
-        .path("/")
-        .same_site(SameSite::None)
-        .partitioned(true)
-        .max_age(REFRESH_MAX_AGE.try_into().unwrap());
-
-    jar = jar.add(refresh_cookie);
-    set_cookies(&resp, jar);
-
-    Ok(())
+    Ok(delegated)
 }
 
 pub async fn logout_identity_impl() -> Result<DelegatedIdentityWire, ServerFnError> {
