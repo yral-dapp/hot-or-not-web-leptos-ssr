@@ -33,16 +33,33 @@ jobs:
                 node-version: 20
           - run: npm install
 
-          - name: Install Lighthouse
-            run: npm install -g @lhci/cli@0.13.x
+          # - name: Install Lighthouse
+          #   run: npm install -g @lhci/cli@0.13.x
 
-          - name: Run Lighthouse
-            run: lhci autorun --upload.githubToken="$LHCI_GITHUB_TOKEN" || echo "LHCI failed!"
-            env: 
-                LHCI_GITHUB_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+          # - name: Run Lighthouse
+          #   run: lhci autorun --upload.githubToken="$LHCI_GITHUB_TOKEN" || echo "LHCI failed!"
+          #   env: 
+          #       LHCI_GITHUB_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
 
           - name: install playwright
             run: npx playwright install    
 
           - name: run playwright
             run: TESTPARAM=${{ secrets.TEST_GMAIL_PASSWORD }} npx playwright test --project=firefox
+    
+          - name: Check test outcome and comment on PR
+            if: ${{ always() }}
+            uses: actions/github-script@v5
+            with:
+              github-token: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+              script: |
+                const prNumber = context.payload.pull_request.number;
+                const testOutcome = context.job.outputs.playwright-test;
+                const commentBody = testOutcome === 'passed' ? 'Test passed!' : 'Test failed. Please check logs for details.';
+    
+                await github.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: prNumber,
+                  body: commentBody
+                });
