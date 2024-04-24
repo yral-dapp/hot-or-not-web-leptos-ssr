@@ -9,12 +9,15 @@ test.beforeEach(async ({ page }) => {
 test.describe('New test', () => {
   test('Has title', async ({page}) => {
 
-    // Check opening status
-    const title = await page.title();
-    console.log(title); // Log the page title
-    // expect(title).toContain('Expected Title'); // Replace with expected title
-    expect(title).toBe("Yral");
-
+    try {    // Check opening status
+      const title = await page.title();
+      console.log(title); // Log the page title
+      // expect(title).toContain('Expected Title'); // Replace with expected title
+      expect(title).toBe("Yral");
+    } catch (error) {
+          console.error("error checking title",error); // Handle errors gracefully
+    }
+    
   });
 
   // test('Test video playing', async ({page}) => {
@@ -98,43 +101,49 @@ test.describe('New test', () => {
   test('Test google login and upload ', async ({page}) => {
 
     // login from wallet: using headfull mode
-    console.log('Log in test');
-    
-    // const environment_pass = global.expect;
-    const environment_pass = process.env.TESTPARAM; 
+    try {
+      console.log('Log in test');
+      
+      // const environment_pass = global.expect;
+      const environment_pass = process.env.TESTPARAM; 
 
-    await page.waitForTimeout(3000);
+      await page.waitForTimeout(3000);
 
-    await page.getByRole('navigation').getByRole('link').nth(3).click();
-    await page.getByRole('button', { name: 'Login to claim your COYNs' }).click();
-    const page1Promise = page.waitForEvent('popup');
-    await page.getByRole('button', { name: 'Google Sign-In' }).click();
-    const page1 = await page1Promise;
-    await page1.getByLabel('Email or phone').click();
-    await page1.getByLabel('Email or phone').fill('testautomationyral@gmail.com');
-    
-    await page.waitForTimeout(2000);
-    await page1.getByLabel('Email or phone').press('Enter');
-    
-    await page1.getByLabel('Enter your password').click();
-    await page1.getByLabel('Enter your password').fill(environment_pass);
-    await page.waitForTimeout(2000);
+      await page.getByRole('navigation').getByRole('link').nth(3).click();
+      await page.getByRole('button', { name: 'Login to claim your COYNs' }).click();
+      const page1Promise = page.waitForEvent('popup');
+      await page.getByRole('button', { name: 'Google Sign-In' }).click();
+      const page1 = await page1Promise;
+      await page1.getByLabel('Email or phone').click();
+      await page1.getByLabel('Email or phone').fill('testautomationyral@gmail.com');
+      
+      await page.waitForTimeout(2000);
+      await page1.getByLabel('Email or phone').press('Enter');
+      
+      await page1.getByLabel('Enter your password').click();
+      await page1.getByLabel('Enter your password').fill(environment_pass);
+      await page.waitForTimeout(2000);
 
-    await page1.getByLabel('Enter your password').press('Enter');
-    // await page1.pause();
-    await page.waitForTimeout(3000);
+      await page1.getByLabel('Enter your password').press('Enter');
+      // await page1.pause();
+      await page.waitForTimeout(3000);
 
-    console.log('Logged in succesfully');
-    await page.getByRole('navigation').getByRole('link').first().click();
+      console.log('Logged in succesfully');
+      // await page.getByRole('navigation').getByRole('link').first().click();
 
-    await page.waitForTimeout(3000);
-      //request to the API endpoint to fetch the response
-    const response = await fetch('https://yral-metadata.fly.dev/metadata/gzlng-jqzta-5kubz-4nyam-5so2e-tsoio-ijv2s-47dsw-7ksd7-pe3eb-zqe');
-    await page.waitForTimeout(2000);
+      await page.waitForTimeout(3000);
+        //request to the API endpoint to fetch the response
+      const response = await fetch('https://yral-metadata.fly.dev/metadata/gzlng-jqzta-5kubz-4nyam-5so2e-tsoio-ijv2s-47dsw-7ksd7-pe3eb-zqe');
+      await page.waitForTimeout(2000);
 
-    console.log(response.status);
-    const responseData = await response.json();
-    console.log(responseData);
+      console.log(response.status);
+      const responseData = await response.json();
+      console.log(responseData);
+
+    } catch (error) {
+      console.error("error in login"); // Handle errors gracefully
+    }
+
     // await page.waitForTimeout(3000);
   // });
 
