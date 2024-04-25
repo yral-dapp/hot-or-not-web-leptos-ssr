@@ -9,7 +9,7 @@ use yral_metadata_types::UserMetadata;
 use crate::{
     auth::DelegatedIdentityWire,
     canister::{
-        individual_user_template::{IndividualUserTemplate, Result8},
+        individual_user_template::{IndividualUserTemplate, Result8, UserCanisterDetails},
         platform_orchestrator::{self, PlatformOrchestrator},
         post_cache::{self, PostCache},
         user_index::UserIndex,
@@ -182,6 +182,7 @@ async fn create_individual_canister(
 
 pub async fn do_canister_auth(
     auth: DelegatedIdentityWire,
+    referrer: Option<Principal>,
 ) -> Result<Canisters<true>, ServerFnError> {
     let id: DelegatedIdentity = auth.clone().try_into()?;
     let mut canisters = Canisters::<true>::authenticated(id);
@@ -194,7 +195,22 @@ pub async fn do_canister_auth(
     } else {
         create_individual_canister(&canisters).await?
     };
+
     let user = canisters.authenticated_user();
+
+    if let Some(referrer_principal_id) = referrer {
+        let referrer_canister = canisters
+            .get_individual_canister_by_user_principal(referrer_principal_id)
+            .await?;
+        if let Some(referrer_canister_id) = referrer_canister {
+            user.update_referrer_details(UserCanisterDetails {
+                user_canister_id: referrer_canister_id,
+                profile_owner: referrer_principal_id,
+            })
+            .await?;
+        }
+    }
+
     match user
         .update_last_access_time()
         .await

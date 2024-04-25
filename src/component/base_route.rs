@@ -25,22 +25,6 @@ fn CtxProvider(
     children: Children,
 ) -> impl IntoView {
     provide_context(canisters_res);
-
-    let referrer_query = use_query::<Referrer>();
-    let referrer_principal = move || {
-        referrer_query()
-            .ok()
-            .and_then(|r| Principal::from_text(r.user_refer).ok())
-    };
-
-    let (referrer_store, set_referrer_store, _) = use_referrer_store();
-    create_effect(move |_| {
-        if referrer_store.get_untracked().is_some() {
-            return;
-        }
-        let refp = referrer_principal();
-        set_referrer_store.set(refp);
-    });
     provide_context(auth);
 
     children()
@@ -52,6 +36,20 @@ pub fn BaseRoute() -> impl IntoView {
     let canisters_store = create_rw_signal(None::<Canisters<true>>);
     provide_context(canisters_store);
 
+    let referrer_query = use_query::<Referrer>();
+    let referrer_principal = Signal::derive(move || {
+        referrer_query()
+            .ok()
+            .and_then(|r| Principal::from_text(r.user_refer).ok())
+    });
+    let (referrer_store, set_referrer_store, _) = use_referrer_store();
+    create_effect(move |_| {
+        if referrer_store.get_untracked().is_some() {
+            return;
+        }
+        set_referrer_store(referrer_principal.get_untracked())
+    });
+
     let canisters_res = create_local_resource(
         move || MockPartialEq(auth()),
         move |auth_id| async move {
@@ -60,7 +58,7 @@ pub fn BaseRoute() -> impl IntoView {
             } else {
                 extract_or_generate_identity().await?
             };
-            let cans = do_canister_auth(id).await?;
+            let cans = do_canister_auth(id, referrer_principal.get_untracked()).await?;
             Ok(cans)
         },
     );
