@@ -1,12 +1,9 @@
-use leptos::{create_effect, create_signal, expect_context, Effect, ReadSignal, RwSignal};
+use leptos::*;
 use leptos_use::{storage::use_local_storage, utils::FromToStringCodec};
 
 use crate::{auth::DelegatedIdentityWire, consts::ACCOUNT_CONNECTED_STORE};
 
-#[derive(Default, Clone)]
-pub struct AuthState {
-    pub identity: RwSignal<Option<DelegatedIdentityWire>>,
-}
+pub type AuthState = RwSignal<Option<DelegatedIdentityWire>>;
 
 pub fn auth_state() -> AuthState {
     expect_context()

@@ -16,9 +16,9 @@ use leptos_use::{
 use crate::{
     component::spinner::FullScreenSpinner,
     consts::NSFW_TOGGLE_STORE,
-    state::canisters::{authenticated_canisters, unauth_canisters},
+    state::canisters::{unauth_canisters, Canisters},
     try_or_redirect,
-    utils::route::{failure_redirect, go_to_root},
+    utils::route::failure_redirect,
 };
 use video_iter::{get_post_uid, VideoFetchStream};
 use video_loader::{BgView, VideoView};
@@ -26,9 +26,9 @@ use video_loader::{BgView, VideoView};
 use overlay::HomeButtonOverlay;
 use video_iter::{FetchCursor, PostDetails};
 
-#[derive(Params, PartialEq)]
+#[derive(Params, PartialEq, Clone, Copy)]
 struct PostParams {
-    canister_id: String,
+    canister_id: Principal,
     post_id: u64,
 }
 
@@ -180,15 +180,14 @@ pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
         })
     }
     let (nsfw_enabled, _, _) = use_local_storage::<bool, FromToStringCodec>(NSFW_TOGGLE_STORE);
-    let auth_cans_res = authenticated_canisters();
+    let auth_canisters: RwSignal<Option<Canisters<true>>> = expect_context();
 
     let fetch_video_action = create_action(move |()| async move {
         loop {
-            let auth_canisters = leptos::untrack(|| auth_cans_res.get().transpose());
-            let auth_canisters = try_or_redirect!(auth_canisters).flatten();
             let Some(cursor) = fetch_cursor.try_get_untracked() else {
                 return;
             };
+            let auth_canisters = auth_canisters.get_untracked();
             let nsfw_enabled = nsfw_enabled.get_untracked();
             let unauth_canisters = unauth_canisters();
 
@@ -205,7 +204,7 @@ pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
             let mut cnt = 0;
             while let Some(chunk) = chunks.next().await {
                 cnt += chunk.len();
-                video_queue.update(|q| {
+                video_queue.try_update(|q| {
                     for uid in chunk {
                         let uid = try_or_redirect!(uid);
                         q.push(uid);
@@ -213,13 +212,13 @@ pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
                 });
             }
             if res.end || cnt >= 8 {
-                queue_end.set(res.end);
+                queue_end.try_set(res.end);
                 break;
             }
-            fetch_cursor.update(|c| c.advance());
+            fetch_cursor.try_update(|c| c.advance());
         }
 
-        fetch_cursor.update(|c| c.advance());
+        fetch_cursor.try_update(|c| c.advance());
     });
     create_effect(move |_| {
         if !recovering_state.get_untracked() {
@@ -260,65 +259,57 @@ pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
 #[component]
 pub fn PostView() -> impl IntoView {
     let params = use_params::<PostParams>();
-    let canister_and_post = move || {
-        params.with_untracked(|p| {
-            let p = p.as_ref().ok()?;
-            let canister_id = Principal::from_text(&p.canister_id).ok()?;
+    let initial_canister_and_post = create_rw_signal(params.get_untracked().ok());
 
-            Some((canister_id, p.post_id))
-        })
-    };
+    create_effect(move |_| {
+        if initial_canister_and_post.with_untracked(|p| p.is_some()) {
+            return None;
+        }
+        let p = params.get().ok()?;
+        initial_canister_and_post.set(Some(p));
+        Some(())
+    });
 
     let PostViewCtx {
         video_queue,
         current_idx,
         ..
     } = expect_context();
+    let canisters = unauth_canisters();
 
-    let cached_post = move || {
-        let Some((canister, post_id)) = canister_and_post() else {
-            go_to_root();
-            return None;
-        };
-
-        let post = video_queue
-            .with_untracked(|q| q.get(current_idx.get_untracked()).cloned())
-            .filter(|post| post.canister_id == canister && post.post_id == post_id);
-
-        post
-    };
-
-    let fetch_first_video_uid = create_resource(
-        || (),
-        move |_| async move {
-            let Some((canister, post_id)) = canister_and_post() else {
-                go_to_root();
-                return None;
+    let fetch_first_video_uid = create_resource(initial_canister_and_post, move |params| {
+        let canisters = canisters.clone();
+        async move {
+            let Some(params) = params else {
+                return Err(());
             };
+            let cached_post = video_queue
+                .with_untracked(|q| q.get(current_idx.get_untracked()).cloned())
+                .filter(|post| {
+                    post.canister_id == params.canister_id && post.post_id == params.post_id
+                });
+            if let Some(post) = cached_post {
+                return Ok(Some(post));
+            }
 
-            let canisters = unauth_canisters();
-            match get_post_uid(&canisters, canister, post_id).await {
-                Ok(Some(uid)) => Some(uid),
+            match get_post_uid(&canisters, params.canister_id, params.post_id).await {
+                Ok(post) => Ok(post),
                 Err(e) => {
                     failure_redirect(e);
-                    None
+                    Err(())
                 }
-                Ok(None) => None,
             }
-        },
-    );
+        }
+    });
 
     view! {
         <Suspense fallback=FullScreenSpinner>
             {move || {
-                if let Some(post) = cached_post() {
-                    Some(view! { <PostViewWithUpdates initial_post=Some(post)/> })
-                } else {
-                    fetch_first_video_uid()
-                        .map(|initial_post| {
-                            view! { <PostViewWithUpdates initial_post=initial_post/> }
-                        })
-                }
+                fetch_first_video_uid()
+                    .and_then(|initial_post| {
+                        let initial_post = initial_post.ok()?;
+                        Some(view! { <PostViewWithUpdates initial_post/> })
+                    })
             }}
 
         </Suspense>

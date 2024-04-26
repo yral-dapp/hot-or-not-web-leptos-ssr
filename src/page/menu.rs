@@ -1,12 +1,10 @@
 use crate::component::back_btn::BackButton;
+use crate::component::canisters_prov::AuthCansProvider;
 use crate::component::title::Title;
 use crate::component::{connect::ConnectLogin, social::*, toggle::Toggle};
 use crate::consts::{social, NSFW_TOGGLE_STORE};
 use crate::state::auth::account_connected_reader;
-use crate::state::canisters::authenticated_canisters;
-use crate::try_or_redirect_opt;
 use crate::utils::profile::ProfileDetails;
-use crate::utils::MockPartialEq;
 use leptos::html::Input;
 use leptos::*;
 use leptos_icons::*;
@@ -97,27 +95,10 @@ fn ProfileLoaded(user_details: ProfileDetails) -> impl IntoView {
 
 #[component]
 fn ProfileInfo() -> impl IntoView {
-    let canisters = authenticated_canisters();
-    let profile_details = create_resource(
-        move || MockPartialEq(canisters.get().and_then(|c| c.transpose())),
-        move |canisters| async move {
-            let canisters = try_or_redirect_opt!(canisters.0?);
-            let user = canisters.authenticated_user();
-            let user_details = user.get_profile_details().await.ok()?;
-            Some(ProfileDetails::from(user_details))
-        },
-    );
-
     view! {
-        <Suspense fallback=ProfileLoading>
-            {move || {
-                profile_details()
-                    .flatten()
-                    .map(|user_details| view! { <ProfileLoaded user_details/> })
-                    .unwrap_or_else(|| view! { <ProfileLoading/> })
-            }}
-
-        </Suspense>
+        <AuthCansProvider fallback=ProfileLoading let:canisters>
+            <ProfileLoaded user_details=canisters.profile_details()/>
+        </AuthCansProvider>
     }
 }
 
@@ -180,7 +161,12 @@ pub fn Menu() -> impl IntoView {
             <div class="flex flex-col py-12 px-8 gap-8 w-full text-lg">
                 <NsfwToggle/>
                 <MenuItem href="/refer-earn" text="Refer & Earn" icon=icondata::AiGiftFilled/>
-                <MenuItem href=social::TELEGRAM text="Talk to the team" icon=icondata::BiWhatsapp target="_blank"/>
+                <MenuItem
+                    href=social::TELEGRAM
+                    text="Talk to the team"
+                    icon=icondata::BiWhatsapp
+                    target="_blank"
+                />
                 <MenuItem href="/terms-of-service" text="Terms of Service" icon=icondata::TbBook2/>
                 <MenuItem href="/privacy-policy" text="Privacy Policy" icon=icondata::TbLock/>
                 <Show when=is_connected>

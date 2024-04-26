@@ -7,15 +7,12 @@ use leptos_icons::*;
 use leptos_router::create_query_signal;
 use leptos_use::use_window;
 
+use crate::component::canisters_prov::AuthCansProvider;
 use crate::component::connect::ConnectLogin;
 use crate::utils::event_streaming::events::{Refer, ReferShareLink};
 use crate::{
     component::{back_btn::BackButton, title::Title},
-    state::{
-        auth::account_connected_reader,
-        canisters::{authenticated_canisters, AuthProfileCanisterResource},
-    },
-    try_or_redirect_opt,
+    state::auth::account_connected_reader,
     utils::web::copy_to_clipboard,
 };
 use history::HistoryView;
@@ -46,7 +43,6 @@ fn ReferLoaded(user_principal: Principal) -> impl IntoView {
         })
         .unwrap_or_default();
 
-    let profile_and_canister_details: AuthProfileCanisterResource = expect_context();
     let (logged_in, _) = account_connected_reader();
 
     let click_copy = create_action(move |()| {
@@ -54,7 +50,7 @@ fn ReferLoaded(user_principal: Principal) -> impl IntoView {
         async move {
             let _ = copy_to_clipboard(&refer_link);
 
-            ReferShareLink.send_event(profile_and_canister_details, logged_in);
+            ReferShareLink.send_event(logged_in);
         }
     });
 
@@ -79,23 +75,10 @@ fn ReferLoading() -> impl IntoView {
 
 #[component]
 fn ReferCode() -> impl IntoView {
-    let canisters = authenticated_canisters();
-
     view! {
-        <Suspense fallback=ReferLoading>
-            {move || {
-                canisters()
-                    .and_then(|canisters| {
-                        let canisters = try_or_redirect_opt!(canisters)?;
-                        let user_principal = canisters.identity().sender().unwrap();
-                        Some(view! { <ReferLoaded user_principal/> })
-                    })
-                    .unwrap_or_else(|| {
-                        view! { <ReferLoading/> }
-                    })
-            }}
-
-        </Suspense>
+        <AuthCansProvider fallback=ReferLoading let:cans>
+            <ReferLoaded user_principal=cans.identity().sender().unwrap()/>
+        </AuthCansProvider>
     }
 }
 

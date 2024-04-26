@@ -1,5 +1,5 @@
 use circular_buffer::CircularBuffer;
-use leptos::{RwSignal, SignalGet, SignalUpdate, SignalWith};
+use leptos::{RwSignal, SignalGet, SignalUpdate, SignalWith, SignalWithUntracked};
 
 #[derive(Clone)]
 pub struct HistoryCtx {
@@ -43,6 +43,10 @@ impl HistoryCtx {
 
     pub fn prev_url(&self) -> Option<String> {
         self.history.with(|h| h.back().cloned())
+    }
+
+    pub fn prev_url_untracked(&self) -> Option<String> {
+        self.history.with_untracked(|h| h.back().cloned())
     }
 
     pub fn log_history(&self) -> String {
