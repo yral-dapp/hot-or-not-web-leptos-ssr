@@ -33,7 +33,7 @@ ic-agent = { version = "0.34.0", default-features = false, features = [
 ] }
 serde-wasm-bindgen = { version = "0.6.3" }
 futures = "0.3.30"
-leptos-use = { version = "0.10.5", features = ["serde"] }
+leptos-use = { version = "0.10.8", features = ["serde"] }
 reqwest = { version = "0.12", default-features = false, features = [
     "json",
     "http2",
