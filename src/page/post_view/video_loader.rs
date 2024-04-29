@@ -10,7 +10,6 @@ use crate::{
         utils::{bg_url, mp4_url},
     },
     component::{feed_popup::FeedPopUp, video_player::VideoPlayer},
-
     state::{
         auth::account_connected_reader, canisters::unauth_canisters,
         local_storage::use_referrer_store,

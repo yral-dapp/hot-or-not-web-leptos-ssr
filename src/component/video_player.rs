@@ -1,20 +1,13 @@
 use leptos::*;
-use leptos_router::*;
 use leptos_dom::{html::Video, NodeRef};
-
 
 #[component]
 pub fn VideoPlayer(
-    #[prop(optional)]
-    node_ref: NodeRef<Video>, 
-    #[prop(into)]
-    view_bg_url: Signal<Option<String>>, 
-    #[prop(into)]
-    view_video_url: Signal<Option<String>>
+    #[prop(optional)] node_ref: NodeRef<Video>,
+    #[prop(into)] view_bg_url: Signal<Option<String>>,
+    #[prop(into)] view_video_url: Signal<Option<String>>,
 ) -> impl IntoView {
-
     let muted = create_rw_signal(false);
-
 
     view! {
         <div class="w-full h-full absolute top-0 left-0 grid grid-cols-1 justify-items-center items-center cursor-pointer z-[3]">

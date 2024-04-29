@@ -7,7 +7,7 @@ use crate::{
         menu::Menu,
         post_view::{PostView, PostViewCtx},
         privacy::PrivacyPolicy,
-        profile::{ProfileView, profile_post::ProfilePost},
+        profile::{profile_post::ProfilePost, ProfileView},
         refer_earn::ReferEarn,
         root::RootPage,
         terms::TermsOfService,

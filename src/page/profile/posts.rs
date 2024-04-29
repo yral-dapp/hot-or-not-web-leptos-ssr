@@ -1,4 +1,4 @@
-use leptos::{svg::image, *};
+use leptos::*;
 use leptos_icons::*;
 
 use candid::Principal;
@@ -14,20 +14,16 @@ use super::ic::ProfileStream;
 
 #[component]
 fn Post(details: PostDetails, user_canister: Principal, _ref: NodeRef<html::Div>) -> impl IntoView {
-
     let image_error = create_rw_signal(false);
 
-
-    let handle_image_error = move |_| {
-        
-        image_error.update(|image_error| *image_error = !*image_error)
-    };
+    let handle_image_error =
+        move |_| image_error.update(|image_error| *image_error = !*image_error);
 
     let profile_post_url = format!("/profile/{}/{}", user_canister, details.id);
     view! {
         <div _ref=_ref class="relative w-full basis-1/3 md:basis-1/4 xl:basis-1/5">
             <div class="relative aspect-[9/16] h-full rounded-md border-white/20 m-2 border-[1px]">
-                <a class = "h-full w-full" href = profile_post_url> 
+                <a class = "h-full w-full" href = profile_post_url>
                     <Show when=image_error
                         fallback=move || view! {
                             <img class="object-cover w-full h-full" on:error=handle_image_error src=bg_url(details.uid.clone())/>

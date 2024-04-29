@@ -2,9 +2,16 @@ use candid::Principal;
 use leptos::{html::Video, *};
 use leptos_router::*;
 
-use crate::{canister::utils::{bg_url, mp4_url}, component::{back_btn::BackButton, spinner::FullScreenSpinner, video_player::VideoPlayer}, page::post_view::video_iter::get_post_uid, state::canisters::{self, authenticated_canisters, unauth_canisters, Canisters}, try_or_redirect, try_or_redirect_opt, utils::route::failure_redirect};
+use crate::{
+    canister::utils::{bg_url, mp4_url},
+    component::{back_btn::BackButton, spinner::FullScreenSpinner, video_player::VideoPlayer},
+    page::post_view::video_iter::get_post_uid,
+    state::canisters::{authenticated_canisters, unauth_canisters},
+    try_or_redirect_opt,
+    utils::route::failure_redirect,
+};
 
-use crate::page::post_view::{overlay::{VideoDetailsOverlay, HomeButtonOverlay}, video_iter::PostDetails};
+use crate::page::post_view::overlay::{HomeButtonOverlay, VideoDetailsOverlay};
 
 #[derive(Params, PartialEq)]
 struct ProfileVideoParams {
@@ -29,9 +36,7 @@ pub fn ProfilePost() -> impl IntoView {
     let auth_cans_res = authenticated_canisters();
 
     let post_details = create_resource(canister_and_post, move |canister_and_post| async move {
-        let Some((creator_canister_id, post_id)) = canister_and_post else {
-            return None;
-        };
+        let (creator_canister_id, post_id) = canister_and_post?;
         let auth_canisters = leptos::untrack(|| auth_cans_res.get().transpose());
         let auth_canisters = try_or_redirect_opt!(auth_canisters);
         match auth_canisters {
@@ -46,7 +51,7 @@ pub fn ProfilePost() -> impl IntoView {
                         None
                     }
                 }
-            },
+            }
             None => {
                 let canisters = unauth_canisters();
                 match get_post_uid(&canisters, creator_canister_id, post_id).await {
@@ -56,7 +61,6 @@ pub fn ProfilePost() -> impl IntoView {
                         None
                     }
                 }
-
             }
         }
         // let post_details_for_frontend = auth_canisters(creator_canister_id).get_individual_post_details_by_id(post_id).await.unwrap();
@@ -64,18 +68,9 @@ pub fn ProfilePost() -> impl IntoView {
         // Some(PostDetails::from_canister_post(post_details_for_frontend))
     });
 
-    let view_video_url = move || {
-        post_details.get().flatten().and_then(|pd| {
-            Some(mp4_url(pd.uid))
-        })
-    };
+    let view_video_url = move || post_details.get().flatten().map(|pd| mp4_url(pd.uid));
 
-
-    let view_bg_url = move || {
-        post_details.get().flatten().and_then(|pd| {
-            Some(bg_url(pd.uid))
-        })
-    };
+    let view_bg_url = move || post_details.get().flatten().map(|pd| bg_url(pd.uid));
 
     let video_node_ref = create_node_ref::<Video>();
 
@@ -90,14 +85,12 @@ pub fn ProfilePost() -> impl IntoView {
         _ = vid.play();
     });
 
-
-
     view! {
         <Suspense fallback = FullScreenSpinner >
         {move || {
                 post_details.get()
                     .flatten().map(|pd| {
-                        
+
                         Some(view!{
                             <div class ="absolute left-4 top-4 bg-transparent z-10 text-white">
                                 <BackButton fallback="/".to_string()/>
