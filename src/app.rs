@@ -114,7 +114,7 @@ pub fn App() -> impl IntoView {
                     <GoogleAuthRedirectorRoute/>
                     <Route path="" view=BaseRoute>
                         <Route path="/hot-or-not/:canister_id/:post_id" view=PostView/>
-                        <Route path="/profilepost/:canister_id/:post_id" view=ProfilePost/>
+                        <Route path="/profile/:canister_id/:post_id" view=ProfilePost/>
                         <Route path="/profile/:id" view=ProfileView/>
                         <Route path="/upload" view=UploadPostPage/>
                         <Route path="/error" view=ServerErrorPage/>
