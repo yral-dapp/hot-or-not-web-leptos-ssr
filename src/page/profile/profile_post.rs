@@ -33,7 +33,7 @@ pub fn ProfilePost() -> impl IntoView {
             return None;
         };
         let auth_canisters = leptos::untrack(|| auth_cans_res.get().transpose());
-        let auth_canisters = try_or_redirect_opt!(auth_canisters).flatten();
+        let auth_canisters = try_or_redirect_opt!(auth_canisters);
         match auth_canisters {
             Some(canisters) => {
                 if canisters.user_canister() == creator_canister_id {
