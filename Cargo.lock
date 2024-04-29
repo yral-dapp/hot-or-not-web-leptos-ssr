@@ -1663,7 +1663,7 @@ version = "0.1.0"
 source = "git+https://github.com/go-bazzinga/gob-cloudflare?rev=c847ba87ecc73a33520b24bd62503420d7e23e3e#c847ba87ecc73a33520b24bd62503420d7e23e3e"
 dependencies = [
  "bytes",
- "reqwest 0.12.3",
+ "reqwest 0.12.4",
  "serde",
  "serde_json",
  "thiserror",
@@ -1851,7 +1851,7 @@ dependencies = [
  "rand_chacha",
  "redb",
  "redis",
- "reqwest 0.12.3",
+ "reqwest 0.12.4",
  "serde",
  "serde-wasm-bindgen",
  "serde_bytes",
@@ -3883,9 +3883,9 @@ dependencies = [
 
 [[package]]
 name = "reqwest"
-version = "0.12.3"
+version = "0.12.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3e6cc1e89e689536eb5aeede61520e874df5a4707df811cd5da4aa5fbb2aae19"
+checksum = "566cafdd92868e0939d3fb961bd0dc25fcfaaed179291093b3d43e6b3150ea10"
 dependencies = [
  "base64 0.22.0",
  "bytes",
@@ -5612,7 +5612,7 @@ version = "0.1.0"
 source = "git+https://github.com/go-bazzinga/yral-metadata?rev=c2c5d254ac273681a66966d62b6f01785679a1be#c2c5d254ac273681a66966d62b6f01785679a1be"
 dependencies = [
  "ic-agent",
- "reqwest 0.12.3",
+ "reqwest 0.12.4",
  "thiserror",
  "yral-identity",
  "yral-metadata-types",
