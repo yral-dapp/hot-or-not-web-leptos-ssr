@@ -7,7 +7,7 @@ use crate::{
         menu::Menu,
         post_view::{PostView, PostViewCtx},
         privacy::PrivacyPolicy,
-        profile::ProfileView,
+        profile::{ProfileView, profile_post::ProfilePost},
         refer_earn::ReferEarn,
         root::RootPage,
         terms::TermsOfService,
@@ -116,6 +116,7 @@ pub fn App() -> impl IntoView {
                     <GoogleAuthRedirectorRoute/>
                     <Route path="/" view=BaseRoute>
                         <Route path="/hot-or-not/:canister_id/:post_id" view=PostView/>
+                        <Route path="/profilepost/:canister_id/:post_id" view=ProfilePost/>
                         <Route path="/profile/:id" view=ProfileView/>
                         <Route path="/upload" view=UploadPostPage/>
                         <Route path="/error" view=ServerErrorPage/>

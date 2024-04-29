@@ -301,8 +301,6 @@ mod server_fn_impl {
 
         pub async fn issue_referral_rewards_impl(
             _referee_canister: Principal,
-            _referrer_canister: Principal,
-            _referrer_principal: Principal,
         ) -> Result<(), ServerFnError> {
             Ok(())
         }

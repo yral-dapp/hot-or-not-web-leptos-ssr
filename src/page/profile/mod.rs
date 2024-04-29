@@ -1,6 +1,7 @@
 mod ic;
 mod posts;
 mod speculation;
+pub mod profile_post;
 
 use candid::Principal;
 use leptos::*;
