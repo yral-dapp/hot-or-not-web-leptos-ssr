@@ -26,7 +26,7 @@ pub fn BgView(idx: usize, children: Children) -> impl IntoView {
         current_idx,
         ..
     } = expect_context();
-    let post = move || video_queue.with(|q| q.get(idx).cloned());
+    let post = create_memo(move |_| video_queue.with(|q| q.get(idx).cloned()));
     let uid = move || post().as_ref().map(|q| q.uid.clone()).unwrap_or_default();
 
     let (is_connected, _) = account_connected_reader();

@@ -43,13 +43,14 @@ async fn mark_user_registered(user_principal: Principal) -> Result<(), ServerFnE
     Ok(())
 }
 
-async fn handle_user_login(canisters: Canisters<true>) -> Result<(), ServerFnError> {
+async fn handle_user_login(
+    canisters: Canisters<true>,
+    referrer: Option<Principal>,
+) -> Result<(), ServerFnError> {
     let user_principal = canisters.identity().sender().unwrap();
     mark_user_registered(user_principal).await?;
 
-    let (referrer_store, _, _) = use_referrer_store();
-
-    let Some(_referrer_principal) = referrer_store.get_untracked() else {
+    let Some(_referrer_principal) = referrer else {
         return Ok(());
     };
 
@@ -129,11 +130,9 @@ pub fn LoginProviders(show_modal: RwSignal<bool>, lock_closing: RwSignal<bool>) 
             let referrer = referrer_store.get_untracked();
 
             // This is some redundant work, but saves us 100+ lines of resource handling
-            let canisters = do_canister_auth(Some(identity.clone()), referrer)
-                .await?
-                .unwrap();
+            let canisters = do_canister_auth(identity, referrer).await?;
 
-            if let Err(e) = handle_user_login(canisters.clone()).await {
+            if let Err(e) = handle_user_login(canisters.clone(), referrer).await {
                 log::warn!("failed to handle user login, err {e}. skipping");
             }
 
@@ -152,7 +151,7 @@ pub fn LoginProviders(show_modal: RwSignal<bool>, lock_closing: RwSignal<bool>) 
         login_complete: SignalSetter::map(move |val: DelegatedIdentityWire| {
             new_identity.set(Some(val.clone()));
             write_account_connected(true);
-            auth.identity.set(Some(val));
+            auth.set(Some(val));
             show_modal.set(false);
         }),
     };

@@ -296,7 +296,7 @@ type UserProfileUpdateDetailsFromFrontend = record {
   profile_picture_url : opt text;
   display_name : opt text;
 };
-service : (IndividualUserTemplateInitArgs) -> {
+service : {
   add_post_v2 : (PostDetailsFromFrontend) -> (Result);
   backup_data_to_backup_canister : (principal, principal) -> ();
   bet_on_currently_viewing_post : (PlaceBetArg) -> (Result_1);
@@ -317,6 +317,9 @@ service : (IndividualUserTemplateInitArgs) -> {
   get_individual_post_details_by_id : (nat64) -> (PostDetailsForFrontend) query;
   get_last_access_time : () -> (Result_4) query;
   get_posts_of_this_user_profile_with_pagination : (nat64, nat64) -> (
+      Result_5,
+    ) query;
+  get_posts_of_this_user_profile_with_pagination_cursor : (nat64, nat64) -> (
       Result_5,
     ) query;
   get_principals_that_follow_this_profile_paginated : (opt nat64) -> (
@@ -376,4 +379,5 @@ service : (IndividualUserTemplateInitArgs) -> {
     ) -> (Result_2);
   update_referrer_details : (UserCanisterDetails) -> (Result_8);
   update_session_type : (SessionType) -> (Result_8);
+  update_well_known_principal : (KnownPrincipalType, principal) -> ();
 }

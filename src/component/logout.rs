@@ -6,26 +6,24 @@ use crate::{
     auth::logout_identity,
     component::loading::Loading,
     consts::ACCOUNT_CONNECTED_STORE,
-    state::{auth::auth_state, canisters::AuthProfileCanisterResource},
+    state::auth::auth_state,
     try_or_redirect,
     utils::event_streaming::events::{LogoutClicked, LogoutConfirmation},
 };
 
 #[component]
 pub fn Logout() -> impl IntoView {
-    let profile_and_canister_details: AuthProfileCanisterResource = expect_context();
-
-    LogoutClicked.send_event(profile_and_canister_details);
+    LogoutClicked.send_event();
+    let auth = auth_state();
 
     let auth_res = create_local_resource(
         || (),
         move |_| async move {
-            let _ = try_or_redirect!(logout_identity().await);
+            let id = try_or_redirect!(logout_identity().await);
 
-            LogoutConfirmation.send_event(profile_and_canister_details);
+            LogoutConfirmation.send_event();
 
-            let auth = auth_state().identity;
-            auth.set(None);
+            auth.set(Some(id));
 
             let (_, write_account_connected, _) =
                 use_local_storage::<bool, FromToStringCodec>(ACCOUNT_CONNECTED_STORE);

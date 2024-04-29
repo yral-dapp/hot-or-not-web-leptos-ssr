@@ -19,8 +19,6 @@ use crate::{
     utils::{profile::ProfileDetails, MockPartialEq},
 };
 
-use super::local_storage::use_referrer_store;
-
 #[derive(Clone)]
 pub struct Canisters<const AUTH: bool> {
     agent: ic_agent::Agent,
@@ -28,6 +26,7 @@ pub struct Canisters<const AUTH: bool> {
     metadata_client: MetadataClient,
     user_canister: Principal,
     expiry: u64,
+    profile_details: Option<ProfileDetails>,
 }
 
 impl Default for Canisters<false> {
@@ -41,6 +40,7 @@ impl Default for Canisters<false> {
             metadata_client: MetadataClient::with_base_url(METADATA_API_BASE.clone()),
             user_canister: Principal::anonymous(),
             expiry: 0,
+            profile_details: None,
         }
     }
 }
@@ -65,6 +65,7 @@ impl Canisters<true> {
             id: Some(id),
             user_canister: Principal::anonymous(),
             expiry,
+            profile_details: None,
         }
     }
 
@@ -84,6 +85,12 @@ impl Canisters<true> {
 
     pub fn authenticated_user(&self) -> IndividualUserTemplate<'_> {
         IndividualUserTemplate(self.user_canister, &self.agent)
+    }
+
+    pub fn profile_details(&self) -> ProfileDetails {
+        self.profile_details
+            .clone()
+            .expect("Authenticated canisters must have profile details")
     }
 }
 
@@ -141,19 +148,8 @@ pub fn unauth_canisters() -> Canisters<false> {
     expect_context()
 }
 
-pub type AuthCanistersResource = Resource<
-    MockPartialEq<Option<DelegatedIdentityWire>>,
-    Result<Option<Canisters<true>>, ServerFnError>,
->;
-
-pub type AuthProfileCanisterResource = Resource<
-    MockPartialEq<Option<Result<Canisters<true>, ServerFnError>>>,
-    Option<(ProfileDetails, Principal)>,
->;
-
 async fn create_individual_canister(
     canisters: &Canisters<true>,
-    _delegation_id: DelegatedIdentityWire,
 ) -> Result<Principal, ServerFnError> {
     let subnet_idxs = canisters.subnet_indexes().await?;
 
@@ -185,15 +181,11 @@ async fn create_individual_canister(
 }
 
 pub async fn do_canister_auth(
-    auth: Option<DelegatedIdentityWire>,
+    auth: DelegatedIdentityWire,
     referrer: Option<Principal>,
-) -> Result<Option<Canisters<true>>, ServerFnError> {
-    let Some(delegation_identity) = auth else {
-        return Ok(None);
-    };
-
-    let auth: DelegatedIdentity = delegation_identity.clone().try_into()?;
-    let mut canisters = Canisters::<true>::authenticated(auth);
+) -> Result<Canisters<true>, ServerFnError> {
+    let id: DelegatedIdentity = auth.clone().try_into()?;
+    let mut canisters = Canisters::<true>::authenticated(id);
 
     canisters.user_canister = if let Some(user_canister) = canisters
         .get_individual_canister_by_user_principal(canisters.identity().sender().unwrap())
@@ -201,10 +193,9 @@ pub async fn do_canister_auth(
     {
         user_canister
     } else {
-        create_individual_canister(&canisters, delegation_identity).await?
+        create_individual_canister(&canisters).await?
     };
 
-    let (_, set_referrer_store, _) = use_referrer_store();
     let user = canisters.authenticated_user();
 
     if let Some(referrer_principal_id) = referrer {
@@ -218,8 +209,6 @@ pub async fn do_canister_auth(
             })
             .await?;
         }
-
-        set_referrer_store.set(Some(referrer_principal_id));
     }
 
     match user
@@ -230,10 +219,18 @@ pub async fn do_canister_auth(
         Ok(Result8::Ok(_)) => (),
         Err(e) | Ok(Result8::Err(e)) => log::warn!("Failed to update last access time: {}", e),
     }
+    canisters.profile_details = Some(user.get_profile_details().await?.into());
 
-    Ok(Some(canisters))
+    Ok(canisters)
 }
 
-pub fn authenticated_canisters() -> AuthCanistersResource {
+pub type AuthCansResource =
+    Resource<MockPartialEq<Option<DelegatedIdentityWire>>, Result<Canisters<true>, ServerFnError>>;
+
+pub fn authenticated_canisters() -> AuthCansResource {
+    expect_context()
+}
+
+pub fn auth_canisters_store() -> RwSignal<Option<Canisters<true>>> {
     expect_context()
 }
