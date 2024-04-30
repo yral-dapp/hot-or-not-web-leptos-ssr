@@ -6,7 +6,7 @@ use candid::Principal;
 use crate::{
     canister::utils::bg_url,
     component::no_more_posts::NoMorePostsGraphic,
-    state::canisters::unauth_canisters,
+    state::canisters::{authenticated_canisters, unauth_canisters},
     utils::profile::{PostDetails, PostsProvider},
 };
 
@@ -19,7 +19,23 @@ fn Post(details: PostDetails, user_canister: Principal, _ref: NodeRef<html::Div>
     let handle_image_error =
         move |_| image_error.update(|image_error| *image_error = !*image_error);
 
-    let profile_post_url = format!("/profile/{}/{}", user_canister, details.id);
+    let auth_canister = authenticated_canisters();
+
+    let auth_canister_id = auth_canister()
+        .transpose()
+        .ok()
+        .flatten()
+        .map(|canisters| canisters.user_canister());
+
+    let profile_post_url = match auth_canister_id {
+        Some(canister_id) if canister_id == user_canister => {
+            format!("/your-profile/{}/{}", canister_id, details.id)
+        }
+        _ => {
+            format!("/profile/{}/{}", user_canister, details.id)
+        }
+    };
+
     view! {
         <div _ref=_ref class="relative w-full basis-1/3 md:basis-1/4 xl:basis-1/5">
             <div class="relative aspect-[9/16] h-full rounded-md border-white/20 m-2 border-[1px]">

@@ -2,6 +2,7 @@ use candid::Principal;
 use leptos::{html::Video, *};
 use leptos_router::*;
 
+use super::overlay::YourProfileOverlay;
 use crate::{
     canister::utils::{bg_url, mp4_url},
     component::{back_btn::BackButton, spinner::FullScreenSpinner, video_player::VideoPlayer},
@@ -20,7 +21,7 @@ struct ProfileVideoParams {
 }
 
 #[component]
-pub fn ProfilePost() -> impl IntoView {
+pub fn YourProfilePost() -> impl IntoView {
     let params = use_params::<ProfileVideoParams>();
 
     let canister_and_post = move || {
@@ -70,10 +71,11 @@ pub fn ProfilePost() -> impl IntoView {
         let Some(vid) = video_node_ref() else {
             return;
         };
-        vid.set_muted(false);
 
         vid.set_autoplay(true);
         _ = vid.play();
+
+        vid.set_muted(false);
     });
 
     view! {
@@ -86,6 +88,7 @@ pub fn ProfilePost() -> impl IntoView {
                             <div class ="absolute left-4 top-4 bg-transparent z-10 text-white">
                                 <BackButton fallback="/".to_string()/>
                             </div>
+                            <YourProfileOverlay/>
                             <div class="snap-always snap-end w-full h-screen">
                                 <div class="bg-transparent w-full h-full relative overflow-hidden">
                                     <div
