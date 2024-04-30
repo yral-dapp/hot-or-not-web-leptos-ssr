@@ -103,15 +103,23 @@ pub fn NavBar() -> impl IntoView {
             "/upload" => 2,
             "/wallet" | "/transactions" => 3,
             "/menu" => 4,
-            s if s.starts_with("/hot-or-not") || s.starts_with("/profile") => {
+            s if s.starts_with("your-profile") => 4,
+            s if s.starts_with("/hot-or-not") => {
                 home_path.set(path);
                 0
             }
+            s if s.starts_with("/profile") => 0,
             _ => 4,
         }
     });
     let bg_color = move || {
-        if cur_selected() == 0 {
+        if cur_selected() == 0
+            || cur_location
+                .pathname
+                .get()
+                .as_str()
+                .starts_with("/your-profile")
+        {
             "bg-transparent"
         } else {
             "bg-black"
