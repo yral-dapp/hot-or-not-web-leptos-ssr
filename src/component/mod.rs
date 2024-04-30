@@ -21,3 +21,4 @@ pub mod social;
 pub mod spinner;
 pub mod title;
 pub mod toggle;
+pub mod video_player;
