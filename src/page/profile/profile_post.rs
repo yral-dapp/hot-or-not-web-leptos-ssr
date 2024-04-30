@@ -86,7 +86,7 @@ pub fn ProfilePost() -> impl IntoView {
                             <div class ="absolute left-4 top-4 bg-transparent z-10 text-white">
                                 <BackButton fallback="/".to_string()/>
                             </div>
-                            <div class="snap-always snap-end w-full h-screen">
+                            <div class="snap-always snap-end w-dvh h-dvh">
                                 <div class="bg-transparent w-full h-full relative overflow-hidden">
                                     <div
                                         class="absolute top-0 left-0 bg-cover bg-center w-full h-full z-[1] blur-lg"

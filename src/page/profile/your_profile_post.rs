@@ -89,7 +89,7 @@ pub fn YourProfilePost() -> impl IntoView {
                                 <BackButton fallback="/".to_string()/>
                             </div>
                             <YourProfileOverlay/>
-                            <div class="snap-always snap-end w-full h-screen">
+                            <div class="snap-always snap-end w-dvh h-dvh">
                                 <div class="bg-transparent w-full h-full relative overflow-hidden">
                                     <div
                                         class="absolute top-0 left-0 bg-cover bg-center w-full h-full z-[1] blur-lg"
