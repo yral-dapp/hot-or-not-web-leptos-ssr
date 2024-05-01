@@ -33,7 +33,7 @@ jobs:
           - name: run playwright
             id: tests
             run: npx playwright test --project=firefox
-            continue-on-error: true
+            # continue-on-error: true
 
           # - name: Notify Google Chat on success
           #   if: success()
@@ -49,7 +49,7 @@ jobs:
             with:
               name: Build
               url: ${{ secrets.TEST_WEBHOOK_URL }}
-              status: "playwright test failed"
+              status: ${{ job.status }}
 
           - name: Check test result and comment
             uses: peter-evans/create-or-update-comment@v1
