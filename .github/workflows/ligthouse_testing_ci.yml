@@ -30,8 +30,16 @@ jobs:
 
           - name: run playwright
             id: tests
-            run: npx playwright test --project=firefox
+            run: npx playwright test --project=firefox > results.txt
+                echo "::set-output name=status::$(cat results.txt)"
+
             # continue-on-error: true
+        
+          - name: Notify Google Chat
+            uses: google-github-actions/send-google-chat-webhook@v0.0.2
+            with:
+              url: ${{ secrets.TEST_WEBHOOK_URL }}
+              message: ${{ steps.test_run.outputs.status }}
 
           # - name: Notify Google Chat on success
           #   if: success()
@@ -41,19 +49,15 @@ jobs:
           #     # mention: "<users/all>"
           #     message: 'Playwright Tests Passed! !!!!!'
 
-    print:
-        if: always()
-        runs-on: ubuntu-latest
-        steps:
-          - name: Notify Google Chat on failure
-            # if: failure()
-            uses: Co-qn/google-chat-notification@releases/v1
-            with:
-              name: Build
-              url: ${{ secrets.TEST_WEBHOOK_URL }}
-              status: ${{ job.status }}
 
-              
+          # - name: Notify Google Chat on failure
+          #   # if: failure()
+          #   uses: Co-qn/google-chat-notification@releases/v1
+          #   with:
+          #     name: Build
+          #     url: ${{ secrets.TEST_WEBHOOK_URL }}
+          #     status: ${{ job.status }}
+
           - name: Check test result and comment
             uses: peter-evans/create-or-update-comment@v1
             with:
