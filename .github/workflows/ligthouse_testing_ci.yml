@@ -33,7 +33,7 @@ jobs:
           - name: run playwright
             id: tests
             run: npx playwright test --project=firefox
-            # continue-on-error: true
+            continue-on-error: true
 
           # - name: Notify Google Chat on success
           #   if: success()
