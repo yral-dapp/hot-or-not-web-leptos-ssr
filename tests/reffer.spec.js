@@ -10,7 +10,7 @@ test.describe('New test', () => {
  test('Test refferal', async () => {
 
     // login from wallet: using headfull mode
-    try {
+    // try {
       
       // const environment_pass = global.expect;
       // login for first user
@@ -116,9 +116,9 @@ test.describe('New test', () => {
     //   const responseData = await response.json();
     //   console.log(responseData);
 
-    } catch (error) {
-      console.error("error in login"); 
-    }
+    // } catch (error) {
+    //   console.error("error in login"); 
+    // }
   });
 
 })
