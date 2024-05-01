@@ -29,7 +29,7 @@ async fn issue_referral_rewards(referee_canister: Principal) -> Result<(), Serve
 }
 
 #[server]
-async fn mark_user_registered(user_principal: Principal) -> Result<(), ServerFnError> {
+async fn mark_user_registered(user_principal: Principal) -> Result<bool, ServerFnError> {
     use self::server_fn_impl::mark_user_registered_impl;
     use crate::state::canisters::unauth_canisters;
 
@@ -39,8 +39,7 @@ async fn mark_user_registered(user_principal: Principal) -> Result<(), ServerFnE
         .get_individual_canister_by_user_principal(user_principal)
         .await?
         .ok_or_else(|| ServerFnError::new("User not found"))?;
-    mark_user_registered_impl(user_canister).await?;
-    Ok(())
+    mark_user_registered_impl(user_canister).await
 }
 
 async fn handle_user_login(
@@ -48,15 +47,15 @@ async fn handle_user_login(
     referrer: Option<Principal>,
 ) -> Result<(), ServerFnError> {
     let user_principal = canisters.identity().sender().unwrap();
-    mark_user_registered(user_principal).await?;
+    let first_time_login = mark_user_registered(user_principal).await?;
 
-    let Some(_referrer_principal) = referrer else {
-        return Ok(());
-    };
-
-    issue_referral_rewards(canisters.user_canister()).await?;
-
-    Ok(())
+    match referrer {
+        Some(_referee_principal) if first_time_login => {
+            issue_referral_rewards(canisters.user_canister()).await?;
+            Ok(())
+        }
+        _ => Ok(()),
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -266,7 +265,7 @@ mod server_fn_impl {
 
         pub async fn mark_user_registered_impl(
             user_canister: Principal,
-        ) -> Result<(), ServerFnError> {
+        ) -> Result<bool, ServerFnError> {
             use crate::{
                 canister::individual_user_template::{Result6, Result8, SessionType},
                 state::admin_canisters::admin_canisters,
@@ -278,7 +277,7 @@ mod server_fn_impl {
                 user.get_session_type().await?,
                 Result6::Ok(SessionType::RegisteredSession)
             ) {
-                return Ok(());
+                return Ok(false);
             }
             user.update_session_type(SessionType::RegisteredSession)
                 .await
@@ -289,7 +288,7 @@ mod server_fn_impl {
                         "failed to mark user as registered {e}"
                     ))),
                 })?;
-            Ok(())
+            Ok(true)
         }
     }
 
@@ -306,8 +305,8 @@ mod server_fn_impl {
 
         pub async fn mark_user_registered_impl(
             _user_canister: Principal,
-        ) -> Result<(), ServerFnError> {
-            Ok(())
+        ) -> Result<bool, ServerFnError> {
+            Ok(true)
         }
     }
 }
