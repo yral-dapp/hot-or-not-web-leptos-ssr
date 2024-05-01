@@ -6,8 +6,6 @@ on:
 jobs:
     lhci:
         runs-on: ubuntu-latest
-        env: 
-            COOKIE_KEY: '1267b291500365c42043e04bc69cf24a31495bd8936fc8d6794283675e288fad755971922d45cf1ca0b438df4fc847f39cb0b2aceb3a45673eff231cddb88dc9'
 
         steps:
           - name: Checkout repo
@@ -43,6 +41,10 @@ jobs:
           #     # mention: "<users/all>"
           #     message: 'Playwright Tests Passed! !!!!!'
 
+    print:
+        if: always()
+        runs-on: ubuntu-latest
+        steps:
           - name: Notify Google Chat on failure
             # if: failure()
             uses: Co-qn/google-chat-notification@releases/v1
@@ -51,6 +53,7 @@ jobs:
               url: ${{ secrets.TEST_WEBHOOK_URL }}
               status: ${{ job.status }}
 
+              
           - name: Check test result and comment
             uses: peter-evans/create-or-update-comment@v1
             with:
