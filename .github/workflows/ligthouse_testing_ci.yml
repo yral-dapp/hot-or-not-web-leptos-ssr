@@ -44,7 +44,7 @@ jobs:
           #     message: 'Playwright Tests Passed! !!!!!'
 
           - name: Notify Google Chat on failure
-            if: failure()
+            # if: failure()
             uses: Co-qn/google-chat-notification@releases/v1
             with:
               webhook_url: '${{ secrets.TEST_WEBHOOK_URL }}'
