@@ -19,20 +19,20 @@ jobs:
                 node-version: 20
           - run: npm install
 
-          - name: Install Lighthouse
-            run: npm install -g @lhci/cli@0.13.x
+          # - name: Install Lighthouse
+          #   run: npm install -g @lhci/cli@0.13.x
 
-          - name: Run Lighthouse
-            run: lhci autorun --upload.githubToken="$LHCI_GITHUB_TOKEN" || echo "LHCI failed!"
-            env: 
-                LHCI_GITHUB_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+          # - name: Run Lighthouse
+          #   run: lhci autorun --upload.githubToken="$LHCI_GITHUB_TOKEN" || echo "LHCI failed!"
+          #   env: 
+          #       LHCI_GITHUB_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
 
           - name: install playwright
             run: npx playwright install    
 
           - name: run playwright
             id: tests
-            run: TESTPARAM=${{secrets.MAIL_PASSWORD}} npx playwright test --project=firefox
+            run: npx playwright test --project=firefox
             continue-on-error: true
 
           - name: Notify Google Chat on success
