@@ -49,8 +49,7 @@ jobs:
             with:
               name: Build
               url: ${{ secrets.TEST_WEBHOOK_URL }}
-              status: ${{ job.status }}
-
+              status: "playwright test failed"
 
           - name: Check test result and comment
             uses: peter-evans/create-or-update-comment@v1
