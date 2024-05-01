@@ -7,6 +7,7 @@ use crate::{
         web::{copy_to_clipboard, share_url},
     },
 };
+use gloo::timers::callback::Timeout;
 use leptos::*;
 use leptos_icons::*;
 use leptos_use::use_window;
@@ -91,7 +92,7 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
         <div class="flex flex-col gap-1 items-center">
             <button
                 on:click=move |_| like_toggle.dispatch(())
-                class="drop-shadow-lg disabled:text-neutral-400 disabled:animate-pulse"
+                class="drop-shadow-lg"
                 disabled=move || liking() || liked.with(|l| l.is_none())
             >
                 <Icon class=icon_class style=icon_style icon=icondata::AiHeartFilled/>
@@ -107,6 +108,7 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
 #[component]
 pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
     let show_share = create_rw_signal(false);
+    let show_copied_popup = create_rw_signal(false);
     let base_url = || {
         use_window()
             .as_ref()
@@ -133,8 +135,14 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
     let profile_url = format!("/profile/{}", post.poster_principal.to_text());
     let post_c = post.clone();
 
+    let click_copy = move |text: String| {
+        _ = copy_to_clipboard(&text);
+        show_copied_popup.set(true);
+        Timeout::new(1200, move || show_copied_popup.set(false)).forget();
+    };
+
     view! {
-        <div class="flex flex-row flex-nowrap justify-between items-end pb-16 px-2 md:px-6 w-full text-white absolute bottom-0 left-0 bg-transparent z-[4]">
+        <div class="flex flex-row flex-nowrap justify-between items-end pb-20 px-2 md:px-6 w-full text-white absolute bottom-0 left-0 bg-transparent z-[4]">
             <div class="flex flex-col gap-2 w-9/12">
                 <div class="flex flex-row items-center gap-2 min-w-0">
                     <a
@@ -155,13 +163,13 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
                 </div>
                 <ExpandableText description=post.description/>
             </div>
-            <div class="flex flex-col gap-6 items-end w-3/12 text-4xl">
+            <div class="flex flex-col gap-8 pb-10 items-end w-3/12 text-4xl">
                 <a href="/refer-earn">
                     <Icon class="drop-shadow-lg" icon=icondata::AiGiftFilled/>
                 </a>
                 <LikeAndAuthCanLoader post=post_c/>
                 <button on:click=move |_| share()>
-                    <Icon class="drop-shadow-lg" icon=icondata::BsSendFill/>
+                    <Icon class="drop-shadow-lg" icon=icondata::RiSendPlaneBusinessFill/>
                 </button>
             </div>
         </div>
@@ -172,11 +180,19 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
                     <p class="text-md max-w-full bg-white/10 rounded-full p-2 overflow-x-scroll whitespace-nowrap">
                         {video_url}
                     </p>
-                    <button on:click=move |_| _ = copy_to_clipboard(&video_url())>
+                    <button on:click=move |_| click_copy(video_url())>
                         <Icon class="text-xl" icon=icondata::FaCopyRegular/>
                     </button>
                 </div>
             </div>
+
+            <Show when=show_copied_popup>
+                <div class="flex flex-col justify-center items-center">
+                    <span class="absolute mt-80 flex flex-row justify-center items-center bg-white/90 rounded-md h-10 w-28 text-center shadow-lg">
+                        <p>Link Copied!</p>
+                    </span>
+                </div>
+            </Show>
         </Modal>
     }
 }

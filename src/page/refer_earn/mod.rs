@@ -1,6 +1,7 @@
 mod history;
 
 use candid::Principal;
+use gloo::timers::callback::Timeout;
 use ic_agent::Identity;
 use leptos::*;
 use leptos_icons::*;
@@ -44,6 +45,7 @@ fn ReferLoaded(user_principal: Principal) -> impl IntoView {
         .unwrap_or_default();
 
     let (logged_in, _) = account_connected_reader();
+    let show_copied_popup = create_rw_signal(false);
 
     let click_copy = create_action(move |()| {
         let refer_link = refer_link.clone();
@@ -51,6 +53,9 @@ fn ReferLoaded(user_principal: Principal) -> impl IntoView {
             let _ = copy_to_clipboard(&refer_link);
 
             ReferShareLink.send_event(logged_in);
+
+            show_copied_popup.set(true);
+            Timeout::new(1200, move || show_copied_popup.set(false)).forget();
         }
     });
 
@@ -61,6 +66,13 @@ fn ReferLoaded(user_principal: Principal) -> impl IntoView {
                 <Icon class="text-xl" icon=icondata::FaCopyRegular/>
             </button>
         </div>
+        <Show when=show_copied_popup>
+            <div class="absolute flex flex-col justify-center items-center z-[4]">
+                <span class="absolute top-80 flex flex-row justify-center items-center bg-white/90 rounded-md h-10 w-28 text-center shadow-lg">
+                    <p class="text-black">Link Copied!</p>
+                </span>
+            </div>
+        </Show>
     }
 }
 
