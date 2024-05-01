@@ -33,7 +33,7 @@ jobs:
           - name: run playwright
             id: tests
             run: npx playwright test --project=firefox
-            continue-on-error: true
+            # continue-on-error: true
 
           # - name: Notify Google Chat on success
           #   if: success()
@@ -45,10 +45,10 @@ jobs:
 
           - name: Notify Google Chat on failure
             # if: failure()
-            uses: Co-qn/google-chat-notification@releases/v1
+            uses: 'google-github-actions/send-google-chat-webhook@v0.0.2'
             with:
               webhook_url: '${{ secrets.TEST_WEBHOOK_URL }}'
-              message: 'Playwright Tests Failed! ❌'
+              message: 'Playwright Tests Failed! '
 
           - name: Check test result and comment
             uses: peter-evans/create-or-update-comment@v1
