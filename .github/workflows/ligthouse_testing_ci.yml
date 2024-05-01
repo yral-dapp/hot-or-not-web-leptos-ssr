@@ -33,23 +33,22 @@ jobs:
           - name: run playwright
             id: tests
             run: TESTPARAM=${{secrets.MAIL_PASSWORD}} npx playwright test --project=firefox
-    
-          # - name: Check test outcome and comment on PR
-          #   if: ${{ always() }}
-          #   uses: actions/github-script@v5
-          #   with:
-          #     github-token: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
-          #     script: |
-          #       const prNumber = context.payload.pull_request.number;
-          #       const testOutcome = context.job.outputs.playwright-test;
-          #       const commentBody = testOutcome === '3 passed' ? 'Test passed!' : 'Test failed. Please check logs for details.';
-    
-          #       await github.issues.createComment({
-          #         owner: context.repo.owner,
-          #         repo: context.repo.repo,
-          #         issue_number: prNumber,
-          #         body: commentBody
-          #       });
+            continue-on-error: true
+
+          - name: Notify Google Chat on success
+            if: success()
+            uses: 'google-github-actions/send-google-chat-webhook@v0.0.2'
+            with:
+              webhook_url: '${{ secrets.TEST_WEBHOOK_URL }}'
+              # mention: "<users/all>"
+              message: 'Playwright Tests Passed! !!!!!'
+
+          - name: Notify Google Chat on failure
+            if: failure()
+            uses: 'google-github-actions/send-google-chat-webhook@v0.0.2'
+            with:
+              webhook_url: '${{ secrets.TEST_WEBHOOK_URL }}'
+              message: 'Playwright Tests Failed! ❌'
 
           - name: Check test result and comment
             uses: peter-evans/create-or-update-comment@v1
@@ -57,4 +56,4 @@ jobs:
               token: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
               issue-number: ${{ github.event.pull_request.number }}
               body: |
-                ${{ steps.tests.outcome == '2 passed' && 'Test passed :heavy_check_mark:' || 'Test failed, Please check logs for details.' }}
+                ${{ steps.tests.outcome == '4 passed' && 'Test passed :heavy_check_mark:' || 'Test failed, Please check logs for details.' }}
