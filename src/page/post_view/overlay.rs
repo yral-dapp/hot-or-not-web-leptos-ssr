@@ -89,7 +89,7 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
     let liking = like_toggle.pending();
 
     view! {
-        <div class="flex flex-col gap-1 items-center">
+        <div class="relative flex flex-col gap-1 items-center">
             <button
                 on:click=move |_| like_toggle.dispatch(())
                 class="drop-shadow-lg"
@@ -97,7 +97,7 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
             >
                 <Icon class=icon_class style=icon_style icon=icondata::AiHeartFilled/>
             </button>
-            <span class="text-sm md:text-md">{likes}</span>
+            <span class="absolute -bottom-5 text-sm md:text-md">{likes}</span>
         </div>
         <WithAuthCans with=liked_fetch let:d>
             {move || liked.set(Some(d.1))}
