@@ -31,7 +31,6 @@ jobs:
           - name: run playwright
             id: tests
             run: npx playwright test --project=firefox > results.txt
-                echo "::set-output name=status::$(cat results.txt)"
 
             # continue-on-error: true
         
