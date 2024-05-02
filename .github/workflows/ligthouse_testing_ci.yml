@@ -73,10 +73,10 @@ jobs:
           #     url: ${{ secrets.TEST_WEBHOOK_URL }}
           #     status: ${{ steps.tests.outcome }}
 
-          # - name: Check test result and comment
-          #   uses: peter-evans/create-or-update-comment@v1
-          #   with:
-          #     token: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
-          #     issue-number: ${{ github.event.pull_request.number }}
-          #     body: |
-          #       ${{ steps.tests.outcome == '1 failed' && 'Test passed :heavy_check_mark:' || 'Test failed, Please check logs for details.' }}
+          - name: Check test result and comment
+            uses: peter-evans/create-or-update-comment@v1
+            with:
+              token: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+              issue-number: ${{ github.event.pull_request.number }}
+              body: |
+                ${{ steps.tests.outcome == 'failed' && 'Test failed, Please check logs for details.' || 'Test passed :heavy_check_mark:'  }}
