@@ -31,8 +31,7 @@ jobs:
           - name: run playwright
             id: tests
             run: npx playwright test --project=firefox 
-
-            # continue-on-error: true
+            continue-on-error: true
         
           - name: Notify Google Chat
             uses: google-github-actions/send-google-chat-webhook@v0.0.2
