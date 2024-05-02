@@ -33,18 +33,21 @@ jobs:
             run: npx playwright test --project=firefox 
             continue-on-error: true
         
-          # - name: Notify Google Chat on success
-          #   if: success()
-          #   uses: Co-qn/google-chat-notification@v1
-          #   with:
-          #     url: ${{ secrets.TEST_WEBHOOK_URL }}
-          #     message: 'Build succeeded!'
-          # - name: Notify Google Chat on failure
-          #   if: failure()
-          #   uses: Co-qn/google-chat-notification@v1
-          #   with:
-          #     url: ${{ secrets.TEST_WEBHOOK_URL }}
-          #     message: 'Build failed!'
+          - name: Notify Google Chat on success
+            if: success()
+            uses: Co-qn/google-chat-notification@v1
+            with:
+              name: test
+              url: ${{ secrets.TEST_WEBHOOK_URL }}
+              status: ${{ steps.tests.outcome }}
+              
+          - name: Notify Google Chat on failure
+            if: failure()
+            uses: Co-qn/google-chat-notification@v1
+            with:
+              name: test
+              url: ${{ secrets.TEST_WEBHOOK_URL }}
+              status: ${{ steps.tests.outcome }}
 
           # using outcome as status
           # - name: Notify Google Chat
@@ -53,22 +56,22 @@ jobs:
           #     url: ${{ secrets.TEST_WEBHOOK_URL }}
           #     message: ${{ steps.tests.outcome }}
 
-          - name: Notify Google Chat on success
-            if: success()
-            uses: google-github-actions/send-google-chat-webhook@v0.0.2
-            with:
-              webhook_url: '${{ secrets.TEST_WEBHOOK_URL }}'
-              # mention: "<users/all>"
-              # message: 'Playwright Tests Passed! !!!!!'
-              status: ${{ steps.tests.outcome }}
+          # - name: Notify Google Chat on success
+          #   if: success()
+          #   uses: google-github-actions/send-google-chat-webhook@v0.0.2
+          #   with:
+          #     webhook_url: '${{ secrets.TEST_WEBHOOK_URL }}'
+          #     # mention: "<users/all>"
+          #     # message: 'Playwright Tests Passed! !!!!!'
+          #     status: ${{ steps.tests.outcome }}
 
-          - name: Notify Google Chat on failure
-            # if: failure()
-            uses: google-github-actions/send-google-chat-webhook@v0.0.2
-            with:
-              # name: Build
-              url: ${{ secrets.TEST_WEBHOOK_URL }}
-              status: ${{ steps.tests.outcome }}
+          # - name: Notify Google Chat on failure
+          #   # if: failure()
+          #   uses: google-github-actions/send-google-chat-webhook@v0.0.2
+          #   with:
+          #     # name: Build
+          #     url: ${{ secrets.TEST_WEBHOOK_URL }}
+          #     status: ${{ steps.tests.outcome }}
 
           # - name: Check test result and comment
           #   uses: peter-evans/create-or-update-comment@v1
