@@ -74,7 +74,7 @@ jobs:
               issue-number: ${{ github.event.pull_request.number }}
               body: |
                 # ${{ steps.tests.outcome == 'failed' && 'Test failed, Please check logs for details.' || 'Test passed :heavy_check_mark:'  }}
-                ${{ steps.lhcitest.outputs.report }}
+                ${{ steps.results.outputs.report }}
 
 
           - name: Trigger a workflow in another repo
