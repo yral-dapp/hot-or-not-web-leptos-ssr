@@ -17,7 +17,7 @@ jobs:
                 node-version: 20
           - run: npm install
 
-          
+    
           - name: Install Lighthouse
             run: npm install -g @lhci/cli@0.13.x
 
@@ -40,9 +40,10 @@ jobs:
             with:
               name: test
               url: ${{ secrets.TEST_WEBHOOK_URL }}
-              status: ${{ steps.lhcitest.outputs.report }}
+              status: ${{ steps.tests.outcome }}
 
 
+              
           # using outcome as status
           # - name: Notify Google Chat
           #   uses: google-github-actions/send-google-chat-webhook@v0.0.2
