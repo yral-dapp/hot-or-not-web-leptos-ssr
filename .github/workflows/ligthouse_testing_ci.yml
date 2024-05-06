@@ -34,16 +34,15 @@ jobs:
           #   run: npx playwright test --project=firefox 
           #   continue-on-error: true
         
-              
-          - name: Notify on Google Chat 
-            uses: Co-qn/google-chat-notification@v1
-            with:
-              name: test
-              url: ${{ secrets.TEST_WEBHOOK_URL }}
-              status: ${{ steps.tests.outcome }}
+          # - name: Notify on Google Chat 
+          #   uses: Co-qn/google-chat-notification@v1
+          #   with:
+          #     name: test
+          #     url: ${{ secrets.TEST_WEBHOOK_URL }}
+          #     status: ${{ steps.tests.outcome }}
 
 
-              
+
           # using outcome as status
           # - name: Notify Google Chat
           #   uses: google-github-actions/send-google-chat-webhook@v0.0.2
