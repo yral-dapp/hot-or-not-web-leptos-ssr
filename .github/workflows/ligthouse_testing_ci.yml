@@ -17,36 +17,31 @@ jobs:
                 node-version: 20
           - run: npm install
 
-          # - name: Install Lighthouse
-          #   run: npm install -g @lhci/cli@0.13.x
+          
+          - name: Install Lighthouse
+            run: npm install -g @lhci/cli@0.13.x
 
-          # - name: Run Lighthouse
-          #   run: lhci autorun --upload.githubToken="$LHCI_GITHUB_TOKEN" || echo "LHCI failed!"
-          #   env: 
-          #       LHCI_GITHUB_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+          - name: Run Lighthouse
+            run: lhci autorun --upload.githubToken="$LHCI_GITHUB_TOKEN" || echo "LHCI failed!"
+            env: 
+                LHCI_GITHUB_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
 
-          - name: install playwright
-            run: npx playwright install    
+          # - name: install playwright
+          #   run: npx playwright install    
 
-          - name: run playwright
-            id: tests
-            run: npx playwright test --project=firefox 
-            continue-on-error: true
+          # - name: run playwright
+          #   id: tests
+          #   run: npx playwright test --project=firefox 
+          #   continue-on-error: true
         
-          # - name: Notify Google Chat on success
-          #   if: success()
-          #   uses: Co-qn/google-chat-notification@v1
-          #   with:
-          #     name: test
-          #     url: ${{ secrets.TEST_WEBHOOK_URL }}
-          #     status: ${{ steps.tests.outcome }}
               
           - name: Notify on Google Chat 
             uses: Co-qn/google-chat-notification@v1
             with:
               name: test
               url: ${{ secrets.TEST_WEBHOOK_URL }}
-              status: ${{ steps.tests.outcome }}
+              status: ${{ steps.lhcitest.outputs.report }}
+
 
           # using outcome as status
           # - name: Notify Google Chat
@@ -78,7 +73,9 @@ jobs:
               token: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
               issue-number: ${{ github.event.pull_request.number }}
               body: |
-                ${{ steps.tests.outcome == 'failed' && 'Test failed, Please check logs for details.' || 'Test passed :heavy_check_mark:'  }}
+                # ${{ steps.tests.outcome == 'failed' && 'Test failed, Please check logs for details.' || 'Test passed :heavy_check_mark:'  }}
+                ${{ steps.lhcitest.outputs.report }}
+
 
           - name: Trigger a workflow in another repo
             uses: actions/github-script@v5
