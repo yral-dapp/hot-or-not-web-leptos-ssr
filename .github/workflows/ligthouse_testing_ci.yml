@@ -72,8 +72,7 @@ jobs:
             with:
               token: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
               issue-number: ${{ github.event.pull_request.number }}
-              body: |
-                ${{ steps.results.outputs.report }}
+              body: ${{ steps.results.outputs.report }}
 
 
           - name: Trigger a workflow in another repo
