@@ -47,23 +47,23 @@ jobs:
           #     status: ${{ steps.tests.outcome }}
 
 
-          - name: Check test result and comment
-            uses: peter-evans/create-or-update-comment@v1
-            with:
-              token: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
-              issue-number: ${{ github.event.pull_request.number }}
-              body: |
-                ${{ steps.results.outputs.report }}
+          # - name: Check test result and comment
+          #   uses: peter-evans/create-or-update-comment@v1
+          #   with:
+          #     token: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+          #     issue-number: ${{ github.event.pull_request.number }}
+          #     body: |
+          #       ${{ steps.results.outputs.report }}
                     
 
-          - name: Trigger a workflow in another repo
-            uses: actions/github-script@v5
-            with:
-                script: |
-                  github.rest.repos.createDispatchEvent({
-                    owner: 'shreybaz',
-                    repo: 'test_automation',
-                    event_type: 'call',
-                    client_payload: { key: "value" }
-                  });
-                github-token: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+          # - name: Trigger a workflow in another repo
+          #   uses: actions/github-script@v5
+          #   with:
+          #       script: |
+          #         github.rest.repos.createDispatchEvent({
+          #           owner: 'shreybaz',
+          #           repo: 'test_automation',
+          #           event_type: 'call',
+          #           client_payload: { key: "value" }
+          #         });
+          #       github-token: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
