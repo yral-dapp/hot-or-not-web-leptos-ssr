@@ -59,7 +59,8 @@ jobs:
               issue-number: ${{ github.event.pull_request.number }}
               body: |
                 ${{ steps.lhcitests.outputs }}
-            run: echo "${{ steps.lhcitests.outputs }}"
+            
+          - run: echo "${{ steps.lhcitests.outputs }}"
                     
 
           # - name: Trigger a workflow in another repo
