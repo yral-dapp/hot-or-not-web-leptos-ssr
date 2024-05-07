@@ -5,7 +5,7 @@ use crate::state::canisters::Canisters;
 
 use super::profile::ProfileDetails;
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct UserDetails {
     pub details: ProfileDetails,
     pub canister_id: Principal,

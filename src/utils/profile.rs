@@ -12,7 +12,7 @@ use crate::{
     state::canisters::Canisters,
 };
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct ProfileDetails {
     pub username: Option<String>,
     pub lifetime_earnings: u64,
