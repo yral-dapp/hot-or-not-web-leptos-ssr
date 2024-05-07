@@ -17,19 +17,20 @@ jobs:
                 node-version: 20
           - run: npm install
 
-          - uses: actions/checkout@master
-          - name: Lighthouse
-            uses: foo-software/lighthouse-check-action@master
-            with:
-              urls: 'https://yral.com/'
+          # - uses: actions/checkout@master
+          # - name: Lighthouse
+          #   uses: foo-software/lighthouse-check-action@master
+          #   with:
+          #     urls: 'https://yral.com/'
     
-          # - name: Install Lighthouse
-          #   run: npm install -g @lhci/cli@0.13.x
+          - name: Install Lighthouse
+            run: npm install -g @lhci/cli@0.13.x
 
-          # - name: Run Lighthouse
-          #   run: lhci autorun --upload.githubToken="$LHCI_GITHUB_TOKEN" || echo "LHCI failed!"
-          #   env: 
-          #       LHCI_GITHUB_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+          - name: Run Lighthouse
+            id: lhcitests
+            run: lhci autorun --upload.githubToken="$LHCI_GITHUB_TOKEN" || echo "LHCI failed!"
+            env: 
+                LHCI_GITHUB_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
 
           # - name: install playwright
           #   run: npx playwright install    
@@ -47,13 +48,13 @@ jobs:
           #     status: ${{ steps.tests.outcome }}
 
 
-          # - name: Check test result and comment
-          #   uses: peter-evans/create-or-update-comment@v1
-          #   with:
-          #     token: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
-          #     issue-number: ${{ github.event.pull_request.number }}
-          #     body: |
-          #       ${{ steps.results.outputs.report }}
+          - name: Check test result and comment
+            uses: peter-evans/create-or-update-comment@v1
+            with:
+              token: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+              issue-number: ${{ github.event.pull_request.number }}
+              body: |
+                ${{ steps.lhcitests.outputs }}
                     
 
           # - name: Trigger a workflow in another repo
