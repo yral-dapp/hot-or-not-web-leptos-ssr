@@ -21,7 +21,7 @@ jobs:
           - name: Lighthouse
             uses: foo-software/lighthouse-check-action@master
             with:
-              urls: 'https://www.yral.com'
+              urls: 'https://yral.com/'
     
           # - name: Install Lighthouse
           #   run: npm install -g @lhci/cli@0.13.x
