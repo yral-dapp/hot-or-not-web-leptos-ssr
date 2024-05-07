@@ -6,6 +6,7 @@ pub mod icon;
 pub mod profile;
 pub mod route;
 pub mod timestamp;
+pub mod user;
 pub mod web;
 
 pub fn current_epoch() -> Duration {

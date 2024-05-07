@@ -4,7 +4,7 @@ use super::{
 };
 use crate::{
     component::modal::Modal,
-    state::canisters::{authenticated_canisters, Canisters},
+    state::canisters::{auth_canisters_store, authenticated_canisters, Canisters},
     try_or_redirect_opt,
     utils::{
         event_streaming::events::{
@@ -59,6 +59,7 @@ pub fn PreVideoUpload(file_blob: WriteSignal<Option<FileWithUrl>>) -> impl IntoV
     let file = create_rw_signal(None::<FileWithUrl>);
     let video_ref = create_node_ref::<Video>();
     let modal_show = create_rw_signal(false);
+    let canister_store = auth_canisters_store();
 
     #[cfg(feature = "hydrate")]
     {
@@ -71,7 +72,7 @@ pub fn PreVideoUpload(file_blob: WriteSignal<Option<FileWithUrl>>) -> impl IntoV
                 let inp_file = input.files()?.get(0)?;
                 file.set(Some(FileWithUrl::new(inp_file.into())));
 
-                VideoUploadVideoSelected.send_event();
+                VideoUploadVideoSelected.send_event(canister_store);
                 Some(())
             });
         });
@@ -181,6 +182,7 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
     let hashtags_len = hashtags.len();
     let is_nsfw = params.is_nsfw;
     let enable_hot_or_not = params.enable_hot_or_not;
+    let canister_store = auth_canisters_store();
 
     let up_desc = description.clone();
 
@@ -206,7 +208,13 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
 
                 if res.is_err() {
                     let e = res.as_ref().err().unwrap().to_string();
-                    VideoUploadUnsuccessful.send_event(e, hashtags_len, is_nsfw, enable_hot_or_not);
+                    VideoUploadUnsuccessful.send_event(
+                        e,
+                        hashtags_len,
+                        is_nsfw,
+                        enable_hot_or_not,
+                        canister_store,
+                    );
                 }
 
                 let upload_info = try_or_redirect_opt!(res);
@@ -215,7 +223,13 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
 
                 if res.is_err() {
                     let e = res.as_ref().err().unwrap().to_string();
-                    VideoUploadUnsuccessful.send_event(e, hashtags_len, is_nsfw, enable_hot_or_not);
+                    VideoUploadUnsuccessful.send_event(
+                        e,
+                        hashtags_len,
+                        is_nsfw,
+                        enable_hot_or_not,
+                        canister_store,
+                    );
                 }
 
                 try_or_redirect_opt!(res);
@@ -234,6 +248,7 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
                             hashtags_len,
                             is_nsfw,
                             enable_hot_or_not,
+                            canister_store,
                         );
                     }
 
@@ -268,14 +283,25 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
 
             if res.is_err() {
                 let e = res.as_ref().err().unwrap().to_string();
-                VideoUploadUnsuccessful.send_event(e, hashtags_len, is_nsfw, enable_hot_or_not);
+                VideoUploadUnsuccessful.send_event(
+                    e,
+                    hashtags_len,
+                    is_nsfw,
+                    enable_hot_or_not,
+                    canister_store,
+                );
             }
 
             try_or_redirect_opt!(res);
 
             publishing.set(false);
 
-            VideoUploadSuccessful.send_event(hashtags_len, is_nsfw, enable_hot_or_not);
+            VideoUploadSuccessful.send_event(
+                hashtags_len,
+                is_nsfw,
+                enable_hot_or_not,
+                canister_store,
+            );
 
             Some(())
         }

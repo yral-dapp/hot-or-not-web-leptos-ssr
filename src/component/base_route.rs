@@ -63,6 +63,8 @@ pub fn BaseRoute() -> impl IntoView {
         },
     );
 
+    // for loading Canisters<true> for events
+
     view! {
         <CtxProvider auth canisters_res>
             <Outlet/>

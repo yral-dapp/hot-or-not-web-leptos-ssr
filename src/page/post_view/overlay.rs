@@ -41,6 +41,7 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
 
     let like_toggle = create_action(move |&()| {
         let post_details = post.clone();
+        let canister_store = canisters;
 
         async move {
             let Some(canisters) = canisters.get_untracked() else {
@@ -55,7 +56,7 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
                     likes.update(|l| *l += 1);
                     liked.set(Some(true));
 
-                    LikeVideo.send_event(post_details, likes);
+                    LikeVideo.send_event(post_details, likes, canister_store);
                 }
             });
             let individual = canisters.individual_user(post_canister);
@@ -121,6 +122,7 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
     };
 
     let post_details = post.clone();
+    let canisters = auth_canisters_store();
 
     let share = move || {
         let post_details = post_details.clone();
@@ -129,7 +131,7 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
             return;
         }
         show_share.set(true);
-        ShareVideo.send_event(post_details);
+        ShareVideo.send_event(post_details, canisters);
     };
 
     let profile_url = format!("/profile/{}", post.poster_principal.to_text());
