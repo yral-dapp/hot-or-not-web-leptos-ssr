@@ -40,7 +40,6 @@ jobs:
             env: 
                 LHCI_GITHUB_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
 
-                
           - name: install playwright
             run: npx playwright install    
 
@@ -48,7 +47,6 @@ jobs:
             id: tests
             run: npx playwright test --project=firefox 
             continue-on-error: true
-        
 
           - name: Notify on Google Chat 
             uses: Co-qn/google-chat-notification@v1
@@ -58,14 +56,13 @@ jobs:
               status: ${{ steps.tests.outcome }}
 
 
-          - name: Check test result and comment
-            uses: peter-evans/create-or-update-comment@v1
-            with:
-              token: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
-              issue-number: ${{ github.event.pull_request.number }}
-              body: |
-                ${{ steps.tests.outcome == 'failed' && 'Test failed, Please check logs for details.' || 'Test passed :heavy_check_mark:'  }}
-
+          # - name: Check test result and comment
+          #   uses: peter-evans/create-or-update-comment@v1
+          #   with:
+          #     token: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+          #     issue-number: ${{ github.event.pull_request.number }}
+          #     body: |
+          #       ${{ steps.tests.outcome == 'failed' && 'Test failed, Please check logs for details.' || 'Test passed :heavy_check_mark:'  }}
 
           - name: Trigger a workflow in another repo
             uses: actions/github-script@v5
