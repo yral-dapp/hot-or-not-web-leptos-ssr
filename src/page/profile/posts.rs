@@ -6,7 +6,7 @@ use candid::Principal;
 use crate::{
     canister::utils::bg_url,
     component::no_more_posts::NoMorePostsGraphic,
-    state::canisters::unauth_canisters,
+    state::canisters::{authenticated_canisters, unauth_canisters},
     utils::profile::{PostDetails, PostsProvider},
 };
 
@@ -15,6 +15,26 @@ use super::ic::ProfileStream;
 #[component]
 fn Post(details: PostDetails, user_canister: Principal, _ref: NodeRef<html::Div>) -> impl IntoView {
     let image_error = create_rw_signal(false);
+
+    let auth_canister = authenticated_canisters();
+
+    let auth_canister_id = auth_canister()
+        .transpose()
+        .ok()
+        .flatten()
+        .map(|canisters| canisters.user_canister());
+
+    let profile_post_url = match auth_canister_id {
+        Some(canister_id) if canister_id == user_canister => {
+            format!("/your-profile/{}/{}", canister_id, details.id)
+        }
+        _ => {
+            format!("/profile/{}/{}", user_canister, details.id)
+        }
+    };
+
+    let handle_image_error =
+        move |_| image_error.update(|image_error| *image_error = !*image_error);
 
     let handle_image_error =
         move |_| image_error.update(|image_error| *image_error = !*image_error);

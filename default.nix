@@ -6,14 +6,18 @@ let
   pkgs = import nixpkgs { };
 in
 pkgs.mkShell {
-  buildInputs = with pkgs; [
+  nativeBuildInputs = with pkgs; [
     binaryen
     flyctl
     leptosfmt
     nodejs_21
     nodePackages_latest.tailwindcss
+    cargo-leptos
     rustup
-    # only used for clippy
     openssl
-  ];
+    protobuf_21
+  ] ++ (if pkgs.stdenv.isDarwin then [
+      darwin.apple_sdk.frameworks.Foundation
+      pkgs.darwin.libiconv
+    ] else []);
 }
