@@ -17,7 +17,6 @@ jobs:
                 node-version: 20
           - run: npm install
 
-
           - uses: actions/checkout@master
           - run: mkdir -p ${{ github.workspace }}/tmp/artifacts
           - name: Lighthouse
@@ -32,60 +31,50 @@ jobs:
               name: Lighthouse reports
               path: ${{ github.workspace }}/tmp/artifacts
 
-          # - uses: actions/checkout@master
-          # - run: mkdir /tmp/artifacts
-          # - name: Lighthouse
-          #   uses: foo-software/lighthouse-check-action@master
-          #   with:
-          #     accessToken: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
-          #     commentUrl: https://api.github.com/repos/shreybaz/hot-or-not-web-leptos-ssr/commits/${{ github.sha }}/comments
-          #     outputDirectory: /tmp/artifacts
-          #     urls: 'https://yral.com/'
-    
-          # - name: Install Lighthouse
-          #   run: npm install -g @lhci/cli@0.13.x
+          - name: Install Lighthouse
+            run: npm install -g @lhci/cli@0.13.x
 
-          # - name: Run Lighthouse
-          #   id: lhcitests
-          #   run: lhci autorun --upload.githubToken="$LHCI_GITHUB_TOKEN" || echo "LHCI failed!"
-          #   env: 
-          #       LHCI_GITHUB_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+          - name: Run Lighthouse
+            id: lhcitests
+            run: lhci autorun --upload.githubToken="$LHCI_GITHUB_TOKEN" || echo "LHCI failed!"
+            env: 
+                LHCI_GITHUB_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
 
-          # - name: install playwright
-          #   run: npx playwright install    
+                
+          - name: install playwright
+            run: npx playwright install    
 
-          # - name: run playwright
-          #   id: tests
-          #   run: npx playwright test --project=firefox 
-          #   continue-on-error: true
+          - name: run playwright
+            id: tests
+            run: npx playwright test --project=firefox 
+            continue-on-error: true
         
-          # - name: Notify on Google Chat 
-          #   uses: Co-qn/google-chat-notification@v1
-          #   with:
-          #     name: test
-          #     url: ${{ secrets.TEST_WEBHOOK_URL }}
-          #     status: ${{ steps.tests.outcome }}
+
+          - name: Notify on Google Chat 
+            uses: Co-qn/google-chat-notification@v1
+            with:
+              name: test
+              url: ${{ secrets.TEST_WEBHOOK_URL }}
+              status: ${{ steps.tests.outcome }}
 
 
-          # - name: Check test result and comment
-          #   uses: peter-evans/create-or-update-comment@v1
-          #   with:
-          #     token: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
-          #     issue-number: ${{ github.event.pull_request.number }}
-          #     body: |
-          #       ${{ steps.lhcitests.outcome }}
-            
-          # - run: echo "${{ steps.lhcitests.outcome }}"
-                    
+          - name: Check test result and comment
+            uses: peter-evans/create-or-update-comment@v1
+            with:
+              token: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+              issue-number: ${{ github.event.pull_request.number }}
+              body: |
+                ${{ steps.tests.outcome == 'failed' && 'Test failed, Please check logs for details.' || 'Test passed :heavy_check_mark:'  }}
 
-          # - name: Trigger a workflow in another repo
-          #   uses: actions/github-script@v5
-          #   with:
-          #       script: |
-          #         github.rest.repos.createDispatchEvent({
-          #           owner: 'shreybaz',
-          #           repo: 'test_automation',
-          #           event_type: 'call',
-          #           client_payload: { key: "value" }
-          #         });
-          #       github-token: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+
+          - name: Trigger a workflow in another repo
+            uses: actions/github-script@v5
+            with:
+                script: |
+                  github.rest.repos.createDispatchEvent({
+                    owner: 'shreybaz',
+                    repo: 'test_automation',
+                    event_type: 'call',
+                    client_payload: { key: "value" }
+                  });
+                github-token: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
