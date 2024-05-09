@@ -1,17 +1,25 @@
 use candid::Principal;
-use leptos::{html::Video, *};
+use leptos::*;
 use leptos_router::*;
+use leptos_use::use_debounce_fn;
 
 use crate::{
-    canister::utils::{bg_url, mp4_url},
-    component::{back_btn::BackButton, spinner::FullScreenSpinner, video_player::VideoPlayer},
-    page::post_view::video_iter::get_post_uid,
-    state::canisters::{authenticated_canisters, unauth_canisters},
-    try_or_redirect_opt,
-    utils::route::failure_redirect,
+    component::{
+        back_btn::BackButton, scrolling_post_view::ScrollingPostView, spinner::FullScreenSpinner,
+    },
+    page::profile::ProfilePostsContext,
+    state::canisters::{auth_canisters_store, unauth_canisters},
+    try_or_redirect,
+    utils::{
+        posts::{get_post_uid, FetchCursor},
+        route::failure_redirect,
+    },
 };
 
-use crate::page::post_view::overlay::VideoDetailsOverlay;
+use super::overlay::YourProfileOverlay;
+use super::profile_iter::ProfileVideoStream;
+
+use crate::utils::posts::PostDetails;
 
 #[derive(Params, PartialEq)]
 struct ProfileVideoParams {
@@ -20,11 +28,109 @@ struct ProfileVideoParams {
 }
 
 #[component]
+pub fn ProfilePostWithUpdates(initial_post: PostDetails) -> impl IntoView {
+    let ProfilePostsContext {
+        video_queue,
+        start_index,
+        current_index,
+        queue_end,
+    } = expect_context();
+    let recovering_state = create_rw_signal(true);
+    let fetch_cursor = create_rw_signal(FetchCursor {
+        start: start_index.get_untracked() as u64,
+        limit: 10,
+    });
+    let auth_canister = auth_canisters_store();
+    let overlay = match auth_canister.get_untracked() {
+        Some(canisters) if canisters.user_canister() == initial_post.canister_id => {
+            || view! { <YourProfileOverlay/> }.into_view()
+        }
+        _ => || view! {}.into_view(),
+    };
+
+    if start_index.get_untracked() == 0 {
+        video_queue.update_untracked(|vq| {
+            vq.push(initial_post.clone());
+        });
+        queue_end.update(|end| {
+            *end = true;
+        })
+    }
+
+    let next_videos = create_action(move |_| async move {
+        let user_canister = initial_post.canister_id;
+        let cursor = fetch_cursor.get_untracked();
+
+        let posts_res = if let Some(canisters) = auth_canister.get_untracked() {
+            let profile_posts = ProfileVideoStream::new(cursor, &canisters, user_canister);
+            profile_posts.fetch_next_profile_posts().await
+        } else {
+            let unauth_canister = unauth_canisters();
+            let profile_posts = ProfileVideoStream::new(cursor, &unauth_canister, user_canister);
+            profile_posts.fetch_next_profile_posts().await
+        };
+
+        let posts = try_or_redirect!(posts_res);
+
+        posts.into_iter().for_each(|p| {
+            video_queue.try_update(|q| {
+                q.push(p);
+            });
+        });
+        fetch_cursor.try_update(|c| {
+            c.advance();
+        });
+    });
+
+    let fetch_next_videos = use_debounce_fn(
+        move || {
+            if !next_videos.pending().get_untracked() && !queue_end.get_untracked() {
+                log::debug!("trigger rerender");
+                next_videos.dispatch(video_queue)
+            }
+        },
+        500.0,
+    );
+
+    let current_post_base = create_memo(move |_| {
+        video_queue.with(|q| {
+            let details = q.get(current_index());
+            details.map(|d| (d.canister_id, d.post_id))
+        })
+    });
+
+    //TODO: fix the navigation for the vidoes.
+    create_effect(move |_| {
+        let Some((canister_id, post_id)) = current_post_base() else {
+            return;
+        };
+        use_navigate()(
+            &format!("profile/{canister_id}/{post_id}"),
+            NavigateOptions {
+                replace: true,
+                ..NavigateOptions::default()
+            },
+        );
+    });
+
+    view! {
+        <ScrollingPostView
+            video_queue
+            current_idx=current_index
+            queue_end
+            recovering_state
+            fetch_next_videos
+            overlay
+        />
+    }
+}
+
+#[component]
 pub fn ProfilePost() -> impl IntoView {
     let params = use_params::<ProfileVideoParams>();
 
     let canister_and_post = move || {
-        params.with(|p| {
+        params.with_untracked(|p| {
             let p = p.as_ref().ok()?;
             let canister_id = Principal::from_text(&p.canister_id).ok()?;
 
@@ -32,75 +138,60 @@ pub fn ProfilePost() -> impl IntoView {
         })
     };
 
-    let auth_cans_res = authenticated_canisters();
+    let ProfilePostsContext {
+        video_queue,
+        current_index,
+        ..
+    } = expect_context();
 
-    let post_details = create_resource(canister_and_post, move |canister_and_post| async move {
-        let (creator_canister_id, post_id) = canister_and_post?;
-        let auth_canisters = leptos::untrack(|| auth_cans_res.get().transpose());
-        let auth_canisters = try_or_redirect_opt!(auth_canisters);
-        match auth_canisters {
-            Some(canisters) => match get_post_uid(&canisters, creator_canister_id, post_id).await {
-                Ok(pd) => pd,
+    let intial_post = create_resource(canister_and_post, move |params| {
+        let canisters = unauth_canisters();
+        async move {
+            let Some((canister_id, post_id)) = params else {
+                failure_redirect("Invalid profile post");
+                return None;
+            };
+
+            let retrieved_post = video_queue.with_untracked(|vq| {
+                let post_idx = vq
+                    .iter()
+                    .position(|post| post.canister_id == canister_id && post.post_id == post_id);
+                current_index.update(|idx| *idx = post_idx.unwrap_or(0));
+                post_idx.and_then(|p_idx| vq.get(p_idx)).cloned()
+            });
+
+            if let Some(post) = retrieved_post {
+                return Some(post);
+            };
+
+            match get_post_uid(&canisters, canister_id, post_id).await {
+                Ok(res) => res,
                 Err(e) => {
                     failure_redirect(e);
                     None
                 }
-            },
-            None => {
-                let canisters = unauth_canisters();
-                match get_post_uid(&canisters, creator_canister_id, post_id).await {
-                    Ok(pd) => pd,
-                    Err(e) => {
-                        failure_redirect(e);
-                        None
-                    }
-                }
             }
         }
-    });
-
-    let view_video_url = move || post_details.get().flatten().map(|pd| mp4_url(pd.uid));
-
-    let view_bg_url = move || post_details.get().flatten().map(|pd| bg_url(pd.uid));
-
-    let video_node_ref = create_node_ref::<Video>();
-
-    // Handles autoplay
-    create_effect(move |_| {
-        let Some(vid) = video_node_ref() else {
-            return;
-        };
-        vid.set_muted(false);
-
-        vid.set_autoplay(true);
-        _ = vid.play();
     });
 
     view! {
-        <Suspense fallback = FullScreenSpinner >
-        {move || {
-                post_details.get()
-                    .flatten().map(|pd| {
-
-                        Some(view!{
-                            <div class ="absolute left-4 top-4 bg-transparent z-10 text-white">
-                                <BackButton fallback="/".to_string()/>
-                            </div>
-                            <div class="snap-always snap-end w-dvh h-dvh">
-                                <div class="bg-transparent w-full h-full relative overflow-hidden">
-                                    <div
-                                        class="absolute top-0 left-0 bg-cover bg-center w-full h-full z-[1] blur-lg"
-                                        style:background-color="rgb(0, 0, 0)"
-                                        style:background-image=move || format!("url({})", view_bg_url().unwrap_or_default())
-                                    ></div>
-                                    </div>
-                                <VideoDetailsOverlay post = pd/>
-                                <VideoPlayer node_ref=video_node_ref view_bg_url view_video_url/>
-                            </div>
-                        })
+        <Suspense fallback=FullScreenSpinner>
+            {move || {
+                intial_post
+                    .get()
+                    .flatten()
+                    .map(|pd| {
+                        Some(
+                            view! {
+                                <div class="absolute left-4 top-4 bg-transparent z-10 text-white">
+                                    <BackButton fallback="/".to_string()/>
+                                </div>
+                                <ProfilePostWithUpdates initial_post=pd/>
+                            },
+                        )
                     })
-            }
-        }
+            }}
+
         </Suspense>
     }
 }

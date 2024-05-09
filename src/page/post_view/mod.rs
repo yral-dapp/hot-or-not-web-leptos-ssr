@@ -1,7 +1,7 @@
-mod error;
+pub mod error;
 pub mod overlay;
 pub mod video_iter;
-mod video_loader;
+pub mod video_loader;
 
 use candid::Principal;
 use futures::StreamExt;
@@ -14,17 +14,19 @@ use leptos_use::{
 };
 
 use crate::{
-    component::spinner::FullScreenSpinner,
+    component::{scrolling_post_view::ScrollingPostView, spinner::FullScreenSpinner},
     consts::NSFW_TOGGLE_STORE,
     state::canisters::{unauth_canisters, Canisters},
     try_or_redirect,
-    utils::route::failure_redirect,
+    utils::{
+        posts::{get_post_uid, FetchCursor, PostDetails},
+        route::failure_redirect,
+    },
 };
-use video_iter::{get_post_uid, VideoFetchStream};
+use video_iter::VideoFetchStream;
 use video_loader::{BgView, VideoView};
 
 use overlay::HomeButtonOverlay;
-use video_iter::{FetchCursor, PostDetails};
 
 #[derive(Params, PartialEq, Clone, Copy)]
 struct PostParams {
@@ -51,6 +53,7 @@ pub fn ScrollingView<NV: Fn() -> NVR + Clone + 'static, NVR>(
     next_videos: NV,
     recovering_state: RwSignal<bool>,
 ) -> impl IntoView {
+    //TODO: take this as a parameter.
     let PostViewCtx {
         video_queue,
         current_idx,
@@ -59,7 +62,9 @@ pub fn ScrollingView<NV: Fn() -> NVR + Clone + 'static, NVR>(
     } = expect_context();
 
     let muted = create_rw_signal(true);
-    let scroll_root = create_node_ref::<html::Div>();
+    let scroll_root: NodeRef<html::Div> = create_node_ref::<html::Div>();
+
+    //LEARN: This creates scrolling view which will be used for intersection observer.
 
     view! {
         <div class="h-full w-full overflow-hidden overflow-y-auto">
@@ -117,8 +122,8 @@ pub fn ScrollingView<NV: Fn() -> NVR + Clone + 'static, NVR>(
                         view! {
                             <div _ref=container_ref class="snap-always snap-end w-full h-full">
                                 <Show when=show_video>
-                                    <BgView idx=queue_idx>
-                                        <VideoView idx=queue_idx muted/>
+                                    <BgView video_queue current_idx idx=queue_idx>
+                                        <VideoView video_queue current_idx idx=queue_idx muted/>
                                     </BgView>
                                 </Show>
                             </div>
@@ -158,7 +163,7 @@ pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
     } = expect_context();
 
     let recovering_state = create_rw_signal(false);
-    if let Some(initial_post) = initial_post {
+    if let Some(initial_post) = initial_post.clone() {
         fetch_cursor.update_untracked(|f| {
             // we've already fetched the first posts
             if f.start > 1 || queue_end.get_untracked() {
@@ -182,7 +187,7 @@ pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
     let (nsfw_enabled, _, _) = use_local_storage::<bool, FromToStringCodec>(NSFW_TOGGLE_STORE);
     let auth_canisters: RwSignal<Option<Canisters<true>>> = expect_context();
 
-    let fetch_video_action = create_action(move |()| async move {
+    let fetch_video_action = create_action(move |_| async move {
         loop {
             let Some(cursor) = fetch_cursor.try_get_untracked() else {
                 return;
@@ -228,7 +233,6 @@ pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
     let next_videos = use_debounce_fn(
         move || {
             if !fetch_video_action.pending().get_untracked() && !queue_end.get_untracked() {
-                log::debug!("trigger rerender");
                 fetch_video_action.dispatch(())
             }
         },
@@ -253,7 +257,16 @@ pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
         );
     });
 
-    view! { <ScrollingView next_videos recovering_state/> }
+    view! {
+        <ScrollingPostView
+            video_queue
+            current_idx
+            recovering_state
+            fetch_next_videos=next_videos
+            queue_end
+            overlay=|| view! { <HomeButtonOverlay/> }
+        />
+    }
 }
 
 #[component]

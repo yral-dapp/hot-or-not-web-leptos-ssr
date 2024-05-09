@@ -3,6 +3,7 @@ use crate::{
     state::canisters::{auth_canisters_store, Canisters},
     utils::{
         event_streaming::events::{LikeVideo, ShareVideo},
+        posts::PostDetails,
         route::failure_redirect,
         web::{copy_to_clipboard, share_url},
     },
@@ -11,7 +12,7 @@ use leptos::*;
 use leptos_icons::*;
 use leptos_use::use_window;
 
-use super::video_iter::{post_liked_by_me, PostDetails};
+use super::video_iter::post_liked_by_me;
 
 #[component]
 fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {

@@ -8,12 +8,13 @@ use serde_json::json;
 use wasm_bindgen::JsCast;
 
 use crate::component::auth_providers::ProviderKind;
+use crate::state::auth::account_connected_reader;
 use crate::state::canisters::Canisters;
 use crate::state::history::HistoryCtx;
 #[cfg(feature = "ga4")]
 use crate::utils::event_streaming::{send_event, send_event_warehouse, send_user_id};
+use crate::utils::posts::PostDetails;
 use crate::utils::profile::ProfileDetails;
-use crate::{page::post_view::video_iter::PostDetails, state::auth::account_connected_reader};
 
 use super::EventHistory;
 

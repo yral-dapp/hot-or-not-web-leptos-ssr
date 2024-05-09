@@ -6,49 +6,52 @@ use candid::Principal;
 use crate::{
     canister::utils::bg_url,
     component::no_more_posts::NoMorePostsGraphic,
-    state::canisters::{authenticated_canisters, unauth_canisters},
-    utils::profile::{PostDetails, PostsProvider},
+    state::canisters::{auth_canisters_store, unauth_canisters},
+    utils::{posts::PostDetails, profile::PostsProvider},
 };
 
 use super::ic::ProfileStream;
+use super::ProfilePostsContext;
 
 #[component]
 fn Post(details: PostDetails, user_canister: Principal, _ref: NodeRef<html::Div>) -> impl IntoView {
     let image_error = create_rw_signal(false);
 
-    let auth_canister = authenticated_canisters();
+    let auth_canister = auth_canisters_store();
 
-    let auth_canister_id = auth_canister()
-        .transpose()
-        .ok()
-        .flatten()
+    let auth_canister_id = auth_canister
+        .get_untracked()
         .map(|canisters| canisters.user_canister());
 
     let profile_post_url = match auth_canister_id {
         Some(canister_id) if canister_id == user_canister => {
-            format!("/your-profile/{}/{}", canister_id, details.id)
+            format!("/your-profile/{}/{}", canister_id, details.post_id)
         }
         _ => {
-            format!("/profile/{}/{}", user_canister, details.id)
+            format!("/profile/{}/{}", user_canister, details.post_id)
         }
     };
 
     let handle_image_error =
         move |_| image_error.update(|image_error| *image_error = !*image_error);
 
-    let handle_image_error =
-        move |_| image_error.update(|image_error| *image_error = !*image_error);
-
-    let profile_post_url = format!("/profile/{}/{}", user_canister, details.id);
     view! {
         <div _ref=_ref class="relative w-full basis-1/3 md:basis-1/4 xl:basis-1/5">
             <div class="relative aspect-[9/16] h-full rounded-md border-white/20 m-2 border-[1px]">
-                <a class = "h-full w-full" href = profile_post_url>
-                    <Show when=image_error
-                        fallback=move || view! {
-                            <img class="object-cover w-full h-full" on:error=handle_image_error src=bg_url(details.uid.clone())/>
+                <a class="h-full w-full" href=profile_post_url>
+                    <Show
+                        when=image_error
+                        fallback=move || {
+                            view! {
+                                <img
+                                    class="object-cover w-full h-full"
+                                    on:error=handle_image_error
+                                    src=bg_url(details.uid.clone())
+                                />
+                            }
                         }
                     >
+
                         <div class="h-full flex text-center flex-col place-content-center items-center text-white">
                             <Icon class="h-8 w-8" icon=icondata::TbCloudX/>
                             <span class="text-md">Not Available</span>
@@ -77,7 +80,13 @@ fn Post(details: PostDetails, user_canister: Principal, _ref: NodeRef<html::Div>
 
 #[component]
 pub fn ProfilePosts(user_canister: Principal) -> impl IntoView {
-    let provider = PostsProvider::new(unauth_canisters(), user_canister);
+    let ProfilePostsContext {
+        video_queue,
+        start_index,
+        ..
+    } = expect_context();
+
+    let provider = PostsProvider::new(unauth_canisters(), video_queue, start_index, user_canister);
 
     view! {
         <ProfileStream
@@ -85,7 +94,13 @@ pub fn ProfilePosts(user_canister: Principal) -> impl IntoView {
             empty_graphic=NoMorePostsGraphic
             empty_text="No Videos Uploaded yet".into()
             children=move |details, _ref| {
-                view! { <Post details=details user_canister=user_canister _ref=_ref.unwrap_or_default()/> }
+                view! {
+                    <Post
+                        details=details
+                        user_canister=user_canister
+                        _ref=_ref.unwrap_or_default()
+                    />
+                }
             }
         />
     }

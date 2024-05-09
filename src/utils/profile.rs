@@ -1,16 +1,19 @@
 use candid::Principal;
 use ic_agent::AgentError;
+use leptos::{RwSignal, SignalUpdateUntracked};
 use serde::{Deserialize, Serialize};
 
 use crate::{
     canister::individual_user_template::{
-        BetDirection, BetOutcomeForBetMaker, PlacedBetDetail, PostDetailsForFrontend, Result5,
+        BetDirection, BetOutcomeForBetMaker, PlacedBetDetail, Result5,
         UserProfileDetailsForFrontend,
     },
     component::infinite_scroller::{CursoredDataProvider, KeyedData, PageEntry},
     consts::FALLBACK_PROPIC_BASE,
     state::canisters::Canisters,
 };
+
+use super::posts::PostDetails;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ProfileDetails {
@@ -78,35 +81,6 @@ pub fn propic_from_principal(principal: Principal) -> String {
     )
 }
 
-#[derive(Clone, Serialize, Deserialize)]
-pub struct PostDetails {
-    pub creator: Principal,
-    pub id: u64,
-    pub uid: String,
-    pub likes: u64,
-    pub views: u64,
-}
-
-impl From<PostDetailsForFrontend> for PostDetails {
-    fn from(post: PostDetailsForFrontend) -> Self {
-        Self {
-            creator: post.created_by_user_principal_id,
-            id: post.id,
-            uid: post.video_uid.clone(),
-            likes: post.like_count,
-            views: post.total_view_count,
-        }
-    }
-}
-
-impl KeyedData for PostDetails {
-    type Key = (Principal, u64);
-
-    fn key(&self) -> Self::Key {
-        (self.creator, self.id)
-    }
-}
-
 #[derive(Clone, Copy)]
 pub enum BetOutcome {
     Won(u64),
@@ -165,12 +139,32 @@ pub const PROFILE_CHUNK_SZ: usize = 10;
 #[derive(Clone)]
 pub struct PostsProvider {
     canisters: Canisters<false>,
+    video_queue: RwSignal<Vec<PostDetails>>,
+    start_index: RwSignal<usize>,
     user: Principal,
 }
 
 impl PostsProvider {
-    pub fn new(canisters: Canisters<false>, user: Principal) -> Self {
-        Self { canisters, user }
+    pub fn new(
+        canisters: Canisters<false>,
+        video_queue: RwSignal<Vec<PostDetails>>,
+        start_index: RwSignal<usize>,
+        user: Principal,
+    ) -> Self {
+        Self {
+            canisters,
+            video_queue,
+            start_index,
+            user,
+        }
+    }
+}
+
+impl KeyedData for PostDetails {
+    type Key = (Principal, u64);
+
+    fn key(&self) -> Self::Key {
+        (self.canister_id, self.post_id)
     }
 }
 
@@ -199,8 +193,16 @@ impl CursoredDataProvider for PostsProvider {
             }
         };
         let list_end = posts.len() < (end - start);
+        self.start_index.update_untracked(|c| *c = end);
+        let post_details: Vec<PostDetails> = posts
+            .into_iter()
+            .map(|details| PostDetails::from_canister_post(false, self.user, details))
+            .collect();
+        self.video_queue.update_untracked(|vq| {
+            vq.extend_from_slice(&post_details);
+        });
         Ok(PageEntry {
-            data: posts.into_iter().map(PostDetails::from).collect(),
+            data: post_details,
             end: list_end,
         })
     }

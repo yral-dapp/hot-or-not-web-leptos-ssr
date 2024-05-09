@@ -7,7 +7,10 @@ use crate::{
     canister::utils::bg_url,
     component::coming_soon::ComingSoonGraphic,
     state::canisters::unauth_canisters,
-    utils::profile::{BetDetails, BetOutcome, BetsProvider, PostDetails, ProfileDetails},
+    utils::{
+        posts::PostDetails,
+        profile::{BetDetails, BetOutcome, BetsProvider, ProfileDetails},
+    },
 };
 
 #[component]
@@ -119,7 +122,11 @@ pub fn Speculation(details: BetDetails, _ref: NodeRef<html::Div>) -> impl IntoVi
             let canister = unauth_canisters();
             let user = canister.individual_user(canister_id);
             let post_details = user.get_individual_post_details_by_id(post_id).await.ok()?;
-            Some(PostDetails::from(post_details))
+            Some(PostDetails::from_canister_post(
+                false,
+                canister_id,
+                post_details,
+            ))
         },
     );
 

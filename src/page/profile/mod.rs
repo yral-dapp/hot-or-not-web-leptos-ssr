@@ -1,6 +1,7 @@
 mod ic;
 pub mod overlay;
 mod posts;
+mod profile_iter;
 pub mod profile_post;
 mod speculation;
 pub mod your_profile_post;
@@ -13,11 +14,19 @@ use leptos_router::*;
 use crate::{
     component::{back_btn::BackButton, connect::ConnectLogin, spinner::FullScreenSpinner},
     state::{auth::account_connected_reader, canisters::unauth_canisters},
-    utils::profile::ProfileDetails,
+    utils::{posts::PostDetails, profile::ProfileDetails},
 };
 
 use posts::ProfilePosts;
 use speculation::ProfileSpeculationsPlaceHolder;
+
+#[derive(Clone, Default)]
+pub struct ProfilePostsContext {
+    video_queue: RwSignal<Vec<PostDetails>>,
+    start_index: RwSignal<usize>,
+    current_index: RwSignal<usize>,
+    queue_end: RwSignal<bool>,
+}
 
 #[derive(Params, PartialEq)]
 struct ProfileParams {
@@ -147,6 +156,19 @@ pub fn ProfileView() -> impl IntoView {
         let user = canisters.individual_user(user_canister);
         let user_details = user.get_profile_details().await.ok()?;
         Some((user_details.into(), user_canister))
+    });
+
+    let ProfilePostsContext {
+        video_queue,
+        start_index,
+        ..
+    } = expect_context();
+
+    video_queue.update_untracked(|v| {
+        v.drain(..);
+    });
+    start_index.update_untracked(|idx| {
+        *idx = 0;
     });
 
     view! {
