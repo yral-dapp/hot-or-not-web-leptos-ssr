@@ -6,14 +6,16 @@ use crate::{
     auth::logout_identity,
     component::loading::Loading,
     consts::ACCOUNT_CONNECTED_STORE,
-    state::auth::auth_state,
+    state::{auth::auth_state, canisters::auth_canisters_store},
     try_or_redirect,
     utils::event_streaming::events::{LogoutClicked, LogoutConfirmation},
 };
 
 #[component]
 pub fn Logout() -> impl IntoView {
-    LogoutClicked.send_event();
+    let canister_store = auth_canisters_store();
+
+    LogoutClicked.send_event(canister_store);
     let auth = auth_state();
 
     let auth_res = create_local_resource(
@@ -21,7 +23,7 @@ pub fn Logout() -> impl IntoView {
         move |_| async move {
             let id = try_or_redirect!(logout_identity().await);
 
-            LogoutConfirmation.send_event();
+            LogoutConfirmation.send_event(canister_store);
 
             auth.set(Some(id));
 

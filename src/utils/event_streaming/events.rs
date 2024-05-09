@@ -1,22 +1,20 @@
-use candid::Principal;
 use ic_agent::Identity;
 use leptos::html::Input;
-use leptos::{create_effect, use_context, ReadSignal, RwSignal, SignalGetUntracked};
+use leptos::{create_effect, ReadSignal, RwSignal, SignalGetUntracked};
 use leptos::{create_signal, ev, expect_context, html::Video, Memo, NodeRef, SignalGet, SignalSet};
 use leptos_use::use_event_listener;
 use serde_json::json;
 use wasm_bindgen::JsCast;
 
+use super::EventHistory;
 use crate::component::auth_providers::ProviderKind;
 use crate::state::auth::account_connected_reader;
-use crate::state::canisters::Canisters;
+use crate::state::canisters::{auth_canisters_store, Canisters};
 use crate::state::history::HistoryCtx;
 #[cfg(feature = "ga4")]
 use crate::utils::event_streaming::{send_event, send_event_warehouse, send_user_id};
 use crate::utils::posts::PostDetails;
-use crate::utils::profile::ProfileDetails;
-
-use super::EventHistory;
+use crate::utils::user::{user_details_can_store_or_ret, user_details_or_ret};
 
 pub enum AnalyticsEvent {
     VideoWatched(VideoWatched),
@@ -35,38 +33,6 @@ pub enum AnalyticsEvent {
     LoginCta(LoginCta),
     LogoutClicked(LogoutClicked),
     LogoutConfirmation(LogoutConfirmation),
-}
-
-#[cfg(feature = "ga4")]
-#[derive(Clone)]
-struct UserDetails {
-    details: ProfileDetails,
-    canister_id: Principal,
-}
-
-#[cfg(feature = "ga4")]
-impl UserDetails {
-    fn try_get() -> Option<Self> {
-        let cans_store: RwSignal<Option<Canisters<true>>> = use_context()?;
-        let canisters = cans_store.get_untracked()?;
-        let details = canisters.profile_details();
-
-        Some(Self {
-            details,
-            canister_id: canisters.user_canister(),
-        })
-    }
-}
-
-#[cfg(feature = "ga4")]
-macro_rules! user_details_or_ret {
-    () => {
-        if let Some(user) = UserDetails::try_get() {
-            user
-        } else {
-            return;
-        }
-    };
 }
 
 #[derive(Default)]
@@ -98,8 +64,10 @@ impl VideoWatched {
             let (video_watched, set_video_watched) = create_signal(false);
             let (full_video_watched, set_full_video_watched) = create_signal(false);
 
+            let cans_store: RwSignal<Option<Canisters<true>>> = auth_canisters_store();
+
             let _ = use_event_listener(container_ref, ev::timeupdate, move |evt| {
-                let user = user_details_or_ret!();
+                let user = user_details_can_store_or_ret!(cans_store);
 
                 let target = evt.target().unwrap();
                 let video = target.unchecked_into::<web_sys::HtmlVideoElement>();
@@ -170,7 +138,7 @@ impl VideoWatched {
 
             // video duration watched - warehousing
             let _ = use_event_listener(container_ref, ev::pause, move |evt| {
-                let user = user_details_or_ret!();
+                let user = user_details_can_store_or_ret!(cans_store);
 
                 let target = evt.target().unwrap();
                 let video = target.unchecked_into::<web_sys::HtmlVideoElement>();
@@ -214,7 +182,12 @@ impl VideoWatched {
 pub struct LikeVideo;
 
 impl LikeVideo {
-    pub fn send_event(&self, post_details: PostDetails, likes: RwSignal<u64>) {
+    pub fn send_event(
+        &self,
+        post_details: PostDetails,
+        likes: RwSignal<u64>,
+        cans_store: RwSignal<Option<Canisters<true>>>,
+    ) {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
         {
             let publisher_user_id = post_details.poster_principal;
@@ -227,7 +200,8 @@ impl LikeVideo {
             let (is_connected, _) = account_connected_reader();
             // like_video - analytics
 
-            let user = user_details_or_ret!();
+            let user = user_details_can_store_or_ret!(cans_store);
+
             send_event(
                 "like_video",
                 &json!({
@@ -256,7 +230,11 @@ impl LikeVideo {
 pub struct ShareVideo;
 
 impl ShareVideo {
-    pub fn send_event(&self, post_details: PostDetails) {
+    pub fn send_event(
+        &self,
+        post_details: PostDetails,
+        cans_store: RwSignal<Option<Canisters<true>>>,
+    ) {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
         {
             let publisher_user_id = post_details.poster_principal;
@@ -269,7 +247,7 @@ impl ShareVideo {
 
             let (is_connected, _) = account_connected_reader();
 
-            let user = user_details_or_ret!();
+            let user = user_details_can_store_or_ret!(cans_store);
 
             // share_video - analytics
             send_event(
@@ -327,11 +305,12 @@ impl VideoUploadUploadButtonClicked {
         hashtag_inp: NodeRef<Input>,
         is_nsfw: NodeRef<Input>,
         enable_hot_or_not: NodeRef<Input>,
+        cans_store: RwSignal<Option<Canisters<true>>>,
     ) {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
         {
             // video_upload_upload_button_clicked - analytics
-            let user = user_details_or_ret!();
+            let user = user_details_can_store_or_ret!(cans_store);
 
             let hashtag_count = hashtag_inp.get_untracked().unwrap().value().len();
             let is_nsfw_val = is_nsfw
@@ -365,11 +344,11 @@ impl VideoUploadUploadButtonClicked {
 pub struct VideoUploadVideoSelected;
 
 impl VideoUploadVideoSelected {
-    pub fn send_event(&self) {
+    pub fn send_event(&self, cans_store: RwSignal<Option<Canisters<true>>>) {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
         {
             // video_upload_video_selected - analytics
-            let user = user_details_or_ret!();
+            let user = user_details_can_store_or_ret!(cans_store);
 
             send_event(
                 "video_upload_video_selected",
@@ -395,11 +374,12 @@ impl VideoUploadUnsuccessful {
         hashtags_len: usize,
         is_nsfw: bool,
         enable_hot_or_not: bool,
+        cans_store: RwSignal<Option<Canisters<true>>>,
     ) {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
         {
             // video_upload_unsuccessful - analytics
-            let user = user_details_or_ret!();
+            let user = user_details_can_store_or_ret!(cans_store);
 
             send_event(
                 "video_upload_unsuccessful",
@@ -422,11 +402,17 @@ impl VideoUploadUnsuccessful {
 pub struct VideoUploadSuccessful;
 
 impl VideoUploadSuccessful {
-    pub fn send_event(&self, hashtags_len: usize, is_nsfw: bool, enable_hot_or_not: bool) {
+    pub fn send_event(
+        &self,
+        hashtags_len: usize,
+        is_nsfw: bool,
+        enable_hot_or_not: bool,
+        cans_store: RwSignal<Option<Canisters<true>>>,
+    ) {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
         {
             // video_upload_successful - analytics
-            let user = user_details_or_ret!();
+            let user = user_details_can_store_or_ret!(cans_store);
             send_event(
                 "video_upload_successful",
                 &json!({
@@ -482,11 +468,15 @@ impl Refer {
 pub struct ReferShareLink;
 
 impl ReferShareLink {
-    pub fn send_event(&self, logged_in: ReadSignal<bool>) {
+    pub fn send_event(
+        &self,
+        logged_in: ReadSignal<bool>,
+        cans_store: RwSignal<Option<Canisters<true>>>,
+    ) {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
         {
             // refer_share_link - analytics
-            let user = user_details_or_ret!();
+            let user = user_details_can_store_or_ret!(cans_store);
             let details = user.details;
 
             let user_id = details.principal;
@@ -615,10 +605,10 @@ impl LoginCta {
 pub struct LogoutClicked;
 
 impl LogoutClicked {
-    pub fn send_event(&self) {
+    pub fn send_event(&self, cans_store: RwSignal<Option<Canisters<true>>>) {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
         {
-            let user = user_details_or_ret!();
+            let user = user_details_can_store_or_ret!(cans_store);
             let details = user.details;
             // logout_clicked - analytics
 
@@ -642,10 +632,10 @@ impl LogoutClicked {
 pub struct LogoutConfirmation;
 
 impl LogoutConfirmation {
-    pub fn send_event(&self) {
+    pub fn send_event(&self, cans_store: RwSignal<Option<Canisters<true>>>) {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
         {
-            let user = user_details_or_ret!();
+            let user = user_details_can_store_or_ret!(cans_store);
             let details = user.details;
 
             let user_id = details.principal;

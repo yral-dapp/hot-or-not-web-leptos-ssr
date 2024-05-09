@@ -1,6 +1,7 @@
 mod history;
 
 use candid::Principal;
+use gloo::timers::callback::Timeout;
 use ic_agent::Identity;
 use leptos::*;
 use leptos_icons::*;
@@ -9,6 +10,7 @@ use leptos_use::use_window;
 
 use crate::component::canisters_prov::AuthCansProvider;
 use crate::component::connect::ConnectLogin;
+use crate::state::canisters::auth_canisters_store;
 use crate::utils::event_streaming::events::{Refer, ReferShareLink};
 use crate::{
     component::{back_btn::BackButton, title::Title},
@@ -44,13 +46,18 @@ fn ReferLoaded(user_principal: Principal) -> impl IntoView {
         .unwrap_or_default();
 
     let (logged_in, _) = account_connected_reader();
+    let show_copied_popup = create_rw_signal(false);
+    let canister_store = auth_canisters_store();
 
     let click_copy = create_action(move |()| {
         let refer_link = refer_link.clone();
         async move {
             let _ = copy_to_clipboard(&refer_link);
 
-            ReferShareLink.send_event(logged_in);
+            ReferShareLink.send_event(logged_in, canister_store);
+
+            show_copied_popup.set(true);
+            Timeout::new(1200, move || show_copied_popup.set(false)).forget();
         }
     });
 
@@ -61,6 +68,13 @@ fn ReferLoaded(user_principal: Principal) -> impl IntoView {
                 <Icon class="text-xl" icon=icondata::FaCopyRegular/>
             </button>
         </div>
+        <Show when=show_copied_popup>
+            <div class="absolute flex flex-col justify-center items-center z-[4]">
+                <span class="absolute top-28 flex flex-row justify-center items-center bg-white/90 rounded-md h-10 w-28 text-center shadow-lg">
+                    <p class="text-black">Link Copied!</p>
+                </span>
+            </div>
+        </Show>
     }
 }
 

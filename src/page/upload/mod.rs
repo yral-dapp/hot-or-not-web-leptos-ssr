@@ -4,6 +4,7 @@ mod video_upload;
 
 use crate::{
     component::toggle::ToggleWithLabel,
+    state::canisters::auth_canisters_store,
     utils::event_streaming::events::{VideoUploadInitiated, VideoUploadUploadButtonClicked},
 };
 
@@ -50,11 +51,17 @@ fn PreUploadView(trigger_upload: WriteSignal<Option<UploadParams>>) -> impl Into
     let hashtag_inp = create_node_ref::<Input>();
     let enable_hot_or_not = create_node_ref::<Input>();
     let is_nsfw = create_node_ref::<Input>();
+    let canister_store = auth_canisters_store();
 
     VideoUploadInitiated.send_event();
 
     let on_submit = move || {
-        VideoUploadUploadButtonClicked.send_event(hashtag_inp, is_nsfw, enable_hot_or_not);
+        VideoUploadUploadButtonClicked.send_event(
+            hashtag_inp,
+            is_nsfw,
+            enable_hot_or_not,
+            canister_store,
+        );
 
         let description = desc.get_untracked().unwrap().value();
         let hashtags = hashtags.get_untracked();
