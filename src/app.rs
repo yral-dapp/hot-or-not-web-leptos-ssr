@@ -119,6 +119,7 @@ pub fn App() -> impl IntoView {
                         <Route path="/profile/:canister_id/:post_id" view=ProfilePost/>
                         <Route path="/your-profile/:canister_id/:post_id" view=ProfilePost/>
                         <Route path="/profile/:id" view=ProfileView/>
+                        <Route path="/your-profile/:id" view=ProfileView/>
                         <Route path="/upload" view=UploadPostPage/>
                         <Route path="/error" view=ServerErrorPage/>
                         <Route path="/menu" view=Menu/>
