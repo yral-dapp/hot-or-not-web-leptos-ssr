@@ -5,10 +5,7 @@ use leptos_use::use_event_listener;
 
 use crate::utils::event_streaming::events::VideoWatched;
 use crate::{
-    canister::{
-        individual_user_template::PostViewDetailsFromFrontend,
-        utils::{bg_url, mp4_url},
-    },
+    canister::{individual_user_template::PostViewDetailsFromFrontend, utils::bg_url},
     component::{feed_popup::FeedPopUp, video_player::VideoPlayer},
     state::{
         auth::account_connected_reader, canisters::unauth_canisters,
@@ -86,9 +83,7 @@ pub fn VideoView(
     let vid_details = create_memo(move |_| with!(|video_queue| video_queue.get(idx).cloned()));
 
     let uid =
-        create_memo(move |_| with!(|video_queue| video_queue.get(idx).map(|q| q.uid.clone())));
-    let view_bg_url = move || uid().map(bg_url);
-    let view_video_url = move || uid().map(mp4_url);
+        Signal::derive(move || with!(|video_queue| video_queue.get(idx).map(|q| q.uid.clone())));
 
     // Handles autoplay
     create_effect(move |_| {
@@ -202,8 +197,9 @@ pub fn VideoView(
     view! {
         <VideoPlayer
             node_ref=container_ref
-            view_bg_url=Signal::derive(view_bg_url)
-            view_video_url=Signal::derive(view_video_url)
+            autoplay=idx == current_idx.get_untracked()
+            muted=muted.write_only()
+            uid
         />
     }
 }

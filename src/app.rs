@@ -89,6 +89,7 @@ pub fn App() -> impl IntoView {
         <Title text="Yral"/>
 
         <Link rel="manifest" href="/app.webmanifest"/>
+        <Stylesheet href="https://vjs.zencdn.net/8.10.0/video-js.css"/>
 
         // GA4 Global Site Tag (gtag.js) - Google Analytics
         // G-6W5Q2MRX0E to test locally | G-PLNNETMSLM
@@ -139,5 +140,6 @@ pub fn App() -> impl IntoView {
                 <NavBar/>
             </nav>
         </Router>
+        <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
     }
 }

@@ -89,3 +89,19 @@ pub mod wasp {
         }
     }
 }
+
+pub mod videojs {
+    use wasm_bindgen::prelude::*;
+
+    #[wasm_bindgen]
+    extern "C" {
+        #[derive(Clone)]
+        pub type VideoJsPlayer;
+
+        #[wasm_bindgen(catch)]
+        pub fn videojs(element: &JsValue) -> Result<VideoJsPlayer, JsValue>;
+
+        #[wasm_bindgen(method, catch)]
+        pub fn dispose(this: &VideoJsPlayer) -> Result<(), JsValue>;
+    }
+}

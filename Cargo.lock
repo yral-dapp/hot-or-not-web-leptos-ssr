@@ -1843,6 +1843,7 @@ dependencies = [
  "ic-agent",
  "icondata",
  "icondata_core",
+ "js-sys",
  "k256",
  "leptos",
  "leptos-use",

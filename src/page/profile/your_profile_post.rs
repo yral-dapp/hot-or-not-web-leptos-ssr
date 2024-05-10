@@ -4,7 +4,7 @@ use leptos_router::*;
 
 use super::overlay::YourProfileOverlay;
 use crate::{
-    canister::utils::{bg_url, mp4_url},
+    canister::utils::bg_url,
     component::{back_btn::BackButton, spinner::FullScreenSpinner, video_player::VideoPlayer},
     state::canisters::{authenticated_canisters, unauth_canisters},
     try_or_redirect_opt,
@@ -59,10 +59,6 @@ pub fn YourProfilePost() -> impl IntoView {
         }
     });
 
-    let view_video_url = move || post_details.get().flatten().map(|pd| mp4_url(pd.uid));
-
-    let view_bg_url = move || post_details.get().flatten().map(|pd| bg_url(pd.uid));
-
     let video_node_ref = create_node_ref::<Video>();
 
     // Handles autoplay
@@ -76,33 +72,44 @@ pub fn YourProfilePost() -> impl IntoView {
 
         vid.set_muted(false);
     });
+    let muted = create_rw_signal(false);
 
     view! {
-        <Suspense fallback = FullScreenSpinner >
-        {move || {
-                post_details.get()
-                    .flatten().map(|pd| {
-
-                        Some(view!{
-                            <div class ="absolute left-4 top-4 bg-transparent z-10 text-white">
-                                <BackButton fallback="/".to_string()/>
-                            </div>
-                            <YourProfileOverlay/>
-                            <div class="snap-always snap-end w-dvh h-dvh">
-                                <div class="bg-transparent w-full h-full relative overflow-hidden">
-                                    <div
-                                        class="absolute top-0 left-0 bg-cover bg-center w-full h-full z-[1] blur-lg"
-                                        style:background-color="rgb(0, 0, 0)"
-                                        style:background-image=move || format!("url({})", view_bg_url().unwrap_or_default())
-                                    ></div>
+        <Suspense fallback=FullScreenSpinner>
+            {move || {
+                post_details
+                    .get()
+                    .flatten()
+                    .map(|post| {
+                        let uid = post.uid.clone();
+                        let view_bg_url = bg_url(&uid);
+                        let bg_img = format!("url({view_bg_url}");
+                        Some(
+                            view! {
+                                <div class="absolute left-4 top-4 bg-transparent z-10 text-white">
+                                    <BackButton fallback="/".to_string()/>
+                                </div>
+                                <YourProfileOverlay/>
+                                <div class="snap-always snap-end w-dvh h-dvh">
+                                    <div class="bg-transparent w-full h-full relative overflow-hidden">
+                                        <div
+                                            class="absolute top-0 left-0 bg-cover bg-center w-full h-full z-[1] blur-lg"
+                                            style:background-color="rgb(0, 0, 0)"
+                                            style:background-image=bg_img
+                                        ></div>
                                     </div>
-                                <VideoDetailsOverlay post = pd/>
-                                <VideoPlayer node_ref=video_node_ref view_bg_url view_video_url/>
-                            </div>
-                        })
+                                    <VideoDetailsOverlay post/>
+                                    <VideoPlayer
+                                        muted=muted.write_only()
+                                        node_ref=video_node_ref
+                                        uid=Some(uid.clone())
+                                    />
+                                </div>
+                            },
+                        )
                     })
-            }
-        }
+            }}
+
         </Suspense>
     }
 }
