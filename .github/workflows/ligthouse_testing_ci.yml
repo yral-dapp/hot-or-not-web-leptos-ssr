@@ -44,12 +44,12 @@ jobs:
           #       });
 
 
-          - name: Install Lighthouse
-            run: npm install -g @lhci/cli@0.13.x
+          # - name: Install Lighthouse
+          #   run: npm install -g @lhci/cli@0.13.x
 
-          - name: Run Lighthouse
-            id: lhcitests
-            run: lhci autorun
+          # - name: Run Lighthouse
+          #   id: lhcitests
+          #   run: lhci autorun
             # env: 
             #     LHCI_GITHUB_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
 
@@ -77,8 +77,9 @@ jobs:
           #     body: |
           #       ${{ steps.tests.outcome == 'failed' && 'Test failed, Please check logs for details.' || 'Test passed :heavy_check_mark:'  }}
 
+
+
           # foo lhci test to comment Lighthouse score to PR
-          
           - uses: actions/checkout@master
           - run: mkdir -p ${{ github.workspace }}/tmp/artifacts
           - name: Lighthouse
