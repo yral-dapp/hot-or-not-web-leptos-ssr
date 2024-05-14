@@ -17,52 +17,39 @@ jobs:
                 node-version: 20
           - run: npm install
 
-          # - uses: actions/checkout@master
-          # - run: mkdir -p ${{ github.workspace }}/tmp/artifacts
-          # - name: Lighthouse
-          #   uses: foo-software/lighthouse-check-action@master
-          #   with:
-          #     outputDirectory: ${{ github.workspace }}/tmp/artifacts
-          #     gitHubAccessToken: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
-          #     urls: 'https://yral.com/'
-          # - name: Upload artifacts
-          #   uses: actions/upload-artifact@master
-          #   with:
-          #     name: Lighthouse reports
-          #     path: ${{ github.workspace }}/tmp/artifacts
-
             
-          - name: Run Lighthouse CI
-            uses: treosh/lighthouse-ci-action@v8
-            with:
-              urls: 'https://yral.com'
-              temporaryPublicStorage: true 
+          # trying with treosh lhci tests
+          # - name: Run Lighthouse CI
+          #   uses: treosh/lighthouse-ci-action@v8
+          #   with:
+          #     urls: 'https://yral.com'
+          #     temporaryPublicStorage: true 
 
-          - name: Comment on PR
-            uses: actions/github-script@v5
-            with:
-              script: |
-                const { context } = require('@actions/github');
-                const prNumber = context.payload.pull_request.number;
-                const repoName = context.repo.repo;
-                const ownerName = context.repo.owner;
-                const githubToken = ${{ secrets.NEW_GITHUB_APP_TOKEN }};
-                const url = `https://storage.googleapis.com/lighthouse-infrastructure.appspot.com/reports/${Date.now()}.report.html`; // Adjust based on where the report is stored
-                const body = `Lighthouse report is available here: [Lighthouse Report](${url})`;
+          # - name: Comment on PR
+          #   uses: actions/github-script@v5
+          #   with:
+          #     script: |
+          #       # const { context } = require('@actions/github');
+          #       const prNumber = context.payload.pull_request.number;
+          #       # const repoName = context.repo.repo;
+          #       # const ownerName = context.repo.owner;
+          #       const githubToken = ${{ secrets.NEW_GITHUB_APP_TOKEN }};
+          #       const url = `https://storage.googleapis.com/lighthouse-infrastructure.appspot.com/reports/${Date.now()}.report.html`; // Adjust based on where the report is stored
+          #       const body = `Lighthouse report is available here: [Lighthouse Report](${url})`;
 
-                octokit.rest.issues.createComment({
-                  ...context.repo,
-                  issue_number: prNumber,
-                  body: body
-                });
+          #       octokit.rest.issues.createComment({
+          #         ...context.repo,
+          #         issue_number: prNumber,
+          #         body: body
+          #       });
 
 
-          # - name: Install Lighthouse
-          #   run: npm install -g @lhci/cli@0.13.x
+          - name: Install Lighthouse
+            run: npm install -g @lhci/cli@0.13.x
 
-          # - name: Run Lighthouse
-          #   id: lhcitests
-          #   run: lhci autorun
+          - name: Run Lighthouse
+            id: lhcitests
+            run: lhci autorun
             # env: 
             #     LHCI_GITHUB_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
 
@@ -90,6 +77,24 @@ jobs:
           #     body: |
           #       ${{ steps.tests.outcome == 'failed' && 'Test failed, Please check logs for details.' || 'Test passed :heavy_check_mark:'  }}
 
+          # foo lhci test to comment Lighthouse score to PR
+          
+          - uses: actions/checkout@master
+          - run: mkdir -p ${{ github.workspace }}/tmp/artifacts
+          - name: Lighthouse
+            uses: foo-software/lighthouse-check-action@master
+            with:
+              outputDirectory: ${{ github.workspace }}/tmp/artifacts
+              gitHubAccessToken: ${{ secrets.NEW_GITHUB_APP_TOKEN }}
+              urls: 'https://yral.com/'
+          - name: Upload artifacts
+            uses: actions/upload-artifact@master
+            with:
+              name: Lighthouse reports
+              path: ${{ github.workspace }}/tmp/artifacts
+
+
+          # call another repo as post deploy action
           - name: Trigger a workflow in another repo
             uses: actions/github-script@v5
             with:
