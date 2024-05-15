@@ -16,7 +16,17 @@ jobs:
             with: 
                 node-version: 20
           - run: npm install
-            
+
+
+          # - name: Install Lighthouse
+          #   run: npm install -g @lhci/cli@0.13.x
+
+          # - name: Run Lighthouse
+          #   id: lhcitests
+          #   run: lhci autorun
+            # env: 
+            #     LHCI_GITHUB_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+
           - name: install playwright
             run: npx playwright install    
 
@@ -24,25 +34,26 @@ jobs:
             id: tests
             run: npx playwright test --project=firefox 
             # continue-on-error: true
+            
+          - name: Notify on Google Chat 
+            uses: Co-qn/google-chat-notification@v1
+            with:
+              name: test
+              url: ${{ secrets.TEST_WEBHOOK_URL }}
+              status: ${{ steps.tests.outcome }}
           
     close-pr:
         if: ${{ needs.lhci.result != 'failure' }}
         needs: lhci 
         runs-on: ubuntu-latest
-        steps:
-          - name: Close Pull Request
-            uses: peter-evans/close-pull-request@v1
-            with:
-              comment: "Playwright tests failed. Closing this pull request."
-              state: closed
-
-          # - name: Notify on Google Chat 
-          #   uses: Co-qn/google-chat-notification@v1
-          #   with:
-          #     name: test
-          #     url: ${{ secrets.TEST_WEBHOOK_URL }}
-          #     status: ${{ steps.tests.outcome }}
-#
+        steps:      
+        - run: gh pr close "$NUMBER" --comment "$COMMENT"
+          env:
+              GITHUB_TOKEN: ${{ secrets.NEW_GITHUB_APP_TOKEN }}
+              GH_REPO: ${{ github.repository }}
+              NUMBER: ${{ github.event.number }}
+              COMMENT: >
+                "Playwright tests failed. Closing this pull request."
 
           # - name: Check test result and comment
           #   uses: peter-evans/create-or-update-comment@v1
@@ -51,7 +62,6 @@ jobs:
           #     issue-number: ${{ github.event.pull_request.number }}
           #     body: |
           #       ${{ steps.tests.outcome == 'failed' && 'Test failed, Please check logs for details.' || 'Test passed :heavy_check_mark:'  }}
-
 
 
           # # foo lhci test to comment Lighthouse score to PR
