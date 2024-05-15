@@ -88,6 +88,16 @@ jobs:
               outputDirectory: ${{ github.workspace }}/tmp/artifacts
               gitHubAccessToken: ${{ secrets.NEW_GITHUB_APP_TOKEN }}
               urls: 'https://yral.com/'
+          - name: Verify Lighthouse Check results
+            uses: foo-software/lighthouse-check-status-action@master
+            with:
+              lighthouseCheckResults: ${{ steps.lighthouseCheck.outputs.lighthouseCheckResults }}
+              minAccessibilityScore: "90"
+              minBestPracticesScore: "90"
+              minPerformanceScore: "50"
+              minProgressiveWebAppScore: "50"
+              minSeoScore: "50"
+
           - name: Upload artifacts
             uses: actions/upload-artifact@master
             with:
