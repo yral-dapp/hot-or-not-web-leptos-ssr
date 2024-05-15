@@ -53,20 +53,23 @@ jobs:
             # env: 
             #     LHCI_GITHUB_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
 
-          - name: install playwright
-            run: npx playwright install    
 
-          - name: run playwright
-            id: tests
-            run: npx playwright test --project=firefox 
-            continue-on-error: true
 
-          - name: Notify on Google Chat 
-            uses: Co-qn/google-chat-notification@v1
-            with:
-              name: test
-              url: ${{ secrets.TEST_WEBHOOK_URL }}
-              status: ${{ steps.tests.outcome }}
+            
+          # - name: install playwright
+          #   run: npx playwright install    
+
+          # - name: run playwright
+          #   id: tests
+          #   run: npx playwright test --project=firefox 
+          #   continue-on-error: true
+
+          # - name: Notify on Google Chat 
+          #   uses: Co-qn/google-chat-notification@v1
+          #   with:
+          #     name: test
+          #     url: ${{ secrets.TEST_WEBHOOK_URL }}
+          #     status: ${{ steps.tests.outcome }}
 
 
           # - name: Check test result and comment
@@ -82,31 +85,31 @@ jobs:
           # foo lhci test to comment Lighthouse score to PR
           - uses: actions/checkout@master
           - run: mkdir -p ${{ github.workspace }}/tmp/artifacts
-          - name: Lighthouse
+          - name: lighthouseCheck
             uses: foo-software/lighthouse-check-action@master
             with:
               outputDirectory: ${{ github.workspace }}/tmp/artifacts
               gitHubAccessToken: ${{ secrets.NEW_GITHUB_APP_TOKEN }}
               urls: 'https://yral.com/'
-          # - name: Verify Lighthouse Check results
-          #   uses: foo-software/lighthouse-check-status-action@master
-          #   with:
-          #     lighthouseCheckResults: ${{ steps.lighthouseCheck.outputs.lighthouseCheckResults }}
-          #     minAccessibilityScore: "90"
-          #     minBestPracticesScore: "90"
-          #     minPerformanceScore: "50"
-          #     minProgressiveWebAppScore: "50"
-          #     minSeoScore: "50"
-
-
-        
+         
           - name: Check test result and comment
             uses: peter-evans/create-or-update-comment@v1
             with:
-              token: ${{ secrets.NEW_GITHUB_APP_TOKEN }}
+              token: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
               issue-number: ${{ github.event.pull_request.number }}
               body: |
-                ${{ steps.lighthouseCheck.outputs.lighthouseCheckResults }}
+                ${{ steps.lighthouseCheck.outputs.lighthouseCheckResults  }}
+
+              
+          - name: Verify Lighthouse Check results
+            uses: foo-software/lighthouse-check-status-action@master
+            with:
+              lighthouseCheckResults: ${{ steps.lighthouseCheck.outputs.lighthouseCheckResults }}
+              minAccessibilityScore: "90"
+              minBestPracticesScore: "90"
+              minPerformanceScore: "50"
+              minProgressiveWebAppScore: "50"
+              minSeoScore: "50"
 
 
           - name: Upload artifacts
