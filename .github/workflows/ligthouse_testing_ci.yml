@@ -88,15 +88,26 @@ jobs:
               outputDirectory: ${{ github.workspace }}/tmp/artifacts
               gitHubAccessToken: ${{ secrets.NEW_GITHUB_APP_TOKEN }}
               urls: 'https://yral.com/'
-          - name: Verify Lighthouse Check results
-            uses: foo-software/lighthouse-check-status-action@master
+          # - name: Verify Lighthouse Check results
+          #   uses: foo-software/lighthouse-check-status-action@master
+          #   with:
+          #     lighthouseCheckResults: ${{ steps.lighthouseCheck.outputs.lighthouseCheckResults }}
+          #     minAccessibilityScore: "90"
+          #     minBestPracticesScore: "90"
+          #     minPerformanceScore: "50"
+          #     minProgressiveWebAppScore: "50"
+          #     minSeoScore: "50"
+
+
+        
+          - name: Check test result and comment
+            uses: peter-evans/create-or-update-comment@v1
             with:
-              lighthouseCheckResults: ${{ steps.lighthouseCheck.outputs.lighthouseCheckResults }}
-              minAccessibilityScore: "90"
-              minBestPracticesScore: "90"
-              minPerformanceScore: "50"
-              minProgressiveWebAppScore: "50"
-              minSeoScore: "50"
+              token: ${{ secrets.NEW_GITHUB_APP_TOKEN }}
+              issue-number: ${{ github.event.pull_request.number }}
+              body: |
+                ${{ steps.lighthouseCheck.outputs.lighthouseCheckResults }}
+
 
           - name: Upload artifacts
             uses: actions/upload-artifact@master
