@@ -92,12 +92,12 @@ jobs:
               gitHubAccessToken: ${{ secrets.NEW_GITHUB_APP_TOKEN }}
               urls: 'https://yral.com/'
          
-          - name: Check test result and comment
-            uses: peter-evans/create-or-update-comment@v1
+          - name: Notify on Google Chat 
+            uses: Co-qn/google-chat-notification@v1
             with:
-              token: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
-              issue-number: ${{ github.event.pull_request.number }}
-              body: ${{ steps.lighthouseCheck.outputs.lighthouseCheckResults  }}
+              name: test
+              url: ${{ secrets.TEST_GOOGLE_CHAT_WEBHOOK_URL }}
+              status: ${{ steps.lighthouseCheck.outputs.lighthouseCheckResults }}
 
               
           - name: Verify Lighthouse Check results
