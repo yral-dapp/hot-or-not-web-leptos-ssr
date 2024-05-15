@@ -107,4 +107,3 @@ jobs:
                     client_payload: { key: "value" }
                   });
                 github-token: ${{ secrets.NEW_GITHUB_APP_TOKEN }}
-
