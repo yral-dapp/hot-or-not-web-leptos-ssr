@@ -97,7 +97,7 @@ jobs:
             with:
               name: test
               url: ${{ secrets.TEST_WEBHOOK_URL }}
-              status: ${{ steps.lighthouseCheck.outputs.lighthouseCheckResults }}
+              status: ${{ steps.lighthouseCheck.outputs }}
 
               
           - name: Verify Lighthouse Check results
