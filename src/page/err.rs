@@ -1,4 +1,4 @@
-use crate::state::history::HistoryCtx;
+use gloo::history::{BrowserHistory, History};
 use leptos::*;
 use leptos_router::*;
 
@@ -22,10 +22,11 @@ pub fn ServerErrorPage() -> impl IntoView {
 
 #[component]
 pub fn ErrorView(#[prop(into)] error: MaybeSignal<String>) -> impl IntoView {
-    let history_ctx = expect_context::<HistoryCtx>();
     let go_back = move || {
-        let back_url = history_ctx.back("/");
-        use_navigate()(&back_url, Default::default());
+        let history = BrowserHistory::new();
+
+        //go back
+        history.back();
     };
 
     view! {

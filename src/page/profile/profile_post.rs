@@ -99,16 +99,23 @@ pub fn ProfilePostWithUpdates(initial_post: PostDetails) -> impl IntoView {
         })
     });
 
-    //TODO: fix the navigation for the vidoes.
     create_effect(move |_| {
-        let Some((canister_id, post_id)) = current_post_base() else {
+        let Some((canister_id, post_id)) = current_post_base.get() else {
             return;
         };
+        
+        if recovering_state.get_untracked() {
+            return;
+        }
+        log::warn!("navigated {canister_id} {post_id}");
+
         use_navigate()(
             &format!("profile/{canister_id}/{post_id}"),
             NavigateOptions {
+                resolve: true,
+                scroll: false,
+                state: State(None),
                 replace: true,
-                ..NavigateOptions::default()
             },
         );
     });
