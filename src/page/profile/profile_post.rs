@@ -103,7 +103,7 @@ pub fn ProfilePostWithUpdates(initial_post: PostDetails) -> impl IntoView {
         let Some((canister_id, post_id)) = current_post_base.get() else {
             return;
         };
-        
+
         if recovering_state.get_untracked() {
             return;
         }
@@ -191,7 +191,7 @@ pub fn ProfilePost() -> impl IntoView {
                         Some(
                             view! {
                                 <div class="absolute left-4 top-4 bg-transparent z-10 text-white">
-                                    <BackButton fallback="/".to_string()/>
+                                    <BackButton/>
                                 </div>
                                 <ProfilePostWithUpdates initial_post=pd/>
                             },

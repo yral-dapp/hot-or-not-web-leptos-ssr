@@ -11,7 +11,7 @@ pub fn TermsOfService() -> impl IntoView {
             // </Title>
             <Title justify_center=false>
                 <div class="flex flex-row justify-between">
-                    <BackButton fallback="/menu".to_string()/>
+                    <BackButton/>
                     <span class="font-bold">Terms of Service</span>
                     <div></div>
                 </div>

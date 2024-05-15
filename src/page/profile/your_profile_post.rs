@@ -78,31 +78,40 @@ pub fn YourProfilePost() -> impl IntoView {
     });
 
     view! {
-        <Suspense fallback = FullScreenSpinner >
-        {move || {
-                post_details.get()
-                    .flatten().map(|pd| {
-
-                        Some(view!{
-                            <div class ="absolute left-4 top-4 bg-transparent z-10 text-white">
-                                <BackButton fallback="/".to_string()/>
-                            </div>
-                            <YourProfileOverlay/>
-                            <div class="snap-always snap-end w-dvh h-dvh">
-                                <div class="bg-transparent w-full h-full relative overflow-hidden">
-                                    <div
-                                        class="absolute top-0 left-0 bg-cover bg-center w-full h-full z-[1] blur-lg"
-                                        style:background-color="rgb(0, 0, 0)"
-                                        style:background-image=move || format!("url({})", view_bg_url().unwrap_or_default())
-                                    ></div>
+        <Suspense fallback=FullScreenSpinner>
+            {move || {
+                post_details
+                    .get()
+                    .flatten()
+                    .map(|pd| {
+                        Some(
+                            view! {
+                                <div class="absolute left-4 top-4 bg-transparent z-10 text-white">
+                                    <BackButton/>
+                                </div>
+                                <YourProfileOverlay/>
+                                <div class="snap-always snap-end w-dvh h-dvh">
+                                    <div class="bg-transparent w-full h-full relative overflow-hidden">
+                                        <div
+                                            class="absolute top-0 left-0 bg-cover bg-center w-full h-full z-[1] blur-lg"
+                                            style:background-color="rgb(0, 0, 0)"
+                                            style:background-image=move || {
+                                                format!("url({})", view_bg_url().unwrap_or_default())
+                                            }
+                                        ></div>
                                     </div>
-                                <VideoDetailsOverlay post = pd/>
-                                <VideoPlayer node_ref=video_node_ref view_bg_url view_video_url/>
-                            </div>
-                        })
+                                    <VideoDetailsOverlay post=pd/>
+                                    <VideoPlayer
+                                        node_ref=video_node_ref
+                                        view_bg_url
+                                        view_video_url
+                                    />
+                                </div>
+                            },
+                        )
                     })
-            }
-        }
+            }}
+
         </Suspense>
     }
 }

@@ -11,7 +11,7 @@ pub fn PrivacyPolicy() -> impl IntoView {
             // </Title>
             <Title justify_center=false>
                 <div class="flex flex-row justify-between">
-                    <BackButton fallback="/menu".to_string()/>
+                    <BackButton/>
                     <div>
                         <span class="font-bold">Privacy Policy</span>
                     </div>

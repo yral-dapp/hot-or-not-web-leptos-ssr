@@ -1,9 +1,9 @@
 use gloo::history::{BrowserHistory, History};
-use leptos::{component, expect_context, view, window, Callback, IntoView};
+use leptos::{component, view, Callback, IntoView};
 use leptos_icons::Icon;
 
 #[component]
-pub fn BackButton(fallback: String) -> impl IntoView {
+pub fn BackButton() -> impl IntoView {
     let go_back = Callback::new(move |_| {
         let history = BrowserHistory::new();
         history.back();

@@ -139,7 +139,7 @@ pub fn Menu() -> impl IntoView {
             <div class="flex flex-col items-center w-full gap-20 pb-16">
                 <Title justify_center=false>
                     <div class="flex flex-row justify-between">
-                        <BackButton fallback="/".to_string()/>
+                        <BackButton/>
                         <span class="font-bold text-2xl">Menu</span>
                         <div></div>
                     </div>
