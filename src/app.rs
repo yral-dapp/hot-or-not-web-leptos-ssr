@@ -7,14 +7,14 @@ use crate::{
         menu::Menu,
         post_view::{PostView, PostViewCtx},
         privacy::PrivacyPolicy,
-        profile::ProfileView,
+        profile::{profile_post::ProfilePost, your_profile_post::YourProfilePost, ProfileView},
         refer_earn::ReferEarn,
         root::RootPage,
         terms::TermsOfService,
         upload::UploadPostPage,
         wallet::{transactions::Transactions, Wallet},
     },
-    state::{auth::AuthState, canisters::Canisters, history::HistoryCtx},
+    state::{canisters::Canisters, history::HistoryCtx},
     utils::event_streaming::EventHistory,
 };
 use leptos::*;
@@ -62,8 +62,6 @@ pub fn App() -> impl IntoView {
     provide_meta_context();
     provide_context(Canisters::default());
     provide_context(PostViewCtx::default());
-    let auth_state = AuthState::default();
-    provide_context(auth_state.clone());
 
     // History Tracking
     let history_ctx = HistoryCtx::default();
@@ -71,7 +69,6 @@ pub fn App() -> impl IntoView {
     create_effect(move |_| {
         let loc = use_location();
         history_ctx.push(&loc.pathname.get());
-        // leptos::logging::log!("{}", history_ctx.log_history());
     });
 
     // Analytics
@@ -92,16 +89,19 @@ pub fn App() -> impl IntoView {
         <Link rel="manifest" href="/app.webmanifest"/>
 
         // GA4 Global Site Tag (gtag.js) - Google Analytics
-        // G-6W5Q2MRX0E to test locally
+        // G-6W5Q2MRX0E to test locally | G-PLNNETMSLM
         <Show when=enable_ga4_script>
-            <Script async_="true" src={concat!("https://www.googletagmanager.com/gtag/js?id=", "G-PLNNETMSLM")}/>
+            <Script
+                async_="true"
+                src=concat!("https://www.googletagmanager.com/gtag/js?id=", "G-PLNNETMSLM")
+            />
             <Script>
-                    {r#"
-                    window.dataLayer = window.dataLayer || [];
-                    function gtag(){dataLayer.push(arguments);}
-                    gtag('js', new Date());
-                    gtag('config', 'G-PLNNETMSLM');
-                    "#}
+                {r#"
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', 'G-PLNNETMSLM');
+                "#}
             </Script>
         </Show>
 
@@ -112,8 +112,11 @@ pub fn App() -> impl IntoView {
                     // auth redirect routes exist outside main context
                     <GoogleAuthRedirectHandlerRoute/>
                     <GoogleAuthRedirectorRoute/>
-                    <Route path="/" view=BaseRoute>
+                    <Route path="" view=BaseRoute>
                         <Route path="/hot-or-not/:canister_id/:post_id" view=PostView/>
+                        <Route path="/profile/:canister_id/:post_id" view=ProfilePost/>
+                        <Route path="/your-profile/:canister_id/:post_id" view=YourProfilePost/>
+                        <Route path="/your-profile/:id" view=ProfileView/>
                         <Route path="/profile/:id" view=ProfileView/>
                         <Route path="/upload" view=UploadPostPage/>
                         <Route path="/error" view=ServerErrorPage/>

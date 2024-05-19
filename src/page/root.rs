@@ -1,8 +1,8 @@
-use crate::component::spinner::FullScreenSpinner;
 use candid::Principal;
 use leptos::*;
 use leptos_router::*;
 
+use crate::component::spinner::FullScreenSpinner;
 #[cfg(feature = "ssr")]
 use crate::{canister::post_cache, state::canisters::unauth_canisters};
 

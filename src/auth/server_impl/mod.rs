@@ -16,7 +16,6 @@ use ic_agent::{
 use leptos::{expect_context, ServerFnError};
 use leptos_axum::{extract_with_state, ResponseOptions};
 use rand_chacha::rand_core::OsRng;
-use serde::{Deserialize, Serialize};
 
 use crate::{
     consts::auth::{DELEGATION_MAX_AGE, REFRESH_MAX_AGE, REFRESH_TOKEN_COOKIE},
@@ -25,7 +24,7 @@ use crate::{
 
 use self::store::{KVStore, KVStoreImpl};
 
-use super::DelegatedIdentityWire;
+use super::{DelegatedIdentityWire, RefreshToken};
 
 impl DelegatedIdentityWire {
     pub fn delegate(from: &impl Identity) -> Self {
@@ -62,12 +61,6 @@ fn set_cookies(resp: &ResponseOptions, jar: impl IntoResponse) {
     {
         resp.append_header(header::SET_COOKIE, cookie);
     }
-}
-
-#[derive(Clone, Copy, Deserialize, Serialize)]
-struct RefreshToken {
-    principal: Principal,
-    expiry_epoch_ms: u128,
 }
 
 async fn extract_principal_from_cookie(
@@ -131,6 +124,7 @@ pub async fn update_user_identity(
         .secure(true)
         .path("/")
         .same_site(SameSite::None)
+        .partitioned(true)
         .max_age(refresh_max_age.try_into().unwrap());
 
     jar = jar.add(refresh_cookie);

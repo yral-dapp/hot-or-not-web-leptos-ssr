@@ -4,9 +4,14 @@ use super::{
 };
 use crate::{
     component::modal::Modal,
-    state::canisters::{authenticated_canisters, AuthProfileCanisterResource, Canisters},
+    state::canisters::{auth_canisters_store, authenticated_canisters, Canisters},
     try_or_redirect_opt,
-    utils::{event_streaming::send_event, route::go_to_root},
+    utils::{
+        event_streaming::events::{
+            VideoUploadSuccessful, VideoUploadUnsuccessful, VideoUploadVideoSelected,
+        },
+        route::go_to_root,
+    },
 };
 use candid::Principal;
 use futures::StreamExt;
@@ -18,7 +23,6 @@ use leptos::{
 };
 use leptos_icons::*;
 use leptos_use::use_event_listener;
-use serde_json::json;
 use web_time::SystemTime;
 
 #[component]
@@ -55,19 +59,7 @@ pub fn PreVideoUpload(file_blob: WriteSignal<Option<FileWithUrl>>) -> impl IntoV
     let file = create_rw_signal(None::<FileWithUrl>);
     let video_ref = create_node_ref::<Video>();
     let modal_show = create_rw_signal(false);
-
-    let profile_and_canister_details: AuthProfileCanisterResource = expect_context();
-    let user_id = move || {
-        profile_and_canister_details()
-            .flatten()
-            .map(|(q, _)| q.principal)
-    };
-    let display_name = move || {
-        profile_and_canister_details()
-            .flatten()
-            .map(|(q, _)| q.display_name)
-    };
-    let canister_id = move || profile_and_canister_details().flatten().map(|(_, q)| q);
+    let canister_store = auth_canisters_store();
 
     #[cfg(feature = "hydrate")]
     {
@@ -75,25 +67,12 @@ pub fn PreVideoUpload(file_blob: WriteSignal<Option<FileWithUrl>>) -> impl IntoV
         _ = use_event_listener(file_ref, change, move |ev| {
             use wasm_bindgen::JsCast;
             use web_sys::HtmlInputElement;
-            ev.target().and_then(|target| {
+            ev.target().and_then(move |target| {
                 let input: &HtmlInputElement = target.dyn_ref()?;
                 let inp_file = input.files()?.get(0)?;
                 file.set(Some(FileWithUrl::new(inp_file.into())));
 
-                #[cfg(feature = "ga4")]
-                {
-                    // video_upload_video_selected - analytics
-                    send_event(
-                        "video_upload_video_selected",
-                        &json!({
-                            "user_id":user_id(),
-                            "display_name": display_name(),
-                            "canister_id": canister_id(),
-                            "creator_category": "NA",
-                        }),
-                    );
-                }
-
+                VideoUploadVideoSelected.send_event(canister_store);
                 Some(())
             });
         });
@@ -203,124 +182,88 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
     let hashtags_len = hashtags.len();
     let is_nsfw = params.is_nsfw;
     let enable_hot_or_not = params.enable_hot_or_not;
+    let canister_store = auth_canisters_store();
 
     let up_desc = description.clone();
 
-    let profile_and_canister_details: AuthProfileCanisterResource = expect_context();
-    let user_id = move || {
-        profile_and_canister_details()
-            .flatten()
-            .map(|(q, _)| q.principal)
-    };
-    let display_name = move || {
-        profile_and_canister_details()
-            .flatten()
-            .map(|(q, _)| q.display_name)
-    };
-    let canister_id = move || profile_and_canister_details().flatten().map(|(_, q)| q);
+    let upload_action = create_resource(
+        || (),
+        move |_| {
+            let hashtags = up_hashtags.clone();
+            let description = up_desc.clone();
+            let file_blob = file_blob.clone();
+            async move {
+                let time_ms = SystemTime::now()
+                    .duration_since(SystemTime::UNIX_EPOCH)
+                    .unwrap()
+                    .as_millis();
 
-    let upload_action = create_action(move |_: &()| {
-        let hashtags = up_hashtags.clone();
-        let description = up_desc.clone();
-        let file_blob = file_blob.clone();
-        async move {
-            let time_ms = SystemTime::now()
-                .duration_since(SystemTime::UNIX_EPOCH)
-                .unwrap()
-                .as_millis();
+                let res = get_upload_info(
+                    Principal::anonymous(),
+                    hashtags,
+                    description,
+                    time_ms.to_string(),
+                )
+                .await;
 
-            let res = get_upload_info(
-                Principal::anonymous(),
-                hashtags,
-                description,
-                time_ms.to_string(),
-            )
-            .await;
-            #[cfg(all(feature = "hydrate", feature = "ga4"))]
-            {
                 if res.is_err() {
                     let e = res.as_ref().err().unwrap().to_string();
-
-                    send_event(
-                        "video_upload_unsuccessful",
-                        &json!({
-                            "user_id": user_id(),
-                            "display_name": display_name(),
-                            "canister_id": canister_id(),
-                            "creator_category": "NA",
-                            "hashtag_count": hashtags_len,
-                            "is_NSFW": is_nsfw,
-                            "is_hotorNot": enable_hot_or_not,
-                            "fail_reason": e,
-                        }),
+                    VideoUploadUnsuccessful.send_event(
+                        e,
+                        hashtags_len,
+                        is_nsfw,
+                        enable_hot_or_not,
+                        canister_store,
                     );
                 }
-            }
-            let upload_info = try_or_redirect_opt!(res);
 
-            let res = upload_video_stream(&upload_info, &file_blob).await;
-            #[cfg(all(feature = "hydrate", feature = "ga4"))]
-            {
+                let upload_info = try_or_redirect_opt!(res);
+
+                let res = upload_video_stream(&upload_info, &file_blob).await;
+
                 if res.is_err() {
                     let e = res.as_ref().err().unwrap().to_string();
-
-                    send_event(
-                        "video_upload_unsuccessful",
-                        &json!({
-                            "user_id": user_id(),
-                            "display_name": display_name(),
-                            "canister_id": canister_id(),
-                            "creator_category": "NA",
-                            "hashtag_count": hashtags_len,
-                            "is_NSFW": is_nsfw,
-                            "is_hotorNot": enable_hot_or_not,
-                            "fail_reason": e,
-                        }),
+                    VideoUploadUnsuccessful.send_event(
+                        e,
+                        hashtags_len,
+                        is_nsfw,
+                        enable_hot_or_not,
+                        canister_store,
                     );
                 }
-            }
-            try_or_redirect_opt!(res);
 
-            uploading.set(false);
+                try_or_redirect_opt!(res);
 
-            let mut check_status = IntervalStream::new(4000);
-            while (check_status.next().await).is_some() {
-                let uid = upload_info.uid.clone();
-                let res = get_video_status(uid).await;
-                #[cfg(all(feature = "hydrate", feature = "ga4"))]
-                {
+                uploading.set(false);
+
+                let mut check_status = IntervalStream::new(4000);
+                while (check_status.next().await).is_some() {
+                    let uid = upload_info.uid.clone();
+                    let res = get_video_status(uid).await;
+
                     if res.is_err() {
                         let e = res.as_ref().err().unwrap().to_string();
-
-                        send_event(
-                            "video_upload_unsuccessful",
-                            &json!({
-                                "user_id": user_id(),
-                                "display_name": display_name(),
-                                "canister_id": canister_id(),
-                                "creator_category": "NA",
-                                "hashtag_count": hashtags_len,
-                                "is_NSFW": is_nsfw,
-                                "is_hotorNot": enable_hot_or_not,
-                                "fail_reason": e,
-                            }),
+                        VideoUploadUnsuccessful.send_event(
+                            e,
+                            hashtags_len,
+                            is_nsfw,
+                            enable_hot_or_not,
+                            canister_store,
                         );
                     }
+
+                    let status = try_or_redirect_opt!(res);
+                    if status == "ready" {
+                        break;
+                    }
                 }
-                let status = try_or_redirect_opt!(res);
-                if status == "ready" {
-                    break;
-                }
+                processing.set(false);
+
+                Some(upload_info.uid)
             }
-            processing.set(false);
+        },
+    );
 
-            Some(upload_info.uid)
-        }
-    });
-    upload_action.dispatch(());
-
-    let canisters = authenticated_canisters();
-    let upload_uid = upload_action.value();
     let publish_action = create_action(move |(canisters, uid): &(Canisters<true>, String)| {
         let canisters = canisters.clone();
         let hashtags = hashtags.clone();
@@ -332,59 +275,39 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
                 canisters,
                 hashtags,
                 description,
-                uid,
+                uid.clone(),
                 params.enable_hot_or_not,
                 params.is_nsfw,
             )
             .await;
 
-            #[cfg(all(feature = "hydrate", feature = "ga4"))]
-            {
-                if res.is_err() {
-                    let e = res.as_ref().err().unwrap().to_string();
-
-                    send_event(
-                        "video_upload_unsuccessful",
-                        &json!({
-                            "user_id": user_id(),
-                            "display_name": display_name(),
-                            "canister_id": canister_id(),
-                            "creator_category": "NA",
-                            "hashtag_count": hashtags_len,
-                            "is_NSFW": is_nsfw,
-                            "is_hotorNot": enable_hot_or_not,
-                            "fail_reason": e,
-                        }),
-                    );
-                }
+            if res.is_err() {
+                let e = res.as_ref().err().unwrap().to_string();
+                VideoUploadUnsuccessful.send_event(
+                    e,
+                    hashtags_len,
+                    is_nsfw,
+                    enable_hot_or_not,
+                    canister_store,
+                );
             }
+
             try_or_redirect_opt!(res);
 
             publishing.set(false);
 
-            #[cfg(all(feature = "hydrate", feature = "ga4"))]
-            {
-                // video_upload_successful - analytics
-
-                send_event(
-                    "video_upload_successful",
-                    &json!({
-                        "user_id":user_id(),
-                        "publisher_user_id": user_id(),
-                        "display_name": display_name(),
-                        "canister_id": canister_id(),
-                        "creator_category": "NA",
-                        "hashtag_count": hashtags_len,
-                        "is_NSFW": params.is_nsfw,
-                        "is_hotorNot": params.enable_hot_or_not,
-                        "is_filter_used": false,
-                    }),
-                );
-            }
+            VideoUploadSuccessful.send_event(
+                uid,
+                hashtags_len,
+                is_nsfw,
+                enable_hot_or_not,
+                canister_store,
+            );
 
             Some(())
         }
     });
+    let cans_res = authenticated_canisters();
 
     view! {
         <div class="flex flex-col justify-start self-center w-3/4 mb-8 lg:mb-0 lg:pb-12 lg:max-h-full lg:w-1/2 basis-full lg:basis-5/12">
@@ -409,8 +332,8 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
                 <ProgressItem initial_text="Publishing" done_text="Published" loading=publishing/>
                 <Suspense>
                     {move || {
-                        let uid = upload_uid().flatten()?;
-                        let canisters = try_or_redirect_opt!(canisters.get() ?.transpose() ?);
+                        let uid = upload_action().flatten()?;
+                        let canisters = cans_res()?.ok()?;
                         publish_action.dispatch((canisters, uid));
                         Some(())
                     }}

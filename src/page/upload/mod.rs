@@ -3,8 +3,9 @@ mod validators;
 mod video_upload;
 
 use crate::{
-    component::toggle::ToggleWithLabel, state::canisters::AuthProfileCanisterResource,
-    utils::event_streaming::send_event,
+    component::toggle::ToggleWithLabel,
+    state::canisters::auth_canisters_store,
+    utils::event_streaming::events::{VideoUploadInitiated, VideoUploadUploadButtonClicked},
 };
 
 use leptos::{
@@ -12,7 +13,6 @@ use leptos::{
     *,
 };
 
-use serde_json::json;
 use validators::{description_validator, hashtags_validator};
 use video_upload::{FileWithUrl, PreVideoUpload, VideoUploader};
 
@@ -51,62 +51,17 @@ fn PreUploadView(trigger_upload: WriteSignal<Option<UploadParams>>) -> impl Into
     let hashtag_inp = create_node_ref::<Input>();
     let enable_hot_or_not = create_node_ref::<Input>();
     let is_nsfw = create_node_ref::<Input>();
+    let canister_store = auth_canisters_store();
 
-    let profile_and_canister_details: AuthProfileCanisterResource = expect_context();
-    let user_id = move || {
-        profile_and_canister_details()
-            .flatten()
-            .map(|(q, _)| q.principal)
-    };
-    let display_name = move || {
-        profile_and_canister_details()
-            .flatten()
-            .map(|(q, _)| q.display_name)
-    };
-    let canister_id = move || profile_and_canister_details().flatten().map(|(_, q)| q);
-
-    // video_upload_initiated - analytics
-    create_effect(move |_| {
-        send_event(
-            "video_upload_initiated",
-            &json!({
-                "user_id":user_id(),
-                "display_name": display_name(),
-                "canister_id": canister_id(),
-                "creator_category": "NA",
-            }),
-        );
-    });
+    VideoUploadInitiated.send_event();
 
     let on_submit = move || {
-        #[cfg(all(feature = "hydrate", feature = "ga4"))]
-        {
-            // video_upload_upload_button_clicked - analytics
-            let hashtag_count = hashtag_inp.get_untracked().unwrap().value().len();
-            let is_nsfw_val = is_nsfw
-                .get_untracked()
-                .map(|v| v.checked())
-                .unwrap_or_default();
-            let is_hotornot_val = enable_hot_or_not
-                .get_untracked()
-                .map(|v| v.checked())
-                .unwrap_or_default();
-
-            create_effect(move |_| {
-                send_event(
-                    "video_upload_upload_button_clicked",
-                    &json!({
-                        "user_id":user_id(),
-                        "display_name": display_name(),
-                        "canister_id": canister_id(),
-                        "creator_category": "NA",
-                        "hashtag_count": hashtag_count,
-                        "is_NSFW": is_nsfw_val,
-                        "is_hotorNot": is_hotornot_val,
-                    }),
-                );
-            });
-        }
+        VideoUploadUploadButtonClicked.send_event(
+            hashtag_inp,
+            is_nsfw,
+            enable_hot_or_not,
+            canister_store,
+        );
 
         let description = desc.get_untracked().unwrap().value();
         let hashtags = hashtags.get_untracked();

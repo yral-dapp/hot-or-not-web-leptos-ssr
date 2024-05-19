@@ -7,7 +7,6 @@ use candid::Principal;
 use ic_agent::Identity;
 use leptos::*;
 use leptos_use::{storage::use_local_storage, utils::FromToStringCodec};
-use serde_json::json;
 
 use crate::{
     auth::DelegatedIdentityWire,
@@ -17,7 +16,10 @@ use crate::{
         canisters::{do_canister_auth, Canisters},
         local_storage::use_referrer_store,
     },
-    utils::MockPartialEq,
+    utils::{
+        event_streaming::events::{LoginMethodSelected, LoginSuccessful},
+        MockPartialEq,
+    },
 };
 
 #[server]
@@ -27,7 +29,7 @@ async fn issue_referral_rewards(referee_canister: Principal) -> Result<(), Serve
 }
 
 #[server]
-async fn mark_user_registered(user_principal: Principal) -> Result<(), ServerFnError> {
+async fn mark_user_registered(user_principal: Principal) -> Result<bool, ServerFnError> {
     use self::server_fn_impl::mark_user_registered_impl;
     use crate::state::canisters::unauth_canisters;
 
@@ -37,32 +39,23 @@ async fn mark_user_registered(user_principal: Principal) -> Result<(), ServerFnE
         .get_individual_canister_by_user_principal(user_principal)
         .await?
         .ok_or_else(|| ServerFnError::new("User not found"))?;
-    mark_user_registered_impl(user_canister).await?;
-    Ok(())
+    mark_user_registered_impl(user_canister).await
 }
 
 async fn handle_user_login(
     canisters: Canisters<true>,
     referrer: Option<Principal>,
 ) -> Result<(), ServerFnError> {
-    use self::set_referrer_impl::set_referrer;
-
     let user_principal = canisters.identity().sender().unwrap();
-    mark_user_registered(user_principal).await?;
-    let Some(referrer) = referrer else {
-        return Ok(());
-    };
-    let Some(referrer_canister) = canisters
-        .get_individual_canister_by_user_principal(referrer)
-        .await?
-    else {
-        return Ok(());
-    };
-    set_referrer(&canisters, referrer, referrer_canister).await?;
+    let first_time_login = mark_user_registered(user_principal).await?;
 
-    issue_referral_rewards(canisters.user_canister()).await?;
-
-    Ok(())
+    match referrer {
+        Some(_referee_principal) if first_time_login => {
+            issue_referral_rewards(canisters.user_canister()).await?;
+            Ok(())
+        }
+        _ => Ok(()),
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -96,24 +89,7 @@ fn LoginProvButton<Cb: Fn(ev::MouseEvent) + 'static>(
     let ctx: LoginProvCtx = expect_context();
 
     let click_action = create_action(move |()| async move {
-        #[cfg(all(feature = "hydrate", feature = "ga4"))]
-        {
-            use crate::utils::event_streaming::send_event;
-
-            // login_method_selected - analytics
-            send_event(
-                "login_method_selected",
-                &json!({
-                    "login_method": match prov {
-                        #[cfg(feature = "local-auth")]
-                        ProviderKind::LocalStorage => "local_storage",
-                        #[cfg(any(feature = "oauth-ssr", feature = "oauth-hydrate"))]
-                        ProviderKind::Google => "google",
-                    },
-                    "attempt_count": 1,
-                }),
-            );
-        }
+        LoginMethodSelected.send_event(prov);
     });
 
     view! {
@@ -153,32 +129,13 @@ pub fn LoginProviders(show_modal: RwSignal<bool>, lock_closing: RwSignal<bool>) 
             let referrer = referrer_store.get_untracked();
 
             // This is some redundant work, but saves us 100+ lines of resource handling
-            let canisters = do_canister_auth(Some(identity.clone())).await?.unwrap();
+            let canisters = do_canister_auth(identity, referrer).await?;
 
             if let Err(e) = handle_user_login(canisters.clone(), referrer).await {
                 log::warn!("failed to handle user login, err {e}. skipping");
             }
 
-            #[cfg(all(feature = "hydrate", feature = "ga4"))]
-            {
-                use crate::utils::event_streaming::{send_event, send_user_id};
-
-                let user_id = canisters.identity().sender().unwrap();
-                let canister_id = canisters.user_canister();
-
-                send_user_id(user_id.to_string());
-
-                // login_successful - analytics
-                send_event(
-                    "login_successful",
-                    &json!({
-                        "login_method": "google", // TODO: change this when more providers are added
-                        "user_id": user_id.to_string(),
-                        "canister_id": canister_id.to_string(),
-                        "is_new_user": false,                   // TODO: add this info
-                    }),
-                );
-            }
+            LoginSuccessful.send_event(canisters);
 
             Ok::<_, ServerFnError>(())
         },
@@ -193,7 +150,7 @@ pub fn LoginProviders(show_modal: RwSignal<bool>, lock_closing: RwSignal<bool>) 
         login_complete: SignalSetter::map(move |val: DelegatedIdentityWire| {
             new_identity.set(Some(val.clone()));
             write_account_connected(true);
-            auth.identity.set(Some(val));
+            auth.set(Some(val));
             show_modal.set(false);
         }),
     };
@@ -244,12 +201,15 @@ mod server_fn_impl {
         ) -> Result<(), ServerFnError> {
             let canisters = unauth_canisters();
             let user = canisters.individual_user(referee_canister);
+            let referrer_details = user
+                .get_profile_details()
+                .await?
+                .referrer_details
+                .ok_or(ServerFnError::new("Referrer details not found"))?;
+
+            let referrer = canisters.individual_user(referrer_details.user_canister_id);
 
             let user_details = user.get_profile_details().await?;
-            let ref_details = user_details
-                .referrer_details
-                .ok_or_else(|| ServerFnError::new("Referral details for user not found"))?;
-            let referrer = canisters.individual_user(ref_details.user_canister_id);
 
             let referrer_index_principal = referrer
                 .get_well_known_principal_value(KnownPrincipalType::CanisterIdUserIndex)
@@ -263,14 +223,14 @@ mod server_fn_impl {
             issue_referral_reward_for(
                 user_index_principal,
                 referee_canister,
-                ref_details.profile_owner,
+                referrer_details.profile_owner,
                 user_details.principal_id,
             )
             .await?;
             issue_referral_reward_for(
                 referrer_index_principal,
-                ref_details.user_canister_id,
-                ref_details.profile_owner,
+                referrer_details.user_canister_id,
+                referrer_details.profile_owner,
                 user_details.principal_id,
             )
             .await?;
@@ -305,7 +265,7 @@ mod server_fn_impl {
 
         pub async fn mark_user_registered_impl(
             user_canister: Principal,
-        ) -> Result<(), ServerFnError> {
+        ) -> Result<bool, ServerFnError> {
             use crate::{
                 canister::individual_user_template::{Result6, Result8, SessionType},
                 state::admin_canisters::admin_canisters,
@@ -317,7 +277,7 @@ mod server_fn_impl {
                 user.get_session_type().await?,
                 Result6::Ok(SessionType::RegisteredSession)
             ) {
-                return Ok(());
+                return Ok(false);
             }
             user.update_session_type(SessionType::RegisteredSession)
                 .await
@@ -328,7 +288,7 @@ mod server_fn_impl {
                         "failed to mark user as registered {e}"
                     ))),
                 })?;
-            Ok(())
+            Ok(true)
         }
     }
 
@@ -345,44 +305,8 @@ mod server_fn_impl {
 
         pub async fn mark_user_registered_impl(
             _user_canister: Principal,
-        ) -> Result<(), ServerFnError> {
-            Ok(())
+        ) -> Result<bool, ServerFnError> {
+            Ok(true)
         }
-    }
-}
-
-mod set_referrer_impl {
-    use crate::state::canisters::Canisters;
-    use candid::Principal;
-    use leptos::ServerFnError;
-
-    #[cfg(feature = "backend-admin")]
-    pub async fn set_referrer(
-        canisters: &Canisters<true>,
-        referrer: Principal,
-        referrer_canister: Principal,
-    ) -> Result<(), ServerFnError> {
-        use crate::canister::individual_user_template::{Result8, UserCanisterDetails};
-
-        let user = canisters.authenticated_user();
-        user.update_referrer_details(UserCanisterDetails {
-            user_canister_id: referrer_canister,
-            profile_owner: referrer,
-        })
-        .await
-        .map_err(ServerFnError::from)
-        .and_then(|res| match res {
-            Result8::Ok(_) => Ok(()),
-            Result8::Err(e) => Err(ServerFnError::new(format!("failed to set referrer {e}"))),
-        })
-    }
-
-    #[cfg(not(feature = "backend-admin"))]
-    pub async fn set_referrer(
-        _canisters: &Canisters<true>,
-        _referrer: Principal,
-        _referrer_canister: Principal,
-    ) -> Result<(), ServerFnError> {
-        Ok(())
     }
 }

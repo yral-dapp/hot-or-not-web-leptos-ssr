@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use web_time::{Duration, SystemTime};
 
 pub mod event_streaming;
@@ -5,6 +6,7 @@ pub mod icon;
 pub mod profile;
 pub mod route;
 pub mod timestamp;
+pub mod user;
 pub mod web;
 
 pub fn current_epoch() -> Duration {
@@ -16,7 +18,7 @@ pub fn current_epoch() -> Duration {
 /// Wrapper for PartialEq that always returns false
 /// this is currently only used for resources
 /// this does not provide a sane implementation of PartialEq
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct MockPartialEq<T>(pub T);
 
 impl<T> PartialEq for MockPartialEq<T> {
