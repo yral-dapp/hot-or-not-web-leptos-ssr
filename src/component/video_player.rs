@@ -4,9 +4,33 @@ use leptos_dom::{html::Video, NodeRef};
 use crate::{
     canister::utils::{bg_url, hls_stream_url, mp4_stream_url},
     js::videojs::{videojs, VideoJsPlayer},
+    utils::web::{user_agent, UserAgent},
 };
 
 const VIDEO_SETTINGS: &str = r#"{"children": { "loadinSpinner": false }}"#;
+
+#[component]
+fn NativePlayer(
+    node_ref: NodeRef<Video>,
+    mp4_url: Signal<Option<String>>,
+    view_bg_url: Signal<Option<String>>,
+    autoplay: bool,
+) -> impl IntoView {
+    view! {
+        <video
+            _ref=node_ref
+            class="object-contain h-dvh max-h-dvh cursor-pointer"
+            poster=view_bg_url
+            src=mp4_url
+            loop
+            playsinline
+            autoplay=autoplay
+            disablepictureinpicture
+            disableremoteplayback
+            preload="auto"
+        ></video>
+    }
+}
 
 #[component]
 pub fn VideoPlayer(
@@ -22,7 +46,12 @@ pub fn VideoPlayer(
     let mp4_url = Signal::derive(move || uid().map(mp4_stream_url));
     let player = create_rw_signal(None::<VideoJsPlayer>);
 
+    let use_native = native_playback || user_agent() == UserAgent::IosSafari;
+
     node_ref.on_load(move |v| {
+        if use_native {
+            return;
+        }
         _ = v.on_mount(move |v| {
             let p = videojs(&v).unwrap();
             player.set(Some(p));
@@ -44,29 +73,41 @@ pub fn VideoPlayer(
                 value=""
                 class="sr-only"
             />
-            <div
-                data-vjs-player
-                style="background-color: transparent;"
-                class="h-dvh max-h-dvh w-fit"
+            <Show
+                when=move || !use_native
+                fallback=move || {
+                    view! {
+                        <NativePlayer
+                            node_ref=node_ref
+                            mp4_url=mp4_url
+                            view_bg_url=view_bg_url
+                            autoplay=autoplay
+                        />
+                    }
+                }
             >
-                <video
-                    node_ref=node_ref
-                    class="video-js vjs-fill cursor-pointer"
-                    poster=view_bg_url
-                    loop
-                    playsinline
-                    autoplay=autoplay
-                    disablepictureinpicture
-                    disableremoteplayback
-                    preload="auto"
-                    data-setup=VIDEO_SETTINGS
+                <div
+                    data-vjs-player
+                    style="background-color: transparent;"
+                    class="h-dvh max-h-dvh w-fit"
                 >
-                    <Show when=move || !native_playback>
+                    <video
+                        node_ref=node_ref
+                        class="video-js vjs-fill cursor-pointer"
+                        poster=view_bg_url
+                        loop
+                        playsinline
+                        autoplay=autoplay
+                        disablepictureinpicture
+                        disableremoteplayback
+                        preload="auto"
+                        data-setup=VIDEO_SETTINGS
+                    >
                         <source src=hls_url type="application/x-mpegURL"/>
-                    </Show>
-                    <source src=mp4_url type="video/mp4"/>
-                </video>
-            </div>
+                        <source src=mp4_url type="video/mp4"/>
+                    </video>
+                </div>
+            </Show>
         </label>
     }
 }

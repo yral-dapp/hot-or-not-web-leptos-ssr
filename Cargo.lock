@@ -1858,6 +1858,7 @@ dependencies = [
  "rand_chacha",
  "redb",
  "redis",
+ "regex",
  "reqwest 0.12.4",
  "serde",
  "serde-wasm-bindgen",

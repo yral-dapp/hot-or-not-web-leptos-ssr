@@ -93,6 +93,7 @@ tonic = { version = "0.11.0", features = [
 ], optional = true }
 prost = { version = "0.12.4", optional = true }
 hmac = { version = "0.12.1", optional = true }
+regex = { version = "1.10.4", optional = true }
 
 [build-dependencies]
 serde = { version = "1.0", features = ["derive"] }
@@ -135,6 +136,7 @@ ssr = [
     "tonic",
     "prost",
     "hmac",
+    "dep:regex",
 ]
 # Fetch mock referral history instead of history via canister
 mock-referral-history = ["dep:rand_chacha", "k256/arithmetic"]

@@ -16,7 +16,7 @@ use crate::{
         wallet::{transactions::Transactions, Wallet},
     },
     state::{canisters::Canisters, history::HistoryCtx},
-    utils::event_streaming::EventHistory,
+    utils::{event_streaming::EventHistory, web::UserAgentCtx},
 };
 use leptos::*;
 use leptos_meta::*;
@@ -64,6 +64,7 @@ pub fn App() -> impl IntoView {
     provide_context(Canisters::default());
     provide_context(PostViewCtx::default());
     provide_context(ProfilePostsContext::default());
+    provide_context(UserAgentCtx::default());
 
     // History Tracking
     let history_ctx = HistoryCtx::default();
