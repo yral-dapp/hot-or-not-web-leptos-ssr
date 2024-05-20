@@ -6,12 +6,15 @@ use crate::{
     js::videojs::{videojs, VideoJsPlayer},
 };
 
+const VIDEO_SETTINGS: &str = r#"{"children": { "loadinSpinner": false }}"#;
+
 #[component]
 pub fn VideoPlayer(
     #[prop(optional)] node_ref: NodeRef<Video>,
     #[prop(into)] muted: WriteSignal<bool>,
     #[prop(into)] uid: MaybeSignal<Option<String>>,
     #[prop(optional)] autoplay: bool,
+    #[prop(optional)] native_playback: bool,
 ) -> impl IntoView {
     let uid = Signal::derive(uid);
     let view_bg_url = Signal::derive(move || uid().map(bg_url));
@@ -56,8 +59,11 @@ pub fn VideoPlayer(
                     disablepictureinpicture
                     disableremoteplayback
                     preload="auto"
+                    data-setup=VIDEO_SETTINGS
                 >
-                    <source src=hls_url type="application/x-mpegURL"/>
+                    <Show when=move || !native_playback>
+                        <source src=hls_url type="application/x-mpegURL"/>
+                    </Show>
                     <source src=mp4_url type="video/mp4"/>
                 </video>
             </div>

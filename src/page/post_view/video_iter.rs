@@ -1,7 +1,7 @@
 use std::pin::Pin;
 
 use candid::Principal;
-use futures::{stream::FuturesOrdered, Stream, StreamExt};
+use futures::{stream::FuturesOrdered, Stream, StreamExt, TryStreamExt};
 
 use crate::{
     canister::post_cache::{self, NsfwFilter},
@@ -21,7 +21,7 @@ pub async fn post_liked_by_me(
     Ok(post.liked_by_me)
 }
 
-type PostsStream<'a> = Pin<Box<dyn Stream<Item = Vec<Result<PostDetails, PostViewError>>> + 'a>>;
+type PostsStream<'a> = Pin<Box<dyn Stream<Item = Result<Vec<PostDetails>, PostViewError>> + 'a>>;
 
 pub struct FetchVideosRes<'a> {
     pub posts_stream: PostsStream<'a>,
@@ -77,7 +77,8 @@ impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
             .map(move |item| get_post_uid(self.canisters, item.publisher_canister_id, item.post_id))
             .collect::<FuturesOrdered<_>>()
             .filter_map(|res| async { res.transpose() })
-            .chunks(chunks);
+            .try_chunks(chunks)
+            .map_err(|e| e.1);
 
         Ok(FetchVideosRes {
             posts_stream: Box::pin(chunk_stream),

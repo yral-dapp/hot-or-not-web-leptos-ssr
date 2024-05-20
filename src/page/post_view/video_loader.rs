@@ -199,6 +199,7 @@ pub fn VideoView(
             node_ref=container_ref
             autoplay=idx == current_idx.get_untracked()
             muted=muted.write_only()
+            native_playback=idx == 0
             uid
         />
     }

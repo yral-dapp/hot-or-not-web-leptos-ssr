@@ -140,8 +140,12 @@ pub fn ScrollingView<NV: Fn() -> NVR + Clone + 'static, NVR>(
                 <Show when=muted>
                     <button
                         class="fixed top-1/2 left-1/2 z-20 cursor-pointer"
-                        on:click=move |_| muted.set(false)
+                        on:click=move |ev| {
+                            muted.set(false);
+                            ev.stop_propagation();
+                        }
                     >
+
                         <Icon
                             class="text-white/80 animate-ping text-4xl"
                             icon=icondata::BiVolumeMuteSolid
@@ -208,12 +212,10 @@ pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
             let mut chunks = res.posts_stream;
             let mut cnt = 0;
             while let Some(chunk) = chunks.next().await {
+                let mut chunk = try_or_redirect!(chunk);
                 cnt += chunk.len();
                 video_queue.try_update(|q| {
-                    for uid in chunk {
-                        let uid = try_or_redirect!(uid);
-                        q.push(uid);
-                    }
+                    q.append(&mut chunk);
                 });
             }
             if res.end || cnt >= 8 {
