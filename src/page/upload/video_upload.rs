@@ -275,7 +275,7 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
                 canisters,
                 hashtags,
                 description,
-                uid,
+                uid.clone(),
                 params.enable_hot_or_not,
                 params.is_nsfw,
             )
@@ -297,6 +297,7 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
             publishing.set(false);
 
             VideoUploadSuccessful.send_event(
+                uid,
                 hashtags_len,
                 is_nsfw,
                 enable_hot_or_not,

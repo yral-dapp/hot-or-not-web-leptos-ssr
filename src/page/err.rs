@@ -1,3 +1,4 @@
+use crate::{state::canisters::auth_canisters_store, utils::event_streaming::events::ErrorEvent};
 use gloo::history::{BrowserHistory, History};
 use leptos::*;
 use leptos_router::*;
@@ -16,6 +17,9 @@ pub fn ServerErrorPage() -> impl IntoView {
             .map(|p| p.err)
             .unwrap_or_else(|_| "Server Error".to_string())
     });
+
+    let canister_store = auth_canisters_store();
+    ErrorEvent.send_event(error, canister_store);
 
     view! { <ErrorView error/> }
 }

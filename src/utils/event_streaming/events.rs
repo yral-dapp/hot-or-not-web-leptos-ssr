@@ -1,6 +1,6 @@
 use ic_agent::Identity;
 use leptos::html::Input;
-use leptos::{create_effect, ReadSignal, RwSignal, SignalGetUntracked};
+use leptos::{create_effect, ReadSignal, RwSignal, Signal, SignalGetUntracked};
 use leptos::{create_signal, ev, expect_context, html::Video, Memo, NodeRef, SignalGet, SignalSet};
 use leptos_use::use_event_listener;
 use serde_json::json;
@@ -33,6 +33,7 @@ pub enum AnalyticsEvent {
     LoginCta(LoginCta),
     LogoutClicked(LogoutClicked),
     LogoutConfirmation(LogoutConfirmation),
+    ErrorEvent(ErrorEvent),
 }
 
 #[derive(Default)]
@@ -404,6 +405,7 @@ pub struct VideoUploadSuccessful;
 impl VideoUploadSuccessful {
     pub fn send_event(
         &self,
+        video_id: String,
         hashtags_len: usize,
         is_nsfw: bool,
         enable_hot_or_not: bool,
@@ -425,6 +427,7 @@ impl VideoUploadSuccessful {
                     "is_NSFW": is_nsfw,
                     "is_hotorNot": enable_hot_or_not,
                     "is_filter_used": false,
+                    "video_id": video_id,
                 }),
             );
         }
@@ -649,6 +652,34 @@ impl LogoutConfirmation {
                     "user_id_viewer": user_id,
                     "display_name": display_name,
                     "canister_id": canister_id,
+                }),
+            );
+        }
+    }
+}
+
+#[derive(Default)]
+pub struct ErrorEvent;
+
+impl ErrorEvent {
+    pub fn send_event(&self, error: Signal<String>, cans_store: RwSignal<Option<Canisters<true>>>) {
+        #[cfg(all(feature = "hydrate", feature = "ga4"))]
+        {
+            let event_history: EventHistory = expect_context();
+            let user = user_details_can_store_or_ret!(cans_store);
+            let details = user.details;
+
+            let user_id = details.principal;
+            let canister_id = user.canister_id;
+
+            // error_event - analytics
+            send_event(
+                "error_event",
+                &json!({
+                    "user_id": user_id,
+                    "canister_id": canister_id,
+                    "description": error.get_untracked(),
+                    "previous_event": event_history.event_name.get_untracked(),
                 }),
             );
         }
