@@ -216,7 +216,7 @@ pub fn ReferEarn() -> impl IntoView {
         <div class="flex flex-col items-center min-w-dvw min-h-dvh bg-black pt-2 pb-12 gap-6">
             <Title justify_center=false>
                 <div class="flex flex-row justify-between">
-                    <BackButton/>
+                    <BackButton fallback="/menu".to_string()/>
                     <span class="text-lg font-bold text-white">Refer & Earn</span>
                     <div></div>
                 </div>

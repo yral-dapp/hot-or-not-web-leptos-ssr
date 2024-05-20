@@ -35,7 +35,7 @@ pub fn Transactions() -> impl IntoView {
         <div class="flex items-center flex-col w-dvw min-h-dvh gap-10 bg-black pt-4 px-4 pb-12">
             <Title justify_center=false>
                 <div class="flex flex-row justify-between">
-                    <BackButton/>
+                    <BackButton fallback="/wallet".to_string()/>
                     <span class="text-xl text-white font-bold">Transactions</span>
                     <div></div>
                 </div>

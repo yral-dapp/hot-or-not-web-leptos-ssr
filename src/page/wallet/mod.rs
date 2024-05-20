@@ -97,7 +97,7 @@ pub fn Wallet() -> impl IntoView {
         <div>
             <div class="top-0 bg-black text-white w-full items-center z-50 pt-4 pl-4">
                 <div class="flex flex-row justify-start">
-                    <BackButton/>
+                    <BackButton fallback="/".to_string()/>
                 </div>
             </div>
             <div class="flex flex-col w-dvw min-h-dvh bg-black gap-4 px-4 pt-4 pb-12">
