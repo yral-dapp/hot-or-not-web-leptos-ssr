@@ -20,7 +20,7 @@ pub fn BackButton(#[prop(into)] fallback: String) -> impl IntoView {
         // HACK: completely remove history ctx eventually
         if cur_url.as_ref().and_then(|u| u.host_str())
             == referrer.as_ref().and_then(|r| r.host_str())
-            || history_ctx.len() > 1
+            || !history_ctx.is_empty()
         {
             let history = BrowserHistory::new();
             history.back();

@@ -5,7 +5,7 @@ use leptos_use::use_debounce_fn;
 
 use crate::{
     component::{
-       scrolling_post_view::ScrollingPostView, spinner::FullScreenSpinner, back_btn::BackButton
+        back_btn::BackButton, scrolling_post_view::ScrollingPostView, spinner::FullScreenSpinner,
     },
     page::profile::ProfilePostsContext,
     state::canisters::{auth_canisters_store, unauth_canisters},
@@ -103,7 +103,7 @@ pub fn ProfilePostWithUpdates(initial_post: PostDetails) -> impl IntoView {
         let Some((canister_id, post_id)) = current_post_base.get() else {
             return;
         };
-        
+
         if recovering_state.get_untracked() {
             return;
         }

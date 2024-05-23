@@ -18,7 +18,6 @@ use crate::{
     state::{canisters::Canisters, history::HistoryCtx},
     utils::event_streaming::EventHistory,
 };
-use gloo::history::{BrowserHistory, History, HistoryListener};
 use leptos::*;
 use leptos_meta::*;
 use leptos_router::*;
