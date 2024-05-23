@@ -5,7 +5,7 @@ use leptos_use::use_debounce_fn;
 
 use crate::{
     component::{
-        back_btn::BackButton, scrolling_post_view::ScrollingPostView, spinner::FullScreenSpinner,
+       scrolling_post_view::ScrollingPostView, spinner::FullScreenSpinner, back_btn::BackButton
     },
     page::profile::ProfilePostsContext,
     state::canisters::{auth_canisters_store, unauth_canisters},
@@ -112,10 +112,8 @@ pub fn ProfilePostWithUpdates(initial_post: PostDetails) -> impl IntoView {
         use_navigate()(
             &format!("profile/{canister_id}/{post_id}"),
             NavigateOptions {
-                resolve: true,
-                scroll: false,
-                state: State(None),
                 replace: true,
+                ..Default::default()
             },
         );
     });
