@@ -107,7 +107,6 @@ pub fn ProfilePostWithUpdates(initial_post: PostDetails) -> impl IntoView {
         if recovering_state.get_untracked() {
             return;
         }
-        log::warn!("navigated {canister_id} {post_id}");
 
         use_navigate()(
             &format!("profile/{canister_id}/{post_id}"),

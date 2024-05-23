@@ -17,10 +17,6 @@ pub fn ScrollingPostView<F: Fn() -> V + Clone + 'static, V, O: Fn() -> IV, IV: I
 ) -> impl IntoView {
     let muted = create_rw_signal(true);
     let scroll_root: NodeRef<html::Div> = create_node_ref();
-    log::warn!(
-        "video queue size {}",
-        video_queue.with_untracked(|v| v.len())
-    );
 
     let var_name = view! {
         <div class="h-full w-full overflow-hidden overflow-y-auto">
