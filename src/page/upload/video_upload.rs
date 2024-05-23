@@ -1,5 +1,5 @@
 use super::{
-    cf_upload::{get_upload_info, get_video_status, publish_video, upload_video_stream},
+    cf_upload::{get_upload_info, get_video_status, publish_video, edit_video_meta, upload_video_stream},
     UploadParams,
 };
 use crate::{
@@ -292,7 +292,10 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
                 );
             }
 
-            try_or_redirect_opt!(res);
+            if let Ok(post_id) = res {
+                let video_meta_res = edit_video_meta(uid.clone(), post_id).await;
+                try_or_redirect_opt!(video_meta_res);
+            }
 
             publishing.set(false);
 
