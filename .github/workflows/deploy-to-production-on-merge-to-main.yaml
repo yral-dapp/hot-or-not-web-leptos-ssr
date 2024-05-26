@@ -43,3 +43,17 @@ jobs:
         run: flyctl deploy --remote-only
         env:
           FLY_API_TOKEN: ${{ secrets.HOT_OR_NOT_WEB_LEPTOS_SSR_FLY_IO_GITHUB_ACTION }}
+  
+# post_deploy:   
+      # trigger automation test in another repo as post deploy action
+      - name: Trigger automation testing workflow in 'hot-or-not-web-leptos-ssr-e2e-test' repo
+        uses: actions/github-script@v5
+        with:
+          script: |
+            github.rest.repos.createDispatchEvent({
+              owner: 'go-bazzinga',
+              repo: 'hot-or-not-web-leptos-ssr-e2e-test',
+              event_type: 'call',
+              client_payload: { key: "value" }
+            });
+          github-token: ${{ secrets.AUTOMATION_TESTING_GITHUB_APP_TOKEN }}
