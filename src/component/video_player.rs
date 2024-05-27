@@ -38,7 +38,6 @@ pub fn VideoPlayer(
     #[prop(into)] muted: WriteSignal<bool>,
     #[prop(into)] uid: MaybeSignal<Option<String>>,
     #[prop(optional)] autoplay: bool,
-    #[prop(optional)] native_playback: bool,
 ) -> impl IntoView {
     let uid = Signal::derive(uid);
     let view_bg_url = Signal::derive(move || uid().map(bg_url));
@@ -46,7 +45,7 @@ pub fn VideoPlayer(
     let mp4_url = Signal::derive(move || uid().map(mp4_stream_url));
     let player = create_rw_signal(None::<VideoJsPlayer>);
 
-    let use_native = native_playback || user_agent() == UserAgent::IosSafari;
+    let use_native = user_agent() == UserAgent::IosSafari;
 
     node_ref.on_load(move |v| {
         if use_native {
@@ -86,6 +85,7 @@ pub fn VideoPlayer(
                     }
                 }
             >
+
                 <div
                     data-vjs-player
                     style="background-color: transparent;"
