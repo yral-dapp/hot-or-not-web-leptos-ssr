@@ -15,7 +15,7 @@ use crate::{
         user_index::UserIndex,
         AGENT_URL,
     },
-    consts::{FALLBACK_USER_INDEX, METADATA_API_BASE},
+    consts::METADATA_API_BASE,
     utils::{profile::ProfileDetails, MockPartialEq},
 };
 
@@ -119,15 +119,7 @@ impl<const A: bool> Canisters<A> {
             .metadata_client
             .get_user_metadata(user_principal)
             .await?;
-        if let Some(meta) = meta {
-            return Ok(Some(meta.user_canister_id));
-        }
-        // Fallback to oldest user index
-        let user_idx = self.user_index_with(*FALLBACK_USER_INDEX);
-        let can = user_idx
-            .get_user_canister_id_from_user_principal_id(user_principal)
-            .await?;
-        Ok(can)
+        Ok(meta.map(|m| m.user_canister_id))
     }
 
     async fn subnet_indexes(&self) -> Result<Vec<Principal>, AgentError> {
