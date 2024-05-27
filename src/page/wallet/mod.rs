@@ -17,10 +17,13 @@ use txn::{provider::get_history_provider, TxnView};
 
 #[component]
 fn ProfileGreeter(details: ProfileDetails) -> impl IntoView {
+    let (is_connected, _) = account_connected_reader();
+
     view! {
         <div class="flex flex-col">
             <span class="text-white/50 text-md">Welcome!</span>
-            <span class="text-white text-lg md:text-xl truncate">
+            <span class="text-white text-lg md:text-xl truncate"
+                class=("md:w-5/12", move || !is_connected())>
                 {details.display_name_or_fallback()}
             </span>
         </div>

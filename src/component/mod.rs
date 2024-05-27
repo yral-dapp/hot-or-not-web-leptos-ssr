@@ -6,6 +6,7 @@ pub mod bullet_loader;
 pub mod canisters_prov;
 pub mod coming_soon;
 pub mod connect;
+pub mod dashbox;
 pub mod feed_popup;
 pub mod ic_symbol;
 pub mod infinite_scroller;

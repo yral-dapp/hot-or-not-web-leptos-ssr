@@ -13,7 +13,7 @@ use crate::component::connect::ConnectLogin;
 use crate::state::canisters::auth_canisters_store;
 use crate::utils::event_streaming::events::{Refer, ReferShareLink};
 use crate::{
-    component::{back_btn::BackButton, title::Title},
+    component::{back_btn::BackButton, dashbox::DashboxLoading, title::Title},
     state::auth::account_connected_reader,
     utils::web::copy_to_clipboard,
 };
@@ -79,18 +79,9 @@ fn ReferLoaded(user_principal: Principal) -> impl IntoView {
 }
 
 #[component]
-fn ReferLoading() -> impl IntoView {
-    view! {
-        <div class="flex border-dashed w-full md:w-2/12 p-1 h-10 md:h-12 border-2 border-primary-500 rounded-full">
-            <span class="bg-white/30 w-full h-full animate-pulse rounded-full "></span>
-        </div>
-    }
-}
-
-#[component]
 fn ReferCode() -> impl IntoView {
     view! {
-        <AuthCansProvider fallback=ReferLoading let:cans>
+        <AuthCansProvider fallback=DashboxLoading let:cans>
             <ReferLoaded user_principal=cans.identity().sender().unwrap()/>
         </AuthCansProvider>
     }

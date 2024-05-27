@@ -145,7 +145,9 @@ pub fn Menu() -> impl IntoView {
                     </div>
                 </Title>
                 <div class="flex flex-col items-center w-full gap-4">
-                    <div class="flex flex-row justify-center gap-4 items-center px-4 w-full">
+                    <div class="flex flex-row justify-center gap-4 items-center px-4"
+                    class:w-full=is_connected
+                    class=("md:w-5/12", move || !is_connected())>
                         <ProfileInfo/>
                     </div>
                     <Show when=move || !is_connected()>
@@ -160,6 +162,7 @@ pub fn Menu() -> impl IntoView {
             </div>
             <div class="flex flex-col py-12 px-8 gap-8 w-full text-lg">
                 <NsfwToggle/>
+                <MenuItem href="/account-transfer" text="HotorNot Account Transfer" icon=icondata::FaMoneyBillTransferSolid/>
                 <MenuItem href="/refer-earn" text="Refer & Earn" icon=icondata::AiGiftFilled/>
                 <MenuItem
                     href=social::TELEGRAM
