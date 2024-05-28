@@ -24,7 +24,7 @@ impl HistoryCtx {
     }
 
     pub fn is_empty(&self) -> bool {
-        !self.history.get_untracked().len() > 0
+        self.history.get_untracked().len() == 0
     }
 
     pub fn len(&self) -> usize {
