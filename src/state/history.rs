@@ -1,9 +1,11 @@
 use circular_buffer::CircularBuffer;
-use leptos::{RwSignal, SignalGet, SignalUpdate, SignalWith, SignalWithUntracked};
+use leptos::{
+    RwSignal, SignalGet, SignalGetUntracked, SignalUpdate, SignalWith, SignalWithUntracked,
+};
 
 #[derive(Clone)]
 pub struct HistoryCtx {
-    history: RwSignal<CircularBuffer<3, String>>,
+    pub history: RwSignal<CircularBuffer<3, String>>,
 }
 
 impl Default for HistoryCtx {
@@ -19,6 +21,14 @@ impl HistoryCtx {
         Self {
             history: RwSignal::new(CircularBuffer::<3, String>::new()),
         }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        !self.history.get_untracked().len() > 0
+    }
+
+    pub fn len(&self) -> usize {
+        self.history.get_untracked().len()
     }
 
     pub fn push(&self, url: &str) {

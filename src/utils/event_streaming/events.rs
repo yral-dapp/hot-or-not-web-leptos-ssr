@@ -6,15 +6,15 @@ use leptos_use::use_event_listener;
 use serde_json::json;
 use wasm_bindgen::JsCast;
 
+use super::EventHistory;
 use crate::component::auth_providers::ProviderKind;
+use crate::state::auth::account_connected_reader;
 use crate::state::canisters::{auth_canisters_store, Canisters};
 use crate::state::history::HistoryCtx;
 #[cfg(feature = "ga4")]
 use crate::utils::event_streaming::{send_event, send_event_warehouse, send_user_id};
+use crate::utils::posts::PostDetails;
 use crate::utils::user::{user_details_can_store_or_ret, user_details_or_ret};
-use crate::{page::post_view::video_iter::PostDetails, state::auth::account_connected_reader};
-
-use super::EventHistory;
 
 pub enum AnalyticsEvent {
     VideoWatched(VideoWatched),

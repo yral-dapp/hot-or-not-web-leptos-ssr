@@ -16,15 +16,15 @@ use crate::{
     },
 };
 
-use super::{overlay::VideoDetailsOverlay, PostViewCtx};
+use super::{overlay::VideoDetailsOverlay, PostDetails};
 
 #[component]
-pub fn BgView(idx: usize, children: Children) -> impl IntoView {
-    let PostViewCtx {
-        video_queue,
-        current_idx,
-        ..
-    } = expect_context();
+pub fn BgView(
+    video_queue: RwSignal<Vec<PostDetails>>,
+    current_idx: RwSignal<usize>,
+    idx: usize,
+    children: Children,
+) -> impl IntoView {
     let post = create_memo(move |_| video_queue.with(|q| q.get(idx).cloned()));
     let uid = move || post().as_ref().map(|q| q.uid.clone()).unwrap_or_default();
 
@@ -76,14 +76,13 @@ pub fn BgView(idx: usize, children: Children) -> impl IntoView {
 }
 
 #[component]
-pub fn VideoView(idx: usize, muted: RwSignal<bool>) -> impl IntoView {
+pub fn VideoView(
+    video_queue: RwSignal<Vec<PostDetails>>,
+    current_idx: RwSignal<usize>,
+    idx: usize,
+    muted: RwSignal<bool>,
+) -> impl IntoView {
     let container_ref = create_node_ref::<Video>();
-    let PostViewCtx {
-        video_queue,
-        current_idx,
-        ..
-    } = expect_context();
-
     let vid_details = create_memo(move |_| with!(|video_queue| video_queue.get(idx).cloned()));
 
     let uid =
@@ -201,6 +200,10 @@ pub fn VideoView(idx: usize, muted: RwSignal<bool>) -> impl IntoView {
     VideoWatched.send_event(vid_details, container_ref);
 
     view! {
-        <VideoPlayer node_ref=container_ref view_bg_url = Signal::derive(view_bg_url) view_video_url=Signal::derive(view_video_url)/>
+        <VideoPlayer
+            node_ref=container_ref
+            view_bg_url=Signal::derive(view_bg_url)
+            view_video_url=Signal::derive(view_video_url)
+        />
     }
 }

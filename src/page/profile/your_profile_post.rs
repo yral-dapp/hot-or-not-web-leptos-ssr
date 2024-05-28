@@ -6,10 +6,9 @@ use super::overlay::YourProfileOverlay;
 use crate::{
     canister::utils::{bg_url, mp4_url},
     component::{back_btn::BackButton, spinner::FullScreenSpinner, video_player::VideoPlayer},
-    page::post_view::video_iter::get_post_uid,
     state::canisters::{authenticated_canisters, unauth_canisters},
     try_or_redirect_opt,
-    utils::route::failure_redirect,
+    utils::{posts::get_post_uid, route::failure_redirect},
 };
 
 use crate::page::post_view::overlay::VideoDetailsOverlay;

@@ -7,7 +7,8 @@ use crate::{
         menu::Menu,
         post_view::{PostView, PostViewCtx},
         privacy::PrivacyPolicy,
-        profile::{profile_post::ProfilePost, your_profile_post::YourProfilePost, ProfileView},
+        profile::ProfilePostsContext,
+        profile::{profile_post::ProfilePost, ProfileView},
         refer_earn::ReferEarn,
         root::RootPage,
         terms::TermsOfService,
@@ -62,6 +63,7 @@ pub fn App() -> impl IntoView {
     provide_meta_context();
     provide_context(Canisters::default());
     provide_context(PostViewCtx::default());
+    provide_context(ProfilePostsContext::default());
 
     // History Tracking
     let history_ctx = HistoryCtx::default();
@@ -115,9 +117,9 @@ pub fn App() -> impl IntoView {
                     <Route path="" view=BaseRoute>
                         <Route path="/hot-or-not/:canister_id/:post_id" view=PostView/>
                         <Route path="/profile/:canister_id/:post_id" view=ProfilePost/>
-                        <Route path="/your-profile/:canister_id/:post_id" view=YourProfilePost/>
-                        <Route path="/your-profile/:id" view=ProfileView/>
+                        <Route path="/your-profile/:canister_id/:post_id" view=ProfilePost/>
                         <Route path="/profile/:id" view=ProfileView/>
+                        <Route path="/your-profile/:id" view=ProfileView/>
                         <Route path="/upload" view=UploadPostPage/>
                         <Route path="/error" view=ServerErrorPage/>
                         <Route path="/menu" view=Menu/>
