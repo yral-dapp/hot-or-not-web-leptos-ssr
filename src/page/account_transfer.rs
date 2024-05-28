@@ -16,8 +16,13 @@ use crate::{
 fn PrincipalInfo() -> impl IntoView {
     view! {
         <AuthCansProvider fallback=DashboxLoading let:cans>
-            <span class="uppercase text-sm md:text-md">COPY PRINICIPAL ID</span>
+            <span class="uppercase text-sm md:text-md pb-5">COPY PRINICIPAL ID</span>
             <DashboxLoaded text=cans.identity().sender().unwrap().to_text()/>
+            <div class="pt-5">
+                <a href="https://hotornot.wtf/migrate" target="_blank">
+                <span class="text-md underline decoration-pink-500 text-pink-500">Visit HotorNot to complete transfer</span>
+                </a>
+            </div>
         </AuthCansProvider>
     }
 }
@@ -36,9 +41,6 @@ fn PrincipalInfoView() -> impl IntoView {
                 <Show when=logged_in fallback=|| view! { <ConnectLogin cta_location="refer"/> }>
                     <PrincipalInfo/>
                 </Show>
-            </div>
-            <div class="flex flex-col w-full items-center gap-4 text-center">
-                <span class="text-md underline decoration-pink-500 text-pink-500">Visit HotorNot to complete transfer</span>
             </div>
         </div>
     }
