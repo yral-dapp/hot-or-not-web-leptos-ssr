@@ -81,8 +81,8 @@ fn ProfileLoaded(user_details: ProfileDetails) -> impl IntoView {
             <img class="h-full w-full object-cover" src=user_details.profile_pic_or_random()/>
         </div>
         <div class="flex flex-col"
-            // class:w-full=is_connected
-            class=("w-5/12", move || !is_connected())>
+            class=("w-12/12", move || !is_connected())
+            class=("sm:w-5/12", move || !is_connected())>
             <span class="text-white text-ellipsis line-clamp-1 text-xl">
                 {user_details.display_name_or_fallback()}
             </span>
