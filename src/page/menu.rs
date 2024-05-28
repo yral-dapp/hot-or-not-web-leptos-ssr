@@ -75,11 +75,14 @@ fn ProfileLoading() -> impl IntoView {
 
 #[component]
 fn ProfileLoaded(user_details: ProfileDetails) -> impl IntoView {
+    let (is_connected, _) = account_connected_reader();
     view! {
         <div class="w-48 md:w-36 lg:w-24 aspect-square overflow-clip rounded-full">
             <img class="h-full w-full object-cover" src=user_details.profile_pic_or_random()/>
         </div>
-        <div class="flex flex-col">
+        <div class="flex flex-col"
+            // class:w-full=is_connected
+            class=("w-5/12", move || !is_connected())>
             <span class="text-white text-ellipsis line-clamp-1 text-xl">
                 {user_details.display_name_or_fallback()}
             </span>
@@ -145,9 +148,7 @@ pub fn Menu() -> impl IntoView {
                     </div>
                 </Title>
                 <div class="flex flex-col items-center w-full gap-4">
-                    <div class="flex flex-row justify-center gap-4 items-center px-4"
-                    class:w-full=is_connected
-                    class=("w-5/12", move || !is_connected())>
+                    <div class="flex flex-row justify-center gap-4 items-center px-4">
                         <ProfileInfo/>
                     </div>
                     <Show when=move || !is_connected()>
