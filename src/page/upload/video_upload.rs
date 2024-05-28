@@ -11,11 +11,12 @@ use crate::{
             VideoUploadSuccessful, VideoUploadUnsuccessful, VideoUploadVideoSelected,
         },
         route::go_to_root,
+        MockPartialEq,
     },
 };
-use candid::Principal;
 use futures::StreamExt;
 use gloo::{file::ObjectUrl, timers::future::IntervalStream};
+use ic_agent::Identity;
 use leptos::{
     ev::durationchange,
     html::{Input, Video},
@@ -186,20 +187,23 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
 
     let up_desc = description.clone();
 
-    let upload_action = create_resource(
-        || (),
-        move |_| {
+    let upload_action = create_local_resource(
+        move || canister_store().map(MockPartialEq),
+        move |cans| {
             let hashtags = up_hashtags.clone();
             let description = up_desc.clone();
             let file_blob = file_blob.clone();
             async move {
+                let cans = cans?.0;
+                let creator_principal = cans.identity().sender().unwrap();
                 let time_ms = SystemTime::now()
                     .duration_since(SystemTime::UNIX_EPOCH)
                     .unwrap()
                     .as_millis();
 
+                // TODO: authenticated call
                 let res = get_upload_info(
-                    Principal::anonymous(),
+                    creator_principal,
                     hashtags,
                     description,
                     time_ms.to_string(),
