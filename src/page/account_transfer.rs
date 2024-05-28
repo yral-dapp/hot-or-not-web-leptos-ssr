@@ -33,7 +33,7 @@ fn PrincipalInfoView() -> impl IntoView {
 
     view! {
         <div class="flex flex-col w-full h-full items-center text-white gap-10">
-            <img class="shrink-0 h-40 select-none" src="/img/account-transfer.svg"/>
+            <img class="shrink-0 h-40 select-none" src="/img/account-transfer.webp"/>
             <div class="flex flex-col w-full items-center gap-4 text-center">
                 <span class="text-md">Transfer your Videos and COYN tokens from your old HotorNot account to your Yral account. We are phasing out HotorNot, so transfer your account before time runs out. <br/> . . . . . . . . . . . </span>
             </div>
