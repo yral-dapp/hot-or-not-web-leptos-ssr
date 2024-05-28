@@ -19,10 +19,10 @@ fn MenuItem(
     #[prop(into, optional)] target: String,
 ) -> impl IntoView {
     view! {
-        <a href=href class="grid grid-cols-2 items-center w-full" target=target>
-            <div class="flex flex-row gap-4 items-center">
+        <a href=href class="grid grid-cols-3 items-center w-full" target=target>
+            <div class="flex flex-row gap-4 items-center col-span-2">
                 <Icon class="text-2xl" icon=icon/>
-                <span>{text}</span>
+                <span class="text-wrap">{text}</span>
             </div>
             <Icon class="text-2xl justify-self-end" icon=icondata::AiRightOutlined/>
         </a>
@@ -147,7 +147,7 @@ pub fn Menu() -> impl IntoView {
                 <div class="flex flex-col items-center w-full gap-4">
                     <div class="flex flex-row justify-center gap-4 items-center px-4"
                     class:w-full=is_connected
-                    class=("md:w-5/12", move || !is_connected())>
+                    class=("w-5/12", move || !is_connected())>
                         <ProfileInfo/>
                     </div>
                     <Show when=move || !is_connected()>

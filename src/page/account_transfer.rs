@@ -18,7 +18,7 @@ fn PrincipalInfo() -> impl IntoView {
         <AuthCansProvider fallback=DashboxLoading let:cans>
             <span class="uppercase text-sm md:text-md pb-5">COPY PRINICIPAL ID</span>
             <DashboxLoaded text=cans.identity().sender().unwrap().to_text()/>
-            <div class="pt-5">
+            <div class="pt-5 pb-10">
                 <a href="https://hotornot.wtf/migrate" target="_blank">
                 <span class="text-md underline decoration-pink-500 text-pink-500">Visit HotorNot to complete transfer</span>
                 </a>

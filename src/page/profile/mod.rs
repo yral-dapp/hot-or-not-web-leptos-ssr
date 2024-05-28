@@ -101,22 +101,24 @@ fn ProfileViewInner(user: ProfileDetails, user_canister: Principal) -> impl Into
                 <div
                     class="flex flex-row w-11/12 sm:w-7/12 justify-center"
                 >
-                    <div class="flex flex-col items-center">
+                    <div class="flex flex-col justify-center items-center">
                         <img
                             class="h-24 w-24 rounded-full"
                             alt=username_or_principal.clone()
                             src=profile_pic
                         />
                         <div class="flex flex-col text-center items-center">
-                            <span class="text-md text-white font-bold truncate"
-                            class=("md:w-5/12", move || !is_connected())>{display_name}</span>
+                            <span class="text-md text-white font-bold"
+                            class=("w-full", is_connected)
+                            class=("w-5/12", move || !is_connected())
+                            class=("truncate", move || !is_connected())>{display_name}</span>
                             <div class="text-sm flex flex-row">
                                 // TODO: Add username when it's available
                                 // <p class="text-white">@ {username_or_principal}</p>
                                 <p class="text-primary-500">{earnings} Earnings</p>
                             </div>
                             <Show when=move || !is_connected()>
-                                <div class="md:w-4/12 w-6/12 pt-5 mr-5">
+                                <div class="md:w-4/12 w-6/12 pt-5">
                                     <ConnectLogin cta_location="profile"/>
                                 </div>
                             </Show>
