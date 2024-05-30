@@ -20,3 +20,6 @@ redb-kv.db
 
 # ide config
 .idea/
+
+# misc
+**/.DS_Store
