@@ -7,7 +7,9 @@ use crate::{
     canister::utils::bg_url,
     component::no_more_posts::NoMorePostsGraphic,
     state::canisters::{auth_canisters_store, unauth_canisters},
-    utils::{posts::PostDetails, profile::PostsProvider},
+    utils::{
+        event_streaming::events::ProfileViewVideo, posts::PostDetails, profile::PostsProvider,
+    },
 };
 
 use super::ic::ProfileStream;
@@ -35,10 +37,18 @@ fn Post(details: PostDetails, user_canister: Principal, _ref: NodeRef<html::Div>
     let handle_image_error =
         move |_| image_error.update(|image_error| *image_error = !*image_error);
 
+    let canisters = auth_canisters_store();
+    let post_details = details.clone();
+    let video_click = move || {
+        ProfileViewVideo.send_event(post_details.clone(), canisters);
+    };
+
     view! {
         <div _ref=_ref class="relative w-full basis-1/3 md:basis-1/4 xl:basis-1/5">
             <div class="relative aspect-[9/16] h-full rounded-md border-white/20 m-2 border-[1px]">
-                <a class="h-full w-full" href=profile_post_url>
+                <a class="h-full w-full"
+                        href=profile_post_url
+                        on:click= move |_| video_click()>
                     <Show
                         when=image_error
                         fallback=move || {

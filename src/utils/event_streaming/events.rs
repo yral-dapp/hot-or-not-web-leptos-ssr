@@ -34,6 +34,7 @@ pub enum AnalyticsEvent {
     LogoutClicked(LogoutClicked),
     LogoutConfirmation(LogoutConfirmation),
     ErrorEvent(ErrorEvent),
+    ProfileViewVideo(ProfileViewVideo),
 }
 
 #[derive(Default)]
@@ -680,6 +681,40 @@ impl ErrorEvent {
                     "canister_id": canister_id,
                     "description": error.get_untracked(),
                     "previous_event": event_history.event_name.get_untracked(),
+                }),
+            );
+        }
+    }
+}
+
+#[derive(Default)]
+pub struct ProfileViewVideo;
+
+impl ProfileViewVideo {
+    pub fn send_event(
+        &self,
+        post_details: PostDetails,
+        cans_store: RwSignal<Option<Canisters<true>>>,
+    ) {
+        #[cfg(all(feature = "hydrate", feature = "ga4"))]
+        {
+            let publisher_user_id = post_details.poster_principal;
+            let video_id = post_details.uid.clone();
+
+            let (is_connected, _) = account_connected_reader();
+
+            let user = user_details_can_store_or_ret!(cans_store);
+
+            send_event(
+                "profile_view_video",
+                &json!({
+                    "publisher_user_id":publisher_user_id,
+                    "user_id": user.details.principal,
+                    "is_loggedIn": is_connected(),
+                    "display_name": user.details.display_name,
+                    "canister_id": user.canister_id,
+                    "video_id": video_id,
+                    "profile_feed": "main",
                 }),
             );
         }
