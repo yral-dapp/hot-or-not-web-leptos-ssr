@@ -1,10 +1,12 @@
 use crate::{
-    component::{canisters_prov::WithAuthCans, modal::Modal},
+    component::{canisters_prov::WithAuthCans, modal::Modal, option::SelectOption},
     state::canisters::{auth_canisters_store, Canisters},
     utils::{
         event_streaming::events::{LikeVideo, ShareVideo},
         posts::PostDetails,
+        report::ReportOption,
         route::failure_redirect,
+        user::UserDetails,
         web::{copy_to_clipboard, share_url},
     },
 };
@@ -110,6 +112,9 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
 #[component]
 pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
     let show_share = create_rw_signal(false);
+    let show_report = create_rw_signal(false);
+    let (report_option, set_report_option) =
+        create_signal(ReportOption::Nudity.as_str().to_string());
     let show_copied_popup = create_rw_signal(false);
     let base_url = || {
         use_window()
@@ -122,11 +127,12 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
             .unwrap_or_default()
     };
 
-    let post_details = post.clone();
+    let post_details_share = post.clone();
     let canisters = auth_canisters_store();
+    let canisters_copy = canisters.clone();
 
     let share = move || {
-        let post_details = post_details.clone();
+        let post_details = post_details_share.clone();
         let url = video_url();
         if share_url(&url).is_some() {
             return;
@@ -143,6 +149,26 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
         show_copied_popup.set(true);
         Timeout::new(1200, move || show_copied_popup.set(false)).forget();
     };
+
+    let post_details_report = post.clone();
+    let click_report = create_action(move |()| {
+        let post_details = post_details_report.clone();
+        logging::warn!("Reporting post");
+        logging::warn!("Publisher id {}", post_details.poster_principal);
+        logging::warn!("Post id {}", post_details.post_id);
+        logging::warn!("Canister id {}", post_details.canister_id);
+        logging::warn!("video id {}", post_details.uid);
+        logging::warn!("reason {}", report_option.get_untracked());
+
+        let user_details = UserDetails::try_get_from_canister_store(canisters_copy).unwrap();
+        logging::warn!("Reporter id {}", user_details.details.principal);
+
+        logging::warn!("Current URL {}", video_url());
+
+        async move {
+            show_report.set(false);
+        }
+    });
 
     view! {
         <div class="flex flex-row flex-nowrap justify-between items-end pb-20 px-2 md:px-6 w-full text-white absolute bottom-0 left-0 bg-transparent z-[4]">
@@ -167,6 +193,9 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
                 <ExpandableText description=post.description/>
             </div>
             <div class="flex flex-col gap-8 pb-10 items-end w-3/12 text-4xl">
+                <button on:click=move |_| show_report.set(true)>
+                    <Icon class="drop-shadow-lg" icon=icondata::TbMessageReport/>
+                </button>
                 <a href="/refer-earn">
                     <Icon class="drop-shadow-lg" icon=icondata::AiGiftFilled/>
                 </a>
@@ -196,6 +225,27 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
                     </span>
                 </div>
             </Show>
+        </Modal>
+        <Modal show=show_report>
+            <div class="flex flex-col justify-center items-center gap-4 text-white">
+                <span class="text-lg">Report Post</span>
+                <span class="text-lg">Please select a reason:</span>
+                <div class="max-w-full text-md text-black">
+                    <select class="p-2 w-full block rounded-lg text-sm" on:change=move |ev| {
+                            let new_value = event_target_value(&ev);
+                            set_report_option(new_value);
+                        }>
+                        <SelectOption value=report_option is=ReportOption::Nudity.as_str()/>
+                        <SelectOption value=report_option is=ReportOption::Violence.as_str()/>
+                        <SelectOption value=report_option is=ReportOption::Offensive.as_str()/>
+                        <SelectOption value=report_option is=ReportOption::Spam.as_str()/>
+                        <SelectOption value=report_option is=ReportOption::Other.as_str()/>
+                    </select>
+                </div>
+                <button on:click=move |_| click_report.dispatch(())>
+                    <div class="rounded-lg bg-pink-500 p-1">Submit</div>
+                </button>
+            </div>
         </Modal>
     }
 }

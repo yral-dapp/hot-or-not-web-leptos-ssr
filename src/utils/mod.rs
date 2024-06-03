@@ -1,3 +1,4 @@
+use leptos::{Attribute, IntoAttribute};
 use serde::{Deserialize, Serialize};
 use web_time::{Duration, SystemTime};
 
@@ -5,6 +6,7 @@ pub mod event_streaming;
 pub mod icon;
 pub mod posts;
 pub mod profile;
+pub mod report;
 pub mod route;
 pub mod timestamp;
 pub mod user;
