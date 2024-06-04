@@ -44,10 +44,9 @@ pub async fn get_video_status(uid: String) -> Result<String, ServerFnError> {
 }
 
 #[server(EditVideoMeta)]
-pub async fn edit_video_meta(uid: String,post_id: u64) -> Result<String, ServerFnError> {
+pub async fn edit_video_meta(uid: String, post_id: u64) -> Result<String, ServerFnError> {
     edit_video_meta_impl(uid, post_id).await
 }
-
 
 #[cfg(feature = "cloudflare")]
 mod cf_impl {
@@ -74,16 +73,18 @@ mod cf_impl {
         use super::UploadInfo;
         use std::time::Duration;
 
-        pub async fn edit_video_meta_impl(uid: String, post_id: u64 ) -> Result<String, ServerFnError>{
+        pub async fn edit_video_meta_impl(
+            uid: String,
+            post_id: u64,
+        ) -> Result<String, ServerFnError> {
             let cf_api: CloudflareAuth = expect_context();
-            // get the existing meta from video 
+            // get the existing meta from video
             let req = VideoDetails::new(uid.clone());
             let res = cf_api.send_auth(req).await?;
             let meta = res.meta;
-            
-            // add new meta to the video 
-            let req = EditVideoDetails::new(uid, meta)
-                                        .add_meta("post_id", post_id.to_string());
+
+            // add new meta to the video
+            let req = EditVideoDetails::new(uid, meta).add_meta("post_id", post_id.to_string());
             let res = cf_api.send_auth(req).await?;
 
             Ok(res.status.state)
@@ -127,8 +128,6 @@ mod cf_impl {
 
             Ok(state)
         }
-
-        
     }
 
     pub async fn upload_video_stream(
@@ -204,12 +203,13 @@ mod mock_impl {
             Ok("ready".into())
         }
 
-
-        pub async fn edit_video_meta_impl(_uid: String, _post_id: u64) -> Result<String, ServerFnError> {
+        pub async fn edit_video_meta_impl(
+            _uid: String,
+            _post_id: u64,
+        ) -> Result<String, ServerFnError> {
             tokio::time::sleep(Duration::from_secs(2)).await;
             Ok("processing".into())
         }
-        
     }
 
     pub async fn upload_video_stream(
