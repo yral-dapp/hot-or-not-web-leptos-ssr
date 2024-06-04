@@ -1,0 +1,26 @@
+# fly.toml app configuration file generated for hot-or-not-web-leptos-ssr on 2023-11-13T11:04:42+05:30
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = "hot-or-not-web-leptos-ssr-staging"
+primary_region = "sin"
+
+[build]
+
+[http_service]
+internal_port = 8080
+force_https = true
+auto_stop_machines = true
+auto_start_machines = true
+min_machines_running = 0
+processes = ["app"]
+
+[[vm]]
+size = "shared-cpu-2x"
+memory = "1gb"
+
+[env]
+CF_ACCOUNT_ID = "a209c523d2d9646cc56227dbe6ce3ede"
+GOOGLE_REDIRECT_URL = "https://hot-or-not-web-leptos-ssr-staging.fly.dev/auth/google_redirect"
+GOOGLE_CLIENT_ID = "1000386990382-3012bbnodvsl8jblr0h8b52d9213c7cn.apps.googleusercontent.com"
