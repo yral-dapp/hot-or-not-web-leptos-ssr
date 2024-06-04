@@ -89,15 +89,15 @@ pub fn ScrollingPostView<F: Fn() -> V + Clone + 'static, V, O: Fn() -> IV, IV: I
                 </Show>
 
                 <Show when=muted>
-                    <button
+                    <div
+                        inert
                         class="fixed top-1/2 left-1/2 z-20 cursor-pointer"
-                        on:click=move |_| muted.set(false)
                     >
                         <Icon
                             class="text-white/80 animate-ping text-4xl"
                             icon=icondata::BiVolumeMuteSolid
                         />
-                    </button>
+                    </div>
                 </Show>
             </div>
         </div>
