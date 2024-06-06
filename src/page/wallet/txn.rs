@@ -42,14 +42,16 @@ pub enum TxnTag {
     Referral,
     Winnings,
     Commission,
+    Transfer,
+    HotorNotAccountTransfer,
 }
 
 impl From<TxnTag> for TxnDirection {
     fn from(value: TxnTag) -> TxnDirection {
         use TxnTag::*;
         match value {
-            BetPlaced => TxnDirection::Deducted,
-            Winnings | Commission => TxnDirection::Added,
+            BetPlaced | Transfer => TxnDirection::Deducted,
+            Winnings | Commission | HotorNotAccountTransfer => TxnDirection::Added,
             SignupBonus | Referral => TxnDirection::Bonus,
         }
     }
@@ -64,6 +66,8 @@ impl TxnTag {
             Referral => "Referral Reward",
             Winnings => "Bet Winnings",
             Commission => "Bet Commission",
+            Transfer => "Transfer",
+            HotorNotAccountTransfer => "HotorNot Account Transfer",
         }
     }
 
@@ -168,7 +172,8 @@ pub mod provider {
                     details: MintEvent::Referral { .. },
                     ..
                 } => (amount, TxnTag::Referral),
-                TokenEvent::Transfer => return None,
+                TokenEvent::Transfer { amount, .. } => (amount, TxnTag::Transfer),
+                TokenEvent::Receive { amount, .. } => (amount, TxnTag::HotorNotAccountTransfer),
                 TokenEvent::HotOrNotOutcomePayout {
                     amount,
                     details: HotOrNotOutcomePayoutEvent::CommissionFromHotOrNotBet { .. },

@@ -267,7 +267,7 @@ mod server_fn_impl {
             user_canister: Principal,
         ) -> Result<bool, ServerFnError> {
             use crate::{
-                canister::individual_user_template::{Result6, Result8, SessionType},
+                canister::individual_user_template::{Result6, Result9, SessionType},
                 state::admin_canisters::admin_canisters,
             };
 
@@ -283,8 +283,8 @@ mod server_fn_impl {
                 .await
                 .map_err(ServerFnError::from)
                 .and_then(|res| match res {
-                    Result8::Ok(_) => Ok(()),
-                    Result8::Err(e) => Err(ServerFnError::new(format!(
+                    Result9::Ok(_) => Ok(()),
+                    Result9::Err(e) => Err(ServerFnError::new(format!(
                         "failed to mark user as registered {e}"
                     ))),
                 })?;
