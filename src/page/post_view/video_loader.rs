@@ -204,6 +204,7 @@ pub fn VideoView(
             node_ref=container_ref
             view_bg_url=Signal::derive(view_bg_url)
             view_video_url=Signal::derive(view_video_url)
+            muted
         />
     }
 }
