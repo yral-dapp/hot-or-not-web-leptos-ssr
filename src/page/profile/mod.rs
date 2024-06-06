@@ -4,7 +4,6 @@ mod posts;
 mod profile_iter;
 pub mod profile_post;
 mod speculation;
-pub mod your_profile_post;
 
 use candid::Principal;
 use leptos::*;
@@ -98,9 +97,7 @@ fn ProfileViewInner(user: ProfileDetails, user_canister: Principal) -> impl Into
                 <BackButton fallback="/".to_string()/>
             </div>
             <div class="grid grid-cols-1 gap-5 justify-normal justify-items-center w-full">
-                <div
-                    class="flex flex-row w-11/12 sm:w-7/12 justify-center"
-                >
+                <div class="flex flex-row w-11/12 sm:w-7/12 justify-center">
                     <div class="flex flex-col justify-center items-center">
                         <img
                             class="h-24 w-24 rounded-full"
@@ -108,10 +105,14 @@ fn ProfileViewInner(user: ProfileDetails, user_canister: Principal) -> impl Into
                             src=profile_pic
                         />
                         <div class="flex flex-col text-center items-center">
-                            <span class="text-md text-white font-bold"
-                            class=("w-full", is_connected)
-                            class=("w-5/12", move || !is_connected())
-                            class=("truncate", move || !is_connected())>{display_name}</span>
+                            <span
+                                class="text-md text-white font-bold"
+                                class=("w-full", is_connected)
+                                class=("w-5/12", move || !is_connected())
+                                class=("truncate", move || !is_connected())
+                            >
+                                {display_name}
+                            </span>
                             <div class="text-sm flex flex-row">
                                 // TODO: Add username when it's available
                                 // <p class="text-white">@ {username_or_principal}</p>
