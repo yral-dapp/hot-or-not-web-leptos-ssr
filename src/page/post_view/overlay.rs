@@ -129,7 +129,7 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
 
     let post_details_share = post.clone();
     let canisters = auth_canisters_store();
-    let canisters_copy = canisters.clone();
+    let canisters_copy = canisters;
 
     let share = move || {
         let post_details = post_details_share.clone();
