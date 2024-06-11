@@ -4,7 +4,7 @@ use crate::{
     utils::{
         event_streaming::events::{LikeVideo, ShareVideo},
         posts::PostDetails,
-        report::ReportOption,
+        report::{send_report_offchain, ReportOption},
         route::failure_redirect,
         user::UserDetails,
         web::{copy_to_clipboard, share_url},
@@ -153,17 +153,21 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
     let post_details_report = post.clone();
     let click_report = create_action(move |()| {
         let post_details = post_details_report.clone();
-        logging::warn!("Reporting post");
-        logging::warn!("Publisher id {}", post_details.poster_principal);
-        logging::warn!("Post id {}", post_details.post_id);
-        logging::warn!("Canister id {}", post_details.canister_id);
-        logging::warn!("video id {}", post_details.uid);
-        logging::warn!("reason {}", report_option.get_untracked());
-
         let user_details = UserDetails::try_get_from_canister_store(canisters_copy).unwrap();
-        logging::warn!("Reporter id {}", user_details.details.principal);
 
-        logging::warn!("Current URL {}", video_url());
+        spawn_local(async move {
+            send_report_offchain(
+                user_details.details.principal.to_string(),
+                post_details.poster_principal.to_string(),
+                post_details.canister_id.to_string(),
+                post_details.post_id.to_string(),
+                post_details.uid,
+                report_option.get_untracked(),
+                video_url(),
+            )
+            .await
+            .unwrap();
+        });
 
         async move {
             show_report.set(false);
