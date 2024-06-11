@@ -1,7 +1,6 @@
 use std::env;
 
 use crate::consts::OFF_CHAIN_AGENT_GRPC_URL;
-use crate::utils::off_chain;
 use leptos::{server, ServerFnError};
 
 pub enum ReportOption {
@@ -34,6 +33,7 @@ pub async fn send_report_offchain(
     reason: String,
     video_url: String,
 ) -> Result<(), ServerFnError> {
+    use crate::utils::off_chain;
     use tonic::metadata::MetadataValue;
     use tonic::transport::Channel;
     use tonic::Request;
