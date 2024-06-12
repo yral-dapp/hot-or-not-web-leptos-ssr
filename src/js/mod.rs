@@ -91,7 +91,16 @@ pub mod wasp {
 }
 
 pub mod videojs {
+    use serde::{Deserialize, Serialize};
     use wasm_bindgen::prelude::*;
+
+    #[derive(Serialize, Deserialize, Clone)]
+    #[serde(rename_all = "camelCase")]
+    pub struct SrcConfig {
+        #[serde(rename = "type")]
+        pub kind: String,
+        pub src: String,
+    }
 
     #[wasm_bindgen]
     extern "C" {
@@ -102,6 +111,15 @@ pub mod videojs {
         pub fn videojs(element: &JsValue) -> Result<VideoJsPlayer, JsValue>;
 
         #[wasm_bindgen(method, catch)]
+        fn src(this: &VideoJsPlayer, config: &JsValue) -> Result<(), JsValue>;
+
+        #[wasm_bindgen(method, catch)]
         pub fn dispose(this: &VideoJsPlayer) -> Result<(), JsValue>;
+    }
+
+    pub fn set_src(player: &VideoJsPlayer, conf: &[SrcConfig]) -> Result<(), JsValue> {
+        let obj = serde_wasm_bindgen::to_value(conf).unwrap();
+        player.src(&obj)?;
+        Ok(())
     }
 }

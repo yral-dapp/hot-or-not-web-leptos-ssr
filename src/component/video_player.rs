@@ -3,11 +3,12 @@ use leptos_dom::{html::Video, NodeRef};
 
 use crate::{
     canister::utils::{bg_url, hls_stream_url, mp4_stream_url},
-    js::videojs::{videojs, VideoJsPlayer},
+    js::videojs::{self, videojs, SrcConfig, VideoJsPlayer},
     utils::web::{user_agent, UserAgent},
 };
 
-const VIDEO_SETTINGS: &str = r#"{"children": { "loadinSpinner": false }}"#;
+// ~6 MiB/s initial bandwidth
+const VIDEO_SETTINGS: &str = r#"{"children": { "loadinSpinner": false, "bandwidth": 51170000 }}"#;
 
 #[component]
 fn NativePlayer(
@@ -53,6 +54,17 @@ pub fn VideoPlayer(
         }
         _ = v.on_mount(move |v| {
             let p = videojs(&v).unwrap();
+            let sources = [
+                SrcConfig {
+                    kind: "application/x-mpegURL".to_string(),
+                    src: hls_url.get_untracked().unwrap(),
+                },
+                SrcConfig {
+                    kind: "video/mp4".to_string(),
+                    src: mp4_url.get_untracked().unwrap(),
+                },
+            ];
+            videojs::set_src(&p, &sources).unwrap();
             player.set(Some(p));
         });
     });
@@ -73,39 +85,36 @@ pub fn VideoPlayer(
                 class="sr-only"
             />
             {if use_native {
-         view! {
+                view! {
                         <NativePlayer
                             node_ref=node_ref
                             mp4_url=mp4_url
                             view_bg_url=view_bg_url
                             autoplay=autoplay
                         />
-                    }
-
+                }
             } else {
-view! {
-          <div
-                    data-vjs-player
-                    style="background-color: transparent;"
-                    class="h-dvh max-h-dvh w-fit"
-                >
-                    <video
-                        node_ref=node_ref
-                        class="video-js vjs-fill cursor-pointer"
-                        poster=view_bg_url
-                        loop
-                        playsinline
-                        autoplay=autoplay
-                        disablepictureinpicture
-                        disableremoteplayback
-                        preload="auto"
-                        data-setup=VIDEO_SETTINGS
+                view! {
+                    <div
+                        data-vjs-player
+                        style="background-color: transparent;"
+                        class="h-dvh max-h-dvh w-fit"
                     >
-                        <source src=hls_url type="application/x-mpegURL"/>
-                        <source src=mp4_url type="video/mp4"/>
-                    </video>
-                </div>
-}
+                        <video
+                            node_ref=node_ref
+                            class="video-js vjs-fill cursor-pointer"
+                            poster=view_bg_url
+                            loop
+                            playsinline
+                            autoplay=autoplay
+                            disablepictureinpicture
+                            disableremoteplayback
+                            preload="auto"
+                            data-setup=VIDEO_SETTINGS
+                        >
+                        </video>
+                    </div>
+                }.into_view()
             }}
         </label>
     }
