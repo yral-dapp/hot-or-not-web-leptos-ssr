@@ -19,10 +19,10 @@ fn MenuItem(
     #[prop(into, optional)] target: String,
 ) -> impl IntoView {
     view! {
-        <a href=href class="grid grid-cols-2 items-center w-full" target=target>
-            <div class="flex flex-row gap-4 items-center">
+        <a href=href class="grid grid-cols-3 items-center w-full" target=target>
+            <div class="flex flex-row gap-4 items-center col-span-2">
                 <Icon class="text-2xl" icon=icon/>
-                <span>{text}</span>
+                <span class="text-wrap">{text}</span>
             </div>
             <Icon class="text-2xl justify-self-end" icon=icondata::AiRightOutlined/>
         </a>
@@ -75,11 +75,14 @@ fn ProfileLoading() -> impl IntoView {
 
 #[component]
 fn ProfileLoaded(user_details: ProfileDetails) -> impl IntoView {
+    let (is_connected, _) = account_connected_reader();
     view! {
         <div class="w-48 md:w-36 lg:w-24 aspect-square overflow-clip rounded-full">
             <img class="h-full w-full object-cover" src=user_details.profile_pic_or_random()/>
         </div>
-        <div class="flex flex-col">
+        <div class="flex flex-col"
+            class=("w-12/12", move || !is_connected())
+            class=("sm:w-5/12", move || !is_connected())>
             <span class="text-white text-ellipsis line-clamp-1 text-xl">
                 {user_details.display_name_or_fallback()}
             </span>
@@ -145,7 +148,7 @@ pub fn Menu() -> impl IntoView {
                     </div>
                 </Title>
                 <div class="flex flex-col items-center w-full gap-4">
-                    <div class="flex flex-row justify-center gap-4 items-center px-4 w-full">
+                    <div class="flex flex-row justify-center gap-4 items-center px-4">
                         <ProfileInfo/>
                     </div>
                     <Show when=move || !is_connected()>
@@ -160,6 +163,7 @@ pub fn Menu() -> impl IntoView {
             </div>
             <div class="flex flex-col py-12 px-8 gap-8 w-full text-lg">
                 <NsfwToggle/>
+                <MenuItem href="/account-transfer" text="HotorNot Account Transfer" icon=icondata::FaMoneyBillTransferSolid/>
                 <MenuItem href="/refer-earn" text="Refer & Earn" icon=icondata::AiGiftFilled/>
                 <MenuItem
                     href=social::TELEGRAM

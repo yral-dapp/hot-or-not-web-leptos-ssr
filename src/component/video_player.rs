@@ -72,10 +72,8 @@ pub fn VideoPlayer(
                 value=""
                 class="sr-only"
             />
-            <Show
-                when=move || !use_native
-                fallback=move || {
-                    view! {
+            {if use_native {
+         view! {
                         <NativePlayer
                             node_ref=node_ref
                             mp4_url=mp4_url
@@ -83,10 +81,10 @@ pub fn VideoPlayer(
                             autoplay=autoplay
                         />
                     }
-                }
-            >
 
-                <div
+            } else {
+view! {
+          <div
                     data-vjs-player
                     style="background-color: transparent;"
                     class="h-dvh max-h-dvh w-fit"
@@ -107,7 +105,8 @@ pub fn VideoPlayer(
                         <source src=mp4_url type="video/mp4"/>
                     </video>
                 </div>
-            </Show>
+}
+            }}
         </label>
     }
 }
