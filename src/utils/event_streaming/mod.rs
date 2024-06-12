@@ -5,7 +5,7 @@ use leptos::*;
 use serde_json::json;
 use wasm_bindgen::prelude::*;
 
-use crate::consts::{GTAG_MEASUREMENT_ID, OFF_CHAIN_AGENT_GRPC_URL};
+use crate::consts::GTAG_MEASUREMENT_ID;
 
 pub mod events;
 
