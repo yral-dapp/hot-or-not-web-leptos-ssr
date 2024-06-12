@@ -40,7 +40,6 @@ pub async fn send_report_offchain(
     let channel: Channel = expect_context();
 
     let mut off_chain_agent_grpc_auth_token = env::var("GRPC_AUTH_TOKEN").expect("GRPC_AUTH_TOKEN");
-    // removing whitespaces and new lines for proper parsing
     off_chain_agent_grpc_auth_token.retain(|c| !c.is_whitespace());
 
     let token: MetadataValue<_> = format!("Bearer {}", off_chain_agent_grpc_auth_token).parse()?;

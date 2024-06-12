@@ -71,8 +71,7 @@ pub async fn stream_to_offchain_agent(event: String, params: String) -> Result<(
     use tonic::transport::Channel;
     use tonic::Request;
 
-    let off_chain_agent_url = OFF_CHAIN_AGENT_GRPC_URL.as_ref();
-    let channel = Channel::from_static(off_chain_agent_url).connect().await?;
+    let channel: Channel = expect_context();
 
     let mut off_chain_agent_grpc_auth_token = env::var("GRPC_AUTH_TOKEN").expect("GRPC_AUTH_TOKEN");
     // removing whitespaces and new lines for proper parsing
