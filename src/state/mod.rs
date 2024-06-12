@@ -14,6 +14,7 @@ pub mod server {
     use axum_extra::extract::cookie::Key;
     use leptos::LeptosOptions;
     use leptos_router::RouteListing;
+    use tonic::transport::Channel;
 
     #[derive(FromRef, Clone)]
     pub struct AppState {
@@ -28,5 +29,7 @@ pub mod server {
         pub cookie_key: Key,
         #[cfg(feature = "oauth-ssr")]
         pub google_oauth: openidconnect::core::CoreClient,
+        #[cfg(feature = "ga4")]
+        pub grpc_offchain_channel: Channel,
     }
 }
