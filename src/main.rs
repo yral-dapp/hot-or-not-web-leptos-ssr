@@ -8,14 +8,16 @@ use axum::{
 };
 use axum::{routing::get, Router};
 use axum_extra::extract::cookie::Key;
-use hot_or_not_web_leptos_ssr::state::canisters::Canisters;
 use hot_or_not_web_leptos_ssr::{app::App, state::server::AppState};
 use hot_or_not_web_leptos_ssr::{
     auth::server_impl::store::KVStoreImpl, fallback::file_and_error_handler,
 };
+use hot_or_not_web_leptos_ssr::{consts::OFF_CHAIN_AGENT_GRPC_URL, state::canisters::Canisters};
 use leptos::{get_configuration, logging::log, provide_context};
 use leptos_axum::handle_server_fns_with_context;
 use leptos_axum::{generate_route_list, LeptosRoutes};
+#[cfg(feature = "ssr")]
+use tonic::transport::Channel;
 
 pub async fn server_fn_handler(
     State(app_state): State<AppState>,
@@ -35,6 +37,8 @@ pub async fn server_fn_handler(
             provide_context(app_state.cookie_key.clone());
             #[cfg(feature = "oauth-ssr")]
             provide_context(app_state.google_oauth.clone());
+            #[cfg(feature = "ssr")]
+            provide_context(app_state.grpc_offchain_channel.clone());
         },
         request,
     )
@@ -58,6 +62,8 @@ pub async fn leptos_routes_handler(
             provide_context(app_state.cookie_key.clone());
             #[cfg(feature = "oauth-ssr")]
             provide_context(app_state.google_oauth.clone());
+            #[cfg(feature = "ssr")]
+            provide_context(app_state.grpc_offchain_channel.clone());
         },
         App,
     );
@@ -136,6 +142,15 @@ fn init_google_oauth() -> openidconnect::core::CoreClient {
     .set_redirect_uri(RedirectUrl::new(redirect_uri).unwrap())
 }
 
+#[cfg(feature = "ssr")]
+async fn init_grpc_offchain_channel() -> Channel {
+    let off_chain_agent_url = OFF_CHAIN_AGENT_GRPC_URL.as_ref();
+    Channel::from_static(off_chain_agent_url)
+        .connect()
+        .await
+        .expect("Couldn't connect to off-chain agent")
+}
+
 #[tokio::main]
 async fn main() {
     simple_logger::init_with_level(log::Level::Debug).expect("couldn't initialize logging");
@@ -163,6 +178,8 @@ async fn main() {
         cookie_key: init_cookie_key(),
         #[cfg(feature = "oauth-ssr")]
         google_oauth: init_google_oauth(),
+        #[cfg(feature = "ssr")]
+        grpc_offchain_channel: init_grpc_offchain_channel().await,
     };
 
     // build our application with a route
