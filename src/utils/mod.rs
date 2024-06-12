@@ -29,7 +29,7 @@ impl<T> PartialEq for MockPartialEq<T> {
     }
 }
 
-#[cfg(feature = "ssr")]
+#[cfg(feature = "ga4")]
 pub mod off_chain {
     tonic::include_proto!("off_chain");
 }

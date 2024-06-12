@@ -4,7 +4,7 @@ use crate::{
     utils::{
         event_streaming::events::{LikeVideo, ShareVideo},
         posts::PostDetails,
-        report::{send_report_offchain, ReportOption},
+        report::ReportOption,
         route::failure_redirect,
         user::UserDetails,
         web::{copy_to_clipboard, share_url},
@@ -152,22 +152,27 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
 
     let post_details_report = post.clone();
     let click_report = create_action(move |()| {
-        let post_details = post_details_report.clone();
-        let user_details = UserDetails::try_get_from_canister_store(canisters_copy).unwrap();
+        #[cfg(feature = "ga4")]
+        {
+            use crate::utils::report::send_report_offchain;
 
-        spawn_local(async move {
-            send_report_offchain(
-                user_details.details.principal.to_string(),
-                post_details.poster_principal.to_string(),
-                post_details.canister_id.to_string(),
-                post_details.post_id.to_string(),
-                post_details.uid,
-                report_option.get_untracked(),
-                video_url(),
-            )
-            .await
-            .unwrap();
-        });
+            let post_details = post_details_report.clone();
+            let user_details = UserDetails::try_get_from_canister_store(canisters_copy).unwrap();
+
+            spawn_local(async move {
+                send_report_offchain(
+                    user_details.details.principal.to_string(),
+                    post_details.poster_principal.to_string(),
+                    post_details.canister_id.to_string(),
+                    post_details.post_id.to_string(),
+                    post_details.uid,
+                    report_option.get_untracked(),
+                    video_url(),
+                )
+                .await
+                .unwrap();
+            });
+        }
 
         async move {
             show_report.set(false);
@@ -239,11 +244,11 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
                             let new_value = event_target_value(&ev);
                             set_report_option(new_value);
                         }>
-                        <SelectOption value=report_option is=ReportOption::Nudity.as_str()/>
-                        <SelectOption value=report_option is=ReportOption::Violence.as_str()/>
-                        <SelectOption value=report_option is=ReportOption::Offensive.as_str()/>
-                        <SelectOption value=report_option is=ReportOption::Spam.as_str()/>
-                        <SelectOption value=report_option is=ReportOption::Other.as_str()/>
+                        <SelectOption value=report_option is=format!("{}",ReportOption::Nudity.as_str())/>
+                        <SelectOption value=report_option is=format!("{}",ReportOption::Violence.as_str())/>
+                        <SelectOption value=report_option is=format!("{}",ReportOption::Offensive.as_str())/>
+                        <SelectOption value=report_option is=format!("{}",ReportOption::Spam.as_str())/>
+                        <SelectOption value=report_option is=format!("{}",ReportOption::Other.as_str())/>
                     </select>
                 </div>
                 <button on:click=move |_| click_report.dispatch(())>

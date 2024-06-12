@@ -1,11 +1,13 @@
 use leptos::*;
 
 #[component]
-pub fn SelectOption(is: &'static str, value: ReadSignal<String>) -> impl IntoView {
+pub fn SelectOption(#[prop(into)] is: String, value: ReadSignal<String>) -> impl IntoView {
+    let is_copy = is.clone();
+
     view! {
         <option
-            value=is
-            selected=move || value() == is
+        value=is.clone()
+            selected=move || value() == is_copy
         >
             {is}
         </option>

@@ -16,8 +16,6 @@ use hot_or_not_web_leptos_ssr::{consts::OFF_CHAIN_AGENT_GRPC_URL, state::caniste
 use leptos::{get_configuration, logging::log, provide_context};
 use leptos_axum::handle_server_fns_with_context;
 use leptos_axum::{generate_route_list, LeptosRoutes};
-#[cfg(feature = "ssr")]
-use tonic::transport::Channel;
 
 pub async fn server_fn_handler(
     State(app_state): State<AppState>,
@@ -37,7 +35,7 @@ pub async fn server_fn_handler(
             provide_context(app_state.cookie_key.clone());
             #[cfg(feature = "oauth-ssr")]
             provide_context(app_state.google_oauth.clone());
-            #[cfg(feature = "ssr")]
+            #[cfg(feature = "ga4")]
             provide_context(app_state.grpc_offchain_channel.clone());
         },
         request,
@@ -62,7 +60,7 @@ pub async fn leptos_routes_handler(
             provide_context(app_state.cookie_key.clone());
             #[cfg(feature = "oauth-ssr")]
             provide_context(app_state.google_oauth.clone());
-            #[cfg(feature = "ssr")]
+            #[cfg(feature = "ga4")]
             provide_context(app_state.grpc_offchain_channel.clone());
         },
         App,
@@ -142,8 +140,10 @@ fn init_google_oauth() -> openidconnect::core::CoreClient {
     .set_redirect_uri(RedirectUrl::new(redirect_uri).unwrap())
 }
 
-#[cfg(feature = "ssr")]
-async fn init_grpc_offchain_channel() -> Channel {
+#[cfg(feature = "ga4")]
+async fn init_grpc_offchain_channel() -> tonic::transport::Channel {
+    use tonic::transport::Channel;
+
     let off_chain_agent_url = OFF_CHAIN_AGENT_GRPC_URL.as_ref();
     Channel::from_static(off_chain_agent_url)
         .connect()
@@ -178,7 +178,7 @@ async fn main() {
         cookie_key: init_cookie_key(),
         #[cfg(feature = "oauth-ssr")]
         google_oauth: init_google_oauth(),
-        #[cfg(feature = "ssr")]
+        #[cfg(feature = "ga4")]
         grpc_offchain_channel: init_grpc_offchain_channel().await,
     };
 

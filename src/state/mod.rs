@@ -29,6 +29,7 @@ pub mod server {
         pub cookie_key: Key,
         #[cfg(feature = "oauth-ssr")]
         pub google_oauth: openidconnect::core::CoreClient,
+        #[cfg(feature = "ga4")]
         pub grpc_offchain_channel: Channel,
     }
 }
