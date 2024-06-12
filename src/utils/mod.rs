@@ -5,6 +5,7 @@ pub mod event_streaming;
 pub mod icon;
 pub mod posts;
 pub mod profile;
+pub mod report;
 pub mod route;
 pub mod timestamp;
 pub mod user;
@@ -26,4 +27,9 @@ impl<T> PartialEq for MockPartialEq<T> {
     fn eq(&self, _: &Self) -> bool {
         false
     }
+}
+
+#[cfg(all(feature = "ga4", feature = "ssr"))]
+pub mod off_chain {
+    tonic::include_proto!("off_chain");
 }
