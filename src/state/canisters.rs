@@ -1,7 +1,7 @@
-use std::{collections::HashSet, sync::Arc};
+use std::sync::Arc;
 
 use candid::Principal;
-use ic_agent::{identity::DelegatedIdentity, AgentError, Identity};
+use ic_agent::{agent::AgentBuilder, identity::DelegatedIdentity, AgentError, Identity};
 use leptos::*;
 use yral_metadata_client::MetadataClient;
 use yral_metadata_types::UserMetadata;
@@ -10,14 +10,40 @@ use crate::{
     auth::DelegatedIdentityWire,
     canister::{
         individual_user_template::{IndividualUserTemplate, Result9, UserCanisterDetails},
-        platform_orchestrator::{self, PlatformOrchestrator},
-        post_cache::{self, PostCache},
+        platform_orchestrator::PlatformOrchestrator,
+        post_cache::PostCache,
         user_index::UserIndex,
-        AGENT_URL,
+        PLATFORM_ORCHESTRATOR_ID, POST_CACHE_ID,
     },
-    consts::METADATA_API_BASE,
+    consts::{AGENT_URL, METADATA_API_BASE},
     utils::{profile::ProfileDetails, MockPartialEq},
 };
+
+pub fn build_agent(builder_func: impl FnOnce(AgentBuilder) -> AgentBuilder) -> ic_agent::Agent {
+    let mut builder = ic_agent::Agent::builder().with_url(AGENT_URL);
+
+    builder = builder_func(builder);
+    #[cfg(any(feature = "local-bin", feature = "local-lib"))]
+    {
+        builder = builder.with_verify_query_signatures(false);
+        let agent = builder.build().unwrap();
+        // TODO: this is specific to the local environment
+        agent.set_root_key(Vec::from([
+            48, 129, 130, 48, 29, 6, 13, 43, 6, 1, 4, 1, 130, 220, 124, 5, 3, 1, 2, 1, 6, 12, 43,
+            6, 1, 4, 1, 130, 220, 124, 5, 3, 2, 1, 3, 97, 0, 177, 245, 178, 217, 104, 189, 171,
+            227, 105, 94, 61, 178, 63, 151, 4, 117, 247, 115, 131, 226, 98, 62, 205, 43, 78, 42, 7,
+            213, 13, 11, 186, 34, 7, 14, 23, 23, 196, 62, 83, 237, 220, 71, 19, 60, 44, 9, 152, 36,
+            25, 96, 126, 153, 75, 232, 77, 136, 196, 241, 4, 243, 202, 21, 52, 235, 136, 5, 178,
+            138, 210, 174, 215, 93, 253, 250, 164, 233, 106, 176, 111, 133, 142, 165, 125, 25, 82,
+            136, 150, 165, 108, 198, 152, 49, 68, 168, 10, 40,
+        ]));
+        agent
+    }
+    #[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
+    {
+        builder.build().unwrap()
+    }
+}
 
 #[derive(Clone)]
 pub struct Canisters<const AUTH: bool> {
@@ -32,10 +58,7 @@ pub struct Canisters<const AUTH: bool> {
 impl Default for Canisters<false> {
     fn default() -> Self {
         Self {
-            agent: ic_agent::Agent::builder()
-                .with_url(AGENT_URL)
-                .build()
-                .unwrap(),
+            agent: build_agent(|b| b),
             id: None,
             metadata_client: MetadataClient::with_base_url(METADATA_API_BASE.clone()),
             user_canister: Principal::anonymous(),
@@ -56,11 +79,7 @@ impl Canisters<true> {
         let id = Arc::new(id);
 
         Canisters {
-            agent: ic_agent::Agent::builder()
-                .with_url(AGENT_URL)
-                .with_arc_identity(id.clone())
-                .build()
-                .unwrap(),
+            agent: build_agent(|b| b.with_arc_identity(id.clone())),
             metadata_client: MetadataClient::with_base_url(METADATA_API_BASE.clone()),
             id: Some(id),
             user_canister: Principal::anonymous(),
@@ -96,7 +115,7 @@ impl Canisters<true> {
 
 impl<const A: bool> Canisters<A> {
     pub fn post_cache(&self) -> PostCache<'_> {
-        PostCache(post_cache::CANISTER_ID, &self.agent)
+        PostCache(POST_CACHE_ID, &self.agent)
     }
 
     pub fn individual_user(&self, user_canister: Principal) -> IndividualUserTemplate<'_> {
@@ -108,7 +127,7 @@ impl<const A: bool> Canisters<A> {
     }
 
     pub fn orchestrator(&self) -> PlatformOrchestrator<'_> {
-        PlatformOrchestrator(platform_orchestrator::CANISTER_ID, &self.agent)
+        PlatformOrchestrator(PLATFORM_ORCHESTRATOR_ID, &self.agent)
     }
 
     pub async fn get_individual_canister_by_user_principal(
@@ -123,16 +142,25 @@ impl<const A: bool> Canisters<A> {
     }
 
     async fn subnet_indexes(&self) -> Result<Vec<Principal>, AgentError> {
-        // TODO: this is temporary
-        let blacklisted =
-            HashSet::from([Principal::from_text("rimrc-piaaa-aaaao-aaljq-cai").unwrap()]);
-        let orchestrator = self.orchestrator();
-        Ok(orchestrator
-            .get_all_available_subnet_orchestrators()
-            .await?
-            .into_iter()
-            .filter(|subnet| !blacklisted.contains(subnet))
-            .collect())
+        #[cfg(any(feature = "local-bin", feature = "local-lib"))]
+        {
+            use crate::canister::USER_INDEX_ID;
+            Ok(vec![USER_INDEX_ID])
+        }
+        #[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
+        {
+            use std::collections::HashSet;
+            // TODO: this is temporary
+            let blacklisted =
+                HashSet::from([Principal::from_text("rimrc-piaaa-aaaao-aaljq-cai").unwrap()]);
+            let orchestrator = self.orchestrator();
+            Ok(orchestrator
+                .get_all_available_subnet_orchestrators()
+                .await?
+                .into_iter()
+                .filter(|subnet| !blacklisted.contains(subnet))
+                .collect())
+        }
     }
 }
 

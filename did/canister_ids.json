@@ -1,20 +1,26 @@
 {
   "configuration": {
-    "ic": "efsfj-sqaaa-aaaap-qatwa-cai"
+    "ic": "efsfj-sqaaa-aaaap-qatwa-cai",
+    "local": "bnz7o-iuaaa-aaaaa-qaaaa-cai"
   },
   "data_backup": {
-    "ic": "jwktp-qyaaa-aaaag-abcfa-cai"
+    "ic": "jwktp-qyaaa-aaaag-abcfa-cai",
+    "local": "bkyz2-fmaaa-aaaaa-qaaaq-cai"
   },
   "individual_user_template": {
-    "ic": "dc47w-kaaaa-aaaak-qav3q-cai"
+    "ic": "dc47w-kaaaa-aaaak-qav3q-cai",
+    "local": "bd3sg-teaaa-aaaaa-qaaba-cai"
   },
   "platform_orchestrator": {
-    "ic": "74zq4-iqaaa-aaaam-ab53a-cai"
+    "ic": "74zq4-iqaaa-aaaam-ab53a-cai",
+    "local": "bw4dl-smaaa-aaaaa-qaacq-cai"
   },
   "post_cache": {
-    "ic": "zyajx-3yaaa-aaaag-acoga-cai"
+    "ic": "zyajx-3yaaa-aaaag-acoga-cai",
+    "local": "be2us-64aaa-aaaaa-qaabq-cai"
   },
   "user_index": {
-    "ic": "rimrc-piaaa-aaaao-aaljq-cai"
+    "ic": "rimrc-piaaa-aaaao-aaljq-cai",
+    "local": "br5f7-7uaaa-aaaaa-qaaca-cai"
   }
 }

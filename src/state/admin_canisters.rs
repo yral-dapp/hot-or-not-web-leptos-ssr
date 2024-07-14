@@ -2,9 +2,8 @@ use candid::Principal;
 use ic_agent::Identity;
 use leptos::expect_context;
 
-use crate::canister::{
-    individual_user_template::IndividualUserTemplate, user_index::UserIndex, AGENT_URL,
-};
+use super::canisters::build_agent;
+use crate::canister::{individual_user_template::IndividualUserTemplate, user_index::UserIndex};
 
 #[derive(Clone)]
 pub struct AdminCanisters {
@@ -14,11 +13,7 @@ pub struct AdminCanisters {
 impl AdminCanisters {
     pub fn new(key: impl Identity + 'static) -> Self {
         Self {
-            agent: ic_agent::Agent::builder()
-                .with_url(AGENT_URL)
-                .with_identity(key)
-                .build()
-                .unwrap(),
+            agent: build_agent(|b| b.with_identity(key)),
         }
     }
 
