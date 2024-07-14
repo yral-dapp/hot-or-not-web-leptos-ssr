@@ -129,6 +129,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "async-lock"
+version = "3.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ff6e472cdea888a4bd64f342f09b3f50e1886d32afe8df3d663c01140b811b18"
+dependencies = [
+ "event-listener",
+ "event-listener-strategy",
+ "pin-project-lite",
+]
+
+[[package]]
 name = "async-recursion"
 version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -829,6 +840,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "concurrent-queue"
+version = "2.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4ca0197aee26d1ae37445ee532fefce43251d24cc7c166799f4d46817f1d3973"
+dependencies = [
+ "crossbeam-utils",
+]
+
+[[package]]
 name = "config"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -947,6 +967,12 @@ checksum = "a97769d94ddab943e4510d138150169a2758b5ef3eb191a9ee688de3e23ef7b3"
 dependencies = [
  "cfg-if",
 ]
+
+[[package]]
+name = "crossbeam-utils"
+version = "0.8.20"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "22ec99545bb0ed0ea7bb9b8e1e9122ea386ff8a48c0922e43f36d45ab09e0e80"
 
 [[package]]
 name = "crunchy"
@@ -1397,6 +1423,27 @@ checksum = "534c5cf6194dfab3db3242765c03bbe257cf92f22b38f6bc0c58d59108a820ba"
 dependencies = [
  "libc",
  "windows-sys 0.52.0",
+]
+
+[[package]]
+name = "event-listener"
+version = "5.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6032be9bd27023a771701cc49f9f053c751055f71efb2e0ae5c15809093675ba"
+dependencies = [
+ "concurrent-queue",
+ "parking",
+ "pin-project-lite",
+]
+
+[[package]]
+name = "event-listener-strategy"
+version = "0.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0f214dc438f977e6d4e3500aaa277f5ad94ca83fbbd9b1a15713ce2344ccc5a1"
+dependencies = [
+ "event-listener",
+ "pin-project-lite",
 ]
 
 [[package]]
@@ -2880,10 +2927,10 @@ dependencies = [
 
 [[package]]
 name = "ic-agent"
-version = "0.34.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "555eda283b8ba1a996d44d80b6c9a6d38a6cbb81797a7b7bbee134fdde64ce48"
+version = "0.36.0"
+source = "git+https://github.com/rupansh/agent-rs?rev=8e60e04fbdfaff6dbcf006843a86038d561aab95#8e60e04fbdfaff6dbcf006843a86038d561aab95"
 dependencies = [
+ "async-lock",
  "backoff",
  "cached 0.46.1",
  "candid",
@@ -2904,7 +2951,7 @@ dependencies = [
  "pkcs8",
  "rand",
  "rangemap",
- "reqwest 0.11.27",
+ "reqwest 0.12.5",
  "ring",
  "rustls-webpki 0.101.7",
  "sec1",
@@ -2937,9 +2984,8 @@ dependencies = [
 
 [[package]]
 name = "ic-transport-types"
-version = "0.34.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7c06d3c1292368c813f8104d9d8294bda5577ea6fe4501a65997d0b7f155f15f"
+version = "0.36.0"
+source = "git+https://github.com/rupansh/agent-rs?rev=8e60e04fbdfaff6dbcf006843a86038d561aab95#8e60e04fbdfaff6dbcf006843a86038d561aab95"
 dependencies = [
  "candid",
  "hex",
@@ -4160,6 +4206,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "parking"
+version = "2.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bb813b8af86854136c6922af0598d719255ecb2179515e6e7730d468f05c9cae"
+
+[[package]]
 name = "parking_lot"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4794,12 +4846,10 @@ dependencies = [
  "system-configuration",
  "tokio",
  "tokio-rustls 0.24.1",
- "tokio-util",
  "tower-service",
  "url",
  "wasm-bindgen",
  "wasm-bindgen-futures",
- "wasm-streams",
  "web-sys",
  "webpki-roots 0.25.4",
  "winreg 0.50.0",
@@ -4814,6 +4864,7 @@ dependencies = [
  "base64 0.22.1",
  "bytes",
  "encoding_rs",
+ "futures-channel",
  "futures-core",
  "futures-util",
  "h2 0.4.5",
@@ -4846,10 +4897,12 @@ dependencies = [
  "tokio",
  "tokio-native-tls",
  "tokio-rustls 0.26.0",
+ "tokio-util",
  "tower-service",
  "url",
  "wasm-bindgen",
  "wasm-bindgen-futures",
+ "wasm-streams",
  "web-sys",
  "webpki-roots 0.26.1",
  "winreg 0.52.0",
@@ -6645,7 +6698,7 @@ checksum = "cfe53a6657fd280eaa890a3bc59152892ffa3e30101319d168b781ed6529b049"
 [[package]]
 name = "yral-identity"
 version = "0.1.0"
-source = "git+https://github.com/go-bazzinga/yral-identity.git?rev=346f61f5bf07b619be8dfc3d041dc665c4c66113#346f61f5bf07b619be8dfc3d041dc665c4c66113"
+source = "git+https://github.com/go-bazzinga/yral-identity.git?rev=6df2ed46e422302cb47d22ce30927756ee531a66#6df2ed46e422302cb47d22ce30927756ee531a66"
 dependencies = [
  "candid",
  "ic-agent",
@@ -6657,7 +6710,7 @@ dependencies = [
 [[package]]
 name = "yral-metadata-client"
 version = "0.1.0"
-source = "git+https://github.com/go-bazzinga/yral-metadata?rev=c2c5d254ac273681a66966d62b6f01785679a1be#c2c5d254ac273681a66966d62b6f01785679a1be"
+source = "git+https://github.com/go-bazzinga/yral-metadata?rev=c394bf9af3f32d81c1ac50b966c25dafafa2545b#c394bf9af3f32d81c1ac50b966c25dafafa2545b"
 dependencies = [
  "ic-agent",
  "reqwest 0.12.5",
@@ -6669,7 +6722,7 @@ dependencies = [
 [[package]]
 name = "yral-metadata-types"
 version = "0.1.0"
-source = "git+https://github.com/go-bazzinga/yral-metadata?rev=c2c5d254ac273681a66966d62b6f01785679a1be#c2c5d254ac273681a66966d62b6f01785679a1be"
+source = "git+https://github.com/go-bazzinga/yral-metadata?rev=c394bf9af3f32d81c1ac50b966c25dafafa2545b#c394bf9af3f32d81c1ac50b966c25dafafa2545b"
 dependencies = [
  "candid",
  "serde",

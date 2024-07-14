@@ -25,19 +25,11 @@ pub fn build_agent(builder_func: impl FnOnce(AgentBuilder) -> AgentBuilder) -> i
     builder = builder_func(builder);
     #[cfg(any(feature = "local-bin", feature = "local-lib"))]
     {
-        builder = builder.with_verify_query_signatures(false);
-        let agent = builder.build().unwrap();
-        // TODO: this is specific to the local environment
-        agent.set_root_key(Vec::from([
-            48, 129, 130, 48, 29, 6, 13, 43, 6, 1, 4, 1, 130, 220, 124, 5, 3, 1, 2, 1, 6, 12, 43,
-            6, 1, 4, 1, 130, 220, 124, 5, 3, 2, 1, 3, 97, 0, 177, 245, 178, 217, 104, 189, 171,
-            227, 105, 94, 61, 178, 63, 151, 4, 117, 247, 115, 131, 226, 98, 62, 205, 43, 78, 42, 7,
-            213, 13, 11, 186, 34, 7, 14, 23, 23, 196, 62, 83, 237, 220, 71, 19, 60, 44, 9, 152, 36,
-            25, 96, 126, 153, 75, 232, 77, 136, 196, 241, 4, 243, 202, 21, 52, 235, 136, 5, 178,
-            138, 210, 174, 215, 93, 253, 250, 164, 233, 106, 176, 111, 133, 142, 165, 125, 25, 82,
-            136, 150, 165, 108, 198, 152, 49, 68, 168, 10, 40,
-        ]));
-        agent
+        builder = builder
+            .with_verify_query_signatures(false)
+            .with_auto_fetch_root_key(true);
+        
+        builder.build().unwrap()
     }
     #[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
     {
@@ -49,7 +41,7 @@ pub fn build_agent(builder_func: impl FnOnce(AgentBuilder) -> AgentBuilder) -> i
 pub struct Canisters<const AUTH: bool> {
     agent: ic_agent::Agent,
     id: Option<Arc<DelegatedIdentity>>,
-    metadata_client: MetadataClient,
+    metadata_client: MetadataClient<false>,
     user_canister: Principal,
     expiry: u64,
     profile_details: Option<ProfileDetails>,
