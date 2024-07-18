@@ -92,6 +92,7 @@ tonic = { version = "0.11.0", features = [
 ], optional = true }
 prost = { version = "0.12.4", optional = true }
 hmac = { version = "0.12.1", optional = true }
+wasm-bindgen-futures = { version = "0.4.42", optional = true }
 
 [build-dependencies]
 serde = { version = "1.0", features = ["derive"] }
@@ -108,6 +109,8 @@ hydrate = [
     "ic-agent/wasm-bindgen",
     "dep:web-sys",
     "reqwest/native-tls",
+    "dep:rand_chacha",
+    "dep:wasm-bindgen-futures"
 ]
 ssr = [
     "dep:axum",
@@ -229,7 +232,7 @@ env = "DEV"
 # The features to use when compiling the bin target
 #
 # Optional. Can be over-ridden with the command line parameter --bin-features
-bin-features = ["ssr"]
+bin-features = ["ssr","local-auth"]
 
 # If the --no-default-features flag should be used when compiling the bin target
 #
@@ -239,7 +242,7 @@ bin-default-features = false
 # The features to use when compiling the lib target
 #
 # Optional. Can be over-ridden with the command line parameter --lib-features
-lib-features = ["hydrate"]
+lib-features = ["hydrate local-auth"]
 
 # If the --no-default-features flag should be used when compiling the lib target
 #

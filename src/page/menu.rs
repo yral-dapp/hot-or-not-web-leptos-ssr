@@ -1,13 +1,17 @@
 use crate::component::back_btn::BackButton;
 use crate::component::canisters_prov::AuthCansProvider;
+use crate::component::content_upload::YoutubeUpload;
+use crate::component::modal::Modal;
 use crate::component::title::Title;
 use crate::component::{connect::ConnectLogin, social::*, toggle::Toggle};
 use crate::consts::{social, NSFW_TOGGLE_STORE};
 use crate::state::auth::account_connected_reader;
 use crate::utils::profile::ProfileDetails;
+use ic_agent::agent::http_transport::reqwest_transport::reqwest::Client;
 use leptos::html::Input;
 use leptos::*;
 use leptos_icons::*;
+use leptos_router::{use_query, use_query_map};
 use leptos_use::use_event_listener;
 use leptos_use::{storage::use_local_storage, utils::FromToStringCodec};
 
@@ -80,9 +84,11 @@ fn ProfileLoaded(user_details: ProfileDetails) -> impl IntoView {
         <div class="w-48 md:w-36 lg:w-24 aspect-square overflow-clip rounded-full">
             <img class="h-full w-full object-cover" src=user_details.profile_pic_or_random()/>
         </div>
-        <div class="flex flex-col"
+        <div
+            class="flex flex-col"
             class=("w-12/12", move || !is_connected())
-            class=("sm:w-5/12", move || !is_connected())>
+            class=("sm:w-5/12", move || !is_connected())
+        >
             <span class="text-white text-ellipsis line-clamp-1 text-xl">
                 {user_details.display_name_or_fallback()}
             </span>
@@ -136,8 +142,19 @@ fn NsfwToggle() -> impl IntoView {
 #[component]
 pub fn Menu() -> impl IntoView {
     let (is_connected, _) = account_connected_reader();
+    let query_params = use_query_map();
+
+    create_effect(move |_| {
+        //check whether query param is right if right set the show_modal_content as true.
+        let url = query_params.get().0.get("text");
+    });
+
+    let show_content_modal = create_rw_signal(query_params.get_untracked().0.len() > 0);
 
     view! {
+        <Modal show=show_content_modal>
+            <YoutubeUpload url=query_params.get().0.get("text").cloned().unwrap_or_default()/>
+        </Modal>
         <div class="min-h-screen w-full flex flex-col text-white pt-2 pb-12 bg-black items-center divide-y divide-white/10">
             <div class="flex flex-col items-center w-full gap-20 pb-16">
                 <Title justify_center=false>
@@ -163,7 +180,11 @@ pub fn Menu() -> impl IntoView {
             </div>
             <div class="flex flex-col py-12 px-8 gap-8 w-full text-lg">
                 <NsfwToggle/>
-                <MenuItem href="/account-transfer" text="HotorNot Account Transfer" icon=icondata::FaMoneyBillTransferSolid/>
+                <MenuItem
+                    href="/account-transfer"
+                    text="HotorNot Account Transfer"
+                    icon=icondata::FaMoneyBillTransferSolid
+                />
                 <MenuItem href="/refer-earn" text="Refer & Earn" icon=icondata::AiGiftFilled/>
                 <MenuItem
                     href=social::TELEGRAM

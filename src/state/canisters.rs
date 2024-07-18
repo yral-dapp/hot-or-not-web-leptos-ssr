@@ -5,6 +5,7 @@ use ic_agent::{identity::DelegatedIdentity, AgentError, Identity};
 use leptos::*;
 use yral_metadata_client::MetadataClient;
 use yral_metadata_types::UserMetadata;
+use std::error::Error;
 
 use crate::{
     auth::DelegatedIdentityWire,
@@ -15,15 +16,18 @@ use crate::{
         user_index::UserIndex,
         AGENT_URL,
     },
-    consts::METADATA_API_BASE,
+    consts::{DOWNLOAD_UPLOAD_SERVICE, METADATA_API_BASE},
     utils::{profile::ProfileDetails, MockPartialEq},
 };
+
+use super::content_seed_client::ContentSeedClient;
 
 #[derive(Clone)]
 pub struct Canisters<const AUTH: bool> {
     agent: ic_agent::Agent,
     id: Option<Arc<DelegatedIdentity>>,
     metadata_client: MetadataClient,
+    content_seed_client: ContentSeedClient,
     user_canister: Principal,
     expiry: u64,
     profile_details: Option<ProfileDetails>,
@@ -38,6 +42,7 @@ impl Default for Canisters<false> {
                 .unwrap(),
             id: None,
             metadata_client: MetadataClient::with_base_url(METADATA_API_BASE.clone()),
+            content_seed_client: ContentSeedClient::with_base_url(DOWNLOAD_UPLOAD_SERVICE.clone()),
             user_canister: Principal::anonymous(),
             expiry: 0,
             profile_details: None,
@@ -62,6 +67,7 @@ impl Canisters<true> {
                 .build()
                 .unwrap(),
             metadata_client: MetadataClient::with_base_url(METADATA_API_BASE.clone()),
+            content_seed_client: ContentSeedClient::with_base_url(DOWNLOAD_UPLOAD_SERVICE.clone()),
             id: Some(id),
             user_canister: Principal::anonymous(),
             expiry,
@@ -91,6 +97,18 @@ impl Canisters<true> {
         self.profile_details
             .clone()
             .expect("Authenticated canisters must have profile details")
+    }
+
+    pub fn user_principal(&self) -> Principal {
+        self.identity().sender().expect("expect principal to be present")
+    }
+
+    pub async fn is_user_authorized_to_seed_content(&self) -> Result<bool, Box<dyn Error>>{
+        self.content_seed_client.check_if_authorized(self.user_principal()).await
+    }
+
+    pub async fn upload_using_content_seed(&self, delegated_identity: DelegatedIdentityWire, url: String) -> Result<(), Box<dyn Error>> {
+        self.content_seed_client.upload_content(url, delegated_identity).await
     }
 }
 

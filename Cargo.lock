@@ -1872,6 +1872,7 @@ dependencies = [
  "tracing",
  "uts2ts",
  "wasm-bindgen",
+ "wasm-bindgen-futures",
  "web-sys",
  "web-time",
  "yral-metadata-client",
