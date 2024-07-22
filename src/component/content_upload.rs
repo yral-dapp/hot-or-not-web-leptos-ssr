@@ -1,8 +1,5 @@
+use crate::{auth::DelegatedIdentityWire, state::canisters::Canisters};
 use leptos::*;
-use crate::{
-    auth::DelegatedIdentityWire,
-    state::canisters::Canisters,
-};
 #[component]
 pub fn YoutubeUpload(
     canisters: Canisters<true>,
