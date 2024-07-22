@@ -69,14 +69,29 @@ async fn init_grpc_offchain_channel() -> tonic::transport::Channel {
 #[cfg(feature = "backend-admin")]
 fn init_admin_canisters() -> crate::state::admin_canisters::AdminCanisters {
     use crate::state::admin_canisters::AdminCanisters;
-    use ic_agent::identity::BasicIdentity;
 
-    let admin_id_pem =
-        env::var("BACKEND_ADMIN_IDENTITY").expect("`BACKEND_ADMIN_IDENTITY` is required!");
-    let admin_id_pem_by = admin_id_pem.as_bytes();
-    let admin_id =
-        BasicIdentity::from_pem(admin_id_pem_by).expect("Invalid `BACKEND_ADMIN_IDENTITY`");
-    AdminCanisters::new(admin_id)
+    #[cfg(feature = "local-bin")]
+    {
+        use ic_agent::identity::Secp256k1Identity;
+        use k256::SecretKey;
+        use yral_testcontainers::backend::ADMIN_SECP_BYTES;
+
+        let sk = SecretKey::from_bytes(&ADMIN_SECP_BYTES.into()).unwrap();
+        let identity = Secp256k1Identity::from_private_key(sk);
+        AdminCanisters::new(identity)
+    }
+
+    #[cfg(not(feature = "local-bin"))]
+    {
+        use ic_agent::identity::BasicIdentity;
+
+        let admin_id_pem =
+            env::var("BACKEND_ADMIN_IDENTITY").expect("`BACKEND_ADMIN_IDENTITY` is required!");
+        let admin_id_pem_by = admin_id_pem.as_bytes();
+        let admin_id =
+            BasicIdentity::from_pem(admin_id_pem_by).expect("Invalid `BACKEND_ADMIN_IDENTITY`");
+        AdminCanisters::new(admin_id)
+    }
 }
 
 pub struct AppStateRes {

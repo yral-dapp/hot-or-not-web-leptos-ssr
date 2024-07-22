@@ -92,7 +92,7 @@ tonic = { version = "0.11.0", features = [
 prost = { version = "0.12.4", optional = true }
 hmac = { version = "0.12.1", optional = true }
 testcontainers = { version = "0.20.0", optional = true }
-yral-testcontainers = { git = "https://github.com/go-bazzinga/yral-testcontainers", rev = "14740097702fbc925ec2dbaa2b4a7660775576f4", optional = true }
+yral-testcontainers = { git = "https://github.com/go-bazzinga/yral-testcontainers", rev = "a68333dc22a39574e951438f83c4679a6074f0ce", optional = true }
 
 [build-dependencies]
 serde = { version = "1.0", features = ["derive"] }
@@ -171,6 +171,7 @@ local-bin = [
     "ssr",
     "redis-kv",
     "local-auth",
+    "backend-admin",
     "dep:testcontainers",
     "dep:yral-testcontainers",
 ]
@@ -178,6 +179,7 @@ local-lib = [
     "hydrate",
     "redis-kv",
     "local-auth",
+    "backend-admin",
 ]
 
 [profile.wasm-release]

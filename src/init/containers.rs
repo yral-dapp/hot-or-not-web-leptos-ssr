@@ -1,11 +1,21 @@
+use std::time::Duration;
+
+use ic_agent::{identity::Secp256k1Identity, AgentError, Identity};
+use k256::SecretKey;
 use testcontainers::{
     core::{ContainerPort, IntoContainerPort, WaitFor},
     runners::AsyncRunner,
     ContainerAsync, GenericImage, Image, ImageExt,
 };
+use yral_metadata_client::MetadataClient;
+use yral_metadata_types::UserMetadata;
 use yral_testcontainers::{
-    backend::{self, YralBackend},
+    backend::{self, YralBackend, ADMIN_SECP_BYTES},
     metadata::{self, YralMetadata},
+};
+
+use crate::{
+    canister::USER_INDEX_ID, consts::METADATA_API_BASE, state::admin_canisters::AdminCanisters,
 };
 
 type MaybeContainer<I> = Option<ContainerAsync<I>>;
@@ -39,6 +49,39 @@ impl TestContainers {
 
     pub async fn start_metadata(&mut self) {
         self.metadata = Some(Self::start_image(YralMetadata, metadata::REST_PORT).await);
+
+        // Setup User Principal -> User Canister ID
+        // for the admin canister
+        let metadata_client: MetadataClient<false> =
+            MetadataClient::with_base_url(METADATA_API_BASE.clone());
+        let sk = SecretKey::from_bytes(&ADMIN_SECP_BYTES.into()).unwrap();
+        let id = Secp256k1Identity::from_private_key(sk);
+        let cans = AdminCanisters::new(id.clone());
+
+        let user_index = cans.user_index_with(USER_INDEX_ID).await.unwrap();
+        let admin_principal = id.sender().unwrap();
+        let admin_canister = loop {
+            let res = user_index
+                .get_user_canister_id_from_user_principal_id(admin_principal)
+                .await;
+            match res {
+                Ok(princ) => break princ.unwrap(),
+                Err(AgentError::HttpError(_)) => {
+                    tokio::time::sleep(Duration::from_secs(8)).await;
+                    continue;
+                }
+                Err(e) => panic!("Failed to get user canister {e}"),
+            }
+        };
+        let metadata = UserMetadata {
+            user_canister_id: admin_canister,
+            user_name: "".into(),
+        };
+
+        metadata_client
+            .set_user_metadata(&id, metadata)
+            .await
+            .unwrap()
     }
 
     pub async fn start_backend(&mut self) {
