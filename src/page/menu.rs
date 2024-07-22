@@ -2,11 +2,14 @@ use crate::component::back_btn::BackButton;
 use crate::component::canisters_prov::AuthCansProvider;
 use crate::component::content_upload::YoutubeUpload;
 use crate::component::modal::Modal;
+use crate::component::spinner::FullScreenSpinner;
 use crate::component::title::Title;
 use crate::component::{connect::ConnectLogin, social::*, toggle::Toggle};
 use crate::consts::{social, NSFW_TOGGLE_STORE};
 use crate::state::auth::account_connected_reader;
+use crate::state::canisters::authenticated_canisters;
 use crate::utils::profile::ProfileDetails;
+use crate::utils::MockPartialEq;
 use ic_agent::agent::http_transport::reqwest_transport::reqwest::Client;
 use leptos::html::Input;
 use leptos::*;
@@ -142,64 +145,127 @@ fn NsfwToggle() -> impl IntoView {
 #[component]
 pub fn Menu() -> impl IntoView {
     let (is_connected, _) = account_connected_reader();
-    let query_params = use_query_map();
+    let query_map = use_query_map();
+    let show_content_modal = create_rw_signal(false);
+
+    let can_res = authenticated_canisters();
+    let is_authorized = create_local_resource_with_initial_value(
+        move || MockPartialEq(can_res()),
+        move |can_res| async move {
+            let canisters = can_res.0?.ok()?;
+            let res = canisters.is_user_authorized_to_seed_content().await.ok();
+            res
+        },
+        Some(Some(false)),
+    );
 
     create_effect(move |_| {
         //check whether query param is right if right set the show_modal_content as true.
-        let url = query_params.get().0.get("text");
+        let authorized = is_authorized.get().flatten()?;
+        let query_params = query_map.get();
+        let url = query_params.0.get("text")?;
+        if url.len() > 0 && authorized && is_connected.get() {
+            show_content_modal.set(true);
+        }
+        Some(())
     });
 
-    let show_content_modal = create_rw_signal(query_params.get_untracked().0.len() > 0);
-
     view! {
-        <Modal show=show_content_modal>
-            <YoutubeUpload url=query_params.get().0.get("text").cloned().unwrap_or_default()/>
-        </Modal>
-        <div class="min-h-screen w-full flex flex-col text-white pt-2 pb-12 bg-black items-center divide-y divide-white/10">
-            <div class="flex flex-col items-center w-full gap-20 pb-16">
-                <Title justify_center=false>
-                    <div class="flex flex-row justify-between">
-                        <BackButton fallback="/".to_string()/>
-                        <span class="font-bold text-2xl">Menu</span>
-                        <div></div>
-                    </div>
-                </Title>
-                <div class="flex flex-col items-center w-full gap-4">
-                    <div class="flex flex-row justify-center gap-4 items-center px-4">
-                        <ProfileInfo/>
-                    </div>
-                    <Show when=move || !is_connected()>
-                        <div class="w-full px-8 md:w-4/12 xl:w-2/12">
-                            <ConnectLogin/>
+        <Suspense fallback=move || {
+            view! { <FullScreenSpinner/> }
+        }>
+
+            {move || {
+                let authenticated_canister = can_res.get()?.ok()?;
+                Some(
+                    view! {
+                        <Modal show=show_content_modal>
+                            <YoutubeUpload
+                                canisters=authenticated_canister.clone()
+                                url=query_map.get().0.get("text").cloned().unwrap_or_default()
+                            />
+                        </Modal>
+                        <div class="min-h-screen w-full flex flex-col text-white pt-2 pb-12 bg-black items-center divide-y divide-white/10">
+                            <div class="flex flex-col items-center w-full gap-20 pb-16">
+                                <Title justify_center=false>
+                                    <div class="flex flex-row justify-between">
+                                        <BackButton fallback="/".to_string()/>
+                                        <span class="font-bold text-2xl">Menu</span>
+                                        <div></div>
+                                    </div>
+                                </Title>
+                                <div class="flex flex-col items-center w-full gap-4">
+                                    <div class="flex flex-row justify-center gap-4 items-center px-4">
+                                        <ProfileInfo/>
+                                    </div>
+                                    <Show when=move || !is_connected()>
+                                        <div class="w-full px-8 md:w-4/12 xl:w-2/12">
+                                            <ConnectLogin/>
+                                        </div>
+                                        <div class="w-full px-8 text-center text-sm font-sans">
+                                            {r#"Your Yral account has been setup. Login with Google to not lose progress."#}
+                                        </div>
+                                    </Show>
+                                    {move || {
+                                        let authorized = is_authorized.get().flatten()?;
+                                        if authorized && is_connected.get() {
+                                            return Some(
+                                                view! {
+                                                    <div class="w-full px-8 md:w-4/12 xl:w-2/12">
+                                                        <button
+                                                            class="font-bold rounded-full bg-primary-600 py-2 md:py-3 w-full text-center text-lg md:text-xl text-white"
+                                                            on:click=move |_| show_content_modal.set(true)
+                                                        >
+                                                            Upload Content
+                                                        </button>
+                                                    </div>
+                                                },
+                                            );
+                                        }
+                                        None
+                                    }}
+
+                                </div>
+                            </div>
+                            <div class="flex flex-col py-12 px-8 gap-8 w-full text-lg">
+                                <NsfwToggle/>
+                                <MenuItem
+                                    href="/account-transfer"
+                                    text="HotorNot Account Transfer"
+                                    icon=icondata::FaMoneyBillTransferSolid
+                                />
+                                <MenuItem
+                                    href="/refer-earn"
+                                    text="Refer & Earn"
+                                    icon=icondata::AiGiftFilled
+                                />
+                                <MenuItem
+                                    href=social::TELEGRAM
+                                    text="Talk to the team"
+                                    icon=icondata::BiWhatsapp
+                                    target="_blank"
+                                />
+                                <MenuItem
+                                    href="/terms-of-service"
+                                    text="Terms of Service"
+                                    icon=icondata::TbBook2
+                                />
+                                <MenuItem
+                                    href="/privacy-policy"
+                                    text="Privacy Policy"
+                                    icon=icondata::TbLock
+                                />
+                                <Show when=is_connected>
+                                    <MenuItem href="/logout" text="Logout" icon=icondata::FiLogOut/>
+                                </Show>
+                            // <MenuItem href="/install-app" text="Install App" icon=icondata::TbDownload/>
+                            </div>
+                            <MenuFooter/>
                         </div>
-                        <div class="w-full px-8 text-center text-sm font-sans">
-                            {r#"Your Yral account has been setup. Login with Google to not lose progress."#}
-                        </div>
-                    </Show>
-                </div>
-            </div>
-            <div class="flex flex-col py-12 px-8 gap-8 w-full text-lg">
-                <NsfwToggle/>
-                <MenuItem
-                    href="/account-transfer"
-                    text="HotorNot Account Transfer"
-                    icon=icondata::FaMoneyBillTransferSolid
-                />
-                <MenuItem href="/refer-earn" text="Refer & Earn" icon=icondata::AiGiftFilled/>
-                <MenuItem
-                    href=social::TELEGRAM
-                    text="Talk to the team"
-                    icon=icondata::BiWhatsapp
-                    target="_blank"
-                />
-                <MenuItem href="/terms-of-service" text="Terms of Service" icon=icondata::TbBook2/>
-                <MenuItem href="/privacy-policy" text="Privacy Policy" icon=icondata::TbLock/>
-                <Show when=is_connected>
-                    <MenuItem href="/logout" text="Logout" icon=icondata::FiLogOut/>
-                </Show>
-            // <MenuItem href="/install-app" text="Install App" icon=icondata::TbDownload/>
-            </div>
-            <MenuFooter/>
-        </div>
+                    },
+                )
+            }}
+
+        </Suspense>
     }
 }
