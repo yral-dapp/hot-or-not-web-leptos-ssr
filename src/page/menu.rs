@@ -10,11 +10,10 @@ use crate::state::auth::account_connected_reader;
 use crate::state::canisters::authenticated_canisters;
 use crate::utils::profile::ProfileDetails;
 use crate::utils::MockPartialEq;
-use ic_agent::agent::http_transport::reqwest_transport::reqwest::Client;
 use leptos::html::Input;
 use leptos::*;
 use leptos_icons::*;
-use leptos_router::{use_query, use_query_map};
+use leptos_router::use_query_map;
 use leptos_use::use_event_listener;
 use leptos_use::{storage::use_local_storage, utils::FromToStringCodec};
 
@@ -153,8 +152,7 @@ pub fn Menu() -> impl IntoView {
         move || MockPartialEq(can_res()),
         move |can_res| async move {
             let canisters = can_res.0?.ok()?;
-            let res = canisters.is_user_authorized_to_seed_content().await.ok();
-            res
+            canisters.is_user_authorized_to_seed_content().await.ok()
         },
         Some(Some(false)),
     );
@@ -164,7 +162,7 @@ pub fn Menu() -> impl IntoView {
         let authorized = is_authorized.get().flatten()?;
         let query_params = query_map.get();
         let url = query_params.0.get("text")?;
-        if url.len() > 0 && authorized && is_connected.get() {
+        if !url.is_empty() && authorized && is_connected.get() {
             show_content_modal.set(true);
         }
         Some(())

@@ -1,12 +1,9 @@
 use candid::Principal;
-use http::StatusCode;
-use ic_agent::identity::DelegatedIdentity;
 use reqwest::Client;
 use reqwest::Url;
 use serde::Deserialize;
 use serde::Serialize;
 use std::error::Error;
-use yral_metadata_types::ApiResult;
 
 use crate::auth::DelegatedIdentityWire;
 

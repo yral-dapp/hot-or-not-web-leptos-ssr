@@ -1,18 +1,8 @@
+use leptos::*;
 use crate::{
     auth::DelegatedIdentityWire,
-    component::{
-        auth_providers::LoginProvCtx, login_modal::LoginModal, spinner::FullScreenSpinner,
-    },
-    state::canisters::{authenticated_canisters, Canisters},
-    utils::MockPartialEq,
+    state::canisters::Canisters,
 };
-use ic_agent::{identity::DelegatedIdentity, Identity};
-use leptos::*;
-use leptos_use::use_window;
-use wasm_bindgen::{closure::Closure, JsValue};
-
-use crate::state::auth::account_connected_reader;
-
 #[component]
 pub fn YoutubeUpload(
     canisters: Canisters<true>,
@@ -27,8 +17,7 @@ pub fn YoutubeUpload(
 
     let create_short_lived_delegated_identity = |canisters: &Canisters<true>| {
         let id = canisters.identity();
-        let delegated_identity_wire = DelegatedIdentityWire::delegate_short_lived_identity(id);
-        delegated_identity_wire
+        DelegatedIdentityWire::delegate_short_lived_identity(id)
     };
 
     let on_submit = create_action(move |_| {

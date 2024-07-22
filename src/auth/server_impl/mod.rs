@@ -10,7 +10,7 @@ use axum_extra::extract::{
 use candid::Principal;
 use http::header;
 use ic_agent::{
-    identity::{DelegatedIdentity, Delegation, Secp256k1Identity, SignedDelegation},
+    identity::{Delegation, Secp256k1Identity, SignedDelegation},
     Identity,
 };
 use leptos::{expect_context, ServerFnError};
