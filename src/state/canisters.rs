@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use candid::Principal;
-use ic_agent::{agent::AgentBuilder, identity::DelegatedIdentity, AgentError, Identity};
+use ic_agent::{identity::DelegatedIdentity, AgentError, Identity};
 use leptos::*;
 use yral_metadata_client::MetadataClient;
 use yral_metadata_types::UserMetadata;
@@ -15,31 +15,13 @@ use crate::{
         user_index::UserIndex,
         PLATFORM_ORCHESTRATOR_ID, POST_CACHE_ID,
     },
-    consts::{AGENT_URL, METADATA_API_BASE},
-    utils::{profile::ProfileDetails, MockPartialEq},
+    consts::METADATA_API_BASE,
+    utils::{ic::AgentWrapper, profile::ProfileDetails, MockPartialEq},
 };
-
-pub fn build_agent(builder_func: impl FnOnce(AgentBuilder) -> AgentBuilder) -> ic_agent::Agent {
-    let mut builder = ic_agent::Agent::builder().with_url(AGENT_URL);
-
-    builder = builder_func(builder);
-    #[cfg(any(feature = "local-bin", feature = "local-lib"))]
-    {
-        builder = builder
-            .with_verify_query_signatures(false)
-            .with_auto_fetch_root_key(true);
-        
-        builder.build().unwrap()
-    }
-    #[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
-    {
-        builder.build().unwrap()
-    }
-}
 
 #[derive(Clone)]
 pub struct Canisters<const AUTH: bool> {
-    agent: ic_agent::Agent,
+    agent: AgentWrapper,
     id: Option<Arc<DelegatedIdentity>>,
     metadata_client: MetadataClient<false>,
     user_canister: Principal,
@@ -50,7 +32,7 @@ pub struct Canisters<const AUTH: bool> {
 impl Default for Canisters<false> {
     fn default() -> Self {
         Self {
-            agent: build_agent(|b| b),
+            agent: AgentWrapper::build(|b| b),
             id: None,
             metadata_client: MetadataClient::with_base_url(METADATA_API_BASE.clone()),
             user_canister: Principal::anonymous(),
@@ -71,7 +53,7 @@ impl Canisters<true> {
         let id = Arc::new(id);
 
         Canisters {
-            agent: build_agent(|b| b.with_arc_identity(id.clone())),
+            agent: AgentWrapper::build(|b| b.with_arc_identity(id.clone())),
             metadata_client: MetadataClient::with_base_url(METADATA_API_BASE.clone()),
             id: Some(id),
             user_canister: Principal::anonymous(),
@@ -94,8 +76,8 @@ impl Canisters<true> {
         self.user_canister
     }
 
-    pub fn authenticated_user(&self) -> IndividualUserTemplate<'_> {
-        IndividualUserTemplate(self.user_canister, &self.agent)
+    pub async fn authenticated_user(&self) -> Result<IndividualUserTemplate<'_>, AgentError> {
+        self.individual_user(self.user_canister).await
     }
 
     pub fn profile_details(&self) -> ProfileDetails {
@@ -106,20 +88,30 @@ impl Canisters<true> {
 }
 
 impl<const A: bool> Canisters<A> {
-    pub fn post_cache(&self) -> PostCache<'_> {
-        PostCache(POST_CACHE_ID, &self.agent)
+    pub async fn post_cache(&self) -> Result<PostCache<'_>, AgentError> {
+        let agent = self.agent.get_agent().await?;
+        Ok(PostCache(POST_CACHE_ID, agent))
     }
 
-    pub fn individual_user(&self, user_canister: Principal) -> IndividualUserTemplate<'_> {
-        IndividualUserTemplate(user_canister, &self.agent)
+    pub async fn individual_user(
+        &self,
+        user_canister: Principal,
+    ) -> Result<IndividualUserTemplate<'_>, AgentError> {
+        let agent = self.agent.get_agent().await?;
+        Ok(IndividualUserTemplate(user_canister, agent))
     }
 
-    pub fn user_index_with(&self, subnet_principal: Principal) -> UserIndex<'_> {
-        UserIndex(subnet_principal, &self.agent)
+    pub async fn user_index_with(
+        &self,
+        subnet_principal: Principal,
+    ) -> Result<UserIndex<'_>, AgentError> {
+        let agent = self.agent.get_agent().await?;
+        Ok(UserIndex(subnet_principal, agent))
     }
 
-    pub fn orchestrator(&self) -> PlatformOrchestrator<'_> {
-        PlatformOrchestrator(PLATFORM_ORCHESTRATOR_ID, &self.agent)
+    pub async fn orchestrator(&self) -> Result<PlatformOrchestrator<'_>, AgentError> {
+        let agent = self.agent.get_agent().await?;
+        Ok(PlatformOrchestrator(PLATFORM_ORCHESTRATOR_ID, agent))
     }
 
     pub async fn get_individual_canister_by_user_principal(
@@ -145,7 +137,7 @@ impl<const A: bool> Canisters<A> {
             // TODO: this is temporary
             let blacklisted =
                 HashSet::from([Principal::from_text("rimrc-piaaa-aaaao-aaljq-cai").unwrap()]);
-            let orchestrator = self.orchestrator();
+            let orchestrator = self.orchestrator().await?;
             Ok(orchestrator
                 .get_all_available_subnet_orchestrators()
                 .await?
@@ -173,7 +165,7 @@ async fn create_individual_canister(
 
     let discrim = u128::from_be_bytes(by);
     let subnet_idx = subnet_idxs[(discrim % subnet_idxs.len() as u128) as usize];
-    let idx = canisters.user_index_with(subnet_idx);
+    let idx = canisters.user_index_with(subnet_idx).await?;
     let user_canister = idx
         .get_requester_principals_canister_id_create_if_not_exists_and_optionally_allow_referrer()
         .await?;
@@ -208,7 +200,7 @@ pub async fn do_canister_auth(
         create_individual_canister(&canisters).await?
     };
 
-    let user = canisters.authenticated_user();
+    let user = canisters.authenticated_user().await?;
 
     if let Some(referrer_principal_id) = referrer {
         let referrer_canister = canisters

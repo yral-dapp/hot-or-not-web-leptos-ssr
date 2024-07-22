@@ -114,7 +114,7 @@ mod history_provider {
             ) -> Result<PageEntry<HistoryDetails>, AgentError> {
                 use crate::canister::individual_user_template::{MintEvent, Result7, TokenEvent};
                 use crate::utils::route::failure_redirect;
-                let individual = self.0.authenticated_user();
+                let individual = self.0.authenticated_user().await?;
                 let history = individual
                     .get_user_utility_token_transaction_history_with_pagination(
                         from as u64,

@@ -2928,7 +2928,8 @@ dependencies = [
 [[package]]
 name = "ic-agent"
 version = "0.36.0"
-source = "git+https://github.com/rupansh/agent-rs?rev=8e60e04fbdfaff6dbcf006843a86038d561aab95#8e60e04fbdfaff6dbcf006843a86038d561aab95"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ba85280257d8663adef20bf5c043b287b3a283d4f916073eb3ca9166a4a59d4b"
 dependencies = [
  "async-lock",
  "backoff",
@@ -2985,7 +2986,8 @@ dependencies = [
 [[package]]
 name = "ic-transport-types"
 version = "0.36.0"
-source = "git+https://github.com/rupansh/agent-rs?rev=8e60e04fbdfaff6dbcf006843a86038d561aab95#8e60e04fbdfaff6dbcf006843a86038d561aab95"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ce14c068bd053c0f5ab525326f3f358f265cdfcae279fbf6461fb529e9682acd"
 dependencies = [
  "candid",
  "hex",

@@ -62,7 +62,9 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
                     LikeVideo.send_event(post_details, likes, canister_store);
                 }
             });
-            let individual = canisters.individual_user(post_canister);
+            let Ok(individual) = canisters.individual_user(post_canister).await else {
+                return;
+            };
             match individual
                 .update_post_toggle_like_status_by_caller(post_id)
                 .await
