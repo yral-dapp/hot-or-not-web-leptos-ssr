@@ -66,7 +66,7 @@ impl TestContainers {
                 .await;
             match res {
                 Ok(princ) => break princ.unwrap(),
-                Err(AgentError::HttpError(_)) => {
+                Err(AgentError::HttpError(_) | AgentError::CertificateOutdated(_)) => {
                     tokio::time::sleep(Duration::from_secs(8)).await;
                     continue;
                 }
