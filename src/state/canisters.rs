@@ -3,7 +3,6 @@ use std::{collections::HashSet, sync::Arc};
 use candid::Principal;
 use ic_agent::{identity::DelegatedIdentity, AgentError, Identity};
 use leptos::*;
-use std::error::Error;
 use yral_metadata_client::MetadataClient;
 use yral_metadata_types::UserMetadata;
 
@@ -16,11 +15,9 @@ use crate::{
         user_index::UserIndex,
         AGENT_URL,
     },
-    consts::{DOWNLOAD_UPLOAD_SERVICE, METADATA_API_BASE},
+    consts::METADATA_API_BASE,
     utils::{profile::ProfileDetails, MockPartialEq},
 };
-
-use super::content_seed_client::ContentSeedClient;
 
 #[derive(Clone)]
 pub struct Canisters<const AUTH: bool> {

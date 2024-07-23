@@ -2,15 +2,14 @@ use crate::component::back_btn::BackButton;
 use crate::component::canisters_prov::AuthCansProvider;
 use crate::component::content_upload::YoutubeUpload;
 use crate::component::modal::Modal;
-use crate::component::spinner::{FullScreenSpinner, Spinner};
+use crate::component::spinner::Spinner;
 use crate::component::title::Title;
 use crate::component::{connect::ConnectLogin, social::*, toggle::Toggle};
 use crate::consts::{social, NSFW_TOGGLE_STORE};
 use crate::state::auth::account_connected_reader;
-use crate::state::canisters::{authenticated_canisters, Canisters};
-use crate::state::content_seed_client::{self, ContentSeedClient};
+use crate::state::canisters::authenticated_canisters;
+use crate::state::content_seed_client::ContentSeedClient;
 use crate::utils::profile::ProfileDetails;
-use crate::utils::MockPartialEq;
 use candid::Principal;
 use leptos::html::Input;
 use leptos::*;
@@ -18,7 +17,6 @@ use leptos_icons::*;
 use leptos_router::use_query_map;
 use leptos_use::use_event_listener;
 use leptos_use::{storage::use_local_storage, utils::FromToStringCodec};
-
 
 #[derive(Clone, Default)]
 pub struct AuthorizedUserToSeedContent(RwSignal<Option<(Principal, bool)>>);
@@ -152,33 +150,36 @@ pub fn Menu() -> impl IntoView {
     let (is_connected, _) = account_connected_reader();
     let query_map = use_query_map();
     let show_content_modal = create_rw_signal(false);
-    let is_authorized_to_seed_content:AuthorizedUserToSeedContent = expect_context();
-    let content_seed_client: ContentSeedClient = expect_context();
+    let is_authorized_to_seed_content: AuthorizedUserToSeedContent = expect_context();
 
     let can_res = authenticated_canisters();
-    let check_authorized_action = create_action( move |user_principal: &Principal | {
+    let check_authorized_action = create_action(move |user_principal: &Principal| {
         let user_principal = *user_principal;
-            async move {
-                let content_seed_client:ContentSeedClient = expect_context();
-                let res = content_seed_client.check_if_authorized(user_principal).await.ok()?;
-                is_authorized_to_seed_content.0.set(Some((user_principal, res)));
-                Some(())
-            }
-        }
-    );
-
-    create_effect(
-        move |_| {
-            let canisters = can_res.get()?.ok()?;
-            let authorized_user_to_seed_content = is_authorized_to_seed_content.0.get_untracked();
-            match authorized_user_to_seed_content {
-                Some((user_principal, val)) if user_principal != canisters.user_principal() => {check_authorized_action.dispatch(canisters.user_principal())},
-                None => {check_authorized_action.dispatch(canisters.user_principal())}
-                _ => {}
-            }
+        async move {
+            let content_seed_client: ContentSeedClient = expect_context();
+            let res = content_seed_client
+                .check_if_authorized(user_principal)
+                .await
+                .ok()?;
+            is_authorized_to_seed_content
+                .0
+                .set(Some((user_principal, res)));
             Some(())
-        },
-    );
+        }
+    });
+
+    create_effect(move |_| {
+        let canisters = can_res.get()?.ok()?;
+        let authorized_user_to_seed_content = is_authorized_to_seed_content.0.get_untracked();
+        match authorized_user_to_seed_content {
+            Some((user_principal, _)) if user_principal != canisters.user_principal() => {
+                check_authorized_action.dispatch(canisters.user_principal())
+            }
+            None => check_authorized_action.dispatch(canisters.user_principal()),
+            _ => {}
+        }
+        Some(())
+    });
 
     create_effect(move |_| {
         //check whether query param is right if right set the show_modal_content as true.

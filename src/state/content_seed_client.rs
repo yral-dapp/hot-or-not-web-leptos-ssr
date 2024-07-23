@@ -30,9 +30,12 @@ pub struct ContentSeedClient {
     base_url: Url,
 }
 
-impl Default for ContentSeedClient  {
+impl Default for ContentSeedClient {
     fn default() -> Self {
-        Self { client: Default::default(), base_url: DOWNLOAD_UPLOAD_SERVICE.clone() }
+        Self {
+            client: Default::default(),
+            base_url: DOWNLOAD_UPLOAD_SERVICE.clone(),
+        }
     }
 }
 
