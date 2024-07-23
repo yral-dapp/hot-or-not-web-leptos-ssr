@@ -7,15 +7,21 @@ use crate::component::title::Title;
 use crate::component::{connect::ConnectLogin, social::*, toggle::Toggle};
 use crate::consts::{social, NSFW_TOGGLE_STORE};
 use crate::state::auth::account_connected_reader;
-use crate::state::canisters::authenticated_canisters;
+use crate::state::canisters::{authenticated_canisters, Canisters};
+use crate::state::content_seed_client::{self, ContentSeedClient};
 use crate::utils::profile::ProfileDetails;
 use crate::utils::MockPartialEq;
+use candid::Principal;
 use leptos::html::Input;
 use leptos::*;
 use leptos_icons::*;
 use leptos_router::use_query_map;
 use leptos_use::use_event_listener;
 use leptos_use::{storage::use_local_storage, utils::FromToStringCodec};
+
+
+#[derive(Clone, Default)]
+pub struct AuthorizedUserToSeedContent(RwSignal<Option<(Principal, bool)>>);
 
 #[component]
 fn MenuItem(
@@ -146,15 +152,32 @@ pub fn Menu() -> impl IntoView {
     let (is_connected, _) = account_connected_reader();
     let query_map = use_query_map();
     let show_content_modal = create_rw_signal(false);
+    let is_authorized_to_seed_content:AuthorizedUserToSeedContent = expect_context();
+    let content_seed_client: ContentSeedClient = expect_context();
 
     let can_res = authenticated_canisters();
-    let is_authorized = create_local_resource_with_initial_value(
-        move || MockPartialEq(can_res()),
-        move |can_res| async move {
-            let canisters = can_res.0?.ok()?;
-            canisters.is_user_authorized_to_seed_content().await.ok()
+    let check_authorized_action = create_action( move |user_principal: &Principal | {
+        let user_principal = *user_principal;
+            async move {
+                let content_seed_client:ContentSeedClient = expect_context();
+                let res = content_seed_client.check_if_authorized(user_principal).await.ok()?;
+                is_authorized_to_seed_content.0.set(Some((user_principal, res)));
+                Some(())
+            }
+        }
+    );
+
+    create_effect(
+        move |_| {
+            let canisters = can_res.get()?.ok()?;
+            let authorized_user_to_seed_content = is_authorized_to_seed_content.0.get_untracked();
+            match authorized_user_to_seed_content {
+                Some((user_principal, val)) if user_principal != canisters.user_principal() => {check_authorized_action.dispatch(canisters.user_principal())},
+                None => {check_authorized_action.dispatch(canisters.user_principal())}
+                _ => {}
+            }
+            Some(())
         },
-        Some(Some(false)),
     );
 
     create_effect(move |_| {
@@ -174,7 +197,7 @@ pub fn Menu() -> impl IntoView {
             }>
                 {move || {
                     let authenticated_canister = can_res.get()?.ok()?;
-                    let authorized = is_authorized.get().flatten()?;
+                    let authorized = is_authorized_to_seed_content.0.get()?.1;
                     if !authorized {
                         show_content_modal.set(false);
                         return None;
@@ -213,7 +236,8 @@ pub fn Menu() -> impl IntoView {
                         </div>
                     </Show>
                     <Show when=move || {
-                        is_authorized.get().flatten().unwrap_or_default() && is_connected.get()
+                        is_authorized_to_seed_content.0.get().map(|auth| auth.1).unwrap_or(false)
+                            && is_connected.get()
                     }>
                         <div class="w-full px-8 md:w-4/12 xl:w-2/12">
                             <button

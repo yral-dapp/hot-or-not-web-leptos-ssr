@@ -5,18 +5,17 @@ use crate::{
         account_transfer::AccountTransfer,
         err::ServerErrorPage,
         leaderboard::Leaderboard,
-        menu::Menu,
+        menu::{AuthorizedUserToSeedContent, Menu},
         post_view::{PostView, PostViewCtx},
         privacy::PrivacyPolicy,
-        profile::ProfilePostsContext,
-        profile::{profile_post::ProfilePost, ProfileView},
+        profile::{profile_post::ProfilePost, ProfilePostsContext, ProfileView},
         refer_earn::ReferEarn,
         root::RootPage,
         terms::TermsOfService,
         upload::UploadPostPage,
         wallet::{transactions::Transactions, Wallet},
     },
-    state::{canisters::Canisters, history::HistoryCtx},
+    state::{canisters::Canisters, content_seed_client::ContentSeedClient, history::HistoryCtx},
     utils::event_streaming::EventHistory,
 };
 use leptos::*;
@@ -63,8 +62,10 @@ pub fn App() -> impl IntoView {
     // Provides context that manages stylesheets, titles, meta tags, etc.
     provide_meta_context();
     provide_context(Canisters::default());
+    provide_context(ContentSeedClient::default());
     provide_context(PostViewCtx::default());
     provide_context(ProfilePostsContext::default());
+    provide_context(AuthorizedUserToSeedContent::default());
 
     // History Tracking
     let history_ctx = HistoryCtx::default();

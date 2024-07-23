@@ -6,6 +6,7 @@ use serde::Serialize;
 use std::error::Error;
 
 use crate::auth::DelegatedIdentityWire;
+use crate::consts::DOWNLOAD_UPLOAD_SERVICE;
 
 #[derive(Deserialize)]
 pub struct AllowPrincpalRes {
@@ -27,6 +28,12 @@ pub struct ServerError {
 pub struct ContentSeedClient {
     client: Client,
     base_url: Url,
+}
+
+impl Default for ContentSeedClient  {
+    fn default() -> Self {
+        Self { client: Default::default(), base_url: DOWNLOAD_UPLOAD_SERVICE.clone() }
+    }
 }
 
 impl ContentSeedClient {

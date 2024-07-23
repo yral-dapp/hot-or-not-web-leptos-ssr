@@ -1,4 +1,4 @@
-use crate::{auth::DelegatedIdentityWire, state::canisters::Canisters};
+use crate::{auth::DelegatedIdentityWire, state::{canisters::Canisters, content_seed_client::{self, ContentSeedClient}}};
 use leptos::*;
 #[component]
 pub fn YoutubeUpload(
@@ -21,8 +21,9 @@ pub fn YoutubeUpload(
         let canisters_copy = canisters.clone();
         async move {
             let delegated_identity = create_short_lived_delegated_identity(&canisters_copy);
-            let res = canisters_copy
-                .upload_using_content_seed(delegated_identity, url_value())
+            let content_seed_client: ContentSeedClient = expect_context();
+            let res = content_seed_client
+                .upload_content(url_value(), delegated_identity)
                 .await;
             match res {
                 Err(e) => response.set(e.to_string()),
