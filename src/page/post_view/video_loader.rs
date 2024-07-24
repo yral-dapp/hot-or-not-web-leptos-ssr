@@ -150,6 +150,8 @@ pub fn VideoView(
                     .unwrap();
                 let send_view_res = canisters
                     .individual_user(canister_id)
+                    .await
+                    .ok()?
                     .update_post_add_view_details(post_id, payload)
                     .await;
 

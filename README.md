@@ -36,6 +36,12 @@ Addtionally, Cargo.toml may need updating as new versions of the dependencies ar
 cargo leptos watch
 ```
 
+## Local Testing with testcontainers
+
+```bash
+./local-run.sh
+```
+
 ## Installing Additional Tools
 
 By default, `cargo-leptos` uses `nightly` Rust, `cargo-generate`, and `sass`. If you run into any trouble, you may need to install one or more of these tools.

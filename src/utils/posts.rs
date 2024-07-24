@@ -95,7 +95,7 @@ pub async fn get_post_uid<const AUTH: bool>(
     user_canister: Principal,
     post_id: u64,
 ) -> Result<Option<PostDetails>, PostViewError> {
-    let post_creator_can = canisters.individual_user(user_canister);
+    let post_creator_can = canisters.individual_user(user_canister).await?;
     let post_details = match post_creator_can
         .get_individual_post_details_by_id(post_id)
         .await

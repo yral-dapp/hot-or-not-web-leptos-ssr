@@ -155,7 +155,7 @@ pub fn ProfileView() -> impl IntoView {
             .get_individual_canister_by_user_principal(principal?)
             .await
             .ok()??;
-        let user = canisters.individual_user(user_canister);
+        let user = canisters.individual_user(user_canister).await.ok()?;
         let user_details = user.get_profile_details().await.ok()?;
         Some((user_details.into(), user_canister))
     });

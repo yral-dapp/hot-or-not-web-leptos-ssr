@@ -7,6 +7,8 @@ pub mod consts;
 pub mod error_template;
 #[cfg(feature = "ssr")]
 pub mod fallback;
+#[cfg(feature = "ssr")]
+pub mod init;
 pub mod js;
 pub mod page;
 pub mod state;

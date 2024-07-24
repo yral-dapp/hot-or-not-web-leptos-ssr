@@ -26,7 +26,7 @@ impl<'a, const AUTH: bool> ProfileVideoStream<'a, AUTH> {
     }
 
     pub async fn fetch_next_profile_posts(&self) -> Result<Vec<PostDetails>, PostViewError> {
-        let user = self.canisters.individual_user(self.user_canister);
+        let user = self.canisters.individual_user(self.user_canister).await?;
         let posts = user
             .get_posts_of_this_user_profile_with_pagination_cursor(
                 self.cursor.start,

@@ -58,7 +58,9 @@ fn BalanceFetch(cans: Canisters<true>) -> impl IntoView {
         move |_| {
             let canisters = cans.clone();
             async move {
-                let user = canisters.authenticated_user();
+                let Ok(user) = canisters.authenticated_user().await else {
+                    return "Error".to_string();
+                };
 
                 user.get_utility_token_balance()
                     .await
@@ -80,7 +82,9 @@ pub fn Wallet() -> impl IntoView {
     let (is_connected, _) = account_connected_reader();
 
     let balance_fetch = |cans: Canisters<true>| async move {
-        let user = cans.authenticated_user();
+        let Ok(user) = cans.authenticated_user().await else {
+            return "Error".to_string();
+        };
 
         user.get_utility_token_balance()
             .await
