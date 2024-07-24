@@ -1,3 +1,13 @@
+#[cfg(any(feature = "local-bin", feature = "local-lib"))]
+mod local;
+#[cfg(any(feature = "local-bin", feature = "local-lib"))]
+pub use local::*;
+
+#[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
+mod remote;
+#[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
+pub use remote::*;
+
 use once_cell::sync::Lazy;
 use reqwest::Url;
 
@@ -9,8 +19,7 @@ pub static CF_BASE_URL: Lazy<Url> =
     Lazy::new(|| Url::parse("https://api.cloudflare.com/client/v4/").unwrap());
 pub const NSFW_TOGGLE_STORE: &str = "nsfw-enabled";
 pub const REFERRER_STORE: &str = "referrer";
-pub static METADATA_API_BASE: Lazy<Url> =
-    Lazy::new(|| Url::parse("https://yral-metadata.fly.dev").unwrap());
+
 pub static OFF_CHAIN_AGENT_GRPC_URL: Lazy<Url> =
     Lazy::new(|| Url::parse("https://icp-off-chain-agent.fly.dev:443").unwrap());
 // G-6W5Q2MRX0E to test locally | G-PLNNETMSLM

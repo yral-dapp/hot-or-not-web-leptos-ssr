@@ -1,5 +1,3 @@
-use std::env;
-
 use axum::{
     body::Body as AxumBody,
     extract::{Path, State},
@@ -7,12 +5,8 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use axum::{routing::get, Router};
-use axum_extra::extract::cookie::Key;
-use hot_or_not_web_leptos_ssr::{app::App, state::server::AppState};
-use hot_or_not_web_leptos_ssr::{
-    auth::server_impl::store::KVStoreImpl, fallback::file_and_error_handler,
-};
-use hot_or_not_web_leptos_ssr::{consts::OFF_CHAIN_AGENT_GRPC_URL, state::canisters::Canisters};
+use hot_or_not_web_leptos_ssr::fallback::file_and_error_handler;
+use hot_or_not_web_leptos_ssr::{app::App, init::AppStateBuilder, state::server::AppState};
 use leptos::{get_configuration, logging::log, provide_context};
 use leptos_axum::handle_server_fns_with_context;
 use leptos_axum::{generate_route_list, LeptosRoutes};
@@ -68,89 +62,6 @@ pub async fn leptos_routes_handler(
     handler(req).await.into_response()
 }
 
-#[cfg(feature = "cloudflare")]
-fn init_cf() -> gob_cloudflare::CloudflareAuth {
-    use gob_cloudflare::{CloudflareAuth, Credentials};
-    let creds = Credentials {
-        token: env::var("CF_TOKEN").expect("`CF_TOKEN` is required!"),
-        account_id: env::var("CF_ACCOUNT_ID").expect("`CF_ACCOUNT_ID` is required!"),
-    };
-    CloudflareAuth::new(creds)
-}
-
-#[cfg(feature = "backend-admin")]
-fn init_admin_canisters() -> hot_or_not_web_leptos_ssr::state::admin_canisters::AdminCanisters {
-    use hot_or_not_web_leptos_ssr::state::admin_canisters::AdminCanisters;
-    use ic_agent::identity::BasicIdentity;
-
-    let admin_id_pem =
-        env::var("BACKEND_ADMIN_IDENTITY").expect("`BACKEND_ADMIN_IDENTITY` is required!");
-    let admin_id_pem_by = admin_id_pem.as_bytes();
-    let admin_id =
-        BasicIdentity::from_pem(admin_id_pem_by).expect("Invalid `BACKEND_ADMIN_IDENTITY`");
-    AdminCanisters::new(admin_id)
-}
-
-async fn init_kv() -> KVStoreImpl {
-    #[cfg(feature = "redis-kv")]
-    {
-        use hot_or_not_web_leptos_ssr::auth::server_impl::store::redis_kv::RedisKV;
-        let redis_url = env::var("REDIS_URL").expect("`REDIS_URL` is required!");
-        KVStoreImpl::Redis(RedisKV::new(&redis_url).await.unwrap())
-    }
-
-    #[cfg(not(feature = "redis-kv"))]
-    {
-        use hot_or_not_web_leptos_ssr::auth::server_impl::store::redb_kv::ReDBKV;
-        KVStoreImpl::ReDB(ReDBKV::new().expect("Failed to initialize ReDB"))
-    }
-}
-
-fn init_cookie_key() -> Key {
-    let cookie_key_str = env::var("COOKIE_KEY").expect("`COOKIE_KEY` is required!");
-    let cookie_key_raw =
-        hex::decode(cookie_key_str).expect("Invalid `COOKIE_KEY` (must be length 128 hex)");
-    Key::from(&cookie_key_raw)
-}
-
-#[cfg(feature = "oauth-ssr")]
-fn init_google_oauth() -> openidconnect::core::CoreClient {
-    use hot_or_not_web_leptos_ssr::consts::google::{
-        GOOGLE_AUTH_URL, GOOGLE_ISSUER_URL, GOOGLE_TOKEN_URL,
-    };
-    use openidconnect::{
-        core::CoreClient, AuthUrl, ClientId, ClientSecret, IssuerUrl, RedirectUrl, TokenUrl,
-    };
-
-    let client_id = env::var("GOOGLE_CLIENT_ID").expect("`GOOGLE_CLIENT_ID` is required!");
-    let client_secret =
-        env::var("GOOGLE_CLIENT_SECRET").expect("`GOOGLE_CLIENT_SECRET` is required!");
-    let redirect_uri = env::var("GOOGLE_REDIRECT_URL").expect("`GOOGLE_REDIRECT_URL` is required!");
-
-    CoreClient::new(
-        ClientId::new(client_id),
-        Some(ClientSecret::new(client_secret)),
-        IssuerUrl::new(GOOGLE_ISSUER_URL.to_string()).unwrap(),
-        AuthUrl::new(GOOGLE_AUTH_URL.to_string()).unwrap(),
-        Some(TokenUrl::new(GOOGLE_TOKEN_URL.to_string()).unwrap()),
-        None,
-        // We don't validate id_tokens against Google's public keys
-        Default::default(),
-    )
-    .set_redirect_uri(RedirectUrl::new(redirect_uri).unwrap())
-}
-
-#[cfg(feature = "ga4")]
-async fn init_grpc_offchain_channel() -> tonic::transport::Channel {
-    use tonic::transport::Channel;
-
-    let off_chain_agent_url = OFF_CHAIN_AGENT_GRPC_URL.as_ref();
-    Channel::from_static(off_chain_agent_url)
-        .connect()
-        .await
-        .expect("Couldn't connect to off-chain agent")
-}
-
 #[tokio::main]
 async fn main() {
     simple_logger::init_with_level(log::Level::Debug).expect("couldn't initialize logging");
@@ -166,20 +77,40 @@ async fn main() {
     let addr = leptos_options.site_addr;
     let routes = generate_route_list(App);
 
-    let app_state = AppState {
-        leptos_options,
-        canisters: Canisters::default(),
-        routes: routes.clone(),
-        #[cfg(feature = "backend-admin")]
-        admin_canisters: init_admin_canisters(),
-        #[cfg(feature = "cloudflare")]
-        cloudflare: init_cf(),
-        kv: init_kv().await,
-        cookie_key: init_cookie_key(),
-        #[cfg(feature = "oauth-ssr")]
-        google_oauth: init_google_oauth(),
-        #[cfg(feature = "ga4")]
-        grpc_offchain_channel: init_grpc_offchain_channel().await,
+    let res = AppStateBuilder::new(leptos_options, routes.clone())
+        .build()
+        .await;
+    let terminate = {
+        use tokio::signal;
+
+        let ctrl_c = async {
+            signal::ctrl_c()
+                .await
+                .expect("failed to install Ctrl+C handler");
+        };
+
+        #[cfg(unix)]
+        let terminate = async {
+            use tokio::signal;
+            signal::unix::signal(signal::unix::SignalKind::terminate())
+                .expect("failed to install signal handler")
+                .recv()
+                .await;
+        };
+
+        #[cfg(not(unix))]
+        let terminate = std::future::pending::<()>();
+
+        async {
+            tokio::select! {
+                _ = ctrl_c => {},
+                _ = terminate => {},
+            }
+            log::info!("stopping...");
+
+            #[cfg(feature = "local-bin")]
+            std::mem::drop(res.containers);
+        }
     };
 
     // build our application with a route
@@ -190,13 +121,14 @@ async fn main() {
         )
         .leptos_routes_with_handler(routes, get(leptos_routes_handler))
         .fallback(file_and_error_handler)
-        .with_state(app_state);
+        .with_state(res.app_state);
 
     // run our app with hyper
     // `axum::Server` is a re-export of `hyper::Server`
     log::info!("listening on http://{}", &addr);
     let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
     axum::serve(listener, app.into_make_service())
+        .with_graceful_shutdown(terminate)
         .await
         .unwrap();
 }

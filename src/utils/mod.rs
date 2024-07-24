@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use web_time::{Duration, SystemTime};
 
 pub mod event_streaming;
+pub mod ic;
 pub mod icon;
 pub mod posts;
 pub mod profile;

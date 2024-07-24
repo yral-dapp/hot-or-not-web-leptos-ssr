@@ -75,10 +75,10 @@ fn MenuFooter() -> impl IntoView {
 #[component]
 fn ProfileLoading() -> impl IntoView {
     view! {
-        <div class="w-48 md:w-36 lg:w-24 aspect-square overflow-clip rounded-full bg-white/20 animate-pulse"></div>
-        <div class="flex flex-col gap-2 animate-pulse">
-            <div class="w-64 h-4 bg-white/20 rounded-full"></div>
-            <div class="w-48 h-3 bg-white/20 rounded-full"></div>
+        <div class="basis-4/12 aspect-square overflow-clip rounded-full bg-white/20 animate-pulse"></div>
+        <div class="basis-8/12 flex flex-col gap-2 animate-pulse">
+            <div class="w-full h-4 bg-white/20 rounded-full"></div>
+            <div class="w-full h-4 bg-white/20 rounded-full"></div>
         </div>
     }
 }
@@ -87,11 +87,11 @@ fn ProfileLoading() -> impl IntoView {
 fn ProfileLoaded(user_details: ProfileDetails) -> impl IntoView {
     let (is_connected, _) = account_connected_reader();
     view! {
-        <div class="w-48 md:w-36 lg:w-24 aspect-square overflow-clip rounded-full">
+        <div class="basis-4/12 aspect-square overflow-clip rounded-full">
             <img class="h-full w-full object-cover" src=user_details.profile_pic_or_random()/>
         </div>
         <div
-            class="flex flex-col"
+            class="flex flex-col basis-8/12"
             class=("w-12/12", move || !is_connected())
             class=("sm:w-5/12", move || !is_connected())
         >
@@ -225,7 +225,7 @@ pub fn Menu() -> impl IntoView {
                     </div>
                 </Title>
                 <div class="flex flex-col items-center w-full gap-4">
-                    <div class="flex flex-row justify-center gap-4 items-center px-4">
+                    <div class="flex flex-row w-full max-w-lg justify-center gap-4 items-center px-4">
                         <ProfileInfo/>
                     </div>
                     <Show when=move || !is_connected()>
