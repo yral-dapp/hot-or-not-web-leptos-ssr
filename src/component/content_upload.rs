@@ -39,18 +39,15 @@ pub fn YoutubeUpload(
     view! {
         {move || {
             view! {
-                <div data-hk="1-0-0-3" class="flex h-full items-center justify-around p-8">
-                    <div
-                        data-hk="1-0-0-4"
-                        class="flex flex-col items-center justify-center bg-red-700 p-10"
-                    >
-                        <div class="flex h-full flex-col justify-around">
-                            <div class="flex basis-1/2 flex-col mb-10">
+                <div data-hk="1-0-0-3" class="flex h-full items-center justify-around p-4">
+                    <div data-hk="1-0-0-4" class="flex flex-col items-center justify-center">
+                        <div class="flex h-full flex-col justify-around gap-6">
+                            <div class="flex basis-9/12 flex-col items-center justify-center">
                                 <h1 data-hk="1-0-0-5" class="text-2xl md:text-3xl text-white">
-                                    YOUTUBE UPLOADER
+                                    VIDEO IMPORTER
                                 </h1>
                             </div>
-                            <div class="flex basis-1/2 flex-col justify-around items-center">
+                            <div class="flex basis-3/12 flex-col justify-around items-center gap-4">
                                 <input
                                     type="text"
                                     value=move || url_value.get()
@@ -60,17 +57,17 @@ pub fn YoutubeUpload(
                                     }
 
                                     placeholder=" Paste your link here"
-                                    class="mb-5 p-1 md:text-xl"
+                                    class="p-1 md:text-xl"
                                 />
                                 <button
                                     type="submit"
-                                    class="my-2 border border-solid px-4 text-xl md:text-2xl w-fit text-white hover:bg-white hover:text-black"
+                                    class="border border-solid px-4 text-xl md:text-2xl w-fit text-white hover:bg-white hover:text-black"
                                     on:click=move |_| on_submit.dispatch(())
                                 >
 
                                     Submit
                                 </button>
-                                <p class="text-base md: text-lg text-white">{response()}</p>
+                                <p class="text-base md:text-lg text-white">{response()}</p>
 
                             </div>
                         </div>
