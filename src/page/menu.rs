@@ -67,7 +67,7 @@ fn ProfileLoading() -> impl IntoView {
     view! {
         <div class="w-48 md:w-36 lg:w-24 aspect-square overflow-clip rounded-full bg-white/20 animate-pulse"></div>
         <div class="flex flex-col gap-2 animate-pulse">
-            <div class="w-64 h-4 bg-white/20 rounded-full"></div>
+            <div class="w-48 h-4 bg-white/20 rounded-full"></div>
             <div class="w-48 h-3 bg-white/20 rounded-full"></div>
         </div>
     }
@@ -80,9 +80,11 @@ fn ProfileLoaded(user_details: ProfileDetails) -> impl IntoView {
         <div class="w-48 md:w-36 lg:w-24 aspect-square overflow-clip rounded-full">
             <img class="h-full w-full object-cover" src=user_details.profile_pic_or_random()/>
         </div>
-        <div class="flex flex-col"
+        <div
+            class="flex flex-col"
             class=("w-12/12", move || !is_connected())
-            class=("sm:w-5/12", move || !is_connected())>
+            class=("sm:w-5/12", move || !is_connected())
+        >
             <span class="text-white text-ellipsis line-clamp-1 text-xl">
                 {user_details.display_name_or_fallback()}
             </span>
@@ -163,7 +165,11 @@ pub fn Menu() -> impl IntoView {
             </div>
             <div class="flex flex-col py-12 px-8 gap-8 w-full text-lg">
                 <NsfwToggle/>
-                <MenuItem href="/account-transfer" text="HotorNot Account Transfer" icon=icondata::FaMoneyBillTransferSolid/>
+                <MenuItem
+                    href="/account-transfer"
+                    text="HotorNot Account Transfer"
+                    icon=icondata::FaMoneyBillTransferSolid
+                />
                 <MenuItem href="/refer-earn" text="Refer & Earn" icon=icondata::AiGiftFilled/>
                 <MenuItem
                     href=social::TELEGRAM
