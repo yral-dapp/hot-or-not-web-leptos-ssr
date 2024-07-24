@@ -24,7 +24,7 @@ impl KVStore for RedisKV {
 
     async fn write(&self, key: String, value: String) -> Result<(), KVError> {
         let mut con = self.0.get().await?;
-        let _replaced: bool = con.hset(key, AUTH_FIELD, value).await?;
+        con.hset::<_, _, _, ()>(key, AUTH_FIELD, value).await?;
         Ok(())
     }
 }
