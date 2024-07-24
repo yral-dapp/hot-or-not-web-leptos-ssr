@@ -6735,7 +6735,7 @@ dependencies = [
 [[package]]
 name = "yral-testcontainers"
 version = "0.1.0"
-source = "git+https://github.com/go-bazzinga/yral-testcontainers?rev=12c9e911a9420bd49576f4cf9db37c314e99a99a#12c9e911a9420bd49576f4cf9db37c314e99a99a"
+source = "git+https://github.com/go-bazzinga/yral-testcontainers?rev=f9d2c01c498d58fca0595a48bdc3f9400e57ec2f#f9d2c01c498d58fca0595a48bdc3f9400e57ec2f"
 dependencies = [
  "anyhow",
  "gix",

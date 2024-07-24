@@ -15,7 +15,9 @@ use yral_testcontainers::{
 };
 
 use crate::{
-    canister::USER_INDEX_ID, consts::METADATA_API_BASE, state::admin_canisters::AdminCanisters,
+    canister::USER_INDEX_ID,
+    consts::{METADATA_API_BASE, YRAL_BACKEND_CONTAINER_TAG, YRAL_METADATA_CONTAINER_TAG},
+    state::admin_canisters::AdminCanisters,
 };
 
 type MaybeContainer<I> = Option<ContainerAsync<I>>;
@@ -48,7 +50,8 @@ impl TestContainers {
     }
 
     pub async fn start_metadata(&mut self) {
-        self.metadata = Some(Self::start_image(YralMetadata, metadata::REST_PORT).await);
+        let img = YralMetadata::new(YRAL_METADATA_CONTAINER_TAG.into());
+        self.metadata = Some(Self::start_image(img, metadata::REST_PORT).await);
 
         // Setup User Principal -> User Canister ID
         // for the admin canister
@@ -85,6 +88,7 @@ impl TestContainers {
     }
 
     pub async fn start_backend(&mut self) {
-        self.backend = Some(Self::start_image(YralBackend, backend::AGENT_PORT).await);
+        let img = YralBackend::new(YRAL_BACKEND_CONTAINER_TAG.into());
+        self.backend = Some(Self::start_image(img, backend::AGENT_PORT).await);
     }
 }
