@@ -10,6 +10,7 @@ pub mod content_upload;
 pub mod dashbox;
 pub mod feed_popup;
 pub mod ic_symbol;
+pub mod img_to_png;
 pub mod infinite_scroller;
 pub mod loading;
 pub mod login_modal;

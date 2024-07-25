@@ -1,4 +1,19 @@
+use gloo::file::ObjectUrl;
 use leptos_use::use_window;
+
+#[derive(Clone)]
+pub struct FileWithUrl {
+    pub file: gloo::file::File,
+    pub url: ObjectUrl,
+}
+
+impl FileWithUrl {
+    #[cfg(feature = "hydrate")]
+    pub fn new(file: gloo::file::File) -> Self {
+        let url = ObjectUrl::from(file.clone());
+        Self { file, url }
+    }
+}
 
 /// Share a URL with the Web Share API
 /// returns None if the API is not available

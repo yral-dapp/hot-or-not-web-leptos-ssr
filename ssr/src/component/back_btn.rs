@@ -7,7 +7,7 @@ use reqwest::Url;
 use crate::state::history::HistoryCtx;
 
 #[component]
-pub fn BackButton(#[prop(into)] fallback: String) -> impl IntoView {
+pub fn BackButton(#[prop(into)] fallback: MaybeSignal<String>) -> impl IntoView {
     let history_ctx = expect_context::<HistoryCtx>();
     let go_back = Callback::new(move |_| {
         let win = window();
@@ -25,7 +25,7 @@ pub fn BackButton(#[prop(into)] fallback: String) -> impl IntoView {
             let history = BrowserHistory::new();
             history.back();
         } else {
-            use_navigate()(&fallback, Default::default());
+            use_navigate()(&fallback.get_untracked(), Default::default());
         }
     });
 
