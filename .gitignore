@@ -9,7 +9,7 @@ pkg
 # node e2e test tools and outputs
 node_modules/
 test-results/
-end2end/playwright-report/
+ssr/end2end/playwright-report/
 playwright/.cache/
 
 # redb

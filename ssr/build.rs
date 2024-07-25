@@ -69,7 +69,7 @@ mod build_common {
     }
 
     fn build_did_intf() -> Result<()> {
-        println!("cargo:rerun-if-changed=did/*");
+        println!("cargo:rerun-if-changed=../did/*");
 
         let mut candid_config = candid_parser::bindings::rust::Config::new();
         candid_config.set_target(candid_parser::bindings::rust::Target::Agent);
@@ -139,26 +139,15 @@ mod build_ssr {
     use anyhow::Result;
 
     fn build_gprc_client() -> Result<()> {
-        println!("cargo:rerun-if-changed=contracts/projects/*");
-
-        let proto_file = "contracts/projects/warehouse_events/warehouse_events.proto";
+        let warehouse_events_proto = "contracts/projects/warehouse_events/warehouse_events.proto";
+        let off_chain_proto = "contracts/projects/off_chain/off_chain.proto";
         let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
 
         tonic_build::configure()
             .build_client(true)
             .build_server(false)
             .out_dir(out_dir)
-            .compile(&[proto_file], &["proto"])?;
-
-        let proto_file = "contracts/projects/off_chain/off_chain.proto";
-        let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
-
-        tonic_build::configure()
-            .build_client(true)
-            .build_server(false)
-            .out_dir(out_dir)
-            .compile(&[proto_file], &["proto"])?;
-
+            .compile(&[warehouse_events_proto, off_chain_proto], &["proto"])?;
         Ok(())
     }
 
