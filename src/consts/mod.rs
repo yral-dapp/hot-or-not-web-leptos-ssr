@@ -24,6 +24,8 @@ pub static OFF_CHAIN_AGENT_GRPC_URL: Lazy<Url> =
     Lazy::new(|| Url::parse("https://icp-off-chain-agent.fly.dev:443").unwrap());
 // G-6W5Q2MRX0E to test locally | G-PLNNETMSLM
 pub static GTAG_MEASUREMENT_ID: Lazy<&str> = Lazy::new(|| "G-PLNNETMSLM");
+pub static DOWNLOAD_UPLOAD_SERVICE: Lazy<Url> =
+    Lazy::new(|| Url::parse("https://download-upload-service.fly.dev").unwrap());
 
 pub mod social {
     pub const TELEGRAM: &str = "https://t.me/+c-LTX0Cp-ENmMzI1";

@@ -85,6 +85,12 @@ impl Canisters<true> {
             .clone()
             .expect("Authenticated canisters must have profile details")
     }
+
+    pub fn user_principal(&self) -> Principal {
+        self.identity()
+            .sender()
+            .expect("expect principal to be present")
+    }
 }
 
 impl<const A: bool> Canisters<A> {
