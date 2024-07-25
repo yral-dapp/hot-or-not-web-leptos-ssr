@@ -112,8 +112,8 @@ pub async fn get_post_uid<const AUTH: bool>(
         "https://customer-2p3jflss4r4hmpnz.cloudflarestream.com/{}/manifest/video.m3u8",
         post_uuid,
     );
-    let res = reqwest::Client::default().head(req_url).send().await?;
-    if res.status() != 200 {
+    let res = reqwest::Client::default().head(req_url).send().await;
+    if res.is_err() || (res.is_ok() && res.unwrap().status() != 200) {
         return Ok(None);
     }
 
