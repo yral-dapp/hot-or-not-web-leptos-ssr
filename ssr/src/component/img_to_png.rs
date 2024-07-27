@@ -39,9 +39,13 @@ pub fn ImgToPng(
     });
 
     view! {
-        <canvas _ref=canvas_ref class="hidden"/>
+        <canvas _ref=canvas_ref class="hidden"></canvas>
         <Show when=move || img_file.with(|img| img.is_some())>
-            <img _ref=img_ref class="hidden" src=move || img_file.with(|f| f.as_ref().unwrap().url.to_string())/>
+            <img
+                _ref=img_ref
+                class="hidden"
+                src=move || img_file.with(|f| f.as_ref().unwrap().url.to_string())
+            />
         </Show>
     }
 }

@@ -36,11 +36,22 @@ fn TokenImgInput() -> impl IntoView {
     view! {
         <div class="ml-2 md:ml-4 h-20 w-20 md:w-36 md:h-36 rounded-full">
             <label for="dropzone-logo" class="flex flex-col h-full w-full cursor-pointer">
-                <Show when=move || img_url.with(|u| u.is_none()) fallback=move || view! {
-                    <img class="object-contain h-full w-full rounded-full" src=move || img_url().unwrap() />
-                }>
+                <Show
+                    when=move || img_url.with(|u| u.is_none())
+                    fallback=move || {
+                        view! {
+                            <img
+                                class="object-contain h-full w-full rounded-full"
+                                src=move || img_url().unwrap()
+                            />
+                        }
+                    }
+                >
                     <div class="flex flex-col items-center justify-center h-full w-full bg-white/10 rounded-full border-2 border-dashed border-neutral-600 hover:bg-white/15">
-                        <Icon icon=icondata::BiImageAddSolid class="text-center bg-white/30 text-4xl"/>
+                        <Icon
+                            icon=icondata::BiImageAddSolid
+                            class="text-center bg-white/30 text-4xl"
+                        />
                     </div>
                 </Show>
                 <input
@@ -182,25 +193,48 @@ pub fn CreateToken() -> impl IntoView {
                 </div>
             </Title>
             <div class="flex flex-col w-full px-6 md:px-8 gap-6 md:gap-8">
-                <Show when=move || create_act_res.with(|v| v.as_ref().map(|v| v.is_err()).unwrap_or_default())>
+                <Show when=move || {
+                    create_act_res.with(|v| v.as_ref().map(|v| v.is_err()).unwrap_or_default())
+                }>
                     <div class="flex flex-col w-full items-center gap-2">
-                        <span class="text-red-500 font-semibold text-center">Error creating token:</span>
+                        <span class="text-red-500 font-semibold text-center">
+                            Error creating token:
+                        </span>
                         <textarea
                             prop:value=create_act_res().unwrap().err().unwrap()
                             disabled
                             rows=3
                             class="bg-white/10 text-xs md:text-sm text-red-500/60 w-full md:w-2/3 resize-none p-2"
-                        />
+                        ></textarea>
                     </div>
                 </Show>
                 <div class="flex flex-row w-full justify-between items-center">
-                    <InputBox heading="Token name" placeholder="Name" updater=set_token_name validator=non_empty_string_validator />
+                    <InputBox
+                        heading="Token name"
+                        placeholder="Name"
+                        updater=set_token_name
+                        validator=non_empty_string_validator
+                    />
                     <TokenImgInput/>
                 </div>
-                <InputArea heading="Description" placeholder="Text" updater=set_token_desc validator=non_empty_string_validator />
-                <InputBox heading="Token Symbol" placeholder="Text" updater=set_token_symbol validator=non_empty_string_validator />
+                <InputArea
+                    heading="Description"
+                    placeholder="Text"
+                    updater=set_token_desc
+                    validator=non_empty_string_validator
+                />
+                <InputBox
+                    heading="Token Symbol"
+                    placeholder="Text"
+                    updater=set_token_symbol
+                    validator=non_empty_string_validator
+                />
                 <div class="w-full flex justify-center">
-                    <button on:click=move |_| create_action.dispatch(()) disabled=create_disabled class="text-white disabled:text-neutral-500 md:text-xl py-4 md:py-4 font-bold w-full md:w-1/2 lg:w-1/3 rounded-full bg-primary-600 disabled:bg-primary-500/30">
+                    <button
+                        on:click=move |_| create_action.dispatch(())
+                        disabled=create_disabled
+                        class="text-white disabled:text-neutral-500 md:text-xl py-4 md:py-4 font-bold w-full md:w-1/2 lg:w-1/3 rounded-full bg-primary-600 disabled:bg-primary-500/30"
+                    >
                         {move || if creating() { "Creating..." } else { "Create" }}
                     </button>
                 </div>
