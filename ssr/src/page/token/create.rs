@@ -7,9 +7,15 @@ use crate::{
     utils::web::FileWithUrl,
 };
 
+use super::sns_form::SnsFormState;
+
 #[component]
-fn TokenImgInput(logo_b64: RwSignal<Option<String>>) -> impl IntoView {
+fn TokenImgInput() -> impl IntoView {
+    let ctx = expect_context::<CreateTokenCtx>();
     let img_file = create_rw_signal(None::<FileWithUrl>);
+    let logo_b64 = create_write_slice(ctx.form_state, |f, v| {
+        f.logo_b64 = v;
+    });
 
     let on_file_input = move |ev: ev::Event| {
         _ = ev.target().and_then(|_target| {
@@ -59,12 +65,12 @@ macro_rules! input_component {
             #[prop(optional)] initial_value: Option<String>,
             updater: U,
             validator: V,
-            set_invalid_cnt: WriteSignal<u32>,
         ) -> impl IntoView {
+            let ctx: CreateTokenCtx = expect_context();
             let error = create_rw_signal(initial_value.is_none());
             let show_error = create_rw_signal(false);
             if error.get_untracked() {
-                set_invalid_cnt.update(|c| *c += 1);
+                ctx.invalid_cnt.update(|c| *c += 1);
             }
 
             view! {
@@ -77,7 +83,7 @@ macro_rules! input_component {
                         match validator(value) {
                             Some(v) => {
                                 if error.get_untracked() {
-                                    set_invalid_cnt.update(|c| *c -= 1);
+                                    ctx.invalid_cnt.update(|c| *c -= 1);
                                 }
                                 error.set(false);
                                 updater(v);
@@ -88,7 +94,7 @@ macro_rules! input_component {
                                     return;
                                 }
                                 error.set(true);
-                                set_invalid_cnt.update(|c| *c += 1);
+                                ctx.invalid_cnt.update(|c| *c += 1);
                             }
                         }
                     }
@@ -103,8 +109,18 @@ macro_rules! input_component {
     }
 }
 
+fn non_empty_string_validator(s: String) -> Option<String> {
+    (!s.is_empty()).then_some(s)
+}
+
 input_component!(InputBox, input, {});
 input_component!(InputArea, textarea, rows = 4);
+
+#[derive(Clone, Copy, Default)]
+struct CreateTokenCtx {
+    form_state: RwSignal<SnsFormState>,
+    invalid_cnt: RwSignal<u32>,
+}
 
 #[component]
 pub fn CreateToken() -> impl IntoView {
@@ -116,10 +132,46 @@ pub fn CreateToken() -> impl IntoView {
         let id = cans.profile_details().username_or_principal();
         format!("/your-profile/{id}")
     });
-    let (invalid_cnt, set_invalid_cnt) = create_signal(0);
-    let logo_b64 = create_rw_signal(None::<String>);
-    let create_disabled =
-        create_memo(move |_| logo_b64.with(|l| l.is_none()) || invalid_cnt() != 0);
+    let ctx = CreateTokenCtx::default();
+    provide_context(ctx);
+
+    let set_token_name = move |name: String| {
+        ctx.form_state.update(|f| f.name = Some(name));
+    };
+    let set_token_symbol = move |symbol: String| {
+        ctx.form_state.update(|f| f.symbol = Some(symbol));
+    };
+    let set_token_desc = move |desc: String| {
+        ctx.form_state.update(|f| f.description = Some(desc));
+    };
+
+    let create_action = create_action(move |&()| async move {
+        let cans = auth_cans
+            .get_untracked()
+            .expect("Create token called without auth canisters");
+        let sns_form = ctx.form_state.get_untracked();
+        let sns_config = sns_form.try_into_config(cans)?;
+
+        let _create_sns = sns_config.try_convert_to_executed_sns_init()?;
+        // TODO: send call to canister
+        Ok::<_, String>(())
+    });
+    let creating = create_action.pending();
+
+    let create_disabled = create_memo(move |_| {
+        creating()
+            || auth_cans.with(|c| c.is_none())
+            || ctx.form_state.with(|f| f.logo_b64.is_none())
+            || ctx.invalid_cnt.get() != 0
+    });
+
+    let create_act_value = create_action.value();
+    let create_act_res = Signal::derive(move || {
+        if creating() {
+            return None;
+        }
+        create_act_value()
+    });
 
     view! {
         <div class="w-dvw min-h-dvh bg-black pt-4 flex flex-col gap-4">
@@ -130,14 +182,27 @@ pub fn CreateToken() -> impl IntoView {
                 </div>
             </Title>
             <div class="flex flex-col w-full px-6 md:px-8 gap-6 md:gap-8">
+                <Show when=move || create_act_res.with(|v| v.as_ref().map(|v| v.is_err()).unwrap_or_default())>
+                    <div class="flex flex-col w-full items-center gap-2">
+                        <span class="text-red-500 font-semibold text-center">Error creating token:</span>
+                        <textarea
+                            prop:value=create_act_res().unwrap().err().unwrap()
+                            disabled
+                            rows=3
+                            class="bg-white/10 text-xs md:text-sm text-red-500/60 w-full md:w-2/3 resize-none p-2"
+                        />
+                    </div>
+                </Show>
                 <div class="flex flex-row w-full justify-between items-center">
-                    <InputBox heading="Token name" placeholder="Name" updater=|_v| {} validator=Some set_invalid_cnt />
-                    <TokenImgInput logo_b64/>
+                    <InputBox heading="Token name" placeholder="Name" updater=set_token_name validator=non_empty_string_validator />
+                    <TokenImgInput/>
                 </div>
-                <InputArea heading="Description" placeholder="Text" updater=|_v| {} validator=Some set_invalid_cnt />
-                <InputBox heading="Token Symbol" placeholder="Text" updater=|_v| {} validator=Some set_invalid_cnt />
+                <InputArea heading="Description" placeholder="Text" updater=set_token_desc validator=non_empty_string_validator />
+                <InputBox heading="Token Symbol" placeholder="Text" updater=set_token_symbol validator=non_empty_string_validator />
                 <div class="w-full flex justify-center">
-                    <button disabled=create_disabled class="text-white disabled:text-neutral-500 md:text-xl py-4 md:py-4 font-bold w-full md:w-1/2 lg:w-1/3 rounded-full bg-primary-600 disabled:bg-primary-500/30">Create</button>
+                    <button on:click=move |_| create_action.dispatch(()) disabled=create_disabled class="text-white disabled:text-neutral-500 md:text-xl py-4 md:py-4 font-bold w-full md:w-1/2 lg:w-1/3 rounded-full bg-primary-600 disabled:bg-primary-500/30">
+                        {move || if creating() { "Creating..." } else { "Create" }}
+                    </button>
                 </div>
             </div>
         </div>

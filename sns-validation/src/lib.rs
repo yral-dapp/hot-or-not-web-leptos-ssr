@@ -1,5 +1,5 @@
 pub mod config;
 mod consts;
 pub mod humanize;
-mod pbs;
+pub mod pbs;
 mod validation;

@@ -1,10 +1,14 @@
 use gov_pb::{create_sns, CreateServiceNervousSystem};
+use nns_pb::{Duration, GlobalTimeOfDay};
 use sns_pb::{sns_init_payload, SnsInitPayload};
+use sns_swap_pb::NeuronsFundParticipationConstraints;
 
-pub mod gov_pb;
+use crate::consts::ONE_DAY_SECONDS;
+
+pub(crate) mod gov_pb;
 pub mod nns_pb;
-pub mod sns_pb;
-pub mod sns_swap_pb;
+pub(crate) mod sns_pb;
+pub(crate) mod sns_swap_pb;
 
 fn divide_perfectly(field_name: &str, dividend: u64, divisor: u64) -> Result<u64, String> {
     match dividend.checked_rem(divisor) {
@@ -446,5 +450,148 @@ impl TryFrom<create_sns::initial_token_distribution::developer_distribution::Neu
             dissolve_delay_seconds,
             vesting_period_seconds,
         })
+    }
+}
+
+#[derive(Clone)]
+pub struct ExecutedCreateServiceNervousSystemProposal {
+    pub current_timestamp_seconds: u64,
+    pub create_service_nervous_system: CreateServiceNervousSystem,
+    pub proposal_id: u64,
+    pub random_swap_start_time: GlobalTimeOfDay,
+    /// Information about the Neurons' Fund participation needed by the Swap canister.
+    pub neurons_fund_participation_constraints: Option<NeuronsFundParticipationConstraints>,
+}
+
+impl TryFrom<ExecutedCreateServiceNervousSystemProposal> for SnsInitPayload {
+    type Error = String;
+
+    fn try_from(src: ExecutedCreateServiceNervousSystemProposal) -> Result<Self, Self::Error> {
+        let mut defects = vec![];
+
+        let current_timestamp_seconds = src.current_timestamp_seconds;
+        let nns_proposal_id = Some(src.proposal_id);
+        let neurons_fund_participation_constraints = src.neurons_fund_participation_constraints;
+        let start_time = src
+            .create_service_nervous_system
+            .swap_parameters
+            .as_ref()
+            .and_then(|swap_parameters| swap_parameters.start_time);
+        let duration = src
+            .create_service_nervous_system
+            .swap_parameters
+            .as_ref()
+            .and_then(|swap_parameters| swap_parameters.duration);
+
+        let (swap_start_timestamp_seconds, swap_due_timestamp_seconds) =
+            match CreateServiceNervousSystem::swap_start_and_due_timestamps(
+                start_time.unwrap_or(src.random_swap_start_time),
+                duration.unwrap_or_default(),
+                current_timestamp_seconds,
+            ) {
+                Ok((swap_start_timestamp_seconds, swap_due_timestamp_seconds)) => (
+                    Some(swap_start_timestamp_seconds),
+                    Some(swap_due_timestamp_seconds),
+                ),
+                Err(err) => {
+                    defects.push(err);
+                    (None, None)
+                }
+            };
+
+        let mut result = SnsInitPayload::try_from(src.create_service_nervous_system)?;
+
+        result.nns_proposal_id = nns_proposal_id;
+        result.swap_start_timestamp_seconds = swap_start_timestamp_seconds;
+        result.swap_due_timestamp_seconds = swap_due_timestamp_seconds;
+        result.neurons_fund_participation_constraints = neurons_fund_participation_constraints;
+
+        result.validate_post_execution()?;
+
+        Ok(result)
+    }
+}
+
+impl CreateServiceNervousSystem {
+    pub fn sns_token_e8s(&self) -> Option<u64> {
+        self.initial_token_distribution
+            .as_ref()?
+            .swap_distribution
+            .as_ref()?
+            .total
+            .as_ref()?
+            .e8s
+    }
+
+    pub fn transaction_fee_e8s(&self) -> Option<u64> {
+        self.ledger_parameters
+            .as_ref()?
+            .transaction_fee
+            .as_ref()?
+            .e8s
+    }
+
+    pub fn neuron_minimum_stake_e8s(&self) -> Option<u64> {
+        self.governance_parameters
+            .as_ref()?
+            .neuron_minimum_stake
+            .as_ref()?
+            .e8s
+    }
+
+    /// Computes timestamps for when the SNS token swap will start, and will be
+    /// due, based on the start and end times.
+    ///
+    /// The swap will start on the first `start_time_of_day` that is more than
+    /// 24h after the swap was approved.
+    ///
+    /// The end time is calculated by adding `duration` to the computed start time.
+    ///
+    /// if start_time_of_day is None, then randomly_pick_swap_start is used to
+    /// pick a start time.
+    pub fn swap_start_and_due_timestamps(
+        start_time_of_day: GlobalTimeOfDay,
+        duration: Duration,
+        swap_approved_timestamp_seconds: u64,
+    ) -> Result<(u64, u64), String> {
+        let start_time_of_day = start_time_of_day
+            .seconds_after_utc_midnight
+            .ok_or("`seconds_after_utc_midnight` should not be None")?;
+        let duration = duration.seconds.ok_or("`seconds` should not be None")?;
+
+        // TODO(NNS1-2298): we should also add 27 leap seconds to this, to avoid
+        // having the swap start half a minute earlier than expected.
+        let midnight_after_swap_approved_timestamp_seconds = swap_approved_timestamp_seconds
+            .saturating_sub(swap_approved_timestamp_seconds % ONE_DAY_SECONDS) // floor to midnight
+            .saturating_add(ONE_DAY_SECONDS); // add one day
+
+        let swap_start_timestamp_seconds = {
+            let mut possible_swap_starts = (0..2).map(|i| {
+                midnight_after_swap_approved_timestamp_seconds
+                    .saturating_add(ONE_DAY_SECONDS * i)
+                    .saturating_add(start_time_of_day)
+            });
+            // Find the earliest time that's at least 24h after the swap was approved.
+            possible_swap_starts
+                .find(|&timestamp| timestamp > swap_approved_timestamp_seconds + ONE_DAY_SECONDS)
+                .ok_or(format!(
+                    "Unable to find a swap start time after the swap was approved. \
+                     swap_approved_timestamp_seconds = {}, \
+                     midnight_after_swap_approved_timestamp_seconds = {}, \
+                     start_time_of_day = {}, \
+                     duration = {} \
+                     This is probably a bug.",
+                    swap_approved_timestamp_seconds,
+                    midnight_after_swap_approved_timestamp_seconds,
+                    start_time_of_day,
+                    duration,
+                ))?
+        };
+
+        let swap_due_timestamp_seconds = duration
+            .checked_add(swap_start_timestamp_seconds)
+            .ok_or("`duration` should not be None")?;
+
+        Ok((swap_start_timestamp_seconds, swap_due_timestamp_seconds))
     }
 }

@@ -2621,6 +2621,7 @@ dependencies = [
  "serde_bytes",
  "serde_json",
  "simple_logger",
+ "sns-validation",
  "testcontainers",
  "thiserror",
  "tokio",
@@ -5578,6 +5579,7 @@ dependencies = [
  "regex",
  "serde",
  "serde_bytes",
+ "web-time",
 ]
 
 [[package]]

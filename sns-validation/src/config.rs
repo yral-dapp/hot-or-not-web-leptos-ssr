@@ -5,10 +5,12 @@ use crate::{
     humanize,
     pbs::{
         gov_pb::CreateServiceNervousSystem,
-        nns_pb::{self, Image},
+        nns_pb::{self, GlobalTimeOfDay, Image},
         sns_pb::SnsInitPayload,
+        ExecutedCreateServiceNervousSystemProposal,
     },
 };
+use web_time::{SystemTime, UNIX_EPOCH};
 
 // Alias CreateServiceNervousSystem-related types, but since we have many
 // related types in this module, put these aliases in their own module to avoid
@@ -406,6 +408,27 @@ impl SnsConfigurationFile {
 
         // Step 5: Ship it!
         Ok(result)
+    }
+
+    pub fn try_convert_to_executed_sns_init(&self) -> Result<SnsInitPayload, String> {
+        let create_sns = self.try_convert_to_create_service_nervous_system()?;
+        let executed_create_sns = ExecutedCreateServiceNervousSystemProposal {
+            current_timestamp_seconds: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
+            create_service_nervous_system: create_sns,
+            random_swap_start_time: GlobalTimeOfDay {
+                seconds_after_utc_midnight: Some(0),
+            },
+            neurons_fund_participation_constraints: None,
+            // `proposal_id` only exists to be exposed to the user for audit purposes, which don't apply here.
+            // But it's required, so we can just use any arbitrary value.
+            proposal_id: 10,
+        };
+        
+
+        SnsInitPayload::try_from(executed_create_sns)
     }
 }
 
