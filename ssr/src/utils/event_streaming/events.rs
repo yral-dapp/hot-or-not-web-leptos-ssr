@@ -410,6 +410,7 @@ impl VideoUploadSuccessful {
         hashtags_len: usize,
         is_nsfw: bool,
         enable_hot_or_not: bool,
+        post_id: u64,
         cans_store: RwSignal<Option<Canisters<true>>>,
     ) {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
@@ -429,6 +430,7 @@ impl VideoUploadSuccessful {
                     "is_hotorNot": enable_hot_or_not,
                     "is_filter_used": false,
                     "video_id": video_id,
+                    "post_id": post_id,
                 }),
             );
         }
