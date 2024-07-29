@@ -30,7 +30,7 @@ use web_time::SystemTime;
 pub fn DropBox() -> impl IntoView {
     view! {
         <div class="flex flex-col items-center justify-self-center justify-center w-full border-2 border-dashed rounded-lg cursor-pointer border-gray-600 hover:bg-gray-600 aspect-[3/4] lg:aspect-[5/4]">
-            <Icon class="w-10 h-10 mb-4 text-gray-400" icon=icondata::BiCloudUploadRegular/>
+            <Icon class="w-10 h-10 mb-4 text-gray-400" icon=icondata::BiCloudUploadRegular />
             <p class="text-center mb-2 mx-2 text-sm text-gray-400">
                 <span class="font-semibold">Click to upload</span>
                 or drag and drop
@@ -110,7 +110,7 @@ pub fn PreVideoUpload(file_blob: WriteSignal<Option<FileWithUrl>>) -> impl IntoV
                 class="flex justify-start flex-col h-full w-full cursor-pointer"
             >
                 <Show when=move || { with!(| file | file.is_none()) }>
-                    <DropBox/>
+                    <DropBox />
                 </Show>
                 <video
                     _ref=video_ref
@@ -124,8 +124,7 @@ pub fn PreVideoUpload(file_blob: WriteSignal<Option<FileWithUrl>>) -> impl IntoV
                     style:display=move || {
                         with!(| file | file.as_ref().map(| _ | "block").unwrap_or("none"))
                     }
-                >
-                </video>
+                ></video>
                 <input
                     on:click=move |_| modal_show.set(true)
                     id="dropzone-file"
@@ -155,13 +154,13 @@ pub fn ProgressItem(
             when=loading
             fallback=move || {
                 view! {
-                    <Icon class="w-10 h-10 text-green-600" icon=icondata::BsCheckCircleFill/>
+                    <Icon class="w-10 h-10 text-green-600" icon=icondata::BsCheckCircleFill />
                     <span class="text-white text-lg font-semibold">{done_text.clone()}</span>
                 }
             }
         >
 
-            <Icon class="w-10 h-10 text-primary-600 animate-spin" icon=icondata::CgSpinnerTwo/>
+            <Icon class="w-10 h-10 text-primary-600 animate-spin" icon=icondata::CgSpinnerTwo />
             <span class="text-white text-lg font-semibold">{initial_text.clone()}</span>
         </Show>
     }
@@ -300,11 +299,13 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
 
             publishing.set(false);
 
+            let post_id = res.unwrap();
             VideoUploadSuccessful.send_event(
                 uid,
                 hashtags_len,
                 is_nsfw,
                 enable_hot_or_not,
+                post_id,
                 canister_store,
             );
 
@@ -327,13 +328,13 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
         </div>
         <div class="flex flex-col basis-full lg:basis-7/12 gap-4 px-4">
             <div class="flex flex-row gap-4">
-                <ProgressItem initial_text="Uploading" done_text="Uploaded" loading=uploading/>
+                <ProgressItem initial_text="Uploading" done_text="Uploaded" loading=uploading />
             </div>
             <div class="flex flex-row gap-4">
-                <ProgressItem initial_text="Processing" done_text="Processed" loading=processing/>
+                <ProgressItem initial_text="Processing" done_text="Processed" loading=processing />
             </div>
             <div class="flex flex-row gap-4">
-                <ProgressItem initial_text="Publishing" done_text="Published" loading=publishing/>
+                <ProgressItem initial_text="Publishing" done_text="Published" loading=publishing />
                 <Suspense>
                     {move || {
                         let uid = upload_action().flatten()?;

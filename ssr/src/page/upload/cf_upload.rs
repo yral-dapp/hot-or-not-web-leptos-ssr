@@ -128,7 +128,7 @@ mod cf_impl {
         uid: String,
         enable_hot_or_not: bool,
         is_nsfw: bool,
-    ) -> Result<(), ServerFnError> {
+    ) -> Result<u64, ServerFnError> {
         let user = canisters.authenticated_user().await?;
         let res = user
             .add_post_v_2(PostDetailsFromFrontend {
@@ -144,7 +144,7 @@ mod cf_impl {
             Result_::Err(e) => return Err(ServerFnError::new(e)),
         };
         user.update_post_as_ready_to_view(post_id).await?;
-        Ok(())
+        Ok(post_id)
     }
 }
 
@@ -196,9 +196,9 @@ mod mock_impl {
         _uid: String,
         _enable_hot_or_not: bool,
         _is_nsfw: bool,
-    ) -> Result<(), ServerFnError> {
+    ) -> Result<u64, ServerFnError> {
         use gloo::timers::future::TimeoutFuture;
         TimeoutFuture::new(1000).await;
-        Ok(())
+        Ok(0)
     }
 }
