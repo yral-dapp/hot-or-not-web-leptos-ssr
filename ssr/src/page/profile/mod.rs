@@ -127,8 +127,8 @@ fn ProfileViewInner(user: ProfileDetails, user_canister: Principal) -> impl Into
                     </div>
                 </div>
                 <div class="flex justify-around text-center rounded-full divide-x-2 divide-white/20 bg-white/10 p-4 my-4 w-11/12 sm:w-7/12">
-                    <Stat stat=user.followers_cnt info="Lovers"/>
-                    <Stat stat=user.following_cnt info="Loving"/>
+                    // <Stat stat=user.followers_cnt info="Lovers"/>
+                    // <Stat stat=user.following_cnt info="Loving"/>
                     <Stat stat=user.hots info="Hots"/>
                     <Stat stat=user.nots info="Nots"/>
                 </div>
