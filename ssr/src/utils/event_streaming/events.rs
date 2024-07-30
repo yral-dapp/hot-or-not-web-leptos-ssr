@@ -61,6 +61,9 @@ impl VideoWatched {
             };
             let view_count = move || vid_details().as_ref().map(|q| q.views);
             let like_count = move || vid_details().as_ref().map(|q| q.likes);
+            let post_id = move || vid_details().as_ref().map(|q| q.post_id.clone());
+            let publisher_canister_id =
+                move || vid_details().as_ref().map(|q| q.canister_id.clone());
 
             // video_viewed - analytics
             let (video_watched, set_video_watched) = create_signal(false);
@@ -103,6 +106,8 @@ impl VideoWatched {
                             "percentage_watched": 100.0,
                             "absolute_watched": duration,
                             "video_duration": duration,
+                            "post_id": post_id(),
+                            "publisher_canister_id": publisher_canister_id(),
                         }),
                     );
 
@@ -132,6 +137,8 @@ impl VideoWatched {
                             "view_count": view_count(),
                             "like_count": like_count(),
                             "share_count": 0,
+                            "post_id": post_id(),
+                            "publisher_canister_id": publisher_canister_id(),
                         }),
                     );
                     set_video_watched.set(true);
@@ -173,6 +180,8 @@ impl VideoWatched {
                         "percentage_watched": percentage_watched,
                         "absolute_watched": current_time,
                         "video_duration": duration,
+                        "post_id": post_id(),
+                        "publisher_canister_id": publisher_canister_id(),
                     }),
                 );
             });
@@ -198,6 +207,8 @@ impl LikeVideo {
             let is_nsfw = post_details.is_nsfw;
             let is_hotornot = post_details.hot_or_not_feed_ranking_score.is_some();
             let view_count = post_details.views;
+            let post_id = post_details.post_id.clone();
+            let publisher_canister_id = post_details.canister_id;
 
             let (is_connected, _) = account_connected_reader();
             // like_video - analytics
@@ -222,6 +233,8 @@ impl LikeVideo {
                     "view_count": view_count,
                     "like_count": likes.get(),
                     "share_count": 0,
+                    "post_id": post_id,
+                    "publisher_canister_id": publisher_canister_id,
                 }),
             );
         }
