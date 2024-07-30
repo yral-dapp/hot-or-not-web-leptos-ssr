@@ -61,9 +61,8 @@ impl VideoWatched {
             };
             let view_count = move || vid_details().as_ref().map(|q| q.views);
             let like_count = move || vid_details().as_ref().map(|q| q.likes);
-            let post_id = move || vid_details().as_ref().map(|q| q.post_id.clone());
-            let publisher_canister_id =
-                move || vid_details().as_ref().map(|q| q.canister_id.clone());
+            let post_id = move || vid_details().as_ref().map(|q| q.post_id);
+            let publisher_canister_id = move || vid_details().as_ref().map(|q| q.canister_id);
 
             // video_viewed - analytics
             let (video_watched, set_video_watched) = create_signal(false);
@@ -207,7 +206,7 @@ impl LikeVideo {
             let is_nsfw = post_details.is_nsfw;
             let is_hotornot = post_details.hot_or_not_feed_ranking_score.is_some();
             let view_count = post_details.views;
-            let post_id = post_details.post_id.clone();
+            let post_id = post_details.post_id;
             let publisher_canister_id = post_details.canister_id;
 
             let (is_connected, _) = account_connected_reader();
