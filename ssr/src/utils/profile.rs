@@ -9,7 +9,7 @@ use crate::{
         UserProfileDetailsForFrontend,
     },
     component::infinite_scroller::{CursoredDataProvider, KeyedData, PageEntry},
-    consts::FALLBACK_PROPIC_BASE,
+    consts::{FALLBACK_PROPIC_BASE, GOBGOB_TOTAL_COUNT, GOBGOB_PROPIC_URL},
     state::canisters::Canisters,
 };
 
@@ -49,6 +49,12 @@ fn color_from_principal(principal: Principal) -> String {
     format!("{col_int:06x}")
 }
 
+fn index_from_principal(principal: Principal) -> u32 {
+    let hash_value = crc32fast::hash(principal.as_slice());
+    let number = (hash_value % GOBGOB_TOTAL_COUNT) + 1;
+    number
+}
+
 impl ProfileDetails {
     pub fn username_or_principal(&self) -> String {
         self.username
@@ -73,11 +79,10 @@ impl ProfileDetails {
 }
 
 pub fn propic_from_principal(principal: Principal) -> String {
-    let background_color = color_from_principal(principal);
+    let index = index_from_principal(principal);
     format!(
-        "{FALLBACK_PROPIC_BASE}?seed={}&backgroundColor={}&backgroundType=solid",
-        principal.to_text(),
-        background_color
+        "{GOBGOB_PROPIC_URL}{}/public",
+        index.to_string()
     )
 }
 
