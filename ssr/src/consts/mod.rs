@@ -15,7 +15,7 @@ pub const CF_STREAM_BASE: &str = "https://customer-2p3jflss4r4hmpnz.cloudflarest
 pub const FALLBACK_PROPIC_BASE: &str = "https://api.dicebear.com/7.x/big-smile/svg";
 // an example URL is "https://imagedelivery.net/abXI9nS4DYYtyR1yFFtziA/gob.5/public";
 pub const GOBGOB_PROPIC_URL: &str = "https://imagedelivery.net/abXI9nS4DYYtyR1yFFtziA/gob.";
-pub const GOBGOB_TOTAL_COUNT: u32 = 5000;
+pub const GOBGOB_TOTAL_COUNT: u32 = 8000;
 pub const CF_WATERMARK_UID: &str = "c094ef579b950a6a5ae3e482268b81ca";
 pub const ACCOUNT_CONNECTED_STORE: &str = "account-connected-1";
 pub static CF_BASE_URL: Lazy<Url> =
