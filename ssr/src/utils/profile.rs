@@ -9,7 +9,7 @@ use crate::{
         UserProfileDetailsForFrontend,
     },
     component::infinite_scroller::{CursoredDataProvider, KeyedData, PageEntry},
-    consts::{FALLBACK_PROPIC_BASE, GOBGOB_TOTAL_COUNT, GOBGOB_PROPIC_URL},
+    consts::{FALLBACK_PROPIC_BASE, GOBGOB_PROPIC_URL, GOBGOB_TOTAL_COUNT},
     state::canisters::Canisters,
 };
 
@@ -69,10 +69,10 @@ impl ProfileDetails {
     }
 
     pub fn profile_pic_or_random(&self) -> String {
-        let propic = self.profile_pic.clone().unwrap_or_default();
-        if !propic.is_empty() {
-            return propic;
-        }
+        // let propic = self.profile_pic.clone().unwrap_or_default();
+        // if !propic.is_empty() {
+        //     return propic;
+        // }
 
         propic_from_principal(self.principal)
     }
@@ -80,10 +80,7 @@ impl ProfileDetails {
 
 pub fn propic_from_principal(principal: Principal) -> String {
     let index = index_from_principal(principal);
-    format!(
-        "{GOBGOB_PROPIC_URL}{}/public",
-        index.to_string()
-    )
+    format!("{GOBGOB_PROPIC_URL}{}/public", index.to_string())
 }
 
 #[derive(Clone, Copy)]
