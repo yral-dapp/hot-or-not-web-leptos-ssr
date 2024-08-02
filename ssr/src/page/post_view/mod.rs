@@ -23,8 +23,7 @@ use crate::{
     },
     try_or_redirect,
     utils::{
-        posts::{get_post_uid, FetchCursor, PostDetails},
-        route::failure_redirect,
+        ml_feed::MLFeed, posts::{get_post_uid, FetchCursor, PostDetails}, route::failure_redirect
     },
 };
 use video_iter::VideoFetchStream;
@@ -195,6 +194,7 @@ pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
     }
     let (nsfw_enabled, _, _) = use_local_storage::<bool, FromToStringCodec>(NSFW_TOGGLE_STORE);
     let auth_canisters: RwSignal<Option<Canisters<true>>> = expect_context();
+    let ml_feed: RwSignal<MLFeed> = expect_context();
 
     let fetch_video_action = create_action(move |_| async move {
         loop {
@@ -208,12 +208,13 @@ pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
                 return;
             };
             let unauth_canisters = unauth_canisters();
+            let ml_feed = ml_feed.get_untracked();
 
             let chunks = if let Some(canisters) = auth_canisters.as_ref() {
-                let fetch_stream = VideoFetchStream::new(canisters, cursor);
+                let fetch_stream = VideoFetchStream::new(canisters, &ml_feed, cursor);
                 fetch_stream.fetch_post_uids_chunked(3, nsfw_enabled).await
             } else {
-                let fetch_stream = VideoFetchStream::new(&unauth_canisters, cursor);
+                let fetch_stream = VideoFetchStream::new(&unauth_canisters, &ml_feed, cursor);
                 fetch_stream.fetch_post_uids_chunked(3, nsfw_enabled).await
             };
 
