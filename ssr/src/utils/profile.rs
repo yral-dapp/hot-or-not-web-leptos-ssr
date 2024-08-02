@@ -63,10 +63,10 @@ impl ProfileDetails {
     }
 
     pub fn profile_pic_or_random(&self) -> String {
-        // let propic = self.profile_pic.clone().unwrap_or_default();
-        // if !propic.is_empty() {
-        //     return propic;
-        // }
+        let propic = self.profile_pic.clone().unwrap_or_default();
+        if !propic.is_empty() {
+            return propic;
+        }
 
         propic_from_principal(self.principal)
     }
