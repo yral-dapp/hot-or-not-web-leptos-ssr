@@ -9,7 +9,7 @@ use crate::{
         UserProfileDetailsForFrontend,
     },
     component::infinite_scroller::{CursoredDataProvider, KeyedData, PageEntry},
-    consts::FALLBACK_PROPIC_BASE,
+    consts::{GOBGOB_PROPIC_URL, GOBGOB_TOTAL_COUNT},
     state::canisters::Canisters,
 };
 
@@ -44,9 +44,9 @@ impl From<UserProfileDetailsForFrontend> for ProfileDetails {
     }
 }
 
-fn color_from_principal(principal: Principal) -> String {
-    let col_int = crc32fast::hash(principal.as_slice()) & 0xFFFFFF;
-    format!("{col_int:06x}")
+fn index_from_principal(principal: Principal) -> u32 {
+    let hash_value = crc32fast::hash(principal.as_slice());
+    (hash_value % GOBGOB_TOTAL_COUNT) + 1
 }
 
 impl ProfileDetails {
@@ -63,22 +63,18 @@ impl ProfileDetails {
     }
 
     pub fn profile_pic_or_random(&self) -> String {
-        let propic = self.profile_pic.clone().unwrap_or_default();
-        if !propic.is_empty() {
-            return propic;
-        }
+        // let propic = self.profile_pic.clone().unwrap_or_default();
+        // if !propic.is_empty() {
+        //     return propic;
+        // }
 
         propic_from_principal(self.principal)
     }
 }
 
 pub fn propic_from_principal(principal: Principal) -> String {
-    let background_color = color_from_principal(principal);
-    format!(
-        "{FALLBACK_PROPIC_BASE}?seed={}&backgroundColor={}&backgroundType=solid",
-        principal.to_text(),
-        background_color
-    )
+    let index = index_from_principal(principal);
+    format!("{GOBGOB_PROPIC_URL}{}/public", index)
 }
 
 #[derive(Clone, Copy)]

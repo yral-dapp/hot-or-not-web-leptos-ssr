@@ -1,5 +1,5 @@
 use leptos::*;
-use leptos_dom::{html::Video, NodeRef};
+use leptos_dom::html::Video;
 
 #[component]
 pub fn VideoPlayer(
