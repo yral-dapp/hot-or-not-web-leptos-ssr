@@ -32,7 +32,7 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
 
     let post_canister = post.canister_id;
     let post_id = post.post_id;
-    let initial_liked = post.liked_by_user;
+    let initial_liked = (post.liked_by_user, post.likes);
     let canisters = auth_canisters_store();
 
     let like_toggle = create_action(move |&()| {
@@ -72,15 +72,15 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
     });
 
     let liked_fetch = move |cans: Canisters<true>| async move {
-        if let Some(liked) = initial_liked {
-            return liked;
+        if let Some(liked) = initial_liked.0 {
+            return (liked, initial_liked.1);
         }
 
         match post_liked_by_me(&cans, post_canister, post_id).await {
             Ok(liked) => liked,
             Err(e) => {
                 failure_redirect(e);
-                false
+                (false, likes.get())
             }
         }
     };
@@ -98,7 +98,10 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
             <span class="absolute -bottom-5 text-sm md:text-md">{likes}</span>
         </div>
         <WithAuthCans with=liked_fetch let:d>
-            {move || liked.set(Some(d.1))}
+            {move || {
+                likes.set(d.1.1);
+                liked.set(Some(d.1.0))
+            }}
         </WithAuthCans>
     }
 }
