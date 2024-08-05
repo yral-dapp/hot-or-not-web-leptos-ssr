@@ -76,9 +76,11 @@ pub fn App() -> impl IntoView {
     provide_context(AuthorizedUserToSeedContent::default());
     provide_context(AudioState::default());
 
-    // ML Feed
-    let ml_feed = create_rw_signal(MLFeed::default());
-    provide_context(ml_feed);
+    #[cfg(feature = "hydrate")]
+    {
+        use crate::utils::ml_feed::MLFeed;
+        provide_context(MLFeed::default());
+    }
 
     // History Tracking
     let history_ctx = HistoryCtx::default();
