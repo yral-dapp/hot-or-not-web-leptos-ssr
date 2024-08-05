@@ -9,7 +9,7 @@ pub mod local_storage;
 
 #[cfg(feature = "ssr")]
 pub mod server {
-    use crate::{auth::server_impl::store::KVStoreImpl, utils::ml_feed::MLFeedGRPCChannel};
+    use crate::auth::server_impl::store::KVStoreImpl;
 
     use super::canisters::Canisters;
     use axum::extract::FromRef;
