@@ -22,18 +22,11 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
     let likes = create_rw_signal(post.likes);
 
     let liked = create_rw_signal(None::<bool>);
-    let icon_class = Signal::derive(move || {
+    let icon_name = Signal::derive(move || {
         if liked().unwrap_or_default() {
-            Some(TextProp::from("fill-primary-600 size-8"))
+            "/img/heart-icon-liked.svg"
         } else {
-            Some(TextProp::from("size-8"))
-        }
-    });
-    let icon_style = Signal::derive(move || {
-        if liked().unwrap_or_default() {
-            Some(TextProp::from("filter: drop-shadow(2px 0 0 white) drop-shadow(-2px 0 0 white) drop-shadow(0 2px 0 white) drop-shadow(0 -2px 0 white);"))
-        } else {
-            Some(TextProp::from("filter: drop-shadow(2px 0 0 white) drop-shadow(-2px 0 0 white) drop-shadow(0 2px 0 white) drop-shadow(0 -2px 0 white);"))
+            "/img/heart-icon-white.svg"
         }
     });
 
@@ -98,10 +91,9 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
         <div class="relative flex flex-col gap-1 items-center">
             <button
                 on:click=move |_| like_toggle.dispatch(())
-                class="drop-shadow-lg"
                 disabled=move || liking() || liked.with(|l| l.is_none())
             >
-                <Icon class=icon_class style=icon_style icon=icondata::AiHeartFilled />
+                <img src=icon_name style="width: 1em; height: 1em;"/>
             </button>
             <span class="absolute -bottom-5 text-sm md:text-md">{likes}</span>
         </div>
