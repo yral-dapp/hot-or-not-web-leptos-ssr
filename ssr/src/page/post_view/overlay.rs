@@ -26,7 +26,7 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
         if liked().unwrap_or_default() {
             Some(TextProp::from("fill-primary-600"))
         } else {
-            None
+            None            
         }
     });
     let icon_style = Signal::derive(move || {
