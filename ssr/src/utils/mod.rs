@@ -16,9 +16,6 @@ pub mod types;
 pub mod user;
 pub mod web;
 
-#[cfg(feature = "hydrate")]
-pub mod ml_feed;
-
 pub fn current_epoch() -> Duration {
     web_time::SystemTime::now()
         .duration_since(SystemTime::UNIX_EPOCH)
@@ -41,6 +38,7 @@ impl<T> PartialEq for MockPartialEq<T> {
 pub mod off_chain {
     tonic::include_proto!("off_chain");
 }
+<<<<<<< HEAD
 
 // TODO: to be removed
 pub mod local_feed_impl {
@@ -158,3 +156,5 @@ pub mod local_feed_impl {
         Ok(posts)
     }
 }
+=======
+>>>>>>> e1f4827... local feed testing

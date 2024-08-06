@@ -195,12 +195,9 @@ pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
     }
     let (nsfw_enabled, _, _) = use_local_storage::<bool, FromToStringCodec>(NSFW_TOGGLE_STORE);
     let auth_canisters: RwSignal<Option<Canisters<true>>> = expect_context();
-    // let ml_feed: MLFeed = expect_context();
 
     // #[cfg(feature = "hydrate")]
     // {
-    //     use crate::utils::ml_feed::ml_feed_impl::get_next_feed;
-
     //     leptos::spawn_local(async move {
 
     //         let temp_res = get_next_feed(&Principal::from_text("76qol-iiaaa-aaaak-qelkq-cai").unwrap(), 10, vec![]).await;
@@ -225,17 +222,22 @@ pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
                 let unauth_canisters = unauth_canisters();
 
                 let chunks = if let Some(canisters) = auth_canisters.as_ref() {
-                    leptos::logging::log!("auth_canisters: yo");
                     let fetch_stream = VideoFetchStream::new(canisters, cursor);
                     fetch_stream
-                        .fetch_post_uids_ml_feed_chunked(3, nsfw_enabled)
+                        .fetch_post_uids_ml_feed_chunked(
+                            3,
+                            nsfw_enabled,
+                            video_queue.get_untracked(),
+                        )
                         .await // fetch_post_uids_ml_feed_chunked
                 } else {
-                    leptos::logging::log!("unauth_canisters: yo");
-                    // return;
                     let fetch_stream = VideoFetchStream::new(&unauth_canisters, cursor);
                     fetch_stream
-                        .fetch_post_uids_ml_feed_chunked(3, nsfw_enabled)
+                        .fetch_post_uids_ml_feed_chunked(
+                            3,
+                            nsfw_enabled,
+                            video_queue.get_untracked(),
+                        )
                         .await // fetch_post_uids_chunked
                 };
 
