@@ -51,12 +51,6 @@ pub fn ErrorView(#[prop(into)] error: MaybeSignal<String>) -> impl IntoView {
             <div class="text-center text-xs md:text-sm text-white/60 w-full md:w-2/3 lg:w-1/3 resize-none px-8 mb-4">
                 {error.clone()}
             </div>
-            // <textarea
-            // prop:value=error
-            // disabled
-            // rows=3
-            // class="text-center bg-white/10 text-xs md:text-sm text-white/60 w-full md:w-2/3 lg:w-1/3 resize-none p-2 mb-4"
-            // ></textarea>
             <button
                 on:click=move |_| go_back()
                 class="bg-primary-600 rounded-full mt-6 py-4 px-12 max-w-full text-white text-lg md:text-xl"
