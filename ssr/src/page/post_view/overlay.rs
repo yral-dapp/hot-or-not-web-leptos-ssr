@@ -22,18 +22,11 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
     let likes = create_rw_signal(post.likes);
 
     let liked = create_rw_signal(None::<bool>);
-    let icon_class = Signal::derive(move || {
+    let icon_name = Signal::derive(move || {
         if liked().unwrap_or_default() {
-            Some(TextProp::from("fill-primary-600"))
+            "/img/heart-icon-liked.svg"
         } else {
-            None
-        }
-    });
-    let icon_style = Signal::derive(move || {
-        if liked().unwrap_or_default() {
-            Some(TextProp::from("filter: drop-shadow(2px 0 0 white) drop-shadow(-2px 0 0 white) drop-shadow(0 2px 0 white) drop-shadow(0 -2px 0 white);"))
-        } else {
-            None
+            "/img/heart-icon-white.svg"
         }
     });
 
@@ -98,10 +91,9 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
         <div class="relative flex flex-col gap-1 items-center">
             <button
                 on:click=move |_| like_toggle.dispatch(())
-                class="drop-shadow-lg"
                 disabled=move || liking() || liked.with(|l| l.is_none())
             >
-                <Icon class=icon_class style=icon_style icon=icondata::AiHeartFilled/>
+                <img src=icon_name style="width: 1em; height: 1em;"/>
             </button>
             <span class="absolute -bottom-5 text-sm md:text-md">{likes}</span>
         </div>
@@ -189,30 +181,30 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
                         href=profile_url
                         class="w-10 md:w-12 h-10 md:h-12 overflow-clip rounded-full border-white border-2"
                     >
-                        <img class="h-full w-full object-cover" src=post.propic_url/>
+                        <img class="h-full w-full object-cover" src=post.propic_url />
                     </a>
                     <div class="flex flex-col w-7/12">
                         <span class="text-md md:text-lg font-bold truncate">
                             {post.display_name}
                         </span>
                         <span class="flex flex-row gap-1 items-center text-sm md:text-md">
-                            <Icon icon=icondata::AiEyeOutlined/>
+                            <Icon icon=icondata::AiEyeOutlined />
                             {post.views}
                         </span>
                     </div>
                 </div>
-                <ExpandableText description=post.description/>
+                <ExpandableText description=post.description />
             </div>
             <div class="flex flex-col gap-8 pb-10 items-end w-3/12 text-4xl">
                 <button on:click=move |_| show_report.set(true)>
-                    <Icon class="drop-shadow-lg" icon=icondata::TbMessageReport/>
+                    <Icon class="drop-shadow-lg" icon=icondata::TbMessageReport />
                 </button>
                 <a href="/refer-earn">
-                    <Icon class="drop-shadow-lg" icon=icondata::AiGiftFilled/>
+                    <Icon class="drop-shadow-lg" icon=icondata::AiGiftFilled />
                 </a>
-                <LikeAndAuthCanLoader post=post_c/>
+                <LikeAndAuthCanLoader post=post_c />
                 <button on:click=move |_| share()>
-                    <Icon class="drop-shadow-lg" icon=icondata::RiSendPlaneBusinessFill/>
+                    <Icon class="drop-shadow-lg" icon=icondata::RiSendPlaneBusinessFill />
                 </button>
             </div>
         </div>
@@ -224,7 +216,7 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
                         {video_url}
                     </p>
                     <button on:click=move |_| click_copy(video_url())>
-                        <Icon class="text-xl" icon=icondata::FaCopyRegular/>
+                        <Icon class="text-xl" icon=icondata::FaCopyRegular />
                     </button>
                 </div>
             </div>
@@ -242,15 +234,33 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
                 <span class="text-lg">Report Post</span>
                 <span class="text-lg">Please select a reason:</span>
                 <div class="max-w-full text-md text-black">
-                    <select class="p-2 w-full block rounded-lg text-sm" on:change=move |ev| {
+                    <select
+                        class="p-2 w-full block rounded-lg text-sm"
+                        on:change=move |ev| {
                             let new_value = event_target_value(&ev);
                             set_report_option(new_value);
-                        }>
-                        <SelectOption value=report_option is=format!("{}",ReportOption::Nudity.as_str())/>
-                        <SelectOption value=report_option is=format!("{}",ReportOption::Violence.as_str())/>
-                        <SelectOption value=report_option is=format!("{}",ReportOption::Offensive.as_str())/>
-                        <SelectOption value=report_option is=format!("{}",ReportOption::Spam.as_str())/>
-                        <SelectOption value=report_option is=format!("{}",ReportOption::Other.as_str())/>
+                        }
+                    >
+                        <SelectOption
+                            value=report_option
+                            is=format!("{}", ReportOption::Nudity.as_str())
+                        />
+                        <SelectOption
+                            value=report_option
+                            is=format!("{}", ReportOption::Violence.as_str())
+                        />
+                        <SelectOption
+                            value=report_option
+                            is=format!("{}", ReportOption::Offensive.as_str())
+                        />
+                        <SelectOption
+                            value=report_option
+                            is=format!("{}", ReportOption::Spam.as_str())
+                        />
+                        <SelectOption
+                            value=report_option
+                            is=format!("{}", ReportOption::Other.as_str())
+                        />
                     </select>
                 </div>
                 <button on:click=move |_| click_report.dispatch(())>
