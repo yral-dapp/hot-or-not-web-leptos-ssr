@@ -1,11 +1,11 @@
 #[cfg(feature = "backend-admin")]
 pub mod admin_canisters;
+pub mod audio_state;
 pub mod auth;
 pub mod canisters;
 pub mod content_seed_client;
 pub mod history;
 pub mod local_storage;
-pub mod audio_state;
 
 #[cfg(feature = "ssr")]
 pub mod server {

@@ -15,7 +15,10 @@ use crate::{
         upload::UploadPostPage,
         wallet::{transactions::Transactions, Wallet},
     },
-    state::{canisters::Canisters, content_seed_client::ContentSeedClient, history::HistoryCtx, audio_state::AudioState},
+    state::{
+        audio_state::AudioState, canisters::Canisters, content_seed_client::ContentSeedClient,
+        history::HistoryCtx,
+    },
     utils::event_streaming::EventHistory,
 };
 use leptos::*;

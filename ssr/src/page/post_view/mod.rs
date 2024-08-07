@@ -2,18 +2,7 @@ pub mod error;
 pub mod overlay;
 pub mod video_iter;
 pub mod video_loader;
-
-use candid::Principal;
-use futures::StreamExt;
-use leptos::*;
-use leptos_icons::*;
-use leptos_router::*;
-use leptos_use::{
-    storage::use_local_storage, use_debounce_fn, use_intersection_observer_with_options,
-    utils::FromToStringCodec, UseIntersectionObserverOptions,
-};
 use crate::state::audio_state::AudioState;
-use std::time::Duration;
 use crate::{
     component::{scrolling_post_view::ScrollingPostView, spinner::FullScreenSpinner},
     consts::NSFW_TOGGLE_STORE,
@@ -24,6 +13,16 @@ use crate::{
         route::failure_redirect,
     },
 };
+use candid::Principal;
+use futures::StreamExt;
+use leptos::*;
+use leptos_icons::*;
+use leptos_router::*;
+use leptos_use::{
+    storage::use_local_storage, use_debounce_fn, use_intersection_observer_with_options,
+    utils::FromToStringCodec, UseIntersectionObserverOptions,
+};
+use std::time::Duration;
 use video_iter::VideoFetchStream;
 use video_loader::{BgView, VideoView};
 
@@ -62,12 +61,15 @@ pub fn ScrollingView<NV: Fn() -> NVR + Clone + 'static, NVR>(
         ..
     } = expect_context();
 
-    
+    let AudioState {
+        muted,
+        show_mute_icon,
+    } = expect_context();
 
-    let AudioState { muted, show_mute_icon } =  expect_context();
-
-     set_timeout(
-        move ||{ show_mute_icon.set(false);},
+    set_timeout(
+        move || {
+            show_mute_icon.set(false);
+        },
         Duration::from_secs(3),
     );
 
