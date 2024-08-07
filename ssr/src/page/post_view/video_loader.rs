@@ -51,7 +51,8 @@ pub fn BgView(
             <Show when=move || { idx == 4 && !is_connected.get() && show_login_popup.get() }>
                 <FeedPopUp
                     on_click=move |_| set_show_login_popup.set(false)
-                    header_text="Login to claim 1000 COYNs!"
+                    header_text="Your 1000 Coyns
+    Await You!"
                     body_text="SignUp/Login to save your progress and claim your rewards."
                     login_text="Login"
                 />
