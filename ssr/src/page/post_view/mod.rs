@@ -176,7 +176,7 @@ pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
         video_queue.update_untracked(|v| {
             if v.len() > 1 {
                 // Safe to do a GC here
-                let rem = 0..(current_idx.get_untracked().saturating_sub(3));
+                let rem = 0..(current_idx.get_untracked().saturating_sub(5));
                 current_idx.update(|c| *c -= rem.len());
                 v.drain(rem);
                 return;

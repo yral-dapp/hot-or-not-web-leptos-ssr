@@ -35,8 +35,10 @@ pub fn BgView(
     let (referrer_store, _, _) = use_referrer_store();
 
     create_effect(move |_| {
-        if current_idx.get() == 5 {
+        if current_idx.get() % 4 != 0 {
             set_show_login_popup.update(|n| *n = false);
+        } else {
+            set_show_login_popup.update(|n| *n = true);
         }
         Some(())
     });
@@ -48,7 +50,7 @@ pub fn BgView(
                 style:background-color="rgb(0, 0, 0)"
                 style:background-image=move || format!("url({})", bg_url(uid()))
             ></div>
-            <Show when=move || { idx == 4 && !is_connected.get() && show_login_popup.get() }>
+            <Show when=move || { current_idx.get() != 0 && current_idx.get() % 4 == 0 && !is_connected.get() && show_login_popup.get() }>
                 <FeedPopUp
                     on_click=move |_| set_show_login_popup.set(false)
                     header_text="Your 1000 COYNs
