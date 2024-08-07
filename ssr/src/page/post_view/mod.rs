@@ -196,79 +196,47 @@ pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
     let (nsfw_enabled, _, _) = use_local_storage::<bool, FromToStringCodec>(NSFW_TOGGLE_STORE);
     let auth_canisters: RwSignal<Option<Canisters<true>>> = expect_context();
 
-    // #[cfg(feature = "hydrate")]
-    // {
-    //     leptos::spawn_local(async move {
+    let fetch_video_action = create_action(move |_| async move {
+        loop {
+            let Some(cursor) = fetch_cursor.try_get_untracked() else {
+                return;
+            };
+            let Some(auth_canisters) = auth_canisters.try_get_untracked() else {
+                return;
+            };
+            let Some(nsfw_enabled) = nsfw_enabled.try_get_untracked() else {
+                return;
+            };
+            let unauth_canisters = unauth_canisters();
 
-    //         let temp_res = get_next_feed(&Principal::from_text("76qol-iiaaa-aaaak-qelkq-cai").unwrap(), 10, vec![]).await;
+            let chunks = if let Some(canisters) = auth_canisters.as_ref() {
+                let fetch_stream = VideoFetchStream::new(canisters, cursor);
+                fetch_stream.fetch_post_uids_chunked(3, nsfw_enabled).await
+            } else {
+                let fetch_stream = VideoFetchStream::new(&unauth_canisters, cursor);
+                fetch_stream.fetch_post_uids_chunked(3, nsfw_enabled).await
+            };
 
-    //         logging::log!("temp_res: {:?}", temp_res);
-    //     });
-
-    // }
-
-    let fetch_video_action = create_action(move |_| {
-        async move {
-            loop {
-                let Some(cursor) = fetch_cursor.try_get_untracked() else {
-                    return;
-                };
-                let Some(auth_canisters) = auth_canisters.try_get_untracked() else {
-                    return;
-                };
-                let Some(nsfw_enabled) = nsfw_enabled.try_get_untracked() else {
-                    return;
-                };
-                let unauth_canisters = unauth_canisters();
-
-                let chunks = if let Some(canisters) = auth_canisters.as_ref() {
-                    let fetch_stream = VideoFetchStream::new(canisters, cursor);
-                    fetch_stream
-                        .fetch_post_uids_ml_feed_chunked(
-                            3,
-                            nsfw_enabled,
-                            video_queue.get_untracked(),
-                        )
-                        .await // fetch_post_uids_ml_feed_chunked
-                } else {
-                    let fetch_stream = VideoFetchStream::new(&unauth_canisters, cursor);
-                    fetch_stream
-                        .fetch_post_uids_ml_feed_chunked(
-                            3,
-                            nsfw_enabled,
-                            video_queue.get_untracked(),
-                        )
-                        .await // fetch_post_uids_chunked
-                };
-
-                let res = try_or_redirect!(chunks);
-                let mut chunks = res.posts_stream;
-                let mut cnt = 0;
-                while let Some(chunk) = chunks.next().await {
-                    cnt += chunk.len();
-                    video_queue.try_update(|q| {
-                        for uid in chunk {
-                            let uid = try_or_redirect!(uid);
-                            q.push(uid);
-
-                            leptos::logging::log!(
-                                "queue len: {:?}, cur_idc: {:?}",
-                                q.len(),
-                                current_idx.get_untracked()
-                            );
-                        }
-                    });
-                }
-                if res.end || cnt >= 8 {
-                    queue_end.try_set(res.end);
-                    leptos::logging::log!("breaking: queue_end {:?}", queue_end.get_untracked());
-                    break;
-                }
-                fetch_cursor.try_update(|c| c.advance());
+            let res = try_or_redirect!(chunks);
+            let mut chunks = res.posts_stream;
+            let mut cnt = 0;
+            while let Some(chunk) = chunks.next().await {
+                cnt += chunk.len();
+                video_queue.try_update(|q| {
+                    for uid in chunk {
+                        let uid = try_or_redirect!(uid);
+                        q.push(uid);
+                    }
+                });
             }
-
+            if res.end || cnt >= 8 {
+                queue_end.try_set(res.end);
+                break;
+            }
             fetch_cursor.try_update(|c| c.advance());
         }
+
+        fetch_cursor.try_update(|c| c.advance());
     });
     create_effect(move |_| {
         if !recovering_state.get_untracked() {
