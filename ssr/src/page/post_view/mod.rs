@@ -9,12 +9,11 @@ use leptos::*;
 use leptos_icons::*;
 use leptos_router::*;
 use leptos_use::{
-    use_timeout_fn,
     storage::use_local_storage, use_debounce_fn, use_intersection_observer_with_options,
     utils::FromToStringCodec, UseIntersectionObserverOptions,
 };
 use crate::state::audio_state::AudioState;
-
+use std::time::Duration;
 use crate::{
     component::{scrolling_post_view::ScrollingPostView, spinner::FullScreenSpinner},
     consts::NSFW_TOGGLE_STORE,
@@ -67,9 +66,9 @@ pub fn ScrollingView<NV: Fn() -> NVR + Clone + 'static, NVR>(
 
     let AudioState { muted, show_mute_icon } =  expect_context();
 
-     use_timeout_fn(
-        move |_: ()|{ show_mute_icon.set(false);},
-        3000.0,
+     set_timeout(
+        move ||{ show_mute_icon.set(false);},
+        Duration::from_secs(3),
     );
 
     let scroll_root: NodeRef<html::Div> = create_node_ref::<html::Div>();
@@ -147,7 +146,7 @@ pub fn ScrollingView<NV: Fn() -> NVR + Clone + 'static, NVR>(
                     </div>
                 </Show>
 
-                <Show when=move || muted() && show_mute_icon()>
+                <Show when=show_mute_icon>
                     <button
                         class="fixed top-1/2 left-1/2 z-20 cursor-pointer"
                         on:click=move |_| muted.set(false)
