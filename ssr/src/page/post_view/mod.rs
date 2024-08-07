@@ -70,7 +70,7 @@ pub fn ScrollingView<NV: Fn() -> NVR + Clone + 'static, NVR>(
         move || {
             show_mute_icon.set(false);
         },
-        Duration::from_secs(3),
+        Duration::from_secs(6),
     );
 
     let scroll_root: NodeRef<html::Div> = create_node_ref::<html::Div>();
