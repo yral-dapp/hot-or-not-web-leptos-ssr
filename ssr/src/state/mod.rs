@@ -5,6 +5,7 @@ pub mod canisters;
 pub mod content_seed_client;
 pub mod history;
 pub mod local_storage;
+pub mod audio_state;
 
 #[cfg(feature = "ssr")]
 pub mod server {
