@@ -7,7 +7,7 @@ use crate::consts::ONE_DAY_SECONDS;
 
 pub(crate) mod gov_pb;
 pub mod nns_pb;
-pub(crate) mod sns_pb;
+pub mod sns_pb;
 pub(crate) mod sns_swap_pb;
 
 fn divide_perfectly(field_name: &str, dividend: u64, divisor: u64) -> Result<u64, String> {

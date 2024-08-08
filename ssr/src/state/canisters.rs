@@ -1,17 +1,22 @@
 use std::sync::Arc;
 
-use candid::Principal;
+use candid::{Decode, Encode, Principal};
 use ic_agent::{identity::DelegatedIdentity, AgentError, Identity};
 use leptos::*;
+use sns_validation::pbs::sns_pb::SnsInitPayload;
 use yral_metadata_client::MetadataClient;
 use yral_metadata_types::UserMetadata;
 
 use crate::{
     auth::DelegatedIdentityWire,
     canister::{
-        individual_user_template::{IndividualUserTemplate, Result9, UserCanisterDetails},
+        individual_user_template::{
+            IndividualUserTemplate, Result16, Result5, UserCanisterDetails,
+        },
         platform_orchestrator::PlatformOrchestrator,
         post_cache::PostCache,
+        sns_governance::SnsGovernance,
+        sns_ledger::SnsLedger,
         user_index::UserIndex,
         PLATFORM_ORCHESTRATOR_ID, POST_CACHE_ID,
     },
@@ -80,6 +85,20 @@ impl Canisters<true> {
         self.individual_user(self.user_canister).await
     }
 
+    pub async fn deploy_cdao_sns(
+        &self,
+        init_payload: SnsInitPayload,
+    ) -> Result<Result5, AgentError> {
+        let agent = self.agent.get_agent().await?;
+        let args = Encode!(&init_payload)?;
+        let bytes = agent
+            .update(&self.user_canister, "deploy_cdao_sns")
+            .with_arg(args)
+            .call_and_wait()
+            .await?;
+        Ok(Decode!(&bytes, Result5)?)
+    }
+
     pub fn profile_details(&self) -> ProfileDetails {
         self.profile_details
             .clone()
@@ -129,6 +148,19 @@ impl<const A: bool> Canisters<A> {
             .get_user_metadata(user_principal)
             .await?;
         Ok(meta.map(|m| m.user_canister_id))
+    }
+
+    pub async fn sns_governance(
+        &self,
+        canister_id: Principal,
+    ) -> Result<SnsGovernance<'_>, AgentError> {
+        let agent = self.agent.get_agent().await?;
+        Ok(SnsGovernance(canister_id, agent))
+    }
+
+    pub async fn sns_ledger(&self, canister_id: Principal) -> Result<SnsLedger<'_>, AgentError> {
+        let agent = self.agent.get_agent().await?;
+        Ok(SnsLedger(canister_id, agent))
     }
 
     async fn subnet_indexes(&self) -> Result<Vec<Principal>, AgentError> {
@@ -226,8 +258,8 @@ pub async fn do_canister_auth(
         .await
         .map_err(|e| e.to_string())
     {
-        Ok(Result9::Ok(_)) => (),
-        Err(e) | Ok(Result9::Err(e)) => log::warn!("Failed to update last access time: {}", e),
+        Ok(Result16::Ok(_)) => (),
+        Err(e) | Ok(Result16::Err(e)) => log::warn!("Failed to update last access time: {}", e),
     }
     canisters.profile_details = Some(user.get_profile_details().await?.into());
 

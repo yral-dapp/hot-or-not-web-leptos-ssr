@@ -2,12 +2,16 @@ use leptos::*;
 use leptos_icons::*;
 
 use crate::{
+    canister::individual_user_template::Result5,
     component::{back_btn::BackButton, img_to_png::ImgToPng, title::Title},
     state::canisters::auth_canisters_store,
     utils::web::FileWithUrl,
 };
 
-use super::sns_form::SnsFormState;
+use super::{
+    popups::{SuccessPopup, TokenCreationPopup},
+    sns_form::SnsFormState,
+};
 
 #[component]
 fn TokenImgInput() -> impl IntoView {
@@ -47,6 +51,7 @@ fn TokenImgInput() -> impl IntoView {
                         }
                     }
                 >
+
                     <div class="flex flex-col items-center justify-center h-full w-full bg-white/10 rounded-full border-2 border-dashed border-neutral-600 hover:bg-white/15">
                         <Icon
                             icon=icondata::BiImageAddSolid
@@ -161,10 +166,22 @@ pub fn CreateToken() -> impl IntoView {
             .get_untracked()
             .expect("Create token called without auth canisters");
         let sns_form = ctx.form_state.get_untracked();
-        let sns_config = sns_form.try_into_config(cans)?;
+        let sns_config = sns_form.try_into_config(&cans)?;
 
-        let _create_sns = sns_config.try_convert_to_executed_sns_init()?;
-        // TODO: send call to canister
+        let create_sns = sns_config.try_convert_to_executed_sns_init()?;
+        let res = cans
+            .deploy_cdao_sns(create_sns)
+            .await
+            .map_err(|e| e.to_string())?;
+        match res {
+            Result5::Ok(c) => {
+                log::debug!("deployed canister {}", c.governance);
+            }
+            Result5::Err(e) => {
+                return Err(format!("{e:?}"));
+            }
+        };
+
         Ok::<_, String>(())
     });
     let creating = create_action.pending();
@@ -182,6 +199,9 @@ pub fn CreateToken() -> impl IntoView {
             return None;
         }
         create_act_value()
+    });
+    let success = Signal::derive(move || {
+        create_act_res.with(|res| res.as_ref().map(|res| res.is_ok()).unwrap_or_default())
     });
 
     view! {
@@ -239,6 +259,13 @@ pub fn CreateToken() -> impl IntoView {
                     </button>
                 </div>
             </div>
+            <SuccessPopup
+                show=success
+                token_name=Signal::derive(move || {
+                    ctx.form_state.with(|f| f.name.clone()).unwrap_or_default()
+                })
+            />
+            <TokenCreationPopup show=creating/>
         </div>
     }
 }

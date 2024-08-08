@@ -1,7 +1,7 @@
 use candid::Principal;
 
 use crate::{
-    canister::individual_user_template::{GetPostsOfUserProfileError, Result5},
+    canister::individual_user_template::{GetPostsOfUserProfileError, Result9},
     state::canisters::Canisters,
     utils::posts::{FetchCursor, PostDetails, PostViewError},
 };
@@ -34,11 +34,11 @@ impl<'a, const AUTH: bool> ProfileVideoStream<'a, AUTH> {
             )
             .await?;
         match posts {
-            Result5::Ok(v) => Ok(v
+            Result9::Ok(v) => Ok(v
                 .into_iter()
                 .map(|details| PostDetails::from_canister_post(AUTH, self.user_canister, details))
                 .collect::<Vec<PostDetails>>()),
-            Result5::Err(GetPostsOfUserProfileError::ReachedEndOfItemsList) => Ok(vec![]),
+            Result9::Err(GetPostsOfUserProfileError::ReachedEndOfItemsList) => Ok(vec![]),
             _ => Err(PostViewError::Canister(
                 "user canister refused to send posts".into(),
             )),

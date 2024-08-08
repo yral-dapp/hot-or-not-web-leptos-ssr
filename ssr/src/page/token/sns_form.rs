@@ -157,7 +157,7 @@ impl Default for SnsFormState {
 impl SnsFormState {
     pub fn try_into_config(
         self,
-        canisters: Canisters<true>,
+        canisters: &Canisters<true>,
     ) -> Result<SnsConfigurationFile, String> {
         let user_principal = canisters.user_principal();
         let user_canister = canisters.user_canister();

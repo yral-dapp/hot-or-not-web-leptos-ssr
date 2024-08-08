@@ -426,7 +426,6 @@ impl SnsConfigurationFile {
             // But it's required, so we can just use any arbitrary value.
             proposal_id: 10,
         };
-        
 
         SnsInitPayload::try_from(executed_create_sns)
     }
