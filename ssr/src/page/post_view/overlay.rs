@@ -181,30 +181,30 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
                         href=profile_url
                         class="w-10 md:w-12 h-10 md:h-12 overflow-clip rounded-full border-white border-2"
                     >
-                        <img class="h-full w-full object-cover" src=post.propic_url />
+                        <img class="h-full w-full object-cover" src=post.propic_url/>
                     </a>
                     <div class="flex flex-col w-7/12">
                         <span class="text-md md:text-lg font-bold truncate">
                             {post.display_name}
                         </span>
                         <span class="flex flex-row gap-1 items-center text-sm md:text-md">
-                            <Icon icon=icondata::AiEyeOutlined />
+                            <Icon icon=icondata::AiEyeOutlined/>
                             {post.views}
                         </span>
                     </div>
                 </div>
-                <ExpandableText description=post.description />
+                <ExpandableText description=post.description/>
             </div>
             <div class="flex flex-col gap-8 pb-10 items-end w-3/12 text-4xl">
                 <button on:click=move |_| show_report.set(true)>
-                    <Icon class="drop-shadow-lg" icon=icondata::TbMessageReport />
+                    <Icon class="drop-shadow-lg" icon=icondata::TbMessageReport/>
                 </button>
                 <a href="/refer-earn">
-                    <Icon class="drop-shadow-lg" icon=icondata::AiGiftFilled />
+                    <Icon class="drop-shadow-lg" icon=icondata::AiGiftFilled/>
                 </a>
-                <LikeAndAuthCanLoader post=post_c />
+                <LikeAndAuthCanLoader post=post_c/>
                 <button on:click=move |_| share()>
-                    <Icon class="drop-shadow-lg" icon=icondata::RiSendPlaneBusinessFill />
+                    <Icon class="drop-shadow-lg" icon=icondata::RiSendPlaneBusinessFill/>
                 </button>
             </div>
         </div>
@@ -216,7 +216,7 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
                         {video_url}
                     </p>
                     <button on:click=move |_| click_copy(video_url())>
-                        <Icon class="text-xl" icon=icondata::FaCopyRegular />
+                        <Icon class="text-xl" icon=icondata::FaCopyRegular/>
                     </button>
                 </div>
             </div>
@@ -241,6 +241,7 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
                             set_report_option(new_value);
                         }
                     >
+
                         <SelectOption
                             value=report_option
                             is=format!("{}", ReportOption::Nudity.as_str())

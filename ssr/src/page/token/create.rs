@@ -265,6 +265,7 @@ pub fn CreateToken() -> impl IntoView {
                     ctx.form_state.with(|f| f.name.clone()).unwrap_or_default()
                 })
             />
+
             <TokenCreationPopup show=creating/>
         </div>
     }

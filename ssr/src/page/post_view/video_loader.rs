@@ -52,7 +52,7 @@ pub fn BgView(
                 <FeedPopUp
                     on_click=move |_| set_show_login_popup.set(false)
                     header_text="Your 1000 COYNs
-    Await You!"
+                    Await You!"
                     body_text="SignUp/Login to save your progress and claim your rewards."
                     login_text="Login"
                 />
