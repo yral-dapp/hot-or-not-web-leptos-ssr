@@ -14,33 +14,21 @@ use gloo::timers::callback::Timeout;
 use leptos::*;
 use leptos_icons::*;
 use leptos_use::use_window;
+use math::mo;
 
-use super::video_iter::post_liked_by_me;
+use super::{
+    bet::{CoinStates, MyBetDirection, bet_on_currently_viewing_post_fe}, 
+    video_iter::post_liked_by_me
+};
 
 
-#[derive(Clone, Debug,  PartialEq)]
-pub enum CoinStates {
-    C50,
-    C100,
-    C200
-}
-
-use std::fmt;
-// todo remove this debug
-impl fmt::Display for CoinStates {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let value = match self {
-            CoinStates::C50 => "50",
-            CoinStates::C100 => "100",
-            CoinStates::C200 => "200",
-        };
-        write!(f, "{}", value)
-    }
-}
+use crate::{
+    canister::individual_user_template::{self, PlaceBetArg , BettingStatus, BetDirection, Result_ }
+};
 
 
 #[component]
-pub fn CoinStatesComponent(coin_state: ReadSignal<CoinStates>, 
+pub fn CoinStatesComponent(coin_state: RwSignal<CoinStates>, 
     #[prop(default = "h-14 w-14".into())]
 css_class: String) -> impl IntoView {
 
@@ -277,31 +265,49 @@ css_class: String) -> impl IntoView {
 
 
 #[component]
-pub fn CoinButton() -> impl IntoView {
-    let (coin_state, set_coin_state) = create_signal(CoinStates::C50);
+pub fn CoinButton(coin_state: RwSignal<CoinStates>) -> impl IntoView {
    
+    let toggle_coins_up = |cur_coin_state: &mut CoinStates| {
+        *cur_coin_state = match *cur_coin_state {
+            CoinStates::C50 => CoinStates::C100,
+            CoinStates::C100 => CoinStates::C200,
+            CoinStates::C200 => CoinStates::C50,
+        };
+    };
+
+    let toggle_coins_down = |cur_coin_state: &mut CoinStates| {
+        *cur_coin_state = match *cur_coin_state {
+            CoinStates::C50 => CoinStates::C200,
+            CoinStates::C100 => CoinStates::C50,
+            CoinStates::C200 => CoinStates::C100,
+        };
+    };
+
     view! {
         <div class="flex flex-col items-center justify-center">
-            <Icon class="text-2xl justify-self-end text-white mb-2" icon=icondata::AiUpOutlined />
+            <Icon
+                class="text-2xl justify-self-end text-white mb-2"
+                icon=icondata::AiUpOutlined
+                on:click=move |ev| {
+                    ev.stop_propagation();
+                    coin_state.update(toggle_coins_up);
+                }
+            />
 
             <button on:click=move |ev| {
                 ev.stop_propagation();
-                set_coin_state
-                    .update(|cur_coin_state: &mut CoinStates| {
-                        *cur_coin_state = match *cur_coin_state {
-                            CoinStates::C50 => CoinStates::C100,
-                            CoinStates::C100 => CoinStates::C200,
-                            CoinStates::C200 => CoinStates::C50,
-                        };
-                    });
+                coin_state.update(toggle_coins_up);
             }>
-                // todo adjust css of coins
                 <CoinStatesComponent coin_state />
             </button>
 
             <Icon
                 class="text-2xl justify-self-end text-white mt-2 "
                 icon=icondata::AiDownOutlined
+                on:click=move |ev| {
+                    ev.stop_propagation();
+                    coin_state.update(toggle_coins_down);
+                }
             />
         </div>
     }
@@ -310,9 +316,19 @@ pub fn CoinButton() -> impl IntoView {
 #[component]
 pub fn HotButton(post: ReadSignal<PostDetails>, 
     #[prop(default = "w-14 h-14".into())]
-    css_class: String) -> impl IntoView {
+    css_class: String, 
+    bet_direction : RwSignal<Option<MyBetDirection>>) -> impl IntoView {
     view! {
-        <p class=css_class>
+        <p
+            class=css_class
+            on:click=move |ev| {
+                ev.stop_propagation();
+                bet_direction
+                    .update(|bet_direction_state: &mut Option<MyBetDirection>| {
+                        *bet_direction_state = Some(MyBetDirection::Hot);
+                    });
+            }
+        >
             <svg viewBox="0 0 492 492" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <rect width="491.982" height="491.982" rx="245.991" fill="#E2017B" />
                 <path
@@ -343,10 +359,21 @@ pub fn HotButton(post: ReadSignal<PostDetails>,
 
 
 #[component]
-pub fn NotButton(post: ReadSignal<PostDetails>, #[prop(default = "w-14 h-14".into())]
-css_class: String) -> impl IntoView{
+pub fn NotButton(post: ReadSignal<PostDetails>, 
+    #[prop(default = "w-14 h-14".into())]
+    css_class: String,
+    bet_direction : RwSignal<Option<MyBetDirection>>) -> impl IntoView{
     view! {
-        <p class=css_class>
+        <p
+            class=css_class
+            on:click=move |ev| {
+                ev.stop_propagation();
+                bet_direction
+                    .update(|bet_direction_state: &mut Option<MyBetDirection>| {
+                        *bet_direction_state = Some(MyBetDirection::Not);
+                    });
+            }
+        >
 
             <svg viewBox="0 0 492 492" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <rect width="491.982" height="491.982" rx="245.991" fill="white" />
@@ -379,14 +406,42 @@ css_class: String) -> impl IntoView{
 
 
 #[component]
-pub fn HNButtonsOverlay(post: ReadSignal<PostDetails>) -> impl IntoView {
+pub fn HNButtonsOverlay(post: ReadSignal<PostDetails>, coin_state: RwSignal<CoinStates>, bet_direction: RwSignal<Option<MyBetDirection>>) -> impl IntoView {
     // let post_clone = post.clone();
+    // let  coin_state = create_rw_signal(CoinStates::C50);
+    
+    // default bet_direction is None
+    // let  bet_direction = create_rw_signal(None::<MyBetDirection>);    
+      
+      // Create an action that calls bet_on_post when MyBetDirection::Hot
+    //   let place_bet_action = create_resource(move || {
+    //     // let input = input.to_owned();
+    //     let direction = bet_direction.get();
+    //     async move {
+    //         if direction == Some(MyBetDirection::Hot) {
+    //             bet_on_post(&input).await;
+    //         }
+    //     }
+    // });
+
+    let place_bet_action = create_resource(move || bet_direction.get(),
+     |direction| async move {
+        match direction { 
+            None => return,
+            Some(some_direction) => {
+                // bet_on_currently_viewing_post_fe(&post).await;
+                return
+            } 
+            
+        }
+    });
+
     view! {
         <div class="flex justify-center absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/70 to-transparent ">
             <div class="flex flex-nowrap items-center space-x-12 pb-8 px-4 bg-transparent z-[4] max-w-screen-sm	">
-                <HotButton post=post />
-                <CoinButton />
-                <NotButton post />
+                <HotButton post bet_direction />
+                <CoinButton coin_state />
+                <NotButton post bet_direction />
             </div>
 
         </div>
@@ -396,16 +451,15 @@ pub fn HNButtonsOverlay(post: ReadSignal<PostDetails>) -> impl IntoView {
 
 
 #[component]
-pub fn HNWonLost(post: ReadSignal<PostDetails>) -> impl IntoView {  
+pub fn HNWonLost(post: ReadSignal<PostDetails>, coin_state: RwSignal<CoinStates>, bet_direction: RwSignal<Option<MyBetDirection>>) -> impl IntoView {
 
     // todo based on placed_bet_detail.value, decide the coin state. C50, C100, C200
-    let (coin_state, set_coin_state) = create_signal(CoinStates::C50);
+    // let (coin_state, set_coin_state) = create_signal(CoinStates::C50);
 
     // todo create_signal for win/lost
     let (won_signal, set_won_signal) = create_signal(true);
     
-    // todo create_signal for bet direction
-    let bet_direction_is_hot = create_rw_signal(true);
+    let bet_direction_is_hot  = move || {bet_direction.get() == Some(MyBetDirection::Hot)};
 
     view! {
         <div class="flex w-auto items-center rounded-xl bg-transparent p-4 shadow-sm backdrop-blur-sm">
@@ -423,11 +477,11 @@ pub fn HNWonLost(post: ReadSignal<PostDetails>) -> impl IntoView {
                 <div class="absolute -bottom-1 -right-2 flex items-center justify-center rounded-full">
                     <span>
                         <Show when=bet_direction_is_hot>
-                            <HotButton post=post css_class="h-9 w-9".into() />
+                            <HotButton post=post css_class="h-9 w-9".into() bet_direction />
                         </Show>
 
-                        <Show when=move || !bet_direction_is_hot.get()>
-                            <NotButton post=post css_class="h-9 w-9".into() />
+                        <Show when=move || !bet_direction_is_hot()>
+                            <NotButton post=post css_class="h-9 w-9".into() bet_direction />
                         </Show>
                     // hot or not icon
                     </span>
@@ -547,7 +601,7 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
                 on:click=move |_| like_toggle.dispatch(())
                 disabled=move || liking() || liked.with(|l| l.is_none())
             >
-                <img src=icon_name style="width: 1em; height: 1em;"/>
+                <img src=icon_name style="width: 1em; height: 1em;" />
             </button>
             <span class="absolute -bottom-5 text-sm md:text-md">{likes}</span>
         </div>
@@ -632,6 +686,13 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
         }
     });
 
+    // is betting enabled? 
+    // get_hot_or_not_bet_details_for_this_post -> BettingStatus -> Open
+
+    let  bet_direction = create_rw_signal(None::<MyBetDirection>);    
+    let  coin_state = create_rw_signal(CoinStates::C50);
+
+
     view! {
         <div class="flex flex-col flex-nowrap justify-start pt-20 px-2 md:px-6 w-full absolute top-0 left-0 bg-transparent text-white z-[4]">
             // top profile section
@@ -676,8 +737,14 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
         <div class="flex flex-nowrap justify-center items-center mb-10 px-2 md:px-6 w-full text-white absolute bottom-0 right-0 bg-transparent bg-opacity-50 z-[4] ">
             <div class="flex flex-col grow gap-8 items-center w-9/12 sm:text-base md:text-xl py-10">
                 // todo do not show hon button if it is not enabled on a post
-                <HNButtonsOverlay post=post_read_signal />
+                <HNButtonsOverlay post=post_read_signal bet_direction coin_state />
             // <HNWonLost post=post_read_signal />
+
+            // <Show
+            // when={ move || bet_direction.get().is_none()}
+            // fallback={move || view! {<HNWonLost post=post_read_signal bet_direction />}}>
+            // <HNButtonsOverlay post=post_read_signal bet_direction />
+            // </Show>
             </div>
         </div>
 
@@ -764,11 +831,8 @@ fn ExpandableText(description: String) -> impl IntoView {
 #[component]
 pub fn HomeButtonOverlay() -> impl IntoView {
     view! {
-        // <div class="rounded-full p-2 text-white bg-black/20">
-        <div class="flex w-full items-center justify-center pt-4 absolute top-0 left-0 bg-transparent z-[4]">// <div class="flex flex-row items-center gap-1 py-2 px-6 rounded-full">
-        // <Icon class="w-3 h-3" icon=HomeSymbolFilled/>
         // <span class="font-sans font-semibold">Home Feed</span>
-        // </div>
+        <div class="flex w-full items-center justify-center pt-4 absolute top-0 left-0 bg-transparent z-[4]">// </div>
         // </div>
         </div>
     }

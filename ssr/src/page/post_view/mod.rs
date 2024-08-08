@@ -2,6 +2,7 @@ pub mod error;
 pub mod overlay;
 pub mod video_iter;
 pub mod video_loader;
+pub mod bet;
 
 use candid::Principal;
 use futures::StreamExt;
