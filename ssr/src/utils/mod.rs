@@ -39,7 +39,6 @@ impl<T> PartialEq for MockPartialEq<T> {
 pub mod off_chain {
     tonic::include_proto!("off_chain");
 }
-<<<<<<< HEAD
 
 // TODO: to be removed
 pub mod local_feed_impl {
@@ -157,5 +156,3 @@ pub mod local_feed_impl {
         Ok(posts)
     }
 }
-=======
->>>>>>> e1f4827... local feed testing
