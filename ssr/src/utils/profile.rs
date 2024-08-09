@@ -2,11 +2,12 @@ use candid::Principal;
 use ic_agent::AgentError;
 use leptos::{RwSignal, SignalUpdateUntracked};
 use serde::{Deserialize, Serialize};
+use std::fmt;
 
 use crate::{
     canister::individual_user_template::{
         BetDirection, BetOutcomeForBetMaker, PlacedBetDetail, Result5,
-        UserProfileDetailsForFrontend,
+        UserProfileDetailsForFrontend, GetPostsOfUserProfileError
     },
     component::infinite_scroller::{CursoredDataProvider, KeyedData, PageEntry},
     consts::{GOBGOB_PROPIC_URL, GOBGOB_TOTAL_COUNT},
@@ -180,8 +181,8 @@ impl CursoredDataProvider for PostsProvider {
             .await?;
         let posts = match posts {
             Result5::Ok(v) => v,
-            Result5::Err(_) => {
-                log::warn!("failed to get posts");
+            Result5::Err(e) => {
+                log::warn!("failed to get posts = {e:?}");
                 return Ok(PageEntry {
                     data: vec![],
                     end: true,
@@ -235,5 +236,21 @@ impl CursoredDataProvider for BetsProvider {
             data: bets.into_iter().map(PlacedBetDetail::into).collect(),
             end: list_end,
         })
+    }
+}
+
+impl fmt::Debug for GetPostsOfUserProfileError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            GetPostsOfUserProfileError::ReachedEndOfItemsList => {
+                write!(f, "ReachedEndOfItemsList")
+            }
+            GetPostsOfUserProfileError::InvalidBoundsPassed => {
+                write!(f, "InvalidBoundsPassed")
+            }
+            GetPostsOfUserProfileError::ExceededMaxNumberOfItemsAllowedInOneRequest => {
+                write!(f, "ExceededMaxNumberOfItemsAllowedInOneRequest")
+            }
+        }
     }
 }
