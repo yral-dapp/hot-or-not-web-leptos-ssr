@@ -1,6 +1,6 @@
 use crate::{
-    component::{self, canisters_prov::WithAuthCans, modal::Modal, option::SelectOption},
-    state::canisters::{auth_canisters_store, Canisters},
+    component::{self, bullet_loader, canisters_prov::WithAuthCans, modal::Modal, option::SelectOption},
+    state::canisters::{self, auth_canisters_store, authenticated_canisters, Canisters},
     utils::{
         event_streaming::events::{LikeVideo, ShareVideo},
         posts::PostDetails,
@@ -10,6 +10,7 @@ use crate::{
         web::{copy_to_clipboard, share_url},
     },
 };
+use futures::stream::SelectNextSome;
 use gloo::timers::callback::Timeout;
 use leptos::*;
 use leptos_icons::*;
@@ -321,8 +322,7 @@ pub fn HotButton(post: ReadSignal<PostDetails>,
     view! {
         <p
             class=css_class
-            on:click=move |ev| {
-                ev.stop_propagation();
+            on:click=move |_ev| {
                 bet_direction
                     .update(|bet_direction_state: &mut Option<MyBetDirection>| {
                         *bet_direction_state = Some(MyBetDirection::Hot);
@@ -407,6 +407,7 @@ pub fn NotButton(post: ReadSignal<PostDetails>,
 
 #[component]
 pub fn HNButtonsOverlay(post: ReadSignal<PostDetails>, coin_state: RwSignal<CoinStates>, bet_direction: RwSignal<Option<MyBetDirection>>) -> impl IntoView {
+    let cans_res = authenticated_canisters();
     // let post_clone = post.clone();
     // let  coin_state = create_rw_signal(CoinStates::C50);
     
@@ -424,16 +425,53 @@ pub fn HNButtonsOverlay(post: ReadSignal<PostDetails>, coin_state: RwSignal<Coin
     //     }
     // });
 
-    let place_bet_action = create_resource(move || bet_direction.get(),
-     |direction| async move {
-        match direction { 
-            None => return,
-            Some(some_direction) => {
-                // bet_on_currently_viewing_post_fe(&post).await;
-                return
-            } 
-            
+    let place_bet_action = create_action(move |(canisters, bet_direction): &(Canisters<true>, MyBetDirection)|{  
+
+        let bet_amount: u64 = match coin_state.get(){
+            CoinStates::C50 => 50,
+            CoinStates::C100 => 100,
+            CoinStates::C200 => 200,    
+        };
+        log::info!("pba -----------------");
+        log::info!("pba - bet_amount = {:?}", bet_amount);
+        log::info!("pba - post_id = {:?}", post.get().post_id);
+        log::info!("pba - canister_id = {:?}", post.get().canister_id);
+        log::info!("pba -----------------");
+
+        let post_canister_id = post.get().canister_id;
+        let post_id  = post.get().post_id;
+        let bet_direction_clone = bet_direction.clone().into();
+        let canisters_clone = canisters.clone();
+
+        async move { 
+            let res = bet_on_currently_viewing_post_fe(canisters_clone,bet_amount,bet_direction_clone,post_id, post_canister_id ).await; 
+            if let Ok(ref res_ok) = res {
+            log::info!("pba - res ok = {:?}", res_ok);
+            } else {
+                log::info!("pba - res  error = {:?}", res);
+            }
+            Some(())
         }
+            
+        });
+
+    create_effect(move |_| {
+        if let Some(bet_direction_val) = bet_direction.get() {
+            log::info!("Some(bet_direction) = {:?} ", bet_direction.get());
+
+            let canisters = cans_res()?.ok()?;
+            place_bet_action.dispatch((canisters, bet_direction_val));    
+            Some(())
+        } 
+        else {
+            log::warn!("trying to place bet without bet_direction {:?} ", bet_direction.get());
+            None
+        }
+    
+    });
+
+    create_effect(move |_| {
+        log::info!(" cr - 2 - place_bet_action.value() = {:?} ", place_bet_action.value());
     });
 
     view! {
@@ -443,7 +481,24 @@ pub fn HNButtonsOverlay(post: ReadSignal<PostDetails>, coin_state: RwSignal<Coin
                 <CoinButton coin_state />
                 <NotButton post bet_direction />
             </div>
+            <p>{bet_direction.get_untracked().is_some().to_string()}</p>
 
+            
+        // <Suspense>
+        // {move || {
+        // if let Some(bet_direction_val) = bet_direction.get() {
+        // log::info!("Some(bet_direction) = {:?} ", bet_direction.get());
+
+        // let canisters = cans_res()?.ok()?;
+        // place_bet_action.dispatch((canisters, bet_direction_val));
+        // Some(())
+        // } else {
+        // log::warn!("trying to place bet without bet_direction {:?} ", bet_direction.get());
+        // None
+        // }
+        // }}
+
+        // </Suspense>
         </div>
     }
 
@@ -831,9 +886,6 @@ fn ExpandableText(description: String) -> impl IntoView {
 #[component]
 pub fn HomeButtonOverlay() -> impl IntoView {
     view! {
-        // <span class="font-sans font-semibold">Home Feed</span>
-        <div class="flex w-full items-center justify-center pt-4 absolute top-0 left-0 bg-transparent z-[4]">// </div>
-        // </div>
-        </div>
+        <div class="flex w-full items-center justify-center pt-4 absolute top-0 left-0 bg-transparent z-[4]"></div>
     }
 }
