@@ -18,7 +18,7 @@ pub fn SuccessPopup(
             return "/menu".into();
         };
         let profile_id = cans.user_principal();
-        format!("/your-profile/{profile_id}")
+        format!("/your-profile/{profile_id}?tab=tokens")
     };
 
     view! {

@@ -9,6 +9,7 @@ pub mod profile;
 pub mod report;
 pub mod route;
 pub mod timestamp;
+pub mod token;
 pub mod user;
 pub mod web;
 

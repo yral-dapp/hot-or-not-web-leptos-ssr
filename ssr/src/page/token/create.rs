@@ -2,7 +2,7 @@ use leptos::*;
 use leptos_icons::*;
 
 use crate::{
-    canister::individual_user_template::Result5,
+    canister::individual_user_template::Result6,
     component::{back_btn::BackButton, img_to_png::ImgToPng, title::Title},
     state::canisters::auth_canisters_store,
     utils::web::FileWithUrl,
@@ -146,7 +146,7 @@ pub fn CreateToken() -> impl IntoView {
             return "/menu".to_string();
         };
         let id = cans.profile_details().username_or_principal();
-        format!("/your-profile/{id}")
+        format!("/your-profile/{id}?tab=tokens")
     });
     let ctx = CreateTokenCtx::default();
     provide_context(ctx);
@@ -174,10 +174,10 @@ pub fn CreateToken() -> impl IntoView {
             .await
             .map_err(|e| e.to_string())?;
         match res {
-            Result5::Ok(c) => {
+            Result6::Ok(c) => {
                 log::debug!("deployed canister {}", c.governance);
             }
-            Result5::Err(e) => {
+            Result6::Err(e) => {
                 return Err(format!("{e:?}"));
             }
         };

@@ -11,12 +11,13 @@ use crate::{
     auth::DelegatedIdentityWire,
     canister::{
         individual_user_template::{
-            IndividualUserTemplate, Result16, Result5, UserCanisterDetails,
+            IndividualUserTemplate, Result19, Result6, UserCanisterDetails,
         },
         platform_orchestrator::PlatformOrchestrator,
         post_cache::PostCache,
         sns_governance::SnsGovernance,
         sns_ledger::SnsLedger,
+        sns_root::SnsRoot,
         user_index::UserIndex,
         PLATFORM_ORCHESTRATOR_ID, POST_CACHE_ID,
     },
@@ -88,7 +89,7 @@ impl Canisters<true> {
     pub async fn deploy_cdao_sns(
         &self,
         init_payload: SnsInitPayload,
-    ) -> Result<Result5, AgentError> {
+    ) -> Result<Result6, AgentError> {
         let agent = self.agent.get_agent().await?;
         let args = Encode!(&init_payload)?;
         let bytes = agent
@@ -96,7 +97,7 @@ impl Canisters<true> {
             .with_arg(args)
             .call_and_wait()
             .await?;
-        Ok(Decode!(&bytes, Result5)?)
+        Ok(Decode!(&bytes, Result6)?)
     }
 
     pub fn profile_details(&self) -> ProfileDetails {
@@ -161,6 +162,11 @@ impl<const A: bool> Canisters<A> {
     pub async fn sns_ledger(&self, canister_id: Principal) -> Result<SnsLedger<'_>, AgentError> {
         let agent = self.agent.get_agent().await?;
         Ok(SnsLedger(canister_id, agent))
+    }
+
+    pub async fn sns_root(&self, canister_id: Principal) -> Result<SnsRoot<'_>, AgentError> {
+        let agent = self.agent.get_agent().await?;
+        Ok(SnsRoot(canister_id, agent))
     }
 
     async fn subnet_indexes(&self) -> Result<Vec<Principal>, AgentError> {
@@ -258,8 +264,8 @@ pub async fn do_canister_auth(
         .await
         .map_err(|e| e.to_string())
     {
-        Ok(Result16::Ok(_)) => (),
-        Err(e) | Ok(Result16::Err(e)) => log::warn!("Failed to update last access time: {}", e),
+        Ok(Result19::Ok(_)) => (),
+        Err(e) | Ok(Result19::Err(e)) => log::warn!("Failed to update last access time: {}", e),
     }
     canisters.profile_details = Some(user.get_profile_details().await?.into());
 
