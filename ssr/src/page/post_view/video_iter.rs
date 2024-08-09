@@ -13,12 +13,12 @@ pub async fn post_liked_by_me(
     canisters: &Canisters<true>,
     post_canister: Principal,
     post_id: u64,
-) -> Result<bool, PostViewError> {
+) -> Result<(bool, u64), PostViewError> {
     let individual = canisters.individual_user(post_canister).await?;
     let post = individual
         .get_individual_post_details_by_id(post_id)
         .await?;
-    Ok(post.liked_by_me)
+    Ok((post.liked_by_me, post.like_count))
 }
 
 type PostsStream<'a> = Pin<Box<dyn Stream<Item = Vec<Result<PostDetails, PostViewError>>> + 'a>>;
