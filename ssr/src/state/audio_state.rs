@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use leptos::*;
 
 #[derive(Clone, Copy, Debug)]
@@ -17,6 +19,25 @@ impl AudioState {
         Self {
             show_mute_icon: create_rw_signal(true),
             muted: create_rw_signal(true),
+        }
+    }
+
+    pub fn get() -> Self {
+        let Self {
+            muted,
+            show_mute_icon,
+        } = expect_context();
+
+        set_timeout(
+            move || {
+                show_mute_icon.set(false);
+            },
+            Duration::from_secs(6),
+        );
+
+        Self {
+            muted,
+            show_mute_icon,
         }
     }
 }
