@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use leptos::*;
 use leptos_icons::*;
 use leptos_use::{use_intersection_observer_with_options, UseIntersectionObserverOptions};

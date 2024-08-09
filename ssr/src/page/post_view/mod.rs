@@ -22,7 +22,6 @@ use leptos_use::{
     storage::use_local_storage, use_debounce_fn, use_intersection_observer_with_options,
     utils::FromToStringCodec, UseIntersectionObserverOptions,
 };
-use std::time::Duration;
 use video_iter::VideoFetchStream;
 use video_loader::{BgView, VideoView};
 
