@@ -30,7 +30,9 @@ where
                 empty_content=move || {
                     view! {
                         <div class="flex flex-col pt-9 gap-2 w-full justify-center items-center">
-                            <Icon class="w-36 h-36" icon=empty_graphic.unwrap()/>
+                            <Show when=move || empty_graphic.is_some()>
+                                <Icon class="w-36 h-36" icon=empty_graphic.unwrap()/>
+                            </Show>
                             <span class="text-lg text-white">{empty_text.clone()}</span>
                         </div>
                     }
