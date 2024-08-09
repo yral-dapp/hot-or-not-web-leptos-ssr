@@ -157,7 +157,7 @@ pub fn Speculation(details: BetDetails, _ref: NodeRef<html::Div>) -> impl IntoVi
                     }}
 
                 </Suspense>
-                <div class="flex flex-col px-2 py-3 z-20">
+                <div class="flex flex-col px-2 py-3 z-20 bg-black/40">
                     <span class="text-xs font-thin uppercase">{bet_res}</span>
                     <span class="text-sm font-bold md:text-lg">{amt} Tokens</span>
                     {icon}
@@ -171,6 +171,7 @@ pub fn Speculation(details: BetDetails, _ref: NodeRef<html::Div>) -> impl IntoVi
 pub fn ProfileSpeculations(user_canister: Principal) -> impl IntoView {
     let provider = BetsProvider::new(unauth_canisters(), user_canister);
 
+    log::warn!("inside ProfileSpeculations");
     view! {
         <ProfileStream
             provider

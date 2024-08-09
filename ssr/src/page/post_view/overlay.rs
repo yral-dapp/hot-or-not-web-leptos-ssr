@@ -481,8 +481,6 @@ pub fn HNButtonsOverlay(post: ReadSignal<PostDetails>, coin_state: RwSignal<Coin
                 <CoinButton coin_state />
                 <NotButton post bet_direction />
             </div>
-            <p>{bet_direction.get_untracked().is_some().to_string()}</p>
-
             
         // <Suspense>
         // {move || {
@@ -789,7 +787,7 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
             </button>
         </div>
 
-        <div class="flex flex-nowrap justify-center items-center mb-10 px-2 md:px-6 w-full text-white absolute bottom-0 right-0 bg-transparent bg-opacity-50 z-[4] ">
+        <div class="flex flex-nowrap justify-center items-center my-10 px-2 md:px-6 w-full text-white absolute bottom-0 right-0 bg-black/30 z-[4] ">
             <div class="flex flex-col grow gap-8 items-center w-9/12 sm:text-base md:text-xl py-10">
                 // todo do not show hon button if it is not enabled on a post
                 <HNButtonsOverlay post=post_read_signal bet_direction coin_state />
