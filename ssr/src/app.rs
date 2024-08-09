@@ -14,7 +14,7 @@ use crate::{
         terms::TermsOfService,
         token::{create::CreateToken, info::TokenInfo},
         upload::UploadPostPage,
-        wallet::{transactions::Transactions, Wallet},
+        wallet::{tokens::Tokens, transactions::Transactions, Wallet},
     },
     state::{canisters::Canisters, content_seed_client::ContentSeedClient, history::HistoryCtx},
     utils::event_streaming::EventHistory,
@@ -136,6 +136,7 @@ pub fn App() -> impl IntoView {
                         <Route path="/logout" view=Logout/>
                         <Route path="/token/create" view=CreateToken/>
                         <Route path="/token/:token_root" view=TokenInfo/>
+                        <Route path="/tokens" view=Tokens/>
                         <Route path="" view=RootPage/>
                     </Route>
                 </Routes>

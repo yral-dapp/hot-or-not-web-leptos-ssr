@@ -1,12 +1,14 @@
+pub mod tokens;
 pub mod transactions;
 mod txn;
 use leptos::*;
+use tokens::{TokenRootList, TokenView};
 
 use crate::{
     component::{
         back_btn::BackButton,
         bullet_loader::BulletLoader,
-        canisters_prov::{AuthCansProvider, WithAuthCans},
+        canisters_prov::{with_cans, AuthCansProvider, WithAuthCans},
         connect::ConnectLogin,
         infinite_scroller::{CursoredDataProvider, KeyedData},
     },
@@ -83,7 +85,7 @@ fn BalanceFetch(cans: Canisters<true>) -> impl IntoView {
 pub fn Wallet() -> impl IntoView {
     let (is_connected, _) = account_connected_reader();
 
-    let balance_fetch = |cans: Canisters<true>| async move {
+    let balance_fetch = with_cans(|cans: Canisters<true>| async move {
         let Ok(user) = cans.authenticated_user().await else {
             return "Error".to_string();
         };
@@ -92,15 +94,22 @@ pub fn Wallet() -> impl IntoView {
             .await
             .map(|b| b.to_string())
             .unwrap_or("Error".to_string())
-    };
-    let history_fetch = |cans: Canisters<true>| {
+    });
+    let history_fetch = with_cans(|cans: Canisters<true>| {
         let history_prov = get_history_provider(cans);
         async move {
             let page = history_prov.get_by_cursor(0, RECENT_TXN_CNT).await;
 
             page.map(|p| p.data).unwrap_or(vec![])
         }
-    };
+    });
+    let tokens_fetch = with_cans(|cans: Canisters<true>| {
+        let tokens_prov = TokenRootList(cans);
+        async move {
+            let tokens = tokens_prov.get_by_cursor(0, 5).await;
+            tokens.map(|t| t.data).unwrap_or_default()
+        }
+    });
 
     view! {
         <div>
@@ -131,6 +140,21 @@ pub fn Wallet() -> impl IntoView {
                         </div>
                     </div>
                 </Show>
+                <div class="flex flex-col w-full gap-2">
+                    <div class="flex flex-row w-full items-end justify-between">
+                        <span class="text-white text-sm md:text-md">My Tokens</span>
+                        <a href="/tokens" class="text-white/50 text-md md:text-lg">
+                            See All
+                        </a>
+                    </div>
+                    <div class="flex flex-col gap-2 items-center">
+                        <WithAuthCans fallback=BulletLoader with=tokens_fetch let:tokens>
+                            <For each=move || tokens.1.clone() key=|token| *token let:token>
+                                <TokenView user_canister=tokens.0.user_canister() token_root=token/>
+                            </For>
+                        </WithAuthCans>
+                    </div>
+                </div>
                 <div class="flex flex-col w-full gap-2">
                     <div class="flex flex-row w-full items-end justify-between">
                         <span class="text-white text-sm md:text-md">Recent Transactions</span>

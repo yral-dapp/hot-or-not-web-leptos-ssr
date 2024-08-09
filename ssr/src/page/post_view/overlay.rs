@@ -1,5 +1,9 @@
 use crate::{
-    component::{canisters_prov::WithAuthCans, modal::Modal, option::SelectOption},
+    component::{
+        canisters_prov::{with_cans, WithAuthCans},
+        modal::Modal,
+        option::SelectOption,
+    },
     state::canisters::{auth_canisters_store, Canisters},
     utils::{
         event_streaming::events::{LikeVideo, ShareVideo},
@@ -71,7 +75,7 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
         }
     });
 
-    let liked_fetch = move |cans: Canisters<true>| async move {
+    let liked_fetch = with_cans(move |cans: Canisters<true>| async move {
         if let Some(liked) = initial_liked {
             return liked;
         }
@@ -83,7 +87,7 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
                 false
             }
         }
-    };
+    });
 
     let liking = like_toggle.pending();
 

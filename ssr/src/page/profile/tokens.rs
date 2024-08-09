@@ -1,27 +1,12 @@
-use candid::{Nat, Principal};
+use candid::Principal;
 use leptos::*;
 use leptos_icons::*;
-use serde::{Deserialize, Serialize};
 
 use crate::{
-    canister::sns_ledger::Account,
     component::{bullet_loader::BulletLoader, token_confetti_symbol::TokenConfettiSymbol},
     state::canisters::unauth_canisters,
-    utils::token::{get_token_metadata, TokenMetadata},
+    utils::token::{get_token_metadata, TokenCans},
 };
-
-#[derive(Serialize, Deserialize, Clone)]
-struct TokenCans {
-    governance: Principal,
-    ledger: Principal,
-    root: Principal,
-}
-
-#[derive(Serialize, Deserialize, Clone)]
-struct BalanceInfo {
-    metadata: TokenMetadata,
-    balance: Nat,
-}
 
 #[component]
 fn TokenViewFallback() -> impl IntoView {
@@ -36,15 +21,10 @@ fn TokenView(user_canister: Principal, token: TokenCans) -> impl IntoView {
         || (),
         move |_| async move {
             let cans = unauth_canisters();
-            let metadata = get_token_metadata(&cans, token.governance, token.ledger).await?;
-            let ledger = cans.sns_ledger(token.ledger).await?;
-            let acc = Account {
-                owner: user_canister,
-                subaccount: None,
-            };
-            let balance = ledger.icrc_1_balance_of(acc).await?;
+            let metadata =
+                get_token_metadata(&cans, user_canister, token.governance, token.ledger).await?;
 
-            Ok::<_, ServerFnError>(BalanceInfo { metadata, balance })
+            Ok::<_, ServerFnError>(metadata)
         },
     );
     let token_link = move || format!("/token/{}", token.root);
@@ -54,15 +34,15 @@ fn TokenView(user_canister: Principal, token: TokenCans) -> impl IntoView {
         {move || token_info().and_then(|info| info.ok()).map(|info| view! {
             <a href=token_link() class="w-full grid grid-cols-2 p-4 rounded-xl border-2 items-center border-neutral-700 bg-white/15">
                 <div class="flex flex-row gap-2 items-center justify-self-start">
-                    <img class="w-12 h-12 rounded-full" src=info.metadata.logo_b64/>
-                    <span class="text-white truncate">{info.metadata.name}</span>
+                    <img class="w-12 h-12 rounded-full" src=info.logo_b64/>
+                    <span class="text-white truncate">{info.name}</span>
                 </div>
                 <div class="flex flex-col gap-2 justify-self-end text-sm">
-                    <span class="text-white truncate">{format!("{} {}", info.balance, info.metadata.symbol)}</span>
+                    <span class="text-white truncate">{format!("{} {}", info.balance, info.symbol)}</span>
                     <div class="flex flex-row gap-1 items-center">
                         <span class="text-white">Details</span>
                         <div class="flex items-center justify-center w-4 h-4 bg-white/15 rounded-full">
-                            <Icon class="text-white justify-self-end" icon=icondata::AiRightOutlined/>
+                            <Icon class="text-white" icon=icondata::AiRightOutlined/>
                         </div>
                     </div>
                 </div>

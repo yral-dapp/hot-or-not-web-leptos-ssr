@@ -3,31 +3,17 @@ use leptos::*;
 use leptos_router::*;
 
 use crate::{
-    canister::sns_root::ListSnsCanistersArg,
-    component::{back_btn::BackButton, spinner::FullScreenSpinner, title::Title},
-    state::canisters::{unauth_canisters, Canisters},
-    utils::token::{get_token_metadata, TokenMetadata},
+    component::{
+        back_btn::BackButton, canisters_prov::WithAuthCans, spinner::FullScreenSpinner,
+        title::Title,
+    },
+    state::canisters::Canisters,
+    utils::token::{token_metadata_by_root, TokenMetadata},
 };
 
 #[derive(Params, PartialEq, Clone)]
 struct TokenParams {
     token_root: Principal,
-}
-
-async fn fetch_token_metadata(
-    cans: Canisters<false>,
-    token_root: Principal,
-) -> Result<Option<TokenMetadata>, ServerFnError> {
-    let root = cans.sns_root(token_root).await?;
-    let sns_cans = root.list_sns_canisters(ListSnsCanistersArg {}).await?;
-    let Some(governance) = sns_cans.governance else {
-        return Ok(None);
-    };
-    let Some(ledger) = sns_cans.ledger else {
-        return Ok(None);
-    };
-
-    Ok(Some(get_token_metadata(&cans, governance, ledger).await?))
 }
 
 #[component]
@@ -67,23 +53,26 @@ fn TokenInfoInner(meta: TokenMetadata) -> impl IntoView {
 pub fn TokenInfo() -> impl IntoView {
     let params = use_params::<TokenParams>();
 
-    let token_info = create_resource(params, |params| async move {
-        let Ok(params) = params else {
-            return Ok(None);
-        };
-        let cans = unauth_canisters();
-        fetch_token_metadata(cans, params.token_root).await
-    });
+    let token_metadata_fetch = move |cans: Canisters<true>| {
+        create_resource(params, move |params| {
+            let cans = cans.clone();
+            async move {
+                let Ok(params) = params else {
+                    return Ok(None);
+                };
+                let user = cans.user_canister();
+                token_metadata_by_root(&cans, user, params.token_root).await
+            }
+        })
+    };
 
     view! {
-        <Suspense fallback=FullScreenSpinner>
-        {move || token_info().map(|res| {
-            match res {
-                Err(e) => view! { <Redirect path=format!("/error?err={e}") /> },
-                Ok(None) => view! { <Redirect path="/" /> },
-                Ok(Some(meta)) => view! { <TokenInfoInner meta /> },
-            }
-        })}
-        </Suspense>
+        <WithAuthCans fallback=FullScreenSpinner with=token_metadata_fetch let:info>
+        {match info.1 {
+            Err(e) => view! { <Redirect path=format!("/error?err={e}") /> },
+            Ok(None) => view! { <Redirect path="/" /> },
+            Ok(Some(meta)) => view! { <TokenInfoInner meta /> },
+        }}
+        </WithAuthCans>
     }
 }
