@@ -5,7 +5,10 @@ use leptos_use::{use_intersection_observer_with_options, UseIntersectionObserver
 use crate::page::post_view::video_loader::{BgView, VideoView};
 
 use crate::utils::posts::PostDetails;
-
+#[cfg(feature = "wasm-bindgen")]
+use js_sys::Date;
+#[cfg(feature = "wasm-bindgen")]
+use wasm_bindgen::prelude::*;
 #[component]
 pub fn ScrollingPostView<F: Fn() -> V + Clone + 'static, V, O: Fn() -> IV, IV: IntoView>(
     video_queue: RwSignal<Vec<PostDetails>>,
@@ -17,7 +20,7 @@ pub fn ScrollingPostView<F: Fn() -> V + Clone + 'static, V, O: Fn() -> IV, IV: I
 ) -> impl IntoView {
     let muted = create_rw_signal(true);
     let scroll_root: NodeRef<html::Div> = create_node_ref();
-
+    let last_muted_change = create_rw_signal(js_sys::Date::now()); // Initialize with current time (f64)
     let var_name = view! {
         <div class="h-full w-full overflow-hidden overflow-y-auto">
             <div
@@ -88,17 +91,21 @@ pub fn ScrollingPostView<F: Fn() -> V + Clone + 'static, V, O: Fn() -> IV, IV: I
                     </div>
                 </Show>
 
-                <Show when=muted>
-                    <button
-                        class="fixed top-1/2 left-1/2 z-20 cursor-pointer"
-                        on:click=move |_| muted.set(false)
-                    >
-                        <Icon
-                            class="text-white/80 animate-ping text-4xl"
-                            icon=icondata::BiVolumeMuteSolid
-                        />
-                    </button>
-                </Show>
+               <Show when=muted>
+        <button
+            class="fixed top-1/2 left-1/2 z-20 cursor-pointer"
+            on:click=move |_| {
+                muted.set(false);
+                last_muted_change.set(js_sys::Date::now());
+            }
+        >
+            <Icon
+                class=format!("text-white/80 text-4xl {}",
+                if js_sys::Date::now() - last_muted_change.get() < 3000.0 { "flash-animation" } else { "hidden" })
+                icon=icondata::BiVolumeMuteSolid
+            />
+        </button>
+    </Show>
             </div>
         </div>
     };
