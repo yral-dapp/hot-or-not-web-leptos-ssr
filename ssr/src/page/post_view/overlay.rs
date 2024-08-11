@@ -1,6 +1,6 @@
 use crate::{
     component::{self, bullet_loader, canisters_prov::WithAuthCans, modal::Modal, option::SelectOption},
-    state::canisters::{self, auth_canisters_store, authenticated_canisters, Canisters},
+    state::canisters::{self, auth_canisters_store, unauth_canisters,authenticated_canisters, Canisters},
     utils::{
         event_streaming::events::{LikeVideo, ShareVideo},
         posts::PostDetails,
@@ -481,7 +481,7 @@ pub fn HNButtonsOverlay(post: ReadSignal<PostDetails>, coin_state: RwSignal<Coin
                 <CoinButton coin_state />
                 <NotButton post bet_direction />
             </div>
-            
+
         // <Suspense>
         // {move || {
         // if let Some(bet_direction_val) = bet_direction.get() {
@@ -745,6 +745,41 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
     let  bet_direction = create_rw_signal(None::<MyBetDirection>);    
     let  coin_state = create_rw_signal(CoinStates::C50);
 
+    let post_for_betting_status  = post.clone();
+
+    
+    
+    let is_betting_enabled_and_user_participated_in_bet = create_resource(
+        move || post_for_betting_status.clone(),
+        move |post| async move {
+        let canister = unauth_canisters();
+        let user = canister.individual_user(post.canister_id).await.ok()?;
+        let res = user.get_hot_or_not_bet_details_for_this_post(post.post_id).await;
+
+        let value = match res { 
+            Ok(ok_res) => 
+            // let value = 
+            match ok_res {
+                // todo recheck this logic once - user may have participated in the bet but betting is closed now
+                BettingStatus::BettingClosed => (false,  false),
+                BettingStatus::BettingOpen{has_this_user_participated_in_this_post, ..} =>
+                {
+                    // log::info!("is_betting_enabled (not closed) = {other:?}");
+                    match has_this_user_participated_in_this_post {
+                        Some(true) => (true, true),
+                        Some(false) => (true, false),
+                        None => (true, false),
+                    }
+                }
+            },
+            Err(e) => {
+                log::info!("is_betting_enabled errored = {e:?}");
+                (false,false)
+            }
+        };
+
+        Some(value)
+    });
 
     view! {
         <div class="flex flex-col flex-nowrap justify-start pt-20 px-2 md:px-6 w-full absolute top-0 left-0 bg-transparent text-white z-[4]">
@@ -790,8 +825,47 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
         <div class="flex flex-nowrap justify-center items-center my-10 px-2 md:px-6 w-full text-white absolute bottom-0 right-0 bg-black/30 z-[4] ">
             <div class="flex flex-col grow gap-8 items-center w-9/12 sm:text-base md:text-xl py-10">
                 // todo do not show hon button if it is not enabled on a post
-                <HNButtonsOverlay post=post_read_signal bet_direction coin_state />
-            // <HNWonLost post=post_read_signal />
+                <Suspense>
+                    {move || {
+                        is_betting_enabled_and_user_participated_in_bet
+                            .get()
+                            .map(|option_value| {
+                                if let Some(
+                                    (is_betting_enabled, has_this_user_participated_in_this_post),
+                                ) = option_value {
+                                    if is_betting_enabled
+                                        && !has_this_user_participated_in_this_post
+                                    {
+                                        view! {
+                                            <HNButtonsOverlay
+                                                post=post_read_signal
+                                                bet_direction
+                                                coin_state
+                                            />
+                                        }
+                                    } 
+                                    // else if has_this_user_participated_in_this_post {
+                                        
+                                    //     view! {
+                                            
+                                    //         <p>"User already participated in this post"</p>
+                                    //     }
+                                    // }
+                                    else {
+                                        view! {
+                                            // ().into_view()
+                                            // todo take the coin state from the bet_details
+                                            <HNWonLost post=post_read_signal coin_state bet_direction />
+                                        }
+                                    }
+                                } else {
+                                    ().into_view()
+                                }
+                            })
+                    }}
+                // <HNButtonsOverlay post=post_read_signal bet_direction coin_state />
+                // <HNWonLost post=post_read_signal />
+                </Suspense>
 
             // <Show
             // when={ move || bet_direction.get().is_none()}
