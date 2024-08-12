@@ -5,7 +5,6 @@ on:
 
 env:
   FLY_API_TOKEN: ${{ secrets.HOT_OR_NOT_WEB_LEPTOS_SSR_FLY_IO_GITHUB_ACTION }}
-  FLY_REGION: iad
   FLY_ORG: gobazzinga-inc-584
 
 jobs:
@@ -24,6 +23,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - name: Download build
+        uses: actions/download-artifact@v3
+        with:
+          name: build-musl
 
       - name: Deploy
         id: deploy
