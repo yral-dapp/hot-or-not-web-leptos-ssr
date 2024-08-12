@@ -26,7 +26,7 @@ pub async fn file_and_error_handler(
         handler(req).await.into_response()
     }
 }
-
+#[allow(unreachable_patterns)]
 async fn get_static_file(uri: Uri, root: &str) -> Result<Response<Body>, (StatusCode, String)> {
     let req = Request::builder()
         .uri(uri.clone())
