@@ -8,7 +8,13 @@ env:
   FLY_ORG: gobazzinga-inc-584
 
 jobs:
+  build_check:
+    uses: ./.github/workflows/build-check.yml
+    with:
+      publish-artifact: true
+  
   preview:
+    needs: build_check
     runs-on: ubuntu-latest
 
     # Only run one deployment at a time per PR.
