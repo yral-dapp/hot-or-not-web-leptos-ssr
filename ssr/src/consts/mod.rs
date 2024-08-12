@@ -24,7 +24,7 @@ pub const NSFW_TOGGLE_STORE: &str = "nsfw-enabled";
 pub const REFERRER_STORE: &str = "referrer";
 
 pub static OFF_CHAIN_AGENT_GRPC_URL: Lazy<Url> =
-    Lazy::new(|| Url::parse("http://localhost:50051").unwrap());
+    Lazy::new(|| Url::parse("https://icp-off-chain-agent.fly.dev:443").unwrap());
 // G-6W5Q2MRX0E to test locally | G-PLNNETMSLM
 pub static GTAG_MEASUREMENT_ID: Lazy<&str> = Lazy::new(|| "G-PLNNETMSLM");
 pub static DOWNLOAD_UPLOAD_SERVICE: Lazy<Url> =

@@ -3,23 +3,23 @@ use leptos::*;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
 
-use crate::{
-    component::canisters_prov::{AuthCansProvider, WithAuthCans},
-    state::auth::account_connected_reader,
-    utils::profile::ProfileDetails,
-};
+// use crate::{
+//     component::canisters_prov::{AuthCansProvider, WithAuthCans},
+//     state::auth::account_connected_reader,
+//     utils::profile::ProfileDetails,
+// };
 
 #[component]
-fn NotifInnerComponent(details: ProfileDetails) -> impl IntoView {
-    let (is_connected, _) = account_connected_reader();
-
-    #[wasm_bindgen(module = "/src/page/notifs/setup-firebase-messaging.js")]
-    extern "C" {
-        fn get_token(flag: bool) -> js_sys::Promise; // Return type as Promise
-    }
+fn NotifInnerComponent() -> impl IntoView {
+    // let (is_connected, _) = account_connected_reader();
 
     #[cfg(feature = "hydrate")]
     let token_getter = move || {
+        #[wasm_bindgen(module = "/src/page/notifs/setup-firebase-messaging.js")]
+        extern "C" {
+            fn get_token(flag: bool) -> js_sys::Promise; // Return type as Promise
+        }
+
         #[cfg(feature = "hydrate")]
         {
             spawn_local(async move {
@@ -47,7 +47,7 @@ fn NotifInnerComponent(details: ProfileDetails) -> impl IntoView {
 
     view! {
         <h1>"YRAL Notifs for"</h1>
-        <h2>{details.username_or_principal()}</h2>
+        // <h2>{details.username_or_principal()}</h2>
         <div class="flex flex-row gap-2 text-black">
             <button class="p-2 bg-gray-50 rounded-md" on:click=move |_| on_token_click()>"Get Token"</button>
         </div>
@@ -58,9 +58,10 @@ fn NotifInnerComponent(details: ProfileDetails) -> impl IntoView {
 pub fn Notif() -> impl IntoView {
     view! {
         <div class="h-screen w-screen grid grid-cols-1 bg-black justify-items-center place-content-center">
-            <AuthCansProvider let:cans>
-                <NotifInnerComponent details=cans.profile_details()/>
-            </AuthCansProvider>
+            // <AuthCansProvider let:cans>
+                // <NotifInnerComponent details=cans.profile_details()/>
+            // </AuthCansProvider>
+            <NotifInnerComponent/>
         </div>
     }
 }
