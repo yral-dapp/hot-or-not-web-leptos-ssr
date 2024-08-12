@@ -1,6 +1,8 @@
 use leptos::*;
 use leptos_dom::html::Video;
 
+use crate::state::audio_state::AudioState;
+
 #[component]
 pub fn VideoPlayer(
     #[prop(optional)] node_ref: NodeRef<Video>,
@@ -11,7 +13,7 @@ pub fn VideoPlayer(
     view! {
         <label class="h-full w-full absolute top-0 left-0 grid grid-cols-1 justify-items-center items-center cursor-pointer z-[3]">
             <input
-                on:change=move |_| muted.update(|m| *m = !*m)
+                on:change=move |_| AudioState::toggle_mute()
                 type="checkbox"
                 value=""
                 class="sr-only"

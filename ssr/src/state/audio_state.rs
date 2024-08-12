@@ -28,13 +28,8 @@ impl AudioState {
             show_mute_icon,
         } = expect_context();
 
-        if !show_mute_icon.get() {
-            set_timeout(
-                move || {
-                    show_mute_icon.set(false);
-                },
-                Duration::from_secs(6),
-            );
+        if show_mute_icon.get() {
+            Self::display_flash_for_6_secs(show_mute_icon);
         }
 
         Self {
@@ -43,12 +38,27 @@ impl AudioState {
         }
     }
 
+    fn display_flash_for_6_secs(show_mute_icon: RwSignal<bool>) {
+        show_mute_icon.set(true);
+        set_timeout(
+            move || {
+                show_mute_icon.set(false);
+            },
+            Duration::from_secs(6),
+        );
+    }
+
     pub fn toggle_mute() {
         let Self {
             muted,
             show_mute_icon,
         } = expect_context();
+        println!("Toggle Mute");
+        if !muted.get() {
+            Self::display_flash_for_6_secs(show_mute_icon);
+        } else {
+            show_mute_icon.set(false);
+        }
         muted.update(|m| *m = !*m);
-        show_mute_icon.set(false);
     }
 }
