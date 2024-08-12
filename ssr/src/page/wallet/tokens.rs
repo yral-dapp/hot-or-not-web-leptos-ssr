@@ -70,6 +70,7 @@ async fn token_metadata_or_fallback(
         description: "Unknown".to_string(),
         symbol: "??".to_string(),
         balance: 0u32.into(),
+        fees: 0u32.into(),
     })
 }
 
@@ -95,7 +96,7 @@ pub fn TokenView(
     view! {
         <Suspense fallback=FallbackToken>
         {move || info.map(|info| view! {
-            <a href=format!("/token/{token_root}") _ref=_ref class="grid grid-cols-2 grid-rows-1 w-full items-center p-4 rounded-xl border-2 border-neutral-700 bg-white/15">
+            <a href=format!("/token/info/{token_root}") _ref=_ref class="grid grid-cols-2 grid-rows-1 w-full items-center p-4 rounded-xl border-2 border-neutral-700 bg-white/15">
                 <div class="flex flex-row gap-2 items-center justify-self-start">
                     <img class="w-12 h-12 rounded-full" src=info.logo_b64.clone()/>
                     <span class="text-white truncate">{info.name.clone()}</span>

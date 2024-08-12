@@ -45,3 +45,22 @@ pub fn copy_to_clipboard(text: &str) -> Option<()> {
     _ = navigator.clipboard()?.write_text(text);
     Some(())
 }
+
+/// Paste text from clipboard
+/// passes None if the API is not available
+/// or if the clipboard is unavailable
+pub async fn paste_from_clipboard() -> Option<String> {
+    #[cfg(feature = "hydrate")]
+    {
+        use wasm_bindgen_futures::JsFuture;
+
+        let navigator = use_window().navigator()?;
+        let text_prom = navigator.clipboard()?.read_text();
+        let text_val = JsFuture::from(text_prom).await.ok()?;
+        text_val.as_string()
+    }
+    #[cfg(not(feature = "hydrate"))]
+    {
+        None
+    }
+}

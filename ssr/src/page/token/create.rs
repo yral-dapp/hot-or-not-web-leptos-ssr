@@ -8,10 +8,7 @@ use crate::{
     utils::web::FileWithUrl,
 };
 
-use super::{
-    popups::{SuccessPopup, TokenCreationPopup},
-    sns_form::SnsFormState,
-};
+use super::{popups::TokenCreationPopup, sns_form::SnsFormState};
 
 #[component]
 fn TokenImgInput() -> impl IntoView {
@@ -200,9 +197,6 @@ pub fn CreateToken() -> impl IntoView {
         }
         create_act_value()
     });
-    let success = Signal::derive(move || {
-        create_act_res.with(|res| res.as_ref().map(|res| res.is_ok()).unwrap_or_default())
-    });
 
     view! {
         <div class="w-dvw min-h-dvh bg-black pt-4 flex flex-col gap-4">
@@ -259,14 +253,12 @@ pub fn CreateToken() -> impl IntoView {
                     </button>
                 </div>
             </div>
-            <SuccessPopup
-                show=success
+            <TokenCreationPopup
+                creation_action=create_action
                 token_name=Signal::derive(move || {
                     ctx.form_state.with(|f| f.name.clone()).unwrap_or_default()
                 })
             />
-
-            <TokenCreationPopup show=creating/>
         </div>
     }
 }

@@ -12,7 +12,7 @@ use crate::{
         refer_earn::ReferEarn,
         root::RootPage,
         terms::TermsOfService,
-        token::{create::CreateToken, info::TokenInfo},
+        token::{create::CreateToken, info::TokenInfo, transfer::TokenTransfer},
         upload::UploadPostPage,
         wallet::{tokens::Tokens, transactions::Transactions, Wallet},
     },
@@ -135,7 +135,8 @@ pub fn App() -> impl IntoView {
                         <Route path="/account-transfer" view=AccountTransfer/>
                         <Route path="/logout" view=Logout/>
                         <Route path="/token/create" view=CreateToken/>
-                        <Route path="/token/:token_root" view=TokenInfo/>
+                        <Route path="/token/info/:token_root" view=TokenInfo/>
+                        <Route path="/token/transfer/:token_root" view=TokenTransfer/>
                         <Route path="/tokens" view=Tokens/>
                         <Route path="" view=RootPage/>
                     </Route>

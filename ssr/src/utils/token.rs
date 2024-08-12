@@ -17,6 +17,7 @@ pub struct TokenMetadata {
     pub description: String,
     pub symbol: String,
     pub balance: Nat,
+    pub fees: Nat,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -61,12 +62,14 @@ pub async fn get_token_metadata<const A: bool>(
         subaccount: None,
     };
     let balance = ledger.icrc_1_balance_of(acc).await?;
+    let fees = ledger.icrc_1_fee().await?;
 
     Ok(TokenMetadata {
         logo_b64: metadata.logo.unwrap_or_default(),
         name: metadata.name.unwrap_or_default(),
         description: metadata.description.unwrap_or_default(),
         symbol,
+        fees,
         balance,
     })
 }

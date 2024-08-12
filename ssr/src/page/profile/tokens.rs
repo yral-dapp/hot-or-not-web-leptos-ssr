@@ -27,7 +27,7 @@ fn TokenView(user_canister: Principal, token: TokenCans) -> impl IntoView {
             Ok::<_, ServerFnError>(metadata)
         },
     );
-    let token_link = move || format!("/token/{}", token.root);
+    let token_link = move || format!("/token/info/{}", token.root);
 
     view! {
         <Suspense fallback=TokenViewFallback>
