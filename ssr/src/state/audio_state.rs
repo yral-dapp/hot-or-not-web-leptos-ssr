@@ -28,16 +28,27 @@ impl AudioState {
             show_mute_icon,
         } = expect_context();
 
-        set_timeout(
-            move || {
-                show_mute_icon.set(false);
-            },
-            Duration::from_secs(6),
-        );
+        if !show_mute_icon.get() {
+            set_timeout(
+                move || {
+                    show_mute_icon.set(false);
+                },
+                Duration::from_secs(6),
+            );
+        }
 
         Self {
             muted,
             show_mute_icon,
         }
+    }
+
+    pub fn toggle_mute() {
+        let Self {
+            muted,
+            show_mute_icon,
+        } = expect_context();
+        muted.update(|m| *m = !*m);
+        show_mute_icon.set(false);
     }
 }

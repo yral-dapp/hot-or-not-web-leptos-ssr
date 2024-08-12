@@ -143,7 +143,7 @@ pub fn ScrollingView<NV: Fn() -> NVR + Clone + 'static, NVR>(
                 <Show when=show_mute_icon>
                     <button
                         class="fixed top-1/2 left-1/2 z-20 cursor-pointer"
-                        on:click=move |_| muted.set(false)
+                        on:click=move |_| AudioState::toggle_mute()
                     >
                         <Icon
                             class="text-white/80 animate-ping text-4xl"
