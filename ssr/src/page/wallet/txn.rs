@@ -205,7 +205,7 @@ pub mod provider {
                 start: usize,
                 end: usize,
             ) -> Result<PageEntry<TxnInfo>, AgentError> {
-                let user = self.0.authenticated_user().await?;
+                let user = self.0.authenticated_user().await;
                 let history = user
                     .get_user_utility_token_transaction_history_with_pagination(
                         start as u64,

@@ -72,7 +72,7 @@ pub fn ProfileTokens(user_canister: Principal) -> impl IntoView {
         || (),
         move |_| async move {
             let cans = unauth_canisters();
-            let user = cans.individual_user(user_canister).await?;
+            let user = cans.individual_user(user_canister).await;
             let tokens: Vec<_> = user
                 .deployed_cdao_canisters()
                 .await?

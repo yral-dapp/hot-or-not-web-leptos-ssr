@@ -1,4 +1,4 @@
-use ic_agent::{agent::AgentBuilder, Agent, AgentError};
+use ic_agent::{agent::AgentBuilder, Agent};
 
 use crate::consts::AGENT_URL;
 
@@ -12,12 +12,15 @@ impl AgentWrapper {
         Self(builder.build().unwrap())
     }
 
-    pub async fn get_agent(&self) -> Result<&Agent, AgentError> {
+    pub async fn get_agent(&self) -> &Agent {
         let agent = &self.0;
         #[cfg(any(feature = "local-bin", feature = "local-lib"))]
         {
-            agent.fetch_root_key().await?;
+            agent
+                .fetch_root_key()
+                .await
+                .expect("AGENT: fetch_root_key failed");
         }
-        Ok(agent)
+        agent
     }
 }

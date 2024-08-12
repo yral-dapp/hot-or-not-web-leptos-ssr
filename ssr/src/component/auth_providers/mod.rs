@@ -200,7 +200,7 @@ mod server_fn_impl {
             referee_canister: Principal,
         ) -> Result<(), ServerFnError> {
             let canisters = unauth_canisters();
-            let user = canisters.individual_user(referee_canister).await?;
+            let user = canisters.individual_user(referee_canister).await;
             let referrer_details = user
                 .get_profile_details()
                 .await?
@@ -209,7 +209,7 @@ mod server_fn_impl {
 
             let referrer = canisters
                 .individual_user(referrer_details.user_canister_id)
-                .await?;
+                .await;
 
             let user_details = user.get_profile_details().await?;
 
@@ -249,7 +249,7 @@ mod server_fn_impl {
             use crate::{canister::user_index::Result_, state::admin_canisters::admin_canisters};
 
             let admin_cans = admin_canisters();
-            let user_idx = admin_cans.user_index_with(user_index).await?;
+            let user_idx = admin_cans.user_index_with(user_index).await;
             let res = user_idx
                 .issue_rewards_for_referral(
                     user_canister_id,
@@ -274,7 +274,7 @@ mod server_fn_impl {
             };
 
             let admin_cans = admin_canisters();
-            let user = admin_cans.individual_user_for(user_canister).await?;
+            let user = admin_cans.individual_user_for(user_canister).await;
             if matches!(
                 user.get_session_type().await?,
                 Result11::Ok(SessionType::RegisteredSession)

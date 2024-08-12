@@ -39,7 +39,7 @@ impl CursoredDataProvider for TokenRootList {
         start: usize,
         end: usize,
     ) -> Result<PageEntry<Self::Data>, Self::Error> {
-        let user = self.0.authenticated_user().await?;
+        let user = self.0.authenticated_user().await;
         let tokens = user
             .get_token_roots_of_this_user_with_pagination_cursor(start as u64, end as u64)
             .await?;

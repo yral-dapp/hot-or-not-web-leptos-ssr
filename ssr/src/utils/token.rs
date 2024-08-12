@@ -31,7 +31,7 @@ pub async fn token_metadata_by_root<const A: bool>(
     user_canister: Principal,
     token_root: Principal,
 ) -> Result<Option<TokenMetadata>, ServerFnError> {
-    let root = cans.sns_root(token_root).await?;
+    let root = cans.sns_root(token_root).await;
     let sns_cans = root.list_sns_canisters(ListSnsCanistersArg {}).await?;
     let Some(governance) = sns_cans.governance else {
         return Ok(None);
@@ -50,10 +50,10 @@ pub async fn get_token_metadata<const A: bool>(
     governance: Principal,
     ledger: Principal,
 ) -> Result<TokenMetadata, AgentError> {
-    let governance = cans.sns_governance(governance).await?;
+    let governance = cans.sns_governance(governance).await;
     let metadata = governance.get_metadata(GetMetadataArg {}).await?;
 
-    let ledger = cans.sns_ledger(ledger).await?;
+    let ledger = cans.sns_ledger(ledger).await;
     let symbol = ledger.icrc_1_symbol().await?;
 
     let acc = Account {

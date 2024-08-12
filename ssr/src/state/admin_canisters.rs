@@ -1,5 +1,5 @@
 use candid::Principal;
-use ic_agent::{AgentError, Identity};
+use ic_agent::Identity;
 use leptos::expect_context;
 
 use crate::{
@@ -19,20 +19,17 @@ impl AdminCanisters {
         }
     }
 
-    pub async fn user_index_with(
-        &self,
-        idx_principal: Principal,
-    ) -> Result<UserIndex<'_>, AgentError> {
-        let agent = self.agent.get_agent().await?;
-        Ok(UserIndex(idx_principal, agent))
+    pub async fn user_index_with(&self, idx_principal: Principal) -> UserIndex<'_> {
+        let agent = self.agent.get_agent().await;
+        UserIndex(idx_principal, agent)
     }
 
     pub async fn individual_user_for(
         &self,
         user_canister: Principal,
-    ) -> Result<IndividualUserTemplate<'_>, AgentError> {
-        let agent = self.agent.get_agent().await?;
-        Ok(IndividualUserTemplate(user_canister, agent))
+    ) -> IndividualUserTemplate<'_> {
+        let agent = self.agent.get_agent().await;
+        IndividualUserTemplate(user_canister, agent)
     }
 }
 
