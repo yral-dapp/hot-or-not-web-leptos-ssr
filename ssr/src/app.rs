@@ -2,18 +2,7 @@ use crate::{
     component::{base_route::BaseRoute, logout::Logout, nav::NavBar},
     error_template::{AppError, ErrorTemplate},
     page::{
-        account_transfer::AccountTransfer,
-        err::ServerErrorPage,
-        leaderboard::Leaderboard,
-        menu::{AuthorizedUserToSeedContent, Menu},
-        post_view::{PostView, PostViewCtx},
-        privacy::PrivacyPolicy,
-        profile::{profile_post::ProfilePost, ProfilePostsContext, ProfileView},
-        refer_earn::ReferEarn,
-        root::RootPage,
-        terms::TermsOfService,
-        upload::UploadPostPage,
-        wallet::{transactions::Transactions, Wallet},
+        account_transfer::AccountTransfer, err::ServerErrorPage, leaderboard::Leaderboard, menu::{AuthorizedUserToSeedContent, Menu}, notifs::Notif, post_view::{PostView, PostViewCtx}, privacy::PrivacyPolicy, profile::{profile_post::ProfilePost, ProfilePostsContext, ProfileView}, refer_earn::ReferEarn, root::RootPage, terms::TermsOfService, upload::UploadPostPage, wallet::{transactions::Transactions, Wallet}
     },
     state::{canisters::Canisters, content_seed_client::ContentSeedClient, history::HistoryCtx},
     utils::event_streaming::EventHistory,
@@ -122,6 +111,7 @@ pub fn App() -> impl IntoView {
                         <Route path="/your-profile/:canister_id/:post_id" view=ProfilePost/>
                         <Route path="/profile/:id" view=ProfileView/>
                         <Route path="/your-profile/:id" view=ProfileView/>
+                        <Route path="/register-notif" view=Notif/>
                         <Route path="/upload" view=UploadPostPage/>
                         <Route path="/error" view=ServerErrorPage/>
                         <Route path="/menu" view=Menu/>
