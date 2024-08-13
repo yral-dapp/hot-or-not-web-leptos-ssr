@@ -3,15 +3,15 @@ use leptos::*;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
 
-// use crate::{
-//     component::canisters_prov::{AuthCansProvider, WithAuthCans},
-//     state::auth::account_connected_reader,
-//     utils::profile::ProfileDetails,
-// };
+use crate::{
+    component::canisters_prov::{AuthCansProvider, WithAuthCans},
+    state::auth::account_connected_reader,
+    utils::{device_id::send_principal_and_token_offchain, profile::ProfileDetails},
+};
 
 #[component]
-fn NotifInnerComponent() -> impl IntoView {
-    // let (is_connected, _) = account_connected_reader();
+fn NotifInnerComponent(details: ProfileDetails) -> impl IntoView {
+    let (is_connected, _) = account_connected_reader();
 
     #[cfg(feature = "hydrate")]
     let token_getter = move || {
