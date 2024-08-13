@@ -130,6 +130,7 @@ impl AppStateBuilder {
             #[cfg(not(feature = "local-bin"))]
             {
                 redis_url = env::var("REDIS_URL").expect("`REDIS_URL` is required!");
+                println!("REDIS_URL {}", &redis_url);
             }
             KVStoreImpl::Redis(RedisKV::new(&redis_url).await.unwrap())
         }
