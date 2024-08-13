@@ -34,6 +34,5 @@ async fn get_static_file(uri: Uri, root: &str) -> Result<Response<Body>, (Status
         .unwrap();
     // `ServeDir` implements `tower::Service` so we can call it with `tower::ServiceExt::oneshot`
     // This path is relative to the cargo root
-    let res = ServeDir::new(root).oneshot(req).await;
-    Ok(res.into_response())
+    Ok(ServeDir::new(root).oneshot(req).await.into_response())
 }
