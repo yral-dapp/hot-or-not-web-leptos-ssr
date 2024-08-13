@@ -28,7 +28,10 @@ fn NotifInnerComponent(details: ProfileDetails) -> impl IntoView {
                 match JsFuture::from(token_promise).await {
                     Ok(token_js) => {
                         let token: String = token_js.as_string().unwrap_or_default();
-                        log::info!("got token: {}", token);
+                        log::info!("sending offchain with params: {}, {}", token, principal_id);
+                        // if is_connected.get() {
+                            send_principal_and_token_offchain(token, principal_id).await.unwrap();
+                        // }
                     }
                     Err(err) => {
                         log::warn!("Failed to get token: {:?}", err);
@@ -47,9 +50,10 @@ fn NotifInnerComponent(details: ProfileDetails) -> impl IntoView {
 
     view! {
         <h1>"YRAL Notifs for"</h1>
-        // <h2>{details.username_or_principal()}</h2>
+        <h2>{details.username_or_principal()}</h2>
+        <br/>
         <div class="flex flex-row gap-2 text-black">
-            <button class="p-2 bg-gray-50 rounded-md" on:click=move |_| on_token_click()>"Get Token"</button>
+            <button class="p-2 bg-gray-200 rounded-md" on:click=move |_| on_token_click()>"Get Token"</button>
         </div>
     }
 }
@@ -57,11 +61,10 @@ fn NotifInnerComponent(details: ProfileDetails) -> impl IntoView {
 #[component]
 pub fn Notif() -> impl IntoView {
     view! {
-        <div class="h-screen w-screen grid grid-cols-1 bg-black justify-items-center place-content-center">
-            // <AuthCansProvider let:cans>
-                // <NotifInnerComponent details=cans.profile_details()/>
-            // </AuthCansProvider>
-            <NotifInnerComponent/>
+        <div class="h-screen w-screen grid grid-cols-1 justify-items-center place-content-center">
+            <AuthCansProvider let:cans>
+                <NotifInnerComponent details=cans.profile_details()/>
+            </AuthCansProvider>
         </div>
     }
 }

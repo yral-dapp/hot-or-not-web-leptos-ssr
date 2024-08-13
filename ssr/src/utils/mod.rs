@@ -7,6 +7,7 @@ pub mod icon;
 pub mod posts;
 pub mod profile;
 pub mod report;
+pub mod device_id;
 pub mod route;
 pub mod timestamp;
 pub mod user;
