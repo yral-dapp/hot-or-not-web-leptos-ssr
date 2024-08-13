@@ -10,6 +10,7 @@ use crate::{
         web::{copy_to_clipboard, share_url},
     },
 };
+
 use futures::stream::SelectNextSome;
 use gloo::timers::callback::Timeout;
 use leptos::*;
@@ -18,18 +19,20 @@ use leptos_use::use_window;
 use math::mo;
 
 use super::{
-    bet::{CoinStates, MyBetDirection, bet_on_currently_viewing_post_fe}, 
+    bet::{CoinStates, bet_on_currently_viewing_post_fe}, 
     video_iter::post_liked_by_me
 };
 
 
 use crate::{
-    canister::individual_user_template::{self, PlaceBetArg , BettingStatus, BetDirection, Result_ }
+    canister::individual_user_template::{self, PlaceBetArg , BettingStatus, PlacedBetDetail, BetDirection, BetOutcomeForBetMaker, Result_ }
 };
 
 
 #[component]
-pub fn CoinStatesComponent(coin_state: RwSignal<CoinStates>, 
+pub fn CoinStatesComponent(
+    #[prop(into)]
+    coin_state: Signal<CoinStates>, 
     #[prop(default = "h-14 w-14".into())]
 css_class: String) -> impl IntoView {
 
@@ -40,7 +43,7 @@ css_class: String) -> impl IntoView {
     let css_class = store_value(css_class);
     view! {
         <Show when=c50>
-            <p class=move || css_class.with_value(|css_class| css_class.clone())>
+            <p class=css_class>
                 <svg
 
                     viewBox="0 0 408 408"
@@ -264,7 +267,6 @@ css_class: String) -> impl IntoView {
 }
 
 
-
 #[component]
 pub fn CoinButton(coin_state: RwSignal<CoinStates>) -> impl IntoView {
    
@@ -318,14 +320,15 @@ pub fn CoinButton(coin_state: RwSignal<CoinStates>) -> impl IntoView {
 pub fn HotButton(post: ReadSignal<PostDetails>, 
     #[prop(default = "w-14 h-14".into())]
     css_class: String, 
-    bet_direction : RwSignal<Option<MyBetDirection>>) -> impl IntoView {
+    bet_direction : RwSignal<Option<BetDirection>>) -> impl IntoView {
+    log::info!("HotButtons before view!");
     view! {
         <p
-            class=css_class
+            class=css_class + "flex flex-col"
             on:click=move |_ev| {
                 bet_direction
-                    .update(|bet_direction_state: &mut Option<MyBetDirection>| {
-                        *bet_direction_state = Some(MyBetDirection::Hot);
+                    .update(|bet_direction_state: &mut Option<BetDirection>| {
+                        *bet_direction_state = Some(BetDirection::Hot);
                     });
             }
         >
@@ -352,7 +355,7 @@ pub fn HotButton(post: ReadSignal<PostDetails>,
                     fill="#E2017B"
                 />
             </svg>
-
+            <p>"Hot"</p>
         </p>
     }
 }
@@ -362,15 +365,17 @@ pub fn HotButton(post: ReadSignal<PostDetails>,
 pub fn NotButton(post: ReadSignal<PostDetails>, 
     #[prop(default = "w-14 h-14".into())]
     css_class: String,
-    bet_direction : RwSignal<Option<MyBetDirection>>) -> impl IntoView{
+    bet_direction : RwSignal<Option<BetDirection>>) -> impl IntoView{
+    log::info!("NotButtons before view!");
+
     view! {
         <p
-            class=css_class
+            class=css_class + "flex flex-col"
             on:click=move |ev| {
                 ev.stop_propagation();
                 bet_direction
-                    .update(|bet_direction_state: &mut Option<MyBetDirection>| {
-                        *bet_direction_state = Some(MyBetDirection::Not);
+                    .update(|bet_direction_state: &mut Option<BetDirection>| {
+                        *bet_direction_state = Some(BetDirection::Not);
                     });
             }
         >
@@ -398,34 +403,18 @@ pub fn NotButton(post: ReadSignal<PostDetails>,
                     fill="white"
                 />
             </svg>
-
+            <p>"Not"</p>
         </p>
     }
 }
 
-
-
 #[component]
-pub fn HNButtonsOverlay(post: ReadSignal<PostDetails>, coin_state: RwSignal<CoinStates>, bet_direction: RwSignal<Option<MyBetDirection>>) -> impl IntoView {
+pub fn HNButtonsOverlay(post: ReadSignal<PostDetails>, coin_state: RwSignal<CoinStates>, bet_direction: RwSignal<Option<BetDirection>>, tried_to_place_bet: RwSignal<Option<bool>>) -> impl IntoView {
     let cans_res = authenticated_canisters();
-    // let post_clone = post.clone();
-    // let  coin_state = create_rw_signal(CoinStates::C50);
     
-    // default bet_direction is None
-    // let  bet_direction = create_rw_signal(None::<MyBetDirection>);    
-      
-      // Create an action that calls bet_on_post when MyBetDirection::Hot
-    //   let place_bet_action = create_resource(move || {
-    //     // let input = input.to_owned();
-    //     let direction = bet_direction.get();
-    //     async move {
-    //         if direction == Some(MyBetDirection::Hot) {
-    //             bet_on_post(&input).await;
-    //         }
-    //     }
-    // });
-
-    let place_bet_action = create_action(move |(canisters, bet_direction): &(Canisters<true>, MyBetDirection)|{  
+    log::info!("HNButtonsOverlay");
+    
+    let place_bet_action = create_action(move |(canisters, bet_direction): &(Canisters<true>, BetDirection)|{  
 
         let bet_amount: u64 = match coin_state.get(){
             CoinStates::C50 => 50,
@@ -447,12 +436,13 @@ pub fn HNButtonsOverlay(post: ReadSignal<PostDetails>, coin_state: RwSignal<Coin
             let res = bet_on_currently_viewing_post_fe(canisters_clone,bet_amount,bet_direction_clone,post_id, post_canister_id ).await; 
             if let Ok(ref res_ok) = res {
             log::info!("pba - res ok = {:?}", res_ok);
+            tried_to_place_bet.set(Some(true));
             } else {
                 log::info!("pba - res  error = {:?}", res);
             }
             Some(())
+            // todo return the bettingstatus which can then be used to display HNPendingResults
         }
-            
         });
 
     create_effect(move |_| {
@@ -469,34 +459,15 @@ pub fn HNButtonsOverlay(post: ReadSignal<PostDetails>, coin_state: RwSignal<Coin
         }
     
     });
-
-    create_effect(move |_| {
-        log::info!(" cr - 2 - place_bet_action.value() = {:?} ", place_bet_action.value());
-    });
-
+ 
+    log::info!("HNButtonsOverlay before view!");
     view! {
-        <div class="flex justify-center absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/70 to-transparent ">
+        <div class="flex justify-center absolute bottom-0 left-0 w-full">
             <div class="flex flex-nowrap items-center space-x-12 pb-8 px-4 bg-transparent z-[4] max-w-screen-sm	">
                 <HotButton post bet_direction />
                 <CoinButton coin_state />
                 <NotButton post bet_direction />
             </div>
-
-        // <Suspense>
-        // {move || {
-        // if let Some(bet_direction_val) = bet_direction.get() {
-        // log::info!("Some(bet_direction) = {:?} ", bet_direction.get());
-
-        // let canisters = cans_res()?.ok()?;
-        // place_bet_action.dispatch((canisters, bet_direction_val));
-        // Some(())
-        // } else {
-        // log::warn!("trying to place bet without bet_direction {:?} ", bet_direction.get());
-        // None
-        // }
-        // }}
-
-        // </Suspense>
         </div>
     }
 
@@ -504,15 +475,24 @@ pub fn HNButtonsOverlay(post: ReadSignal<PostDetails>, coin_state: RwSignal<Coin
 
 
 #[component]
-pub fn HNWonLost(post: ReadSignal<PostDetails>, coin_state: RwSignal<CoinStates>, bet_direction: RwSignal<Option<MyBetDirection>>) -> impl IntoView {
+pub fn HNWonLost(post: ReadSignal<PostDetails>,  participation_signal: ReadSignal<PlacedBetDetail>) -> impl IntoView {
+    // pub fn HNWonLost(post: ReadSignal<PostDetails>, coin_state: RwSignal<CoinStates>, bet_direction: RwSignal<Option<BetDirection>>) -> impl IntoView {
 
-    // todo based on placed_bet_detail.value, decide the coin state. C50, C100, C200
-    // let (coin_state, set_coin_state) = create_signal(CoinStates::C50);
+    let won_signal: Signal<bool> = Signal::derive(move || { match participation_signal.get().outcome_received{
+        BetOutcomeForBetMaker::Won(_) => true,
+        _ => false
+    }});
 
-    // todo create_signal for win/lost
-    let (won_signal, set_won_signal) = create_signal(true);
+    // bet_direction is ignored in this component. it is useful in HNButtonsOverlay where the value is used to set the PlacedBetArgs
+    let bet_direction = create_rw_signal(None::<BetDirection>);
     
-    let bet_direction_is_hot  = move || {bet_direction.get() == Some(MyBetDirection::Hot)};
+    let bet_direction_is_hot: Signal<bool>  = Signal::derive(move || {participation_signal.get().bet_direction == BetDirection::Hot});
+
+    let coin_state: Signal<CoinStates> = Signal::derive(move || {match participation_signal.get().amount_bet {
+        100 => CoinStates::C100,
+        200 => CoinStates::C200,
+        _ => CoinStates::C50
+    }});
 
     view! {
         <div class="flex w-auto items-center rounded-xl bg-transparent p-4 shadow-sm backdrop-blur-sm">
@@ -520,13 +500,10 @@ pub fn HNWonLost(post: ReadSignal<PostDetails>, coin_state: RwSignal<CoinStates>
             <div class="relative flex-shrink-0">
 
                 <div class="h-[5rem] w-[5rem] ">
-                    // <!-- Assume we have a Coin component here -->
-                    // placed_bet_detail.value
-                    // coin value
                     <CoinStatesComponent coin_state />
                 </div>
 
-                // <!-- Hot icon -->
+                // <!-- Hot / Not icon -->
                 <div class="absolute -bottom-1 -right-2 flex items-center justify-center rounded-full">
                     <span>
                         <Show when=bet_direction_is_hot>
@@ -536,7 +513,6 @@ pub fn HNWonLost(post: ReadSignal<PostDetails>, coin_state: RwSignal<CoinStates>
                         <Show when=move || !bet_direction_is_hot()>
                             <NotButton post=post css_class="h-9 w-9".into() bet_direction />
                         </Show>
-                    // hot or not icon
                     </span>
                 </div>
             </div>
@@ -573,6 +549,73 @@ pub fn HNWonLost(post: ReadSignal<PostDetails>, coin_state: RwSignal<CoinStates>
                     </button>
                 </Show>
             </div>
+        </div>
+    }
+}
+
+#[component]
+pub fn HNAwaitingResult(post_read_signal: ReadSignal<PostDetails>, participation_signal: ReadSignal<PlacedBetDetail>) -> impl IntoView{
+    let bet_direction = create_rw_signal(None::<BetDirection>);
+    
+    let bet_direction_is_hot: Signal<bool>  = Signal::derive(move || {participation_signal.get().bet_direction == BetDirection::Hot});
+    let bet_direction_display: Signal<&str>  = Signal::derive(move || { match participation_signal.get().bet_direction{ 
+        BetDirection::Hot => "Hot",
+        BetDirection::Not => "Not"
+        }});
+
+    let coin_state: Signal<CoinStates> = Signal::derive(move || {match participation_signal.get().amount_bet {
+        100 => CoinStates::C100,
+        200 => CoinStates::C200,
+        _ => CoinStates::C50
+    }});
+
+    view! {
+        <div class="flex w-auto items-center rounded-xl bg-transparent p-4 shadow-sm backdrop-blur-sm">
+
+            // <div class="flex items-center space-x-4">
+            // <!-- Coin Component -->
+            <div class="relative flex-shrink-0">
+
+                <div class="h-[5rem] w-[5rem] ">
+                    <CoinStatesComponent coin_state />
+                </div>
+
+                // <!-- Hot / Not icon -->
+                <div class="absolute -bottom-1 -right-2 flex items-center justify-center rounded-full">
+                    <span>
+                        <Show when=bet_direction_is_hot>
+                            <HotButton
+                                post=post_read_signal
+                                css_class="h-9 w-9".into()
+                                bet_direction
+                            />
+                        </Show>
+
+                        <Show when=move || !bet_direction_is_hot()>
+                            <NotButton
+                                post=post_read_signal
+                                css_class="h-9 w-9".into()
+                                bet_direction
+                            />
+                        </Show>
+                    </span>
+                </div>
+            </div>
+
+            // timer component
+            <div class="ml-4 flex flex-grow relative h-6">
+                <div class="absolute inset-0 rounded bg-gray-200"></div>
+                <div class="absolute inset-y-0 left-0 rounded bg-pink-500 w-3/5"></div>
+                <div class="absolute inset-0 flex items-center justify-end pr-3">
+                    <span class="font-semibold text-gray-600 text-sm">00:32:12</span>
+                </div>
+
+            </div>
+            <div class="mt-4 text-center text-gray-700">
+                You staked {participation_signal.get().amount_bet}tokens on {bet_direction_display}
+                . Result is still pending
+            </div>
+        // </div>
         </div>
     }
 }
@@ -667,6 +710,134 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
     }
 }
 
+
+#[component]
+// pub fn HNWonLost(post: ReadSignal<PostDetails>, coin_state: RwSignal<CoinStates>, bet_direction: RwSignal<Option<BetDirection>>) -> impl IntoView {
+pub fn HNUserParticipation(participation:  PlacedBetDetail, post_read_signal: ReadSignal<PostDetails> ) -> impl IntoView {
+
+    let (participation_signal, _) = create_signal(participation.clone());
+
+    // let bet_direction = create_rw_signal(participation.bet_direction);
+    // let amount_bet = create_rw_signal(participation.amount_bet);
+
+    view! {
+        {match participation.outcome_received {
+            BetOutcomeForBetMaker::AwaitingResult => {
+                view! { <HNAwaitingResult post_read_signal participation_signal /> }
+            }
+            BetOutcomeForBetMaker::Won(_) => {
+                view! {
+                    // view! { "AwaitingResult" }.into_view(),
+                    <HNWonLost post=post_read_signal participation_signal />
+                }
+            }
+            BetOutcomeForBetMaker::Draw(_) => {
+                view! {
+                    // view! { "AwaitingResult" }.into_view(),
+                    // view! { "AwaitingResult" }.into_view(),
+                    // view! { "AwaitingResult" }.into_view(),
+                    // view! { "AwaitingResult" }.into_view(),
+                    // view! { "AwaitingResult" }.into_view(),
+                    // view! { "AwaitingResult" }.into_view(),
+                    "Draw"
+                }
+                    .into_view()
+            }
+            BetOutcomeForBetMaker::Lost => {
+                view! {
+                    // view! { "AwaitingResult" }.into_view(),
+                    // view! { "AwaitingResult" }.into_view(),
+                    // view! { "AwaitingResult" }.into_view(),
+                    // view! { "AwaitingResult" }.into_view(),
+                    // view! { "AwaitingResult" }.into_view(),
+                    // view! { "AwaitingResult" }.into_view(),
+                    // view! { "AwaitingResult" }.into_view(),
+                    // view! { "AwaitingResult" }.into_view(),
+                    // view! { "AwaitingResult" }.into_view(),
+                    // view! { "AwaitingResult" }.into_view(),
+                    // view! { "AwaitingResult" }.into_view(),
+                    // view! { "AwaitingResult" }.into_view(),
+                    // view! { "AwaitingResult" }.into_view(),
+                    // view! { "AwaitingResult" }.into_view(),
+                    // view! { "AwaitingResult" }.into_view(),
+                    // view! { "AwaitingResult" }.into_view(),
+                    // view! { "AwaitingResult" }.into_view(),
+                    // view! { "AwaitingResult" }.into_view(),
+                    // view! { "AwaitingResult" }.into_view(),
+                    // view! { "AwaitingResult" }.into_view(),
+                    // view! { "AwaitingResult" }.into_view(),
+                    <HNWonLost post=post_read_signal participation_signal />
+                }
+            }
+        }
+            .into_view()}
+    }
+}
+
+
+#[component]
+pub fn MaybeHNButtonsOverlay(post_read_signal: ReadSignal<PostDetails>, bet_direction: RwSignal<Option<BetDirection>>, coin_state: RwSignal<CoinStates>, tried_to_place_bet: RwSignal<Option<bool>>) -> impl IntoView {
+    // let canisters = auth_canisters_store();
+    let cans_res = authenticated_canisters();
+
+
+
+    // create_effect( move |_| {
+
+    //     let canisters = cans_res()?.ok()?;
+    //     let user =  canisters.authenticated_user().await?;
+
+    //         place_bet_action.dispatch((canisters, bet_direction_val));    
+    //         Some(())
+    
+    // });
+
+    let is_betting_enabled_resource = create_resource(
+        move || post_read_signal.get_untracked(),
+        move |post| async move {
+
+        let canisters = cans_res()?.ok()?;
+
+        let user =  canisters.authenticated_user().await.ok()?;
+        let res = user.get_hot_or_not_bet_details_for_this_post(post.post_id).await.ok()?;
+        log::warn!("resource - is_betting_enabled: {:?}" , res);
+        match res {
+            // BettingStatus::BettingClosed => Some((false, false)),
+            // BettingStatus::BettingOpen{has_this_user_participated_in_this_post, ..} => Some((true, has_this_user_participated_in_this_post.unwrap_or(false)))
+            BettingStatus::BettingClosed => Some(false),
+            BettingStatus::BettingOpen{ ..} => Some(true)
+        
+        
+        }
+    }
+    );
+
+    view! {
+        {move || {
+            is_betting_enabled_resource
+                .get()
+                .map(|option_true| {
+                    log::info!("option_true : {:?}", option_true);
+                    if let Some(true) = option_true {
+                        log::info!("INSIDE IF option_true : {:?}", option_true);
+                        view! {
+                            <HNButtonsOverlay
+                                post=post_read_signal
+                                bet_direction
+                                coin_state
+                                tried_to_place_bet
+                            />
+                        }
+                    } else {
+                        log::info!("else option_true: {:?}", option_true);
+                        view! {}.into_view()
+                    }
+                })
+        }}
+    }
+}
+
+
 #[component]
 pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
     let show_share = create_rw_signal(false);
@@ -739,48 +910,38 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
         }
     });
 
-    // is betting enabled? 
-    // get_hot_or_not_bet_details_for_this_post -> BettingStatus -> Open
-
-    let  bet_direction = create_rw_signal(None::<MyBetDirection>);    
+    let  bet_direction = create_rw_signal(None::<BetDirection>);    
     let  coin_state = create_rw_signal(CoinStates::C50);
 
-    let post_for_betting_status  = post.clone();
+    // this tracks whether the user has just placed bet on this post or not 
+    let tried_to_place_bet = create_rw_signal(None::<bool>);
 
-    
-    
-    let is_betting_enabled_and_user_participated_in_bet = create_resource(
-        move || post_for_betting_status.clone(),
-        move |post| async move {
-        let canister = unauth_canisters();
-        let user = canister.individual_user(post.canister_id).await.ok()?;
-        let res = user.get_hot_or_not_bet_details_for_this_post(post.post_id).await;
+    let user_bet_participation_outcome_resource = create_local_resource(
+        // todo ideally this should be reactive.
+        move || (post_read_signal.get_untracked(), tried_to_place_bet.get()),
+        move |(post, tried_to_place_bet)| 
+        async move {
 
-        let value = match res { 
-            Ok(ok_res) => 
-            // let value = 
-            match ok_res {
-                // todo recheck this logic once - user may have participated in the bet but betting is closed now
-                BettingStatus::BettingClosed => (false,  false),
-                BettingStatus::BettingOpen{has_this_user_participated_in_this_post, ..} =>
-                {
-                    // log::info!("is_betting_enabled (not closed) = {other:?}");
-                    match has_this_user_participated_in_this_post {
-                        Some(true) => (true, true),
-                        Some(false) => (true, false),
-                        None => (true, false),
-                    }
+            log::info!("ubpo_resource - {} - tried_to_place_bet: {:?} ", post.post_id, tried_to_place_bet);
+            // let post = post_details.get_untracked();
+            let canister = unauth_canisters();
+            let user = canister.individual_user(post.canister_id).await.ok()?;
+            let bet_participation = user.get_individual_hot_or_not_bet_placed_by_this_profile(post.canister_id, post.post_id).await;
+
+            match bet_participation {
+                Ok(participation) => {
+                    log::info!("User bet participation: {:?}", participation);
+                    participation
+                },
+                Err(e) => {
+                    log::error!("Failed to check user bet participation: {:?}", e);
+                    None
                 }
-            },
-            Err(e) => {
-                log::info!("is_betting_enabled errored = {e:?}");
-                (false,false)
             }
-        };
-
-        Some(value)
-    });
-
+        }
+        
+    );
+    
     view! {
         <div class="flex flex-col flex-nowrap justify-start pt-20 px-2 md:px-6 w-full absolute top-0 left-0 bg-transparent text-white z-[4]">
             // top profile section
@@ -822,58 +983,35 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
             </button>
         </div>
 
-        <div class="flex flex-nowrap justify-center items-center my-10 px-2 md:px-6 w-full text-white absolute bottom-0 right-0 bg-black/30 z-[4] ">
-            <div class="flex flex-col grow gap-8 items-center w-9/12 sm:text-base md:text-xl py-10">
-                // todo do not show hon button if it is not enabled on a post
-                <Suspense>
-                    {move || {
-                        is_betting_enabled_and_user_participated_in_bet
-                            .get()
-                            .map(|option_value| {
-                                if let Some(
-                                    (is_betting_enabled, has_this_user_participated_in_this_post),
-                                ) = option_value {
-                                    if is_betting_enabled
-                                        && !has_this_user_participated_in_this_post
-                                    {
-                                        view! {
-                                            <HNButtonsOverlay
-                                                post=post_read_signal
-                                                bet_direction
-                                                coin_state
-                                            />
-                                        }
-                                    } 
-                                    // else if has_this_user_participated_in_this_post {
-                                        
-                                    //     view! {
-                                            
-                                    //         <p>"User already participated in this post"</p>
-                                    //     }
-                                    // }
-                                    else {
-                                        view! {
-                                            // ().into_view()
-                                            // todo take the coin state from the bet_details
-                                            <HNWonLost post=post_read_signal coin_state bet_direction />
-                                        }
-                                    }
-                                } else {
-                                    ().into_view()
-                                }
-                            })
-                    }}
-                // <HNButtonsOverlay post=post_read_signal bet_direction coin_state />
-                // <HNWonLost post=post_read_signal />
-                </Suspense>
+        <div class="absolute inset-x-0 bottom-0 h-1/3 bg-black/[.10] backdrop-blur-md z-0"></div>
 
-            // <Show
-            // when={ move || bet_direction.get().is_none()}
-            // fallback={move || view! {<HNWonLost post=post_read_signal bet_direction />}}>
-            // <HNButtonsOverlay post=post_read_signal bet_direction />
-            // </Show>
-            </div>
+        <div class="flex flex-col grow gap-8 items-center w-9/12 sm:text-base md:text-xl py-10">
+            // <Suspense>
+            {move || {
+                user_bet_participation_outcome_resource
+                    .get()
+                    .map(|option_val| {
+                        match option_val {
+                            Some(participation) => {
+                                view! { <HNUserParticipation participation post_read_signal /> }
+                            }
+                            None => {
+                                view! {
+                                    <MaybeHNButtonsOverlay
+                                        post_read_signal
+                                        bet_direction
+                                        coin_state
+                                        tried_to_place_bet
+                                    />
+                                }
+                            }
+                        }
+                    })
+            }}
+        // <HNButtonsOverlay post=post_read_signal bet_direction coin_state />
+        // </Suspense>
         </div>
+        // </div>
 
         <Modal show=show_share>
             <div class="flex flex-col justify-center items-center gap-4 text-white">

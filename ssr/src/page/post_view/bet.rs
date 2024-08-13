@@ -2,7 +2,7 @@ use candid::Principal;
 use leptos::ServerFnError;
 
 use crate::{
-    canister::individual_user_template::{self, PlaceBetArg , BettingStatus, BetOnCurrentlyViewingPostError, BetDirection, SystemTime, Result_, Result1 },
+    canister::individual_user_template::{self, PlaceBetArg , BettingStatus, BetOnCurrentlyViewingPostError, BetDirection, SystemTime, PlacedBetDetail,BetOutcomeForBetMaker,  Result_, Result1 },
     state::canisters::Canisters
 };
 // use crate::canister::individual_user_template::{self, PlaceBetArg, types::arg::PlaceBetArg};
@@ -92,6 +92,124 @@ impl fmt::Debug for BetOnCurrentlyViewingPostError {
             BetOnCurrentlyViewingPostError::Unauthorized => write!(f, "Unauthorized"),
             BetOnCurrentlyViewingPostError::PostCreatorCanisterCallFailed => write!(f, "PostCreatorCanisterCallFailed"),
             BetOnCurrentlyViewingPostError::UserNotLoggedIn => write!(f, "UserNotLoggedIn"),
+        }
+    }
+}
+
+
+impl fmt::Debug for PlacedBetDetail {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("PlacedBetDetail")
+            .field("outcome_received", &self.outcome_received)
+            .field("slot_id", &self.slot_id)
+            .field("post_id", &self.post_id)
+            .field("room_id", &self.room_id)
+            .field("canister_id", &self.canister_id)
+            .field("bet_direction", &self.bet_direction)
+            .field("amount_bet", &self.amount_bet)
+            .field("bet_placed_at", &self.bet_placed_at)
+            .finish()
+    }
+}
+
+impl Clone for PlacedBetDetail {
+    fn clone(&self) -> Self {
+        Self {
+            outcome_received: self.outcome_received.clone(),
+            slot_id: self.slot_id.clone(),
+            post_id: self.post_id.clone(),
+            room_id: self.room_id.clone(),
+            canister_id: self.canister_id.clone(),
+            bet_direction: self.bet_direction.clone(),
+            amount_bet: self.amount_bet.clone(),
+            bet_placed_at: self.bet_placed_at.clone(),
+        }
+    }
+}
+
+
+impl Clone for SystemTime {
+    fn clone(&self) -> Self {
+        Self {
+            nanos_since_epoch: self.nanos_since_epoch.clone(),
+            secs_since_epoch: self.secs_since_epoch.clone(),
+        }
+    }
+}
+
+
+
+// use serde::{Serialize, Deserialize};
+// use serde::ser::SerializeStruct;
+
+// impl Serialize for PlacedBetDetail {
+//     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+//     where
+//         S: serde::Serializer,
+//     {
+//         let mut state = serializer.serialize_struct("PlacedBetDetail", 7)?;
+//         state.serialize_field("outcome_received", &self.outcome_received)?;
+//         state.serialize_field("slot_id", &self.slot_id)?;
+//         state.serialize_field("post_id", &self.post_id)?;
+//         state.serialize_field("room_id", &self.room_id)?;
+//         state.serialize_field("canister_id", &self.canister_id)?;
+//         state.serialize_field("bet_direction", &self.bet_direction)?;
+//         state.serialize_field("amount_bet", &self.amount_bet)?;
+//         state.serialize_field("bet_placed_at", &self.bet_placed_at)?;
+//         state.end()
+//     }
+// }
+
+
+impl fmt::Debug for BetDirection {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            BetDirection::Hot => write!(f, "Hot"),
+            BetDirection::Not => write!(f, "Not"),
+        }
+    }
+}
+
+impl Clone for BetDirection {
+    fn clone(&self) -> Self {
+        match self {
+            BetDirection::Hot => BetDirection::Hot,
+            BetDirection::Not => BetDirection::Not,
+        }
+    }
+}
+
+impl PartialEq for BetDirection {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (BetDirection::Hot, BetDirection::Hot) => true,
+            (BetDirection::Not, BetDirection::Not) => true,
+            _ => false,
+        }
+    }
+}
+
+
+
+impl fmt::Debug for BetOutcomeForBetMaker {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            BetOutcomeForBetMaker::Won(amount) => write!(f, "Won: {:?}", amount),
+            BetOutcomeForBetMaker::Draw(amount) => write!(f, "Draw: {:?}", amount),
+            BetOutcomeForBetMaker::Lost => write!(f, "Lost"),
+            BetOutcomeForBetMaker::AwaitingResult => write!(f, "AwaitingResult"),
+        }
+    }
+}
+
+
+impl Clone for BetOutcomeForBetMaker {
+    fn clone(&self) -> Self {
+        match self {
+            BetOutcomeForBetMaker::Won(amount) => BetOutcomeForBetMaker::Won(*amount),
+            BetOutcomeForBetMaker::Draw(amount) => BetOutcomeForBetMaker::Draw(*amount),
+            BetOutcomeForBetMaker::Lost => BetOutcomeForBetMaker::Lost,
+            BetOutcomeForBetMaker::AwaitingResult => BetOutcomeForBetMaker::AwaitingResult,
         }
     }
 }
