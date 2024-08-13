@@ -16,15 +16,7 @@ fn NotifInnerComponent(details: ProfileDetails) -> impl IntoView {
     let token_getter = move || {
         #[wasm_bindgen(module = "/src/page/notifs/setup-firebase-messaging.js")]
         extern "C" {
-            fn get_token(
-                apiKey: String,
-                authDomain: String,
-                projectId: String,
-                storageBucket: String,
-                messagingSenderId: String,
-                appId: String,
-                vapidKey: String,
-            ) -> js_sys::Promise; // Return type as Promise
+            fn get_token(vapidKey: String) -> js_sys::Promise;
         }
 
         #[cfg(feature = "hydrate")]
@@ -34,15 +26,7 @@ fn NotifInnerComponent(details: ProfileDetails) -> impl IntoView {
             spawn_local(async move {
                 log::info!("Getting token...");
 
-                let token_promise = get_token(
-                    env!("apiKey").to_string(),
-                    env!("authDomain").to_string(),
-                    env!("projectId").to_string(),
-                    env!("storageBucket").to_string(),
-                    env!("messagingSenderId").to_string(),
-                    env!("appId").to_string(),
-                    env!("vapidKey").to_string(),
-                );
+                let token_promise = get_token(env!("vapidKey").to_string());
                 match JsFuture::from(token_promise).await {
                     Ok(token_js) => {
                         let token: String = token_js.as_string().unwrap_or_default();
