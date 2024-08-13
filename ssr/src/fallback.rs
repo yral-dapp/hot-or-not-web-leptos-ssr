@@ -22,11 +22,12 @@ pub async fn file_and_error_handler(
         res.into_response()
     } else {
         let handler =
-            leptos_axum::render_app_to_stream(options.to_owned(), move || view! { <App/> });
+            leptos_axum::render_app_to_stream(options.to_owned(), move || view! { <App /> });
         handler(req).await.into_response()
     }
 }
 
+#[allow(unreachable_patterns)]
 async fn get_static_file(uri: Uri, root: &str) -> Result<Response<Body>, (StatusCode, String)> {
     let req = Request::builder()
         .uri(uri.clone())
