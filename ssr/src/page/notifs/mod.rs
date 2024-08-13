@@ -1,6 +1,5 @@
 use std::env;
 
-use candid::types::principal;
 use leptos::*;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
