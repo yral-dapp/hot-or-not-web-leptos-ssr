@@ -10,7 +10,7 @@ use leptos_icons::*;
 use leptos_router::*;
 use leptos_use::{
     storage::use_local_storage, use_debounce_fn, use_intersection_observer_with_options,
-    use_permission, utils::FromToStringCodec, UseIntersectionObserverOptions,
+    utils::FromToStringCodec, UseIntersectionObserverOptions,
 };
 
 use crate::{
