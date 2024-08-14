@@ -50,11 +50,14 @@ pub fn BgView(
                 style:background-color="rgb(0, 0, 0)"
                 style:background-image=move || format!("url({})", bg_url(uid()))
             ></div>
-            <Show when=move || { current_idx.get() != 0 && current_idx.get() % 5 == 0 && !is_connected.get() && show_login_popup.get() }>
+            <Show when=move || {
+                current_idx.get() != 0 && current_idx.get() % 5 == 0 && !is_connected.get()
+                    && show_login_popup.get()
+            }>
                 <FeedPopUp
                     on_click=move |_| set_show_login_popup.set(false)
                     header_text="Your 1000 COYNs
-    Await You!"
+                    Await You!"
                     body_text="SignUp/Login to save your progress and claim your rewards."
                     login_text="Login"
                 />

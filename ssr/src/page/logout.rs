@@ -34,12 +34,17 @@ pub fn Logout() -> impl IntoView {
 
     view! {
         <Loading text="Logging out...".to_string()>
-            <Suspense>{move || auth_res.get().flatten().map(|id| {
-                auth.set(Some(id));
-                view! {
-                    <Redirect path="/menu"/>
-                }
-            })}</Suspense>
+            <Suspense>
+                {move || {
+                    auth_res
+                        .get()
+                        .flatten()
+                        .map(|id| {
+                            auth.set(Some(id));
+                            view! { <Redirect path="/menu"/> }
+                        })
+                }}
+            </Suspense>
         </Loading>
     }
 }

@@ -161,14 +161,17 @@ pub fn Menu() -> impl IntoView {
 
     view! {
         <Modal show=show_content_modal>
-            <AuthCansProvider fallback=Spinner children=move |canisters| {
-                view! {
-                    <YoutubeUpload
-                        canisters
-                        url=query_map.get().0.get("text").cloned().unwrap_or_default()
-                    />
+            <AuthCansProvider
+                fallback=Spinner
+                children=move |canisters| {
+                    view! {
+                        <YoutubeUpload
+                            canisters
+                            url=query_map.get().0.get("text").cloned().unwrap_or_default()
+                        />
+                    }
                 }
-            } />
+            />
         </Modal>
         <div class="min-h-screen w-full flex flex-col text-white pt-2 pb-12 bg-black items-center divide-y divide-white/10">
             <div class="flex flex-col items-center w-full gap-20 pb-16">
@@ -191,10 +194,7 @@ pub fn Menu() -> impl IntoView {
                             {r#"Your Yral account has been setup. Login with Google to not lose progress."#}
                         </div>
                     </Show>
-                    <Show when=move || {
-                        is_authorized_to_seed_content.0.get()
-                            && is_connected()
-                    }>
+                    <Show when=move || { is_authorized_to_seed_content.0.get() && is_connected() }>
                         <div class="w-full px-8 md:w-4/12 xl:w-2/12">
                             <button
                                 class="font-bold rounded-full bg-primary-600 py-2 md:py-3 w-full text-center text-lg md:text-xl text-white"

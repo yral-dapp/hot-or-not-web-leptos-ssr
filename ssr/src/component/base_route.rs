@@ -99,6 +99,7 @@ fn CtxProvider(temp_identity: Option<JwkEcKey>, children: ChildrenFn) -> impl In
                         canisters_store.set(Some(cans));
                     })
             }}
+
         </Suspense>
     }
 }
@@ -116,11 +117,17 @@ pub fn BaseRoute() -> impl IntoView {
 
     view! {
         <Suspense fallback=FullScreenSpinner>
-            {move || temp_identity_res().map(|temp_identity| view! {
-                <CtxProvider temp_identity>
-                    <Outlet/>
-                </CtxProvider>
-            })}
+            {move || {
+                temp_identity_res()
+                    .map(|temp_identity| {
+                        view! {
+                            <CtxProvider temp_identity>
+                                <Outlet/>
+                            </CtxProvider>
+                        }
+                    })
+            }}
+
         </Suspense>
     }
 }

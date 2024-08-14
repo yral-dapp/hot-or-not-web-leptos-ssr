@@ -22,8 +22,10 @@ fn ProfileGreeter(details: ProfileDetails) -> impl IntoView {
     view! {
         <div class="flex flex-col">
             <span class="text-white/50 text-md">Welcome!</span>
-            <span class="text-white text-lg md:text-xl truncate"
-                class=("md:w-5/12", move || !is_connected())>
+            <span
+                class="text-white text-lg md:text-xl truncate"
+                class=("md:w-5/12", move || !is_connected())
+            >
                 {details.display_name_or_fallback()}
             </span>
         </div>

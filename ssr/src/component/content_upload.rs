@@ -59,7 +59,9 @@ fn YoutubeUploadInner(canisters: Canisters<true>, #[prop(optional)] url: String)
 
                             Submit
                         </button>
-                        <p class="text-base md:text-lg text-white">{move || submit_res().unwrap_or_default()}</p>
+                        <p class="text-base md:text-lg text-white">
+                            {move || submit_res().unwrap_or_default()}
+                        </p>
                     </div>
                 </div>
             </div>
@@ -89,16 +91,24 @@ pub fn YoutubeUpload(canisters: Canisters<true>, #[prop(optional)] url: String) 
 
     view! {
         <Suspense fallback=Spinner>
-        {move || check_authorized().and_then(move |authorized| {
-            is_authorized_to_seed_content.0.set(authorized);
-            if !authorized {
-                return None;
-            }
+            {move || {
+                check_authorized()
+                    .and_then(move |authorized| {
+                        is_authorized_to_seed_content.0.set(authorized);
+                        if !authorized {
+                            return None;
+                        }
+                        Some(
+                            view! {
+                                <YoutubeUploadInner
+                                    canisters=canisters_s.get_value()
+                                    url=url_s.get_value()
+                                />
+                            },
+                        )
+                    })
+            }}
 
-            Some(view! {
-                <YoutubeUploadInner canisters=canisters_s.get_value() url=url_s.get_value()/>
-            })
-        })}
         </Suspense>
     }
 }
