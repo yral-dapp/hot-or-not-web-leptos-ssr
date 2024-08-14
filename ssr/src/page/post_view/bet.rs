@@ -223,6 +223,8 @@ pub async fn bet_on_currently_viewing_post_fe(
     -> Result<BettingStatus, ServerFnError> {
     let user = canisters.authenticated_user().await?;
 
+    log::info!("bet_on_currently_viewing_post_fe - {} - user: {:?} ", post_id, user.0);
+
     let place_bet_arg = PlaceBetArg {
         bet_amount,
         post_id,

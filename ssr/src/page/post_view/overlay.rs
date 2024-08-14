@@ -321,7 +321,6 @@ pub fn HotButton(post: ReadSignal<PostDetails>,
     #[prop(default = "w-14 h-14".into())]
     css_class: String, 
     bet_direction : RwSignal<Option<BetDirection>>) -> impl IntoView {
-    log::info!("HotButtons before view!");
     view! {
         <p
             class=css_class + "flex flex-col"
@@ -366,7 +365,6 @@ pub fn NotButton(post: ReadSignal<PostDetails>,
     #[prop(default = "w-14 h-14".into())]
     css_class: String,
     bet_direction : RwSignal<Option<BetDirection>>) -> impl IntoView{
-    log::info!("NotButtons before view!");
 
     view! {
         <p
@@ -437,6 +435,8 @@ pub fn HNButtonsOverlay(post: ReadSignal<PostDetails>, coin_state: RwSignal<Coin
             if let Ok(ref res_ok) = res {
             log::info!("pba - res ok = {:?}", res_ok);
             tried_to_place_bet.set(Some(true));
+            let topbt = move || tried_to_place_bet.get();
+            log::info!("pba - tried_to_place_bet = {:?}",  topbt());
             } else {
                 log::info!("pba - res  error = {:?}", res);
             }
@@ -460,7 +460,6 @@ pub fn HNButtonsOverlay(post: ReadSignal<PostDetails>, coin_state: RwSignal<Coin
     
     });
  
-    log::info!("HNButtonsOverlay before view!");
     view! {
         <div class="flex justify-center absolute bottom-0 left-0 w-full">
             <div class="flex flex-nowrap items-center space-x-12 pb-8 px-4 bg-transparent z-[4] max-w-screen-sm	">
@@ -726,48 +725,11 @@ pub fn HNUserParticipation(participation:  PlacedBetDetail, post_read_signal: Re
                 view! { <HNAwaitingResult post_read_signal participation_signal /> }
             }
             BetOutcomeForBetMaker::Won(_) => {
-                view! {
-                    // view! { "AwaitingResult" }.into_view(),
-                    <HNWonLost post=post_read_signal participation_signal />
-                }
+                view! { <HNWonLost post=post_read_signal participation_signal /> }
             }
-            BetOutcomeForBetMaker::Draw(_) => {
-                view! {
-                    // view! { "AwaitingResult" }.into_view(),
-                    // view! { "AwaitingResult" }.into_view(),
-                    // view! { "AwaitingResult" }.into_view(),
-                    // view! { "AwaitingResult" }.into_view(),
-                    // view! { "AwaitingResult" }.into_view(),
-                    // view! { "AwaitingResult" }.into_view(),
-                    "Draw"
-                }
-                    .into_view()
-            }
+            BetOutcomeForBetMaker::Draw(_) => view! { "Draw" }.into_view(),
             BetOutcomeForBetMaker::Lost => {
-                view! {
-                    // view! { "AwaitingResult" }.into_view(),
-                    // view! { "AwaitingResult" }.into_view(),
-                    // view! { "AwaitingResult" }.into_view(),
-                    // view! { "AwaitingResult" }.into_view(),
-                    // view! { "AwaitingResult" }.into_view(),
-                    // view! { "AwaitingResult" }.into_view(),
-                    // view! { "AwaitingResult" }.into_view(),
-                    // view! { "AwaitingResult" }.into_view(),
-                    // view! { "AwaitingResult" }.into_view(),
-                    // view! { "AwaitingResult" }.into_view(),
-                    // view! { "AwaitingResult" }.into_view(),
-                    // view! { "AwaitingResult" }.into_view(),
-                    // view! { "AwaitingResult" }.into_view(),
-                    // view! { "AwaitingResult" }.into_view(),
-                    // view! { "AwaitingResult" }.into_view(),
-                    // view! { "AwaitingResult" }.into_view(),
-                    // view! { "AwaitingResult" }.into_view(),
-                    // view! { "AwaitingResult" }.into_view(),
-                    // view! { "AwaitingResult" }.into_view(),
-                    // view! { "AwaitingResult" }.into_view(),
-                    // view! { "AwaitingResult" }.into_view(),
-                    <HNWonLost post=post_read_signal participation_signal />
-                }
+                view! { <HNWonLost post=post_read_signal participation_signal /> }
             }
         }
             .into_view()}
@@ -777,37 +739,24 @@ pub fn HNUserParticipation(participation:  PlacedBetDetail, post_read_signal: Re
 
 #[component]
 pub fn MaybeHNButtonsOverlay(post_read_signal: ReadSignal<PostDetails>, bet_direction: RwSignal<Option<BetDirection>>, coin_state: RwSignal<CoinStates>, tried_to_place_bet: RwSignal<Option<bool>>) -> impl IntoView {
-    // let canisters = auth_canisters_store();
-    let cans_res = authenticated_canisters();
 
-
-
-    // create_effect( move |_| {
-
-    //     let canisters = cans_res()?.ok()?;
-    //     let user =  canisters.authenticated_user().await?;
-
-    //         place_bet_action.dispatch((canisters, bet_direction_val));    
-    //         Some(())
-    
-    // });
+    // let cans_res = authenticated_canisters();
 
     let is_betting_enabled_resource = create_resource(
         move || post_read_signal.get_untracked(),
         move |post| async move {
 
-        let canisters = cans_res()?.ok()?;
-
-        let user =  canisters.authenticated_user().await.ok()?;
+        let canister = unauth_canisters();
+        // let canisters = cans_res()?.ok()?;
+        // let user = canisters.authenticated_user().await.ok()?;
+        let user = canister.individual_user(post.canister_id).await.ok()?;
         let res = user.get_hot_or_not_bet_details_for_this_post(post.post_id).await.ok()?;
-        log::warn!("resource - is_betting_enabled: {:?}" , res);
+        log::info!("resource - {}, is_betting_enabled: {:?}" , post.post_id, res);
         match res {
             // BettingStatus::BettingClosed => Some((false, false)),
             // BettingStatus::BettingOpen{has_this_user_participated_in_this_post, ..} => Some((true, has_this_user_participated_in_this_post.unwrap_or(false)))
             BettingStatus::BettingClosed => Some(false),
-            BettingStatus::BettingOpen{ ..} => Some(true)
-        
-        
+            BettingStatus::BettingOpen{ ..} => Some(true)    
         }
     }
     );
@@ -915,26 +864,35 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
 
     // this tracks whether the user has just placed bet on this post or not 
     let tried_to_place_bet = create_rw_signal(None::<bool>);
+    let can_res = authenticated_canisters();
 
     let user_bet_participation_outcome_resource = create_local_resource(
         // todo ideally this should be reactive.
-        move || (post_read_signal.get_untracked(), tried_to_place_bet.get()),
+        move || (post_read_signal , tried_to_place_bet),
+        // move || (post_read_signal.get_untracked(), tried_to_place_bet.get()),
         move |(post, tried_to_place_bet)| 
+
         async move {
 
-            log::info!("ubpo_resource - {} - tried_to_place_bet: {:?} ", post.post_id, tried_to_place_bet);
-            // let post = post_details.get_untracked();
-            let canister = unauth_canisters();
-            let user = canister.individual_user(post.canister_id).await.ok()?;
+            let post = post.get_untracked();
+            let tried_to_place_bet = move || tried_to_place_bet.get();
+            // let can_r = can_res.clone();
+            
+            let canisters = can_res.get()?.ok()?;
+            let user = canisters.authenticated_user().await.ok()?;
+            log::info!("ubpo_resource - {} - tried_to_place_bet: {:?} ", post.post_id, tried_to_place_bet());
+            // let canister = unauth_canisters();
+            // let user = canister.individual_user(post.canister_id).await.ok()?;
+            log::info!("ubpo_resource - {} - user: {:?} ", post.post_id, user.0);
             let bet_participation = user.get_individual_hot_or_not_bet_placed_by_this_profile(post.canister_id, post.post_id).await;
 
             match bet_participation {
                 Ok(participation) => {
-                    log::info!("User bet participation: {:?}", participation);
+                    log::info!("ubpo_resource - {} - User bet participation: {:?}", post.post_id, participation);
                     participation
                 },
                 Err(e) => {
-                    log::error!("Failed to check user bet participation: {:?}", e);
+                    log::error!("ubpo_resource - {} - Failed to check user bet participation: {:?}", post.post_id, e);
                     None
                 }
             }
@@ -988,25 +946,34 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
         <div class="flex flex-col grow gap-8 items-center w-9/12 sm:text-base md:text-xl py-10">
             // <Suspense>
             {move || {
-                user_bet_participation_outcome_resource
-                    .get()
-                    .map(|option_val| {
-                        match option_val {
-                            Some(participation) => {
-                                view! { <HNUserParticipation participation post_read_signal /> }
-                            }
-                            None => {
-                                view! {
-                                    <MaybeHNButtonsOverlay
-                                        post_read_signal
-                                        bet_direction
-                                        coin_state
-                                        tried_to_place_bet
-                                    />
+                // match tried_to_place_bet.get() {
+                //     _ => {
+                        user_bet_participation_outcome_resource
+                            .get()
+                            .map(|option_val| {
+                                match option_val {
+                                    Some(participation) => {
+                                        view! {
+                                            <HNUserParticipation participation post_read_signal />
+                                        }
+                                    }
+                                    None => {
+                                        view! {
+                                            // match tried_to_place_bet.get() {
+                                            // Some(true) => {view! { <HNUserParticipation participation.clone() post_read_signal /> }}
+                                            // None => {
+                                            <MaybeHNButtonsOverlay
+                                                post_read_signal
+                                                bet_direction
+                                                coin_state
+                                                tried_to_place_bet
+                                            />
+                                        }
+                                    }
                                 }
-                            }
-                        }
-                    })
+                            })
+                //     }
+                // }
             }}
         // <HNButtonsOverlay post=post_read_signal bet_direction coin_state />
         // </Suspense>
