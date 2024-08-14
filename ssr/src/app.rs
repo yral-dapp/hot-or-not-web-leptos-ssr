@@ -105,6 +105,14 @@ pub fn App() -> impl IntoView {
                 function gtag(){dataLayer.push(arguments);}
                 gtag('js', new Date());
                 gtag('config', 'G-PLNNETMSLM');
+                 document.querySelectorAll('.track-link').forEach(link => {
+                    link.addEventListener('click', function() {
+                        gtag('event', 'click', {
+                            'event_category': 'link',
+                            'event_label': this.href
+                        });
+                    });
+                });
                 "#}
             </Script>
         </Show>
@@ -137,6 +145,14 @@ pub fn App() -> impl IntoView {
                     </Route>
                 </Routes>
 
+         <div>
+                    <a href="https://yral.com/?utm_source=twitter&utm_medium=social&utm_campaign=campaign1&utm_content=hon_game" class="track-link">Campaign 1</a>
+                    <a href="https://yral.com/?utm_source=twitter&utm_medium=social&utm_campaign=campaign2&utm_content=hon_game" class="track-link">Campaign 2</a>
+                    <a href="https://yral.com/?utm_source=twitter&utm_medium=social&utm_campaign=campaign3&utm_content=hon_game" class="track-link">Campaign 3</a>
+                    <a href="https://yral.com/?utm_source=twitter&utm_medium=social&utm_campaign=campaign4&utm_content=hon_game" class="track-link">Campaign 4</a>
+                    <a href="https://yral.com/?utm_source=twitter&utm_medium=social&utm_campaign=campaign5&utm_content=hon_game" class="track-link">Campaign 5</a>
+                    <a href="https://yral.com/?utm_source=twitter&utm_medium=social&utm_campaign=campaign6&utm_content=hon_game" class="track-link">Campaign 6</a>
+                </div>
             </main>
             <nav>
                 <NavBar/>
