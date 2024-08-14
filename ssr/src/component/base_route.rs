@@ -106,7 +106,7 @@ fn CtxProvider(temp_identity: Option<JwkEcKey>, children: ChildrenFn) -> impl In
 
 #[component]
 pub fn BaseRoute() -> impl IntoView {
-    let temp_identity_res = create_resource(
+    let temp_identity_res = create_blocking_resource(
         || (),
         |_| async move {
             generate_anonymous_identity_if_required()

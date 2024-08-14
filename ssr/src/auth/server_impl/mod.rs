@@ -155,7 +155,8 @@ pub async fn logout_identity_impl() -> Result<DelegatedIdentityWire, ServerFnErr
     Ok(delegated)
 }
 
-pub async fn generate_anonymous_identity_impl() -> Result<Option<JwkEcKey>, ServerFnError> {
+pub async fn generate_anonymous_identity_if_required_impl(
+) -> Result<Option<JwkEcKey>, ServerFnError> {
     let key: Key = expect_context();
     let jar: SignedCookieJar = extract_with_state(&key).await?;
     if extract_principal_from_cookie(&jar)?.is_some() {

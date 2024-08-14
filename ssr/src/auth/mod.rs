@@ -90,7 +90,7 @@ impl TryFrom<DelegatedIdentityWire> for DelegatedIdentity {
 /// Generate an anonymous identity if refresh token is not set
 #[server]
 pub async fn generate_anonymous_identity_if_required() -> Result<Option<JwkEcKey>, ServerFnError> {
-    server_impl::generate_anonymous_identity_impl().await
+    server_impl::generate_anonymous_identity_if_required_impl().await
 }
 
 /// this server function is purely a side effect and only sets the refresh token cookie
