@@ -14,7 +14,7 @@ async fn perform_local_storage_auth(
     secp256k1_key: Option<JwkEcKey>,
 ) -> Result<(DelegatedIdentityWire, JwkEcKey), ServerFnError> {
     use crate::auth::server_impl::{
-        store::KVStoreImpl, try_extract_identity, update_user_identity,
+        store::KVStoreImpl, try_extract_identity, update_user_identity_and_delegate,
     };
     use axum_extra::extract::{cookie::Key, SignedCookieJar};
     use leptos_axum::{extract_with_state, ResponseOptions};
@@ -31,7 +31,7 @@ async fn perform_local_storage_auth(
     let base_identity = Secp256k1Identity::from_private_key(base_key);
 
     let resp: ResponseOptions = expect_context();
-    let delegated = update_user_identity(&resp, jar, base_identity).await?;
+    let delegated = update_user_identity_and_delegate(&resp, jar, base_identity)?;
     Ok((delegated, jwk))
 }
 

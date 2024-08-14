@@ -7,10 +7,7 @@ use crate::component::title::Title;
 use crate::component::{connect::ConnectLogin, social::*, toggle::Toggle};
 use crate::consts::{social, NSFW_TOGGLE_STORE};
 use crate::state::auth::account_connected_reader;
-use crate::state::canisters::authenticated_canisters;
-use crate::state::content_seed_client::ContentSeedClient;
 use crate::utils::profile::ProfileDetails;
-use candid::Principal;
 use leptos::html::Input;
 use leptos::*;
 use leptos_icons::*;
@@ -19,7 +16,7 @@ use leptos_use::use_event_listener;
 use leptos_use::{storage::use_local_storage, utils::FromToStringCodec};
 
 #[derive(Clone, Default)]
-pub struct AuthorizedUserToSeedContent(RwSignal<Option<(Principal, bool)>>);
+pub struct AuthorizedUserToSeedContent(pub RwSignal<bool>);
 
 #[component]
 fn MenuItem(
@@ -152,35 +149,6 @@ pub fn Menu() -> impl IntoView {
     let show_content_modal = create_rw_signal(false);
     let is_authorized_to_seed_content: AuthorizedUserToSeedContent = expect_context();
 
-    let can_res = authenticated_canisters();
-    let check_authorized_action = create_action(move |user_principal: &Principal| {
-        let user_principal = *user_principal;
-        async move {
-            let content_seed_client: ContentSeedClient = expect_context();
-            let res = content_seed_client
-                .check_if_authorized(user_principal)
-                .await
-                .ok()?;
-            is_authorized_to_seed_content
-                .0
-                .set(Some((user_principal, res)));
-            Some(())
-        }
-    });
-
-    create_effect(move |_| {
-        let canisters = can_res.get()?.ok()?;
-        let authorized_user_to_seed_content = is_authorized_to_seed_content.0.get_untracked();
-        match authorized_user_to_seed_content {
-            Some((user_principal, _)) if user_principal != canisters.user_principal() => {
-                check_authorized_action.dispatch(canisters.user_principal())
-            }
-            None => check_authorized_action.dispatch(canisters.user_principal()),
-            _ => {}
-        }
-        Some(())
-    });
-
     create_effect(move |_| {
         //check whether query param is right if right set the show_modal_content as true.
         let query_params = query_map.get();
@@ -193,27 +161,14 @@ pub fn Menu() -> impl IntoView {
 
     view! {
         <Modal show=show_content_modal>
-            <Suspense fallback=|| {
-                view! { <Spinner/> }
-            }>
-                {move || {
-                    let authenticated_canister = can_res.get()?.ok()?;
-                    let authorized = is_authorized_to_seed_content.0.get()?.1;
-                    if !authorized {
-                        show_content_modal.set(false);
-                        return None;
-                    }
-                    Some(
-                        view! {
-                            <YoutubeUpload
-                                canisters=authenticated_canister.clone()
-                                url=query_map.get().0.get("text").cloned().unwrap_or_default()
-                            />
-                        },
-                    )
-                }}
-
-            </Suspense>
+            <AuthCansProvider fallback=Spinner children=move |canisters| {
+                view! {
+                    <YoutubeUpload
+                        canisters
+                        url=query_map.get().0.get("text").cloned().unwrap_or_default()
+                    />
+                }
+            } />
         </Modal>
         <div class="min-h-screen w-full flex flex-col text-white pt-2 pb-12 bg-black items-center divide-y divide-white/10">
             <div class="flex flex-col items-center w-full gap-20 pb-16">
@@ -237,8 +192,8 @@ pub fn Menu() -> impl IntoView {
                         </div>
                     </Show>
                     <Show when=move || {
-                        is_authorized_to_seed_content.0.get().map(|auth| auth.1).unwrap_or(false)
-                            && is_connected.get()
+                        is_authorized_to_seed_content.0.get()
+                            && is_connected()
                     }>
                         <div class="w-full px-8 md:w-4/12 xl:w-2/12">
                             <button

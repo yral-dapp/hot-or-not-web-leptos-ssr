@@ -1,10 +1,11 @@
 use crate::{
-    component::{base_route::BaseRoute, logout::Logout, nav::NavBar},
+    component::{base_route::BaseRoute, nav::NavBar},
     error_template::{AppError, ErrorTemplate},
     page::{
         account_transfer::AccountTransfer,
         err::ServerErrorPage,
         leaderboard::Leaderboard,
+        logout::Logout,
         menu::{AuthorizedUserToSeedContent, Menu},
         post_view::{PostView, PostViewCtx},
         privacy::PrivacyPolicy,

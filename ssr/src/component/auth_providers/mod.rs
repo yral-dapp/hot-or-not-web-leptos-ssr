@@ -129,7 +129,8 @@ pub fn LoginProviders(show_modal: RwSignal<bool>, lock_closing: RwSignal<bool>) 
             let referrer = referrer_store.get_untracked();
 
             // This is some redundant work, but saves us 100+ lines of resource handling
-            let canisters = do_canister_auth(identity, referrer).await?;
+            let cans_wire = do_canister_auth(identity, referrer).await?;
+            let canisters = cans_wire.canisters()?;
 
             if let Err(e) = handle_user_login(canisters.clone(), referrer).await {
                 log::warn!("failed to handle user login, err {e}. skipping");

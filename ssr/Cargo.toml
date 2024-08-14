@@ -110,7 +110,7 @@ hydrate = [
     "dep:web-sys",
     "reqwest/native-tls",
     "dep:rand_chacha",
-    "dep:wasm-bindgen-futures"
+    "dep:wasm-bindgen-futures",
 ]
 ssr = [
     "dep:axum",
