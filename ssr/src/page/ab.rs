@@ -1,6 +1,6 @@
 use leptos::*;
 // use crate::abselector;
-use crate::utils::ab_testing::abselector_2comp;
+use crate::utils::ab_testing::{abselector_2comp, abselector_2compProps};
 
 enum ViewEnum {
     Default,
@@ -72,7 +72,12 @@ pub fn ABTestTesting() -> impl IntoView {
 
     view! {
         {
-            abselector_2comp(Some("B".to_string()), ComponentA, ComponentB)
+            // abselector_2comp(Some("B".to_string()), ComponentA, ComponentB)
+            abselector_2compProps { 
+                identifier: Some("B".to_string()),
+                component_a: ComponentA,
+                component_b: ComponentB,
+            }
         }
     }
 }
