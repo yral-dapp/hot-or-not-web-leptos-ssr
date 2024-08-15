@@ -86,7 +86,7 @@ pub enum ABFlags {
 // }
 
 #[component]
-pub fn abselector_2comp<CompA: Fn() -> AIV, CompB: Fn() -> AIV, AIV: IntoView>(identifier: Option<String>, component_a: CompA, component_b: CompB) -> impl IntoView {
+pub fn abselector_2comp<CompA: Fn() -> AIV + 'static, CompB: Fn() -> AIV + 'static, AIV: IntoView + 'static>(identifier: Option<String>, component_a: CompA, component_b: CompB) -> impl IntoView {
     let mut flags = vec![false; 2];
 
     // function to input the identifier and enable a flag
@@ -101,14 +101,18 @@ pub fn abselector_2comp<CompA: Fn() -> AIV, CompB: Fn() -> AIV, AIV: IntoView>(i
         None => 0,
     }] = true;
 
+    let a_enabled = flags[0];
     let b_enabled = flags[1];
 
     view! {
-        <Suspense fallback = component_a>
-            <Show when=move || {b_enabled} fallback=component_a>
-                component_b
-            </Show>
-        </Suspense>
+        // <Suspense fallback = component_a>
+        <Show when=move || {a_enabled}>
+            component_a
+        </Show>
+        <Show when=move || {b_enabled}>
+            component_b
+        </Show>
+        // </Suspense>
     }
 
     // return component_a or component_b based on the flag
