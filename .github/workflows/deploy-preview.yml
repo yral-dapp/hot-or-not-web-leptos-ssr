@@ -57,7 +57,8 @@ jobs:
             GOOGLE_CLIENT_SECRET: ${{ secrets.STAGING_TEMPORARY_GOOGLE_CLIENT_SECRET }}
             FLY_API_TOKEN: ${{ secrets.HOT_OR_NOT_WEB_LEPTOS_SSR_FLY_IO_GITHUB_ACTION }}
             GRPC_AUTH_TOKEN: ${{ secrets.OFF_CHAIN_AGENT_GRPC_AUTH_TOKEN }}
-      - name: 
+      
+      - name: Deploy Secrets
         run: |
             APP_NAME="pr-${{github.event.number}}-go-bazzinga-hot-or-not-web-leptos-ssr"
             flyctl deploy --app $APP_NAME
