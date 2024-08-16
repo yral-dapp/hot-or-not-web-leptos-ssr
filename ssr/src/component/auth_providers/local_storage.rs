@@ -1,7 +1,8 @@
+use codee::string::JsonSerdeCodec;
 use ic_agent::identity::Secp256k1Identity;
 use k256::elliptic_curve::JwkEcKey;
 use leptos::*;
-use leptos_use::{storage::use_local_storage, utils::JsonCodec};
+use leptos_use::storage::use_local_storage;
 
 use crate::auth::DelegatedIdentityWire;
 
@@ -38,7 +39,7 @@ async fn perform_local_storage_auth(
 #[component]
 pub fn LocalStorageProvider() -> impl IntoView {
     let (jwk_identity, set_jwk_identity, _) =
-        use_local_storage::<Option<JwkEcKey>, JsonCodec>(IDENTITY_JWK_STORE);
+        use_local_storage::<Option<JwkEcKey>, JsonSerdeCodec>(IDENTITY_JWK_STORE);
 
     let ctx: LoginProvCtx = expect_context();
 

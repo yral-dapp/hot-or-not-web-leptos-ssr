@@ -4,13 +4,14 @@ pub mod video_iter;
 pub mod video_loader;
 
 use candid::Principal;
+use codee::string::FromToStringCodec;
 use futures::StreamExt;
 use leptos::*;
 use leptos_icons::*;
 use leptos_router::*;
 use leptos_use::{
     storage::use_local_storage, use_debounce_fn, use_intersection_observer_with_options,
-    utils::FromToStringCodec, UseIntersectionObserverOptions,
+    UseIntersectionObserverOptions,
 };
 
 use crate::{
@@ -192,8 +193,12 @@ pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
             let Some(cursor) = fetch_cursor.try_get_untracked() else {
                 return;
             };
-            let auth_canisters = auth_canisters.get_untracked();
-            let nsfw_enabled = nsfw_enabled.get_untracked();
+            let Some(auth_canisters) = auth_canisters.try_get_untracked() else {
+                return;
+            };
+            let Some(nsfw_enabled) = nsfw_enabled.try_get_untracked() else {
+                return;
+            };
             let unauth_canisters = unauth_canisters();
 
             let chunks = if let Some(canisters) = auth_canisters.as_ref() {

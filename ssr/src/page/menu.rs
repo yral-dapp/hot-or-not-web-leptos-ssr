@@ -8,12 +8,13 @@ use crate::component::{connect::ConnectLogin, social::*, toggle::Toggle};
 use crate::consts::{social, NSFW_TOGGLE_STORE};
 use crate::state::auth::account_connected_reader;
 use crate::utils::profile::ProfileDetails;
+use codee::string::FromToStringCodec;
 use leptos::html::Input;
 use leptos::*;
 use leptos_icons::*;
 use leptos_router::use_query_map;
+use leptos_use::storage::use_local_storage;
 use leptos_use::use_event_listener;
-use leptos_use::{storage::use_local_storage, utils::FromToStringCodec};
 
 #[derive(Clone, Default)]
 pub struct AuthorizedUserToSeedContent(pub RwSignal<bool>);

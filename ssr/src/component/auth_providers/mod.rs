@@ -4,9 +4,10 @@ mod google;
 mod local_storage;
 
 use candid::Principal;
+use codee::string::FromToStringCodec;
 use ic_agent::Identity;
 use leptos::*;
-use leptos_use::{storage::use_local_storage, utils::FromToStringCodec};
+use leptos_use::storage::use_local_storage;
 
 use crate::{
     auth::DelegatedIdentityWire,
