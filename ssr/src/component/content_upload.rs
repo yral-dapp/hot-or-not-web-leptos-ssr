@@ -71,44 +71,23 @@ fn YoutubeUploadInner(canisters: Canisters<true>, #[prop(optional)] url: String)
 
 #[component]
 pub fn YoutubeUpload(canisters: Canisters<true>, #[prop(optional)] url: String) -> impl IntoView {
-    let is_authorized_to_seed_content: AuthorizedUserToSeedContent = expect_context();
-
     let user_principal = canisters.user_principal();
-    let check_authorized = create_resource(
-        || (),
-        move |_| async move {
-            let content_seed_client: ContentSeedClient = expect_context();
-
-            content_seed_client
-                .check_if_authorized(user_principal)
-                .await
-                .unwrap_or_default()
-        },
-    );
-
-    let canisters_s = store_value(canisters);
+    let cans_s = store_value(canisters);
     let url_s = store_value(url);
 
-    view! {
-        <Suspense fallback=Spinner>
-            {move || {
-                check_authorized()
-                    .and_then(move |authorized| {
-                        is_authorized_to_seed_content.0.set(authorized);
-                        if !authorized {
-                            return None;
-                        }
-                        Some(
-                            view! {
-                                <YoutubeUploadInner
-                                    canisters=canisters_s.get_value()
-                                    url=url_s.get_value()
-                                />
-                            },
-                        )
-                    })
-            }}
+    let authorized_ctx: AuthorizedUserToSeedContent = expect_context();
+    let authorized = authorized_ctx.0;
+    let loaded = move || {
+        authorized()
+            .map(|(_, principal)| principal == user_principal)
+            .unwrap_or_default()
+    };
 
-        </Suspense>
+    view! {
+        <Show when=loaded fallback=Spinner>
+            <Show when=move || authorized().map(|(a, _)| a).unwrap_or_default()>
+                <YoutubeUploadInner canisters=cans_s.get_value() url=url_s.get_value()/>
+            </Show>
+        </Show>
     }
 }
