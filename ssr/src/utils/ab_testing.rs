@@ -1,189 +1,84 @@
-use leptos::*;
-use std::collections::HashSet;
-
-#[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq, Eq, Hash)]
-pub enum ABFlags {
-    FlagA,
-    FlagB,
-    FlagC,
-    // Add more flags as needed
-}
-
-// pub fn ab_chooser<V: IntoView>(variations: Vec<(ABFlags, V)>, identifier: Option<String>) -> impl IntoView {
-//     // let user_flags = create_resource(|| (), |_| {
-//     //     // Dummy implementation: Assume the user has FlagA and FlagC enabled
-//     //     let enabled_flags = HashSet::from([ABFlag::FlagA, ABFlag::FlagC]);
-//     //     futures::future::ready(enabled_flags)
-//     // });
-
-//     let flag_to_view = match identifier {
-//         Some(id) => {
-//             match id.as_str() {
-//                 "A" => ABFlags::FlagA,
-//                 "B" => ABFlags::FlagB,
-//                 "C" => ABFlags::FlagC,
-//                 _ => ABFlags::FlagA,
-//             }
-//         },
-//         None => ABFlags::FlagA,
-//     };
-
-//     // // Ensure that `selected_view` is a closure that implements `Fn`
-//     // let selected_view = {
-//     //     let variations = variations.clone();  // Clone the variations to avoid moving them
-//     //     move || {
-//     //         user_flags.get().map(|flags| {
-//     //             variations.iter().find_map(|(flag, view)| {
-//     //                 if flags.contains(flag) {
-//     //                     Some(view.clone()) // Return the corresponding view if the flag matches
-//     //                 } else {
-//     //                     None
-//     //                 }
-//     //             })
-//     //             .unwrap_or_else(|| default_view.clone()) // Fallback to default_view if no flags match
-//     //         }).unwrap_or_else(|| default_view.clone()) // Fallback in case the resource is not ready
-//     //     }
-//     // };
-
-//     // let selected_view = variations.iter().find_map(|(flag, view)| {
-//     //     if flag == &flag_to_view {
-//     //         Some(view.clone())
-//     //     } else {
-//     //         None
-//     //     }
-//     // }).unwrap_or_else(|| default_view);
-
-//     // view! {
-//     //     <Suspense fallback={move || { default_view.clone() }}>
-//     //         {selected_view()}
-//     //     </Suspense>
-//     // }
-
-//     // return default
-//     // let mut selected_view = default_view;
-//     // for (flag, view) in variations {
-//     //     if flag == flag_to_view {
-//     //         selected_view = view;
-//     //         break;
-//     //     }
-//     // }
-
-//     view! {
-//         {
-//             if !variations.is_empty() {
-//                 // Return the first element as a View
-//                 view! { <div> {variations[0].1} </div> }.into_view()
-//             } else {
-//                 // Return a fallback View
-//                 view! { <div> No variations found </div> }.into_view()
-//             }
-//         }
-//     }
-// }
-
-// pub fn ab_chooser<V: IntoView>(variations: Vec<(ABFlags, V)>, identifier: Option<String>) -> impl IntoView {
-//     return variations[0].1;
-// }
-
-#[component]
-pub fn abselector_2comp<CompA: Fn() -> AIV + 'static, CompB: Fn() -> AIV + 'static, AIV: IntoView + 'static>(identifier: Option<String>, component_a: CompA, component_b: CompB) -> impl IntoView {
-    let mut flags = vec![false; 2];
-
-    // function to input the identifier and enable a flag
-    flags[match identifier {
-        Some(id) => {
-            match id.as_str() {
-                "A" => 0,
-                "B" => 1,
-                _ => 0,
-            }
-        },
-        None => 0,
-    }] = true;
-
-    let a_enabled = flags[0];
-    let b_enabled = flags[1];
-
-    view! {
-        // <Suspense fallback = component_a>
-        <Show when=move || {a_enabled}>
-            component_a
-        </Show>
-        <Show when=move || {b_enabled}>
-            component_b
-        </Show>
-        // </Suspense>
-    }
-
-    // return component_a or component_b based on the flag
-    // if b_enabled {
-    //     component_b
-    // } else {
-    //     component_a
-    // }
-}
+pub type ABComponent = Box<dyn Fn() -> Option<leptos::View>>;
 
 #[macro_export]
-macro_rules! abselectorold {
-    (
-        default: $default_view:expr,
-        identifier: $identifier:expr,
-        $($flag:expr => $view:expr),* $(,)?
-    ) => {
-        pub fn ab_chooser() -> impl leptos::IntoView {
-            let identifier = $identifier;
+macro_rules! abselector_id {
+    ($identifier:expr, $component_1:expr, $($rest:expr),* $(,)?) => {
+        {
+            let identifier = $identifier.as_deref();
+            let mut view = None;
 
-            let selected_view = move || {
-                $(
-                    if identifier == $flag {
-                        return $view;
-                    }
-                )*
-                $default_view
-            };
+            // Reverse iterate through the components and create the match cases
+            $(
+                if identifier == Some(stringify!($rest).trim_start_matches("component_")) {
+                    view = Some($rest.into_view());
+                }
+            )*
 
-            view! {
-                <Suspense fallback=$default_view>
-                    { selected_view() }
-                </Suspense>
-            }
+            // Fallback to the first component if no match is found
+            view.unwrap_or_else(|| $component_1.into_view())
         }
     };
 }
 
-// #[macro_export]
-// macro_rules! abselector {
-//     (
-//         default: $default_view:expr,
-//         identifier: $identifier:expr,
-//         $($flag:expr => $view:expr),* $(,)?
-//     ) => {
-//         pub fn ab_chooser() -> impl leptos::IntoView {
-//             let identifier = $identifier;
+/*
+USAGE:
+    earlier:
 
-//             let selected_view = move || {
-//                 $(
-//                     if identifier == $flag {
-//                         return $view.into_view(); // Ensure that we call `into_view` to convert it to the common type
-//                     }
-//                 )*
-//                 $default_view.into_view() // Ensure that the default view is also converted to the common type
-//             };
+    view! {
+        <Scroller />
+    }
 
-//             view! {
-//                 <Suspense fallback=$default_view.into_view()>
-//                     { selected_view() }
-//                 </Suspense>
-//             }
-//         }
-//     };
-// }
+    now:
 
-// // Example usage:
-// ABSelection! {
-//     default: default_view(),
-//     identifier: "some_identifier".to_string(),
-//     "flag_a" => view_a(),
-//     "flag_b" => view_b(),
-//     "flag_c" => view_c(),
-// }
+    view! {
+        let component_1: ABComponent = Box::new(<Scroller1 />);
+        let component_2: ABComponent = Box::new(<Scroller2 />);
+        let component_3: ABComponent = Box::new(<Scroller3 />);
+        abselector!(/* closure returning string */, component_1, component_2, component_3)()
+    }
+*/
+#[macro_export]
+macro_rules! abselector {
+    // Accept a closure for identifier generation
+    ($identifier_closure:expr, $component_1:expr, $($rest:expr),* $(,)?) => {
+        {
+            // Execute the closure to get the identifier
+            let identifier_string = ($identifier_closure)();
+            let identifier = identifier_string.as_deref();
+            let mut view = None;
+
+            // Reverse iterate through the components and create the match cases
+            $(
+                if identifier == Some(stringify!($rest).trim_start_matches("component_")) {
+                    view = Some($rest);
+                }
+            )*
+
+            // Fallback to the first component if no match is found
+            view.unwrap_or_else(|| $component_1)
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! abselector_alt {
+    // Accept a closure for identifier generation
+    ($identifier_closure:expr, $component_1:expr, $($rest:expr),* $(,)?) => {
+        {
+            // Execute the closure to get the identifier
+            let identifier_string = ($identifier_closure)();
+            let identifier = identifier_string.as_deref();
+            let mut view = None;
+
+            // Reverse iterate through the components and create the match cases
+            $(
+                if identifier == Some(stringify!($rest).trim_start_matches("component_")) {
+                    view = Some($rest.into_view());
+                }
+            )*
+
+            // Fallback to the first component if no match is found
+            view.unwrap_or_else(|| $component_1.into_view())
+        }
+    };
+}
