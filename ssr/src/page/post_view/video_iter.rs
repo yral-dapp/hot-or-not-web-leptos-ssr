@@ -132,7 +132,7 @@ impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
                     .collect::<Vec<(String, u64)>>()
             ); // TODO: to be removed
 
-            let end = top_posts.len() < self.cursor.limit as usize;
+            let end = false; //top_posts.len() < self.cursor.limit as usize;
             let chunk_stream = top_posts
                 .into_iter()
                 .map(move |item| get_post_uid(self.canisters, item.0, item.1))
