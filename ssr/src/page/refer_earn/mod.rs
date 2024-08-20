@@ -15,7 +15,7 @@ use crate::utils::event_streaming::events::{Refer, ReferShareLink};
 use crate::{
     component::{back_btn::BackButton, dashbox::DashboxLoading, title::Title},
     state::auth::account_connected_reader,
-    utils::web::copy_to_clipboard,
+    utils::web::{copy_to_clipboard, share_url},
 };
 use history::HistoryView;
 
@@ -49,8 +49,9 @@ fn ReferLoaded(user_principal: Principal) -> impl IntoView {
     let show_copied_popup = create_rw_signal(false);
     let canister_store = auth_canisters_store();
 
-    let click_copy = create_action(move |()| {
+    let click_copy = create_action(move |refer_link: &String| {
         let refer_link = refer_link.clone();
+
         async move {
             let _ = copy_to_clipboard(&refer_link);
 
@@ -61,11 +62,19 @@ fn ReferLoaded(user_principal: Principal) -> impl IntoView {
         }
     });
 
+    let handle_share = move || {
+        let url = refer_link.clone();
+        if share_url(&url).is_some() {
+            return;
+        }
+        click_copy.dispatch(url)
+    };
+
     view! {
         <div class="flex items-center w-fit rounded-full border-dashed border-2 p-3 gap-2 border-primary-500">
             <span class="text-md lg:text-lg text-ellipsis line-clamp-1">{refer_code}</span>
-            <button on:click=move |_| click_copy.dispatch(())>
-                <Icon class="text-xl" icon=icondata::FaCopyRegular/>
+            <button on:click=move |_| handle_share()>
+                <Icon class="text-xl text-primary-500" icon=icondata::IoShareSocialSharp/>
             </button>
         </div>
         <Show when=show_copied_popup>
