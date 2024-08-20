@@ -446,7 +446,7 @@ pub fn PostView() -> impl IntoView {
                 fetch_first_video_uid()
                     .and_then(|initial_post| {
                         let initial_post = initial_post.ok()?;
-                        Some(view! { <PostViewWithUpdatesMLFeed initial_post /> })
+                        Some(view! { <PostViewWithUpdatesMLFeed initial_post /> }) // TODO_DEBJIT : conditional component here based on host , either PostViewWithUpdatesMLFeed or PostViewWithUpdates
                     })
             }}
 
