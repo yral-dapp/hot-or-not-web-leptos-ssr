@@ -124,6 +124,14 @@ impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
                 }
             };
 
+            leptos::logging::log!(
+                "top_posts: {:?}",
+                top_posts
+                    .iter()
+                    .map(|item| (item.0.to_text(), item.1))
+                    .collect::<Vec<(String, u64)>>()
+            ); // TODO: to be removed
+
             let end = top_posts.len() < self.cursor.limit as usize;
             let chunk_stream = top_posts
                 .into_iter()
