@@ -864,20 +864,23 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
 
     // this tracks whether the user has just placed bet on this post or not 
     let tried_to_place_bet = create_rw_signal(None::<bool>);
+    let can_res = authenticated_canisters();
 
     let user_bet_participation_outcome_resource = create_local_resource(
+        // let user_bet_participation_outcome_resource = create_local_resource(
         // todo ideally this should be reactive.
-        move || (post_read_signal.get(), tried_to_place_bet.get()),
-         |(post, tried_to_place_bet)|
+        move || (post_read_signal, tried_to_place_bet),
+        move|(post, tried_to_place_bet)|
         async move {
-            let can_res = authenticated_canisters();
-            // let post = post.get_untracked();
-            // let tried_to_place_bet = move || tried_to_place_bet.get();
+            
+            let post = post.get_untracked();
+                // let tried_to_place_bet =  move || tried_to_place_bet.get();
             // let can_r = can_res.clone();
             
             let canisters = can_res.get()?.ok()?;
             let user = canisters.authenticated_user().await.ok()?;
-            log::info!("ubpo_resource - {} - tried_to_place_bet: {:?} ", post.post_id, tried_to_place_bet);
+            log::info!("ubpo_resource - {} - tried_to_place_bet: {:?} ", post.post_id, tried_to_place_bet.get());
+            // log::info!("ubpo_resource - {} - tried_to_place_bet: {:?} ", post.post_id, tried_to_place_bet());
             // let canister = unauth_canisters();
             // let user = canister.individual_user(post.canister_id).await.ok()?;
             log::info!("ubpo_resource - {} - user: {:?} ", post.post_id, user.0);
@@ -946,7 +949,9 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
         <div class="absolute inset-x-0 bottom-0 h-1/3 bg-black/[.10] backdrop-blur-md z-0"></div>
 
         <div class="flex flex-col grow gap-8 items-center w-9/12 sm:text-base md:text-xl py-10">
-            // <Suspense>
+            <Suspense
+            fallback=move || view! { <p>"Loading..."</p> }
+            >
             {move || {
                 user_bet_participation_outcome_resource
                     .get()
@@ -979,7 +984,7 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
                     })
             }}
         // <HNButtonsOverlay post=post_read_signal bet_direction coin_state />
-        // </Suspense>
+        </Suspense>
         </div>
         // </div>
 
