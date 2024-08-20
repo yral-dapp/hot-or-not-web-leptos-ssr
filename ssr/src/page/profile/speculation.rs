@@ -5,7 +5,6 @@ use leptos_icons::*;
 use super::ic::ProfileStream;
 use crate::{
     canister::utils::bg_url,
-    component::coming_soon::ComingSoonGraphic,
     state::canisters::unauth_canisters,
     utils::{
         posts::PostDetails,
@@ -178,16 +177,5 @@ pub fn ProfileSpeculations(user_canister: Principal) -> impl IntoView {
                 view! { <Speculation details _ref=_ref.unwrap_or_default()/> }
             }
         />
-    }
-}
-
-#[component]
-pub fn ProfileSpeculationsPlaceHolder() -> impl IntoView {
-    view! {
-        <div></div>
-        <div class="flex flex-col w-full gap-2 justify-center items-center">
-            <Icon class="h-36 w-36" icon=ComingSoonGraphic/>
-            <span class="text-white text-xl">Coming Soon</span>
-        </div>
     }
 }

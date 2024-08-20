@@ -9,6 +9,7 @@ pub mod connect;
 pub mod content_upload;
 pub mod dashbox;
 pub mod feed_popup;
+pub mod hn_icons;
 pub mod ic_symbol;
 pub mod infinite_scroller;
 pub mod loading;

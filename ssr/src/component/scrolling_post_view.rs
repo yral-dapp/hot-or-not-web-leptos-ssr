@@ -8,13 +8,13 @@ use crate::state::audio_state::AudioState;
 use crate::utils::posts::PostDetails;
 
 #[component]
-pub fn ScrollingPostView<F: Fn() -> V + Clone + 'static, V, O: Fn() -> IV, IV: IntoView>(
+pub fn ScrollingPostView<F: Fn() -> V + Clone + 'static, V>(
     video_queue: RwSignal<Vec<PostDetails>>,
     current_idx: RwSignal<usize>,
     #[prop(optional)] fetch_next_videos: Option<F>,
     recovering_state: RwSignal<bool>,
     queue_end: RwSignal<bool>,
-    #[prop(optional)] overlay: Option<O>,
+    #[prop(optional, into)] overlay: Option<ViewFn>,
 ) -> impl IntoView {
     let AudioState {
         muted,
@@ -32,7 +32,7 @@ pub fn ScrollingPostView<F: Fn() -> V + Clone + 'static, V, O: Fn() -> IV, IV: I
                 style:scroll-snap-points-y="repeat(100vh)"
             >
 
-                {overlay.map(|o| o())}
+                {overlay.map(|o| o.run())}
 
                 <For
                     each=move || video_queue().into_iter().enumerate()

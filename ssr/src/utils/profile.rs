@@ -1,3 +1,5 @@
+use web_time::Duration;
+
 use candid::Principal;
 use ic_agent::AgentError;
 use leptos::{RwSignal, SignalUpdateUntracked};
@@ -13,7 +15,7 @@ use crate::{
     state::canisters::Canisters,
 };
 
-use super::posts::PostDetails;
+use super::{current_epoch, posts::PostDetails};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ProfileDetails {
@@ -77,7 +79,7 @@ pub fn propic_from_principal(principal: Principal) -> String {
     format!("{GOBGOB_PROPIC_URL}{}/public", index)
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Serialize, Deserialize)]
 pub enum BetOutcome {
     Won(u64),
     Draw(u64),
@@ -85,19 +87,46 @@ pub enum BetOutcome {
     AwaitingResult,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Serialize, Deserialize)]
 pub enum BetKind {
     Hot,
     Not,
 }
 
-#[derive(Clone)]
+impl From<BetKind> for BetDirection {
+    fn from(kind: BetKind) -> Self {
+        match kind {
+            BetKind::Hot => BetDirection::Hot,
+            BetKind::Not => BetDirection::Not,
+        }
+    }
+}
+
+#[derive(Clone, Serialize, Deserialize)]
 pub struct BetDetails {
     pub outcome: BetOutcome,
     pub post_id: u64,
     pub canister_id: Principal,
     pub bet_kind: BetKind,
     pub bet_amount: u64,
+    placed_at: Duration,
+}
+
+impl BetDetails {
+    /// Remaining time in HH, MM, SS
+    pub fn time_remaining_hms(&self) -> (u64, u64, u64) {
+        let now = current_epoch();
+        let elapsed = now - self.placed_at;
+        // 48 hours
+        let bet_limit = Duration::from_secs(48 * 60 * 60);
+        let remaining = bet_limit.saturating_sub(elapsed).as_secs();
+
+        let hh = remaining / 3600;
+        let mm = (remaining - hh * 3600) / 60;
+        let ss = (remaining - hh * 3600) - mm * 60;
+
+        (hh, mm, ss)
+    }
 }
 
 impl From<PlacedBetDetail> for BetDetails {
@@ -118,6 +147,10 @@ impl From<PlacedBetDetail> for BetDetails {
             canister_id: bet.canister_id,
             bet_kind,
             bet_amount: bet.amount_bet,
+            placed_at: Duration::new(
+                bet.bet_placed_at.secs_since_epoch,
+                bet.bet_placed_at.nanos_since_epoch,
+            ),
         }
     }
 }

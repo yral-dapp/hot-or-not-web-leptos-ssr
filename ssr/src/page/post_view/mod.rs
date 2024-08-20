@@ -1,3 +1,4 @@
+mod bet;
 pub mod error;
 pub mod overlay;
 pub mod video_iter;
@@ -7,20 +8,13 @@ use candid::Principal;
 use codee::string::FromToStringCodec;
 use futures::StreamExt;
 use leptos::*;
-use leptos_icons::*;
 use leptos_router::*;
-use leptos_use::{
-    storage::use_local_storage, use_debounce_fn, use_intersection_observer_with_options,
-    UseIntersectionObserverOptions,
-};
+use leptos_use::{storage::use_local_storage, use_debounce_fn};
 
 use crate::{
     component::{scrolling_post_view::ScrollingPostView, spinner::FullScreenSpinner},
     consts::NSFW_TOGGLE_STORE,
-    state::{
-        audio_state::AudioState,
-        canisters::{unauth_canisters, Canisters},
-    },
+    state::canisters::{unauth_canisters, Canisters},
     try_or_redirect,
     utils::{
         posts::{get_post_uid, FetchCursor, PostDetails},
@@ -28,9 +22,6 @@ use crate::{
     },
 };
 use video_iter::VideoFetchStream;
-use video_loader::{BgView, VideoView};
-
-use overlay::HomeButtonOverlay;
 
 #[derive(Params, PartialEq, Clone, Copy)]
 struct PostParams {
@@ -48,118 +39,6 @@ pub struct PostViewCtx {
     video_queue: RwSignal<Vec<PostDetails>>,
     current_idx: RwSignal<usize>,
     queue_end: RwSignal<bool>,
-}
-
-// Infinite Scrolling View
-// Basically a virtual list with 5 items visible at a time
-#[component]
-pub fn ScrollingView<NV: Fn() -> NVR + Clone + 'static, NVR>(
-    next_videos: NV,
-    recovering_state: RwSignal<bool>,
-) -> impl IntoView {
-    //TODO: take this as a parameter.
-    let PostViewCtx {
-        video_queue,
-        current_idx,
-        queue_end,
-        ..
-    } = expect_context();
-
-    let AudioState {
-        muted,
-        show_mute_icon,
-        ..
-    } = AudioState::get();
-
-    let scroll_root: NodeRef<html::Div> = create_node_ref::<html::Div>();
-
-    //LEARN: This creates scrolling view which will be used for intersection observer.
-
-    view! {
-        <div class="h-full w-full overflow-hidden overflow-y-auto">
-            <div
-                _ref=scroll_root
-                class="snap-mandatory snap-y overflow-y-scroll h-dvh w-dvw bg-black"
-                style:scroll-snap-points-y="repeat(100vh)"
-            >
-                <HomeButtonOverlay />
-                <For
-                    each=move || video_queue().into_iter().enumerate()
-                    key=|(_, details)| (details.canister_id, details.post_id)
-                    children=move |(queue_idx, _details)| {
-                        let container_ref = create_node_ref::<html::Div>();
-                        let next_videos = next_videos.clone();
-                        use_intersection_observer_with_options(
-                            container_ref,
-                            move |entry, _| {
-                                let Some(visible) = entry
-                                    .first()
-                                    .filter(|entry| entry.is_intersecting()) else {
-                                    return;
-                                };
-                                let rect = visible.bounding_client_rect();
-                                if rect.y() == rect.height()
-                                    || queue_idx == current_idx.get_untracked()
-                                {
-                                    return;
-                                }
-                                if video_queue.with_untracked(|q| q.len()).saturating_sub(queue_idx)
-                                    <= 10
-                                {
-                                    next_videos();
-                                }
-                                current_idx.set(queue_idx);
-                            },
-                            UseIntersectionObserverOptions::default()
-                                .thresholds(vec![0.83])
-                                .root(Some(scroll_root)),
-                        );
-                        create_effect(move |_| {
-                            let Some(container) = container_ref() else {
-                                return;
-                            };
-                            if current_idx.get_untracked() == queue_idx
-                                && recovering_state.get_untracked()
-                            {
-                                container.scroll_into_view();
-                                recovering_state.set(false);
-                            }
-                        });
-                        let show_video = create_memo(move |_| {
-                            queue_idx.abs_diff(current_idx()) <= 20
-                        });
-                        view! {
-                            <div _ref=container_ref class="snap-always snap-end w-full h-full">
-                                <Show when=show_video>
-                                    <BgView video_queue current_idx idx=queue_idx>
-                                        <VideoView video_queue current_idx idx=queue_idx muted />
-                                    </BgView>
-                                </Show>
-                            </div>
-                        }
-                    }
-                />
-
-                <Show when=queue_end>
-                    <div class="h-full w-full relative top-0 left-0 bg-inherit z-[21] flex snap-always snap-end justify-center items-center text-xl text-white/80">
-                        <span>You have reached the end!</span>
-                    </div>
-                </Show>
-
-                <Show when=show_mute_icon>
-                    <button
-                        class="fixed top-1/2 left-1/2 z-20 cursor-pointer"
-                        on:click=move |_| AudioState::toggle_mute()
-                    >
-                        <Icon
-                            class="text-white/80 animate-ping text-4xl"
-                            icon=icondata::BiVolumeMuteSolid
-                        />
-                    </button>
-                </Show>
-            </div>
-        </div>
-    }
 }
 
 #[component]
@@ -277,7 +156,6 @@ pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
             recovering_state
             fetch_next_videos=next_videos
             queue_end
-            overlay=|| view! { <HomeButtonOverlay /> }
         />
     }
 }
