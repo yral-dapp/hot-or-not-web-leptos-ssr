@@ -316,18 +316,12 @@ fn HNAwaitingResults(participation: BetDetails) -> impl IntoView {
             </div>
 
             // timer component
-            <div class="ml-4 flex flex-grow relative h-6">
-                <div class="absolute inset-0 rounded bg-gray-200"></div>
-                <div class="absolute inset-y-0 left-0 rounded bg-pink-500 w-3/5"></div>
-                <div class="absolute inset-0 flex items-center justify-end pr-3">
-                    <span class="font-semibold text-white bg-black/25 rounded-full text-sm p-1">{time_remaining}</span>
-                </div>
-
-            </div>
-
-            <div class="mt-4 text-center text-white bg-black/15 rounded-full p-1">
-                You staked {bet_amount} tokens on {bet_direction_text}
-                Result is still pending
+            <div class="flex flex-col gap-1 ps-2 w-fit">
+                <p class="font-semibold text-white bg-black/25 rounded-full text-sm p-1 ps-2">{time_remaining}</p>
+                <p class="text-center text-white bg-black/15 rounded-full p-1 ps-2">
+                    You staked {bet_amount} tokens on {bet_direction_text}
+                    Result is still pending
+                </p>
             </div>
         </div>
     }

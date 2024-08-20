@@ -290,7 +290,7 @@ fn ExpandableText(description: String) -> impl IntoView {
 
     view! {
         <span
-            class="text-xs md:text-sm lg:text-base md:ms-4 w-full"
+            class="text-xs md:text-sm lg:text-base w-full"
             class:truncate=truncated
 
             on:click=move |_| truncated.update(|e| *e = !*e)
