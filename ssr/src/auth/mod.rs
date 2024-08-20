@@ -44,10 +44,13 @@ impl DelegatedIdentityWire {
             signature: sig.signature.unwrap(),
         };
 
+        let mut delegation_chain = from.delegation_chain();
+        delegation_chain.push(signed_delegation);
+
         Self {
             from_key: sig.public_key.unwrap(),
             to_secret: to_secret.to_jwk(),
-            delegation_chain: vec![signed_delegation],
+            delegation_chain,
         }
     }
 
