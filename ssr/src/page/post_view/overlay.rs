@@ -178,8 +178,8 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
     });
 
     view! {
-        <div class="flex flex-col flex-nowrap h-full justify-between pt-10 pb-20 px-2 md:px-6 w-full text-white absolute bottom-0 left-0 bg-transparent z-[4]">
-            <div class="flex flex-row gap-2 w-9/12 rounded-s-full bg-gradient-to-r from-black/25 via-80% via-black/10 items-center p-2">
+        <div class="flex flex-col pointer-events-none flex-nowrap h-full justify-between pt-10 pb-20 px-2 md:px-6 w-full text-white absolute bottom-0 left-0 bg-transparent z-[4]">
+            <div class="flex pointer-events-auto flex-row gap-2 w-9/12 rounded-s-full bg-gradient-to-r from-black/25 via-80% via-black/10 items-center p-2">
                 <div class="w-fit flex">
                     <a
                         href=profile_url
@@ -202,7 +202,7 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
                     <ExpandableText description=post.description/>
                 </div>
             </div>
-            <div class="flex flex-col gap-2 w-full">
+            <div class="flex pointer-events-auto flex-col gap-2 w-full">
                 <div class="flex flex-col gap-6 self-end items-end w-3/12 text-2xl md:text-3xl lg:text-4xl">
                     <button on:click=move |_| show_report.set(true)>
                         <Icon class="drop-shadow-lg" icon=icondata::TbMessageReport/>
