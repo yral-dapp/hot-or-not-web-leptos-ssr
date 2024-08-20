@@ -53,7 +53,6 @@ impl AudioState {
             muted,
             show_mute_icon,
         } = expect_context();
-        println!("Toggle Mute");
         if !muted.get() {
             Self::display_flash_for_6_secs(show_mute_icon);
         } else {
