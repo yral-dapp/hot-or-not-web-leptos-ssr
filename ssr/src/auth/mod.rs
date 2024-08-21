@@ -117,8 +117,20 @@ pub async fn logout_identity() -> Result<DelegatedIdentityWire, ServerFnError> {
 }
 
 #[cfg(feature = "oauth-ssr")]
-#[derive(Clone)]
-pub struct CoreClients {
-    pub google_oauth: openidconnect::core::CoreClient,
-    pub hotornot_google_oauth: openidconnect::core::CoreClient,
+pub mod core_clients {
+    #[derive(Clone)]
+    pub struct CoreClients {
+        pub google_oauth: openidconnect::core::CoreClient,
+        pub hotornot_google_oauth: openidconnect::core::CoreClient,
+    }
+
+    impl CoreClients {
+        pub fn get_oauth_client(&self, host: &str) -> openidconnect::core::CoreClient {
+            if host == "hotornot.wtf" {
+                self.hotornot_google_oauth.clone()
+            } else {
+                self.google_oauth.clone()
+            }
+        }
+    }
 }

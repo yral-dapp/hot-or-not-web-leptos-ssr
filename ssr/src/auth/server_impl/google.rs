@@ -18,7 +18,7 @@ use crate::auth::{
         fetch_identity_from_kv, store::KVStore, try_extract_identity,
         update_user_identity_and_delegate,
     },
-    CoreClients, DelegatedIdentityWire,
+    DelegatedIdentityWire,
 };
 
 use super::{set_cookies, store::KVStoreImpl};
@@ -26,9 +26,9 @@ use super::{set_cookies, store::KVStoreImpl};
 const PKCE_VERIFIER_COOKIE: &str = "google-pkce-verifier";
 const CSRF_TOKEN_COOKIE: &str = "google-csrf-token";
 
-pub async fn google_auth_url_impl() -> Result<String, ServerFnError> {
-    let oauth_clients: CoreClients = expect_context();
-    let oauth2 = oauth_clients.google_oauth;
+pub async fn google_auth_url_impl(
+    oauth2: openidconnect::core::CoreClient,
+) -> Result<String, ServerFnError> {
     let (pkce_challenge, pkce_verifier) = PkceCodeChallenge::new_random_sha256();
     let (auth_url, csrf_token, _) = oauth2
         .authorize_url(
@@ -105,6 +105,7 @@ async fn extract_identity_and_associate_with_google_sub(
 pub async fn perform_google_auth_impl(
     provided_csrf: String,
     auth_code: String,
+    oauth2: openidconnect::core::CoreClient,
 ) -> Result<DelegatedIdentityWire, ServerFnError> {
     let key: Key = expect_context();
     let mut jar: PrivateCookieJar = extract_with_state(&key).await?;
@@ -126,8 +127,6 @@ pub async fn perform_google_auth_impl(
     let resp: ResponseOptions = expect_context();
     set_cookies(&resp, jar);
 
-    let oauth_clients: CoreClients = expect_context();
-    let oauth2 = oauth_clients.google_oauth;
     let token_res = oauth2
         .exchange_code(AuthorizationCode::new(auth_code))
         .set_pkce_verifier(pkce_verifier)

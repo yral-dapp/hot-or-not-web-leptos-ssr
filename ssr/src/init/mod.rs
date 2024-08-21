@@ -30,8 +30,8 @@ fn init_cookie_key() -> Key {
 }
 
 #[cfg(feature = "oauth-ssr")]
-fn init_google_oauth() -> crate::auth::CoreClients {
-    use crate::auth::CoreClients;
+fn init_google_oauth() -> crate::auth::core_clients::CoreClients {
+    use crate::auth::core_clients::CoreClients;
     use crate::consts::google::{GOOGLE_AUTH_URL, GOOGLE_ISSUER_URL, GOOGLE_TOKEN_URL};
     use openidconnect::{
         core::CoreClient, AuthUrl, ClientId, ClientSecret, IssuerUrl, RedirectUrl, TokenUrl,
