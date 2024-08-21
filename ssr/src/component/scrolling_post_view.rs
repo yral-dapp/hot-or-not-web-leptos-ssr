@@ -36,7 +36,6 @@ pub fn ScrollingPostView<F: Fn() -> V + Clone + 'static, V, O: Fn() -> IV, IV: I
 
                 <For
                     each=move || video_queue().into_iter().enumerate()
-                    // TODO: change it back
                     key=move |(_, details)| (details.canister_id, details.post_id)
                     children=move |(queue_idx, _details)| {
                         let container_ref = create_node_ref::<html::Div>();
@@ -95,10 +94,10 @@ pub fn ScrollingPostView<F: Fn() -> V + Clone + 'static, V, O: Fn() -> IV, IV: I
                     </div>
                 </Show>
 
-                <Show when=muted>
+                <Show when=show_mute_icon>
                     <button
                         class="fixed top-1/2 left-1/2 z-20 cursor-pointer"
-                        on:click=move |_| muted.set(false)
+                        on:click=move |_| AudioState::toggle_mute()
                     >
                         <Icon
                             class="text-white/80 animate-ping text-4xl"
@@ -121,7 +120,11 @@ pub fn ScrollingPostViewMLFeed<F: Fn() -> V + Clone + 'static, V, O: Fn() -> IV,
     queue_end: RwSignal<bool>,
     #[prop(optional)] overlay: Option<O>,
 ) -> impl IntoView {
-    let muted = create_rw_signal(true);
+    let AudioState {
+        muted,
+        show_mute_icon,
+    } = AudioState::get();
+
     let scroll_root: NodeRef<html::Div> = create_node_ref();
 
     let var_name = view! {
@@ -136,7 +139,6 @@ pub fn ScrollingPostViewMLFeed<F: Fn() -> V + Clone + 'static, V, O: Fn() -> IV,
 
                 <For
                     each=move || video_queue().into_iter().enumerate()
-                    // TODO: change it back
                     key=move |(_, details)| (details.canister_id, details.post_id)
                     children=move |(queue_idx, _details)| {
                         let container_ref = create_node_ref::<html::Div>();
@@ -155,7 +157,7 @@ pub fn ScrollingPostViewMLFeed<F: Fn() -> V + Clone + 'static, V, O: Fn() -> IV,
                                     return;
                                 }
                                 if video_queue.with_untracked(|q| q.len()).saturating_sub(queue_idx)
-                                <= 20 // JAY_TODO
+                                <= 20
                                 {
                                     next_videos.as_ref().map(|nv| { nv() });
                                 }

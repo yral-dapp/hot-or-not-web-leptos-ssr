@@ -21,10 +21,7 @@ use crate::{
         audio_state::AudioState, canisters::Canisters, content_seed_client::ContentSeedClient,
         history::HistoryCtx,
     },
-    utils::{
-        event_streaming::EventHistory,
-        ml_feed::{self, MLFeed},
-    },
+    utils::event_streaming::EventHistory,
 };
 use leptos::*;
 use leptos_meta::*;

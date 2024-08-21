@@ -136,7 +136,6 @@ hydrate = [
     "dep:web-sys",
     "reqwest/native-tls",
     "dep:rand_chacha",
-    "dep:wasm-bindgen-futures",
     "tonic_2",
     "prost_2",
 ]
