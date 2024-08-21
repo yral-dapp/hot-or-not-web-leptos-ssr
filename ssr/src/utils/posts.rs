@@ -1,5 +1,6 @@
 use candid::Principal;
 use serde::{Deserialize, Serialize};
+use web_time::Duration;
 
 use crate::{
     canister::individual_user_template::PostDetailsForFrontend, state::canisters::Canisters,
@@ -59,6 +60,7 @@ pub struct PostDetails {
     pub hastags: Vec<String>,
     pub is_nsfw: bool,
     pub hot_or_not_feed_ranking_score: Option<u64>,
+    pub created_at: Duration,
 }
 
 impl PostDetails {
@@ -86,6 +88,10 @@ impl PostDetails {
             hastags: details.hashtags,
             is_nsfw: details.is_nsfw,
             hot_or_not_feed_ranking_score: details.hot_or_not_feed_ranking_score,
+            created_at: Duration::new(
+                details.created_at.secs_since_epoch,
+                details.created_at.nanos_since_epoch,
+            ),
         }
     }
 }

@@ -1,6 +1,8 @@
 use candid::Principal;
 use leptos::*;
 use leptos_icons::*;
+use leptos_use::use_interval_fn;
+use web_time::Duration;
 
 use crate::{
     canister::individual_user_template::{BettingStatus, PlaceBetArg, Result1},
@@ -13,6 +15,7 @@ use crate::{
     utils::{
         posts::PostDetails,
         profile::{BetDetails, BetKind, BetOutcome},
+        timestamp::to_hh_mm_ss,
         MockPartialEq,
     },
 };
@@ -100,28 +103,27 @@ fn CoinStateView(
 }
 
 #[component]
-fn HotButton(
-    #[prop(into)] bet_direction: WriteSignal<Option<BetKind>>,
+fn HNButton(
+    bet_direction: RwSignal<Option<BetKind>>,
+    kind: BetKind,
     #[prop(into)] disabled: Signal<bool>,
 ) -> impl IntoView {
-    view! {
-        <button class="h-14 w-14 md:h-16 md:w-16 lg:h-18 md:w-18" disabled=disabled on:click=move |_| bet_direction.set(Some(BetKind::Hot))>
-            <Show when=move || !disabled() fallback=SpinnerFit>
-                <HotIcon/>
-            </Show>
-        </button>
-    }
-}
+    let grayscale = create_memo(move |_| bet_direction() != Some(kind) && disabled());
+    let show_spinner = move || disabled() && bet_direction() == Some(kind);
 
-#[component]
-fn NotButton(
-    #[prop(into)] bet_direction: WriteSignal<Option<BetKind>>,
-    #[prop(into)] disabled: Signal<bool>,
-) -> impl IntoView {
     view! {
-        <button class="h-14 w-14 md:h-16 md:w-16 lg:h-18 md:w-18" disabled=disabled on:click=move |_| bet_direction.set(Some(BetKind::Not))>
-            <Show when=move || !disabled() fallback=SpinnerFit>
-                <NotIcon/>
+        <button
+            class="h-14 w-14 md:h-16 md:w-16 lg:h-18 md:w-18"
+            class=("grayscale", grayscale)
+            disabled=disabled
+            on:click=move |_| bet_direction.set(Some(kind))
+        >
+            <Show when=move || !show_spinner() fallback=SpinnerFit>
+                {if kind == BetKind::Hot {
+                    view! { <HotIcon/> }
+                 } else {
+                    view! { <NotIcon/> }
+                }}
             </Show>
         </button>
     }
@@ -152,7 +154,6 @@ fn HNButtonOverlay(
             }
         },
     );
-    let set_bet_direction = bet_direction.write_only();
     let place_bet_res = place_bet_action.value();
     create_effect(move |_| {
         if place_bet_res().flatten().is_some() {
@@ -184,20 +185,20 @@ fn HNButtonOverlay(
             />
         </div>
         <div class="flex flex-row w-full items-center justify-center gap-6">
-            <HotButton disabled=running bet_direction=set_bet_direction />
+            <HNButton disabled=running bet_direction kind=BetKind::Hot  />
             <button on:click=move |ev| {
                 ev.stop_propagation();
                 coin.update(|c| *c = c.wrapping_next())
             }>
-                <CoinStateView class="w-12 h-12" coin />
+                <CoinStateView class="w-12 h-12 md:h-14 md:w-14 lg:w-16 lg:h-16" coin />
             </button>
-            <NotButton disabled=running bet_direction=set_bet_direction />
+            <HNButton disabled=running bet_direction kind=BetKind::Not />
         </div>
         // Bottom row: Hot <down arrow> Not
         // most of the CSS is for alignment with above icons
         <div class="flex w-full justify-center items-center gap-6 text-base md:text-lg lg:text-xl text-center font-medium pt-2">
-            <p class="w-14">Hot</p>
-            <div class="flex justify-center w-12">
+            <p class="w-14 md:w-16 lg:w-18">Hot</p>
+            <div class="flex justify-center w-12 md:w-14 lg:w-16">
                 <Icon
                     class="text-2xl text-white hover:cursor-pointer"
                     icon=icondata::AiDownOutlined
@@ -207,7 +208,7 @@ fn HNButtonOverlay(
                     }
                 />
             </div>
-            <p class="w-14">Not</p>
+            <p class="w-14 md:w-16 lg:w-18">Not</p>
         </div>
     }
 }
@@ -216,7 +217,7 @@ fn HNButtonOverlay(
 fn WinBadge() -> impl IntoView {
     view! {
         // <!-- Win Badge as a full-width button -->
-        <button class="mt-2 w-full rounded-sm bg-pink-500 px-4 py-2 text-sm font-bold text-white">
+        <button class="w-full rounded-sm bg-pink-500 px-4 py-2 text-sm font-bold text-white">
             <div class="flex justify-center items-center">
                 <span class="">
                     <Icon
@@ -234,7 +235,7 @@ fn WinBadge() -> impl IntoView {
 #[component]
 fn LostBadge() -> impl IntoView {
     view! {
-        <button class="mt-2 w-full rounded-sm bg-white px-4 py-2 text-sm font-bold text-black">
+        <button class="w-full rounded-sm bg-white px-4 py-2 text-sm font-bold text-black">
             <Icon class="fill-white" style="" icon=icondata::RiTrophyFinanceFill />
             "You Lost"
         </button>
@@ -243,9 +244,9 @@ fn LostBadge() -> impl IntoView {
 
 #[component]
 fn HNWonLost(participation: BetDetails) -> impl IntoView {
-    let won = move || matches!(participation.outcome, BetOutcome::Won(_));
-    let bet_amount = move || participation.bet_amount;
-    let coin = Signal::derive(move || match bet_amount() {
+    let won = matches!(participation.outcome, BetOutcome::Won(_));
+    let bet_amount = participation.bet_amount;
+    let coin = match bet_amount {
         50 => CoinState::C50,
         100 => CoinState::C100,
         200 => CoinState::C200,
@@ -253,33 +254,68 @@ fn HNWonLost(participation: BetDetails) -> impl IntoView {
             log::warn!("Invalid bet amount: {amt}, using fallback");
             CoinState::C50
         }
-    });
-    let is_hot = move || matches!(participation.bet_kind, BetKind::Hot);
+    };
+    let is_hot = matches!(participation.bet_kind, BetKind::Hot);
 
     view! {
-        <div class="flex w-auto items-center rounded-xl bg-transparent p-4 shadow-sm backdrop-blur-sm">
+        <div class="flex w-full justify-center items-center gap-4 rounded-xl bg-transparent p-4 shadow-sm">
             <div class="relative flex-shrink-0">
                 <CoinStateView class="w-20 h-20" coin/>
                 <div class="absolute -bottom-1 -right-2 flex items-center justify-center rounded-full h-9 w-9">
-                    <Show when=is_hot fallback=NotIcon>
-                        <HotIcon/>
-                    </Show>
+                    {if is_hot {
+                        view! { <HotIcon/> }
+                    } else {
+                        view! { <NotIcon/> }
+                    }}
                 </div>
             </div>
 
             // <!-- Text and Badge Column -->
-            <div class="ml-4 flex flex-grow flex-col">
+            <div class="gap-2 w-full md:w-1/2 lg:w-1/3 flex flex-col">
                 // <!-- Result Text -->
-                <div class="text-sm leading-snug text-white bg-black/15 rounded-full p-1">
-                    <p>You staked placed_bet_detail.value tokens on Hot.</p>
-                    <p>You received placed_bet_detail.reward tokens.</p>
+                <div class="text-sm leading-snug text-white rounded-full p-1">
+                    <p>You staked {bet_amount} tokens on {if is_hot { "Hot" } else { "Not" }}.</p>
+                    <p>{if let Some(reward) = participation.reward() {
+                        format!("You received {reward} tokens.")
+                    } else {
+                        format!("You lost {bet_amount} tokens.")
+                    }}</p>
                 </div>
-
-                <Show when=won fallback=LostBadge>
-                    <WinBadge/>
-                </Show>
+                {if won {
+                    view! { <WinBadge/> }
+                } else {
+                    view! { <LostBadge/> }
+                }}
             </div>
 
+        </div>
+    }
+}
+
+#[component]
+fn BetTimer(participation: BetDetails) -> impl IntoView {
+    let bet_duration = participation.bet_duration().as_secs();
+    let time_remaining = create_rw_signal(participation.time_remaining());
+    _ = use_interval_fn(
+        move || {
+            time_remaining.update(|t| *t = t.saturating_sub(Duration::from_secs(1)));
+        },
+        1000,
+    );
+
+    let percentage = create_memo(move |_| {
+        let remaining_secs = time_remaining().as_secs();
+        100 - ((remaining_secs * 100) / bet_duration).min(100)
+    });
+    let gradient = move || {
+        let perc = percentage();
+        format!("background: linear-gradient(to right, rgb(var(--color-primary-600)) {perc}%, #00000020 0 {}%);", 100 - perc)
+    };
+
+    view! {
+        <div class="flex flex-row justify-end items-center gap-1 w-full rounded-full py-px pe-4 text-white text-base md:text-lg" style=gradient>
+            <Icon icon=icondata::AiClockCircleFilled/>
+            <span>{move || to_hh_mm_ss(time_remaining())}</span>
         </div>
     }
 }
@@ -299,30 +335,26 @@ fn HNAwaitingResults(participation: BetDetails) -> impl IntoView {
             CoinState::C50
         }
     });
-    let time_remaining = move || {
-        let (hh, mm, ss) = participation.time_remaining_hms();
-        format!("{hh:02}:{mm:02}:{ss:02}")
-    };
 
     view! {
-        <div class="flex w-auto items-center rounded-xl bg-transparent p-4 shadow-sm backdrop-blur-sm">
-            <div class="relative flex-shrink-0">
-                <CoinStateView class="w-20 h-20" coin/>
-                <div class="absolute -bottom-1 -right-2 flex items-center justify-center rounded-full h-9 w-9">
-                    <Show when=is_hot fallback=NotIcon>
-                        <HotIcon/>
-                    </Show>
+        <div class="flex flex-col w-full items-center gap-1 p-4 shadow-sm">
+            <div class="flex flex-row w-full justify-center items-end gap-4">
+                <div class="relative flex-shrink-0">
+                    <CoinStateView class="w-20 h-20" coin/>
+                    <div class="absolute -bottom-1 -right-2 flex items-center justify-center rounded-full h-9 w-9">
+                        <Show when=is_hot fallback=NotIcon>
+                            <HotIcon/>
+                        </Show>
+                    </div>
+                </div>
+                <div class="w-1/2 md:w-1/3 lg:w-1/4">
+                    <BetTimer participation/>
                 </div>
             </div>
-
-            // timer component
-            <div class="flex flex-col gap-1 ps-2 w-fit">
-                <p class="font-semibold text-white bg-black/25 rounded-full text-sm p-1 ps-2">{time_remaining}</p>
-                <p class="text-center text-white bg-black/15 rounded-full p-1 ps-2">
-                    You staked {bet_amount} tokens on {bet_direction_text}
-                    Result is still pending
-                </p>
-            </div>
+            <p class="text-center text-white bg-black/15 rounded-full p-1 ps-2">
+                You staked {bet_amount} tokens on {bet_direction_text}
+                Result is still pending
+            </p>
         </div>
     }
 }

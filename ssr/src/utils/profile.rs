@@ -87,7 +87,7 @@ pub enum BetOutcome {
     AwaitingResult,
 }
 
-#[derive(Clone, Copy, Serialize, Deserialize)]
+#[derive(Clone, Copy, Serialize, Deserialize, PartialEq)]
 pub enum BetKind {
     Hot,
     Not,
@@ -110,22 +110,30 @@ pub struct BetDetails {
     pub bet_kind: BetKind,
     pub bet_amount: u64,
     placed_at: Duration,
+    slot_id: u8,
 }
 
 impl BetDetails {
-    /// Remaining time in HH, MM, SS
-    pub fn time_remaining_hms(&self) -> (u64, u64, u64) {
-        let now = current_epoch();
-        let elapsed = now - self.placed_at;
-        // 48 hours
-        let bet_limit = Duration::from_secs(48 * 60 * 60);
-        let remaining = bet_limit.saturating_sub(elapsed).as_secs();
+    pub fn reward(&self) -> Option<u64> {
+        match self.outcome {
+            BetOutcome::Won(w) => Some(w),
+            BetOutcome::Draw(w) => Some(w),
+            BetOutcome::Lost => None,
+            BetOutcome::AwaitingResult => None,
+        }
+    }
 
-        let hh = remaining / 3600;
-        let mm = (remaining - hh * 3600) / 60;
-        let ss = (remaining - hh * 3600) - mm * 60;
+    pub fn bet_duration(&self) -> Duration {
+        Duration::from_secs((self.slot_id as u64) * 60 * 60)
+    }
 
-        (hh, mm, ss)
+    pub fn end_time(&self) -> Duration {
+        self.placed_at + self.bet_duration()
+    }
+
+    pub fn time_remaining(&self) -> Duration {
+        let end_time = self.end_time();
+        end_time.saturating_sub(current_epoch())
     }
 }
 
@@ -151,6 +159,7 @@ impl From<PlacedBetDetail> for BetDetails {
                 bet.bet_placed_at.secs_since_epoch,
                 bet.bet_placed_at.nanos_since_epoch,
             ),
+            slot_id: bet.slot_id,
         }
     }
 }

@@ -96,7 +96,7 @@ pub fn ScrollingPostView<F: Fn() -> V + Clone + 'static, V>(
 
                 <Show when=show_mute_icon>
                     <button
-                        class="fixed top-1/2 left-1/2 z-20 cursor-pointer"
+                        class="fixed top-1/2 left-1/2 z-20 cursor-pointer pointer-events-none"
                         on:click=move |_| AudioState::toggle_mute()
                     >
                         <Icon

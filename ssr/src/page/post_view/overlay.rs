@@ -203,8 +203,8 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
                     <ExpandableText description=post.description/>
                 </div>
             </div>
-            <div class="flex pointer-events-auto flex-col gap-2 w-full">
-                <div class="flex flex-col gap-6 self-end items-end w-3/12 text-2xl md:text-3xl lg:text-4xl">
+            <div class="flex flex-col gap-2 w-full">
+                <div class="flex flex-col pointer-events-auto gap-6 self-end items-end text-2xl md:text-3xl lg:text-4xl">
                     <button on:click=move |_| show_report.set(true)>
                         <Icon class="drop-shadow-lg" icon=icondata::TbMessageReport/>
                     </button>
@@ -216,7 +216,7 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
                         <Icon class="drop-shadow-lg" icon=icondata::RiSendPlaneBusinessFill/>
                     </button>
                 </div>
-                <div class="w-full bg-transparent">
+                <div class="w-full bg-transparent pointer-events-auto">
                     <HNGameOverlay post=post_c />
                 </div>
             </div>

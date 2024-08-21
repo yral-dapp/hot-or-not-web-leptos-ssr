@@ -5,7 +5,7 @@ struct DisplayMutedIconTimeout {
     // TODO: use TAIT once stable
     // instead of Dyn dispatch
     start: Box<dyn Fn(())>,
-    _stop: Box<dyn Fn()>,
+    stop: Box<dyn Fn()>,
     _is_pending: Signal<bool>,
     show_mute_icon: RwSignal<bool>,
 }
@@ -26,7 +26,7 @@ impl DisplayMutedIconTimeout {
         );
         Self {
             start: Box::new(start),
-            _stop: Box::new(stop),
+            stop: Box::new(stop),
             _is_pending: is_pending,
             show_mute_icon,
         }
@@ -35,6 +35,11 @@ impl DisplayMutedIconTimeout {
     fn flash(&self) {
         self.show_mute_icon.set(true);
         (self.start)(());
+    }
+
+    fn stop(&self) {
+        self.show_mute_icon.set(false);
+        (self.stop)();
     }
 }
 
@@ -77,7 +82,7 @@ impl AudioState {
         if !this.muted.get_untracked() {
             this.display_flash.with_value(|d| d.flash());
         } else {
-            this.show_mute_icon.set(false);
+            this.display_flash.with_value(|d| d.stop());
         }
         this.muted.update(|m| *m = !*m);
     }
