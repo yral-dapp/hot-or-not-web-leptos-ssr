@@ -4,6 +4,7 @@ pub mod video_iter;
 pub mod video_loader;
 use crate::state::audio_state::AudioState;
 use crate::{
+    abselector,
     component::{
         scrolling_post_view::{ScrollingPostView, ScrollingPostViewMLFeed},
         spinner::FullScreenSpinner,
@@ -12,6 +13,7 @@ use crate::{
     state::canisters::{unauth_canisters, Canisters},
     try_or_redirect,
     utils::{
+        ab_testing::ABComponent,
         posts::{get_post_uid, FetchCursor, PostDetails},
         route::failure_redirect,
     },
@@ -470,13 +472,31 @@ pub fn PostView() -> impl IntoView {
 
     view! {
         <Suspense fallback=FullScreenSpinner>
-            {move || {
+        {
+            let identifier = move || {
+                let loc: String = window().location().href().unwrap().to_string();
+                if loc.contains("http://localhost") || loc.contains("hotornot.wtf") || loc.contains("go-bazzinga-hot-or-not-web-leptos-ssr.fly.dev") {
+                    Some("PostViewWithUpdatesMLFeed")
+                } else {
+                    Some("PostViewWithUpdates")
+                }
+            };
+            let component_PostViewWithUpdatesMLFeed: ABComponent = Box::new(            move || {
                 fetch_first_video_uid()
                     .and_then(|initial_post| {
                         let initial_post = initial_post.ok()?;
-                        Some(view! { <PostViewWithUpdatesMLFeed initial_post /> }) // TODO_DEBJIT : conditional component here based on host , either PostViewWithUpdatesMLFeed or PostViewWithUpdates
+                        Some(view! { <PostViewWithUpdatesMLFeed initial_post /> }) // TODO_DEBJIT : TODO -> TO-DONE!!
                     })
-            }}
+            });
+            let component_PostViewWithUpdates: ABComponent = Box::new(            move || {
+                fetch_first_video_uid()
+                    .and_then(|initial_post| {
+                        let initial_post = initial_post.ok()?;
+                        Some(view! { <PostViewWithUpdates initial_post /> }) // TODO_DEBJIT : TODO -> TO-DONE!!
+                    })
+            });
+            abselector!(identifier, component_PostViewWithUpdatesMLFeed, component_PostViewWithUpdates)()
+        }
 
         </Suspense>
     }
