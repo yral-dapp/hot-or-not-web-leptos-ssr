@@ -14,12 +14,19 @@ use leptos_use::{
 };
 
 use crate::{
-    abselector, component::{
+    abselector,
+    component::{
         scrolling_post_view::{ScrollingPostView, ScrollingPostViewMLFeed},
         spinner::FullScreenSpinner,
-    }, consts::NSFW_TOGGLE_STORE, state::canisters::{unauth_canisters, Canisters}, try_or_redirect, utils::{
-        ab_testing::ABComponent, posts::{get_post_uid, FetchCursor, PostDetails}, route::failure_redirect
-    }
+    },
+    consts::NSFW_TOGGLE_STORE,
+    state::canisters::{unauth_canisters, Canisters},
+    try_or_redirect,
+    utils::{
+        ab_testing::ABComponent,
+        posts::{get_post_uid, FetchCursor, PostDetails},
+        route::failure_redirect,
+    },
 };
 use video_iter::{FeedResultType, VideoFetchStream};
 use video_loader::{BgView, VideoView};
