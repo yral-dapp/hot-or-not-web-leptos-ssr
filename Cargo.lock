@@ -4615,7 +4615,7 @@ dependencies = [
  "prost 0.12.6",
  "prost-types 0.12.6",
  "regex",
- "syn 2.0.72",
+ "syn 2.0.74",
  "tempfile",
 ]
 
@@ -4663,7 +4663,7 @@ dependencies = [
  "itertools 0.12.1",
  "proc-macro2",
  "quote",
- "syn 2.0.72",
+ "syn 2.0.74",
 ]
 
 [[package]]
@@ -6175,7 +6175,7 @@ dependencies = [
  "percent-encoding",
  "pin-project",
  "prost 0.12.6",
- "rustls-pemfile 2.1.2",
+ "rustls-pemfile 2.1.3",
  "rustls-pki-types",
  "tokio",
  "tokio-rustls 0.25.0",
@@ -6201,12 +6201,7 @@ dependencies = [
  "http-body-util",
  "percent-encoding",
  "pin-project",
- "rustls-pemfile 2.1.3",
- "rustls-pki-types",
  "prost 0.13.1",
- "socket2",
- "tokio",
- "tokio-rustls 0.26.0",
  "tokio-stream",
  "tower-layer",
  "tower-service",
@@ -6236,7 +6231,7 @@ dependencies = [
  "proc-macro2",
  "prost-build 0.13.1",
  "quote",
- "syn 2.0.72",
+ "syn 2.0.74",
 ]
 
 [[package]]
