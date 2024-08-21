@@ -19,7 +19,6 @@ jobs:
             npm ci
 
       - name: Run Nightwatch tests
-        continue-on-error: true
         run: |
             cd tests/e2e
             xvfb-run --auto-servernum npm test -- --env chrome --serial
