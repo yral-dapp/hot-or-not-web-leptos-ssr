@@ -17,7 +17,10 @@ use leptos_use::{
 use crate::{
     component::{scrolling_post_view::ScrollingPostView, spinner::FullScreenSpinner},
     consts::NSFW_TOGGLE_STORE,
-    state::canisters::{unauth_canisters, Canisters},
+    state::{
+        audio_state::AudioState,
+        canisters::{unauth_canisters, Canisters},
+    },
     try_or_redirect,
     utils::{
         posts::{get_post_uid, FetchCursor, PostDetails},
@@ -62,7 +65,11 @@ pub fn ScrollingView<NV: Fn() -> NVR + Clone + 'static, NVR>(
         ..
     } = expect_context();
 
-    let muted = create_rw_signal(true);
+    let AudioState {
+        muted,
+        show_mute_icon,
+    } = AudioState::get();
+
     let scroll_root: NodeRef<html::Div> = create_node_ref::<html::Div>();
 
     //LEARN: This creates scrolling view which will be used for intersection observer.
@@ -74,7 +81,7 @@ pub fn ScrollingView<NV: Fn() -> NVR + Clone + 'static, NVR>(
                 class="snap-mandatory snap-y overflow-y-scroll h-dvh w-dvw bg-black"
                 style:scroll-snap-points-y="repeat(100vh)"
             >
-                <HomeButtonOverlay/>
+                <HomeButtonOverlay />
                 <For
                     each=move || video_queue().into_iter().enumerate()
                     key=|(_, details)| (details.canister_id, details.post_id)
@@ -124,7 +131,7 @@ pub fn ScrollingView<NV: Fn() -> NVR + Clone + 'static, NVR>(
                             <div _ref=container_ref class="snap-always snap-end w-full h-full">
                                 <Show when=show_video>
                                     <BgView video_queue current_idx idx=queue_idx>
-                                        <VideoView video_queue current_idx idx=queue_idx muted/>
+                                        <VideoView video_queue current_idx idx=queue_idx muted />
                                     </BgView>
                                 </Show>
                             </div>
@@ -138,10 +145,10 @@ pub fn ScrollingView<NV: Fn() -> NVR + Clone + 'static, NVR>(
                     </div>
                 </Show>
 
-                <Show when=muted>
+                <Show when=show_mute_icon>
                     <button
                         class="fixed top-1/2 left-1/2 z-20 cursor-pointer"
-                        on:click=move |_| muted.set(false)
+                        on:click=move |_| AudioState::toggle_mute()
                     >
                         <Icon
                             class="text-white/80 animate-ping text-4xl"
@@ -269,7 +276,7 @@ pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
             recovering_state
             fetch_next_videos=next_videos
             queue_end
-            overlay=|| view! { <HomeButtonOverlay/> }
+            overlay=|| view! { <HomeButtonOverlay /> }
         />
     }
 }
@@ -326,7 +333,7 @@ pub fn PostView() -> impl IntoView {
                 fetch_first_video_uid()
                     .and_then(|initial_post| {
                         let initial_post = initial_post.ok()?;
-                        Some(view! { <PostViewWithUpdates initial_post/> })
+                        Some(view! { <PostViewWithUpdates initial_post /> })
                     })
             }}
 

@@ -1,0 +1,62 @@
+name: deploy preview
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, closed]
+
+env:
+  FLY_API_TOKEN: ${{ secrets.HOT_OR_NOT_WEB_LEPTOS_SSR_FLY_IO_GITHUB_ACTION }}
+  FLY_ORG: gobazzinga-inc-584
+
+jobs:
+  build_check:
+    uses: ./.github/workflows/build-check.yml
+    with:
+      publish-artifact: true
+  
+  preview:
+    needs: build_check
+    runs-on: ubuntu-latest
+
+    # Only run one deployment at a time per PR.
+    concurrency:
+      group: pr-${{ github.event.number }}
+
+    # Create a GitHub deployment environment per staging app so it shows up
+    # in the pull request UI.
+    environment:
+      name: pr-${{ github.event.number }}
+      url: ${{ steps.deploy.outputs.url }}
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Download build
+        uses: actions/download-artifact@v3
+        with:
+          name: build-musl
+      - run: chmod +x target/x86_64-unknown-linux-musl/release/hot-or-not-web-leptos-ssr
+
+      - name: Deploy
+        id: deploy
+        uses: superfly/fly-pr-review-apps@1.2.1
+
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: Set secret tokens
+        if: ${{ github.event.pull_request.merged == false}}
+        run: |
+            APP_NAME="pr-${{github.event.number}}-go-bazzinga-hot-or-not-web-leptos-ssr"
+            flyctl secrets set CF_TOKEN="$CF_TOKEN" --app "$APP_NAME" --stage
+            flyctl secrets set BACKEND_ADMIN_IDENTITY="$BACKEND_ADMIN_IDENTITY" --app "$APP_NAME" --stage
+            flyctl secrets set COOKIE_KEY="$COOKIE_KEY" --app "$APP_NAME" --stage
+            flyctl secrets set REDIS_URL="$REDIS_URL" --app "$APP_NAME" --stage
+            flyctl secrets set GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET --app "$APP_NAME" --stage
+            flyctl secrets set GRPC_AUTH_TOKEN="$GRPC_AUTH_TOKEN" --app "$APP_NAME" --stage
+            flyctl deploy --app $APP_NAME
+        env:
+            CF_TOKEN: ${{ secrets.CLOUDFLARE_STREAM_IMAGES_ANALYTICS_READ_WRITE_SECRET }}
+            BACKEND_ADMIN_IDENTITY: ${{ secrets.YRAL_WHITELISTED_BACKEND_GLOBAL_ADMIN_SECRET_KEY }}
+            COOKIE_KEY: ${{ secrets.AUTH_SESSION_COOKIE_SIGNING_SECRET_KEY }}
+            REDIS_URL: ${{ secrets.AUTH_FLY_IO_UPSTASH_REDIS_DATABASE_CONNECTION_STRING }}
+            GOOGLE_CLIENT_SECRET: ${{ secrets.STAGING_TEMPORARY_GOOGLE_CLIENT_SECRET }}
+            FLY_API_TOKEN: ${{ secrets.HOT_OR_NOT_WEB_LEPTOS_SSR_FLY_IO_GITHUB_ACTION }}
+            GRPC_AUTH_TOKEN: ${{ secrets.OFF_CHAIN_AGENT_GRPC_AUTH_TOKEN }}
+      

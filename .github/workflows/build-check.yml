@@ -8,9 +8,6 @@ on:
         required: false
         type: boolean
   workflow_dispatch:
-  pull_request:
-    branches:
-      - main
 
 jobs:
   build_check:

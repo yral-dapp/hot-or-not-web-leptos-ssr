@@ -7,6 +7,7 @@ use crate::{
         leaderboard::Leaderboard,
         logout::Logout,
         menu::{AuthorizedUserToSeedContent, Menu},
+        notifs::Notif,
         post_view::{PostView, PostViewCtx},
         privacy::PrivacyPolicy,
         profile::{profile_post::ProfilePost, ProfilePostsContext, ProfileView},
@@ -16,7 +17,10 @@ use crate::{
         upload::UploadPostPage,
         wallet::{transactions::Transactions, Wallet},
     },
-    state::{canisters::Canisters, content_seed_client::ContentSeedClient, history::HistoryCtx},
+    state::{
+        audio_state::AudioState, canisters::Canisters, content_seed_client::ContentSeedClient,
+        history::HistoryCtx,
+    },
     utils::event_streaming::EventHistory,
 };
 use leptos::*;
@@ -67,6 +71,7 @@ pub fn App() -> impl IntoView {
     provide_context(PostViewCtx::default());
     provide_context(ProfilePostsContext::default());
     provide_context(AuthorizedUserToSeedContent::default());
+    provide_context(AudioState::default());
 
     // History Tracking
     let history_ctx = HistoryCtx::default();
@@ -124,6 +129,7 @@ pub fn App() -> impl IntoView {
                         <Route path="/your-profile/:canister_id/:post_id" view=ProfilePost/>
                         <Route path="/profile/:id" view=ProfileView/>
                         <Route path="/your-profile/:id" view=ProfileView/>
+                        <Route path="/register-notif" view=Notif/>
                         <Route path="/upload" view=UploadPostPage/>
                         <Route path="/error" view=ServerErrorPage/>
                         <Route path="/menu" view=Menu/>
