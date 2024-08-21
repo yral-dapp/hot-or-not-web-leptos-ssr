@@ -460,8 +460,8 @@ pub fn PostView() -> impl IntoView {
         <Suspense fallback=FullScreenSpinner>
         {
             let identifier = move || {
-                let loc: String = window().location().href().unwrap().to_string();
-                if loc.contains("http://localhost") || loc.contains("hotornot.wtf") || loc.contains("go-bazzinga-hot-or-not-web-leptos-ssr.fly.dev") {
+                let loc: String = window().location().host().unwrap().to_string();
+                if loc == "localhost:3000" || loc == "hotornot.wtf" || loc.contains("go-bazzinga-hot-or-not-web-leptos-ssr.fly.dev") || loc == "hot-or-not-web-leptos-ssr-staging.fly.dev" {
                     Some("PostViewWithUpdatesMLFeed")
                 } else {
                     Some("PostViewWithUpdates")
