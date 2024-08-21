@@ -392,7 +392,8 @@ pub fn HNGameOverlay(post: PostDetails) -> impl IntoView {
     let post = store_value(post);
 
     let create_bet_participation_outcome = move |canisters: Canisters<true>| {
-        create_resource(
+        // TODO: leptos 0.7, switch to `create_resource`
+        create_local_resource(
             // MockPartialEq is necessary
             // See: https://github.com/leptos-rs/leptos/issues/2661
             move || {
@@ -421,7 +422,6 @@ pub fn HNGameOverlay(post: PostDetails) -> impl IntoView {
         {
             let bet_participation_outcome = create_bet_participation_outcome(canisters);
             view! {
-                <Suspense fallback=BulletLoader>
                 {move || bet_participation_outcome().and_then(|res| {
                     let participation = try_or_redirect_opt!(res);
                     Some(if let Some(participation) = participation {
@@ -437,8 +437,7 @@ pub fn HNGameOverlay(post: PostDetails) -> impl IntoView {
                             />
                         }
                     })
-                })}
-                </Suspense>
+                }).unwrap_or_else(|| view! { <BulletLoader/> })}
             }
         }
         </AuthCansProvider>

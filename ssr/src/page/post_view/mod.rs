@@ -165,7 +165,7 @@ pub fn PostView() -> impl IntoView {
     let params = use_params::<PostParams>();
     let initial_canister_and_post = create_rw_signal(params.get_untracked().ok());
 
-    create_effect(move |_| {
+    create_isomorphic_effect(move |_| {
         if initial_canister_and_post.with_untracked(|p| p.is_some()) {
             return None;
         }

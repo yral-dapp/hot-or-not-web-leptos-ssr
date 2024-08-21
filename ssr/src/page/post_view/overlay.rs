@@ -80,7 +80,7 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
             Ok(liked) => liked,
             Err(e) => {
                 failure_redirect(e);
-                (false, likes.get())
+                (false, likes.try_get_untracked().unwrap_or_default())
             }
         }
     };
@@ -96,14 +96,15 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
                 <img src=icon_name style="width: 1em; height: 1em;"/>
             </button>
             <span class="absolute -bottom-5 text-sm md:text-md">{likes}</span>
-        </div>
-        <WithAuthCans with=liked_fetch let:d>
-            {move || {
-                likes.set(d.1.1);
-                liked.set(Some(d.1.0))
-            }}
+            <WithAuthCans with=liked_fetch let:d>
+                {move || {
+                    likes.set(d.1.1);
+                    liked.set(Some(d.1.0))
+                }}
 
-        </WithAuthCans>
+            </WithAuthCans>
+        </div>
+
     }
 }
 
