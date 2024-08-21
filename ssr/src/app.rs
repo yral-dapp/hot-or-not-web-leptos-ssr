@@ -16,7 +16,10 @@ use crate::{
         upload::UploadPostPage,
         wallet::{transactions::Transactions, Wallet},
     },
-    state::{canisters::Canisters, content_seed_client::ContentSeedClient, history::HistoryCtx},
+    state::{
+        audio_state::AudioState, canisters::Canisters, content_seed_client::ContentSeedClient,
+        history::HistoryCtx,
+    },
     utils::event_streaming::EventHistory,
 };
 use leptos::*;
@@ -67,6 +70,7 @@ pub fn App() -> impl IntoView {
     provide_context(PostViewCtx::default());
     provide_context(ProfilePostsContext::default());
     provide_context(AuthorizedUserToSeedContent::default());
+    provide_context(AudioState::default());
 
     // History Tracking
     let history_ctx = HistoryCtx::default();
