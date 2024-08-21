@@ -22,6 +22,6 @@ jobs:
         continue-on-error: true
         run: |
             cd tests/e2e
-            xvfb-run --auto-servernum npm test -- --env chrome
+            xvfb-run --auto-servernum npm test -- --env chrome --serial
         env: 
             PREVIEW_URL: https://pr-${{github.event.number}}-go-bazzinga-hot-or-not-web-leptos-ssr.fly.dev
