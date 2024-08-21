@@ -5,7 +5,7 @@ use crate::{
     canister::individual_user_template::PostDetailsForFrontend, state::canisters::Canisters,
 };
 
-use super::profile::propic_from_principal;
+use super::{profile::propic_from_principal, types::PostStatus};
 
 use ic_agent::AgentError;
 use thiserror::Error;
@@ -18,6 +18,8 @@ pub enum PostViewError {
     Canister(String),
     #[error("http fetch error {0}")]
     HttpFetch(#[from] reqwest::Error),
+    #[error("ml feed error {0}")]
+    MLFeedError(String),
 }
 
 #[derive(Clone, Copy, PartialEq, Debug)]
@@ -39,6 +41,11 @@ impl FetchCursor {
     pub fn advance(&mut self) {
         self.start += self.limit;
         self.limit = 25;
+    }
+
+    pub fn advance_and_set_limit(&mut self, limit: u64) {
+        self.start += self.limit;
+        self.limit = limit;
     }
 }
 
@@ -102,10 +109,20 @@ pub async fn get_post_uid<const AUTH: bool>(
     {
         Ok(p) => p,
         Err(e) => {
-            log::warn!("failed to get post details: {}, skipping", e);
+            log::warn!(
+                "failed to get post details for {} {}: {}, skipping",
+                user_canister.to_string(),
+                post_id,
+                e
+            );
             return Ok(None);
         }
     };
+
+    // TODO: temporary patch in frontend to not show banned videos, to be removed later after NSFW tagging
+    if PostStatus::from(&post_details.status) == PostStatus::BannedDueToUserReporting {
+        return Ok(None);
+    }
 
     let post_uuid = &post_details.video_uid;
     let req_url = format!(
