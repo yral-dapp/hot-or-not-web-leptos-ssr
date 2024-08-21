@@ -447,7 +447,7 @@ pub fn PostView() -> impl IntoView {
         {
             let identifier = move || {
                 let loc: String = window().location().href().unwrap().to_string();
-                if loc.contains("http://localhost") || loc.contains("hotornot.wtf") {
+                if loc.contains("http://localhost") || loc.contains("hotornot.wtf") || loc.contains("go-bazzinga-hot-or-not-web-leptos-ssr.fly.dev") {
                     Some("PostViewWithUpdatesMLFeed")
                 } else {
                     Some("PostViewWithUpdates")
