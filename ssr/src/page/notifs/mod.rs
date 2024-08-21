@@ -1,53 +1,20 @@
 use leptos::*;
-use wasm_bindgen::prelude::*;
-use wasm_bindgen_futures::JsFuture;
 
 use crate::{
     component::canisters_prov::AuthCansProvider,
     state::auth::account_connected_reader,
-    utils::{device_id::send_principal_and_token_offchain, profile::ProfileDetails},
+    utils::{notifications::get_token_for_principal, profile::ProfileDetails},
 };
 
 #[component]
 fn NotifInnerComponent(details: ProfileDetails) -> impl IntoView {
     let (_, _) = account_connected_reader();
 
-    #[cfg(feature = "hydrate")]
-    let token_getter = move || {
-        #[wasm_bindgen(module = "/src/page/notifs/setup-firebase-messaging.js")]
-        extern "C" {
-            fn get_token(vapidKey: String) -> js_sys::Promise;
-        }
-
-        #[cfg(feature = "hydrate")]
-        {
-            let principal_id = details.principal.to_string();
-
-            spawn_local(async move {
-                log::info!("Getting token...");
-
-                let token_promise = get_token(env!("vapidKey").to_string());
-                match JsFuture::from(token_promise).await {
-                    Ok(token_js) => {
-                        let token: String = token_js.as_string().unwrap_or_default();
-                        log::info!("sending offchain with params: {}, {}", token, principal_id);
-                        send_principal_and_token_offchain(token, principal_id)
-                            .await
-                            .unwrap();
-                    }
-                    Err(err) => {
-                        log::warn!("Failed to get token: {:?}", err);
-                    }
-                }
-            });
-        }
-    };
-
     let on_token_click = move || {
-        #[cfg(feature = "hydrate")]
-        {
-            token_getter();
-        }
+        let _ = create_local_resource(
+            || (),
+            move |_| async move { get_token_for_principal(details.principal.to_string()).await },
+        );
     };
 
     view! {

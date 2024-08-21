@@ -1,10 +1,10 @@
 use serde::{Deserialize, Serialize};
 use web_time::{Duration, SystemTime};
 
-pub mod device_id;
 pub mod event_streaming;
 pub mod ic;
 pub mod icon;
+pub mod notifications;
 pub mod posts;
 pub mod profile;
 pub mod report;

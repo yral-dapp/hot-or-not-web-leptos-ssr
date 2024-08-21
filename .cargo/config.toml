@@ -2,10 +2,4 @@
 rustflags = ["--cfg=web_sys_unstable_apis"]
 
 [env]
-apiKey = ""
-authDomain = ""
-projectId = ""
-storageBucket = ""
-messagingSenderId = ""
-appId = ""
 vapidKey = ""
