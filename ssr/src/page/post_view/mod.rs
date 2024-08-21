@@ -14,17 +14,12 @@ use leptos_use::{
 };
 
 use crate::{
-    component::{
+    abselector, component::{
         scrolling_post_view::{ScrollingPostView, ScrollingPostViewMLFeed},
         spinner::FullScreenSpinner,
-    },
-    consts::NSFW_TOGGLE_STORE,
-    state::canisters::{unauth_canisters, Canisters},
-    try_or_redirect,
-    utils::{
-        posts::{get_post_uid, FetchCursor, PostDetails},
-        route::failure_redirect,
-    },
+    }, consts::NSFW_TOGGLE_STORE, state::canisters::{unauth_canisters, Canisters}, try_or_redirect, utils::{
+        ab_testing::ABComponent, posts::{get_post_uid, FetchCursor, PostDetails}, route::failure_redirect
+    }
 };
 use video_iter::{FeedResultType, VideoFetchStream};
 use video_loader::{BgView, VideoView};
@@ -442,13 +437,31 @@ pub fn PostView() -> impl IntoView {
 
     view! {
         <Suspense fallback=FullScreenSpinner>
-            {move || {
+        {
+            let identifier = move || {
+                let loc: String = window().location().href().unwrap().to_string();
+                if loc.contains("http://localhost") || loc.contains("hotornot.wtf") {
+                    Some("PostViewWithUpdatesMLFeed")
+                } else {
+                    Some("PostViewWithUpdates")
+                }
+            };
+            let component_PostViewWithUpdatesMLFeed: ABComponent = Box::new(            move || {
                 fetch_first_video_uid()
                     .and_then(|initial_post| {
                         let initial_post = initial_post.ok()?;
-                        Some(view! { <PostViewWithUpdatesMLFeed initial_post /> }) // TODO_DEBJIT : conditional component here based on host , either PostViewWithUpdatesMLFeed or PostViewWithUpdates
+                        Some(view! { <PostViewWithUpdatesMLFeed initial_post /> }) // TODO_DEBJIT : TODO -> TO-DONE!!
                     })
-            }}
+            });
+            let component_PostViewWithUpdates: ABComponent = Box::new(            move || {
+                fetch_first_video_uid()
+                    .and_then(|initial_post| {
+                        let initial_post = initial_post.ok()?;
+                        Some(view! { <PostViewWithUpdates initial_post /> }) // TODO_DEBJIT : TODO -> TO-DONE!!
+                    })
+            });
+            abselector!(identifier, component_PostViewWithUpdatesMLFeed, component_PostViewWithUpdates)()
+        }
 
         </Suspense>
     }
