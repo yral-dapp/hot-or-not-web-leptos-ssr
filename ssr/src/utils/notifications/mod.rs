@@ -6,11 +6,11 @@ pub mod device_id;
 
 #[wasm_bindgen(module = "/src/utils/notifications/setup-firebase-messaging.js")]
 extern "C" {
-    fn get_token(vapidKey: String) -> js_sys::Promise;
+    fn get_token() -> js_sys::Promise;
 }
 
 pub async fn get_token_for_principal(principal_id: String) {
-    let token_promise = get_token(env!("vapidKey").to_string());
+    let token_promise = get_token();
     match JsFuture::from(token_promise).await {
         Ok(token_js) => {
             let token: String = token_js.as_string().unwrap_or_default();

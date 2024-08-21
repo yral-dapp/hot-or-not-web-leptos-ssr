@@ -12,7 +12,8 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-export function get_token(vapidKey) {
+export function get_token() {
+    let vapidKey = "BOmsEya6dANYUoElzlUWv3Jekmw08_nqDEUFu06aTak-HQGd-G_Lsk8y4Bs9B4kcEjBM8FXF0IQ_oOpJDmU3zMs";
     return new Promise((resolve, reject) => {
         messaging.getToken({ vapidKey: vapidKey }).then((currentToken) => {
             resolve(currentToken);
