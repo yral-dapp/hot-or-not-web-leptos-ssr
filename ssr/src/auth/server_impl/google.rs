@@ -15,7 +15,8 @@ use web_time::Duration;
 
 use crate::auth::{
     server_impl::{
-        fetch_identity_from_kv, store::KVStore, try_extract_identity, update_user_identity,
+        fetch_identity_from_kv, store::KVStore, try_extract_identity,
+        update_user_identity_and_delegate,
     },
     DelegatedIdentityWire,
 };
@@ -151,7 +152,7 @@ pub async fn perform_google_auth_impl(
         extract_identity_and_associate_with_google_sub(&kv, &jar, sub_id).await?
     };
 
-    let delegated = update_user_identity(&resp, jar, identity).await?;
+    let delegated = update_user_identity_and_delegate(&resp, jar, identity)?;
 
     Ok(delegated)
 }

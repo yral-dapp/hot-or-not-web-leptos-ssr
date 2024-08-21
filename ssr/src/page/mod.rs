@@ -6,6 +6,7 @@ pub mod faq;
 #[cfg(any(feature = "oauth-ssr", feature = "oauth-hydrate"))]
 pub mod google_redirect;
 pub mod leaderboard;
+pub mod logout;
 pub mod menu;
 pub mod notifs;
 pub mod post_view;
