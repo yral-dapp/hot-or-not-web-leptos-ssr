@@ -5,6 +5,7 @@ pub mod ab_testing;
 pub mod event_streaming;
 pub mod ic;
 pub mod icon;
+pub mod notifications;
 pub mod posts;
 pub mod profile;
 pub mod report;
