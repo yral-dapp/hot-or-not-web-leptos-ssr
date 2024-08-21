@@ -19,6 +19,7 @@ pub fn ScrollingPostView<F: Fn() -> V + Clone + 'static, V, O: Fn() -> IV, IV: I
     let AudioState {
         muted,
         show_mute_icon,
+        ..
     } = AudioState::get();
 
     let scroll_root: NodeRef<html::Div> = create_node_ref();

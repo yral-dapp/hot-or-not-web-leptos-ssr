@@ -207,7 +207,7 @@ tailwind-config-file = "tailwind.config.js"
 # Enables additional file hashes on outputted css, js, and wasm files
 #
 # Optional: Defaults to false. Can also be set with the LEPTOS_HASH_FILES=false env var
-hash-files = true
+hash-files = false
 
 # Assets source dir. All files found here will be copied and synchronized to site-root.
 # The assets-dir cannot have a sub directory with the same name/path as site-pkg-dir.

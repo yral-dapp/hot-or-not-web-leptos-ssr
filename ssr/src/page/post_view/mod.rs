@@ -68,6 +68,7 @@ pub fn ScrollingView<NV: Fn() -> NVR + Clone + 'static, NVR>(
     let AudioState {
         muted,
         show_mute_icon,
+        ..
     } = AudioState::get();
 
     let scroll_root: NodeRef<html::Div> = create_node_ref::<html::Div>();
