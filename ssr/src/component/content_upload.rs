@@ -25,7 +25,7 @@ fn YoutubeUploadInner(canisters: Canisters<true>, #[prop(optional)] url: String)
             match res {
                 Err(e) => e.to_string(),
                 _ => "Submitted!".to_string(),
-            };
+            }
         }
     });
     let submit_res = on_submit.value();
