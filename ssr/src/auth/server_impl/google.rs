@@ -7,7 +7,7 @@ use ic_agent::{identity::Secp256k1Identity, Identity};
 use leptos::{expect_context, ServerFnError};
 use leptos_axum::{extract_with_state, ResponseOptions};
 use openidconnect::{
-    core::{CoreAuthenticationFlow, CoreClient, CoreIdTokenVerifier},
+    core::{CoreAuthenticationFlow, CoreIdTokenVerifier},
     reqwest::async_http_client,
     AuthorizationCode, CsrfToken, Nonce, PkceCodeChallenge, PkceCodeVerifier, Scope,
 };
