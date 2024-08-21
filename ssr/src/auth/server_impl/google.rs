@@ -18,7 +18,7 @@ use crate::auth::{
         fetch_identity_from_kv, store::KVStore, try_extract_identity,
         update_user_identity_and_delegate,
     },
-    DelegatedIdentityWire,
+    CoreClients, DelegatedIdentityWire,
 };
 
 use super::{set_cookies, store::KVStoreImpl};
@@ -27,7 +27,8 @@ const PKCE_VERIFIER_COOKIE: &str = "google-pkce-verifier";
 const CSRF_TOKEN_COOKIE: &str = "google-csrf-token";
 
 pub async fn google_auth_url_impl() -> Result<String, ServerFnError> {
-    let oauth2: CoreClient = expect_context();
+    let oauth_clients: CoreClients = expect_context();
+    let oauth2 = oauth_clients.google_oauth;
     let (pkce_challenge, pkce_verifier) = PkceCodeChallenge::new_random_sha256();
     let (auth_url, csrf_token, _) = oauth2
         .authorize_url(
@@ -125,7 +126,8 @@ pub async fn perform_google_auth_impl(
     let resp: ResponseOptions = expect_context();
     set_cookies(&resp, jar);
 
-    let oauth2: CoreClient = expect_context();
+    let oauth_clients: CoreClients = expect_context();
+    let oauth2 = oauth_clients.google_oauth;
     let token_res = oauth2
         .exchange_code(AuthorizationCode::new(auth_code))
         .set_pkce_verifier(pkce_verifier)
