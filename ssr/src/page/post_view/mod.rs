@@ -29,20 +29,6 @@ use leptos_use::{
     UseIntersectionObserverOptions,
 };
 
-use crate::{
-    component::{scrolling_post_view::ScrollingPostView, spinner::FullScreenSpinner},
-    consts::NSFW_TOGGLE_STORE,
-    state::{
-        audio_state::AudioState,
-        canisters::{unauth_canisters, Canisters},
-    },
-    try_or_redirect,
-    utils::{
-        ml_feed::MLFeed,
-        posts::{get_post_uid, FetchCursor, PostDetails},
-        route::failure_redirect,
-    },
-};
 use video_iter::{FeedResultType, VideoFetchStream};
 use video_loader::{BgView, VideoView};
 
