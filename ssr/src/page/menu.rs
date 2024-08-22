@@ -9,6 +9,7 @@ use crate::consts::{social, NSFW_TOGGLE_STORE};
 use crate::state::auth::account_connected_reader;
 use crate::state::canisters::authenticated_canisters;
 use crate::state::content_seed_client::ContentSeedClient;
+use crate::utils::notifications::get_token_for_principal;
 use crate::utils::profile::ProfileDetails;
 use candid::Principal;
 use leptos::html::Input;
@@ -146,6 +147,32 @@ fn NsfwToggle() -> impl IntoView {
 }
 
 #[component]
+fn EnableNotifications(user_details: ProfileDetails) -> impl IntoView {
+    let (_, _) = account_connected_reader();
+
+    let on_token_click = create_action(move |()| async move {
+        get_token_for_principal(user_details.principal.to_string()).await;
+    });
+
+    view! {
+        <div class="grid grid-cols-2 items-center w-full">
+            <div class="flex flex-row gap-4 items-center">
+                <Icon class="text-2xl" icon=icondata::BiCommentDotsRegular/>
+                <span>Enable Notifications</span>
+            </div>
+            <div class="justify-self-end">
+                <button
+                    class="p-2 bg-black rounded-md text-white"
+                    on:click=move |_| on_token_click.dispatch(())
+                >
+                    Enable
+                </button>
+            </div>
+        </div>
+    }
+}
+
+#[component]
 pub fn Menu() -> impl IntoView {
     let (is_connected, _) = account_connected_reader();
     let query_map = use_query_map();
@@ -254,6 +281,9 @@ pub fn Menu() -> impl IntoView {
             </div>
             <div class="flex flex-col py-12 px-8 gap-8 w-full text-lg">
                 <NsfwToggle/>
+                <AuthCansProvider let:canisters>
+                    <EnableNotifications user_details=canisters.profile_details()/>
+                </AuthCansProvider>
                 <MenuItem
                     href="/account-transfer"
                     text="HotorNot Account Transfer"
