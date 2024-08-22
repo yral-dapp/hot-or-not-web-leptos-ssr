@@ -170,16 +170,17 @@ impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
     }
 
     pub async fn fetch_post_uids_hybrid(
-        &self,
+        &mut self,
         chunks: usize,
         _allow_nsfw: bool,
         video_queue: Vec<PostDetails>,
     ) -> Result<FetchVideosRes<'a>, PostViewError> {
-        // If cursor.start is < 15, fetch from fetch_post_uids_chunked
+        // If video_queue len is < 10, fetch from fetch_post_uids_chunked
         // else fetch from fetch_post_uids_ml_feed_chunked
         // if that fails fallback to fetch_post_uids_chunked
 
-        if self.cursor.start < 15 {
+        if video_queue.len() < 10 {
+            self.cursor.set_limit(15);
             self.fetch_post_uids_chunked(chunks, _allow_nsfw).await
         } else {
             let res = self
@@ -188,7 +189,10 @@ impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
 
             match res {
                 Ok(res) => Ok(res),
-                Err(_) => self.fetch_post_uids_chunked(chunks, _allow_nsfw).await,
+                Err(_) => {
+                    self.cursor.set_limit(15);
+                    self.fetch_post_uids_chunked(chunks, _allow_nsfw).await
+                }
             }
         }
     }

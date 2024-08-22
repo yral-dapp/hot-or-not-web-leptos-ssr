@@ -332,7 +332,7 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
             let unauth_canisters = unauth_canisters();
 
             let chunks = if let Some(canisters) = auth_canisters.as_ref() {
-                let fetch_stream = VideoFetchStream::new(canisters, cursor);
+                let mut fetch_stream = VideoFetchStream::new(canisters, cursor);
                 fetch_stream
                     .fetch_post_uids_hybrid(3, nsfw_enabled, video_queue.get_untracked())
                     .await
