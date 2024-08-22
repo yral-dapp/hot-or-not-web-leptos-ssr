@@ -35,7 +35,7 @@ async fn get_top_post_id() -> Result<Option<(Principal, u64)>, ServerFnError> {
     Ok(Some((top_item.publisher_canister_id, top_item.post_id)))
 }
 
-// TODO: Implement this when we shift to the new ml feed for first post
+// TODO: Use this when we shift to the new ml feed for first post
 // #[server]
 // async fn get_top_post_id_mlfeed() -> Result<Option<(Principal, u64)>, ServerFnError> {
 //     use crate::utils::ml_feed::ml_feed_grpc::get_start_feed;

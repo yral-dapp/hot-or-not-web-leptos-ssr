@@ -117,22 +117,13 @@ impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
             let top_posts = match top_posts_fut.await {
                 Ok(top_posts) => top_posts,
                 Err(e) => {
-                    leptos::logging::log!("error fetching posts: {:?}", e); // TODO: to be removed
                     return Err(PostViewError::MLFeedError(
-                        "ML feed server failed to send results".into(),
+                        format!("Error fetching ml feed: {:?}", e).into(),
                     ));
                 }
             };
 
-            leptos::logging::log!(
-                "top_posts: {:?}",
-                top_posts
-                    .iter()
-                    .map(|item| (item.0.to_text(), item.1))
-                    .collect::<Vec<(String, u64)>>()
-            ); // TODO: to be removed
-
-            let end = false; //top_posts.len() < self.cursor.limit as usize;
+            let end = false;
             let chunk_stream = top_posts
                 .into_iter()
                 .map(move |item| get_post_uid(self.canisters, item.0, item.1))

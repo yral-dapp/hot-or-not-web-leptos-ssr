@@ -102,6 +102,7 @@ impl Canisters<true> {
             .expect("Authenticated canisters must have an identity")
     }
 
+    // Shifted to Cansiter<A>. Is this ok ?
     // pub fn user_canister(&self) -> Principal {
     //     self.user_canister
     // }
