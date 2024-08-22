@@ -157,13 +157,12 @@ pub fn get_feed_component_identifier() -> impl Fn() -> Option<&'static str> {
 
         #[cfg(not(feature = "hydrate"))]
         {
+            use axum::http::request::Parts;
             use http::header::HeaderMap;
             use leptos::expect_context;
 
-            use axum::http::request::Parts;
             let parts: Parts = expect_context();
             let headers = parts.headers;
-
             loc = headers.get("Host").unwrap().to_str().unwrap().to_string();
         }
 
