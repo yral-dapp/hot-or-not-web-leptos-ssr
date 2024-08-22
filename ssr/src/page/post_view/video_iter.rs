@@ -117,9 +117,10 @@ impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
             let top_posts = match top_posts_fut.await {
                 Ok(top_posts) => top_posts,
                 Err(e) => {
-                    return Err(PostViewError::MLFeedError(
-                        format!("Error fetching ml feed: {:?}", e).into(),
-                    ));
+                    return Err(PostViewError::MLFeedError(format!(
+                        "Error fetching ml feed: {:?}",
+                        e
+                    )));
                 }
             };
 
