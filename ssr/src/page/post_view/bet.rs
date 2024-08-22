@@ -294,13 +294,16 @@ fn HNWonLost(participation: BetDetails) -> impl IntoView {
 fn BetTimer(participation: BetDetails, refetch_bet: Trigger) -> impl IntoView {
     let bet_duration = participation.bet_duration().as_secs();
     // Add some overhead to avoid fetching bet status multiple times
-    let time_remaining = create_rw_signal(participation.time_remaining() + Duration::from_secs(30));
+    // let time_remaining = create_rw_signal(participation.time_remaining() + Duration::from_secs(30));
+    let time_remaining = create_rw_signal(participation.time_remaining());
     _ = use_interval_fn(
         move || {
             time_remaining.try_update(|t| *t = t.saturating_sub(Duration::from_secs(1)));
-            if time_remaining.try_get_untracked() == Some(Duration::ZERO) {
-                refetch_bet.notify();
-            }
+            _ = refetch_bet;
+            // TODO: notify once time_remaining is correct
+            // if time_remaining.try_get_untracked() == Some(Duration::ZERO) {
+            //     refetch_bet.notify();
+            // }
         },
         1000,
     );

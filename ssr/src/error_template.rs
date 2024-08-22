@@ -54,6 +54,7 @@ pub fn ErrorTemplate(
     }
 
     view! {
+        <div class="text-white">
         <h1>{if errors.len() > 1 { "Errors" } else { "Error" }}</h1>
         <For
             // a function that returns the items we're iterating over; a signal is fine
@@ -70,5 +71,6 @@ pub fn ErrorTemplate(
                 }
             }
         />
+        </div>
     }
 }

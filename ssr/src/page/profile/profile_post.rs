@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use candid::Principal;
 use leptos::*;
 use leptos_router::*;
@@ -7,28 +9,25 @@ use crate::{
     component::{
         back_btn::BackButton, scrolling_post_view::ScrollingPostView, spinner::FullScreenSpinner,
     },
-    page::profile::ProfilePostsContext,
+    page::profile::{profile_iter::FixedFetchCursor, ProfilePostsContext},
     state::canisters::{auth_canisters_store, unauth_canisters},
     try_or_redirect,
-    utils::{
-        posts::{get_post_uid, FetchCursor},
-        route::failure_redirect,
-    },
+    utils::{posts::get_post_uid, route::failure_redirect},
 };
 
-use super::overlay::YourProfileOverlay;
-use super::profile_iter::ProfileVideoStream;
+use super::{
+    overlay::YourProfileOverlay,
+    profile_iter::{ProfVideoStream, ProfileVideoStream},
+};
 
 use crate::utils::posts::PostDetails;
 
-#[derive(Params, PartialEq)]
-struct ProfileVideoParams {
-    canister_id: String,
-    post_id: u64,
-}
-
 #[component]
-pub fn ProfilePostWithUpdates(initial_post: PostDetails) -> impl IntoView {
+fn ProfilePostWithUpdates<const LIMIT: u64, VidStream: ProfVideoStream<LIMIT>>(
+    initial_post: PostDetails,
+    user_canister: Principal,
+    #[prop(optional)] _stream_phantom: PhantomData<VidStream>,
+) -> impl IntoView {
     let ProfilePostsContext {
         video_queue,
         start_index,
@@ -36,7 +35,7 @@ pub fn ProfilePostWithUpdates(initial_post: PostDetails) -> impl IntoView {
         queue_end,
     } = expect_context();
     let recovering_state = create_rw_signal(true);
-    let fetch_cursor = create_rw_signal(FetchCursor {
+    let fetch_cursor = create_rw_signal(FixedFetchCursor::<LIMIT> {
         start: start_index.get_untracked() as u64,
         limit: 10,
     });
@@ -52,27 +51,23 @@ pub fn ProfilePostWithUpdates(initial_post: PostDetails) -> impl IntoView {
         video_queue.update_untracked(|vq| {
             vq.push(initial_post.clone());
         });
-        queue_end.update(|end| {
-            *end = true;
-        })
+        queue_end.set(true)
     }
 
     let next_videos = create_action(move |_| async move {
-        let user_canister = initial_post.canister_id;
         let cursor = fetch_cursor.get_untracked();
 
         let posts_res = if let Some(canisters) = auth_canister.get_untracked() {
-            let profile_posts = ProfileVideoStream::new(cursor, &canisters, user_canister);
-            profile_posts.fetch_next_profile_posts().await
+            VidStream::fetch_next_posts(cursor, &canisters, user_canister).await
         } else {
-            let unauth_canister = unauth_canisters();
-            let profile_posts = ProfileVideoStream::new(cursor, &unauth_canister, user_canister);
-            profile_posts.fetch_next_profile_posts().await
+            let canisters = unauth_canisters();
+            VidStream::fetch_next_posts(cursor, &canisters, user_canister).await
         };
 
-        let posts = try_or_redirect!(posts_res);
+        let res = try_or_redirect!(posts_res);
 
-        posts.into_iter().for_each(|p| {
+        queue_end.set(res.end);
+        res.posts.into_iter().for_each(|p| {
             video_queue.try_update(|q| {
                 q.push(p);
             });
@@ -130,18 +125,10 @@ pub fn ProfilePostWithUpdates(initial_post: PostDetails) -> impl IntoView {
 }
 
 #[component]
-pub fn ProfilePost() -> impl IntoView {
-    let params = use_params::<ProfileVideoParams>();
-
-    let canister_and_post = move || {
-        params.with_untracked(|p| {
-            let p = p.as_ref().ok()?;
-            let canister_id = Principal::from_text(&p.canister_id).ok()?;
-
-            Some((canister_id, p.post_id))
-        })
-    };
-
+fn ProfilePostBase<IV: IntoView, C: Fn(PostDetails) -> IV + Clone + 'static>(
+    #[prop(into)] canister_and_post: Signal<Option<(Principal, u64)>>,
+    children: C,
+) -> impl IntoView {
     let ProfilePostsContext {
         video_queue,
         current_index,
@@ -177,6 +164,7 @@ pub fn ProfilePost() -> impl IntoView {
             }
         }
     });
+    let children_s = store_value(children);
 
     view! {
         <Suspense fallback=FullScreenSpinner>
@@ -190,7 +178,7 @@ pub fn ProfilePost() -> impl IntoView {
                                 <div class="absolute left-4 top-4 bg-transparent z-10 text-white">
                                     <BackButton fallback="/".to_string()/>
                                 </div>
-                                <ProfilePostWithUpdates initial_post=pd/>
+                                {(children_s.get_value())(pd)}
                             },
                         )
                     })
@@ -199,3 +187,59 @@ pub fn ProfilePost() -> impl IntoView {
         </Suspense>
     }
 }
+
+#[derive(Params, PartialEq)]
+struct ProfileVideoParams {
+    canister_id: Principal,
+    post_id: u64,
+}
+
+const PROFILE_POST_LIMIT: u64 = 25;
+type DefProfileVidStream = ProfileVideoStream<PROFILE_POST_LIMIT>;
+
+#[component]
+pub fn ProfilePost() -> impl IntoView {
+    let params = use_params::<ProfileVideoParams>();
+
+    let canister_and_post = Signal::derive(move || {
+        params.with_untracked(|p| {
+            let p = p.as_ref().ok()?;
+            Some((p.canister_id, p.post_id))
+        })
+    });
+
+    view! {
+        <ProfilePostBase canister_and_post let:pd>
+            <ProfilePostWithUpdates<PROFILE_POST_LIMIT, DefProfileVidStream> user_canister=pd.canister_id initial_post=pd/>
+        </ProfilePostBase>
+    }
+}
+
+// TODO: handle custom context management for bets
+// #[derive(Params, PartialEq)]
+// struct ProfileBetsParams {
+//     bet_canister: Principal,
+//     post_canister: Principal,
+//     post_id: u64,
+// }
+
+// const PROFILE_POST_BET_LIMIT: u64 = 10;
+
+// #[component]
+// pub fn ProfilePostBets() -> impl IntoView {
+//     let params = use_params::<ProfileBetsParams>();
+
+//     let user_canister = params.with_untracked(|p| p.as_ref().map(|p| p.bet_canister).unwrap_or(Principal::anonymous()));
+//     let canister_and_post = Signal::derive(move || {
+//         params.with_untracked(|p| {
+//             let p = p.as_ref().ok()?;
+//             Some((p.post_canister, p.post_id))
+//         })
+//     });
+
+//     view! {
+//         <ProfilePostBase canister_and_post let:pd>
+//             <ProfilePostWithUpdates<PROFILE_POST_BET_LIMIT, ProfileVideoBetsStream> user_canister initial_post=pd/>
+//         </ProfilePostBase>
+//     }
+// }
