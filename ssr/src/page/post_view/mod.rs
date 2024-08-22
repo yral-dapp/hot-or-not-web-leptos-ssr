@@ -5,10 +5,7 @@ pub mod video_loader;
 use crate::state::audio_state::AudioState;
 use crate::{
     abselector,
-    component::{
-        scrolling_post_view::{ScrollingPostView, ScrollingPostViewMLFeed},
-        spinner::FullScreenSpinner,
-    },
+    component::{scrolling_post_view::ScrollingPostView, spinner::FullScreenSpinner},
     consts::NSFW_TOGGLE_STORE,
     state::canisters::{unauth_canisters, Canisters},
     try_or_redirect,
@@ -280,6 +277,7 @@ pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
             fetch_next_videos=next_videos
             queue_end
             overlay=|| view! { <HomeButtonOverlay /> }
+            threshold_trigger_fetch=10
         />
     }
 }
@@ -302,7 +300,7 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
                 return;
             }
             f.start = 1;
-            f.limit = 15; // JAY_TODO
+            f.limit = 15;
         });
         video_queue.update_untracked(|v| {
             if v.len() > 1 {
@@ -399,13 +397,14 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
     });
 
     view! {
-        <ScrollingPostViewMLFeed
+        <ScrollingPostView
             video_queue
             current_idx
             recovering_state
             fetch_next_videos=next_videos
             queue_end
             overlay=|| view! { <HomeButtonOverlay /> }
+            threshold_trigger_fetch=20
         />
     }
 }
@@ -467,14 +466,14 @@ pub fn PostView() -> impl IntoView {
                     Some("PostViewWithUpdates")
                 }
             };
-            let component_PostViewWithUpdatesMLFeed: ABComponent = Box::new(            move || {
+            let component_PostViewWithUpdatesMLFeed: ABComponent = Box::new(move || {
                 fetch_first_video_uid()
                     .and_then(|initial_post| {
                         let initial_post = initial_post.ok()?;
                         Some(view! { <PostViewWithUpdatesMLFeed initial_post /> }) // TODO_DEBJIT : TODO -> TO-DONE!!
                     })
             });
-            let component_PostViewWithUpdates: ABComponent = Box::new(            move || {
+            let component_PostViewWithUpdates: ABComponent = Box::new(move || {
                 fetch_first_video_uid()
                     .and_then(|initial_post| {
                         let initial_post = initial_post.ok()?;

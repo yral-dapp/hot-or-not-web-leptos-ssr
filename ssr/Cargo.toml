@@ -90,7 +90,6 @@ gloo-utils = { version = "0.2.0", features = ["serde"] }
 tonic = { version = "0.11.0", features = [
     "tls",
     "tls-webpki-roots",
-    "transport",        # for clippy
 ], optional = true }
 prost = { version = "0.12.4", optional = true }
 hmac = { version = "0.12.1", optional = true }
@@ -177,7 +176,6 @@ redis-kv = []
 cloudflare = ["dep:gob-cloudflare"]
 backend-admin = []
 ga4 = []
-local-feed = []
 mock-wallet-history = ["dep:rand_chacha"]
 release-bin = [
     "ssr",
