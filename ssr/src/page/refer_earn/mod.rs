@@ -12,6 +12,7 @@ use crate::component::canisters_prov::AuthCansProvider;
 use crate::component::connect::ConnectLogin;
 use crate::state::canisters::auth_canisters_store;
 use crate::utils::event_streaming::events::{Refer, ReferShareLink};
+use crate::utils::web::Share;
 use crate::{
     component::{back_btn::BackButton, dashbox::DashboxLoading, title::Title},
     state::auth::account_connected_reader,
@@ -31,7 +32,7 @@ fn WorkButton(#[prop(into)] text: String, #[prop(into)] head: String) -> impl In
 
 #[component]
 fn ReferLoaded(user_principal: Principal) -> impl IntoView {
-    let refer_code = user_principal.to_text();
+    let refer_code = user_principal.to_text().clone();
     let window = use_window();
     let refer_link = window
         .as_ref()
@@ -62,19 +63,21 @@ fn ReferLoaded(user_principal: Principal) -> impl IntoView {
         }
     });
 
+    let code = refer_code.clone();
+
     let handle_share = move || {
         let url = refer_link.clone();
-        if share_url(&url).is_some() {
+        if Share::refer(&url).is_some() {
             return;
         }
-        click_copy.dispatch(url)
+        click_copy.dispatch(url.clone());
     };
 
     view! {
         <div class="flex items-center w-fit rounded-full border-dashed border-2 p-3 gap-2 border-primary-500">
-            <span class="text-md lg:text-lg text-ellipsis line-clamp-1">{refer_code}</span>
+            <span class="text-md lg:text-lg text-ellipsis line-clamp-1"> { refer_code }</span>
             <button on:click=move |_| handle_share()>
-                <Icon class="text-xl text-primary-500" icon=icondata::IoShareSocialSharp/>
+                <Icon class="text-xl text-primary-500" icon=icondata::IoShareSocialSharp />
             </button>
         </div>
         <Show when=show_copied_popup>
@@ -91,7 +94,7 @@ fn ReferLoaded(user_principal: Principal) -> impl IntoView {
 fn ReferCode() -> impl IntoView {
     view! {
         <AuthCansProvider fallback=DashboxLoading let:cans>
-            <ReferLoaded user_principal=cans.identity().sender().unwrap()/>
+            <ReferLoaded user_principal=cans.identity().sender().unwrap() />
         </AuthCansProvider>
     }
 }
@@ -104,14 +107,14 @@ fn ReferView() -> impl IntoView {
 
     view! {
         <div class="flex flex-col w-full h-full items-center text-white gap-10">
-            <img class="shrink-0 h-40 select-none" src="/img/coins-stash.webp"/>
+            <img class="shrink-0 h-40 select-none" src="/img/coins-stash.webp" />
             <div class="flex flex-col w-full items-center gap-4 text-center">
-                <span class="font-bold text-2xl">Invite & Win upto <br/> 500 Coyns</span>
+                <span class="font-bold text-2xl">Invite & Win upto <br />500 Coyns</span>
             </div>
             <div class="flex flex-col w-full gap-2 px-4 text-white items-center">
                 <span class="uppercase text-sm md:text-md">Referral Link</span>
-                <Show when=logged_in fallback=|| view! { <ConnectLogin cta_location="refer"/> }>
-                    <ReferCode/>
+                <Show when=logged_in fallback=|| view! { <ConnectLogin cta_location="refer" /> }>
+                    <ReferCode />
                 </Show>
             </div>
             <div class="flex flex-col w-full items-center gap-8 mt-4">
@@ -202,7 +205,7 @@ fn ListSwitcher() -> impl IntoView {
         </div>
         <div class="flex flex-row justify-center">
             <Show when=move || current_tab() == 0 fallback=HistoryView>
-                <ReferView/>
+                <ReferView />
             </Show>
         </div>
     }
@@ -216,14 +219,14 @@ pub fn ReferEarn() -> impl IntoView {
         <div class="flex flex-col items-center min-w-dvw min-h-dvh bg-black pt-2 pb-12 gap-6">
             <Title justify_center=false>
                 <div class="flex flex-row justify-between">
-                    <BackButton fallback="/menu".to_string()/>
+                    <BackButton fallback="/menu".to_string() />
                     <span class="text-lg font-bold text-white">Refer & Earn</span>
                     <div></div>
                 </div>
             </Title>
             <div class="px-8 w-full sm:w-7/12">
                 <Show when=logged_in fallback=ReferView>
-                    <ListSwitcher/>
+                    <ListSwitcher />
                 </Show>
             </div>
         </div>

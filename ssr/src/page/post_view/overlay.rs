@@ -131,6 +131,8 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
     let share = move || {
         let post_details = post_details_share.clone();
         let url = video_url();
+        let title = post_details.display_name.clone();
+        let text = post_details.description.clone();
         if share_url(&url).is_some() {
             return;
         }
