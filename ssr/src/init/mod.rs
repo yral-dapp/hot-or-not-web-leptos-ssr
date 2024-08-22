@@ -30,8 +30,7 @@ fn init_cookie_key() -> Key {
 }
 
 #[cfg(feature = "oauth-ssr")]
-fn init_google_oauth() -> crate::auth::core_clients::CoreClients {
-    use crate::auth::core_clients::CoreClients;
+fn init_google_oauth() -> openidconnect::core::CoreClient {
     use crate::consts::google::{GOOGLE_AUTH_URL, GOOGLE_ISSUER_URL, GOOGLE_TOKEN_URL};
     use openidconnect::{
         core::CoreClient, AuthUrl, ClientId, ClientSecret, IssuerUrl, RedirectUrl, TokenUrl,
@@ -42,7 +41,7 @@ fn init_google_oauth() -> crate::auth::core_clients::CoreClients {
         env::var("GOOGLE_CLIENT_SECRET").expect("`GOOGLE_CLIENT_SECRET` is required!");
     let redirect_uri = env::var("GOOGLE_REDIRECT_URL").expect("`GOOGLE_REDIRECT_URL` is required!");
 
-    let google_oauth = CoreClient::new(
+    CoreClient::new(
         ClientId::new(client_id),
         Some(ClientSecret::new(client_secret)),
         IssuerUrl::new(GOOGLE_ISSUER_URL.to_string()).unwrap(),
@@ -52,34 +51,9 @@ fn init_google_oauth() -> crate::auth::core_clients::CoreClients {
         // We don't validate id_tokens against Google's public keys
         Default::default(),
     )
-    .set_redirect_uri(RedirectUrl::new(redirect_uri).unwrap());
-
-    let client_id =
-        env::var("HOTORNOT_GOOGLE_CLIENT_ID").expect("`HOTORNOT_GOOGLE_CLIENT_ID` is required!");
-    let client_secret = env::var("HOTORNOT_GOOGLE_CLIENT_SECRET")
-        .expect("`HOTORNOT_GOOGLE_CLIENT_SECRET` is required!");
-    let redirect_uri = env::var("HOTORNOT_GOOGLE_REDIRECT_URL")
-        .expect("`HOTORNOT_GOOGLE_REDIRECT_URL` is required!");
-
-    let hotornot_google_oauth = CoreClient::new(
-        ClientId::new(client_id),
-        Some(ClientSecret::new(client_secret)),
-        IssuerUrl::new(GOOGLE_ISSUER_URL.to_string()).unwrap(),
-        AuthUrl::new(GOOGLE_AUTH_URL.to_string()).unwrap(),
-        Some(TokenUrl::new(GOOGLE_TOKEN_URL.to_string()).unwrap()),
-        None,
-        // We don't validate id_tokens against Google's public keys
-        Default::default(),
-    )
-    .set_redirect_uri(RedirectUrl::new(redirect_uri).unwrap());
-
-    CoreClients {
-        google_oauth,
-        hotornot_google_oauth,
-    }
+    .set_redirect_uri(RedirectUrl::new(redirect_uri).unwrap())
 }
 
-#[cfg(not(clippy))]
 #[cfg(feature = "ga4")]
 async fn init_grpc_offchain_channel() -> tonic::transport::Channel {
     use crate::consts::OFF_CHAIN_AGENT_GRPC_URL;
@@ -186,8 +160,7 @@ impl AppStateBuilder {
             kv,
             cookie_key: init_cookie_key(),
             #[cfg(feature = "oauth-ssr")]
-            google_oauth_clients: init_google_oauth(),
-            #[cfg(not(clippy))]
+            google_oauth: init_google_oauth(),
             #[cfg(feature = "ga4")]
             grpc_offchain_channel: init_grpc_offchain_channel().await,
         };

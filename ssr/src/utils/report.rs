@@ -1,6 +1,6 @@
 use std::{env, fmt::Display};
 
-use leptos::{server, ServerFnError};
+use leptos::{expect_context, server, ServerFnError};
 
 pub enum ReportOption {
     Nudity,
@@ -22,7 +22,6 @@ impl ReportOption {
     }
 }
 
-#[cfg(not(clippy))]
 #[cfg(feature = "ga4")]
 #[server]
 pub async fn send_report_offchain(
@@ -35,7 +34,6 @@ pub async fn send_report_offchain(
     video_url: String,
 ) -> Result<(), ServerFnError> {
     use crate::utils::off_chain;
-    use leptos::expect_context;
     use tonic::metadata::MetadataValue;
     use tonic::transport::Channel;
     use tonic::Request;
@@ -68,20 +66,5 @@ pub async fn send_report_offchain(
 
     client.report_post(request).await?;
 
-    Ok(())
-}
-
-#[cfg(clippy)]
-#[cfg(feature = "ga4")]
-#[server]
-pub async fn send_report_offchain(
-    _reporter_id: String,
-    _publisher_id: String,
-    _publisher_canister_id: String,
-    _post_id: String,
-    _video_id: String,
-    _reason: String,
-    _video_url: String,
-) -> Result<(), ServerFnError> {
     Ok(())
 }

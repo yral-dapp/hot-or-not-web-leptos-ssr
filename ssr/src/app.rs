@@ -31,7 +31,7 @@ use leptos_router::*;
 fn NotFound() -> impl IntoView {
     let mut outside_errors = Errors::default();
     outside_errors.insert_with_default_key(AppError::NotFound);
-    view! { <ErrorTemplate outside_errors /> }
+    view! { <ErrorTemplate outside_errors/> }
 }
 
 #[component(transparent)]
@@ -40,11 +40,11 @@ fn GoogleAuthRedirectHandlerRoute() -> impl IntoView {
     #[cfg(any(feature = "oauth-ssr", feature = "oauth-hydrate"))]
     {
         use crate::page::google_redirect::GoogleRedirectHandler;
-        view! { <Route path view=GoogleRedirectHandler /> }
+        view! { <Route path view=GoogleRedirectHandler/> }
     }
     #[cfg(not(any(feature = "oauth-ssr", feature = "oauth-hydrate")))]
     {
-        view! { <Route path view=NotFound /> }
+        view! { <Route path view=NotFound/> }
     }
 }
 
@@ -54,11 +54,11 @@ fn GoogleAuthRedirectorRoute() -> impl IntoView {
     #[cfg(any(feature = "oauth-ssr", feature = "oauth-hydrate"))]
     {
         use crate::page::google_redirect::GoogleRedirector;
-        view! { <Route path view=GoogleRedirector /> }
+        view! { <Route path view=GoogleRedirector/> }
     }
     #[cfg(not(any(feature = "oauth-ssr", feature = "oauth-hydrate")))]
     {
-        view! { <Route path view=NotFound /> }
+        view! { <Route path view=NotFound/> }
     }
 }
 
@@ -72,12 +72,6 @@ pub fn App() -> impl IntoView {
     provide_context(ProfilePostsContext::default());
     provide_context(AuthorizedUserToSeedContent::default());
     provide_context(AudioState::default());
-
-    #[cfg(feature = "hydrate")]
-    {
-        use crate::utils::ml_feed::ml_feed_grpcweb::MLFeed;
-        provide_context(MLFeed::default());
-    }
 
     // History Tracking
     let history_ctx = HistoryCtx::default();
@@ -97,12 +91,12 @@ pub fn App() -> impl IntoView {
     }
 
     view! {
-        <Stylesheet id="leptos" href="/pkg/hot-or-not-leptos-ssr.css" />
+        <Stylesheet id="leptos" href="/pkg/hot-or-not-leptos-ssr.css"/>
 
         // sets the document title
-        <Title text="Yral" />
+        <Title text="Yral"/>
 
-        <Link rel="manifest" href="/app.webmanifest" />
+        <Link rel="manifest" href="/app.webmanifest"/>
 
         // GA4 Global Site Tag (gtag.js) - Google Analytics
         // G-6W5Q2MRX0E to test locally | G-PLNNETMSLM

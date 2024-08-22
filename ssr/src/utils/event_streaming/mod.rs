@@ -9,7 +9,6 @@ use crate::consts::GTAG_MEASUREMENT_ID;
 
 pub mod events;
 
-#[cfg(not(clippy))]
 #[cfg(feature = "ssr")]
 pub mod warehouse_events {
     tonic::include_proto!("warehouse_events");
@@ -65,7 +64,6 @@ pub fn send_event_warehouse(event_name: &str, params: &serde_json::Value) {
     });
 }
 
-#[cfg(not(clippy))]
 #[cfg(feature = "ga4")]
 #[server]
 pub async fn stream_to_offchain_agent(event: String, params: String) -> Result<(), ServerFnError> {
@@ -94,15 +92,5 @@ pub async fn stream_to_offchain_agent(event: String, params: String) -> Result<(
 
     client.send_event(request).await?;
 
-    Ok(())
-}
-
-#[cfg(clippy)]
-#[cfg(feature = "ga4")]
-#[server]
-pub async fn stream_to_offchain_agent(
-    _event: String,
-    _params: String,
-) -> Result<(), ServerFnError> {
     Ok(())
 }
