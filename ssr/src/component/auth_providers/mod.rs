@@ -4,14 +4,14 @@ mod google;
 mod local_storage;
 
 use candid::Principal;
-use codee::string::{FromToStringCodec, JsonSerdeCodec};
+use codee::string::FromToStringCodec;
 use ic_agent::Identity;
 use leptos::*;
 use leptos_use::storage::use_local_storage;
 
 use crate::{
     auth::DelegatedIdentityWire,
-    consts::{ACCOUNT_CONNECTED_STORE, USER_CANISTER_ID},
+    consts::ACCOUNT_CONNECTED_STORE,
     state::{
         auth::auth_state,
         canisters::{do_canister_auth, Canisters},
@@ -136,10 +136,6 @@ pub fn LoginProviders(show_modal: RwSignal<bool>, lock_closing: RwSignal<bool>) 
             if let Err(e) = handle_user_login(canisters.clone(), referrer).await {
                 log::warn!("failed to handle user login, err {e}. skipping");
             }
-
-            let (_, set_user_canister_id, _) =
-                use_local_storage::<Option<Principal>, JsonSerdeCodec>(USER_CANISTER_ID);
-            set_user_canister_id(Some(canisters.user_canister()));
 
             LoginSuccessful.send_event(canisters);
 

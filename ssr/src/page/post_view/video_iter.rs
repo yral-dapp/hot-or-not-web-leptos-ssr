@@ -8,7 +8,7 @@ use leptos_use::storage::use_local_storage;
 
 use crate::{
     canister::post_cache::{self, NsfwFilter},
-    consts::USER_CANISTER_ID,
+    consts::USER_CANISTER_ID_STORE,
     state::canisters::{auth_canisters_store, Canisters},
     utils::posts::{get_post_uid, FetchCursor, PostDetails, PostViewError},
 };
@@ -112,7 +112,7 @@ impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
             let ml_feed: MLFeed = expect_context();
 
             let (user_canister_id_local_storage, _, _) =
-                use_local_storage::<Option<Principal>, JsonSerdeCodec>(USER_CANISTER_ID);
+                use_local_storage::<Option<Principal>, JsonSerdeCodec>(USER_CANISTER_ID_STORE);
             let user_canister_id;
             if let Some(canister_id) = user_canister_id_local_storage.get_untracked() {
                 user_canister_id = canister_id;

@@ -22,7 +22,7 @@ pub static CF_BASE_URL: Lazy<Url> =
     Lazy::new(|| Url::parse("https://api.cloudflare.com/client/v4/").unwrap());
 pub const NSFW_TOGGLE_STORE: &str = "nsfw-enabled";
 pub const REFERRER_STORE: &str = "referrer";
-pub const USER_CANISTER_ID: &str = "user-canister-id";
+pub const USER_CANISTER_ID_STORE: &str = "user-canister-id";
 
 pub static OFF_CHAIN_AGENT_GRPC_URL: Lazy<Url> =
     Lazy::new(|| Url::parse("https://icp-off-chain-agent.fly.dev:443").unwrap());
