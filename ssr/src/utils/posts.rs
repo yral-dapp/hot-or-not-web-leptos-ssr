@@ -1,5 +1,4 @@
 use candid::Principal;
-use leptos::window;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -148,22 +147,33 @@ pub async fn get_post_uid<const AUTH: bool>(
 
 pub fn get_feed_component_identifier() -> impl Fn() -> Option<&'static str> {
     move || {
+        let loc: String;
+
         #[cfg(feature = "hydrate")]
         {
-            let loc: String = window().location().host().unwrap().to_string();
-            if loc == "localhost:3000"
-                || loc == "hotornot.wtf"
-                || loc.contains("go-bazzinga-hot-or-not-web-leptos-ssr.fly.dev")
-                || loc == "hot-or-not-web-leptos-ssr-staging.fly.dev"
-            {
-                Some("PostViewWithUpdatesMLFeed")
-            } else {
-                Some("PostViewWithUpdates")
-            }
+            use leptos::window;
+            loc = window().location().host().unwrap().to_string();
         }
 
         #[cfg(not(feature = "hydrate"))]
         {
+            use http::header::HeaderMap;
+            use leptos::expect_context;
+
+            use axum::http::request::Parts;
+            let parts: Parts = expect_context();
+            let headers = parts.headers;
+
+            loc = headers.get("Host").unwrap().to_str().unwrap().to_string();
+        }
+
+        if loc == "localhost:3000"
+            || loc == "hotornot.wtf"
+            || loc.contains("go-bazzinga-hot-or-not-web-leptos-ssr.fly.dev")
+            || loc == "hot-or-not-web-leptos-ssr-staging.fly.dev"
+        {
+            Some("PostViewWithUpdatesMLFeed")
+        } else {
             Some("PostViewWithUpdates")
         }
     }
