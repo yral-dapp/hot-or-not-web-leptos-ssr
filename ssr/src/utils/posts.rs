@@ -5,7 +5,7 @@ use crate::{
     canister::individual_user_template::PostDetailsForFrontend, state::canisters::Canisters,
 };
 
-use super::profile::propic_from_principal;
+use super::{profile::propic_from_principal, types::PostStatus};
 
 use ic_agent::AgentError;
 use thiserror::Error;
@@ -18,6 +18,8 @@ pub enum PostViewError {
     Canister(String),
     #[error("http fetch error {0}")]
     HttpFetch(#[from] reqwest::Error),
+    #[error("ml feed error {0}")]
+    MLFeedError(String),
 }
 
 #[derive(Clone, Copy, PartialEq, Debug)]
@@ -39,6 +41,15 @@ impl FetchCursor {
     pub fn advance(&mut self) {
         self.start += self.limit;
         self.limit = 25;
+    }
+
+    pub fn set_limit(&mut self, limit: u64) {
+        self.limit = limit;
+    }
+
+    pub fn advance_and_set_limit(&mut self, limit: u64) {
+        self.start += self.limit;
+        self.limit = limit;
     }
 }
 
@@ -102,10 +113,20 @@ pub async fn get_post_uid<const AUTH: bool>(
     {
         Ok(p) => p,
         Err(e) => {
-            log::warn!("failed to get post details: {}, skipping", e);
+            log::warn!(
+                "failed to get post details for {} {}: {}, skipping",
+                user_canister.to_string(),
+                post_id,
+                e
+            );
             return Ok(None);
         }
     };
+
+    // TODO: temporary patch in frontend to not show banned videos, to be removed later after NSFW tagging
+    if PostStatus::from(&post_details.status) == PostStatus::BannedDueToUserReporting {
+        return Ok(None);
+    }
 
     let post_uuid = &post_details.video_uid;
     let req_url = format!(
@@ -122,4 +143,37 @@ pub async fn get_post_uid<const AUTH: bool>(
         user_canister,
         post_details,
     )))
+}
+
+pub fn get_feed_component_identifier() -> impl Fn() -> Option<&'static str> {
+    move || {
+        let loc: String;
+
+        #[cfg(feature = "hydrate")]
+        {
+            use leptos::window;
+            loc = window().location().host().unwrap().to_string();
+        }
+
+        #[cfg(not(feature = "hydrate"))]
+        {
+            use axum::http::request::Parts;
+            use http::header::HeaderMap;
+            use leptos::expect_context;
+
+            let parts: Parts = expect_context();
+            let headers = parts.headers;
+            loc = headers.get("Host").unwrap().to_str().unwrap().to_string();
+        }
+
+        if loc == "localhost:3000"
+            || loc == "hotornot.wtf"
+            || loc.contains("go-bazzinga-hot-or-not-web-leptos-ssr.fly.dev")
+            || loc == "hot-or-not-web-leptos-ssr-staging.fly.dev"
+        {
+            Some("PostViewWithUpdatesMLFeed")
+        } else {
+            Some("PostViewWithUpdates")
+        }
+    }
 }

@@ -4,6 +4,7 @@ use k256::elliptic_curve::JwkEcKey;
 use leptos::*;
 use leptos_router::*;
 
+use crate::consts::USER_CANISTER_ID_STORE;
 use crate::{
     auth::{
         extract_identity, generate_anonymous_identity_if_required, set_anonymous_identity_cookie,
@@ -18,6 +19,8 @@ use crate::{
     try_or_redirect,
     utils::MockPartialEq,
 };
+use codee::string::JsonSerdeCodec;
+use leptos_use::storage::use_local_storage;
 
 #[derive(Params, PartialEq, Clone)]
 struct Referrer {
@@ -96,6 +99,10 @@ fn CtxProvider(temp_identity: Option<JwkEcKey>, children: ChildrenFn) -> impl In
                     .map(|res| {
                         let cans_wire = try_or_redirect!(res);
                         let cans = try_or_redirect!(cans_wire.canisters());
+
+                        let (_, set_user_canister_id, _) =  use_local_storage::<Option<Principal>, JsonSerdeCodec>(USER_CANISTER_ID_STORE);
+                        set_user_canister_id(Some(cans.user_canister()));
+
                         canisters_store.set(Some(cans));
                     })
             }}
