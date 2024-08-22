@@ -1,4 +1,5 @@
 use candid::Principal;
+use leptos::window;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -41,6 +42,10 @@ impl FetchCursor {
     pub fn advance(&mut self) {
         self.start += self.limit;
         self.limit = 25;
+    }
+
+    pub fn set_limit(&mut self, limit: u64) {
+        self.limit = limit;
     }
 
     pub fn advance_and_set_limit(&mut self, limit: u64) {
@@ -139,4 +144,19 @@ pub async fn get_post_uid<const AUTH: bool>(
         user_canister,
         post_details,
     )))
+}
+
+pub fn get_feed_component_identifier() -> impl Fn() -> Option<&'static str> {
+    move || {
+        let loc: String = window().location().host().unwrap().to_string();
+        if loc == "localhost:3000"
+            || loc == "hotornot.wtf"
+            || loc.contains("go-bazzinga-hot-or-not-web-leptos-ssr.fly.dev")
+            || loc == "hot-or-not-web-leptos-ssr-staging.fly.dev"
+        {
+            Some("PostViewWithUpdatesMLFeed")
+        } else {
+            Some("PostViewWithUpdates")
+        }
+    }
 }

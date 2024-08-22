@@ -102,10 +102,9 @@ impl Canisters<true> {
             .expect("Authenticated canisters must have an identity")
     }
 
-    // Shifted to Cansiter<A>. Is this ok ?
-    // pub fn user_canister(&self) -> Principal {
-    //     self.user_canister
-    // }
+    pub fn user_canister(&self) -> Principal {
+        self.user_canister
+    }
 
     pub async fn authenticated_user(&self) -> Result<IndividualUserTemplate<'_>, AgentError> {
         self.individual_user(self.user_canister).await
@@ -125,10 +124,6 @@ impl Canisters<true> {
 }
 
 impl<const A: bool> Canisters<A> {
-    pub fn user_canister(&self) -> Principal {
-        self.user_canister
-    }
-
     pub async fn post_cache(&self) -> Result<PostCache<'_>, AgentError> {
         let agent = self.agent.get_agent().await?;
         Ok(PostCache(POST_CACHE_ID, agent))
