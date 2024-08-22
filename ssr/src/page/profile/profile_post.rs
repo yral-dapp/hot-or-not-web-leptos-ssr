@@ -125,7 +125,6 @@ pub fn ProfilePostWithUpdates(initial_post: PostDetails) -> impl IntoView {
             recovering_state
             fetch_next_videos
             overlay
-            threshold_trigger_fetch=10
         />
     }
 }

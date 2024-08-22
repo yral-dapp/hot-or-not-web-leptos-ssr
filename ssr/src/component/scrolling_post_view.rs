@@ -15,7 +15,6 @@ pub fn ScrollingPostView<F: Fn() -> V + Clone + 'static, V, O: Fn() -> IV, IV: I
     recovering_state: RwSignal<bool>,
     queue_end: RwSignal<bool>,
     #[prop(optional)] overlay: Option<O>,
-    threshold_trigger_fetch: usize,
 ) -> impl IntoView {
     let AudioState {
         muted,
@@ -55,7 +54,7 @@ pub fn ScrollingPostView<F: Fn() -> V + Clone + 'static, V, O: Fn() -> IV, IV: I
                                     return;
                                 }
                                 if video_queue.with_untracked(|q| q.len()).saturating_sub(queue_idx)
-                                <= threshold_trigger_fetch
+                                    <= 10
                                 {
                                     next_videos.as_ref().map(|nv| { nv() });
                                 }

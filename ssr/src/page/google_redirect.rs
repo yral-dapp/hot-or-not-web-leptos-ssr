@@ -8,36 +8,16 @@ pub type GoogleAuthMessage = Result<DelegatedIdentityWire, String>;
 
 #[server]
 async fn google_auth_redirector() -> Result<(), ServerFnError> {
-    use crate::auth::core_clients::CoreClients;
     use crate::auth::server_impl::google::google_auth_url_impl;
-    use http::header::HeaderMap;
-    use leptos_axum::extract;
-
-    let headers: HeaderMap = extract().await?;
-    let host = headers.get("Host").unwrap().to_str().unwrap();
-
-    let oauth_clients: CoreClients = expect_context();
-    let oauth2 = oauth_clients.get_oauth_client(host);
-
-    let url = google_auth_url_impl(oauth2).await?;
+    let url = google_auth_url_impl().await?;
     leptos_axum::redirect(&url);
     Ok(())
 }
 
 #[server]
 async fn perform_google_auth(oauth: OAuthQuery) -> Result<DelegatedIdentityWire, ServerFnError> {
-    use crate::auth::core_clients::CoreClients;
     use crate::auth::server_impl::google::perform_google_auth_impl;
-    use http::header::HeaderMap;
-    use leptos_axum::extract;
-
-    let headers: HeaderMap = extract().await?;
-    let host = headers.get("Host").unwrap().to_str().unwrap();
-
-    let oauth_clients: CoreClients = expect_context();
-    let oauth2 = oauth_clients.get_oauth_client(host);
-
-    perform_google_auth_impl(oauth.state, oauth.code, oauth2).await
+    perform_google_auth_impl(oauth.state, oauth.code).await
 }
 
 #[derive(Params, Debug, PartialEq, Clone, Serialize, Deserialize)]
