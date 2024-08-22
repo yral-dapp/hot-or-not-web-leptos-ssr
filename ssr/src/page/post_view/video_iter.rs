@@ -1,11 +1,15 @@
 use std::pin::Pin;
 
 use candid::Principal;
+use codee::string::JsonSerdeCodec;
 use futures::{stream::FuturesOrdered, Stream, StreamExt};
+use leptos::*;
+use leptos_use::storage::use_local_storage;
 
 use crate::{
     canister::post_cache::{self, NsfwFilter},
-    state::canisters::Canisters,
+    consts::USER_CANISTER_ID,
+    state::canisters::{auth_canisters_store, Canisters},
     utils::posts::{get_post_uid, FetchCursor, PostDetails, PostViewError},
 };
 
@@ -105,14 +109,30 @@ impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
             use crate::utils::ml_feed::ml_feed_grpcweb::MLFeed;
             use leptos::expect_context;
 
-            let user_canister_principal = self.canisters.user_canister();
             let ml_feed: MLFeed = expect_context();
 
-            let top_posts_fut = ml_feed.get_next_feed(
-                &user_canister_principal,
-                self.cursor.limit as u32,
-                video_queue,
-            );
+            let (user_canister_id_local_storage, _, _) =
+                use_local_storage::<Option<Principal>, JsonSerdeCodec>(USER_CANISTER_ID);
+            let user_canister_id;
+            if let Some(canister_id) = user_canister_id_local_storage.get_untracked() {
+                user_canister_id = canister_id;
+            } else {
+                let cans_store = auth_canisters_store();
+                let mut cans_stream = cans_store.to_stream();
+                let cans;
+                loop {
+                    if let Some(cans_val) = cans_stream.next().await.flatten() {
+                        cans = cans_val;
+                        break;
+                    } else {
+                        continue;
+                    }
+                }
+                user_canister_id = cans.user_canister();
+            }
+
+            let top_posts_fut =
+                ml_feed.get_next_feed(&user_canister_id, self.cursor.limit as u32, video_queue);
 
             let top_posts = match top_posts_fut.await {
                 Ok(top_posts) => top_posts,
