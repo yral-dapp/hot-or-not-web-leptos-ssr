@@ -148,14 +148,22 @@ pub async fn get_post_uid<const AUTH: bool>(
 
 pub fn get_feed_component_identifier() -> impl Fn() -> Option<&'static str> {
     move || {
-        let loc: String = window().location().host().unwrap().to_string();
-        if loc == "localhost:3000"
-            || loc == "hotornot.wtf"
-            || loc.contains("go-bazzinga-hot-or-not-web-leptos-ssr.fly.dev")
-            || loc == "hot-or-not-web-leptos-ssr-staging.fly.dev"
+        #[cfg(feature = "hydrate")]
         {
-            Some("PostViewWithUpdatesMLFeed")
-        } else {
+            let loc: String = window().location().host().unwrap().to_string();
+            if loc == "localhost:3000"
+                || loc == "hotornot.wtf"
+                || loc.contains("go-bazzinga-hot-or-not-web-leptos-ssr.fly.dev")
+                || loc == "hot-or-not-web-leptos-ssr-staging.fly.dev"
+            {
+                Some("PostViewWithUpdatesMLFeed")
+            } else {
+                Some("PostViewWithUpdates")
+            }
+        }
+
+        #[cfg(not(feature = "hydrate"))]
+        {
             Some("PostViewWithUpdates")
         }
     }
