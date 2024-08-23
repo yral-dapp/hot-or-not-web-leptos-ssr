@@ -1,6 +1,7 @@
 use candid::Principal;
 use leptos::*;
 use leptos_icons::*;
+use leptos_router::use_location;
 use leptos_use::use_interval_fn;
 use web_time::Duration;
 
@@ -74,7 +75,7 @@ pub fn FallbackUser() -> impl IntoView {
 
 #[component]
 fn BetTimer(details: BetDetails) -> impl IntoView {
-    let bet_duration = details.bet_duration().as_secs();
+    let bet_duration = BetDetails::bet_duration().as_secs();
     let time_remaining = create_rw_signal(details.time_remaining());
     _ = use_interval_fn(
         move || {
@@ -105,7 +106,7 @@ fn BetTimer(details: BetDetails) -> impl IntoView {
 #[component]
 pub fn Speculation(details: BetDetails, _ref: NodeRef<html::Div>) -> impl IntoView {
     // TODO: enable scrolling videos for bets
-    let profile_post_url = format!("/hot-or-not/{}/{}", details.canister_id, details.post_id);
+    let profile_post_url = format!("/post/{}/{}", details.canister_id, details.post_id);
     let (bet_res, amt, icon) = match details.outcome {
         BetOutcome::Won(amt) => (
             "YOU RECEIVED",
@@ -208,12 +209,22 @@ pub fn Speculation(details: BetDetails, _ref: NodeRef<html::Div>) -> impl IntoVi
 #[component]
 pub fn ProfileSpeculations(user_canister: Principal) -> impl IntoView {
     let provider = BetsProvider::new(unauth_canisters(), user_canister);
+    let location = use_location();
+    let empty_text = if location
+        .pathname
+        .get_untracked()
+        .starts_with("/your-profile")
+    {
+        "You haven't placed any bets yet!"
+    } else {
+        "Not played any games yet!"
+    };
 
     view! {
         <ProfileStream
             provider
             empty_graphic=NoMoreBetsGraphic
-            empty_text="Play games to see your bets!"
+            empty_text
             children=move |details, _ref| {
                 view! { <Speculation details _ref=_ref.unwrap_or_default()/> }
             }

@@ -2,10 +2,27 @@ use leptos::*;
 use leptos_icons::*;
 use leptos_use::{use_intersection_observer_with_options, UseIntersectionObserverOptions};
 
-use crate::page::post_view::video_loader::{BgView, VideoView};
+use crate::page::post_view::video_loader::{BgView, VideoViewForQueue};
 
 use crate::state::audio_state::AudioState;
 use crate::utils::posts::PostDetails;
+
+#[component]
+pub fn MuteIconOverlay(show_mute_icon: RwSignal<bool>) -> impl IntoView {
+    view! {
+        <Show when=show_mute_icon>
+            <button
+                class="fixed top-1/2 left-1/2 z-20 cursor-pointer pointer-events-none"
+                on:click=move |_| AudioState::toggle_mute()
+            >
+                <Icon
+                    class="text-white/80 animate-ping text-4xl"
+                    icon=icondata::BiVolumeMuteSolid
+                />
+            </button>
+        </Show>
+    }
+}
 
 #[component]
 pub fn ScrollingPostView<F: Fn() -> V + Clone + 'static, V>(
@@ -80,7 +97,7 @@ pub fn ScrollingPostView<F: Fn() -> V + Clone + 'static, V>(
                             <div _ref=container_ref class="snap-always snap-end w-full h-full">
                                 <Show when=show_video>
                                     <BgView video_queue current_idx idx=queue_idx>
-                                        <VideoView video_queue current_idx idx=queue_idx muted />
+                                        <VideoViewForQueue video_queue current_idx idx=queue_idx muted />
                                     </BgView>
                                 </Show>
                             </div>
@@ -94,17 +111,7 @@ pub fn ScrollingPostView<F: Fn() -> V + Clone + 'static, V>(
                     </div>
                 </Show>
 
-                <Show when=show_mute_icon>
-                    <button
-                        class="fixed top-1/2 left-1/2 z-20 cursor-pointer pointer-events-none"
-                        on:click=move |_| AudioState::toggle_mute()
-                    >
-                        <Icon
-                            class="text-white/80 animate-ping text-4xl"
-                            icon=icondata::BiVolumeMuteSolid
-                        />
-                    </button>
-                </Show>
+                <MuteIconOverlay show_mute_icon/>
             </div>
         </div>
     };

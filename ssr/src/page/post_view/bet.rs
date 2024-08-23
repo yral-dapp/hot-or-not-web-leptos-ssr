@@ -213,6 +213,7 @@ fn HNButtonOverlay(
             </div>
             <p class="w-14 md:w-16 lg:w-18">Not</p>
         </div>
+        <ShadowBg/>
     }
 }
 
@@ -292,15 +293,12 @@ fn HNWonLost(participation: BetDetails) -> impl IntoView {
 
 #[component]
 fn BetTimer(participation: BetDetails, refetch_bet: Trigger) -> impl IntoView {
-    let bet_duration = participation.bet_duration().as_secs();
-    // Add some overhead to avoid fetching bet status multiple times
-    // let time_remaining = create_rw_signal(participation.time_remaining() + Duration::from_secs(30));
+    let bet_duration = BetDetails::bet_duration().as_secs();
     let time_remaining = create_rw_signal(participation.time_remaining());
     _ = use_interval_fn(
         move || {
             time_remaining.try_update(|t| *t = t.saturating_sub(Duration::from_secs(1)));
             _ = refetch_bet;
-            // TODO: notify once time_remaining is correct
             // if time_remaining.try_get_untracked() == Some(Duration::ZERO) {
             //     refetch_bet.notify();
             // }
@@ -376,6 +374,7 @@ pub fn HNUserParticipation(participation: BetDetails, refetch_bet: Trigger) -> i
                 view! { <HNWonLost participation /> }
             }
         }.into_view()}
+        <ShadowBg/>
     }
 }
 
@@ -404,7 +403,7 @@ fn MaybeHNButtons(
     );
 
     view! {
-        <Suspense fallback=BulletLoader>
+        <Suspense fallback=LoaderWithShadowBg>
         {move || is_betting_enabled().and_then(|enabled| {
             if !enabled.unwrap_or_default() {
                 return None;
@@ -414,6 +413,24 @@ fn MaybeHNButtons(
             })
         })}
         </Suspense>
+    }
+}
+
+#[component]
+fn LoaderWithShadowBg() -> impl IntoView {
+    view! {
+        <BulletLoader/>
+        <ShadowBg/>
+    }
+}
+
+#[component]
+fn ShadowBg() -> impl IntoView {
+    view! {
+        <div
+            class="absolute bottom-0 left-0 w-dvw h-2/5 -z-[1]"
+            style="background: linear-gradient(to bottom, #00000000 0%, #00000099 45%, #000000a8 100%, #000000cc 100%, #000000a8 100%);"
+        />
     }
 }
 
@@ -452,7 +469,7 @@ pub fn HNGameOverlay(post: PostDetails) -> impl IntoView {
     };
 
     view! {
-        <AuthCansProvider fallback=BulletLoader let:canisters>
+        <AuthCansProvider fallback=LoaderWithShadowBg let:canisters>
         {
             let bet_participation_outcome = create_bet_participation_outcome(canisters);
             view! {
@@ -471,13 +488,9 @@ pub fn HNGameOverlay(post: PostDetails) -> impl IntoView {
                             />
                         }
                     })
-                }).unwrap_or_else(|| view! { <BulletLoader/> })}
+                }).unwrap_or_else(|| view! { <LoaderWithShadowBg/> })}
             }
         }
         </AuthCansProvider>
-        <div
-            class="group-has-[:only-child]:hidden absolute bottom-0 left-0 w-dvw h-2/5 -z-[1]"
-            style="background: linear-gradient(to bottom, #00000000 0%, #00000099 45%, #000000a8 100%, #000000cc 100%, #000000a8 100%);"
-        />
     }
 }

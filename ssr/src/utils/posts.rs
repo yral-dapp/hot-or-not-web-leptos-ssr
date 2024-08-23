@@ -94,6 +94,10 @@ impl PostDetails {
             ),
         }
     }
+
+    pub fn is_hot_or_not(&self) -> bool {
+        self.hot_or_not_feed_ranking_score.is_some()
+    }
 }
 
 pub async fn get_post_uid<const AUTH: bool>(

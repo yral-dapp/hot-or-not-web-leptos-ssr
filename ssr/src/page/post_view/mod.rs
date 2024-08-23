@@ -1,6 +1,7 @@
 mod bet;
 pub mod error;
 pub mod overlay;
+pub mod single_post;
 pub mod video_iter;
 pub mod video_loader;
 
