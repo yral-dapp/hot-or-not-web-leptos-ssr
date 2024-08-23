@@ -144,6 +144,15 @@ impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
                 }
             };
 
+            // log top_posts
+            logging::log!(
+                "top_posts: {:?}",
+                top_posts
+                    .iter()
+                    .map(|(a, b)| (a.to_string(), b))
+                    .collect::<Vec<_>>()
+            );
+
             let end = false;
             let chunk_stream = top_posts
                 .into_iter()
