@@ -370,7 +370,7 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
         <CommonPostViewWithUpdates
             initial_post
             fetch_video_action
-            threshold_trigger_fetch=20
+            threshold_trigger_fetch=10
         />
     }
 }

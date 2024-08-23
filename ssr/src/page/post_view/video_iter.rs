@@ -188,8 +188,9 @@ impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
         // else fetch from fetch_post_uids_ml_feed_chunked
         // if that fails fallback to fetch_post_uids_chunked
 
-        if video_queue.len() < 10 {
-            self.cursor.set_limit(15);
+        if video_queue.len() < 5 {
+            //10
+            self.cursor.set_limit(5); //15
             self.fetch_post_uids_chunked(chunks, _allow_nsfw).await
         } else {
             let res = self
@@ -199,7 +200,7 @@ impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
             match res {
                 Ok(res) => Ok(res),
                 Err(_) => {
-                    self.cursor.set_limit(15);
+                    self.cursor.set_limit(5); //15
                     self.fetch_post_uids_chunked(chunks, _allow_nsfw).await
                 }
             }
