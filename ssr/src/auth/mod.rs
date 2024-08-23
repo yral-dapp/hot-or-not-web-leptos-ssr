@@ -126,7 +126,9 @@ pub mod core_clients {
 
     impl CoreClients {
         pub fn get_oauth_client(&self, host: &str) -> openidconnect::core::CoreClient {
-            if host == "hotornot.wtf" {
+            if host == "hotornot.wtf"
+                || host.contains("go-bazzinga-hot-or-not-web-leptos-ssr.fly.dev")
+            {
                 self.hotornot_google_oauth.clone()
             } else {
                 self.google_oauth.clone()
