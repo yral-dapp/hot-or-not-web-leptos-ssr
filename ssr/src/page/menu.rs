@@ -1,5 +1,5 @@
 use crate::component::back_btn::BackButton;
-use crate::component::canisters_prov::AuthCansProvider;
+use crate::component::canisters_prov::{AuthCansProvider, WithAuthCans};
 use crate::component::content_upload::YoutubeUpload;
 use crate::component::modal::Modal;
 use crate::component::spinner::Spinner;
@@ -7,20 +7,21 @@ use crate::component::title::Title;
 use crate::component::{connect::ConnectLogin, social::*, toggle::Toggle};
 use crate::consts::{social, NSFW_TOGGLE_STORE};
 use crate::state::auth::account_connected_reader;
-use crate::state::canisters::authenticated_canisters;
+use crate::state::canisters::Canisters;
 use crate::state::content_seed_client::ContentSeedClient;
 use crate::utils::notifications::get_token_for_principal;
 use crate::utils::profile::ProfileDetails;
 use candid::Principal;
+use codee::string::FromToStringCodec;
 use leptos::html::Input;
 use leptos::*;
 use leptos_icons::*;
 use leptos_router::use_query_map;
+use leptos_use::storage::use_local_storage;
 use leptos_use::use_event_listener;
-use leptos_use::{storage::use_local_storage, utils::FromToStringCodec};
 
-#[derive(Clone, Default)]
-pub struct AuthorizedUserToSeedContent(RwSignal<Option<(Principal, bool)>>);
+#[derive(Default, Clone, Copy)]
+pub struct AuthorizedUserToSeedContent(pub RwSignal<Option<(bool, Principal)>>);
 
 #[component]
 fn MenuItem(
@@ -179,35 +180,6 @@ pub fn Menu() -> impl IntoView {
     let show_content_modal = create_rw_signal(false);
     let is_authorized_to_seed_content: AuthorizedUserToSeedContent = expect_context();
 
-    let can_res = authenticated_canisters();
-    let check_authorized_action = create_action(move |user_principal: &Principal| {
-        let user_principal = *user_principal;
-        async move {
-            let content_seed_client: ContentSeedClient = expect_context();
-            let res = content_seed_client
-                .check_if_authorized(user_principal)
-                .await
-                .ok()?;
-            is_authorized_to_seed_content
-                .0
-                .set(Some((user_principal, res)));
-            Some(())
-        }
-    });
-
-    create_effect(move |_| {
-        let canisters = can_res.get()?.ok()?;
-        let authorized_user_to_seed_content = is_authorized_to_seed_content.0.get_untracked();
-        match authorized_user_to_seed_content {
-            Some((user_principal, _)) if user_principal != canisters.user_principal() => {
-                check_authorized_action.dispatch(canisters.user_principal())
-            }
-            None => check_authorized_action.dispatch(canisters.user_principal()),
-            _ => {}
-        }
-        Some(())
-    });
-
     create_effect(move |_| {
         //check whether query param is right if right set the show_modal_content as true.
         let query_params = query_map.get();
@@ -218,29 +190,32 @@ pub fn Menu() -> impl IntoView {
         Some(())
     });
 
-    view! {
-        <Modal show=show_content_modal>
-            <Suspense fallback=|| {
-                view! { <Spinner/> }
-            }>
-                {move || {
-                    let authenticated_canister = can_res.get()?.ok()?;
-                    let authorized = is_authorized_to_seed_content.0.get()?.1;
-                    if !authorized {
-                        show_content_modal.set(false);
-                        return None;
-                    }
-                    Some(
-                        view! {
-                            <YoutubeUpload
-                                canisters=authenticated_canister.clone()
-                                url=query_map.get().0.get("text").cloned().unwrap_or_default()
-                            />
-                        },
-                    )
-                }}
+    let authorized_fetch = move |cans: Canisters<true>| async move {
+        let user_principal = cans.user_principal();
+        match is_authorized_to_seed_content.0.get_untracked() {
+            Some((auth, principal)) if principal == user_principal => return auth,
+            _ => (),
+        }
 
-            </Suspense>
+        let content_seed_client: ContentSeedClient = expect_context();
+
+        content_seed_client
+            .check_if_authorized(user_principal)
+            .await
+            .unwrap_or_default()
+    };
+
+    view! {
+        <WithAuthCans with=authorized_fetch let:authorized>
+            {is_authorized_to_seed_content.0.set(Some((authorized.1, authorized.0.user_principal())))}
+        </WithAuthCans>
+        <Modal show=show_content_modal>
+            <AuthCansProvider fallback=Spinner let:canisters>
+                <YoutubeUpload
+                    canisters
+                    url=query_map.get().0.get("text").cloned().unwrap_or_default()
+                />
+            </AuthCansProvider>
         </Modal>
         <div class="min-h-screen w-full flex flex-col text-white pt-2 pb-12 bg-black items-center divide-y divide-white/10">
             <div class="flex flex-col items-center w-full gap-20 pb-16">
@@ -263,10 +238,7 @@ pub fn Menu() -> impl IntoView {
                             {r#"Your Yral account has been setup. Login with Google to not lose progress."#}
                         </div>
                     </Show>
-                    <Show when=move || {
-                        is_authorized_to_seed_content.0.get().map(|auth| auth.1).unwrap_or(false)
-                            && is_connected.get()
-                    }>
+                    <Show when=move || is_authorized_to_seed_content.0.get().map(|(a, _)| a).unwrap_or_default() && is_connected()>
                         <div class="w-full px-8 md:w-4/12 xl:w-2/12">
                             <button
                                 class="font-bold rounded-full bg-primary-600 py-2 md:py-3 w-full text-center text-lg md:text-xl text-white"

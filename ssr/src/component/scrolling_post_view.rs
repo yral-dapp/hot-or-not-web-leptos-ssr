@@ -4,6 +4,7 @@ use leptos_use::{use_intersection_observer_with_options, UseIntersectionObserver
 
 use crate::page::post_view::video_loader::{BgView, VideoView};
 
+use crate::state::audio_state::AudioState;
 use crate::utils::posts::PostDetails;
 
 #[component]
@@ -14,8 +15,14 @@ pub fn ScrollingPostView<F: Fn() -> V + Clone + 'static, V, O: Fn() -> IV, IV: I
     recovering_state: RwSignal<bool>,
     queue_end: RwSignal<bool>,
     #[prop(optional)] overlay: Option<O>,
+    threshold_trigger_fetch: usize,
 ) -> impl IntoView {
-    let muted = create_rw_signal(true);
+    let AudioState {
+        muted,
+        show_mute_icon,
+        ..
+    } = AudioState::get();
+
     let scroll_root: NodeRef<html::Div> = create_node_ref();
 
     let var_name = view! {
@@ -48,7 +55,7 @@ pub fn ScrollingPostView<F: Fn() -> V + Clone + 'static, V, O: Fn() -> IV, IV: I
                                     return;
                                 }
                                 if video_queue.with_untracked(|q| q.len()).saturating_sub(queue_idx)
-                                    <= 10
+                                <= threshold_trigger_fetch
                                 {
                                     next_videos.as_ref().map(|nv| { nv() });
                                 }
@@ -74,7 +81,7 @@ pub fn ScrollingPostView<F: Fn() -> V + Clone + 'static, V, O: Fn() -> IV, IV: I
                             <div _ref=container_ref class="snap-always snap-end w-full h-full">
                                 <Show when=show_video>
                                     <BgView video_queue current_idx idx=queue_idx>
-                                        <VideoView video_queue current_idx idx=queue_idx muted/>
+                                        <VideoView video_queue current_idx idx=queue_idx muted />
                                     </BgView>
                                 </Show>
                             </div>
@@ -88,10 +95,10 @@ pub fn ScrollingPostView<F: Fn() -> V + Clone + 'static, V, O: Fn() -> IV, IV: I
                     </div>
                 </Show>
 
-                <Show when=muted>
+                <Show when=show_mute_icon>
                     <button
                         class="fixed top-1/2 left-1/2 z-20 cursor-pointer"
-                        on:click=move |_| muted.set(false)
+                        on:click=move |_| AudioState::toggle_mute()
                     >
                         <Icon
                             class="text-white/80 animate-ping text-4xl"

@@ -1,10 +1,11 @@
 use crate::{
-    component::{base_route::BaseRoute, logout::Logout, nav::NavBar},
+    component::{base_route::BaseRoute, nav::NavBar},
     error_template::{AppError, ErrorTemplate},
     page::{
         account_transfer::AccountTransfer,
         err::ServerErrorPage,
         leaderboard::Leaderboard,
+        logout::Logout,
         menu::{AuthorizedUserToSeedContent, Menu},
         post_view::{PostView, PostViewCtx},
         privacy::PrivacyPolicy,
@@ -16,7 +17,10 @@ use crate::{
         upload::UploadPostPage,
         wallet::{transactions::Transactions, Wallet},
     },
-    state::{canisters::Canisters, content_seed_client::ContentSeedClient, history::HistoryCtx},
+    state::{
+        audio_state::AudioState, canisters::Canisters, content_seed_client::ContentSeedClient,
+        history::HistoryCtx,
+    },
     utils::event_streaming::EventHistory,
 };
 use leptos::*;
@@ -27,7 +31,7 @@ use leptos_router::*;
 fn NotFound() -> impl IntoView {
     let mut outside_errors = Errors::default();
     outside_errors.insert_with_default_key(AppError::NotFound);
-    view! { <ErrorTemplate outside_errors/> }
+    view! { <ErrorTemplate outside_errors /> }
 }
 
 #[component(transparent)]
@@ -36,11 +40,11 @@ fn GoogleAuthRedirectHandlerRoute() -> impl IntoView {
     #[cfg(any(feature = "oauth-ssr", feature = "oauth-hydrate"))]
     {
         use crate::page::google_redirect::GoogleRedirectHandler;
-        view! { <Route path view=GoogleRedirectHandler/> }
+        view! { <Route path view=GoogleRedirectHandler /> }
     }
     #[cfg(not(any(feature = "oauth-ssr", feature = "oauth-hydrate")))]
     {
-        view! { <Route path view=NotFound/> }
+        view! { <Route path view=NotFound /> }
     }
 }
 
@@ -50,11 +54,11 @@ fn GoogleAuthRedirectorRoute() -> impl IntoView {
     #[cfg(any(feature = "oauth-ssr", feature = "oauth-hydrate"))]
     {
         use crate::page::google_redirect::GoogleRedirector;
-        view! { <Route path view=GoogleRedirector/> }
+        view! { <Route path view=GoogleRedirector /> }
     }
     #[cfg(not(any(feature = "oauth-ssr", feature = "oauth-hydrate")))]
     {
-        view! { <Route path view=NotFound/> }
+        view! { <Route path view=NotFound /> }
     }
 }
 
@@ -67,6 +71,13 @@ pub fn App() -> impl IntoView {
     provide_context(PostViewCtx::default());
     provide_context(ProfilePostsContext::default());
     provide_context(AuthorizedUserToSeedContent::default());
+    provide_context(AudioState::default());
+
+    #[cfg(feature = "hydrate")]
+    {
+        use crate::utils::ml_feed::ml_feed_grpcweb::MLFeed;
+        provide_context(MLFeed::default());
+    }
 
     // History Tracking
     let history_ctx = HistoryCtx::default();
@@ -86,12 +97,12 @@ pub fn App() -> impl IntoView {
     }
 
     view! {
-        <Stylesheet id="leptos" href="/pkg/hot-or-not-leptos-ssr.css"/>
+        <Stylesheet id="leptos" href="/pkg/hot-or-not-leptos-ssr.css" />
 
         // sets the document title
-        <Title text="Yral"/>
+        <Title text="Yral" />
 
-        <Link rel="manifest" href="/app.webmanifest"/>
+        <Link rel="manifest" href="/app.webmanifest" />
 
         // GA4 Global Site Tag (gtag.js) - Google Analytics
         // G-6W5Q2MRX0E to test locally | G-PLNNETMSLM
@@ -117,6 +128,7 @@ pub fn App() -> impl IntoView {
                     // auth redirect routes exist outside main context
                     <GoogleAuthRedirectHandlerRoute/>
                     <GoogleAuthRedirectorRoute/>
+                    <Route path="/" view=RootPage/>
                     <Route path="" view=BaseRoute>
                         <Route path="/hot-or-not/:canister_id/:post_id" view=PostView/>
                         <Route path="/profile/:canister_id/:post_id" view=ProfilePost/>
@@ -135,7 +147,6 @@ pub fn App() -> impl IntoView {
                         <Route path="/leaderboard" view=Leaderboard/>
                         <Route path="/account-transfer" view=AccountTransfer/>
                         <Route path="/logout" view=Logout/>
-                        <Route path="" view=RootPage/>
                     </Route>
                 </Routes>
 

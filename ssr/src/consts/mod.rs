@@ -23,6 +23,7 @@ pub static CF_BASE_URL: Lazy<Url> =
 pub const NOTIFICATIONS_ENABLED_STORE: &str = "yral-notifications-enabled";
 pub const NSFW_TOGGLE_STORE: &str = "nsfw-enabled";
 pub const REFERRER_STORE: &str = "referrer";
+pub const USER_CANISTER_ID_STORE: &str = "user-canister-id";
 
 pub static OFF_CHAIN_AGENT_GRPC_URL: Lazy<Url> =
     Lazy::new(|| Url::parse("https://icp-off-chain-agent.fly.dev:443").unwrap());
@@ -30,6 +31,7 @@ pub static OFF_CHAIN_AGENT_GRPC_URL: Lazy<Url> =
 pub static GTAG_MEASUREMENT_ID: Lazy<&str> = Lazy::new(|| "G-PLNNETMSLM");
 pub static DOWNLOAD_UPLOAD_SERVICE: Lazy<Url> =
     Lazy::new(|| Url::parse("https://download-upload-service.fly.dev").unwrap());
+pub const ML_FEED_GRPC_URL: &str = "https://yral-ml-feed-server.fly.dev:443";
 
 pub mod social {
     pub const TELEGRAM: &str = "https://t.me/+c-LTX0Cp-ENmMzI1";
