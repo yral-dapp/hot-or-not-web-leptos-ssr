@@ -13,6 +13,7 @@ pub mod privacy;
 pub mod profile;
 pub mod refer_earn;
 pub mod root;
+pub mod settings;
 pub mod terms;
 pub mod upload;
 pub mod wallet;

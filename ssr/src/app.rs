@@ -11,6 +11,7 @@ use crate::{
         profile::{profile_post::ProfilePost, ProfilePostsContext, ProfileView},
         refer_earn::ReferEarn,
         root::RootPage,
+        settings::Settings,
         terms::TermsOfService,
         upload::UploadPostPage,
         wallet::{transactions::Transactions, Wallet},
@@ -125,6 +126,7 @@ pub fn App() -> impl IntoView {
                         <Route path="/upload" view=UploadPostPage/>
                         <Route path="/error" view=ServerErrorPage/>
                         <Route path="/menu" view=Menu/>
+                        <Route path="/settings" view=Settings/>
                         <Route path="/refer-earn" view=ReferEarn/>
                         <Route path="/terms-of-service" view=TermsOfService/>
                         <Route path="/privacy-policy" view=PrivacyPolicy/>

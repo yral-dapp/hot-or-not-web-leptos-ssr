@@ -1,26 +1,16 @@
 use crate::component::back_btn::BackButton;
 use crate::component::canisters_prov::AuthCansProvider;
-use crate::component::content_upload::YoutubeUpload;
-use crate::component::modal::Modal;
-use crate::component::spinner::Spinner;
 use crate::component::title::Title;
-use crate::component::{connect::ConnectLogin, social::*, toggle::Toggle};
-use crate::consts::{social, NSFW_TOGGLE_STORE};
+use crate::component::{social::*, toggle::Toggle};
+use crate::consts::NOTIFICATIONS_ENABLED_STORE;
 use crate::state::auth::account_connected_reader;
-use crate::state::canisters::authenticated_canisters;
-use crate::state::content_seed_client::ContentSeedClient;
 use crate::utils::notifications::get_token_for_principal;
 use crate::utils::profile::ProfileDetails;
-use candid::Principal;
 use leptos::html::Input;
 use leptos::*;
 use leptos_icons::*;
-use leptos_router::use_query_map;
 use leptos_use::use_event_listener;
 use leptos_use::{storage::use_local_storage, utils::FromToStringCodec};
-
-#[derive(Clone, Default)]
-pub struct AuthorizedUserToSeedContent(RwSignal<Option<(Principal, bool)>>);
 
 #[component]
 fn MenuItem(
@@ -119,39 +109,22 @@ fn ProfileInfo() -> impl IntoView {
 }
 
 #[component]
-fn NsfwToggle() -> impl IntoView {
-    let (nsfw_enabled, set_nsfw_enabled, _) =
-        use_local_storage::<bool, FromToStringCodec>(NSFW_TOGGLE_STORE);
-    let toggle_ref = create_node_ref::<Input>();
-
-    _ = use_event_listener(toggle_ref, ev::change, move |_| {
-        set_nsfw_enabled(
-            toggle_ref
-                .get_untracked()
-                .map(|t| t.checked())
-                .unwrap_or_default(),
-        )
-    });
-
-    view! {
-        <div class="grid grid-cols-2 items-center w-full">
-            <div class="flex flex-row gap-4 items-center">
-                <Icon class="text-2xl" icon=icondata::BiShowAltRegular/>
-                <span>Show NSFW Videos</span>
-            </div>
-            <div class="justify-self-end">
-                <Toggle checked=nsfw_enabled node_ref=toggle_ref/>
-            </div>
-        </div>
-    }
-}
-
-#[component]
 fn EnableNotifications(user_details: ProfileDetails) -> impl IntoView {
     let (_, _) = account_connected_reader();
 
+    let (notifs_enabled, set_notifs_enabled, _) =
+        use_local_storage::<bool, FromToStringCodec>(NOTIFICATIONS_ENABLED_STORE);
+    let toggle_ref = create_node_ref::<Input>();
+
     let on_token_click = create_action(move |()| async move {
         get_token_for_principal(user_details.principal.to_string()).await;
+    });
+
+    _ = use_event_listener(toggle_ref, ev::change, move |_| {
+        if !notifs_enabled.get() {
+            on_token_click.dispatch(());
+        }
+        set_notifs_enabled(true)
     });
 
     view! {
@@ -161,149 +134,29 @@ fn EnableNotifications(user_details: ProfileDetails) -> impl IntoView {
                 <span>Enable Notifications</span>
             </div>
             <div class="justify-self-end">
-                <button
-                    class="p-2 bg-black rounded-md text-white"
-                    on:click=move |_| on_token_click.dispatch(())
-                >
-                    Enable
-                </button>
+                <Toggle checked=notifs_enabled node_ref=toggle_ref/>
             </div>
         </div>
     }
 }
 
 #[component]
-pub fn Menu() -> impl IntoView {
-    let (is_connected, _) = account_connected_reader();
-    let query_map = use_query_map();
-    let show_content_modal = create_rw_signal(false);
-    let is_authorized_to_seed_content: AuthorizedUserToSeedContent = expect_context();
-
-    let can_res = authenticated_canisters();
-    let check_authorized_action = create_action(move |user_principal: &Principal| {
-        let user_principal = *user_principal;
-        async move {
-            let content_seed_client: ContentSeedClient = expect_context();
-            let res = content_seed_client
-                .check_if_authorized(user_principal)
-                .await
-                .ok()?;
-            is_authorized_to_seed_content
-                .0
-                .set(Some((user_principal, res)));
-            Some(())
-        }
-    });
-
-    create_effect(move |_| {
-        let canisters = can_res.get()?.ok()?;
-        let authorized_user_to_seed_content = is_authorized_to_seed_content.0.get_untracked();
-        match authorized_user_to_seed_content {
-            Some((user_principal, _)) if user_principal != canisters.user_principal() => {
-                check_authorized_action.dispatch(canisters.user_principal())
-            }
-            None => check_authorized_action.dispatch(canisters.user_principal()),
-            _ => {}
-        }
-        Some(())
-    });
-
-    create_effect(move |_| {
-        //check whether query param is right if right set the show_modal_content as true.
-        let query_params = query_map.get();
-        let url = query_params.0.get("text")?;
-        if !url.is_empty() && is_connected.get() {
-            show_content_modal.set(true);
-        }
-        Some(())
-    });
-
+pub fn Settings() -> impl IntoView {
     view! {
-        <Modal show=show_content_modal>
-            <Suspense fallback=|| {
-                view! { <Spinner/> }
-            }>
-                {move || {
-                    let authenticated_canister = can_res.get()?.ok()?;
-                    let authorized = is_authorized_to_seed_content.0.get()?.1;
-                    if !authorized {
-                        show_content_modal.set(false);
-                        return None;
-                    }
-                    Some(
-                        view! {
-                            <YoutubeUpload
-                                canisters=authenticated_canister.clone()
-                                url=query_map.get().0.get("text").cloned().unwrap_or_default()
-                            />
-                        },
-                    )
-                }}
-
-            </Suspense>
-        </Modal>
         <div class="min-h-screen w-full flex flex-col text-white pt-2 pb-12 bg-black items-center divide-y divide-white/10">
             <div class="flex flex-col items-center w-full gap-20 pb-16">
                 <Title justify_center=false>
                     <div class="flex flex-row justify-between">
-                        <BackButton fallback="/".to_string()/>
-                        <span class="font-bold text-2xl">Menu</span>
+                        <BackButton fallback="/menu".to_string()/>
+                        <span class="font-bold text-2xl">Settings</span>
                         <div></div>
                     </div>
                 </Title>
-                <div class="flex flex-col items-center w-full gap-4">
-                    <div class="flex flex-row w-full max-w-lg justify-center gap-4 items-center px-4">
-                        <ProfileInfo/>
-                    </div>
-                    <Show when=move || !is_connected()>
-                        <div class="w-full px-8 md:w-4/12 xl:w-2/12">
-                            <ConnectLogin/>
-                        </div>
-                        <div class="w-full px-8 text-center text-sm font-sans">
-                            {r#"Your Yral account has been setup. Login with Google to not lose progress."#}
-                        </div>
-                    </Show>
-                    <Show when=move || {
-                        is_authorized_to_seed_content.0.get().map(|auth| auth.1).unwrap_or(false)
-                            && is_connected.get()
-                    }>
-                        <div class="w-full px-8 md:w-4/12 xl:w-2/12">
-                            <button
-                                class="font-bold rounded-full bg-primary-600 py-2 md:py-3 w-full text-center text-lg md:text-xl text-white"
-                                on:click=move |_| show_content_modal.set(true)
-                            >
-                                Upload Content
-                            </button>
-                        </div>
-                    </Show>
-
-                </div>
             </div>
             <div class="flex flex-col py-12 px-8 gap-8 w-full text-lg">
-                <NsfwToggle/>
-                <MenuItem
-                    href="/account-transfer"
-                    text="HotorNot Account Transfer"
-                    icon=icondata::FaMoneyBillTransferSolid
-                />
-                <MenuItem href="/refer-earn" text="Refer & Earn" icon=icondata::AiGiftFilled/>
-                <MenuItem
-                    href=social::TELEGRAM
-                    text="Talk to the team"
-                    icon=icondata::BiWhatsapp
-                    target="_blank"
-                />
-                <MenuItem href="/terms-of-service" text="Terms of Service" icon=icondata::TbBook2/>
-                <MenuItem href="/privacy-policy" text="Privacy Policy" icon=icondata::TbLock/>
-                <MenuItem
-                    href="/settings"
-                    text="Settings"
-                    icon=icondata::BiCogRegular
-                />
-                <Show when=is_connected>
-                    <MenuItem href="/logout" text="Logout" icon=icondata::FiLogOut/>
-                </Show>
-            // <MenuItem href="/install-app" text="Install App" icon=icondata::TbDownload/>
+                <AuthCansProvider let:canisters>
+                    <EnableNotifications user_details=canisters.profile_details()/>
+                </AuthCansProvider>
             </div>
             <MenuFooter/>
         </div>
