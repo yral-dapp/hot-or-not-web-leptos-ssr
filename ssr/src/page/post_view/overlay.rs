@@ -1,5 +1,8 @@
 use crate::{
-    component::{canisters_prov::WithAuthCans, modal::Modal, option::SelectOption},
+    component::{
+        canisters_prov::WithAuthCans, hn_icons::HomeFeedShareIcon, modal::Modal,
+        option::SelectOption,
+    },
     state::canisters::{auth_canisters_store, Canisters},
     utils::{
         event_streaming::events::{LikeVideo, ShareVideo},
@@ -88,14 +91,14 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
     let liking = like_toggle.pending();
 
     view! {
-        <div class="relative flex flex-col gap-1 items-center">
+        <div class="flex flex-col gap-1 items-center">
             <button
                 on:click=move |_| like_toggle.dispatch(())
                 disabled=move || liking() || liked.with(|l| l.is_none())
             >
                 <img src=icon_name style="width: 1em; height: 1em;"/>
             </button>
-            <span class="absolute -bottom-5 text-sm md:text-md">{likes}</span>
+            <span class="text-sm md:text-md">{likes}</span>
             <WithAuthCans with=liked_fetch let:d>
                 {move || {
                     likes.set(d.1.1);
@@ -179,7 +182,7 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
     });
 
     view! {
-        <div class="flex flex-col pointer-events-none flex-nowrap h-full justify-between pt-10 pb-20 px-2 md:px-6 w-full text-white absolute bottom-0 left-0 bg-transparent z-[4]">
+        <div class="flex flex-col pointer-events-none flex-nowrap h-full justify-between pt-5 pb-20 px-2 md:px-6 w-full text-white absolute bottom-0 left-0 bg-transparent z-[4]">
             <div class="flex pointer-events-auto flex-row gap-2 w-9/12 rounded-s-full bg-gradient-to-r from-black/25 via-80% via-black/10 items-center p-2">
                 <div class="w-fit flex">
                     <a
@@ -213,7 +216,7 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
                     </a>
                     <LikeAndAuthCanLoader post=post_c.clone() />
                     <button on:click=move |_| share()>
-                        <Icon class="drop-shadow-lg" icon=icondata::RiSendPlaneBusinessFill/>
+                        <Icon class="drop-shadow-lg" icon=HomeFeedShareIcon />
                     </button>
                 </div>
                 <div class="w-full bg-transparent pointer-events-auto">
