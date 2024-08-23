@@ -20,6 +20,7 @@ pub const CF_WATERMARK_UID: &str = "c094ef579b950a6a5ae3e482268b81ca";
 pub const ACCOUNT_CONNECTED_STORE: &str = "account-connected-1";
 pub static CF_BASE_URL: Lazy<Url> =
     Lazy::new(|| Url::parse("https://api.cloudflare.com/client/v4/").unwrap());
+pub const NOTIFICATIONS_ENABLED_STORE: &str = "yral-notifications-enabled";
 pub const NSFW_TOGGLE_STORE: &str = "nsfw-enabled";
 pub const REFERRER_STORE: &str = "referrer";
 pub const USER_CANISTER_ID_STORE: &str = "user-canister-id";

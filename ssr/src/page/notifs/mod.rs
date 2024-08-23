@@ -10,13 +10,6 @@ use crate::{
 fn NotifInnerComponent(details: ProfileDetails) -> impl IntoView {
     let (_, _) = account_connected_reader();
 
-    // let on_token_click = move || {
-    //     let _ = create_local_resource(
-    //         || (),
-    //         move |_| async move { get_token_for_principal(details.principal.to_string()).await },
-    //     );
-    // };
-
     let on_token_click = create_action(move |()| async move {
         get_token_for_principal(details.principal.to_string()).await;
     });
