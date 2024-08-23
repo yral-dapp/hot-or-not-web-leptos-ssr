@@ -356,7 +356,7 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
             }
             leptos::logging::log!("feed type: {:?}", res.res_type);
             if res.res_type == FeedResultType::PostCache {
-                fetch_cursor.try_update(|c| c.advance_and_set_limit(7)); // 30
+                fetch_cursor.try_update(|c| c.advance_and_set_limit(12)); // 30
             }
 
             if res.end || cnt >= 8 {

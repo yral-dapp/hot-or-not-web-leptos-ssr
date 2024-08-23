@@ -190,7 +190,7 @@ impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
 
         if video_queue.len() < 5 {
             //10
-            self.cursor.set_limit(5); //15
+            self.cursor.set_limit(10); //15
             self.fetch_post_uids_chunked(chunks, _allow_nsfw).await
         } else {
             let res = self
