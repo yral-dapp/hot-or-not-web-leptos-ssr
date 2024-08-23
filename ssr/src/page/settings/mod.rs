@@ -6,11 +6,12 @@ use crate::consts::NOTIFICATIONS_ENABLED_STORE;
 use crate::state::auth::account_connected_reader;
 use crate::utils::notifications::get_token_for_principal;
 use crate::utils::profile::ProfileDetails;
+use codee::string::FromToStringCodec;
 use leptos::html::Input;
 use leptos::*;
 use leptos_icons::*;
+use leptos_use::storage::use_local_storage;
 use leptos_use::use_event_listener;
-use leptos_use::{storage::use_local_storage, utils::FromToStringCodec};
 
 #[component]
 fn MenuItem(
