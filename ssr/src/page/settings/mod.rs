@@ -122,9 +122,7 @@ fn EnableNotifications(user_details: ProfileDetails) -> impl IntoView {
     });
 
     _ = use_event_listener(toggle_ref, ev::change, move |_| {
-        if !notifs_enabled.get() {
-            on_token_click.dispatch(());
-        }
+        on_token_click.dispatch(());
         set_notifs_enabled(true)
     });
 
