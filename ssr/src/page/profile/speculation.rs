@@ -75,7 +75,7 @@ pub fn FallbackUser() -> impl IntoView {
 
 #[component]
 fn BetTimer(details: BetDetails) -> impl IntoView {
-    let bet_duration = BetDetails::bet_duration().as_secs();
+    let bet_duration = details.bet_duration().as_secs();
     let time_remaining = create_rw_signal(details.time_remaining());
     _ = use_interval_fn(
         move || {
@@ -109,7 +109,7 @@ pub fn Speculation(details: BetDetails, _ref: NodeRef<html::Div>) -> impl IntoVi
     let profile_post_url = format!("/post/{}/{}", details.canister_id, details.post_id);
     let (bet_res, amt, icon) = match details.outcome {
         BetOutcome::Won(amt) => (
-            "YOU RECEIVED",
+            "RECEIVED",
             amt,
             view! {
                 <div class="flex w-full justify-center items-center text-white bg-primary-600 h-6 gap-0.5">
@@ -119,7 +119,7 @@ pub fn Speculation(details: BetDetails, _ref: NodeRef<html::Div>) -> impl IntoVi
             }.into_view(),
         ),
         BetOutcome::Draw(amt) => (
-            "YOU RECEIVED",
+            "RECEIVED",
             amt,
             view! {
                 <div class="flex w-full justify-center items-center bg-yellow-500 text-xs font-medium text-white h-6">
@@ -128,7 +128,7 @@ pub fn Speculation(details: BetDetails, _ref: NodeRef<html::Div>) -> impl IntoVi
             }.into_view(),
         ),
         BetOutcome::Lost => (
-            "YOUR BET",
+            "VOTE",
             details.bet_amount,
             view! {
                 <div class="flex w-full justify-center items-center h-6 bg-white text-black py-2 text-xs font-medium">
@@ -137,7 +137,7 @@ pub fn Speculation(details: BetDetails, _ref: NodeRef<html::Div>) -> impl IntoVi
             }.into_view(),
         ),
         BetOutcome::AwaitingResult => (
-            "YOUR BET",
+            "VOTE",
             details.bet_amount,
             view! {
                 <BetTimer details=details.clone()/>
@@ -215,7 +215,7 @@ pub fn ProfileSpeculations(user_canister: Principal) -> impl IntoView {
         .get_untracked()
         .starts_with("/your-profile")
     {
-        "You haven't placed any bets yet!"
+        "You haven't placed any votes yet!"
     } else {
         "Not played any games yet!"
     };

@@ -293,7 +293,7 @@ fn HNWonLost(participation: BetDetails) -> impl IntoView {
 
 #[component]
 fn BetTimer(participation: BetDetails, refetch_bet: Trigger) -> impl IntoView {
-    let bet_duration = BetDetails::bet_duration().as_secs();
+    let bet_duration = participation.bet_duration().as_secs();
     let time_remaining = create_rw_signal(participation.time_remaining());
     _ = use_interval_fn(
         move || {

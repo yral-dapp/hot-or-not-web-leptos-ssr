@@ -123,13 +123,13 @@ impl BetDetails {
         }
     }
 
-    pub const fn bet_duration() -> Duration {
-        // 1 hour + 5 minute overhead
-        Duration::from_secs(65 * 60)
+    pub fn bet_duration(&self) -> Duration {
+        // Bet duration + 5 minute overhead
+        Duration::from_secs(((self.slot_id as u64) * 60 * 60) + 5 * 60 * 60)
     }
 
     pub fn end_time(&self) -> Duration {
-        self.placed_at + Self::bet_duration()
+        self.placed_at + self.bet_duration()
     }
 
     pub fn time_remaining(&self) -> Duration {
