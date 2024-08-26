@@ -1,6 +1,6 @@
 use ic_agent::Identity;
 use leptos::html::Input;
-use leptos::{create_effect, ReadSignal, RwSignal, Signal, SignalGetUntracked};
+use leptos::{create_effect, ReadSignal, RwSignal, SignalGetUntracked};
 use leptos::{create_signal, ev, expect_context, html::Video, Memo, NodeRef, SignalGet, SignalSet};
 use leptos_use::use_event_listener;
 use serde_json::json;
