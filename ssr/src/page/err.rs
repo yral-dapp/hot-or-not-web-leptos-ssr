@@ -27,8 +27,13 @@ pub fn ServerErrorPage() -> impl IntoView {
             .unwrap_or_else(|_| "Server Error".to_string())
     });
 
+    let error_str = params
+        .get()
+        .map(|p| p.err.clone())
+        .unwrap_or_else(|_| "Server Error".to_string());
+
     let canister_store = auth_canisters_store();
-    ErrorEvent.send_event(error, canister_store);
+    ErrorEvent.send_event(error_str, canister_store);
 
     view! { <ErrorView error/> }
 }
