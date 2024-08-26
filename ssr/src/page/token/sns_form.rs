@@ -98,17 +98,17 @@ impl Default for SnsFormState {
             description: None,
             logo_b64: None,
             symbol: None,
-            transaction_fee: parse_tokens("10_000 e8s").unwrap(),
+            transaction_fee: parse_tokens("1 e8s").unwrap(),
             proposals: Proposals {
                 rejection_fee: parse_tokens("1 token").unwrap(),
                 initial_voting_period: parse_duration("4 days").unwrap(),
                 maximum_wait_for_quiet_deadline_extension: parse_duration("1 day").unwrap(),
             },
             neurons: Neurons {
-                minimum_creation_stake: parse_tokens("1 tokens").unwrap(),
+                minimum_creation_stake: parse_tokens("2 e8s").unwrap(),
             },
             voting: Voting {
-                minimum_dissolve_delay: parse_duration("1 day").unwrap(),
+                minimum_dissolve_delay: parse_duration("2 seconds").unwrap(),
                 maximum_voting_power_bonuses: MaximumVotingPowerBonuses {
                     dissolve_delay: Bonus {
                         duration: parse_duration("8 years").unwrap(),
@@ -127,16 +127,16 @@ impl Default for SnsFormState {
             },
             distribution: DistributionForm::default(),
             swap: Swap {
-                minimum_participants: 57,
-                minimum_direct_participation_icp: Some(parse_tokens("100_000 tokens").unwrap()),
-                maximum_direct_participation_icp: Some(parse_tokens("1_000_000 tokens").unwrap()),
-                minimum_participant_icp: parse_tokens("100 tokens").unwrap(),
-                maximum_participant_icp: parse_tokens("10_000 tokens").unwrap(),
-                duration: parse_duration("7 days").unwrap(),
+                minimum_participants: 1,
+                minimum_direct_participation_icp: Some(parse_tokens("15 e8s").unwrap()),
+                maximum_direct_participation_icp: Some(parse_tokens("1 tokens").unwrap()),
+                minimum_participant_icp: parse_tokens("2000 e8s").unwrap(),
+                maximum_participant_icp: parse_tokens("1 tokens").unwrap(),
+                duration: parse_duration("5 seconds").unwrap(),
                 neurons_fund_participation: Some(false),
                 vesting_schedule: VestingSchedule {
                     events: 2,
-                    interval: parse_duration("1 month").unwrap(),
+                    interval: parse_duration("5 seconds").unwrap(),
                 },
                 minimum_icp: None,
                 maximum_icp: None,

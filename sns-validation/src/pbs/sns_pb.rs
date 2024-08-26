@@ -163,8 +163,6 @@ pub struct SnsInitPayload {
     pub nns_proposal_id: ::core::option::Option<u64>,
     /// Whether or not the neurons' fund is participating
     pub neurons_fund_participation: ::core::option::Option<bool>,
-    /// The Neurons' Fund participants of this SNS decentralization swap.
-    pub neurons_fund_participants: ::core::option::Option<NeuronsFundParticipants>,
     /// The token_logo for the SNS project represented as a base64 encoded string.
     pub token_logo: ::core::option::Option<String>,
     /// Constraints for the Neurons' Fund participation in this swap. These constraints passed from

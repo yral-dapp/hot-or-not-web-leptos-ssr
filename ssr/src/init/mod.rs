@@ -118,23 +118,23 @@ impl AppStateBuilder {
     }
 
     async fn init_kv(&mut self) -> KVStoreImpl {
-        #[cfg(feature = "redis-kv")]
-        {
-            use crate::auth::server_impl::store::redis_kv::RedisKV;
-            let redis_url: String;
-            #[cfg(feature = "local-bin")]
-            {
-                self.containers.start_redis().await;
-                redis_url = "redis://127.0.0.1:6379".to_string();
-            }
-            #[cfg(not(feature = "local-bin"))]
-            {
-                redis_url = env::var("REDIS_URL").expect("`REDIS_URL` is required!");
-            }
-            KVStoreImpl::Redis(RedisKV::new(&redis_url).await.unwrap())
-        }
+        // #[cfg(feature = "redis-kv")]
+        // {
+        //     use crate::auth::server_impl::store::redis_kv::RedisKV;
+        //     let redis_url: String;
+        //     #[cfg(feature = "local-bin")]
+        //     {
+        //         // self.containers.start_redis().await;
+        //         redis_url = "redis://127.0.0.1:6379".to_string();
+        //     }
+        //     #[cfg(not(feature = "local-bin"))]
+        //     {
+        //         redis_url = env::var("REDIS_URL").expect("`REDIS_URL` is required!");
+        //     }
+        //     KVStoreImpl::Redis(RedisKV::new(&redis_url).await.unwrap())
+        // }
 
-        #[cfg(not(feature = "redis-kv"))]
+        // #[cfg(not(feature = "redis-kv"))]
         {
             use crate::auth::server_impl::store::redb_kv::ReDBKV;
             KVStoreImpl::ReDB(ReDBKV::new().expect("Failed to initialize ReDB"))
@@ -145,8 +145,8 @@ impl AppStateBuilder {
         let kv = self.init_kv().await;
         #[cfg(feature = "local-bin")]
         {
-            self.containers.start_backend().await;
-            self.containers.start_metadata().await;
+            // self.containers.start_backend().await;
+            // self.containers.start_metadata().await;
         }
 
         let app_state = AppState {

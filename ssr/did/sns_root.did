@@ -36,12 +36,15 @@ type DefiniteCanisterSettings = record {
   freezing_threshold : opt nat;
   controllers : vec principal;
   reserved_cycles_limit : opt nat;
+  log_visibility : opt LogVisibility;
+  wasm_memory_limit : opt nat;
   memory_allocation : opt nat;
   compute_allocation : opt nat;
 };
 type DefiniteCanisterSettingsArgs = record {
   freezing_threshold : nat;
   controllers : vec principal;
+  wasm_memory_limit : opt nat;
   memory_allocation : nat;
   compute_allocation : nat;
 };
@@ -68,11 +71,13 @@ type ListSnsCanistersResponse = record {
   dapps : vec principal;
   archives : vec principal;
 };
+type LogVisibility = variant { controllers; public };
 type ManageDappCanisterSettingsRequest = record {
   freezing_threshold : opt nat64;
   canister_ids : vec principal;
   reserved_cycles_limit : opt nat64;
   log_visibility : opt int32;
+  wasm_memory_limit : opt nat64;
   memory_allocation : opt nat64;
   compute_allocation : opt nat64;
 };
@@ -93,6 +98,7 @@ type SnsRootCanister = record {
   index_canister_id : opt principal;
   swap_canister_id : opt principal;
   ledger_canister_id : opt principal;
+  updated_framework_canisters_memory_limit : opt bool;
 };
 service : (SnsRootCanister) -> {
   canister_status : (CanisterIdRecord) -> (CanisterStatusResult);
