@@ -120,6 +120,7 @@ fn ProfilePostWithUpdates<const LIMIT: u64, VidStream: ProfVideoStream<LIMIT>>(
             recovering_state
             fetch_next_videos
             overlay
+            threshold_trigger_fetch=10
         />
     }
 }
