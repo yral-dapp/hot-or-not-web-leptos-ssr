@@ -677,7 +677,7 @@ impl LogoutConfirmation {
 pub struct ErrorEvent;
 
 impl ErrorEvent {
-    pub fn send_event(&self, error: Signal<String>, cans_store: RwSignal<Option<Canisters<true>>>) {
+    pub fn send_event(&self, error_str: String, cans_store: RwSignal<Option<Canisters<true>>>) {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
         {
             let event_history: EventHistory = expect_context();
@@ -693,7 +693,7 @@ impl ErrorEvent {
                 &json!({
                     "user_id": user_id,
                     "canister_id": canister_id,
-                    "description": error.get_untracked(),
+                    "description": error_str,
                     "previous_event": event_history.event_name.get_untracked(),
                 }),
             );
