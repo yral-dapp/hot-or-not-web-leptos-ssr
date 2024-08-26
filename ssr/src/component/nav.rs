@@ -127,36 +127,35 @@ pub fn NavBar() -> impl IntoView {
     };
 
     view! {
-        <div class=move || {
-            format!(
-                "flex flex-row justify-between px-6 py-2 w-full {} fixed left-0 bottom-0 z-50",
-                bg_color(),
-            )
-        }>
-            <NavIcon
-                idx=0
-                href=home_path
-                icon=HomeSymbol
-                filled_icon=HomeSymbolFilled
-                cur_selected=cur_selected
-            />
-             <NavIcon
-                idx=3
-                href="/wallet"
-                icon=WalletSymbol
-                filled_icon=WalletSymbolFilled
-                cur_selected=cur_selected
-            />
-            <UploadIcon idx=2 cur_selected/>
-            <NavIcon
-                idx=3
-                href=""
-                icon=ProfileIcon0
-
-                // filled_icon=ProfileIconFilled
-                cur_selected=cur_selected
-            />
-            <NavIcon idx=4 href="/menu" icon=MenuSymbol cur_selected=cur_selected/>
-        </div>
-    }
+            <div class=move || {
+                format!(
+                    "flex flex-row justify-between px-6 py-2 w-full {} fixed left-0 bottom-0 z-50",
+                    bg_color(),
+                )
+            }>
+                <NavIcon
+                    idx=0
+                    href=home_path
+                    icon=HomeSymbol
+                    filled_icon=HomeSymbolFilled
+                    cur_selected=cur_selected
+                />
+                 <NavIcon
+                    idx=3
+            href="/wallet"
+                    icon=WalletSymbol
+                    filled_icon=WalletSymbolFilled
+                    cur_selected=cur_selected
+                />
+                <UploadIcon idx=2 cur_selected/>
+                <NavIcon
+                    idx=3
+                    href=""
+                    icon=ProfileIcon0
+    // filled_icon=ProfileIconFilled
+                    cur_selected=cur_selected
+                />
+                <NavIcon idx=4 href="/menu" icon=MenuSymbol cur_selected=cur_selected/>
+            </div>
+        }
 }
