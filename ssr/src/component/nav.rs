@@ -140,13 +140,20 @@ pub fn NavBar() -> impl IntoView {
                 filled_icon=HomeSymbolFilled
                 cur_selected=cur_selected
             />
-            <TrophyIcon idx=1 cur_selected/>
-            <UploadIcon idx=2 cur_selected/>
-            <NavIcon
+             <NavIcon
                 idx=3
                 href="/wallet"
                 icon=WalletSymbol
                 filled_icon=WalletSymbolFilled
+                cur_selected=cur_selected
+            />
+            <UploadIcon idx=2 cur_selected/>
+            <NavIcon
+                idx=3
+                href=""
+                icon=ProfileIcon0
+
+                // filled_icon=ProfileIconFilled
                 cur_selected=cur_selected
             />
             <NavIcon idx=4 href="/menu" icon=MenuSymbol cur_selected=cur_selected/>
