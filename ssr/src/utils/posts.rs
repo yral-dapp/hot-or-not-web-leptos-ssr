@@ -1,5 +1,6 @@
 use candid::Principal;
 use serde::{Deserialize, Serialize};
+use web_time::Duration;
 
 use crate::{
     canister::individual_user_template::PostDetailsForFrontend, state::canisters::Canisters,
@@ -70,6 +71,7 @@ pub struct PostDetails {
     pub hastags: Vec<String>,
     pub is_nsfw: bool,
     pub hot_or_not_feed_ranking_score: Option<u64>,
+    pub created_at: Duration,
 }
 
 impl PostDetails {
@@ -97,7 +99,15 @@ impl PostDetails {
             hastags: details.hashtags,
             is_nsfw: details.is_nsfw,
             hot_or_not_feed_ranking_score: details.hot_or_not_feed_ranking_score,
+            created_at: Duration::new(
+                details.created_at.secs_since_epoch,
+                details.created_at.nanos_since_epoch,
+            ),
         }
+    }
+
+    pub fn is_hot_or_not(&self) -> bool {
+        self.hot_or_not_feed_ranking_score.is_some()
     }
 }
 
@@ -169,7 +179,7 @@ pub fn get_feed_component_identifier() -> impl Fn() -> Option<&'static str> {
         if loc == "localhost:3000"
             || loc == "hotornot.wtf"
             || loc.contains("go-bazzinga-hot-or-not-web-leptos-ssr.fly.dev")
-            || loc == "hot-or-not-web-leptos-ssr-staging.fly.dev"
+        // || loc == "hot-or-not-web-leptos-ssr-staging.fly.dev"
         {
             Some("PostViewWithUpdatesMLFeed")
         } else {

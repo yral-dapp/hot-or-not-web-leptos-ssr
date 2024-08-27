@@ -1,3 +1,5 @@
+use web_time::Duration;
+
 use candid::Principal;
 use ic_agent::AgentError;
 use leptos::{RwSignal, SignalUpdateUntracked};
@@ -13,7 +15,7 @@ use crate::{
     state::canisters::Canisters,
 };
 
-use super::posts::PostDetails;
+use super::{current_epoch, posts::PostDetails};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ProfileDetails {
@@ -77,7 +79,7 @@ pub fn propic_from_principal(principal: Principal) -> String {
     format!("{GOBGOB_PROPIC_URL}{}/public", index)
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Serialize, Deserialize)]
 pub enum BetOutcome {
     Won(u64),
     Draw(u64),
@@ -85,19 +87,55 @@ pub enum BetOutcome {
     AwaitingResult,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Serialize, Deserialize, PartialEq)]
 pub enum BetKind {
     Hot,
     Not,
 }
 
-#[derive(Clone)]
+impl From<BetKind> for BetDirection {
+    fn from(kind: BetKind) -> Self {
+        match kind {
+            BetKind::Hot => BetDirection::Hot,
+            BetKind::Not => BetDirection::Not,
+        }
+    }
+}
+
+#[derive(Clone, Serialize, Deserialize)]
 pub struct BetDetails {
     pub outcome: BetOutcome,
     pub post_id: u64,
     pub canister_id: Principal,
     pub bet_kind: BetKind,
     pub bet_amount: u64,
+    placed_at: Duration,
+    slot_id: u8,
+}
+
+impl BetDetails {
+    pub fn reward(&self) -> Option<u64> {
+        match self.outcome {
+            BetOutcome::Won(w) => Some(w),
+            BetOutcome::Draw(w) => Some(w),
+            BetOutcome::Lost => None,
+            BetOutcome::AwaitingResult => None,
+        }
+    }
+
+    pub fn bet_duration(&self) -> Duration {
+        // Bet duration + 5 minute overhead
+        Duration::from_secs(((self.slot_id as u64) * 60 * 60) + 5 * 60 * 60)
+    }
+
+    pub fn end_time(&self) -> Duration {
+        self.placed_at + self.bet_duration()
+    }
+
+    pub fn time_remaining(&self) -> Duration {
+        let end_time = self.end_time();
+        end_time.saturating_sub(current_epoch())
+    }
 }
 
 impl From<PlacedBetDetail> for BetDetails {
@@ -118,6 +156,11 @@ impl From<PlacedBetDetail> for BetDetails {
             canister_id: bet.canister_id,
             bet_kind,
             bet_amount: bet.amount_bet,
+            placed_at: Duration::new(
+                bet.bet_placed_at.secs_since_epoch,
+                bet.bet_placed_at.nanos_since_epoch,
+            ),
+            slot_id: bet.slot_id,
         }
     }
 }

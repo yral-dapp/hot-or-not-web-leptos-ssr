@@ -17,20 +17,19 @@ fn NavIcon(
                 when=move || cur_selected() == idx
                 fallback=move || {
                     view! {
-                        <div class="py-3">
-                            <Icon icon=icon class="text-white h-6 w-6"/>
+                        <div class="py-5">
+                            <Icon icon=icon class="text-white text-2xl md:text-3xl"/>
                         </div>
                     }
                 }
             >
 
-                <div class="py-3 border-t-2 border-t-pink-500">
+                <div class="py-5 border-t-2 border-t-pink-500">
                     <Icon
                         icon=filled_icon.unwrap_or(icon)
-                        class="text-white aspect-square h-6 w-6"
+                        class="text-white aspect-square text-2xl md:text-3xl"
                     />
                 </div>
-            // <div class="absolute bottom-0 bg-primary-600 py-1 w-6 blur-md"></div>
             </Show>
         </a>
     }
@@ -44,20 +43,19 @@ fn TrophyIcon(idx: usize, cur_selected: Memo<usize>) -> impl IntoView {
                 when=move || cur_selected() == idx
                 fallback=move || {
                     view! {
-                        <div class="py-3">
-                            <Icon icon=TrophySymbol class="text-white fill-none h-6 w-6"/>
+                        <div class="py-5">
+                            <Icon icon=TrophySymbol class="text-white fill-none text-2xl md:text-3xl"/>
                         </div>
                     }
                 }
             >
 
-                <div class="py-3 border-t-2 border-t-pink-500">
+                <div class="py-5 border-t-2 border-t-pink-500">
                     <Icon
                         icon=TrophySymbolFilled
-                        class="text-white fill-none aspect-square h-6 w-6"
+                        class="text-white fill-none aspect-square text-2xl md:text-3xl"
                     />
                 </div>
-            // <div class="absolute bottom-0 bg-primary-600 py-1 w-6 blur-md"></div>
             </Show>
         </a>
     }
@@ -66,7 +64,7 @@ fn TrophyIcon(idx: usize, cur_selected: Memo<usize>) -> impl IntoView {
 #[component]
 fn UploadIcon(idx: usize, cur_selected: Memo<usize>) -> impl IntoView {
     view! {
-        <a href="/upload" class="flex items-center justify-center rounded-fullt text-white">
+        <a href="/upload" class="flex items-center justify-center rounded-full text-white">
             <Show
                 when=move || cur_selected() == idx
                 fallback=move || {
@@ -112,27 +110,9 @@ pub fn NavBar() -> impl IntoView {
             _ => 4,
         }
     });
-    let bg_color = move || {
-        if cur_selected() == 0
-            || cur_location
-                .pathname
-                .get()
-                .as_str()
-                .starts_with("/your-profile")
-        {
-            "bg-transparent"
-        } else {
-            "bg-black"
-        }
-    };
 
     view! {
-        <div class=move || {
-            format!(
-                "flex flex-row justify-between px-6 py-2 w-full {} fixed left-0 bottom-0 z-50",
-                bg_color(),
-            )
-        }>
+        <div class="fixed z-50 bottom-0 left-0 flex flex-row justify-between px-6 items-center w-full bg-black/80">
             <NavIcon
                 idx=0
                 href=home_path
