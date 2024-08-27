@@ -64,13 +64,14 @@ pub fn send_event_warehouse(event_name: &str, params: &serde_json::Value) {
     use super::posts::get_host;
 
     let event_name = event_name.to_string();
-    let params_str = params.to_string();
 
-    if !params_str.contains("host") {
+    if params["host"].is_null() {
         let host_str = get_host();
         let mut params = params.clone();
         params["host"] = json!(host_str);
     }
+
+    let params_str = params.to_string();
 
     spawn_local(async move {
         stream_to_offchain_agent(event_name, params_str)
