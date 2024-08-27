@@ -66,7 +66,7 @@ pub fn send_event_warehouse(event_name: &str, params: &serde_json::Value) {
     let event_name = event_name.to_string();
     let params_str = params.to_string();
 
-    if params["host"].is_null() {
+    if !params_str.contains("host") {
         let host_str = get_host();
         let mut params = params.clone();
         params["host"] = json!(host_str);
