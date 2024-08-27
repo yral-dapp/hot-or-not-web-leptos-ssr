@@ -33,7 +33,9 @@ pub fn share_url(url: &str) -> Option<()> {
         if !Reflect::has(&nav, &JsValue::from_str("share")).unwrap_or_default() {
             return None;
         }
-        _ = nav.share_with_data(ShareData::new().url(url));
+        let share_data = ShareData::new();
+        share_data.set_url(url);
+        _ = nav.share_with_data(&share_data);
         Some(())
     }
 }
@@ -42,7 +44,7 @@ pub fn share_url(url: &str) -> Option<()> {
 /// returns None if the API is not available
 pub fn copy_to_clipboard(text: &str) -> Option<()> {
     let navigator = use_window().navigator()?;
-    _ = navigator.clipboard()?.write_text(text);
+    _ = navigator.clipboard().write_text(text);
     Some(())
 }
 
@@ -55,7 +57,7 @@ pub async fn paste_from_clipboard() -> Option<String> {
         use wasm_bindgen_futures::JsFuture;
 
         let navigator = use_window().navigator()?;
-        let text_prom = navigator.clipboard()?.read_text();
+        let text_prom = navigator.clipboard().read_text();
         let text_val = JsFuture::from(text_prom).await.ok()?;
         text_val.as_string()
     }

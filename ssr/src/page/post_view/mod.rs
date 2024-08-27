@@ -1,32 +1,29 @@
+mod bet;
 pub mod error;
 pub mod overlay;
+pub mod single_post;
 pub mod video_iter;
 pub mod video_loader;
-
-use candid::Principal;
-use futures::StreamExt;
-use leptos::*;
-use leptos_icons::*;
-use leptos_router::*;
-use leptos_use::{
-    storage::use_local_storage, use_debounce_fn, use_intersection_observer_with_options,
-    utils::FromToStringCodec, UseIntersectionObserverOptions,
-};
-
 use crate::{
+    abselector,
     component::{scrolling_post_view::ScrollingPostView, spinner::FullScreenSpinner},
     consts::NSFW_TOGGLE_STORE,
     state::canisters::{unauth_canisters, Canisters},
     try_or_redirect,
     utils::{
-        posts::{get_post_uid, FetchCursor, PostDetails},
+        ab_testing::ABComponent,
+        posts::{get_feed_component_identifier, get_post_uid, FetchCursor, PostDetails},
         route::failure_redirect,
     },
 };
-use video_iter::VideoFetchStream;
-use video_loader::{BgView, VideoView};
+use candid::Principal;
+use codee::string::FromToStringCodec;
+use futures::StreamExt;
+use leptos::*;
+use leptos_router::*;
+use leptos_use::{storage::use_local_storage, use_debounce_fn};
 
-use overlay::HomeButtonOverlay;
+use video_iter::{FeedResultType, VideoFetchStream};
 
 #[derive(Params, PartialEq, Clone, Copy)]
 struct PostParams {
@@ -46,115 +43,12 @@ pub struct PostViewCtx {
     queue_end: RwSignal<bool>,
 }
 
-// Infinite Scrolling View
-// Basically a virtual list with 5 items visible at a time
 #[component]
-pub fn ScrollingView<NV: Fn() -> NVR + Clone + 'static, NVR>(
-    next_videos: NV,
-    recovering_state: RwSignal<bool>,
+pub fn CommonPostViewWithUpdates(
+    initial_post: Option<PostDetails>,
+    fetch_video_action: Action<(), ()>,
+    threshold_trigger_fetch: usize,
 ) -> impl IntoView {
-    //TODO: take this as a parameter.
-    let PostViewCtx {
-        video_queue,
-        current_idx,
-        queue_end,
-        ..
-    } = expect_context();
-
-    let muted = create_rw_signal(true);
-    let scroll_root: NodeRef<html::Div> = create_node_ref::<html::Div>();
-
-    //LEARN: This creates scrolling view which will be used for intersection observer.
-
-    view! {
-        <div class="h-full w-full overflow-hidden overflow-y-auto">
-            <div
-                _ref=scroll_root
-                class="snap-mandatory snap-y overflow-y-scroll h-dvh w-dvw bg-black"
-                style:scroll-snap-points-y="repeat(100vh)"
-            >
-                <HomeButtonOverlay/>
-                <For
-                    each=move || video_queue().into_iter().enumerate()
-                    key=|(_, details)| (details.canister_id, details.post_id)
-                    children=move |(queue_idx, _details)| {
-                        let container_ref = create_node_ref::<html::Div>();
-                        let next_videos = next_videos.clone();
-                        use_intersection_observer_with_options(
-                            container_ref,
-                            move |entry, _| {
-                                let Some(visible) = entry
-                                    .first()
-                                    .filter(|entry| entry.is_intersecting()) else {
-                                    return;
-                                };
-                                let rect = visible.bounding_client_rect();
-                                if rect.y() == rect.height()
-                                    || queue_idx == current_idx.get_untracked()
-                                {
-                                    return;
-                                }
-                                if video_queue.with_untracked(|q| q.len()).saturating_sub(queue_idx)
-                                    <= 10
-                                {
-                                    next_videos();
-                                }
-                                current_idx.set(queue_idx);
-                            },
-                            UseIntersectionObserverOptions::default()
-                                .thresholds(vec![0.83])
-                                .root(Some(scroll_root)),
-                        );
-                        create_effect(move |_| {
-                            let Some(container) = container_ref() else {
-                                return;
-                            };
-                            if current_idx.get_untracked() == queue_idx
-                                && recovering_state.get_untracked()
-                            {
-                                container.scroll_into_view();
-                                recovering_state.set(false);
-                            }
-                        });
-                        let show_video = create_memo(move |_| {
-                            queue_idx.abs_diff(current_idx()) <= 20
-                        });
-                        view! {
-                            <div _ref=container_ref class="snap-always snap-end w-full h-full">
-                                <Show when=show_video>
-                                    <BgView video_queue current_idx idx=queue_idx>
-                                        <VideoView video_queue current_idx idx=queue_idx muted/>
-                                    </BgView>
-                                </Show>
-                            </div>
-                        }
-                    }
-                />
-
-                <Show when=queue_end>
-                    <div class="h-full w-full relative top-0 left-0 bg-inherit z-[21] flex snap-always snap-end justify-center items-center text-xl text-white/80">
-                        <span>You have reached the end!</span>
-                    </div>
-                </Show>
-
-                <Show when=muted>
-                    <button
-                        class="fixed top-1/2 left-1/2 z-20 cursor-pointer"
-                        on:click=move |_| muted.set(false)
-                    >
-                        <Icon
-                            class="text-white/80 animate-ping text-4xl"
-                            icon=icondata::BiVolumeMuteSolid
-                        />
-                    </button>
-                </Show>
-            </div>
-        </div>
-    }
-}
-
-#[component]
-pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
     let PostViewCtx {
         fetch_cursor,
         video_queue,
@@ -176,7 +70,7 @@ pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
         video_queue.update_untracked(|v| {
             if v.len() > 1 {
                 // Safe to do a GC here
-                let rem = 0..(current_idx.get_untracked().saturating_sub(3));
+                let rem = 0..(current_idx.get_untracked().saturating_sub(6));
                 current_idx.update(|c| *c -= rem.len());
                 v.drain(rem);
                 return;
@@ -184,47 +78,7 @@ pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
             *v = vec![initial_post];
         })
     }
-    let (nsfw_enabled, _, _) = use_local_storage::<bool, FromToStringCodec>(NSFW_TOGGLE_STORE);
-    let auth_canisters: RwSignal<Option<Canisters<true>>> = expect_context();
 
-    let fetch_video_action = create_action(move |_| async move {
-        loop {
-            let Some(cursor) = fetch_cursor.try_get_untracked() else {
-                return;
-            };
-            let auth_canisters = auth_canisters.get_untracked();
-            let nsfw_enabled = nsfw_enabled.get_untracked();
-            let unauth_canisters = unauth_canisters();
-
-            let chunks = if let Some(canisters) = auth_canisters.as_ref() {
-                let fetch_stream = VideoFetchStream::new(canisters, cursor);
-                fetch_stream.fetch_post_uids_chunked(3, nsfw_enabled).await
-            } else {
-                let fetch_stream = VideoFetchStream::new(&unauth_canisters, cursor);
-                fetch_stream.fetch_post_uids_chunked(3, nsfw_enabled).await
-            };
-
-            let res = try_or_redirect!(chunks);
-            let mut chunks = res.posts_stream;
-            let mut cnt = 0;
-            while let Some(chunk) = chunks.next().await {
-                cnt += chunk.len();
-                video_queue.try_update(|q| {
-                    for uid in chunk {
-                        let uid = try_or_redirect!(uid);
-                        q.push(uid);
-                    }
-                });
-            }
-            if res.end || cnt >= 8 {
-                queue_end.try_set(res.end);
-                break;
-            }
-            fetch_cursor.try_update(|c| c.advance());
-        }
-
-        fetch_cursor.try_update(|c| c.advance());
-    });
     create_effect(move |_| {
         if !recovering_state.get_untracked() {
             fetch_video_action.dispatch(());
@@ -264,7 +118,140 @@ pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
             recovering_state
             fetch_next_videos=next_videos
             queue_end
-            overlay=|| view! { <HomeButtonOverlay/> }
+            threshold_trigger_fetch
+        />
+    }
+}
+
+#[component]
+pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
+    let PostViewCtx {
+        fetch_cursor,
+        video_queue,
+        queue_end,
+        ..
+    } = expect_context();
+
+    let (nsfw_enabled, _, _) = use_local_storage::<bool, FromToStringCodec>(NSFW_TOGGLE_STORE);
+    let auth_canisters: RwSignal<Option<Canisters<true>>> = expect_context();
+
+    let fetch_video_action = create_action(move |_| async move {
+        loop {
+            let Some(cursor) = fetch_cursor.try_get_untracked() else {
+                return;
+            };
+            let Some(auth_canisters) = auth_canisters.try_get_untracked() else {
+                return;
+            };
+            let Some(nsfw_enabled) = nsfw_enabled.try_get_untracked() else {
+                return;
+            };
+            let unauth_canisters = unauth_canisters();
+
+            let chunks = if let Some(canisters) = auth_canisters.as_ref() {
+                let fetch_stream = VideoFetchStream::new(canisters, cursor);
+                fetch_stream.fetch_post_uids_chunked(3, nsfw_enabled).await
+            } else {
+                let fetch_stream = VideoFetchStream::new(&unauth_canisters, cursor);
+                fetch_stream.fetch_post_uids_chunked(3, nsfw_enabled).await
+            };
+
+            let res = try_or_redirect!(chunks);
+            let mut chunks = res.posts_stream;
+            let mut cnt = 0;
+            while let Some(chunk) = chunks.next().await {
+                cnt += chunk.len();
+                video_queue.try_update(|q| {
+                    for uid in chunk {
+                        let uid = try_or_redirect!(uid);
+                        q.push(uid);
+                    }
+                });
+            }
+            if res.end || cnt >= 8 {
+                queue_end.try_set(res.end);
+                break;
+            }
+            fetch_cursor.try_update(|c| c.advance());
+        }
+
+        fetch_cursor.try_update(|c| c.advance());
+    });
+
+    view! {
+        <CommonPostViewWithUpdates
+            initial_post
+            fetch_video_action
+            threshold_trigger_fetch=10
+        />
+    }
+}
+
+#[component]
+pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl IntoView {
+    let PostViewCtx {
+        fetch_cursor,
+        video_queue,
+        queue_end,
+        ..
+    } = expect_context();
+
+    let (nsfw_enabled, _, _) = use_local_storage::<bool, FromToStringCodec>(NSFW_TOGGLE_STORE);
+    let auth_canisters: RwSignal<Option<Canisters<true>>> = expect_context();
+
+    let fetch_video_action = create_action(move |_| async move {
+        loop {
+            let Some(mut cursor) = fetch_cursor.try_get_untracked() else {
+                return;
+            };
+            let Some(auth_canisters) = auth_canisters.try_get_untracked() else {
+                return;
+            };
+            let Some(nsfw_enabled) = nsfw_enabled.try_get_untracked() else {
+                return;
+            };
+            let unauth_canisters = unauth_canisters();
+
+            let chunks = if let Some(canisters) = auth_canisters.as_ref() {
+                let mut fetch_stream = VideoFetchStream::new(canisters, cursor);
+                fetch_stream
+                    .fetch_post_uids_hybrid(3, nsfw_enabled, video_queue.get_untracked())
+                    .await
+            } else {
+                cursor.set_limit(15);
+                let fetch_stream = VideoFetchStream::new(&unauth_canisters, cursor);
+                fetch_stream.fetch_post_uids_chunked(3, nsfw_enabled).await
+            };
+
+            let res = try_or_redirect!(chunks);
+            let mut chunks = res.posts_stream;
+            let mut cnt = 0;
+            while let Some(chunk) = chunks.next().await {
+                cnt += chunk.len();
+                video_queue.try_update(|q| {
+                    for uid in chunk {
+                        let uid = try_or_redirect!(uid);
+                        q.push(uid);
+                    }
+                });
+            }
+            leptos::logging::log!("feed type: {:?}", res.res_type);
+            if res.res_type == FeedResultType::PostCache {
+                fetch_cursor.try_update(|c| c.advance_and_set_limit(30));
+            }
+
+            if res.end || cnt >= 8 {
+                queue_end.try_set(res.end);
+                break;
+            }
+        }
+    });
+
+    view! {
+        <CommonPostViewWithUpdates
+            initial_post
+            fetch_video_action
+            threshold_trigger_fetch=20
         />
     }
 }
@@ -274,7 +261,7 @@ pub fn PostView() -> impl IntoView {
     let params = use_params::<PostParams>();
     let initial_canister_and_post = create_rw_signal(params.get_untracked().ok());
 
-    create_effect(move |_| {
+    create_isomorphic_effect(move |_| {
         if initial_canister_and_post.with_untracked(|p| p.is_some()) {
             return None;
         }
@@ -317,13 +304,23 @@ pub fn PostView() -> impl IntoView {
 
     view! {
         <Suspense fallback=FullScreenSpinner>
-            {move || {
+        {
+            let component_PostViewWithUpdatesMLFeed: ABComponent = Box::new(move || {
                 fetch_first_video_uid()
                     .and_then(|initial_post| {
                         let initial_post = initial_post.ok()?;
-                        Some(view! { <PostViewWithUpdates initial_post/> })
+                        Some(view! { <PostViewWithUpdatesMLFeed initial_post /> })
                     })
-            }}
+            });
+            let component_PostViewWithUpdates: ABComponent = Box::new(move || {
+                fetch_first_video_uid()
+                    .and_then(|initial_post| {
+                        let initial_post = initial_post.ok()?;
+                        Some(view! { <PostViewWithUpdates initial_post /> })
+                    })
+            });
+            abselector!(get_feed_component_identifier(), component_PostViewWithUpdatesMLFeed, component_PostViewWithUpdates)()
+        }
 
         </Suspense>
     }

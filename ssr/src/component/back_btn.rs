@@ -6,10 +6,17 @@ use reqwest::Url;
 
 use crate::state::history::HistoryCtx;
 
-#[component]
-pub fn BackButton(#[prop(into)] fallback: MaybeSignal<String>) -> impl IntoView {
-    let history_ctx = expect_context::<HistoryCtx>();
-    let go_back = Callback::new(move |_| {
+/// Go back or navigate to a fallback route
+/// does nothing in ssr mode
+/// ideal for calling from a button, for example
+pub fn go_back_or_fallback(fallback: &str) {
+    #[cfg(not(feature = "hydrate"))]
+    {
+        return;
+    }
+    #[cfg(feature = "hydrate")]
+    {
+        let history_ctx = expect_context::<HistoryCtx>();
         let win = window();
         let referrer = win
             .document()
@@ -25,12 +32,15 @@ pub fn BackButton(#[prop(into)] fallback: MaybeSignal<String>) -> impl IntoView 
             let history = BrowserHistory::new();
             history.back();
         } else {
-            use_navigate()(&fallback.get_untracked(), Default::default());
+            use_navigate()(fallback, Default::default());
         }
-    });
+    }
+}
 
+#[component]
+pub fn BackButton(#[prop(into)] fallback: MaybeSignal<String>) -> impl IntoView {
     view! {
-        <button on:click=go_back class="items-center">
+        <button on:click=move |_| go_back_or_fallback(&fallback.get_untracked()) class="items-center">
             <Icon icon=icondata::AiLeftOutlined/>
         </button>
     }

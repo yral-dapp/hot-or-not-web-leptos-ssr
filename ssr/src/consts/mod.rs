@@ -16,12 +16,14 @@ pub const FALLBACK_PROPIC_BASE: &str = "https://api.dicebear.com/7.x/big-smile/s
 // an example URL is "https://imagedelivery.net/abXI9nS4DYYtyR1yFFtziA/gob.5/public";
 pub const GOBGOB_PROPIC_URL: &str = "https://imagedelivery.net/abXI9nS4DYYtyR1yFFtziA/gob.";
 pub const GOBGOB_TOTAL_COUNT: u32 = 18557;
-pub const CF_WATERMARK_UID: &str = "c094ef579b950a6a5ae3e482268b81ca";
+pub const CF_WATERMARK_UID: &str = "b5588fa1516ca33a08ebfef06c8edb33";
 pub const ACCOUNT_CONNECTED_STORE: &str = "account-connected-1";
 pub static CF_BASE_URL: Lazy<Url> =
     Lazy::new(|| Url::parse("https://api.cloudflare.com/client/v4/").unwrap());
+pub const NOTIFICATIONS_ENABLED_STORE: &str = "yral-notifications-enabled";
 pub const NSFW_TOGGLE_STORE: &str = "nsfw-enabled";
 pub const REFERRER_STORE: &str = "referrer";
+pub const USER_CANISTER_ID_STORE: &str = "user-canister-id";
 
 pub static OFF_CHAIN_AGENT_GRPC_URL: Lazy<Url> =
     Lazy::new(|| Url::parse("https://icp-off-chain-agent.fly.dev:443").unwrap());
@@ -29,6 +31,7 @@ pub static OFF_CHAIN_AGENT_GRPC_URL: Lazy<Url> =
 pub static GTAG_MEASUREMENT_ID: Lazy<&str> = Lazy::new(|| "G-PLNNETMSLM");
 pub static DOWNLOAD_UPLOAD_SERVICE: Lazy<Url> =
     Lazy::new(|| Url::parse("https://download-upload-service.fly.dev").unwrap());
+pub const ML_FEED_GRPC_URL: &str = "https://yral-ml-feed-server.fly.dev:443";
 
 pub mod social {
     pub const TELEGRAM: &str = "https://t.me/+c-LTX0Cp-ENmMzI1";

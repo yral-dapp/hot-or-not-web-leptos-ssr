@@ -1,4 +1,6 @@
-use ic_agent::{agent::AgentBuilder, Agent};
+use std::sync::Arc;
+
+use ic_agent::{agent::AgentBuilder, Agent, Identity};
 
 use crate::consts::AGENT_URL;
 
@@ -22,5 +24,9 @@ impl AgentWrapper {
                 .expect("AGENT: fetch_root_key failed");
         }
         agent
+    }
+
+    pub fn set_arc_id(&mut self, id: Arc<impl Identity + 'static>) {
+        self.0.set_arc_identity(id);
     }
 }

@@ -1,15 +1,19 @@
 use serde::{Deserialize, Serialize};
 use web_time::{Duration, SystemTime};
 
+pub mod ab_testing;
 pub mod event_streaming;
 pub mod ic;
 pub mod icon;
+pub mod ml_feed;
+pub mod notifications;
 pub mod posts;
 pub mod profile;
 pub mod report;
 pub mod route;
 pub mod timestamp;
 pub mod token;
+pub mod types;
 pub mod user;
 pub mod web;
 
@@ -31,6 +35,7 @@ impl<T> PartialEq for MockPartialEq<T> {
     }
 }
 
+#[cfg(not(clippy))]
 #[cfg(all(feature = "ga4", feature = "ssr"))]
 pub mod off_chain {
     tonic::include_proto!("off_chain");

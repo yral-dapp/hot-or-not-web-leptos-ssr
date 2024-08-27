@@ -1,6 +1,7 @@
 use crate::{
     component::{
         canisters_prov::{with_cans, WithAuthCans},
+        hn_icons::HomeFeedShareIcon,
         modal::Modal,
         option::SelectOption,
     },
@@ -19,7 +20,7 @@ use leptos::*;
 use leptos_icons::*;
 use leptos_use::use_window;
 
-use super::video_iter::post_liked_by_me;
+use super::{bet::HNGameOverlay, video_iter::post_liked_by_me};
 
 #[component]
 fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
@@ -36,7 +37,7 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
 
     let post_canister = post.canister_id;
     let post_id = post.post_id;
-    let initial_liked = post.liked_by_user;
+    let initial_liked = (post.liked_by_user, post.likes);
     let canisters = auth_canisters_store();
 
     let like_toggle = create_action(move |&()| {
@@ -74,15 +75,15 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
     });
 
     let liked_fetch = with_cans(move |cans: Canisters<true>| async move {
-        if let Some(liked) = initial_liked {
-            return liked;
+        if let Some(liked) = initial_liked.0 {
+            return (liked, initial_liked.1);
         }
 
         match post_liked_by_me(&cans, post_canister, post_id).await {
             Ok(liked) => liked,
             Err(e) => {
                 failure_redirect(e);
-                false
+                (false, likes.try_get_untracked().unwrap_or_default())
             }
         }
     });
@@ -90,18 +91,23 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
     let liking = like_toggle.pending();
 
     view! {
-        <div class="relative flex flex-col gap-1 items-center">
+        <div class="flex flex-col gap-1 items-center">
             <button
                 on:click=move |_| like_toggle.dispatch(())
                 disabled=move || liking() || liked.with(|l| l.is_none())
             >
                 <img src=icon_name style="width: 1em; height: 1em;"/>
             </button>
-            <span class="absolute -bottom-5 text-sm md:text-md">{likes}</span>
+            <span class="text-sm md:text-md">{likes}</span>
+            <WithAuthCans with=liked_fetch let:d>
+                {move || {
+                    likes.set(d.1.1);
+                    liked.set(Some(d.1.0))
+                }}
+
+            </WithAuthCans>
         </div>
-        <WithAuthCans with=liked_fetch let:d>
-            {move || liked.set(Some(d.1))}
-        </WithAuthCans>
+
     }
 }
 
@@ -176,38 +182,46 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
     });
 
     view! {
-        <div class="flex flex-row flex-nowrap justify-between items-end pb-20 px-2 md:px-6 w-full text-white absolute bottom-0 left-0 bg-transparent z-[4]">
-            <div class="flex flex-col gap-2 w-9/12">
-                <div class="flex flex-row items-center gap-2 min-w-0">
+        <div class="flex flex-col pointer-events-none flex-nowrap h-full justify-between pt-5 pb-20 px-2 md:px-6 w-full text-white absolute bottom-0 left-0 bg-transparent z-[4]">
+            <div class="flex pointer-events-auto flex-row gap-2 w-9/12 rounded-s-full bg-gradient-to-r from-black/25 via-80% via-black/10 items-center p-2">
+                <div class="w-fit flex">
                     <a
                         href=profile_url
-                        class="w-10 md:w-12 h-10 md:h-12 overflow-clip rounded-full border-white border-2"
+                        class="w-10 md:w-12 h-10 md:h-12 overflow-clip rounded-full border-primary-600 border-2"
                     >
                         <img class="h-full w-full object-cover" src=post.propic_url/>
                     </a>
-                    <div class="flex flex-col w-7/12">
-                        <span class="text-md md:text-lg font-bold truncate">
+                </div>
+                <div class="flex flex-col justify-center min-w-0">
+                    <div class="flex flex-row text-xs md:text-sm lg:text-base gap-1">
+                        <span class="font-semibold truncate">
                             {post.display_name}
                         </span>
-                        <span class="flex flex-row gap-1 items-center text-sm md:text-md">
-                            <Icon icon=icondata::AiEyeOutlined/>
+                        <span class="font-semibold">"|"</span>
+                        <span class="flex flex-row gap-1 items-center">
+                            <Icon class="text-sm md:text-base lg:text-lg" icon=icondata::AiEyeOutlined/>
                             {post.views}
                         </span>
                     </div>
+                    <ExpandableText description=post.description/>
                 </div>
-                <ExpandableText description=post.description/>
             </div>
-            <div class="flex flex-col gap-8 pb-10 items-end w-3/12 text-4xl">
-                <button on:click=move |_| show_report.set(true)>
-                    <Icon class="drop-shadow-lg" icon=icondata::TbMessageReport/>
-                </button>
-                <a href="/refer-earn">
-                    <Icon class="drop-shadow-lg" icon=icondata::AiGiftFilled/>
-                </a>
-                <LikeAndAuthCanLoader post=post_c/>
-                <button on:click=move |_| share()>
-                    <Icon class="drop-shadow-lg" icon=icondata::RiSendPlaneBusinessFill/>
-                </button>
+            <div class="flex flex-col gap-2 w-full">
+                <div class="flex flex-col pointer-events-auto gap-6 self-end items-end text-2xl md:text-3xl lg:text-4xl">
+                    <button on:click=move |_| show_report.set(true)>
+                        <Icon class="drop-shadow-lg" icon=icondata::TbMessageReport/>
+                    </button>
+                    <a href="/refer-earn">
+                        <Icon class="drop-shadow-lg" icon=icondata::AiGiftFilled/>
+                    </a>
+                    <LikeAndAuthCanLoader post=post_c.clone() />
+                    <button on:click=move |_| share()>
+                        <Icon class="drop-shadow-lg" icon=HomeFeedShareIcon />
+                    </button>
+                </div>
+                <div class="w-full bg-transparent pointer-events-auto">
+                    <HNGameOverlay post=post_c />
+                </div>
             </div>
         </div>
         <Modal show=show_share>
@@ -280,29 +294,12 @@ fn ExpandableText(description: String) -> impl IntoView {
 
     view! {
         <span
-            class="text-sm md:text-md ms-2 md:ms-4 w-full"
+            class="text-xs md:text-sm lg:text-base w-full"
             class:truncate=truncated
 
             on:click=move |_| truncated.update(|e| *e = !*e)
         >
             {description}
         </span>
-    }
-}
-
-#[component]
-pub fn HomeButtonOverlay() -> impl IntoView {
-    view! {
-        <div class="flex w-full items-center justify-center pt-4 absolute top-0 left-0 bg-transparent z-[4]">
-            // <div class="flex justify-center items-center">
-            // <img src="/img/yral-logo.svg" alt="Logo"/>
-            // </div>
-            <div class="rounded-full p-2 text-white bg-black/20">
-                <div class="flex flex-row items-center gap-1 py-2 px-6 rounded-full">
-                    // <Icon class="w-3 h-3" icon=HomeSymbolFilled/>
-                    <span class="font-sans font-semibold">Home Feed</span>
-                </div>
-            </div>
-        </div>
     }
 }

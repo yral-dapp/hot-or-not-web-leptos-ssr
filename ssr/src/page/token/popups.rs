@@ -2,12 +2,9 @@ use leptos::*;
 use leptos_icons::*;
 
 use crate::{
-    component::{
-        overlay::PopupOverlay, token_confetti_symbol::TokenConfettiSymbol,
-    },
+    component::{overlay::PopupOverlay, token_confetti_symbol::TokenConfettiSymbol},
     state::canisters::auth_canisters_store,
 };
-
 
 #[component]
 fn SuccessPopup(token_name: MaybeSignal<String>) -> impl IntoView {

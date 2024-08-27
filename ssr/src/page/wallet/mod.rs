@@ -19,14 +19,15 @@ use txn::{provider::get_history_provider, TxnView};
 
 #[component]
 fn ProfileGreeter(details: ProfileDetails) -> impl IntoView {
-    let (is_connected, _) = account_connected_reader();
+    // let (is_connected, _) = account_connected_reader();
 
     view! {
         <div class="flex flex-col">
             <span class="text-white/50 text-md">Welcome!</span>
             <span
                 class="text-white text-lg md:text-xl truncate"
-                class=("md:w-5/12", move || !is_connected())
+                // TEMP: Workaround for hydration bug until leptos 0.7
+                // class=("md:w-5/12", move || !is_connected())
             >
                 {details.display_name_or_fallback()}
             </span>
@@ -53,30 +54,6 @@ const RECENT_TXN_CNT: usize = 10;
 #[component]
 fn BalanceFallback() -> impl IntoView {
     view! { <div class="w-1/4 rounded-full py-3 mt-1 bg-white/30 animate-pulse"></div> }
-}
-
-#[component]
-fn BalanceFetch(cans: Canisters<true>) -> impl IntoView {
-    let balance_resource = create_resource(
-        || (),
-        move |_| {
-            let canisters = cans.clone();
-            async move {
-                let user = canisters.authenticated_user().await;
-
-                user.get_utility_token_balance()
-                    .await
-                    .map(|b| b.to_string())
-                    .unwrap_or("Error".to_string())
-            }
-        },
-    );
-
-    view! {
-        {move || {
-            balance_resource().map(|bal| view! { <span class="text-xl lg:text-2xl">{bal}</span> })
-        }}
-    }
 }
 
 #[component]
@@ -123,7 +100,7 @@ pub fn Wallet() -> impl IntoView {
                 <div class="flex flex-col w-full items-center mt-6 text-white">
                     <span class="text-md lg:text-lg uppercase">Your Coyns Balance</span>
                     <WithAuthCans fallback=BalanceFallback with=balance_fetch let:bal>
-                        <span class="text-xl lg:text-2xl">{bal.1}</span>
+                        <div class="text-xl lg:text-2xl">{bal.1}</div>
                     </WithAuthCans>
                 </div>
                 <Show when=move || !is_connected()>

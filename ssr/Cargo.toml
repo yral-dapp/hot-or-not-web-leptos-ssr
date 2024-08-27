@@ -16,10 +16,13 @@ leptos_meta = { version = "0.6", features = ["nightly"] }
 leptos_router = { version = "0.6", features = ["nightly"] }
 log = "0.4"
 simple_logger = "4.0"
-tokio = { version = "1", optional = true, features = ["rt-multi-thread", "signal"] }
+tokio = { version = "1", optional = true, features = [
+    "rt-multi-thread",
+    "signal",
+] }
 tower = { version = "0.4", optional = true }
 tower-http = { version = "0.5", features = ["fs"], optional = true }
-wasm-bindgen = "=0.2.92"
+wasm-bindgen = "=0.2.93"
 thiserror = "1.0"
 tracing = { version = "0.1.37", optional = true }
 http = "1.1.0"
@@ -29,9 +32,10 @@ ic-agent = { version = "0.36.0", default-features = false, features = [
     "pem",
     "reqwest",
 ] }
-serde-wasm-bindgen = { version = "0.6.3" }
+serde-wasm-bindgen = "0.6.5"
 futures = "0.3.30"
-leptos-use = { version = "0.10.5", features = ["serde"] }
+leptos-use = "0.12.0"
+codee = { version = "0.1.2", features = ["json_serde"] }
 reqwest = { version = "0.12", default-features = false, features = [
     "json",
     "http2",
@@ -90,10 +94,25 @@ tonic = { version = "0.11.0", features = [
 ], optional = true }
 prost = { version = "0.12.4", optional = true }
 hmac = { version = "0.12.1", optional = true }
-wasm-bindgen-futures = { version = "0.4.42", optional = true }
+wasm-bindgen-futures = { version = "0.4.42" }
 testcontainers = { version = "0.20.0", optional = true }
 yral-testcontainers = { git = "https://github.com/go-bazzinga/yral-testcontainers", rev = "f9d2c01c498d58fca0595a48bdc3f9400e57ec2f", optional = true }
 sns-validation.workspace = true
+js-sys = "0.3.69"
+tonic-web-wasm-client = { version = "0.6" }
+
+[dependencies.tonic_2]
+package = "tonic"
+version = "0.12.0"
+optional = true
+default-features = false
+features = ["prost", "codegen"]
+
+
+[dependencies.prost_2]
+package = "prost"
+version = "0.13.0"
+optional = true
 
 [build-dependencies]
 serde = { version = "1.0", features = ["derive"] }
@@ -102,6 +121,12 @@ serde_json = "1.0.110"
 convert_case = "0.6.0"
 tonic-build = "0.11.0"
 anyhow = "1.0.86"
+
+[build-dependencies.tonic_build_2]
+package = "tonic-build"
+version = "=0.12.0"
+default-features = false
+features = ["prost"]
 
 [features]
 hydrate = [
@@ -112,7 +137,8 @@ hydrate = [
     "dep:web-sys",
     "reqwest/native-tls",
     "dep:rand_chacha",
-    "dep:wasm-bindgen-futures"
+    "tonic_2",
+    "prost_2",
 ]
 ssr = [
     "dep:axum",
@@ -178,12 +204,7 @@ local-bin = [
     "dep:testcontainers",
     "dep:yral-testcontainers",
 ]
-local-lib = [
-    "hydrate",
-    "redis-kv",
-    "local-auth",
-    "backend-admin",
-]
+local-lib = ["hydrate", "redis-kv", "local-auth", "backend-admin"]
 
 [package.metadata.leptos]
 # The name used by wasm-bindgen/cargo-leptos for the JS/WASM bundle. Defaults to the crate name
@@ -208,7 +229,7 @@ tailwind-config-file = "tailwind.config.js"
 # Enables additional file hashes on outputted css, js, and wasm files
 #
 # Optional: Defaults to false. Can also be set with the LEPTOS_HASH_FILES=false env var
-hash-files = true
+hash-files = false
 
 # Assets source dir. All files found here will be copied and synchronized to site-root.
 # The assets-dir cannot have a sub directory with the same name/path as site-pkg-dir.
@@ -240,7 +261,7 @@ env = "DEV"
 # The features to use when compiling the bin target
 #
 # Optional. Can be over-ridden with the command line parameter --bin-features
-bin-features = ["ssr","local-auth"]
+bin-features = ["ssr", "local-auth"]
 
 # If the --no-default-features flag should be used when compiling the bin target
 #
