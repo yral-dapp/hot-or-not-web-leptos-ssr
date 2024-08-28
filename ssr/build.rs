@@ -139,7 +139,7 @@ mod build_common {
         out_dir = out_dir.join("grpc-web");
         fs::create_dir_all(&out_dir)?;
 
-        tonic_build_2::configure()
+        tonic_build::configure()
             .build_client(true)
             .build_server(false)
             .out_dir(out_dir)
