@@ -13,8 +13,8 @@ use crate::{
 pub fn ProfileStream<Prov, EF, N>(
     provider: Prov,
     children: EF,
-    #[prop(optional)] empty_graphic: Option<icondata::Icon>,
-    #[prop(optional)] empty_text: String,
+    empty_graphic: icondata::Icon,
+    #[prop(into)] empty_text: String,
 ) -> impl IntoView
 where
     Prov: CursoredDataProvider + Clone + 'static,
@@ -30,7 +30,7 @@ where
                 empty_content=move || {
                     view! {
                         <div class="flex flex-col pt-9 gap-2 w-full justify-center items-center">
-                            <Icon class="w-36 h-36" icon=empty_graphic.unwrap()/>
+                            <Icon class="w-36 h-36" icon=empty_graphic/>
                             <span class="text-lg text-white">{empty_text.clone()}</span>
                         </div>
                     }
