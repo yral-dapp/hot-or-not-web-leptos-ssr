@@ -82,10 +82,13 @@ fn init_google_oauth() -> crate::auth::core_clients::CoreClients {
 #[cfg(feature = "ga4")]
 async fn init_grpc_offchain_channel() -> tonic::transport::Channel {
     use crate::consts::OFF_CHAIN_AGENT_GRPC_URL;
-    use tonic::transport::Channel;
+    use tonic::transport::{Channel, ClientTlsConfig};
 
+    let tls_config = ClientTlsConfig::new().with_webpki_roots();
     let off_chain_agent_url = OFF_CHAIN_AGENT_GRPC_URL.as_ref();
     Channel::from_static(off_chain_agent_url)
+        .tls_config(tls_config)
+        .expect("Couldn't update TLS config for off-chain agent")
         .connect()
         .await
         .expect("Couldn't connect to off-chain agent")
