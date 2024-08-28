@@ -34,7 +34,6 @@ impl<T> PartialEq for MockPartialEq<T> {
     }
 }
 
-#[cfg(not(clippy))]
 #[cfg(all(feature = "ga4", feature = "ssr"))]
 pub mod off_chain {
     tonic::include_proto!("off_chain");

@@ -37,7 +37,7 @@ pub mod ml_feed_grpcweb {
             canister_id: &Principal,
             limit: u32,
             filter_list: Vec<PostDetails>,
-        ) -> Result<Vec<PostId>, tonic_2::Status> {
+        ) -> Result<Vec<PostId>, tonic::Status> {
             let request = FeedRequest {
                 canister_id: canister_id.to_string(),
                 filter_posts: filter_list
@@ -52,8 +52,8 @@ pub mod ml_feed_grpcweb {
             };
 
             let response = self.client.get_feed(request).await.map_err(|e| {
-                tonic_2::Status::new(
-                    tonic_2::Code::Internal,
+                tonic::Status::new(
+                    tonic::Code::Internal,
                     format!("Error fetching posts: {:?}", e),
                 )
             })?;
@@ -78,12 +78,10 @@ pub mod ml_feed_grpc {
     use super::*;
     use crate::utils::posts::PostDetails;
 
-    #[cfg(not(clippy))]
     pub mod ml_feed_proto {
         tonic::include_proto!("ml_feed");
     }
 
-    #[cfg(not(clippy))]
     pub async fn get_start_feed(
         canister_id: &Principal,
         limit: u32,
@@ -134,15 +132,5 @@ pub mod ml_feed_grpc {
                 )
             })
             .collect())
-    }
-
-    // empty function
-    #[cfg(clippy)]
-    pub async fn get_start_feed(
-        _canister_id: &Principal,
-        _limit: u32,
-        _filter_list: Vec<PostDetails>,
-    ) -> Result<Vec<PostId>, tonic::Status> {
-        Ok(vec![])
     }
 }
