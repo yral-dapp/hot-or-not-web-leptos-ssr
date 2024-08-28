@@ -88,7 +88,7 @@ fn UploadIcon(idx: usize, cur_selected: Memo<usize>) -> impl IntoView {
         </a>
     }
 }
-
+// check
 #[component]
 pub fn NavBar() -> impl IntoView {
     let cur_location = use_location();
