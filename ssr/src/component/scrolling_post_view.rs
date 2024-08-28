@@ -2,19 +2,36 @@ use leptos::*;
 use leptos_icons::*;
 use leptos_use::{use_intersection_observer_with_options, UseIntersectionObserverOptions};
 
-use crate::page::post_view::video_loader::{BgView, VideoView};
+use crate::page::post_view::video_loader::{BgView, VideoViewForQueue};
 
 use crate::state::audio_state::AudioState;
 use crate::utils::posts::PostDetails;
 
 #[component]
-pub fn ScrollingPostView<F: Fn() -> V + Clone + 'static, V, O: Fn() -> IV, IV: IntoView>(
+pub fn MuteIconOverlay(show_mute_icon: RwSignal<bool>) -> impl IntoView {
+    view! {
+        <Show when=show_mute_icon>
+            <button
+                class="fixed top-1/2 left-1/2 z-20 cursor-pointer pointer-events-none"
+                on:click=move |_| AudioState::toggle_mute()
+            >
+                <Icon
+                    class="text-white/80 animate-ping text-4xl"
+                    icon=icondata::BiVolumeMuteSolid
+                />
+            </button>
+        </Show>
+    }
+}
+
+#[component]
+pub fn ScrollingPostView<F: Fn() -> V + Clone + 'static, V>(
     video_queue: RwSignal<Vec<PostDetails>>,
     current_idx: RwSignal<usize>,
     #[prop(optional)] fetch_next_videos: Option<F>,
     recovering_state: RwSignal<bool>,
     queue_end: RwSignal<bool>,
-    #[prop(optional)] overlay: Option<O>,
+    #[prop(optional, into)] overlay: Option<ViewFn>,
     threshold_trigger_fetch: usize,
 ) -> impl IntoView {
     let AudioState {
@@ -33,7 +50,7 @@ pub fn ScrollingPostView<F: Fn() -> V + Clone + 'static, V, O: Fn() -> IV, IV: I
                 style:scroll-snap-points-y="repeat(100vh)"
             >
 
-                {overlay.map(|o| o())}
+                {overlay.map(|o| o.run())}
 
                 <For
                     each=move || video_queue().into_iter().enumerate()
@@ -81,7 +98,7 @@ pub fn ScrollingPostView<F: Fn() -> V + Clone + 'static, V, O: Fn() -> IV, IV: I
                             <div _ref=container_ref class="snap-always snap-end w-full h-full">
                                 <Show when=show_video>
                                     <BgView video_queue current_idx idx=queue_idx>
-                                        <VideoView video_queue current_idx idx=queue_idx muted />
+                                        <VideoViewForQueue video_queue current_idx idx=queue_idx muted />
                                     </BgView>
                                 </Show>
                             </div>
@@ -95,17 +112,7 @@ pub fn ScrollingPostView<F: Fn() -> V + Clone + 'static, V, O: Fn() -> IV, IV: I
                     </div>
                 </Show>
 
-                <Show when=show_mute_icon>
-                    <button
-                        class="fixed top-1/2 left-1/2 z-20 cursor-pointer"
-                        on:click=move |_| AudioState::toggle_mute()
-                    >
-                        <Icon
-                            class="text-white/80 animate-ping text-4xl"
-                            icon=icondata::BiVolumeMuteSolid
-                        />
-                    </button>
-                </Show>
+                <MuteIconOverlay show_mute_icon/>
             </div>
         </div>
     };
