@@ -97,64 +97,79 @@ pub fn App() -> impl IntoView {
     }
 
     view! {
-        <Stylesheet id="leptos" href="/pkg/hot-or-not-leptos-ssr.css" />
+          <Stylesheet id="leptos" href="/pkg/hot-or-not-leptos-ssr.css" />
 
-        // sets the document title
-        <Title text="Yral" />
+          // sets the document title
+          <Title text="Yral" />
 
-        <Link rel="manifest" href="/app.webmanifest" />
+          <Link rel="manifest" href="/app.webmanifest" />
 
-        // GA4 Global Site Tag (gtag.js) - Google Analytics
-        // G-6W5Q2MRX0E to test locally | G-PLNNETMSLM
-        <Show when=enable_ga4_script>
-            <Script
-                async_="true"
-                src=concat!("https://www.googletagmanager.com/gtag/js?id=", "G-PLNNETMSLM")
-            />
-            <Script>
-                {r#"
+          // GA4 Global Site Tag (gtag.js) - Google Analytics
+          // G-6W5Q2MRX0E to test locally | G-PLNNETMSLM
+          <Show when=enable_ga4_script>
+              <Script
+                  async_="true"
+                  src=concat!("https://www.googletagmanager.com/gtag/js?id=", "G-PLNNETMSLM")
+              />
+              <Script>
+                  {r#"
                 window.dataLayer = window.dataLayer || [];
                 function gtag(){dataLayer.push(arguments);}
                 gtag('js', new Date());
                 gtag('config', 'G-PLNNETMSLM');
+                document.querySelectorAll('.track-link').forEach(link => {
+                    link.addEventListener('click', function() {
+                        gtag('event', 'click', {
+                            'event_category': 'link',
+                            'event_label': this.href
+                        });
+                    });
+                });
                 "#}
-            </Script>
-        </Show>
+              </Script>
+          </Show>
 
-        // content for this welcome page
-        <Router fallback=|| view! { <NotFound/> }.into_view()>
-            <main>
-                <Routes>
-                    // auth redirect routes exist outside main context
-                    <GoogleAuthRedirectHandlerRoute/>
-                    <GoogleAuthRedirectorRoute/>
-                    <Route path="/" view=RootPage/>
-                    <Route path="" view=BaseRoute>
-                        <Route path="/hot-or-not/:canister_id/:post_id" view=PostView/>
-                        <Route path="/post/:canister_id/:post_id" view=SinglePost/>
-                        <Route path="/profile/:canister_id/:post_id" view=ProfilePost/>
-                        <Route path="/your-profile/:canister_id/:post_id" view=ProfilePost/>
-                        <Route path="/profile/:id" view=ProfileView/>
-                        <Route path="/your-profile/:id" view=ProfileView/>
-                        <Route path="/upload" view=UploadPostPage/>
-                        <Route path="/error" view=ServerErrorPage/>
-                        <Route path="/menu" view=Menu/>
-                        <Route path="/settings" view=Settings/>
-                        <Route path="/refer-earn" view=ReferEarn/>
-                        <Route path="/terms-of-service" view=TermsOfService/>
-                        <Route path="/privacy-policy" view=PrivacyPolicy/>
-                        <Route path="/wallet" view=Wallet/>
-                        <Route path="/transactions" view=Transactions/>
-                        <Route path="/leaderboard" view=Leaderboard/>
-                        <Route path="/account-transfer" view=AccountTransfer/>
-                        <Route path="/logout" view=Logout/>
-                    </Route>
-                </Routes>
-
-            </main>
-            <nav>
-                <NavBar/>
-            </nav>
-        </Router>
-    }
+          // content for this welcome page
+          <Router fallback=|| view! { <NotFound/> }.into_view()>
+              <main>
+                  <Routes>
+                      // auth redirect routes exist outside main context
+                      <GoogleAuthRedirectHandlerRoute/>
+                      <GoogleAuthRedirectorRoute/>
+                      <Route path="/" view=RootPage/>
+                      <Route path="" view=BaseRoute>
+                          <Route path="/hot-or-not/:canister_id/:post_id" view=PostView/>
+                          <Route path="/post/:canister_id/:post_id" view=SinglePost/>
+                          <Route path="/profile/:canister_id/:post_id" view=ProfilePost/>
+                          <Route path="/your-profile/:canister_id/:post_id" view=ProfilePost/>
+                          <Route path="/profile/:id" view=ProfileView/>
+                          <Route path="/your-profile/:id" view=ProfileView/>
+                          <Route path="/upload" view=UploadPostPage/>
+                          <Route path="/error" view=ServerErrorPage/>
+                          <Route path="/menu" view=Menu/>
+                          <Route path="/settings" view=Settings/>
+                          <Route path="/refer-earn" view=ReferEarn/>
+                          <Route path="/terms-of-service" view=TermsOfService/>
+                          <Route path="/privacy-policy" view=PrivacyPolicy/>
+                          <Route path="/wallet" view=Wallet/>
+                          <Route path="/transactions" view=Transactions/>
+                          <Route path="/leaderboard" view=Leaderboard/>
+                          <Route path="/account-transfer" view=AccountTransfer/>
+                          <Route path="/logout" view=Logout/>
+                      </Route>
+                  </Routes>
+    <div>
+                      <a href="https://yral.com/?utm_source=twitter&utm_medium=social&utm_campaign=campaign1&utm_content=hon_game" class="track-link">Campaign 1</a>
+                      <a href="https://yral.com/?utm_source=twitter&utm_medium=social&utm_campaign=campaign2&utm_content=hon_game" class="track-link">Campaign 2</a>
+                      <a href="https://yral.com/?utm_source=twitter&utm_medium=social&utm_campaign=campaign3&utm_content=hon_game" class="track-link">Campaign 3</a>
+                      <a href="https://yral.com/?utm_source=twitter&utm_medium=social&utm_campaign=campaign4&utm_content=hon_game" class="track-link">Campaign 4</a>
+                      <a href="https://yral.com/?utm_source=twitter&utm_medium=social&utm_campaign=campaign5&utm_content=hon_game" class="track-link">Campaign 5</a>
+                      <a href="https://yral.com/?utm_source=twitter&utm_medium=social&utm_campaign=campaign6&utm_content=hon_game" class="track-link">Campaign 6</a>
+                  </div>
+              </main>
+              <nav>
+                  <NavBar/>
+              </nav>
+          </Router>
+      }
 }
