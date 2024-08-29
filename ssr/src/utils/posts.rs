@@ -159,7 +159,8 @@ pub fn get_feed_component_identifier() -> impl Fn() -> Option<&'static str> {
     move || {
         let loc = get_host();
 
-        if loc == "localhost:3000"
+        if loc == "yral.com"
+            || loc == "localhost:3000"
             || loc == "hotornot.wtf"
             || loc.contains("go-bazzinga-hot-or-not-web-leptos-ssr.fly.dev")
         // || loc == "hot-or-not-web-leptos-ssr-staging.fly.dev"
