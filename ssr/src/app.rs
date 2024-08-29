@@ -1,3 +1,4 @@
+use crate::page::view_profile_redirect::{ProfileInfo, ProfileRedirect};
 use crate::{
     component::{base_route::BaseRoute, nav::NavBar},
     error_template::{AppError, ErrorTemplate},
@@ -23,6 +24,7 @@ use crate::{
     },
     utils::event_streaming::EventHistory,
 };
+
 use leptos::*;
 use leptos_meta::*;
 use leptos_router::*;
@@ -148,7 +150,10 @@ pub fn App() -> impl IntoView {
                         <Route path="/leaderboard" view=Leaderboard/>
                         <Route path="/account-transfer" view=AccountTransfer/>
                         <Route path="/logout" view=Logout/>
-                    </Route>
+                    <Route path="/your-profile" view=ProfileInfo />
+
+
+        </Route>
                 </Routes>
 
             </main>

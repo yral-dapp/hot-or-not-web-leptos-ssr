@@ -17,4 +17,5 @@ pub mod root;
 pub mod settings;
 pub mod terms;
 pub mod upload;
+pub mod view_profile_redirect;
 pub mod wallet;

@@ -92,16 +92,7 @@ fn UploadIcon(idx: usize, cur_selected: Memo<usize>) -> impl IntoView {
         </a>
     }
 }
-#[component]
-fn ProfileLoading() -> impl IntoView {
-    view! {
-        <div class="basis-4/12 aspect-square overflow-clip rounded-full bg-white/20 animate-pulse"></div>
-        <div class="basis-8/12 flex flex-col gap-2 animate-pulse">
-            <div class="w-full h-4 bg-white/20 rounded-full"></div>
-            <div class="w-full h-4 bg-white/20 rounded-full"></div>
-        </div>
-    }
-}
+
 #[component]
 pub fn NavBar() -> impl IntoView {
     let cur_location = use_location();
@@ -114,7 +105,7 @@ pub fn NavBar() -> impl IntoView {
             "/upload" => 2,
             "/wallet" | "/transactions" => 3,
             "/menu" => 4,
-            s if s.starts_with("/your-profile") => 4,
+            s if s.starts_with("/your-profile") => 5,
             s if s.starts_with("/hot-or-not") => {
                 home_path.set(path);
                 0
@@ -125,7 +116,6 @@ pub fn NavBar() -> impl IntoView {
     });
 
     view! {
-        <AuthCansProvider fallback=ProfileLoading let:canisters>
 
         <div class="fixed z-50 bottom-0 left-0 flex flex-row justify-between px-6 items-center w-full bg-black/80">
             <NavIcon
@@ -144,15 +134,13 @@ pub fn NavBar() -> impl IntoView {
             />
             <UploadIcon idx=2 cur_selected/>
            <NavIcon
-                idx=1
-                        href=format!("/your-profile/")
-
+                idx=5
+                href="/your-profile"
                 icon=ProfileIcon
                 filled_icon=ProfileIconFilled
                 cur_selected=cur_selected
             />
             <NavIcon idx=4 href="/menu" icon=MenuSymbol cur_selected=cur_selected/>
         </div>
-                </AuthCansProvider>
     }
 }
