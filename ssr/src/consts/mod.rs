@@ -1,5 +1,6 @@
 #[cfg(any(feature = "local-bin", feature = "local-lib"))]
 mod local;
+use candid::Principal;
 #[cfg(any(feature = "local-bin", feature = "local-lib"))]
 pub use local::*;
 
@@ -32,6 +33,9 @@ pub static GTAG_MEASUREMENT_ID: Lazy<&str> = Lazy::new(|| "G-PLNNETMSLM");
 pub static DOWNLOAD_UPLOAD_SERVICE: Lazy<Url> =
     Lazy::new(|| Url::parse("https://download-upload-service.fly.dev").unwrap());
 pub const ML_FEED_GRPC_URL: &str = "https://yral-ml-feed-server.fly.dev:443";
+
+pub static FALLBACK_USER_INDEX: Lazy<Principal> =
+    Lazy::new(|| Principal::from_text("rimrc-piaaa-aaaao-aaljq-cai").unwrap());
 
 pub mod social {
     pub const TELEGRAM: &str = "https://t.me/+c-LTX0Cp-ENmMzI1";
