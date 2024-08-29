@@ -1,8 +1,7 @@
-use crate::component::canisters_prov::{AuthCansProvider, WithAuthCans};
-use crate::state::canisters::{authenticated_canisters, CanistersAuthWire};
+use crate::component::canisters_prov::AuthCansProvider;
 use crate::utils::profile::ProfileDetails;
 use leptos::*;
-use leptos_router::{Redirect, Route};
+use leptos_router::Redirect;
 
 #[component]
 fn ProfileLoading() -> impl IntoView {

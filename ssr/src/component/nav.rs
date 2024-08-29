@@ -1,9 +1,4 @@
 use super::nav_icons::*;
-use crate::component::canisters_prov::{AuthCansProvider, WithAuthCans};
-use crate::state::canisters::Canisters;
-
-use crate::utils::profile::ProfileDetails;
-
 use leptos::*;
 use leptos_icons::*;
 use leptos_router::*;
