@@ -305,21 +305,13 @@ pub fn PostView() -> impl IntoView {
     view! {
         <Suspense fallback=FullScreenSpinner>
         {
-            let component_PostViewWithUpdatesMLFeed: ABComponent = Box::new(move || {
+            {move || {
                 fetch_first_video_uid()
                     .and_then(|initial_post| {
                         let initial_post = initial_post.ok()?;
                         Some(view! { <PostViewWithUpdatesMLFeed initial_post /> })
                     })
-            });
-            let component_PostViewWithUpdates: ABComponent = Box::new(move || {
-                fetch_first_video_uid()
-                    .and_then(|initial_post| {
-                        let initial_post = initial_post.ok()?;
-                        Some(view! { <PostViewWithUpdates initial_post /> })
-                    })
-            });
-            abselector!(get_feed_component_identifier(), component_PostViewWithUpdatesMLFeed, component_PostViewWithUpdates)()
+            }}
         }
 
         </Suspense>
