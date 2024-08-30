@@ -5,6 +5,7 @@ use leptos::*;
 use leptos_router::*;
 
 use crate::consts::USER_CANISTER_ID_STORE;
+use crate::utils::ParentResource;
 use crate::{
     auth::{
         extract_identity, generate_anonymous_identity_if_required, set_anonymous_identity_cookie,
@@ -65,7 +66,7 @@ fn CtxProvider(temp_identity: Option<JwkEcKey>, children: ChildrenFn) -> impl In
         set_referrer_store(referrer_principal.get_untracked())
     });
 
-    let canisters_res: AuthCansResource = create_resource(
+    let canisters_res: AuthCansResource = ParentResource(create_resource(
         move || MockPartialEq(auth()),
         move |auth_id| {
             let temp_identity = temp_identity.clone();
@@ -88,14 +89,14 @@ fn CtxProvider(temp_identity: Option<JwkEcKey>, children: ChildrenFn) -> impl In
                 do_canister_auth(id_wire, ref_principal).await
             }
         },
-    );
-    provide_context(canisters_res);
+    ));
+    provide_context(canisters_res.clone());
 
     view! {
         {children}
         <Suspense>
             {move || {
-                canisters_res()
+                (canisters_res.0)()
                     .map(|res| {
                         let cans_wire = try_or_redirect!(res);
                         let cans = try_or_redirect!(cans_wire.canisters());
