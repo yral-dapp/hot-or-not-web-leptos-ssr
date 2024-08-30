@@ -125,15 +125,15 @@ impl BetDetails {
 
     pub fn bet_duration(&self) -> Duration {
         // Bet duration + 5 minute overhead
-        Duration::from_secs(((self.slot_id as u64) * 60 * 60) + 5 * 60 * 60)
+        Duration::from_secs(((self.slot_id as u64) * 60 * 60) + 5 * 60)
     }
 
-    pub fn end_time(&self) -> Duration {
-        self.placed_at + self.bet_duration()
+    pub fn end_time(&self, post_creation_time: Duration) -> Duration {
+        post_creation_time + self.bet_duration()
     }
 
-    pub fn time_remaining(&self) -> Duration {
-        let end_time = self.end_time();
+    pub fn time_remaining(&self, post_creation_time: Duration) -> Duration {
+        let end_time = self.end_time(post_creation_time);
         end_time.saturating_sub(current_epoch())
     }
 }
