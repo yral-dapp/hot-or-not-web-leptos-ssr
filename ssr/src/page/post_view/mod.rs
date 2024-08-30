@@ -5,14 +5,12 @@ pub mod single_post;
 pub mod video_iter;
 pub mod video_loader;
 use crate::{
-    abselector,
     component::{scrolling_post_view::ScrollingPostView, spinner::FullScreenSpinner},
     consts::NSFW_TOGGLE_STORE,
     state::canisters::{unauth_canisters, Canisters},
     try_or_redirect,
     utils::{
-        ab_testing::ABComponent,
-        posts::{get_feed_component_identifier, get_post_uid, FetchCursor, PostDetails},
+        posts::{get_post_uid, FetchCursor, PostDetails},
         route::failure_redirect,
     },
 };
@@ -305,21 +303,13 @@ pub fn PostView() -> impl IntoView {
     view! {
         <Suspense fallback=FullScreenSpinner>
         {
-            let component_PostViewWithUpdatesMLFeed: ABComponent = Box::new(move || {
+            {move || {
                 fetch_first_video_uid()
                     .and_then(|initial_post| {
                         let initial_post = initial_post.ok()?;
                         Some(view! { <PostViewWithUpdatesMLFeed initial_post /> })
                     })
-            });
-            let component_PostViewWithUpdates: ABComponent = Box::new(move || {
-                fetch_first_video_uid()
-                    .and_then(|initial_post| {
-                        let initial_post = initial_post.ok()?;
-                        Some(view! { <PostViewWithUpdates initial_post /> })
-                    })
-            });
-            abselector!(get_feed_component_identifier(), component_PostViewWithUpdatesMLFeed, component_PostViewWithUpdates)()
+            }}
         }
 
         </Suspense>
