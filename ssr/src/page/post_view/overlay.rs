@@ -194,13 +194,13 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
                 </div>
                 <div class="flex flex-col justify-center min-w-0">
                     <div class="flex flex-row text-xs md:text-sm lg:text-base gap-1">
-                        <a
-                            href=profile_url
-                        >
-                            <span class="font-semibold truncate">
+                        <span class="font-semibold truncate">
+                            <a
+                                href=profile_url
+                            >
                                 {post.display_name}
-                            </span>
-                        </a>
+                            </a>
+                        </span>
                         <span class="font-semibold">"|"</span>
                         <span class="flex flex-row gap-1 items-center">
                             <Icon class="text-sm md:text-base lg:text-lg" icon=icondata::AiEyeOutlined/>
