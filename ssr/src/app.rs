@@ -117,14 +117,26 @@ pub fn App() -> impl IntoView {
                 function gtag(){dataLayer.push(arguments);}
                 gtag('js', new Date());
                 gtag('config', 'G-PLNNETMSLM');
-                document.querySelectorAll('.track-link').forEach(link => {
-                    link.addEventListener('click', function() {
-                        gtag('event', 'click', {
-                            'event_category': 'link',
-                            'event_label': this.href
-                        });
+                  document.querySelectorAll('a').forEach(link => {
+                   const urlParams = new URLSearchParams(link.search);
+                    if (
+                       urlParams.has('utm_source') &&
+                       urlParams.has('utm_medium') &&
+                       urlParams.has('utm_campaign') &&
+                       urlParams.has('utm_content')
+                     ) {
+                       link.classList.add('track-link');
+                      }
+                     });
+
+                     document.querySelectorAll('.track-link').forEach(link => {
+                          link.addEventListener('click', function() {
+                           gtag('event', 'click', {
+                          'event_category': 'link',
+                          'event_label': this.href
+                         });
+                       });
                     });
-                });
                 "#}
               </Script>
           </Show>
