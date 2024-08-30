@@ -17,7 +17,7 @@ use crate::{
         PLATFORM_ORCHESTRATOR_ID, POST_CACHE_ID,
     },
     consts::{FALLBACK_USER_INDEX, METADATA_API_BASE},
-    utils::{ic::AgentWrapper, profile::ProfileDetails, MockPartialEq},
+    utils::{ic::AgentWrapper, profile::ProfileDetails, MockPartialEq, ParentResource},
 };
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -279,7 +279,7 @@ pub async fn do_canister_auth(
     Ok(cans_wire)
 }
 
-pub type AuthCansResource = Resource<
+pub type AuthCansResource = ParentResource<
     MockPartialEq<Option<DelegatedIdentityWire>>,
     Result<CanistersAuthWire, ServerFnError>,
 >;
