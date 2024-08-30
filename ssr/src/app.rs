@@ -151,8 +151,6 @@ pub fn App() -> impl IntoView {
                         <Route path="/account-transfer" view=AccountTransfer/>
                         <Route path="/logout" view=Logout/>
                     <Route path="/your-profile" view=ProfileInfo />
-
-
         </Route>
                 </Routes>
 

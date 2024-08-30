@@ -1,15 +1,14 @@
-use crate::component::canisters_prov::AuthCansProvider;
-use crate::utils::profile::ProfileDetails;
+use crate::component::{canisters_prov::AuthCansProvider, spinner::FullScreenSpinner};
 use leptos::*;
 use leptos_router::Redirect;
 
 #[component]
 fn ProfileLoading() -> impl IntoView {
     view! {
-        <div class="basis-4/12 aspect-square overflow-clip rounded-full bg-white/20 animate-pulse"></div>
-        <div class="basis-8/12 flex flex-col gap-2 animate-pulse">
-            <div class="w-full h-4 bg-white/20 rounded-full"></div>
-            <div class="w-full h-4 bg-white/20 rounded-full"></div>
+        <div class="rounded-full animate-pulse basis-4/12 aspect-square overflow-clip bg-white/20"></div>
+        <div class="flex flex-col gap-2 animate-pulse basis-8/12">
+            <div class="w-full h-4 rounded-full bg-white/20"></div>
+            <div class="w-full h-4 rounded-full bg-white/20"></div>
         </div>
     }
 }
@@ -17,16 +16,8 @@ fn ProfileLoading() -> impl IntoView {
 #[component]
 pub fn ProfileInfo() -> impl IntoView {
     view! {
-        <AuthCansProvider fallback=ProfileLoading let:canisters>
-            <ProfileRedirect user_details=canisters.profile_details() />
+        <AuthCansProvider fallback=FullScreenSpinner let:canisters>
+                <Redirect path=canisters.user_principal() />
         </AuthCansProvider>
-    }
-}
-#[component]
-pub fn ProfileRedirect(user_details: ProfileDetails) -> impl IntoView {
-    // Ensure the method is called on an Option<String>
-    let url = user_details.username_or_principal();
-    view! {
-        <Redirect path=url />
     }
 }
