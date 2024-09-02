@@ -178,7 +178,7 @@ fn HNButtonOverlay(
             });
         }
         </AuthCansProvider>
-        <div class="flex w-full justify-center">
+        <div class="flex w-full justify-center touch-manipulation">
             <button
                 disabled=running
                 on:click=move |_| coin.update(|c| *c =  c.wrapping_next())
@@ -189,7 +189,7 @@ fn HNButtonOverlay(
                 />
             </button>
         </div>
-        <div class="flex flex-row w-full items-center justify-center gap-6">
+        <div class="flex flex-row w-full items-center justify-center gap-6 touch-manipulation">
             <HNButton disabled=running bet_direction kind=BetKind::Hot  />
             <button disabled=running on:click=move |_| coin.update(|c| *c = c.wrapping_next())>
                 <CoinStateView disabled=running class="w-12 h-12 md:h-14 md:w-14 lg:w-16 lg:h-16 drop-shadow-lg" coin />
@@ -198,7 +198,7 @@ fn HNButtonOverlay(
         </div>
         // Bottom row: Hot <down arrow> Not
         // most of the CSS is for alignment with above icons
-        <div class="flex w-full justify-center items-center gap-6 text-base md:text-lg lg:text-xl text-center font-medium pt-2">
+        <div class="flex w-full justify-center items-center gap-6 text-base md:text-lg lg:text-xl text-center font-medium pt-2 touch-manipulation">
             <p class="w-14 md:w-16 lg:w-18">Hot</p>
             <div class="flex justify-center w-12 md:w-14 lg:w-16">
                 <button
@@ -292,9 +292,9 @@ fn HNWonLost(participation: BetDetails) -> impl IntoView {
 }
 
 #[component]
-fn BetTimer(participation: BetDetails, refetch_bet: Trigger) -> impl IntoView {
+fn BetTimer(post: PostDetails, participation: BetDetails, refetch_bet: Trigger) -> impl IntoView {
     let bet_duration = participation.bet_duration().as_secs();
-    let time_remaining = create_rw_signal(participation.time_remaining());
+    let time_remaining = create_rw_signal(participation.time_remaining(post.created_at));
     _ = use_interval_fn(
         move || {
             time_remaining.try_update(|t| *t = t.saturating_sub(Duration::from_secs(1)));
@@ -324,7 +324,11 @@ fn BetTimer(participation: BetDetails, refetch_bet: Trigger) -> impl IntoView {
 }
 
 #[component]
-fn HNAwaitingResults(participation: BetDetails, refetch_bet: Trigger) -> impl IntoView {
+fn HNAwaitingResults(
+    post: PostDetails,
+    participation: BetDetails,
+    refetch_bet: Trigger,
+) -> impl IntoView {
     let is_hot = matches!(participation.bet_kind, BetKind::Hot);
     let bet_direction_text = if is_hot { "Hot" } else { "Not" };
     let hn_icon = if is_hot { HotIcon } else { NotIcon };
@@ -348,7 +352,7 @@ fn HNAwaitingResults(participation: BetDetails, refetch_bet: Trigger) -> impl In
                     <CoinStateView class="absolute bottom-0 -right-3 h-7 w-7 md:w-9 md:h-9 lg:w-11 lg:h-11" coin/>
                 </div>
                 <div class="w-1/2 md:w-1/3 lg:w-1/4">
-                    <BetTimer refetch_bet participation/>
+                    <BetTimer post refetch_bet participation/>
                 </div>
             </div>
             <p class="text-center text-white bg-black/15 rounded-full p-1 ps-2">
@@ -360,11 +364,15 @@ fn HNAwaitingResults(participation: BetDetails, refetch_bet: Trigger) -> impl In
 }
 
 #[component]
-pub fn HNUserParticipation(participation: BetDetails, refetch_bet: Trigger) -> impl IntoView {
+pub fn HNUserParticipation(
+    post: PostDetails,
+    participation: BetDetails,
+    refetch_bet: Trigger,
+) -> impl IntoView {
     view! {
         {match participation.outcome {
             BetOutcome::AwaitingResult => {
-                view! { <HNAwaitingResults refetch_bet participation /> }
+                view! { <HNAwaitingResults post refetch_bet participation /> }
             }
             BetOutcome::Won(_) => {
                 view! { <HNWonLost participation /> }
@@ -475,14 +483,15 @@ pub fn HNGameOverlay(post: PostDetails) -> impl IntoView {
             view! {
                 {move || bet_participation_outcome().and_then(|res| {
                     let participation = try_or_redirect_opt!(res);
+                    let post = post.get_value();
                     Some(if let Some(participation) = participation {
                         view! {
-                            <HNUserParticipation refetch_bet participation/>
+                            <HNUserParticipation post refetch_bet participation/>
                         }
                     } else {
                         view! {
                             <MaybeHNButtons
-                                post=post.get_value()
+                                post
                                 bet_direction coin
                                 refetch_bet
                             />

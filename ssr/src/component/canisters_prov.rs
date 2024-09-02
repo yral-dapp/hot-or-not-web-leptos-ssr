@@ -18,7 +18,7 @@ where
     let cans_res = authenticated_canisters();
     let children = store_value(children);
     let loader = move || {
-        let cans_wire = try_or_redirect_opt!(cans_res()?);
+        let cans_wire = try_or_redirect_opt!((cans_res.0)()?);
         let cans = try_or_redirect_opt!(cans_wire.canisters());
         Some((children.get_value())(cans).into_view())
     };

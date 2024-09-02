@@ -31,7 +31,6 @@ pub mod server {
         pub cookie_key: Key,
         #[cfg(feature = "oauth-ssr")]
         pub google_oauth_clients: crate::auth::core_clients::CoreClients,
-        #[cfg(not(clippy))]
         #[cfg(feature = "ga4")]
         pub grpc_offchain_channel: tonic::transport::Channel,
     }
