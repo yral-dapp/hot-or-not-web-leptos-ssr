@@ -36,7 +36,9 @@ fn TokenView(user_canister: Principal, token: TokenCans) -> impl IntoView {
         },
     );
     create_effect(move |_| {
-        token_unlocking();
+        if is_connected() {
+            token_unlocking();
+        }
     });
 
     let token_info = create_resource(
