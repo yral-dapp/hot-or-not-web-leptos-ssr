@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     canister::{
-        sns_governance::GetMetadataArg, sns_ledger::Account, sns_root::ListSnsCanistersArg,
+        sns_governance::{Account, Amount, Command, Command1, Disburse, GetMetadataArg, ListNeurons, ManageNeuron, Neuron}, sns_ledger::Account as LedgerAccount, sns_root::ListSnsCanistersArg,
     },
     state::canisters::Canisters,
 };
@@ -57,7 +57,7 @@ pub async fn get_token_metadata<const A: bool>(
     let ledger = cans.sns_ledger(ledger).await;
     let symbol = ledger.icrc_1_symbol().await?;
 
-    let acc = Account {
+    let acc = LedgerAccount {
         owner: user_canister,
         subaccount: None,
     };
@@ -73,3 +73,71 @@ pub async fn get_token_metadata<const A: bool>(
         balance,
     })
 }
+
+pub async fn get_neurons<const A: bool>(
+    cans: &Canisters<A>,
+    user_principal: Principal,
+    governance: Principal,
+) -> Option<Vec<Neuron>> {
+    let governance = cans.sns_governance(governance).await;
+    let neurons = governance.list_neurons(ListNeurons {
+        of_principal: Some(user_principal),
+        limit: 10,
+        start_page_at: None
+    }).await;
+
+    if neurons.is_ok() {
+        let neurons = neurons.unwrap().neurons;
+        Some(neurons)
+    } else {
+        None
+    }
+}
+
+pub async fn claim_tokens_from_first_neuron(
+    cans: &Canisters<true>,
+    user_principal: Principal,
+    governance: Principal,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        // if !A {
+        //     println!("!!!!! Not authenticated");
+        //     return Err("Not authenticaled".into());
+        // }
+        let governance_can = cans.sns_governance(governance).await;
+
+        let neurons = get_neurons(cans, user_principal, governance).await.unwrap();
+        if neurons.len() == 0 || neurons[0].cached_neuron_stake_e8s == 0 {
+            return Ok(());
+        }
+        // let neuron = neurons[0];
+        let neuron_id = neurons[0].id.as_ref().unwrap().id.clone();
+        let amount = neurons[0].cached_neuron_stake_e8s;
+        let manage_neuron_arg = ManageNeuron {
+            subaccount: neuron_id,
+            command: Some(
+                Command::Disburse(Disburse {
+                    to_account: Some(Account {
+                        owner: Some(user_principal),
+                        subaccount: None
+                    }),
+                    amount: Some(Amount { e8s: amount })
+                })
+            )
+        };
+        let manage_neuron = governance_can.manage_neuron(manage_neuron_arg).await;
+        if manage_neuron.is_ok() {
+            let manage_neuron_res = manage_neuron.unwrap().command.unwrap();
+            println!("!!!!! manage_neuron_res: {:?}", manage_neuron_res);
+            match manage_neuron_res {
+                Command1::Disburse(_) => {
+                    return Ok(());
+                }
+                _ => {
+                    println!("!!!!! Failed to claim tokens");
+                    return Err("Failed to claim tokens".into());
+                }
+            }
+        } else {
+            return Err("Failed to claim tokens".into());
+        }
+    }
