@@ -16,7 +16,7 @@ use crate::utils::web::Share;
 use crate::{
     component::{back_btn::BackButton, dashbox::DashboxLoading, title::Title},
     state::auth::account_connected_reader,
-    utils::web::{copy_to_clipboard, share_url},
+    utils::web::copy_to_clipboard,
 };
 use history::HistoryView;
 
@@ -62,8 +62,6 @@ fn ReferLoaded(user_principal: Principal) -> impl IntoView {
             Timeout::new(1200, move || show_copied_popup.set(false)).forget();
         }
     });
-
-    let code = refer_code.clone();
 
     let handle_share = move || {
         let url = refer_link.clone();

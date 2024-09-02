@@ -41,7 +41,7 @@ impl Share {
 
             shareImage(
                 Some(TITLE),
-                Some(TITLE),
+                Some(TEXT),
                 Some(url),
                 Some(
                     vec![FILE_URL.to_string()]
