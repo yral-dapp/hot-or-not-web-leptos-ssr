@@ -1,7 +1,7 @@
 use ic_agent::Identity;
 use leptos::html::Input;
-use leptos::{create_effect, ReadSignal, RwSignal, Signal, SignalGetUntracked};
-use leptos::{create_signal, ev, expect_context, html::Video, Memo, NodeRef, SignalGet, SignalSet};
+use leptos::{create_effect, MaybeSignal, ReadSignal, RwSignal, SignalGetUntracked};
+use leptos::{create_signal, ev, expect_context, html::Video, NodeRef, SignalGet, SignalSet};
 use leptos_use::use_event_listener;
 use serde_json::json;
 use wasm_bindgen::JsCast;
@@ -43,26 +43,12 @@ pub struct VideoWatched;
 impl VideoWatched {
     pub fn send_event(
         &self,
-        vid_details: Memo<Option<PostDetails>>,
+        vid_details: MaybeSignal<Option<PostDetails>>,
         container_ref: NodeRef<Video>,
     ) {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
         {
             let (is_connected, _) = account_connected_reader();
-
-            let publisher_user_id = move || vid_details().as_ref().map(|q| q.poster_principal);
-            let video_id = move || vid_details().as_ref().map(|q| q.uid.clone());
-            let hastag_count = move || vid_details().as_ref().map(|q| q.hastags.len());
-            let is_nsfw = move || vid_details().as_ref().map(|q| q.is_nsfw);
-            let is_hotornot = move || {
-                vid_details()
-                    .as_ref()
-                    .map(|q| q.hot_or_not_feed_ranking_score.is_some())
-            };
-            let view_count = move || vid_details().as_ref().map(|q| q.views);
-            let like_count = move || vid_details().as_ref().map(|q| q.likes);
-            let post_id = move || vid_details().as_ref().map(|q| q.post_id);
-            let publisher_canister_id = move || vid_details().as_ref().map(|q| q.canister_id);
 
             // video_viewed - analytics
             let (video_watched, set_video_watched) = create_signal(false);
@@ -70,8 +56,11 @@ impl VideoWatched {
 
             let cans_store: RwSignal<Option<Canisters<true>>> = auth_canisters_store();
 
+            let post_for_time = vid_details.clone();
             let _ = use_event_listener(container_ref, ev::timeupdate, move |evt| {
                 let user = user_details_can_store_or_ret!(cans_store);
+                let post_o = post_for_time();
+                let post = post_o.as_ref();
 
                 let target = evt.target().unwrap();
                 let video = target.unchecked_into::<web_sys::HtmlVideoElement>();
@@ -87,26 +76,26 @@ impl VideoWatched {
                     send_event_warehouse(
                         "video_duration_watched",
                         &json!({
-                            "publisher_user_id":publisher_user_id(),
+                            "publisher_user_id": post.map(|p| p.poster_principal),
                             "user_id": user.details.principal,
                             "is_loggedIn": is_connected(),
                             "display_name": user.details.display_name.clone(),
                             "canister_id": user.canister_id,
-                            "video_id": video_id(),
+                            "video_id": post.map(|p| p.uid.clone()),
                             "video_category": "NA",
-                            "creator_category": "NA",
-                            "hashtag_count": hastag_count(),
-                            "is_NSFW": is_nsfw(),
-                            "is_hotorNot": is_hotornot(),
+                            "creator_category": "NApublisher_canister_id(",
+                            "hashtag_count": post.map(|p| p.hastags.len()),
+                            "is_NSFW": post.map(|p| p.is_nsfw),
+                            "is_hotorNot": post.map(|p| p.is_hot_or_not()),
                             "feed_type": "NA",
-                            "view_count": view_count(),
-                            "like_count": like_count(),
+                            "view_count": post.map(|p| p.views),
+                            "like_count": post.map(|p| p.likes),
                             "share_count": 0,
                             "percentage_watched": 100.0,
                             "absolute_watched": duration,
                             "video_duration": duration,
-                            "post_id": post_id(),
-                            "publisher_canister_id": publisher_canister_id(),
+                            "post_id": post.map(|p| p.post_id),
+                            "publisher_canister_id": post.map(|p| p.canister_id),
                         }),
                     );
 
@@ -121,23 +110,23 @@ impl VideoWatched {
                     send_event(
                         "video_viewed",
                         &json!({
-                            "publisher_user_id":publisher_user_id(),
+                            "publisher_user_id": post.map(|p| p.poster_principal),
                             "user_id": user.details.principal,
                             "is_loggedIn": is_connected(),
                             "display_name": user.details.display_name,
                             "canister_id": user.canister_id,
-                            "video_id": video_id(),
+                            "video_id": post.map(|p| p.uid.clone()),
                             "video_category": "NA",
                             "creator_category": "NA",
-                            "hashtag_count": hastag_count(),
-                            "is_NSFW": is_nsfw(),
-                            "is_hotorNot": is_hotornot(),
+                            "hashtag_count": post.map(|p| p.hastags.len()),
+                            "is_NSFW": post.map(|p| p.is_nsfw),
+                            "is_hotorNot": post.map(|p| p.is_hot_or_not()),
                             "feed_type": "NA",
-                            "view_count": view_count(),
-                            "like_count": like_count(),
+                            "view_count": post.map(|p| p.views),
+                            "like_count": post.map(|p| p.likes),
                             "share_count": 0,
-                            "post_id": post_id(),
-                            "publisher_canister_id": publisher_canister_id(),
+                            "post_id": post.map(|p| p.post_id),
+                            "publisher_canister_id": post.map(|p| p.canister_id),
                         }),
                     );
                     set_video_watched.set(true);
@@ -145,8 +134,11 @@ impl VideoWatched {
             });
 
             // video duration watched - warehousing
+            let post_for_warehouse = vid_details.clone();
             let _ = use_event_listener(container_ref, ev::pause, move |evt| {
                 let user = user_details_can_store_or_ret!(cans_store);
+                let post_o = post_for_warehouse();
+                let post = post_o.as_ref();
 
                 let target = evt.target().unwrap();
                 let video = target.unchecked_into::<web_sys::HtmlVideoElement>();
@@ -161,26 +153,26 @@ impl VideoWatched {
                 send_event_warehouse(
                     "video_duration_watched",
                     &json!({
-                        "publisher_user_id":publisher_user_id(),
+                        "publisher_user_id": post.map(|p| p.poster_principal),
                         "user_id": user.details.principal,
                         "is_loggedIn": is_connected(),
                         "display_name": user.details.display_name.clone(),
                         "canister_id": user.canister_id,
-                        "video_id": video_id(),
+                        "video_id": post.map(|p| p.uid.clone()),
                         "video_category": "NA",
                         "creator_category": "NA",
-                        "hashtag_count": hastag_count(),
-                        "is_NSFW": is_nsfw(),
-                        "is_hotorNot": is_hotornot(),
+                        "hashtag_count": post.map(|p| p.hastags.len()),
+                        "is_NSFW": post.map(|p| p.is_nsfw),
+                        "is_hotorNot": post.map(|p| p.is_hot_or_not()),
                         "feed_type": "NA",
-                        "view_count": view_count(),
-                        "like_count": like_count(),
+                        "view_count": post.map(|p| p.views),
+                        "like_count": post.map(|p| p.likes),
                         "share_count": 0,
                         "percentage_watched": percentage_watched,
                         "absolute_watched": current_time,
                         "video_duration": duration,
-                        "post_id": post_id(),
-                        "publisher_canister_id": publisher_canister_id(),
+                        "post_id": post.map(|p| p.post_id),
+                        "publisher_canister_id": post.map(|p| p.canister_id),
                     }),
                 );
             });
@@ -677,7 +669,7 @@ impl LogoutConfirmation {
 pub struct ErrorEvent;
 
 impl ErrorEvent {
-    pub fn send_event(&self, error: Signal<String>, cans_store: RwSignal<Option<Canisters<true>>>) {
+    pub fn send_event(&self, error_str: String, cans_store: RwSignal<Option<Canisters<true>>>) {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
         {
             let event_history: EventHistory = expect_context();
@@ -693,7 +685,7 @@ impl ErrorEvent {
                 &json!({
                     "user_id": user_id,
                     "canister_id": canister_id,
-                    "description": error.get_untracked(),
+                    "description": error_str,
                     "previous_event": event_history.event_name.get_untracked(),
                 }),
             );

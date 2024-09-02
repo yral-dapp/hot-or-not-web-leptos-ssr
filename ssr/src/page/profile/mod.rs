@@ -18,7 +18,7 @@ use crate::{
 };
 
 use posts::ProfilePosts;
-use speculation::ProfileSpeculationsPlaceHolder;
+use speculation::ProfileSpeculations;
 use tokens::ProfileTokens;
 
 #[derive(Clone, Default)]
@@ -79,15 +79,12 @@ fn ListSwitcher(user_canister: Principal) -> impl IntoView {
             </button>
         </div>
         <div class="flex flex-col gap-y-12 justify-center pb-12 w-11/12 sm:w-7/12">
-            <Show when=move || current_tab() == 0>
-                <ProfilePosts user_canister/>
-            </Show>
-            <Show when=move || current_tab() == 1>
-                <ProfileSpeculationsPlaceHolder/>
-            </Show>
-            <Show when=move || current_tab() == 2>
-                <ProfileTokens user_canister />
-            </Show>
+        <Show
+            when=move || current_tab() == 0
+            fallback=move || view! { <ProfileSpeculations user_canister /> }
+        >
+            <ProfilePosts user_canister/>
+        </Show>
         </div>
     }
 }

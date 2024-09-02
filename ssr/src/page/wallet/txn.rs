@@ -61,11 +61,11 @@ impl TxnTag {
     fn to_text(self) -> &'static str {
         use TxnTag::*;
         match self {
-            BetPlaced => "Bet Placement",
+            BetPlaced => "Vote Placement",
             SignupBonus => "Joining Bonus",
             Referral => "Referral Reward",
-            Winnings => "Bet Winnings",
-            Commission => "Bet Commission",
+            Winnings => "Vote Winnings",
+            Commission => "Vote Commission",
             Transfer => "Transfer",
             HotorNotAccountTransfer => "HotorNot Account Transfer",
         }

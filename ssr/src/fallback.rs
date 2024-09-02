@@ -27,6 +27,7 @@ pub async fn file_and_error_handler(
     }
 }
 
+#[allow(unreachable_patterns)]
 async fn get_static_file(uri: Uri, root: &str) -> Result<Response<Body>, (StatusCode, String)> {
     let req = Request::builder()
         .uri(uri.clone())
@@ -34,11 +35,5 @@ async fn get_static_file(uri: Uri, root: &str) -> Result<Response<Body>, (Status
         .unwrap();
     // `ServeDir` implements `tower::Service` so we can call it with `tower::ServiceExt::oneshot`
     // This path is relative to the cargo root
-    match ServeDir::new(root).oneshot(req).await {
-        Ok(res) => Ok(res.into_response()),
-        Err(err) => Err((
-            StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Something went wrong: {err}"),
-        )),
-    }
+    Ok(ServeDir::new(root).oneshot(req).await.into_response())
 }

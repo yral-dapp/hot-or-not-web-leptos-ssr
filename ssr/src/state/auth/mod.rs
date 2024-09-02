@@ -1,5 +1,6 @@
+use codee::string::FromToStringCodec;
 use leptos::*;
-use leptos_use::{storage::use_local_storage, utils::FromToStringCodec};
+use leptos_use::storage::use_local_storage;
 
 use crate::{auth::DelegatedIdentityWire, consts::ACCOUNT_CONNECTED_STORE};
 
