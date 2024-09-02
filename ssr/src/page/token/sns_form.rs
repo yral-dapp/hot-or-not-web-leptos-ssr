@@ -22,22 +22,22 @@ struct NeuronForm {
 impl Default for NeuronForm {
     fn default() -> Self {
         Self {
-            stake: parse_tokens("1_000 tokens").unwrap(),
+            stake: parse_tokens("4_500_000 tokens").unwrap(),
             memo: 0,
-            dissolve_delay: parse_duration("2 years").unwrap(),
-            vesting_period: parse_duration("4 years").unwrap(),
+            dissolve_delay: parse_duration("2 seconds").unwrap(),
+            vesting_period: parse_duration("2 seconds").unwrap(),
         }
     }
 }
 
 impl NeuronForm {
-    fn into_neuron(self, user_canister: Principal) -> Neuron {
+    fn into_neuron(self, user_principal: Principal) -> Neuron {
         Neuron {
-            principal: user_canister.to_string(),
-            stake: self.stake,
+            principal: user_principal.to_string(),
+            stake: parse_tokens("4_500_000 tokens").unwrap(),
             memo: self.memo,
-            dissolve_delay: self.dissolve_delay,
-            vesting_period: self.vesting_period,
+            dissolve_delay: nns_pb::Duration {seconds: Some(2)},
+            vesting_period: nns_pb::Duration {seconds: None},
         }
     }
 }
@@ -52,24 +52,24 @@ struct DistributionForm {
 impl Default for DistributionForm {
     fn default() -> Self {
         Self {
-            total: parse_tokens("2_501_000 tokens").unwrap(),
+            total: parse_tokens("10_000_000 tokens").unwrap(),
             neurons: vec![NeuronForm::default()],
             initial_balances: InitialBalances {
-                governance: parse_tokens("2_000_000 tokens").unwrap(),
-                swap: parse_tokens("500_000 tokens").unwrap(),
+                governance: parse_tokens("500_000 tokens").unwrap(),
+                swap: parse_tokens("5_000_000 tokens").unwrap(),
             },
         }
     }
 }
 
 impl DistributionForm {
-    fn into_distribution(self, user_canister: Principal) -> Distribution {
+    fn into_distribution(self, user_principal: Principal) -> Distribution {
         Distribution {
             total: self.total,
             neurons: self
                 .neurons
                 .into_iter()
-                .map(|n| n.into_neuron(user_canister))
+                .map(|n| n.into_neuron(user_principal))
                 .collect(),
             initial_balances: self.initial_balances,
         }
@@ -98,17 +98,17 @@ impl Default for SnsFormState {
             description: None,
             logo_b64: None,
             symbol: None,
-            transaction_fee: parse_tokens("10_000 e8s").unwrap(),
+            transaction_fee: parse_tokens("1 e8s").unwrap(),
             proposals: Proposals {
                 rejection_fee: parse_tokens("1 token").unwrap(),
-                initial_voting_period: parse_duration("4 days").unwrap(),
-                maximum_wait_for_quiet_deadline_extension: parse_duration("1 day").unwrap(),
+                initial_voting_period: parse_duration("86400 seconds").unwrap(),
+                maximum_wait_for_quiet_deadline_extension: parse_duration("2 seconds").unwrap(),
             },
             neurons: Neurons {
-                minimum_creation_stake: parse_tokens("1 tokens").unwrap(),
+                minimum_creation_stake: parse_tokens("2 e8s").unwrap(),
             },
             voting: Voting {
-                minimum_dissolve_delay: parse_duration("1 day").unwrap(),
+                minimum_dissolve_delay: parse_duration("2 seconds").unwrap(),
                 maximum_voting_power_bonuses: MaximumVotingPowerBonuses {
                     dissolve_delay: Bonus {
                         duration: parse_duration("8 years").unwrap(),
@@ -127,22 +127,22 @@ impl Default for SnsFormState {
             },
             distribution: DistributionForm::default(),
             swap: Swap {
-                minimum_participants: 57,
-                minimum_direct_participation_icp: Some(parse_tokens("100_000 tokens").unwrap()),
-                maximum_direct_participation_icp: Some(parse_tokens("1_000_000 tokens").unwrap()),
-                minimum_participant_icp: parse_tokens("100 tokens").unwrap(),
-                maximum_participant_icp: parse_tokens("10_000 tokens").unwrap(),
-                duration: parse_duration("7 days").unwrap(),
+                minimum_participants: 1,
+                minimum_direct_participation_icp: Some(parse_tokens("15 e8s").unwrap()),
+                maximum_direct_participation_icp: Some(parse_tokens("1 tokens").unwrap()),
+                minimum_participant_icp: parse_tokens("2000 e8s").unwrap(),
+                maximum_participant_icp: parse_tokens("1 tokens").unwrap(),
+                duration: parse_duration("5 seconds").unwrap(),
                 neurons_fund_participation: Some(false),
                 vesting_schedule: VestingSchedule {
                     events: 2,
-                    interval: parse_duration("1 month").unwrap(),
+                    interval: parse_duration("5 seconds").unwrap(),
                 },
                 minimum_icp: None,
                 maximum_icp: None,
                 confirmation_text: None,
                 restricted_countries: None,
-                start_time: None,
+                start_time: Some(nns_pb::GlobalTimeOfDay { seconds_after_utc_midnight: Some(1) }),
                 neurons_fund_investment_icp: None,
             },
             nns_proposal: NnsProposal {
@@ -182,7 +182,7 @@ impl SnsFormState {
             proposals: self.proposals,
             neurons: self.neurons,
             voting: self.voting,
-            distribution: self.distribution.into_distribution(user_canister),
+            distribution: self.distribution.into_distribution(user_principal),
             swap: self.swap,
             nns_proposal: self.nns_proposal,
         })
