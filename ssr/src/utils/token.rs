@@ -103,6 +103,10 @@ pub async fn claim_tokens_from_first_neuron(
         //     println!("!!!!! Not authenticated");
         //     return Err("Not authenticaled".into());
         // }
+        println!("!!!!! Claiming tokens from first neuron");
+        println!("!!!!! user_principal: {:?}", user_principal);
+        println!("!!!!! governance: {:?}", governance);
+
         let governance_can = cans.sns_governance(governance).await;
 
         let neurons = get_neurons(cans, user_principal, governance).await.unwrap();

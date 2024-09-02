@@ -8,11 +8,11 @@ use crate::{
     component::{
         back_btn::BackButton,
         bullet_loader::BulletLoader,
-        canisters_prov::AuthCansProvider,
+        canisters_prov::{with_cans, AuthCansProvider, WithAuthCans},
         connect::ConnectLogin,
         infinite_scroller::{CursoredDataProvider, KeyedData},
     },
-    state::{auth::account_connected_reader, canisters::authenticated_canisters},
+    state::{auth::account_connected_reader, canisters::{authenticated_canisters, Canisters}},
     try_or_redirect_opt,
     utils::profile::ProfileDetails,
 };
@@ -66,7 +66,7 @@ pub fn Wallet() -> impl IntoView {
         || (),
         |cans_wire, _| async move {
             let cans = cans_wire?.canisters()?;
-            let user = cans.authenticated_user().await?;
+            let user = cans.authenticated_user().await;
 
             let bal = user.get_utility_token_balance().await?;
             Ok::<_, ServerFnError>(bal.to_string())
@@ -82,6 +82,22 @@ pub fn Wallet() -> impl IntoView {
             Ok::<_, ServerFnError>(page.data)
         },
     );
+    // let tokens_fetch = auth_cans.derive(
+    //     || (),
+    //     |cans_wire, _| async move {
+    //         let cans = cans_wire?.canisters()?;
+    //         let tokens_prov = TokenRootList(cans);
+    //         let tokens = tokens_prov.get_by_cursor(0, 5).await;
+    //         Ok::<_, ServerFnError>(tokens.map(|t| t.data).unwrap_or_default())
+    //     },
+    // );
+    let tokens_fetch = with_cans(|cans: Canisters<true>| {
+        let tokens_prov = TokenRootList(cans);
+        async move {
+            let tokens = tokens_prov.get_by_cursor(0, 5).await;
+            tokens.map(|t| t.data).unwrap_or_default()
+        }
+    });
 
     view! {
         <div>
