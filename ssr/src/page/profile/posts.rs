@@ -5,7 +5,7 @@ use candid::Principal;
 
 use crate::{
     canister::utils::bg_url,
-    component::no_more_posts::NoMorePostsGraphic,
+    component::profile_placeholders::NoMorePostsGraphic,
     state::canisters::{auth_canisters_store, unauth_canisters},
     utils::{
         event_streaming::events::ProfileViewVideo, posts::PostDetails, profile::PostsProvider,
@@ -35,7 +35,7 @@ fn Post(details: PostDetails, user_canister: Principal, _ref: NodeRef<html::Div>
     };
 
     let handle_image_error =
-        move |_| image_error.update(|image_error| *image_error = !*image_error);
+        move |_| _ = image_error.try_update(|image_error| *image_error = !*image_error);
 
     let canisters = auth_canisters_store();
     let post_details = details.clone();
@@ -100,7 +100,7 @@ pub fn ProfilePosts(user_canister: Principal) -> impl IntoView {
         <ProfileStream
             provider
             empty_graphic=NoMorePostsGraphic
-            empty_text="No Videos Uploaded yet".into()
+            empty_text="No Videos Uploaded yet"
             children=move |details, _ref| {
                 view! {
                     <Post

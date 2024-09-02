@@ -1,6 +1,5 @@
+use leptos::{server, ServerFnError};
 use std::env;
-
-use leptos::{expect_context, server, ServerFnError};
 
 #[cfg(feature = "ga4")]
 #[server]
@@ -9,6 +8,7 @@ pub async fn send_principal_and_token_offchain(
     principal_id: String,
 ) -> Result<(), ServerFnError> {
     use crate::utils::off_chain;
+    use leptos::expect_context;
     use tonic::metadata::MetadataValue;
     use tonic::transport::Channel;
     use tonic::Request;

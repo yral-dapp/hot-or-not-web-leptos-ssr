@@ -1,4 +1,5 @@
 use uts2ts::uts2ts;
+use web_time::Duration;
 
 /// Get day & month -> DD MMM format
 /// where DD -> 2 digits
@@ -21,4 +22,13 @@ pub fn get_day_month(epoch_secs: u64) -> String {
         _ => unreachable!(),
     };
     format!("{:02} {month}", ts.day)
+}
+
+pub fn to_hh_mm_ss(duration: Duration) -> String {
+    let secs = duration.as_secs();
+    let hh = secs / 3600;
+    let mm = (secs - hh * 3600) / 60;
+    let ss = (secs - hh * 3600) - mm * 60;
+
+    format!("{hh:02}:{mm:02}:{ss:02}")
 }

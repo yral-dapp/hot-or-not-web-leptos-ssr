@@ -9,6 +9,7 @@ pub mod local_storage;
 
 #[cfg(feature = "ssr")]
 pub mod server {
+
     use crate::auth::server_impl::store::KVStoreImpl;
 
     use super::canisters::Canisters;
@@ -16,7 +17,6 @@ pub mod server {
     use axum_extra::extract::cookie::Key;
     use leptos::LeptosOptions;
     use leptos_router::RouteListing;
-    use tonic::transport::Channel;
 
     #[derive(FromRef, Clone)]
     pub struct AppState {
@@ -30,8 +30,8 @@ pub mod server {
         pub routes: Vec<RouteListing>,
         pub cookie_key: Key,
         #[cfg(feature = "oauth-ssr")]
-        pub google_oauth: openidconnect::core::CoreClient,
+        pub google_oauth_clients: crate::auth::core_clients::CoreClients,
         #[cfg(feature = "ga4")]
-        pub grpc_offchain_channel: Channel,
+        pub grpc_offchain_channel: tonic::transport::Channel,
     }
 }
