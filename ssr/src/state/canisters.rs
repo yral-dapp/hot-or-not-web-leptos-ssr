@@ -176,7 +176,7 @@ impl<const A: bool> Canisters<A> {
             return Ok(Some(meta.user_canister_id));
         }
         // Fallback to oldest user index
-        let user_idx = self.user_index_with(*FALLBACK_USER_INDEX).await?;
+        let user_idx = self.user_index_with(*FALLBACK_USER_INDEX).await;
         let can = user_idx
             .get_user_canister_id_from_user_principal_id(user_principal)
             .await?;
