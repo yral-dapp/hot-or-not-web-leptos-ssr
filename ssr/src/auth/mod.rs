@@ -12,7 +12,7 @@ use rand_chacha::rand_core::OsRng;
 use serde::{Deserialize, Serialize};
 use web_time::Duration;
 
-use crate::utils::current_epoch;
+use crate::{consts::auth::DELEGATION_MAX_AGE, utils::current_epoch};
 
 /// Delegated identity that can be serialized over the wire
 #[derive(Serialize, Deserialize, Clone)]
@@ -28,10 +28,10 @@ pub struct DelegatedIdentityWire {
 }
 
 impl DelegatedIdentityWire {
-    pub fn delegate_short_lived_identity(from: &impl Identity) -> Self {
+    fn delegate_with_max_age(from: &impl Identity, max_age: Duration) -> Self {
         let to_secret = k256::SecretKey::random(&mut OsRng);
         let to_identity = Secp256k1Identity::from_private_key(to_secret.clone());
-        let expiry = current_epoch() + Duration::from_secs(24 * 60 * 60); //1 day
+        let expiry = current_epoch() + max_age;
         let expiry_ns = expiry.as_nanos() as u64;
         let delegation = Delegation {
             pubkey: to_identity.public_key().unwrap(),
@@ -52,6 +52,15 @@ impl DelegatedIdentityWire {
             to_secret: to_secret.to_jwk(),
             delegation_chain,
         }
+    }
+
+    pub fn delegate(from: &impl Identity) -> Self {
+        Self::delegate_with_max_age(from, DELEGATION_MAX_AGE)
+    }
+
+    pub fn delegate_short_lived_identity(from: &impl Identity) -> Self {
+        let max_age = Duration::from_secs(24 * 60 * 60); // 1 day
+        Self::delegate_with_max_age(from, max_age)
     }
 }
 
@@ -81,9 +90,25 @@ impl TryFrom<DelegatedIdentityWire> for DelegatedIdentity {
     }
 }
 
+/// Generate an anonymous identity if refresh token is not set
 #[server]
-pub async fn extract_or_generate_identity() -> Result<DelegatedIdentityWire, ServerFnError> {
-    server_impl::extract_or_generate_identity_impl().await
+pub async fn generate_anonymous_identity_if_required() -> Result<Option<JwkEcKey>, ServerFnError> {
+    server_impl::generate_anonymous_identity_if_required_impl().await
+}
+
+/// this server function is purely a side effect and only sets the refresh token cookie
+#[server]
+pub async fn set_anonymous_identity_cookie(
+    anonymous_identity: JwkEcKey,
+) -> Result<(), ServerFnError> {
+    server_impl::set_anonymous_identity_cookie_impl(anonymous_identity).await
+}
+
+/// Extract the identity from refresh token,
+/// returns None if refresh token doesn't exist
+#[server]
+pub async fn extract_identity() -> Result<Option<DelegatedIdentityWire>, ServerFnError> {
+    server_impl::extract_identity_impl().await
 }
 
 #[server]

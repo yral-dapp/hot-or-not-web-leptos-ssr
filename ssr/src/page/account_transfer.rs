@@ -20,7 +20,9 @@ fn PrincipalInfo() -> impl IntoView {
             <DashboxLoaded text=cans.identity().sender().unwrap().to_text()/>
             <div class="pt-5 pb-10">
                 <a href="https://hotornot.wtf/migrate" target="_blank">
-                <span class="text-md underline decoration-pink-500 text-pink-500">Visit HotorNot to complete transfer</span>
+                    <span class="text-md underline decoration-pink-500 text-pink-500">
+                        Visit HotorNot to complete transfer
+                    </span>
                 </a>
             </div>
         </AuthCansProvider>
@@ -35,7 +37,10 @@ fn PrincipalInfoView() -> impl IntoView {
         <div class="flex flex-col w-full h-full items-center text-white gap-10">
             <img class="shrink-0 h-40 select-none" src="/img/account-transfer.webp"/>
             <div class="flex flex-col w-full items-center gap-4 text-center">
-                <span class="text-md">Transfer your Videos and COYN tokens from your old HotorNot account to your Yral account. We are phasing out HotorNot, so transfer your account before time runs out. <br/> . . . . . . . . . . . </span>
+                <span class="text-md">
+                    Transfer your Videos and COYN tokens from your old HotorNot account to your Yral account. We are phasing out HotorNot, so transfer your account before time runs out.
+                    <br/> . . . . . . . . . . .
+                </span>
             </div>
             <div class="flex flex-col w-full gap-2 px-4 text-white items-center">
                 <Show when=logged_in fallback=|| view! { <ConnectLogin cta_location="refer"/> }>
@@ -58,7 +63,7 @@ pub fn AccountTransfer() -> impl IntoView {
                 </div>
             </Title>
             <div class="px-8 w-full sm:w-7/12">
-                <PrincipalInfoView />
+                <PrincipalInfoView/>
             </div>
         </div>
     }

@@ -31,11 +31,9 @@ ic-agent = { version = "0.36.0", default-features = false, features = [
 ] }
 serde-wasm-bindgen = "0.6.5"
 futures = "0.3.30"
-leptos-use = { version = "0.12", features = ["serde"] }
-reqwest = { version = "0.12", default-features = false, features = [
-    "json",
-    "http2",
-] }
+leptos-use = "0.12.0"
+codee = { version = "0.1.2", features = ["json_serde"] }
+reqwest = { version = "0.12", default-features = false, features = ["json", "http2"] }
 serde_bytes = "0.11.14"
 hex = "0.4.3"
 leptos_icons = "0.3.0"
@@ -110,6 +108,7 @@ hydrate = [
     "ic-agent/wasm-bindgen",
     "dep:web-sys",
     "reqwest/native-tls",
+        "reqwest/blocking",
     "dep:rand_chacha",
 ]
 ssr = [
@@ -125,6 +124,7 @@ ssr = [
     "leptos-use/ssr",
     "leptos-use/axum",
     "reqwest/rustls-tls",
+            "reqwest/blocking",
     "dep:redis",
     "yral-metadata-client/rustls-tls",
     "dep:redb",
@@ -206,7 +206,7 @@ tailwind-config-file = "tailwind.config.js"
 # Enables additional file hashes on outputted css, js, and wasm files
 #
 # Optional: Defaults to false. Can also be set with the LEPTOS_HASH_FILES=false env var
-hash-files = true
+hash-files = false
 
 # Assets source dir. All files found here will be copied and synchronized to site-root.
 # The assets-dir cannot have a sub directory with the same name/path as site-pkg-dir.
