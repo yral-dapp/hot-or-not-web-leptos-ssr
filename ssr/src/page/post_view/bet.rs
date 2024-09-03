@@ -356,7 +356,7 @@ fn HNAwaitingResults(
                 </div>
             </div>
             <p class="p-1 text-center text-white rounded-full bg-black/15 ps-2">
-                You staked {bet_amount} tokens on {bet_direction_text}.
+                You staked {bet_amount} tokens on {bet_direction_text}
                 Result is still pending
             </p>
         </div>
