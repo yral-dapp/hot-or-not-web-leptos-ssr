@@ -5,7 +5,7 @@ use leptos_use::use_interval_fn;
 use web_time::Duration;
 
 use crate::{
-    canister::individual_user_template::{BettingStatus, PlaceBetArg, Result1},
+    canister::individual_user_template::{BettingStatus, PlaceBetArg, Result2},
     component::{
         bullet_loader::BulletLoader, canisters_prov::AuthCansProvider, hn_icons::*,
         spinner::SpinnerFit,
@@ -74,8 +74,8 @@ async fn bet_on_post(
     let res = user.bet_on_currently_viewing_post(place_bet_arg).await?;
 
     let betting_status = match res {
-        Result1::Ok(p) => p,
-        Result1::Err(_e) => {
+        Result2::Ok(p) => p,
+        Result2::Err(_e) => {
             // todo send event that betting failed
             return Err(ServerFnError::new(
                 "bet on bet_on_currently_viewing_post error".to_string(),
