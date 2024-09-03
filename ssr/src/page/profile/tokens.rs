@@ -28,15 +28,17 @@ fn TokenView(user_canister: Principal, token: TokenCans) -> impl IntoView {
         move |cans_wire, _| async move {
             let cans = cans_wire?.canisters()?;
             // let token = token.clone();
-            let claim_result = claim_tokens_from_first_neuron(&cans, cans.user_principal().clone(), token.governance).await;
+            let claim_result = claim_tokens_from_first_neuron(&cans, cans.user_principal().clone(), token.governance, user_canister, token.ledger).await;
             if claim_result.is_err() {
-                println!("Failed to claim tokens from first neuron: {:?}", claim_result.err());
+                leptos::logging::log!("Failed to claim tokens from first neuron: {:?}", claim_result.err());
             }
             Ok::<_, ServerFnError>(())
         },
     );
     create_effect(move |_| {
+        leptos::logging::log!("TokenView effect");
         if is_connected() {
+            leptos::logging::log!("Unlocking tokens for token: {:?}", token.governance.clone());
             token_unlocking();
         }
     });

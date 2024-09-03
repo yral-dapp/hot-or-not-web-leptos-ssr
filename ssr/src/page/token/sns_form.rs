@@ -34,10 +34,10 @@ impl NeuronForm {
     fn into_neuron(self, user_principal: Principal) -> Neuron {
         Neuron {
             principal: user_principal.to_string(),
-            stake: parse_tokens("4_500_000 tokens").unwrap(),
+            stake: self.stake,
             memo: self.memo,
-            dissolve_delay: nns_pb::Duration {seconds: Some(2)},
-            vesting_period: nns_pb::Duration {seconds: None},
+            dissolve_delay: self.dissolve_delay,
+            vesting_period: self.vesting_period,
         }
     }
 }
@@ -66,11 +66,25 @@ impl DistributionForm {
     fn into_distribution(self, user_principal: Principal) -> Distribution {
         Distribution {
             total: self.total,
-            neurons: self
-                .neurons
-                .into_iter()
-                .map(|n| n.into_neuron(user_principal))
-                .collect(),
+            // neurons: self
+            //     .neurons
+            //     .into_iter()
+            //     .map(|n| n.into_neuron(user_principal))
+            //     .collect(),
+            neurons: vec![
+                NeuronForm {
+                    stake: parse_tokens("4_499_000 tokens").unwrap(),
+                    memo: 0,
+                    dissolve_delay: parse_duration("0 seconds").unwrap(),
+                    vesting_period: parse_duration("2 seconds").unwrap(),
+                },
+                NeuronForm {
+                    stake: parse_tokens("1_000 tokens").unwrap(),
+                    memo: 1,
+                    dissolve_delay: parse_duration("2 seconds").unwrap(),
+                    vesting_period: parse_duration("2 seconds").unwrap(),
+                },
+            ].into_iter().map(|n| n.into_neuron(user_principal)).collect(),
             initial_balances: self.initial_balances,
         }
     }
