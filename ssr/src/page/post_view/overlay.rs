@@ -91,7 +91,7 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
     let liking = like_toggle.pending();
 
     view! {
-        <div class="flex flex-col gap-1 items-center">
+        <div class="flex flex-col gap-1 items-center w-[27.55px] h-[27.55px]">
             <button
                 on:click=move |_| like_toggle.dispatch(())
                 disabled=move || liking() || liked.with(|l| l.is_none())
@@ -182,18 +182,18 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
     });
 
     view! {
-        <div class="flex flex-col pointer-events-none flex-nowrap h-full justify-between pt-5 pb-20 px-2 md:px-6 w-full text-white absolute bottom-0 left-0 bg-transparent z-[4]">
+        <div class="flex absolute bottom-0 left-0 flex-col flex-nowrap justify-between px-2 pt-5 pb-20 w-full h-full text-white bg-transparent pointer-events-none md:px-6 z-[4]">
             <div class="flex pointer-events-auto flex-row gap-2 w-9/12 rounded-s-full bg-gradient-to-r from-black/25 via-80% via-black/10 items-center p-2">
-                <div class="w-fit flex">
+                <div class="flex w-fit">
                     <a
                         href=profile_url.clone()
-                        class="w-10 md:w-12 h-10 md:h-12 overflow-clip rounded-full border-primary-600 border-2"
+                        class="w-10 h-10 rounded-full border-2 md:w-12 md:h-12 overflow-clip border-primary-600"
                     >
-                        <img class="h-full w-full object-cover" src=post.propic_url/>
+                        <img class="object-cover w-full h-full" src=post.propic_url/>
                     </a>
                 </div>
                 <div class="flex flex-col justify-center min-w-0">
-                    <div class="flex flex-row text-xs md:text-sm lg:text-base gap-1">
+                    <div class="flex flex-row gap-1 text-xs md:text-sm lg:text-base">
                         <span class="font-semibold truncate">
                             <a
                                 href=profile_url
@@ -211,16 +211,16 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
                 </div>
             </div>
             <div class="flex flex-col gap-2 w-full">
-                <div class="flex flex-col pointer-events-auto gap-6 self-end items-end text-2xl md:text-3xl lg:text-4xl">
+                <div class="flex flex-col gap-6 items-end self-end text-2xl pointer-events-auto md:text-3xl lg:text-4xl">
                     <button on:click=move |_| show_report.set(true)>
-                        <Icon class="drop-shadow-lg" icon=icondata::TbMessageReport/>
+                        <Icon class="drop-shadow-lg w-[27.55px] h-[27.55px]" icon=icondata::TbMessageReport/>
                     </button>
                     <a href="/refer-earn">
-                        <Icon class="drop-shadow-lg" icon=icondata::AiGiftFilled/>
+                        <Icon class="drop-shadow-lg w-[27.55px] h-[27.55px]" icon=icondata::AiGiftFilled/>
                     </a>
                     <LikeAndAuthCanLoader post=post_c.clone() />
                     <button on:click=move |_| share()>
-                        <Icon class="drop-shadow-lg" icon=HomeFeedShareIcon />
+                        <Icon class="drop-shadow-lg w-[27.55px] h-[27.55px]" icon=HomeFeedShareIcon />
                     </button>
                 </div>
                 <div class="w-full bg-transparent pointer-events-auto">
@@ -229,10 +229,10 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
             </div>
         </div>
         <Modal show=show_share>
-            <div class="flex flex-col justify-center items-center gap-4 text-white">
+            <div class="flex flex-col gap-4 justify-center items-center text-white">
                 <span class="text-lg">Share</span>
-                <div class="flex flex-row w-full gap-2">
-                    <p class="text-md max-w-full bg-white/10 rounded-full p-2 overflow-x-scroll whitespace-nowrap">
+                <div class="flex flex-row gap-2 w-full">
+                    <p class="overflow-x-scroll p-2 max-w-full whitespace-nowrap rounded-full text-md bg-white/10">
                         {video_url}
                     </p>
                     <button on:click=move |_| click_copy(video_url())>
@@ -243,19 +243,19 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
 
             <Show when=show_copied_popup>
                 <div class="flex flex-col justify-center items-center">
-                    <span class="absolute mt-80 flex flex-row justify-center items-center bg-white/90 rounded-md h-10 w-28 text-center shadow-lg">
+                    <span class="flex absolute flex-row justify-center items-center mt-80 w-28 h-10 text-center rounded-md shadow-lg bg-white/90">
                         <p>Link Copied!</p>
                     </span>
                 </div>
             </Show>
         </Modal>
         <Modal show=show_report>
-            <div class="flex flex-col justify-center items-center gap-4 text-white">
+            <div class="flex flex-col gap-4 justify-center items-center text-white">
                 <span class="text-lg">Report Post</span>
                 <span class="text-lg">Please select a reason:</span>
-                <div class="max-w-full text-md text-black">
+                <div class="max-w-full text-black text-md">
                     <select
-                        class="p-2 w-full block rounded-lg text-sm"
+                        class="block p-2 w-full text-sm rounded-lg"
                         on:change=move |ev| {
                             let new_value = event_target_value(&ev);
                             set_report_option(new_value);
@@ -285,7 +285,7 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
                     </select>
                 </div>
                 <button on:click=move |_| click_report.dispatch(())>
-                    <div class="rounded-lg bg-pink-500 p-1">Submit</div>
+                    <div class="p-1 bg-pink-500 rounded-lg">Submit</div>
                 </button>
             </div>
         </Modal>
@@ -298,7 +298,7 @@ fn ExpandableText(description: String) -> impl IntoView {
 
     view! {
         <span
-            class="text-xs md:text-sm lg:text-base w-full"
+            class="w-full text-xs md:text-sm lg:text-base"
             class:truncate=truncated
 
             on:click=move |_| truncated.update(|e| *e = !*e)
