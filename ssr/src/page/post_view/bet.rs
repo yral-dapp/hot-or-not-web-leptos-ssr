@@ -121,13 +121,13 @@ fn HNButton(
 
     view! {
         <button
-            class="h-14 w-14 md:h-16 md:w-16 lg:h-18 md:w-18"
+            class="w-14 h-14 md:w-16 md:h-16 md:w-18 lg:h-18"
             class=("grayscale", grayscale)
             disabled=disabled
             on:click=move |_| bet_direction.set(Some(kind))
         >
             <Show when=move || !show_spinner() fallback=SpinnerFit>
-                <Icon class="h-full w-full drop-shadow-lg" icon=icon/>
+                <Icon class="w-full h-full drop-shadow-lg" icon=icon/>
             </Show>
         </button>
     }
@@ -178,27 +178,27 @@ fn HNButtonOverlay(
             });
         }
         </AuthCansProvider>
-        <div class="flex w-full justify-center touch-manipulation">
+        <div class="flex justify-center w-full touch-manipulation">
             <button
                 disabled=running
                 on:click=move |_| coin.update(|c| *c =  c.wrapping_next())
             >
                 <Icon
-                    class="text-2xl justify-self-end text-white"
+                    class="justify-self-end text-2xl text-white"
                     icon=icondata::AiUpOutlined
                 />
             </button>
         </div>
-        <div class="flex flex-row w-full items-center justify-center gap-6 touch-manipulation">
+        <div class="flex flex-row gap-6 justify-center items-center w-full touch-manipulation">
             <HNButton disabled=running bet_direction kind=BetKind::Hot  />
             <button disabled=running on:click=move |_| coin.update(|c| *c = c.wrapping_next())>
-                <CoinStateView disabled=running class="w-12 h-12 md:h-14 md:w-14 lg:w-16 lg:h-16 drop-shadow-lg" coin />
+                <CoinStateView disabled=running class="w-12 h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 drop-shadow-lg" coin />
             </button>
             <HNButton disabled=running bet_direction kind=BetKind::Not />
         </div>
         // Bottom row: Hot <down arrow> Not
         // most of the CSS is for alignment with above icons
-        <div class="flex w-full justify-center items-center gap-6 text-base md:text-lg lg:text-xl text-center font-medium pt-2 touch-manipulation">
+        <div class="flex gap-6 justify-center items-center pt-2 w-full text-base font-medium text-center md:text-lg lg:text-xl touch-manipulation">
             <p class="w-14 md:w-16 lg:w-18">Hot</p>
             <div class="flex justify-center w-12 md:w-14 lg:w-16">
                 <button
@@ -221,7 +221,7 @@ fn HNButtonOverlay(
 fn WinBadge() -> impl IntoView {
     view! {
         // <!-- Win Badge as a full-width button -->
-        <button class="w-full rounded-sm bg-primary-600 px-4 py-2 text-sm font-bold text-white">
+        <button class="py-2 px-4 w-full text-sm font-bold text-white rounded-sm bg-primary-600">
             <div class="flex justify-center items-center">
                 <span class="">
                     <Icon
@@ -239,7 +239,7 @@ fn WinBadge() -> impl IntoView {
 #[component]
 fn LostBadge() -> impl IntoView {
     view! {
-        <button class="w-full rounded-sm bg-white px-4 py-2 text-sm font-bold text-black">
+        <button class="py-2 px-4 w-full text-sm font-bold text-black bg-white rounded-sm">
             <Icon class="fill-white" style="" icon=icondata::RiTrophyFinanceFill />
             "You Lost"
         </button>
@@ -263,16 +263,16 @@ fn HNWonLost(participation: BetDetails) -> impl IntoView {
     let hn_icon = if is_hot { HotIcon } else { NotIcon };
 
     view! {
-        <div class="flex w-full justify-center items-center gap-6 rounded-xl bg-transparent p-4 shadow-sm">
+        <div class="flex gap-6 justify-center items-center p-4 w-full bg-transparent rounded-xl shadow-sm">
             <div class="relative flex-shrink-0 drop-shadow-lg">
                 <CoinStateView class="w-14 h-14 md:w-16 md:h-16" coin/>
-                <Icon class="absolute -bottom-0.5 -right-3 h-7 w-7 md:w-9 md:h-9" icon=hn_icon />
+                <Icon class="absolute -bottom-0.5 -right-3 w-7 h-7 md:w-9 md:h-9" icon=hn_icon />
             </div>
 
             // <!-- Text and Badge Column -->
-            <div class="gap-2 w-full md:w-1/2 lg:w-1/3 flex flex-col">
+            <div class="flex flex-col gap-2 w-full md:w-1/2 lg:w-1/3">
                 // <!-- Result Text -->
-                <div class="text-sm leading-snug text-white rounded-full p-1">
+                <div class="p-1 text-sm leading-snug text-white rounded-full">
                     <p>You staked {bet_amount} tokens on {if is_hot { "Hot" } else { "Not" }}.</p>
                     <p>{if let Some(reward) = participation.reward() {
                         format!("You received {reward} tokens.")
@@ -316,7 +316,7 @@ fn BetTimer(post: PostDetails, participation: BetDetails, refetch_bet: Trigger) 
     };
 
     view! {
-        <div class="flex flex-row justify-end items-center gap-1 w-full rounded-full py-px pe-4 text-white text-base md:text-lg" style=gradient>
+        <div class="flex flex-row gap-1 justify-end items-center py-px w-full text-base text-white rounded-full md:text-lg pe-4" style=gradient>
             <Icon icon=icondata::AiClockCircleFilled/>
             <span>{move || to_hh_mm_ss(time_remaining())}</span>
         </div>
@@ -345,18 +345,18 @@ fn HNAwaitingResults(
     };
 
     view! {
-        <div class="flex flex-col w-full items-center gap-1 p-4 shadow-sm">
-            <div class="flex flex-row w-full justify-center items-end gap-4">
+        <div class="flex flex-col gap-1 items-center p-4 w-full shadow-sm">
+            <div class="flex flex-row gap-4 justify-center items-end w-full">
                 <div class="relative flex-shrink-0 drop-shadow-lg">
                     <Icon class="w-12 h-12 md:w-14 md:h-14 lg:w-16 lg:h-16" icon=hn_icon/>
-                    <CoinStateView class="absolute bottom-0 -right-3 h-7 w-7 md:w-9 md:h-9 lg:w-11 lg:h-11" coin/>
+                    <CoinStateView class="absolute bottom-0 -right-3 w-7 h-7 md:w-9 md:h-9 lg:w-11 lg:h-11" coin/>
                 </div>
                 <div class="w-1/2 md:w-1/3 lg:w-1/4">
                     <BetTimer post refetch_bet participation/>
                 </div>
             </div>
-            <p class="text-center text-white bg-black/15 rounded-full p-1 ps-2">
-                You staked {bet_amount} tokens on {bet_direction_text}
+            <p class="p-1 text-center text-white rounded-full bg-black/15 ps-2">
+                You staked {bet_amount} tokens on {bet_direction_text}.
                 Result is still pending
             </p>
         </div>
@@ -436,7 +436,7 @@ fn LoaderWithShadowBg() -> impl IntoView {
 fn ShadowBg() -> impl IntoView {
     view! {
         <div
-            class="absolute bottom-0 left-0 w-dvw h-2/5 -z-[1]"
+            class="absolute bottom-0 left-0 h-2/5 w-dvw -z-[1]"
             style="background: linear-gradient(to bottom, #00000000 0%, #00000099 45%, #000000a8 100%, #000000cc 100%, #000000a8 100%);"
         />
     }
