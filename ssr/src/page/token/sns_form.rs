@@ -74,6 +74,10 @@ impl DistributionForm {
             initial_balances: self.initial_balances,
         }
     }
+
+    fn update_total_distribution(&mut self, total: nns_pb::Tokens) {
+        self.total = total;
+    }
 }
 
 #[derive(Clone)]
@@ -155,6 +159,10 @@ impl Default for SnsFormState {
 }
 
 impl SnsFormState {
+    pub fn try_update_total_distribution_tokens(&mut self, tokens: nns_pb::Tokens) {
+        self.distribution.update_total_distribution(tokens);
+    }
+
     pub fn try_into_config(
         self,
         canisters: &Canisters<true>,

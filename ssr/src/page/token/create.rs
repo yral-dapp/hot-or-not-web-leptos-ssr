@@ -8,7 +8,65 @@ use crate::{
     utils::web::FileWithUrl,
 };
 
+use sns_validation::pbs::nns_pb::Tokens;
+
 use super::{popups::TokenCreationPopup, sns_form::SnsFormState};
+
+#[component]
+fn TokenImage() -> impl IntoView {
+    let ctx = expect_context::<CreateTokenCtx>();
+    let img_file = create_rw_signal(None::<FileWithUrl>);
+    let logo_b64 = create_write_slice(ctx.form_state, |f, v| {
+        f.logo_b64 = v;
+    });
+
+    let on_file_input = move |ev: ev::Event| {
+        _ = ev.target().and_then(|_target| {
+            #[cfg(feature = "hydrate")]
+            {
+                use wasm_bindgen::JsCast;
+                use web_sys::HtmlInputElement;
+
+                let input = _target.dyn_ref::<HtmlInputElement>()?;
+                let file = input.files()?.get(0)?;
+                img_file.set(Some(FileWithUrl::new(file.into())));
+            }
+            Some(())
+        })
+    };
+    let img_url = Signal::derive(move || img_file.with(|f| f.as_ref().map(|f| f.url.to_string())));
+
+    view! {
+        <div class="flex flex-col space-y-4  rounded-lg text-white">
+
+            <div class="flex items-center space-x-4">
+                <div class="relative w-20 h-20 rounded-full border-2" style="border-color: #C7C7C8;" >
+                    <div class="flex items-center justify-center w-full h-full rounded-full">
+                        <span class="text-xs text-center">"Add custom logo"</span>
+                    </div>
+                    <input type="file"
+                        on:change=on_file_input
+                        id="dropzone-logo"
+                        accept="image/*"
+                      class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                    <div class="absolute bottom-0 right-0 bg-gray-600 p-1 rounded-full bg-white ">
+                        <img src="/img/upload.svg" class="bg-white" />
+                    </div>
+                </div>
+                <div class="flex-1">
+                    <label class="block mb-1 text-sm font-medium" for="token-name">"Token name"</label>
+                    <input
+                        type="text"
+                        id="token-name"
+                        placeholder="Add a name to your cryptocurrency"
+                        class="w-full p-3  md:p-4 md:py-5 text-white outline-none bg-white/10 border-2 border-solid border-white/20 text-sm rounded-xl placeholder-neutral-600 "
+                    />
+                </div>
+            </div>
+         </div>
+
+    }
+}
 
 #[component]
 fn TokenImgInput() -> impl IntoView {
@@ -76,6 +134,7 @@ macro_rules! input_component {
             #[prop(into)] heading: String,
             #[prop(into)] placeholder: String,
             #[prop(optional)] initial_value: Option<String>,
+            #[prop(optional)] input_type: Option<String>,
             updater: U,
             validator: V,
         ) -> impl IntoView {
@@ -114,8 +173,8 @@ macro_rules! input_component {
                         $attrs
                         placeholder=placeholder
                         class="p-3 py-4 md:p-4 md:py-5 text-white outline-none bg-white/10 border-2 border-solid border-white/20 rounded-xl placeholder-neutral-600"
-                        type="text"
-                    />
+                        type=input_type.unwrap_or_else(|| "text".into() )
+                         />
                 </div>
             }
         }
@@ -124,6 +183,14 @@ macro_rules! input_component {
 
 fn non_empty_string_validator(s: String) -> Option<String> {
     (!s.is_empty()).then_some(s)
+}
+
+fn non_empty_string_validator_for_u64(s: String) -> Option<String> {
+    if !s.is_empty() && s.parse::<u64>().is_ok() {
+        Some(s)
+    } else {
+        None
+    }
 }
 
 input_component!(InputBox, input, {});
@@ -156,6 +223,17 @@ pub fn CreateToken() -> impl IntoView {
     };
     let set_token_desc = move |desc: String| {
         ctx.form_state.update(|f| f.description = Some(desc));
+    };
+
+    let set_transaction_fee = move |fee: String| {
+        ctx.form_state
+            .update(|f| f.transaction_fee = Tokens::parse_token_e8s(&fee).unwrap());
+    };
+
+    let set_total_distribution = move |total: String| {
+        ctx.form_state.update(|f| {
+            (*f).try_update_total_distribution_tokens(Tokens::parse_token_e8s(&total).unwrap())
+        });
     };
 
     let create_action = create_action(move |&()| async move {
@@ -222,15 +300,17 @@ pub fn CreateToken() -> impl IntoView {
                         ></textarea>
                     </div>
                 </Show>
+                <TokenImage/>
                 <div class="flex flex-row w-full justify-between items-center">
+                    <TokenImgInput/>
                     <InputBox
                         heading="Token name"
-                        placeholder="Name"
+                        placeholder="Add a name to your crypto currency"
                         updater=set_token_name
                         validator=non_empty_string_validator
                     />
-                    <TokenImgInput/>
                 </div>
+
                 <InputArea
                     heading="Description"
                     placeholder="Text"
@@ -243,6 +323,21 @@ pub fn CreateToken() -> impl IntoView {
                     updater=set_token_symbol
                     validator=non_empty_string_validator
                 />
+                <InputBox
+                    heading="Transaction Fee"
+                    placeholder="Fee"
+                    input_type="number".into()
+                    updater=set_transaction_fee
+                    validator=non_empty_string_validator_for_u64
+                />
+                <InputBox
+                    heading="Total Token Distribution"
+                    placeholder="Tokens"
+                    input_type="number".into()
+                    updater=set_total_distribution
+                    validator=non_empty_string_validator_for_u64
+                />
+
                 <div class="w-full flex justify-center">
                     <button
                         on:click=move |_| create_action.dispatch(())

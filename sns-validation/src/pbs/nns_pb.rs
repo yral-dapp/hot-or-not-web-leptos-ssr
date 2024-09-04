@@ -99,6 +99,15 @@ impl Tokens {
         let e8s = self.e8s?.checked_sub(rhs.e8s?)?;
         Some(Tokens { e8s: Some(e8s) })
     }
+
+    pub fn parse_token_e8s(s: &str) -> Result<Tokens, String> {
+        let e8s: u64 = s
+            .replace('_', "")
+            .parse::<u64>()
+            .map_err(|err| err.to_string())?;
+
+        Ok(Tokens { e8s: Some(e8s) })
+    }
 }
 
 impl Percentage {
