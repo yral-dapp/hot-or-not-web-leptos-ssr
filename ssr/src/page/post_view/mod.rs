@@ -234,7 +234,7 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
                 if res.res_type != FeedResultType::MLFeed {
                     fetch_cursor.try_update(|c| {
                         c.set_limit(15);
-                        c.advance_and_set_limit(30)
+                        c.advance_and_set_limit(20)
                     });
                 }
 
