@@ -91,14 +91,14 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
     let liking = like_toggle.pending();
 
     view! {
-        <div class="flex flex-col gap-1 items-center w-[27.55px] h-[27.55px]">
+        <div class="flex flex-col items-center ">
             <button
                 on:click=move |_| like_toggle.dispatch(())
                 disabled=move || liking() || liked.with(|l| l.is_none())
             >
-                <img src=icon_name style="width: 1em; height: 1em;"/>
+                <img src=icon_name style="width: 27.55px; height: 27.55px;"/>
             </button>
-            <span class="text-sm md:text-md">{likes}</span>
+            <span class="text-sm md:text-md ">{likes}</span>
             <WithAuthCans with=liked_fetch let:d>
                 {move || {
                     likes.set(d.1.1);
@@ -219,8 +219,8 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
                         <Icon class="drop-shadow-lg w-[27.55px] h-[27.55px]" icon=icondata::AiGiftFilled/>
                     </a>
                     <LikeAndAuthCanLoader post=post_c.clone() />
-                    <button on:click=move |_| share()>
-                        <Icon class="drop-shadow-lg w-[27.55px] h-[27.55px]" icon=HomeFeedShareIcon />
+                    <button on:click=move |_| share()  >
+                        <Icon class="drop-shadow-lg w-[27.55px] h-[27.55px] " icon=HomeFeedShareIcon />
                     </button>
                 </div>
                 <div class="w-full bg-transparent pointer-events-auto">
