@@ -40,9 +40,9 @@ fn TokenImage() -> impl IntoView {
         <div class="flex flex-col space-y-4  rounded-lg text-white">
 
             <div class="flex items-center space-x-4">
-                <div class="relative w-20 h-20 rounded-full border-2" style="border-color: #C7C7C8;" >
+                <div class="relative w-20 h-20 rounded-full border-2 border-white/20 "  >
                     <div class="flex items-center justify-center w-full h-full rounded-full">
-                        <span class="text-xs text-center">"Add custom logo"</span>
+                        <span class="text-xs text-center text-gray-400 font-medium">"Add custom logo"</span>
                     </div>
                     <input type="file"
                         on:change=on_file_input
@@ -54,12 +54,12 @@ fn TokenImage() -> impl IntoView {
                     </div>
                 </div>
                 <div class="flex-1">
-                    <label class="block mb-1 text-sm font-medium" for="token-name">"Token name"</label>
+                    <label class="block mb-1 text-sm font-medium text-white" for="token-name">"Token name"</label>
                     <input
                         type="text"
                         id="token-name"
                         placeholder="Add a name to your cryptocurrency"
-                        class="w-full p-3  md:p-4 md:py-5 text-white outline-none bg-white/10 border-2 border-solid border-white/20 text-sm rounded-xl placeholder-neutral-600 "
+                        class="w-full p-3  md:p-4 md:py-5 text-white outline-none bg-white/10 border-2 border-solid border-white/20 text-xs  rounded-xl placeholder-neutral-600 "
                     />
                 </div>
             </div>
