@@ -128,8 +128,8 @@ pub fn App() -> impl IntoView {
                     // auth redirect routes exist outside main context
                     <GoogleAuthRedirectHandlerRoute/>
                     <GoogleAuthRedirectorRoute/>
-                    <Route path="/" view=RootPage/>
                     <Route path="" view=BaseRoute>
+                        <Route path="" view=RootPage/>
                         <Route path="/hot-or-not/:canister_id/:post_id" view=PostView/>
                         <Route path="/post/:canister_id/:post_id" view=SinglePost/>
                         <Route path="/profile/:canister_id/:post_id" view=ProfilePost/>
