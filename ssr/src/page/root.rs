@@ -1,15 +1,10 @@
-use std::time::Duration;
-
 use candid::Principal;
 use leptos::*;
 use leptos_router::*;
 
+use crate::component::spinner::FullScreenSpinner;
 #[cfg(feature = "ssr")]
 use crate::{canister::post_cache, state::canisters::unauth_canisters};
-use crate::{
-    component::spinner::FullScreenSpinner,
-    state::canisters::{auth_canisters_store, authenticated_canisters, Canisters},
-};
 
 #[server]
 async fn get_top_post_id() -> Result<Option<(Principal, u64)>, ServerFnError> {

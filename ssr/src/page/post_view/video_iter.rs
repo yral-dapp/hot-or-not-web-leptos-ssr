@@ -1,4 +1,4 @@
-use std::{pin::Pin, time::Duration};
+use std::pin::Pin;
 
 use candid::Principal;
 use codee::string::JsonSerdeCodec;
@@ -9,10 +9,9 @@ use leptos_use::storage::use_local_storage;
 use crate::{
     canister::post_cache::{self, NsfwFilter},
     consts::USER_CANISTER_ID_STORE,
-    state::canisters::{auth_canisters_store, AuthCansResource, Canisters},
+    state::canisters::{auth_canisters_store, Canisters},
     utils::posts::{get_post_uid, FetchCursor, PostDetails, PostViewError},
 };
-use gloo::timers::future::TimeoutFuture;
 
 pub async fn post_liked_by_me(
     canisters: &Canisters<true>,
@@ -185,7 +184,7 @@ impl<'a> VideoFetchStream<'a, true> {
             user_canister.get_ml_feed_cache_paginated(self.cursor.start, self.cursor.limit);
 
         let top_posts = top_posts_fut.await?;
-        if top_posts.len() == 0 {
+        if top_posts.is_empty() {
             leptos::logging::log!("postcache results");
             return self.fetch_post_uids_chunked(chunks, allow_nsfw).await;
         }

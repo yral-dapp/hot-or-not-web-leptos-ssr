@@ -7,7 +7,7 @@ pub mod video_loader;
 use crate::{
     component::{scrolling_post_view::ScrollingPostView, spinner::FullScreenSpinner},
     consts::NSFW_TOGGLE_STORE,
-    state::canisters::{authenticated_canisters, unauth_canisters, AuthCansResource, Canisters},
+    state::canisters::{authenticated_canisters, unauth_canisters, Canisters},
     try_or_redirect,
     utils::{
         posts::{get_post_uid, FetchCursor, PostDetails},
@@ -17,7 +17,6 @@ use crate::{
 use candid::Principal;
 use codee::string::FromToStringCodec;
 use futures::StreamExt;
-use gloo::timers::future::TimeoutFuture;
 use leptos::*;
 use leptos_router::*;
 use leptos_use::{storage::use_local_storage, use_debounce_fn};
@@ -192,7 +191,7 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
         fetch_cursor,
         video_queue,
         queue_end,
-        current_idx,
+        ..
     } = expect_context();
 
     let (nsfw_enabled, _, _) = use_local_storage::<bool, FromToStringCodec>(NSFW_TOGGLE_STORE);
