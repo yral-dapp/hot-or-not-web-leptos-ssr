@@ -55,6 +55,7 @@ fn TokenImage() -> impl IntoView {
                             />
                              <div class="absolute bottom-0 right-0 bg-gray-600 p-1 rounded-full bg-white ">
                              <img src="/img/edit.svg" class="bg-white" />
+                          //   <button on:click=move|_|{img_file.set(None) ;  } >  <img src="/img/edit.svg" class="bg-white" /> </button>
                              </div>
                         }
                     }
@@ -256,12 +257,12 @@ pub fn CreateToken() -> impl IntoView {
     let set_token_desc = move |desc: String| {
         ctx.form_state.update(|f| f.description = Some(desc));
     };
-
+/*
     let set_transaction_fee = move |fee: String| {
         ctx.form_state
             .update(|f| f.transaction_fee = Tokens::parse_token_e8s(&fee).unwrap());
     };
-
+*/
     let set_total_distribution = move |total: String| {
         ctx.form_state.update(|f| {
             (*f).try_update_total_distribution_tokens(Tokens::parse_token_e8s(&total).unwrap())
@@ -311,12 +312,13 @@ pub fn CreateToken() -> impl IntoView {
     view! {
         <div class="w-dvw min-h-dvh bg-black pt-4 flex flex-col gap-4">
             <Title justify_center=false>
-                <div class="grid grid-cols-3 justify-start w-full">
+                <div class="flex justify-between w-full">
                     <BackButton fallback=fallback_url/>
-                    <span class="font-bold justify-self-center">Create a Token</span>
+                    <span class="font-bold justify-self-center">Create Meme Token </span>
+                    <img src="/img/info.svg"/ >
                 </div>
             </Title>
-            <div class="flex flex-col w-full px-6 md:px-8 gap-6 md:gap-8">
+            <div class="flex flex-col w-full px-6 md:px-8 gap-2 md:gap-8">
                 <Show when=move || {
                     create_act_res.with(|v| v.as_ref().map(|v| v.is_err()).unwrap_or_default())
                 }>
@@ -365,6 +367,7 @@ pub fn CreateToken() -> impl IntoView {
                     updater=set_token_symbol
                     validator=non_empty_string_validator
                 />
+  /*
                 <InputBox
                     heading="Transaction Fee"
                     placeholder="Fee"
@@ -372,6 +375,7 @@ pub fn CreateToken() -> impl IntoView {
                     updater=set_transaction_fee
                     validator=non_empty_string_validator_for_u64
                 />
+*/
                 <InputBox
                     heading="Distribution"
                     placeholder="Distribution Tokens"
