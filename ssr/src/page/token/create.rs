@@ -49,14 +49,17 @@ fn TokenImage() -> impl IntoView {
                                 class="object-conver h-full w-full rounded-full"
                                 src=move || img_url().unwrap()
                             />
+                             <div class="absolute bottom-0 right-0 bg-gray-600 p-1 rounded-full bg-white ">
+                             <img src="/img/edit.svg" class="bg-white" />
+                             </div>
                         }
                     }
-                >      
-                    
+                >
+
               <div class="flex items-center justify-center w-full h-full rounded-full">
                         <span class="text-xs text-center text-gray-400 font-medium">"Add custom logo"</span>
                     </div>
-                    
+
                     <input type="file"
                         on:change=on_file_input
                         id="dropzone-logo"
@@ -64,9 +67,9 @@ fn TokenImage() -> impl IntoView {
                       class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                     <div class="absolute bottom-0 right-0 bg-gray-600 p-1 rounded-full bg-white ">
                         <img src="/img/upload.svg" class="bg-white" />
-                    </div>                    
+                    </div>
                 </Show>
-                
+
                 </div>
                 <div class="flex-1">
                     <label class="block mb-1 text-sm font-medium text-white" for="token-name">"Token name"</label>
