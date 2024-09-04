@@ -319,7 +319,7 @@ pub fn CreateToken() -> impl IntoView {
                 </div>
             </Title>
             <div class="flex flex-col w-full px-6 md:px-8 gap-2 md:gap-8">
-                <Show when=move || {
+               /*  <Show when=move || {
                     create_act_res.with(|v| v.as_ref().map(|v| v.is_err()).unwrap_or_default())
                 }>
                     <div class="flex flex-col w-full items-center gap-2">
@@ -334,6 +334,7 @@ pub fn CreateToken() -> impl IntoView {
                         ></textarea>
                     </div>
                 </Show>
+                */
                 <div class="flex flex-row w-full gap-4  justify-between items-center">
                 <TokenImage/>
                     <InputBox
