@@ -61,6 +61,8 @@ pub fn ScrollingPostView<F: Fn() -> V + Clone + 'static, V>(
                         use_intersection_observer_with_options(
                             container_ref,
                             move |entry, _| {
+                                leptos::logging::log!("current_idx: {}, queue_idx: {}", current_idx.get(), queue_idx);
+
                                 let Some(visible) = entry.first().filter(|e| e.is_intersecting())
                                 else {
                                     return;
