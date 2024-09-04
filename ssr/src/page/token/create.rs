@@ -75,7 +75,7 @@ fn TokenImage() -> impl IntoView {
                 </Show>
 
                 </div>
-                <div class="flex-1">
+               /*  <div class="flex-1">
                     <InputBox
                         heading="Token name"
                         placeholder="Add a name to your crypto currency"
@@ -83,9 +83,10 @@ fn TokenImage() -> impl IntoView {
                         validator=non_empty_string_validator
                     />
 
-                </div>
+                </div> */
             </div>
          </div>
+                 <ImgToPng img_file=img_file output_b64=logo_b64/>
 
     }
 }
@@ -331,8 +332,17 @@ pub fn CreateToken() -> impl IntoView {
                         ></textarea>
                     </div>
                 </Show>
+                <div class="flex flex-row w-full gap-4  justify-between items-center">
                 <TokenImage/>
-             /*  <div class="flex flex-row w-full justify-between items-center">
+                    <InputBox
+                        heading="Token name"
+                        placeholder="Add a name to your crypto currency"
+                        updater=set_token_name
+                        validator=non_empty_string_validator
+                    />
+                </div>
+/*
+               <div class="flex flex-row w-full justify-between items-center">
                     <TokenImgInput/>
                     <InputBox
                         heading="Token name"
@@ -341,16 +351,17 @@ pub fn CreateToken() -> impl IntoView {
                         validator=non_empty_string_validator
                     />
                 </div>
-            */
-                <InputArea
+  */
+                            
+                                                                                <InputArea
                     heading="Description"
-                    placeholder="Text"
+                    placeholder="Fun & friendly internet currency inspired by the legendary Shiba Inu dog 'Kabosu'"
                     updater=set_token_desc
                     validator=non_empty_string_validator
                 />
                 <InputBox
                     heading="Token Symbol"
-                    placeholder="Text"
+                    placeholder="Eg. DODGE"
                     updater=set_token_symbol
                     validator=non_empty_string_validator
                 />
@@ -363,7 +374,7 @@ pub fn CreateToken() -> impl IntoView {
                 />
                 <InputBox
                     heading="Distribution"
-                    placeholder="Tokens"
+                    placeholder="Distribution Tokens"
                     input_type="number".into()
                     updater=set_total_distribution
                     validator=non_empty_string_validator_for_u64
@@ -378,6 +389,10 @@ pub fn CreateToken() -> impl IntoView {
                         {move || if creating() { "Creating..." } else { "Create" }}
                     </button>
                 </div>
+
+                <div class="w-full flex justify-center underline text-sm text-white my-4 " >
+                View advanced settings
+                 </div>
             </div>
             <TokenCreationPopup
                 creation_action=create_action
