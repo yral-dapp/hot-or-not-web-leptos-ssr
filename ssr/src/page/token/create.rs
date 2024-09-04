@@ -24,7 +24,6 @@ fn TokenImage() -> impl IntoView {
         ctx.form_state.update(|f| f.name = Some(name));
     };
 
-
     let on_file_input = move |ev: ev::Event| {
         _ = ev.target().and_then(|_target| {
             #[cfg(feature = "hydrate")]
@@ -77,13 +76,13 @@ fn TokenImage() -> impl IntoView {
 
                 </div>
                 <div class="flex-1">
-                    <label class="block mb-1 text-sm font-medium text-white" for="token-name">"Token name"</label>
-                    <input
-                        type="text"
-                        id="token-name"
-                        placeholder="Add a name to your cryptocurrency"
-                        class="w-full p-3  md:p-4 md:py-5 text-white outline-none bg-white/10 border-2 border-solid border-white/20 text-xs  rounded-xl placeholder-neutral-600 "
+                    <InputBox
+                        heading="Token name"
+                        placeholder="Add a name to your crypto currency"
+                        updater=set_token_name
+                        validator=non_empty_string_validator
                     />
+
                 </div>
             </div>
          </div>
@@ -168,13 +167,13 @@ macro_rules! input_component {
                 ctx.invalid_cnt.update(|c| *c += 1);
             }
 
-            let input_class = match show_error() && error() {
+            let input_class =move ||  match show_error() && error() {
                 false => format!("w-full p-3  md:p-4 md:py-5 text-white outline-none bg-white/10 border-2 border-solid border-white/20 text-xs  rounded-xl placeholder-neutral-600"),
                 _ =>  format!("w-full p-3  md:p-4 md:py-5 text-white outline-none bg-white/10 border-2 border-solid border-red-500 text-xs  rounded-xl placeholder-neutral-600")
             };
             view! {
                 <div class="flex flex-col grow gap-y-1 text-sm md:text-base">
-                     <span class="text-white font-semibold">{heading.clone()}</span>            
+                     <span class="text-white font-semibold">{heading.clone()}</span>
                      <$input_element prop:value=initial_value.unwrap_or_default() on:input=move |ev| {
                         let value = event_target_value(&ev);
                         match validator(value) {
@@ -197,11 +196,13 @@ macro_rules! input_component {
                         }
                         $attrs
                         placeholder=placeholder
-                        class=input_class
+                        class=move || input_class()
                         type=input_type.unwrap_or_else(|| "text".into() )
                          />
 
-                <Show when=move || show_error() && error()>
+                <Show when=move || show_error() && error() fallback=move || view!{
+                                            <span class="text-red-500 font-semibold">  </span>
+                } >
                         <span class="text-red-500 font-semibold">Invalid </span>
                     </Show>
 
@@ -331,7 +332,7 @@ pub fn CreateToken() -> impl IntoView {
                     </div>
                 </Show>
                 <TokenImage/>
-                <div class="flex flex-row w-full justify-between items-center">
+             /*  <div class="flex flex-row w-full justify-between items-center">
                     <TokenImgInput/>
                     <InputBox
                         heading="Token name"
@@ -340,7 +341,7 @@ pub fn CreateToken() -> impl IntoView {
                         validator=non_empty_string_validator
                     />
                 </div>
-
+            */
                 <InputArea
                     heading="Description"
                     placeholder="Text"
@@ -361,7 +362,7 @@ pub fn CreateToken() -> impl IntoView {
                     validator=non_empty_string_validator_for_u64
                 />
                 <InputBox
-                    heading="Total Token Distribution"
+                    heading="Distribution"
                     placeholder="Tokens"
                     input_type="number".into()
                     updater=set_total_distribution
