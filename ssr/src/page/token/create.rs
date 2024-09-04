@@ -20,6 +20,11 @@ fn TokenImage() -> impl IntoView {
         f.logo_b64 = v;
     });
 
+    let set_token_name = move |name: String| {
+        ctx.form_state.update(|f| f.name = Some(name));
+    };
+
+
     let on_file_input = move |ev: ev::Event| {
         _ = ev.target().and_then(|_target| {
             #[cfg(feature = "hydrate")]
@@ -163,12 +168,14 @@ macro_rules! input_component {
                 ctx.invalid_cnt.update(|c| *c += 1);
             }
 
+            let input_class = match show_error() && error() {
+                false => format!("w-full p-3  md:p-4 md:py-5 text-white outline-none bg-white/10 border-2 border-solid border-white/20 text-xs  rounded-xl placeholder-neutral-600"),
+                _ =>  format!("w-full p-3  md:p-4 md:py-5 text-white outline-none bg-white/10 border-2 border-solid border-red-500 text-xs  rounded-xl placeholder-neutral-600")
+            };
             view! {
-                <div class="flex flex-col grow gap-y-2 text-sm md:text-base">
-                    <Show when=move || show_error() && error() fallback=move || view! { <span class="text-white font-semibold">{heading.clone()}</span> }>
-                        <span class="text-red-500 font-semibold">Invalid</span>
-                    </Show>
-                    <$input_element prop:value=initial_value.unwrap_or_default() on:input=move |ev| {
+                <div class="flex flex-col grow gap-y-1 text-sm md:text-base">
+                     <span class="text-white font-semibold">{heading.clone()}</span>            
+                     <$input_element prop:value=initial_value.unwrap_or_default() on:input=move |ev| {
                         let value = event_target_value(&ev);
                         match validator(value) {
                             Some(v) => {
@@ -185,14 +192,19 @@ macro_rules! input_component {
                                 }
                                 error.set(true);
                                 ctx.invalid_cnt.update(|c| *c += 1);
+                                }
                             }
                         }
-                    }
                         $attrs
                         placeholder=placeholder
-                        class="p-3 py-4 md:p-4 md:py-5 text-white outline-none bg-white/10 border-2 border-solid border-white/20 rounded-xl placeholder-neutral-600"
+                        class=input_class
                         type=input_type.unwrap_or_else(|| "text".into() )
                          />
+
+                <Show when=move || show_error() && error()>
+                        <span class="text-red-500 font-semibold">Invalid </span>
+                    </Show>
+
                 </div>
             }
         }
