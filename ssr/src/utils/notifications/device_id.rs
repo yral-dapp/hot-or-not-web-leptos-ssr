@@ -1,7 +1,6 @@
 use leptos::{server, ServerFnError};
 use std::env;
 
-#[cfg(not(clippy))]
 #[cfg(feature = "ga4")]
 #[server]
 pub async fn send_principal_and_token_offchain(
@@ -37,15 +36,5 @@ pub async fn send_principal_and_token_offchain(
 
     client.bind_device_to_principal(request).await?;
 
-    Ok(())
-}
-
-#[cfg(clippy)]
-#[cfg(feature = "ga4")]
-#[server]
-pub async fn send_principal_and_token_offchain(
-    _device_id: String,
-    _principal_id: String,
-) -> Result<(), ServerFnError> {
     Ok(())
 }

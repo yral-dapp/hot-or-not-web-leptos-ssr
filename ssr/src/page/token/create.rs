@@ -1,12 +1,12 @@
-use leptos::*;
-use leptos_icons::*;
-
 use crate::{
     canister::individual_user_template::Result6,
     component::{back_btn::BackButton, img_to_png::ImgToPng, title::Title},
     state::canisters::auth_canisters_store,
     utils::web::FileWithUrl,
 };
+use leptos::*;
+use leptos_icons::*;
+use leptos_router::*;
 
 use sns_validation::pbs::nns_pb::Tokens;
 
@@ -19,10 +19,6 @@ fn TokenImage() -> impl IntoView {
     let logo_b64 = create_write_slice(ctx.form_state, |f, v| {
         f.logo_b64 = v;
     });
-
-    let set_token_name = move |name: String| {
-        ctx.form_state.update(|f| f.name = Some(name));
-    };
 
     let on_file_input = move |ev: ev::Event| {
         _ = ev.target().and_then(|_target| {
@@ -257,12 +253,12 @@ pub fn CreateToken() -> impl IntoView {
     let set_token_desc = move |desc: String| {
         ctx.form_state.update(|f| f.description = Some(desc));
     };
-/*
-    let set_transaction_fee = move |fee: String| {
-        ctx.form_state
-            .update(|f| f.transaction_fee = Tokens::parse_token_e8s(&fee).unwrap());
-    };
-*/
+    /*
+        let set_transaction_fee = move |fee: String| {
+            ctx.form_state
+                .update(|f| f.transaction_fee = Tokens::parse_token_e8s(&fee).unwrap());
+        };
+    */
     let set_total_distribution = move |total: String| {
         ctx.form_state.update(|f| {
             (*f).try_update_total_distribution_tokens(Tokens::parse_token_e8s(&total).unwrap())
@@ -310,101 +306,132 @@ pub fn CreateToken() -> impl IntoView {
     });
 
     view! {
-        <div class="w-dvw min-h-dvh bg-black pt-4 flex flex-col gap-4">
-            <Title justify_center=false>
-                <div class="flex justify-between w-full">
-                    <BackButton fallback=fallback_url/>
-                    <span class="font-bold justify-self-center">Create Meme Token </span>
-                    <img src="/img/info.svg"/ >
-                </div>
-            </Title>
-            <div class="flex flex-col w-full px-6 md:px-8 gap-2 md:gap-8">
-               /*  <Show when=move || {
-                    create_act_res.with(|v| v.as_ref().map(|v| v.is_err()).unwrap_or_default())
-                }>
-                    <div class="flex flex-col w-full items-center gap-2">
-                        <span class="text-red-500 font-semibold text-center">
-                            Error creating token:
-                        </span>
-                        <textarea
-                            prop:value=create_act_res().unwrap().err().unwrap()
-                            disabled
-                            rows=3
-                            class="bg-white/10 text-xs md:text-sm text-red-500/60 w-full md:w-2/3 resize-none p-2"
-                        ></textarea>
+            <div class="w-dvw min-h-dvh bg-black pt-4 flex flex-col gap-4">
+                <Title justify_center=false>
+                    <div class="flex justify-between w-full">
+                        <BackButton fallback=fallback_url/>
+                        <span class="font-bold justify-self-center">Create Meme Token </span>
+                        <img src="/img/info.svg"/ >
                     </div>
-                </Show>
-                */
-                <div class="flex flex-row w-full gap-4  justify-between items-center">
-                <TokenImage/>
-                    <InputBox
-                        heading="Token name"
-                        placeholder="Add a name to your crypto currency"
-                        updater=set_token_name
+                </Title>
+                <div class="flex flex-col w-full px-6 md:px-8 gap-2 md:gap-8">
+                   /*  <Show when=move || {
+                        create_act_res.with(|v| v.as_ref().map(|v| v.is_err()).unwrap_or_default())
+                    }>
+                        <div class="flex flex-col w-full items-center gap-2">
+                            <span class="text-red-500 font-semibold text-center">
+                                Error creating token:
+                            </span>
+                            <textarea
+                                prop:value=create_act_res().unwrap().err().unwrap()
+                                disabled
+                                rows=3
+                                class="bg-white/10 text-xs md:text-sm text-red-500/60 w-full md:w-2/3 resize-none p-2"
+                            ></textarea>
+                        </div>
+                    </Show>
+                    */
+                    <div class="flex flex-row w-full gap-4  justify-between items-center">
+                    <TokenImage/>
+                        <InputBox
+                            heading="Token name"
+                            placeholder="Add a name to your crypto currency"
+                            updater=set_token_name
+                            validator=non_empty_string_validator
+                        />
+                    </div>
+    /*
+                   <div class="flex flex-row w-full justify-between items-center">
+                        <TokenImgInput/>
+                        <InputBox
+                            heading="Token name"
+                            placeholder="Add a name to your crypto currency"
+                            updater=set_token_name
+                            validator=non_empty_string_validator
+                        />
+                    </div>
+      */
+
+                                                                                    <InputArea
+                        heading="Description"
+                        placeholder="Fun & friendly internet currency inspired by the legendary Shiba Inu dog 'Kabosu'"
+                        updater=set_token_desc
                         validator=non_empty_string_validator
                     />
-                </div>
-/*
-               <div class="flex flex-row w-full justify-between items-center">
-                    <TokenImgInput/>
                     <InputBox
-                        heading="Token name"
-                        placeholder="Add a name to your crypto currency"
-                        updater=set_token_name
+                        heading="Token Symbol"
+                        placeholder="Eg. DODGE"
+                        updater=set_token_symbol
                         validator=non_empty_string_validator
                     />
-                </div>
-  */
-                            
-                                                                                <InputArea
-                    heading="Description"
-                    placeholder="Fun & friendly internet currency inspired by the legendary Shiba Inu dog 'Kabosu'"
-                    updater=set_token_desc
-                    validator=non_empty_string_validator
-                />
-                <InputBox
-                    heading="Token Symbol"
-                    placeholder="Eg. DODGE"
-                    updater=set_token_symbol
-                    validator=non_empty_string_validator
-                />
-  /*
-                <InputBox
-                    heading="Transaction Fee"
-                    placeholder="Fee"
-                    input_type="number".into()
-                    updater=set_transaction_fee
-                    validator=non_empty_string_validator_for_u64
-                />
-*/
-                <InputBox
-                    heading="Distribution"
-                    placeholder="Distribution Tokens"
-                    input_type="number".into()
-                    updater=set_total_distribution
-                    validator=non_empty_string_validator_for_u64
-                />
+      /*
+                    <InputBox
+                        heading="Transaction Fee"
+                        placeholder="Fee"
+                        input_type="number".into()
+                        updater=set_transaction_fee
+                        validator=non_empty_string_validator_for_u64
+                    />
+    */
+                    <InputBox
+                        heading="Distribution"
+                        placeholder="Distribution Tokens"
+                        input_type="number".into()
+                        updater=set_total_distribution
+                        validator=non_empty_string_validator_for_u64
+                    />
 
-                <div class="w-full flex justify-center">
-                    <button
-                        on:click=move |_| create_action.dispatch(())
-                        disabled=create_disabled
-                        class="text-white disabled:text-neutral-500 md:text-xl py-4 md:py-4 font-bold w-full md:w-1/2 lg:w-1/3 rounded-full bg-primary-600 disabled:bg-primary-500/30"
-                    >
-                        {move || if creating() { "Creating..." } else { "Create" }}
-                    </button>
-                </div>
+                    <div class="w-full flex justify-center">
+                        <button
+                            on:click=move |_| create_action.dispatch(())
+                            disabled=create_disabled
+                            class="text-white disabled:text-neutral-500 md:text-xl py-4 md:py-4 font-bold w-full md:w-1/2 lg:w-1/3 rounded-full bg-primary-600 disabled:bg-primary-500/30"
+                        >
+                            {move || if creating() { "Creating..." } else { "Create" }}
+                        </button>
+                    </div>
 
-                <div class="w-full flex justify-center underline text-sm text-white my-4 " >
-                View advanced settings
-                 </div>
+                    <div class="w-full flex justify-center underline text-sm text-white my-4 " >
+                     <button on:click=move |_|{navigate_token_settings() }  >  View advanced settings </button>
+                     </div>
+                </div>
+                <TokenCreationPopup
+                    creation_action=create_action
+                    token_name=Signal::derive(move || {
+                        ctx.form_state.with(|f| f.name.clone()).unwrap_or_default()
+                    })
+/>
             </div>
-            <TokenCreationPopup
-                creation_action=create_action
-                token_name=Signal::derive(move || {
-                    ctx.form_state.with(|f| f.name.clone()).unwrap_or_default()
-                })
-            />
-        </div>
+        }
+}
+
+fn navigate_token_settings() {
+    let navigate = use_navigate();
+    navigate("/token/create/settings", Default::default());
+}
+
+#[component]
+pub fn CreateTokenSettings() -> impl IntoView {
+    let auth_cans = auth_canisters_store();
+    let fallback_url = Signal::derive(move || {
+        let Some(cans) = auth_cans() else {
+            return "/token/create".to_string();
+        };
+        let id = cans.profile_details().username_or_principal();
+        format!("/your-profile/{id}?tab=tokens")
+    });
+    let ctx = CreateTokenCtx::default();
+    provide_context(ctx);
+
+    view! {
+         <div class="w-dvw min-h-dvh bg-black pt-4 flex flex-col gap-4">
+               <Title justify_center=false>
+                    <div class="grid grid-cols-3 justify-start w-full">
+                        <BackButton fallback=fallback_url/>
+                        <span class="font-bold justify-self-center">Settings</span>
+                    </div>
+                </Title>
+
+         </div>
     }
 }

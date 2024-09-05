@@ -74,9 +74,9 @@ pub fn FallbackUser() -> impl IntoView {
 }
 
 #[component]
-fn BetTimer(details: BetDetails) -> impl IntoView {
+fn BetTimer(post: PostDetails, details: BetDetails) -> impl IntoView {
     let bet_duration = details.bet_duration().as_secs();
-    let time_remaining = create_rw_signal(details.time_remaining());
+    let time_remaining = create_rw_signal(details.time_remaining(post.created_at));
     _ = use_interval_fn(
         move || {
             time_remaining.try_update(|t| *t = t.saturating_sub(Duration::from_secs(1)));
@@ -107,7 +107,35 @@ fn BetTimer(details: BetDetails) -> impl IntoView {
 pub fn Speculation(details: BetDetails, _ref: NodeRef<html::Div>) -> impl IntoView {
     // TODO: enable scrolling videos for bets
     let profile_post_url = format!("/post/{}/{}", details.canister_id, details.post_id);
-    let (bet_res, amt, icon) = match details.outcome {
+
+    let bet_canister = details.canister_id;
+
+    let post_details = create_resource(
+        move || (bet_canister, details.post_id),
+        move |(canister_id, post_id)| async move {
+            let canister = unauth_canisters();
+            let user = canister.individual_user(canister_id).await;
+            let post_details = user.get_individual_post_details_by_id(post_id).await.ok()?;
+            Some(PostDetails::from_canister_post(
+                false,
+                canister_id,
+                post_details,
+            ))
+        },
+    );
+
+    let profile_details = create_resource(
+        move || bet_canister,
+        move |canister_id| async move {
+            let canister = unauth_canisters();
+            let user = canister.individual_user(canister_id).await;
+            let profile_details = user.get_profile_details().await.ok()?;
+            Some(ProfileDetails::from(profile_details))
+        },
+    );
+
+    let details = store_value(details);
+    let (bet_res, amt, icon) = match details.with_value(|d| d.outcome) {
         BetOutcome::Won(amt) => (
             "RECEIVED",
             amt,
@@ -129,7 +157,7 @@ pub fn Speculation(details: BetDetails, _ref: NodeRef<html::Div>) -> impl IntoVi
         ),
         BetOutcome::Lost => (
             "VOTE",
-            details.bet_amount,
+            details.with_value(|d| d.bet_amount),
             view! {
                 <div class="flex w-full justify-center items-center h-6 bg-white text-black py-2 text-xs font-medium">
                     You Lost
@@ -138,34 +166,19 @@ pub fn Speculation(details: BetDetails, _ref: NodeRef<html::Div>) -> impl IntoVi
         ),
         BetOutcome::AwaitingResult => (
             "VOTE",
-            details.bet_amount,
+            details.with_value(|d| d.bet_amount),
             view! {
-                <BetTimer details=details.clone()/>
+                <Suspense>
+                    {move || {
+                        let post = post_details().flatten()?;
+                        Some(view! {
+                            <BetTimer post details=details.get_value()/>
+                        })
+                    }}
+                </Suspense>
             },
         ),
     };
-    let profile_details = create_resource(
-        move || details.canister_id,
-        move |canister_id| async move {
-            let canister = unauth_canisters();
-            let user = canister.individual_user(canister_id).await;
-            let profile_details = user.get_profile_details().await.ok()?;
-            Some(ProfileDetails::from(profile_details))
-        },
-    );
-    let post_details = create_resource(
-        move || (details.canister_id, details.post_id),
-        move |(canister_id, post_id)| async move {
-            let canister = unauth_canisters();
-            let user = canister.individual_user(canister_id).await;
-            let post_details = user.get_individual_post_details_by_id(post_id).await.ok()?;
-            Some(PostDetails::from_canister_post(
-                false,
-                canister_id,
-                post_details,
-            ))
-        },
-    );
 
     view! {
         <div _ref=_ref class="relative w-1/2 md:w-1/3 lg:w-1/4 px-1">

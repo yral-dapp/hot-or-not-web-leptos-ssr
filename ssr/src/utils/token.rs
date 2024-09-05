@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     canister::{
-        sns_governance::GetMetadataArg, sns_ledger::Account, sns_root::ListSnsCanistersArg,
+        sns_governance::{Account, Amount, Command, Command1, Disburse, DissolveState, GetMetadataArg, ListNeurons, ManageNeuron, Neuron}, sns_ledger::{Account as LedgerAccount, TransferArg, TransferResult}, sns_root::ListSnsCanistersArg,
     },
     state::canisters::Canisters,
 };
@@ -20,7 +20,7 @@ pub struct TokenMetadata {
     pub fees: Nat,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct TokenCans {
     pub governance: Principal,
     pub ledger: Principal,
@@ -57,7 +57,7 @@ pub async fn get_token_metadata<const A: bool>(
     let ledger = cans.sns_ledger(ledger).await;
     let symbol = ledger.icrc_1_symbol().await?;
 
-    let acc = Account {
+    let acc = LedgerAccount {
         owner: user_canister,
         subaccount: None,
     };
@@ -73,3 +73,129 @@ pub async fn get_token_metadata<const A: bool>(
         balance,
     })
 }
+
+pub async fn get_neurons<const A: bool>(
+    cans: &Canisters<A>,
+    user_principal: Principal,
+    governance: Principal,
+) -> Option<Vec<Neuron>> {
+    let governance = cans.sns_governance(governance).await;
+    let neurons = governance.list_neurons(ListNeurons {
+        of_principal: Some(user_principal),
+        limit: 10,
+        start_page_at: None
+    }).await;
+
+    if neurons.is_ok() {
+        let neurons = neurons.unwrap().neurons;
+        Some(neurons)
+    } else {
+        None
+    }
+}
+
+pub async fn claim_tokens_from_first_neuron(
+    cans: &Canisters<true>,
+    user_principal: Principal,
+    governance: Principal,
+    user_canister: Principal,
+    ledger: Principal,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        // if !A {
+        //     println!("!!!!! Not authenticated");
+        //     return Err("Not authenticaled".into());
+        // }
+        leptos::logging::log!("!!!!! Claiming tokens from first neuron");
+        leptos::logging::log!("!!!!! user_principal: {:?}", user_principal);
+        leptos::logging::log!("!!!!! governance: {:?}", governance);
+
+        let governance_can = cans.sns_governance(governance).await;
+
+        let neurons = get_neurons(cans, user_principal, governance).await.unwrap();
+        if neurons.len() < 1 || neurons[1].cached_neuron_stake_e8s == 0 {
+            return Ok(());
+        }
+        // let neuron = neurons[0];
+        let mut ix = 0;
+        // if let Some(neuron) = neurons.get(1) {
+        //     if let Some(dissolve) = neuron.dissolve_state {
+        //         match dissolve {
+        //             DissolveState::DissolveDelaySeconds(x) => {
+        //                 if x > 0 {
+        //                     ix = 1;
+        //                 }
+        //             }
+        //             _ => {}
+        //         }
+        //     }
+        // }
+        if neurons[1].dissolve_state.is_some() {
+            if let Some(DissolveState::DissolveDelaySeconds(x)) = neurons[1].dissolve_state.as_ref() {
+                if *x == 0 {
+                    ix = 1;
+                }
+            }
+        }
+        let neuron_id = neurons[ix].id.as_ref().unwrap().id.clone();
+        let amount = neurons[ix].cached_neuron_stake_e8s;
+        let manage_neuron_arg = ManageNeuron {
+            subaccount: neuron_id,
+            command: Some(
+                Command::Disburse(Disburse {
+                    to_account: Some(Account {
+                        owner: Some(user_principal),
+                        subaccount: None
+                    }),
+                    amount: Some(Amount { e8s: amount })
+                })
+            )
+        };
+        let manage_neuron = governance_can.manage_neuron(manage_neuron_arg).await;
+        if manage_neuron.is_ok() {
+            let manage_neuron_res = manage_neuron.unwrap().command.unwrap();
+            leptos::logging::log!("!!!!! manage_neuron_res: {:?}", manage_neuron_res);
+            match manage_neuron_res {
+                Command1::Disburse(_) => {
+                    // transfer to canister
+                    let ledger_can = cans.sns_ledger(ledger).await;
+                    let transfer_resp = ledger_can.icrc_1_transfer(TransferArg {
+                        to: LedgerAccount {
+                            owner: user_canister,
+                            subaccount: None
+                        },
+                        fee: None,
+                        memo: None,
+                        from_subaccount: None,
+                        amount: Nat::from(amount-2),
+                        created_at_time: None
+                    }).await?;
+                    leptos::logging::log!("!!!!! transfer_resp: {:?}", transfer_resp);
+                    // if transfer_resp() {
+                    //     return Ok(());
+                    // } else {
+                    //     leptos::logging::log!("!!!!! Failed to transfer tokens");
+                    //     leptos::logging::log!("!!!!! transfer_resp: {:?}", transfer_resp);
+                    //     return Err("Failed to transfer tokens".into());
+                    // }
+                    match transfer_resp {
+                        TransferResult::Ok(block) => {
+                            leptos::logging::log!("!!!!! Successfully claimed tokens: {:?}", block);
+                            return Ok(());
+                        }
+                        _ => {
+                            leptos::logging::log!("!!!!! Failed to claim tokens");
+                            leptos::logging::log!("!!!!! transfer_resp: {:?}", transfer_resp);
+                            return Err("Failed to claim tokens".into());
+                        }
+                    }
+                    // return Ok(());
+                }
+                _ => {
+                    leptos::logging::log!("!!!!! Failed to claim tokens");
+                    return Err("Failed to claim tokens".into());
+                }
+            }
+        } else {
+            return Err("Failed to claim tokens".into());
+        }
+    }

@@ -22,8 +22,8 @@ use crate::{
         user_index::UserIndex,
         PLATFORM_ORCHESTRATOR_ID, POST_CACHE_ID,
     },
-    consts::METADATA_API_BASE,
-    utils::{ic::AgentWrapper, profile::ProfileDetails, MockPartialEq},
+    consts::{FALLBACK_USER_INDEX, METADATA_API_BASE},
+    utils::{ic::AgentWrapper, profile::ProfileDetails, MockPartialEq, ParentResource},
 };
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -172,7 +172,15 @@ impl<const A: bool> Canisters<A> {
             .metadata_client
             .get_user_metadata(user_principal)
             .await?;
-        Ok(meta.map(|m| m.user_canister_id))
+        if let Some(meta) = meta {
+            return Ok(Some(meta.user_canister_id));
+        }
+        // Fallback to oldest user index
+        let user_idx = self.user_index_with(*FALLBACK_USER_INDEX).await;
+        let can = user_idx
+            .get_user_canister_id_from_user_principal_id(user_principal)
+            .await?;
+        Ok(can)
     }
 
     pub async fn sns_governance(&self, canister_id: Principal) -> SnsGovernance<'_> {
@@ -300,7 +308,7 @@ pub async fn do_canister_auth(
     Ok(cans_wire)
 }
 
-pub type AuthCansResource = Resource<
+pub type AuthCansResource = ParentResource<
     MockPartialEq<Option<DelegatedIdentityWire>>,
     Result<CanistersAuthWire, ServerFnError>,
 >;

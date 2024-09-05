@@ -186,7 +186,7 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
             <div class="flex pointer-events-auto flex-row gap-2 w-9/12 rounded-s-full bg-gradient-to-r from-black/25 via-80% via-black/10 items-center p-2">
                 <div class="w-fit flex">
                     <a
-                        href=profile_url
+                        href=profile_url.clone()
                         class="w-10 md:w-12 h-10 md:h-12 overflow-clip rounded-full border-primary-600 border-2"
                     >
                         <img class="h-full w-full object-cover" src=post.propic_url/>
@@ -195,7 +195,11 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
                 <div class="flex flex-col justify-center min-w-0">
                     <div class="flex flex-row text-xs md:text-sm lg:text-base gap-1">
                         <span class="font-semibold truncate">
-                            {post.display_name}
+                            <a
+                                href=profile_url
+                            >
+                                {post.display_name}
+                            </a>
                         </span>
                         <span class="font-semibold">"|"</span>
                         <span class="flex flex-row gap-1 items-center">

@@ -12,7 +12,8 @@ use crate::{
         connect::ConnectLogin,
         infinite_scroller::{CursoredDataProvider, KeyedData},
     },
-    state::{auth::account_connected_reader, canisters::Canisters},
+    state::{auth::account_connected_reader, canisters::{authenticated_canisters, Canisters}},
+    try_or_redirect_opt,
     utils::profile::ProfileDetails,
 };
 use txn::{provider::get_history_provider, TxnView};
@@ -60,22 +61,36 @@ fn BalanceFallback() -> impl IntoView {
 pub fn Wallet() -> impl IntoView {
     let (is_connected, _) = account_connected_reader();
 
-    let balance_fetch = with_cans(|cans: Canisters<true>| async move {
-        let user = cans.authenticated_user().await;
+    let auth_cans = authenticated_canisters();
+    let balance_fetch = auth_cans.derive(
+        || (),
+        |cans_wire, _| async move {
+            let cans = cans_wire?.canisters()?;
+            let user = cans.authenticated_user().await;
 
-        user.get_utility_token_balance()
-            .await
-            .map(|b| b.to_string())
-            .unwrap_or("Error".to_string())
-    });
-    let history_fetch = with_cans(|cans: Canisters<true>| {
-        let history_prov = get_history_provider(cans);
-        async move {
-            let page = history_prov.get_by_cursor(0, RECENT_TXN_CNT).await;
+            let bal = user.get_utility_token_balance().await?;
+            Ok::<_, ServerFnError>(bal.to_string())
+        },
+    );
+    let history_fetch = auth_cans.derive(
+        || (),
+        |cans_wire, _| async move {
+            let cans = cans_wire?.canisters()?;
+            let history_prov = get_history_provider(cans);
+            let page = history_prov.get_by_cursor(0, RECENT_TXN_CNT).await?;
 
-            page.map(|p| p.data).unwrap_or(vec![])
-        }
-    });
+            Ok::<_, ServerFnError>(page.data)
+        },
+    );
+    // let tokens_fetch = auth_cans.derive(
+    //     || (),
+    //     |cans_wire, _| async move {
+    //         let cans = cans_wire?.canisters()?;
+    //         let tokens_prov = TokenRootList(cans);
+    //         let tokens = tokens_prov.get_by_cursor(0, 5).await;
+    //         Ok::<_, ServerFnError>(tokens.map(|t| t.data).unwrap_or_default())
+    //     },
+    // );
     let tokens_fetch = with_cans(|cans: Canisters<true>| {
         let tokens_prov = TokenRootList(cans);
         async move {
@@ -99,9 +114,14 @@ pub fn Wallet() -> impl IntoView {
                 </div>
                 <div class="flex flex-col w-full items-center mt-6 text-white">
                     <span class="text-md lg:text-lg uppercase">Your Coyns Balance</span>
-                    <WithAuthCans fallback=BalanceFallback with=balance_fetch let:bal>
-                        <div class="text-xl lg:text-2xl">{bal.1}</div>
-                    </WithAuthCans>
+                    <Suspense fallback=BalanceFallback>
+                        {move || {
+                            let balance = try_or_redirect_opt!(balance_fetch()?);
+                            Some(view! {
+                                <div class="text-xl lg:text-2xl">{balance}</div>
+                            })
+                        }}
+                    </Suspense>
                 </div>
                 <Show when=move || !is_connected()>
                     <div class="flex flex-col w-full py-5 items-center">
@@ -136,11 +156,13 @@ pub fn Wallet() -> impl IntoView {
                         </a>
                     </div>
                     <div class="flex flex-col divide-y divide-white/10">
-                        <WithAuthCans fallback=BulletLoader with=history_fetch let:history>
-                            <For each=move || history.1.clone() key=|inf| inf.key() let:info>
-                                <TxnView info/>
-                            </For>
-                        </WithAuthCans>
+                        <Suspense fallback=BulletLoader>
+                            {move || history_fetch().map(|history| view! {
+                                <For each=move || history.clone().unwrap_or_default() key=|inf| inf.key() let:info>
+                                    <TxnView info/>
+                                </For>
+                            })}
+                        </Suspense>
                     </div>
                 </div>
             </div>

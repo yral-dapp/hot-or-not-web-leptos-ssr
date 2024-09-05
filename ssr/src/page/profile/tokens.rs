@@ -4,8 +4,11 @@ use leptos_icons::*;
 
 use crate::{
     component::{bullet_loader::BulletLoader, token_confetti_symbol::TokenConfettiSymbol},
-    state::canisters::unauth_canisters,
-    utils::token::{get_token_metadata, TokenCans},
+    state::{
+        auth::account_connected_reader,
+        canisters::{unauth_canisters, authenticated_canisters},
+    },
+    utils::token::{get_token_metadata, TokenCans, claim_tokens_from_first_neuron},
 };
 
 #[component]
@@ -17,6 +20,29 @@ fn TokenViewFallback() -> impl IntoView {
 
 #[component]
 fn TokenView(user_canister: Principal, token: TokenCans) -> impl IntoView {
+    let (is_connected, _) = account_connected_reader();
+    let auth_cans = authenticated_canisters();
+
+    let token_unlocking = auth_cans.derive(
+        || (),
+        move |cans_wire, _| async move {
+            let cans = cans_wire?.canisters()?;
+            // let token = token.clone();
+            let claim_result = claim_tokens_from_first_neuron(&cans, cans.user_principal().clone(), token.governance, user_canister, token.ledger).await;
+            if claim_result.is_err() {
+                leptos::logging::log!("Failed to claim tokens from first neuron: {:?}", claim_result.err());
+            }
+            Ok::<_, ServerFnError>(())
+        },
+    );
+    create_effect(move |_| {
+        leptos::logging::log!("TokenView effect");
+        if is_connected() {
+            leptos::logging::log!("Unlocking tokens for token: {:?}", token.governance.clone());
+            token_unlocking();
+        }
+    });
+
     let token_info = create_resource(
         || (),
         move |_| async move {
