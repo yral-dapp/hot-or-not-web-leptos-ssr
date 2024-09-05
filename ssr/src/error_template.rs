@@ -1,6 +1,7 @@
 use http::status::StatusCode;
 use leptos::*;
 use thiserror::Error;
+use gloo::history::{BrowserHistory, History};
 
 #[cfg(feature = "ssr")]
 use leptos_axum::ResponseOptions;
@@ -36,6 +37,13 @@ pub fn ErrorTemplate(
     // Get Errors from Signal
     let errors = errors.get_untracked();
 
+    let go_back = move || {
+        let history = BrowserHistory::new();
+
+        //go back
+        history.back();
+    };
+    
     // Downcast lets us take a type that implements `std::error::Error`
     let errors: Vec<AppError> = errors
         .into_iter()
@@ -54,23 +62,34 @@ pub fn ErrorTemplate(
     }
 
     view! {
-        <div class="bg-black text-white">
-        <h1>{if errors.len() > 1 { "Errors" } else { "Error" }}</h1>
-        <For
-            // a function that returns the items we're iterating over; a signal is fine
-            each=move || { errors.clone().into_iter().enumerate() }
-            // a unique key for each item as a reference
-            key=|(index, _error)| *index
-            // renders each item to a view
-            children=move |error| {
-                let error_string = error.1.to_string();
-                let error_code = error.1.status_code();
-                view! {
-                    <h2>{error_code.to_string()}</h2>
-                    <p>"Error: " {error_string}</p>
-                }
-            }
-        />
+        <div class="flex flex-col w-dvw h-dvh bg-black justify-center items-center">
+            <img src="/img/error-logo.svg"/>
+            <h1 class="p-2 text-2xl md:text-3xl font-bold text-white">"oh no!"</h1>
+            <div class="text-center text-xs md:text-sm text-white/60 w-full md:w-2/3 lg:w-1/3 resize-none px-8 mb-4">
+                // <h1>{if errors.len() > 1 { "Errors" } else { "Error" }}</h1>
+                <For
+                    // a function that returns the items we're iterating over; a signal is fine
+                    each=move || { errors.clone().into_iter().enumerate() }
+                    // a unique key for each item as a reference
+                    key=|(index, _error)| *index
+                    // renders each item to a view
+                    children=move |error| {
+                        let error_string = error.1.to_string();
+                        let error_code = error.1.status_code();
+                        view! {
+                            <h2>{error_code.to_string()}</h2>
+                            <p>"Error: " {error_string}</p>
+                        }
+                    }
+                />
+
+            </div>
+            <button
+                on:click=move |_| go_back()
+                class="bg-primary-600 rounded-full mt-6 py-4 px-12 max-w-full text-white text-lg md:text-xl"
+            >
+                Go back
+            </button>
         </div>
     }
 }
