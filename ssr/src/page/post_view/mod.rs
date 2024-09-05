@@ -210,6 +210,7 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
                 let Some(nsfw_enabled) = nsfw_enabled.try_get_untracked() else {
                     return;
                 };
+
                 let Some(current_idx_val) = current_idx.try_get_untracked() else {
                     return;
                 };
