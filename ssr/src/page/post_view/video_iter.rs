@@ -133,8 +133,15 @@ impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
                 user_canister_id = cans.user_canister();
             }
 
+            // buffer of 5 posts in case user scrolls few posts ahead
+            // inserting new feed after 5 posts from current index
+            let filter_results = video_queue
+                .into_iter()
+                .take(current_idx + 5)
+                .collect::<Vec<_>>();
+
             let top_posts_fut =
-                ml_feed.get_next_feed(&user_canister_id, self.cursor.limit as u32, video_queue);
+                ml_feed.get_next_feed(&user_canister_id, self.cursor.limit as u32, filter_results);
 
             let top_posts = match top_posts_fut.await {
                 Ok(top_posts) => top_posts,
