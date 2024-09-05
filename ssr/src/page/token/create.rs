@@ -34,7 +34,7 @@ fn TokenImage() -> impl IntoView {
             Some(())
         })
     };
-
+/*
     let file_input_ref = create_node_ref::<leptos::html::Input>();
 
     let on_edit_click = move |_| {
@@ -43,14 +43,20 @@ fn TokenImage() -> impl IntoView {
             input.click();
         }
     };
-
+*/
     let img_url = Signal::derive(move || img_file.with(|f| f.as_ref().map(|f| f.url.to_string())));
+
+     let border_class =move ||  match img_url.with(|u| u.is_none() ) {
+                true => format!("relative w-20 h-20 rounded-full border-2 border-white/20"),
+                _ =>  format!("relative w-20 h-20 rounded-full border-2 border-primary-600")
+            };
+
 
     view! {
         <div class="flex flex-col space-y-4  rounded-lg text-white">
 
             <div class="flex items-center space-x-4">
-                <div class="relative w-20 h-20 rounded-full border-2 border-white/20 "  >
+                <div class= move || border_class()  >
             <Show
                     when=move || img_url.with(|u| u.is_none())
                     fallback=move || {
@@ -60,10 +66,9 @@ fn TokenImage() -> impl IntoView {
                                 src=move || img_url().unwrap()
                             />
                              <div class="absolute bottom-0 right-0 bg-gray-600 p-1 rounded-full bg-white ">
-                            <button on:click=on_edit_click>
+                          //  <button on:click=on_edit_click>
                                  <img src="/img/edit.svg" class="bg-white" />
-                            </button>
-                          //   <button on:click=move|_|{img_file.set(None) ;  } >  <img src="/img/edit.svg" class="bg-white" /> </button>
+                          //  </button>
                              </div>
                         }
                     }

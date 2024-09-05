@@ -1,7 +1,6 @@
 pub mod create;
 pub mod info;
 mod popups;
-pub mod settings;
 mod sns_form;
 pub mod transfer;
 
