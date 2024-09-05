@@ -12,7 +12,10 @@ use crate::{
         connect::ConnectLogin,
         infinite_scroller::{CursoredDataProvider, KeyedData},
     },
-    state::{auth::account_connected_reader, canisters::{authenticated_canisters, Canisters}},
+    state::{
+        auth::account_connected_reader,
+        canisters::{authenticated_canisters, Canisters},
+    },
     try_or_redirect_opt,
     utils::profile::ProfileDetails,
 };

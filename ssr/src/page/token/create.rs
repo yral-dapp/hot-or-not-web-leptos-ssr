@@ -306,103 +306,103 @@ pub fn CreateToken() -> impl IntoView {
     });
 
     view! {
-            <div class="w-dvw min-h-dvh bg-black pt-4 flex flex-col gap-4">
-                <Title justify_center=false>
-                    <div class="flex justify-between w-full">
-                        <BackButton fallback=fallback_url/>
-                        <span class="font-bold justify-self-center">Create Meme Token </span>
-                        <img src="/img/info.svg"/ >
-                    </div>
-                </Title>
-                <div class="flex flex-col w-full px-6 md:px-8 gap-2 md:gap-8">
-                   /*  <Show when=move || {
-                        create_act_res.with(|v| v.as_ref().map(|v| v.is_err()).unwrap_or_default())
-                    }>
-                        <div class="flex flex-col w-full items-center gap-2">
-                            <span class="text-red-500 font-semibold text-center">
-                                Error creating token:
-                            </span>
-                            <textarea
-                                prop:value=create_act_res().unwrap().err().unwrap()
-                                disabled
-                                rows=3
-                                class="bg-white/10 text-xs md:text-sm text-red-500/60 w-full md:w-2/3 resize-none p-2"
-                            ></textarea>
+                <div class="w-dvw min-h-dvh bg-black pt-4 flex flex-col gap-4">
+                    <Title justify_center=false>
+                        <div class="flex justify-between w-full">
+                            <BackButton fallback=fallback_url/>
+                            <span class="font-bold justify-self-center">Create Meme Token </span>
+                            <img src="/img/info.svg"/ >
                         </div>
-                    </Show>
-                    */
-                    <div class="flex flex-row w-full gap-4  justify-between items-center">
-                    <TokenImage/>
-                        <InputBox
-                            heading="Token name"
-                            placeholder="Add a name to your crypto currency"
-                            updater=set_token_name
+                    </Title>
+                    <div class="flex flex-col w-full px-6 md:px-8 gap-2 md:gap-8">
+                       /*  <Show when=move || {
+                            create_act_res.with(|v| v.as_ref().map(|v| v.is_err()).unwrap_or_default())
+                        }>
+                            <div class="flex flex-col w-full items-center gap-2">
+                                <span class="text-red-500 font-semibold text-center">
+                                    Error creating token:
+                                </span>
+                                <textarea
+                                    prop:value=create_act_res().unwrap().err().unwrap()
+                                    disabled
+                                    rows=3
+                                    class="bg-white/10 text-xs md:text-sm text-red-500/60 w-full md:w-2/3 resize-none p-2"
+                                ></textarea>
+                            </div>
+                        </Show>
+                        */
+                        <div class="flex flex-row w-full gap-4  justify-between items-center">
+                        <TokenImage/>
+                            <InputBox
+                                heading="Token name"
+                                placeholder="Add a name to your crypto currency"
+                                updater=set_token_name
+                                validator=non_empty_string_validator
+                            />
+                        </div>
+        /*
+                       <div class="flex flex-row w-full justify-between items-center">
+                            <TokenImgInput/>
+                            <InputBox
+                                heading="Token name"
+                                placeholder="Add a name to your crypto currency"
+                                updater=set_token_name
+                                validator=non_empty_string_validator
+                            />
+                        </div>
+          */
+
+                                                                                        <InputArea
+                            heading="Description"
+                            placeholder="Fun & friendly internet currency inspired by the legendary Shiba Inu dog 'Kabosu'"
+                            updater=set_token_desc
                             validator=non_empty_string_validator
                         />
-                    </div>
-    /*
-                   <div class="flex flex-row w-full justify-between items-center">
-                        <TokenImgInput/>
                         <InputBox
-                            heading="Token name"
-                            placeholder="Add a name to your crypto currency"
-                            updater=set_token_name
+                            heading="Token Symbol"
+                            placeholder="Eg. DODGE"
+                            updater=set_token_symbol
                             validator=non_empty_string_validator
                         />
+          /*
+                        <InputBox
+                            heading="Transaction Fee"
+                            placeholder="Fee"
+                            input_type="number".into()
+                            updater=set_transaction_fee
+                            validator=non_empty_string_validator_for_u64
+                        />
+        */
+                        <InputBox
+                            heading="Distribution"
+                            placeholder="Distribution Tokens"
+                            input_type="number".into()
+                            updater=set_total_distribution
+                            validator=non_empty_string_validator_for_u64
+                        />
+
+                        <div class="w-full flex justify-center">
+                            <button
+                                on:click=move |_| create_action.dispatch(())
+                                disabled=create_disabled
+                                class="text-white disabled:text-neutral-500 md:text-xl py-4 md:py-4 font-bold w-full md:w-1/2 lg:w-1/3 rounded-full bg-primary-600 disabled:bg-primary-500/30"
+                            >
+                                {move || if creating() { "Creating..." } else { "Create" }}
+                            </button>
+                        </div>
+
+                        <div class="w-full flex justify-center underline text-sm text-white my-4 " >
+                         <button on:click=move |_|{navigate_token_settings() }  >  View advanced settings </button>
+                         </div>
                     </div>
-      */
-
-                                                                                    <InputArea
-                        heading="Description"
-                        placeholder="Fun & friendly internet currency inspired by the legendary Shiba Inu dog 'Kabosu'"
-                        updater=set_token_desc
-                        validator=non_empty_string_validator
-                    />
-                    <InputBox
-                        heading="Token Symbol"
-                        placeholder="Eg. DODGE"
-                        updater=set_token_symbol
-                        validator=non_empty_string_validator
-                    />
-      /*
-                    <InputBox
-                        heading="Transaction Fee"
-                        placeholder="Fee"
-                        input_type="number".into()
-                        updater=set_transaction_fee
-                        validator=non_empty_string_validator_for_u64
-                    />
-    */
-                    <InputBox
-                        heading="Distribution"
-                        placeholder="Distribution Tokens"
-                        input_type="number".into()
-                        updater=set_total_distribution
-                        validator=non_empty_string_validator_for_u64
-                    />
-
-                    <div class="w-full flex justify-center">
-                        <button
-                            on:click=move |_| create_action.dispatch(())
-                            disabled=create_disabled
-                            class="text-white disabled:text-neutral-500 md:text-xl py-4 md:py-4 font-bold w-full md:w-1/2 lg:w-1/3 rounded-full bg-primary-600 disabled:bg-primary-500/30"
-                        >
-                            {move || if creating() { "Creating..." } else { "Create" }}
-                        </button>
-                    </div>
-
-                    <div class="w-full flex justify-center underline text-sm text-white my-4 " >
-                     <button on:click=move |_|{navigate_token_settings() }  >  View advanced settings </button>
-                     </div>
+                    <TokenCreationPopup
+                        creation_action=create_action
+                        token_name=Signal::derive(move || {
+                            ctx.form_state.with(|f| f.name.clone()).unwrap_or_default()
+                        })
+    />
                 </div>
-                <TokenCreationPopup
-                    creation_action=create_action
-                    token_name=Signal::derive(move || {
-                        ctx.form_state.with(|f| f.name.clone()).unwrap_or_default()
-                    })
-/>
-            </div>
-        }
+            }
 }
 
 fn navigate_token_settings() {
@@ -423,6 +423,44 @@ pub fn CreateTokenSettings() -> impl IntoView {
     let ctx = CreateTokenCtx::default();
     provide_context(ctx);
 
+    let set_sns_proposal_link = move |value: String| {
+        ctx.form_state
+            .update(|f| f.sns_form_setting.sns_proposal_link = Some(value));
+    };
+
+    let set_nns_proposal_link = move |value: String| {
+        ctx.form_state
+            .update(|f| f.sns_form_setting.nns_proposal_link = Some(value));
+    };
+    let set_dapp_canister_id = move |value: String| {
+        ctx.form_state
+            .update(|f| f.sns_form_setting.dapp_canister_id = Some(value));
+    };
+    let set_transaction_fee = move |value: String| {
+        ctx.form_state
+            .update(|f| f.transaction_fee = (Tokens::parse_token_e8s(&value).unwrap()));
+    };
+    let set_rejection_fee = move |value: String| {
+        ctx.form_state.update(|f| {
+            f.sns_form_setting.rejection_fee = (Tokens::parse_token_e8s(&value).ok());
+        });
+    };
+    let set_initial_voting_period_in_days = move |value: String| {
+        ctx.form_state.update(|f| {
+            f.sns_form_setting.initial_voting_period_in_days = value.parse::<u64>().ok();
+        });
+    };
+    let set_max_wait_deadline_extention = move |value: String| {
+        ctx.form_state.update(|f| {
+            f.sns_form_setting.max_wait_deadline_extention = value.parse::<u64>().ok();
+        });
+    };
+    let set_min_creation_stake = move |value: String| {
+        ctx.form_state.update(|f| {
+            f.sns_form_setting.min_creation_stake = value.parse::<u64>().ok();
+        });
+    };
+
     view! {
          <div class="w-dvw min-h-dvh bg-black pt-4 flex flex-col gap-4">
                <Title justify_center=false>
@@ -431,6 +469,33 @@ pub fn CreateTokenSettings() -> impl IntoView {
                         <span class="font-bold justify-self-center">Settings</span>
                     </div>
                 </Title>
+                <div class="flex flex-col w-full px-6 md:px-8 gap-2 md:gap-8">
+                <InputBox
+                        heading="SNS proposal link"
+                        placeholder="https://your-proposal-link.com"
+                        updater=set_sns_proposal_link
+                        validator=non_empty_string_validator
+                />
+                <InputBox
+                        heading="NNS proposal link"
+                        placeholder="https://your-proposal-link.com"
+                        updater=set_nns_proposal_link
+                        validator=non_empty_string_validator
+                />
+                <InputBox
+                        heading="Dapp Canister ID"
+                        placeholder="#8539434643"
+                        updater=set_dapp_canister_id
+                        validator=non_empty_string_validator
+                />
+                <InputBox
+                        heading="Transaction Fee"
+                        placeholder="Fee"
+                        input_type="number".into()
+                        updater=set_transaction_fee
+                        validator=non_empty_string_validator_for_u64
+                 />
+                 </div>
 
          </div>
     }

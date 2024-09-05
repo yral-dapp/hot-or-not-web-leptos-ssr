@@ -84,7 +84,10 @@ impl DistributionForm {
                     dissolve_delay: parse_duration("2 seconds").unwrap(),
                     vesting_period: parse_duration("2 seconds").unwrap(),
                 },
-            ].into_iter().map(|n| n.into_neuron(user_principal)).collect(),
+            ]
+            .into_iter()
+            .map(|n| n.into_neuron(user_principal))
+            .collect(),
             initial_balances: self.initial_balances,
         }
     }
@@ -107,6 +110,18 @@ pub struct SnsFormState {
     distribution: DistributionForm,
     pub swap: Swap,
     pub nns_proposal: NnsProposal,
+    pub sns_form_setting: SnsFormSettings,
+}
+
+#[derive(Clone, Default)]
+pub struct SnsFormSettings {
+    pub sns_proposal_link: Option<String>,
+    pub nns_proposal_link: Option<String>,
+    pub dapp_canister_id: Option<String>,
+    pub rejection_fee: Option<nns_pb::Tokens>,
+    pub initial_voting_period_in_days: Option<u64>,
+    pub max_wait_deadline_extention: Option<u64>,
+    pub min_creation_stake: Option<u64>,
 }
 
 impl Default for SnsFormState {
@@ -144,6 +159,7 @@ impl Default for SnsFormState {
                 },
             },
             distribution: DistributionForm::default(),
+            sns_form_setting: SnsFormSettings::default(),
             swap: Swap {
                 minimum_participants: 1,
                 minimum_direct_participation_icp: Some(parse_tokens("15 e8s").unwrap()),
@@ -160,7 +176,9 @@ impl Default for SnsFormState {
                 maximum_icp: None,
                 confirmation_text: None,
                 restricted_countries: None,
-                start_time: Some(nns_pb::GlobalTimeOfDay { seconds_after_utc_midnight: Some(1) }),
+                start_time: Some(nns_pb::GlobalTimeOfDay {
+                    seconds_after_utc_midnight: Some(1),
+                }),
                 neurons_fund_investment_icp: None,
             },
             nns_proposal: NnsProposal {
