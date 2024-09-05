@@ -4,10 +4,12 @@ pub mod overlay;
 pub mod single_post;
 pub mod video_iter;
 pub mod video_loader;
+use std::collections::BinaryHeap;
+
 use crate::{
-    component::{scrolling_post_view::ScrollingPostView, spinner::FullScreenSpinner},
+    component::{scrolling_post_view::ScrollingPostViewMLFeed, spinner::FullScreenSpinner},
     consts::NSFW_TOGGLE_STORE,
-    state::canisters::{authenticated_canisters, unauth_canisters, Canisters},
+    state::canisters::{authenticated_canisters, unauth_canisters},
     try_or_redirect,
     utils::{
         posts::{get_post_uid, FetchCursor, PostDetails},
@@ -39,6 +41,7 @@ pub struct PostViewCtx {
     video_queue: RwSignal<Vec<PostDetails>>,
     current_idx: RwSignal<usize>,
     queue_end: RwSignal<bool>,
+    priority_q: RwSignal<BinaryHeap<PostDetails>>,
 }
 
 #[component]
@@ -52,6 +55,7 @@ pub fn CommonPostViewWithUpdates(
         video_queue,
         current_idx,
         queue_end,
+        ..
     } = expect_context();
 
     let recovering_state = create_rw_signal(false);
@@ -110,7 +114,7 @@ pub fn CommonPostViewWithUpdates(
     });
 
     view! {
-        <ScrollingPostView
+        <ScrollingPostViewMLFeed
             video_queue
             current_idx
             recovering_state
@@ -121,69 +125,69 @@ pub fn CommonPostViewWithUpdates(
     }
 }
 
-#[component]
-pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
-    let PostViewCtx {
-        fetch_cursor,
-        video_queue,
-        queue_end,
-        ..
-    } = expect_context();
+// #[component]
+// pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
+//     let PostViewCtx {
+//         fetch_cursor,
+//         video_queue,
+//         queue_end,
+//         ..
+//     } = expect_context();
 
-    let (nsfw_enabled, _, _) = use_local_storage::<bool, FromToStringCodec>(NSFW_TOGGLE_STORE);
-    let auth_canisters: RwSignal<Option<Canisters<true>>> = expect_context();
+//     let (nsfw_enabled, _, _) = use_local_storage::<bool, FromToStringCodec>(NSFW_TOGGLE_STORE);
+//     let auth_canisters: RwSignal<Option<Canisters<true>>> = expect_context();
 
-    let fetch_video_action = create_action(move |_| async move {
-        loop {
-            let Some(cursor) = fetch_cursor.try_get_untracked() else {
-                return;
-            };
-            let Some(auth_canisters) = auth_canisters.try_get_untracked() else {
-                return;
-            };
-            let Some(nsfw_enabled) = nsfw_enabled.try_get_untracked() else {
-                return;
-            };
-            let unauth_canisters = unauth_canisters();
+//     let fetch_video_action = create_action(move |_| async move {
+//         loop {
+//             let Some(cursor) = fetch_cursor.try_get_untracked() else {
+//                 return;
+//             };
+//             let Some(auth_canisters) = auth_canisters.try_get_untracked() else {
+//                 return;
+//             };
+//             let Some(nsfw_enabled) = nsfw_enabled.try_get_untracked() else {
+//                 return;
+//             };
+//             let unauth_canisters = unauth_canisters();
 
-            let chunks = if let Some(canisters) = auth_canisters.as_ref() {
-                let fetch_stream = VideoFetchStream::new(canisters, cursor);
-                fetch_stream.fetch_post_uids_chunked(3, nsfw_enabled).await
-            } else {
-                let fetch_stream = VideoFetchStream::new(&unauth_canisters, cursor);
-                fetch_stream.fetch_post_uids_chunked(3, nsfw_enabled).await
-            };
+//             let chunks = if let Some(canisters) = auth_canisters.as_ref() {
+//                 let fetch_stream = VideoFetchStream::new(canisters, cursor);
+//                 fetch_stream.fetch_post_uids_chunked(3, nsfw_enabled).await
+//             } else {
+//                 let fetch_stream = VideoFetchStream::new(&unauth_canisters, cursor);
+//                 fetch_stream.fetch_post_uids_chunked(3, nsfw_enabled).await
+//             };
 
-            let res = try_or_redirect!(chunks);
-            let mut chunks = res.posts_stream;
-            let mut cnt = 0;
-            while let Some(chunk) = chunks.next().await {
-                cnt += chunk.len();
-                video_queue.try_update(|q| {
-                    for uid in chunk {
-                        let uid = try_or_redirect!(uid);
-                        q.push(uid);
-                    }
-                });
-            }
-            if res.end || cnt >= 8 {
-                queue_end.try_set(res.end);
-                break;
-            }
-            fetch_cursor.try_update(|c| c.advance());
-        }
+//             let res = try_or_redirect!(chunks);
+//             let mut chunks = res.posts_stream;
+//             let mut cnt = 0;
+//             while let Some(chunk) = chunks.next().await {
+//                 cnt += chunk.len();
+//                 video_queue.try_update(|q| {
+//                     for uid in chunk {
+//                         let uid = try_or_redirect!(uid);
+//                         q.push(uid);
+//                     }
+//                 });
+//             }
+//             if res.end || cnt >= 8 {
+//                 queue_end.try_set(res.end);
+//                 break;
+//             }
+//             fetch_cursor.try_update(|c| c.advance());
+//         }
 
-        fetch_cursor.try_update(|c| c.advance());
-    });
+//         fetch_cursor.try_update(|c| c.advance());
+//     });
 
-    view! {
-        <CommonPostViewWithUpdates
-            initial_post
-            fetch_video_action
-            threshold_trigger_fetch=10
-        />
-    }
-}
+//     view! {
+//         <CommonPostViewWithUpdates
+//             initial_post
+//             fetch_video_action
+//             threshold_trigger_fetch=10
+//         />
+//     }
+// }
 
 #[component]
 pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl IntoView {
@@ -191,6 +195,7 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
         fetch_cursor,
         video_queue,
         queue_end,
+        priority_q,
         ..
     } = expect_context();
 
@@ -201,7 +206,8 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
     let fetch_video_action = create_action(move |_| {
         let auth_cans = auth_cans.clone();
         async move {
-            loop {
+            // loop {
+            while priority_q.get_untracked().len() < 30 {
                 let Some(cursor) = fetch_cursor.try_get_untracked() else {
                     return;
                 };
@@ -222,26 +228,51 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
                 let mut cnt = 0;
                 while let Some(chunk) = chunks.next().await {
                     cnt += chunk.len();
-                    video_queue.try_update(|q| {
+                    // video_queue.try_update(|q| {
+                    //     for uid in chunk {
+                    //         let uid = try_or_redirect!(uid);
+                    //         q.push(uid);
+                    //     }
+                    // });
+
+                    update!(move |video_queue, priority_q| {
                         for uid in chunk {
                             let uid = try_or_redirect!(uid);
-                            q.push(uid);
+
+                            if video_queue.len() < 10 {
+                                video_queue.push(uid);
+                            } else {
+                                priority_q.push(uid);
+                            }
                         }
                     });
                 }
+
                 leptos::logging::log!("feed type: {:?}", res.res_type);
                 if res.res_type != FeedResultType::MLFeed {
                     fetch_cursor.try_update(|c| {
                         c.set_limit(15);
-                        c.advance_and_set_limit(20)
+                        c.advance_and_set_limit(30)
                     });
                 }
 
                 if res.end || cnt >= 8 {
                     queue_end.try_set(res.end);
-                    break;
+                    // break;
                 }
             }
+
+            update!(move |video_queue, priority_q| {
+                let mut cnt = 0;
+                leptos::logging::log!("1 priority_q length: {}", priority_q.len());
+                while let Some(next) = priority_q.pop() {
+                    video_queue.push(next);
+                    cnt += 1;
+                    if cnt >= 15 {
+                        break;
+                    }
+                }
+            });
         }
     });
 
