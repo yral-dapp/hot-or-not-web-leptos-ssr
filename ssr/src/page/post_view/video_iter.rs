@@ -104,6 +104,7 @@ impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
         chunks: usize,
         _allow_nsfw: bool,
         video_queue: Vec<PostDetails>,
+        current_idx: usize,
     ) -> Result<FetchVideosRes<'a>, PostViewError> {
         #[cfg(feature = "hydrate")]
         {
@@ -208,6 +209,7 @@ impl<'a> VideoFetchStream<'a, true> {
         chunks: usize,
         _allow_nsfw: bool,
         video_queue: Vec<PostDetails>,
+        current_idx: usize,
     ) -> Result<FetchVideosRes<'a>, PostViewError> {
         if video_queue.len() < 10 {
             self.cursor.set_limit(15);
@@ -215,7 +217,7 @@ impl<'a> VideoFetchStream<'a, true> {
                 .await
         } else {
             let res = self
-                .fetch_post_uids_ml_feed_chunked(chunks, _allow_nsfw, video_queue)
+                .fetch_post_uids_ml_feed_chunked(chunks, _allow_nsfw, video_queue, current_idx)
                 .await;
 
             match res {

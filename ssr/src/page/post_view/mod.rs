@@ -4,6 +4,8 @@ pub mod overlay;
 pub mod single_post;
 pub mod video_iter;
 pub mod video_loader;
+use std::collections::HashSet;
+
 use crate::{
     component::{scrolling_post_view::ScrollingPostView, spinner::FullScreenSpinner},
     consts::NSFW_TOGGLE_STORE,
@@ -191,7 +193,7 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
         fetch_cursor,
         video_queue,
         queue_end,
-        ..
+        current_idx,
     } = expect_context();
 
     let (nsfw_enabled, _, _) = use_local_storage::<bool, FromToStringCodec>(NSFW_TOGGLE_STORE);
@@ -208,27 +210,59 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
                 let Some(nsfw_enabled) = nsfw_enabled.try_get_untracked() else {
                     return;
                 };
+                let Some(current_idx_val) = current_idx.try_get_untracked() else {
+                    return;
+                };
 
                 let canisters = auth_cans.wait_untracked().await;
                 let cans_true = canisters.unwrap().canisters().unwrap();
 
                 let mut fetch_stream = VideoFetchStream::new(&cans_true, cursor);
                 let chunks = fetch_stream
-                    .fetch_post_uids_hybrid(3, nsfw_enabled, video_queue.get_untracked())
+                    .fetch_post_uids_hybrid(
+                        3,
+                        nsfw_enabled,
+                        video_queue.get_untracked(),
+                        current_idx_val,
+                    )
                     .await;
 
                 let res = try_or_redirect!(chunks);
                 let mut chunks = res.posts_stream;
                 let mut cnt = 0;
+                let mut temp_video_queue = Vec::new();
                 while let Some(chunk) = chunks.next().await {
                     cnt += chunk.len();
-                    video_queue.try_update(|q| {
-                        for uid in chunk {
-                            let uid = try_or_redirect!(uid);
-                            q.push(uid);
-                        }
-                    });
+                    for uid in chunk {
+                        let uid = try_or_redirect!(uid);
+                        temp_video_queue.push(uid);
+                    }
                 }
+
+                let Some(current_idx_val) = current_idx.try_get_untracked() else {
+                    return;
+                };
+                let mut idx = current_idx_val + 5;
+
+                // remove duplicates in temp_video_queue from video_queue after current_idx+5
+                // insert into video_queue after min(current_idx + 5, video_queue.len())
+                let mut temp_set = HashSet::new();
+                temp_set.extend(temp_video_queue.iter().cloned());
+                video_queue.try_update(|q| {
+                    let mut i = idx;
+                    while i < q.len() {
+                        if temp_set.contains(&q[i]) {
+                            q.remove(i);
+                        } else {
+                            i += 1;
+                        }
+                    }
+                    if idx > q.len() {
+                        idx = q.len();
+                    }
+                    q.splice(idx..idx, temp_video_queue.iter().cloned());
+                });
+
                 leptos::logging::log!("feed type: {:?}", res.res_type);
                 if res.res_type != FeedResultType::MLFeed {
                     fetch_cursor.try_update(|c| {

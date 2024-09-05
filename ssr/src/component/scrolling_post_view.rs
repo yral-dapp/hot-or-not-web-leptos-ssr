@@ -54,7 +54,7 @@ pub fn ScrollingPostView<F: Fn() -> V + Clone + 'static, V>(
 
                 <For
                     each=move || video_queue().into_iter().enumerate()
-                    key=move |(_, details)| (details.canister_id, details.post_id)
+                    key=move |(x, details)| (*x, details.canister_id, details.post_id)
                     children=move |(queue_idx, _details)| {
                         let container_ref = create_node_ref::<html::Div>();
                         let next_videos = fetch_next_videos.clone();
