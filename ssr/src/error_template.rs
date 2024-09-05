@@ -1,7 +1,7 @@
+use gloo::history::{BrowserHistory, History};
 use http::status::StatusCode;
 use leptos::*;
 use thiserror::Error;
-use gloo::history::{BrowserHistory, History};
 
 #[cfg(feature = "ssr")]
 use leptos_axum::ResponseOptions;
@@ -43,7 +43,7 @@ pub fn ErrorTemplate(
         //go back
         history.back();
     };
-    
+
     // Downcast lets us take a type that implements `std::error::Error`
     let errors: Vec<AppError> = errors
         .into_iter()
