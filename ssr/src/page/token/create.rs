@@ -501,7 +501,7 @@ pub fn CreateTokenSettings() -> impl IntoView {
     let set_fields = move |value: String| {};
 
     view! {
-         <div class="w-dvw min-h-dvh bg-black pt-4 flex flex-col gap-4" style="padding-bottom:5rem;" >
+         <div class="w-dvw min-h-dvh bg-black pt-4 flex flex-col gap-4 p-4" style="padding-bottom:5rem;" >
                    <Title justify_center=false >
                     <div class="grid grid-cols-3 justify-start w-full" style="background: black" >
                         <BackButton fallback=fallback_url/>
