@@ -36,7 +36,7 @@ fn set_cookies(resp: &ResponseOptions, jar: impl IntoResponse) {
     }
 }
 
-fn extract_principal_from_cookie(
+pub fn extract_principal_from_cookie(
     jar: &SignedCookieJar,
 ) -> Result<Option<Principal>, ServerFnError> {
     let Some(cookie) = jar.get(REFRESH_TOKEN_COOKIE) else {
