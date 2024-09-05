@@ -395,6 +395,7 @@ pub fn CreateToken() -> impl IntoView {
                             heading="Distribution"
                             placeholder="Distribution Tokens"
                             input_type="number".into()
+                            initial_value="100000000".into()
                             updater=set_total_distribution
                             validator=non_empty_string_validator_for_u64
                         />
@@ -507,7 +508,17 @@ pub fn CreateTokenSettings() -> impl IntoView {
                         <span class="font-bold justify-self-center">Settings</span>
                     </div>
                     </Title>
-                <div class="flex flex-col w-full px-6 md:px-8 gap-2 md:gap-8">
+                <label class="flex flex-cols-2 cursor-pointer px-1">
+                <span class="flex-1 text-sm font-medium text-gray-400 dark:text-gray-500">Do you want to raise ICP?</span>
+                <div>
+                  <input type="checkbox" value="" class="sr-only peer" checked disabled />
+                    <div class="relative w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:bg-gray-600">
+                    <div class="absolute top-0.5 left-0.5 bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform peer-checked:translate-x-5 dark:border-gray-600"></div>
+                    </div>
+                </div>
+                 // <div class="relative w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-gray-600"></div>
+                </label>
+
                 <InputBox
                         heading="SNS proposal link"
                         placeholder="https://your-proposal-link.com"
@@ -633,8 +644,7 @@ pub fn CreateTokenSettings() -> impl IntoView {
                             </button>
                  </div>
                  <button class="w-full flex justify-center underline text-sm text-white my-4 " >Reset to default</button>
-                 </div>
+            </div>
 
-         </div>
     }
 }
