@@ -48,10 +48,6 @@ impl FetchCursor {
         self.limit = limit;
     }
 
-    pub fn advance_by(&mut self, cnt: u64) {
-        self.start += cnt;
-    }
-
     pub fn advance_and_set_limit(&mut self, limit: u64) {
         self.start += self.limit;
         self.limit = limit;

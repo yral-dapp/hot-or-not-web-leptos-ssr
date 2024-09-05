@@ -73,12 +73,6 @@ async fn get_top_post_id_mlcache() -> Result<Option<(Principal, u64)>, ServerFnE
     Ok(Some((top_item.canister_id, top_item.post_id)))
 }
 
-// #[server]
-// async fn get_top_post_id_cache() -> Result<Option<(Principal, u64)>, ServerFnError> {
-
-//     top_post().unwrap()
-// }
-
 // TODO: Use this when we shift to the new ml feed for first post
 // #[server]
 // async fn get_top_post_id_mlfeed() -> Result<Option<(Principal, u64)>, ServerFnError> {

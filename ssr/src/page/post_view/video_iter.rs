@@ -185,11 +185,8 @@ impl<'a> VideoFetchStream<'a, true> {
 
         let top_posts = top_posts_fut.await?;
         if top_posts.is_empty() {
-            leptos::logging::log!("postcache results");
             return self.fetch_post_uids_chunked(chunks, allow_nsfw).await;
         }
-
-        leptos::logging::log!("mlcache results");
 
         let end = false;
         let chunk_stream = top_posts
