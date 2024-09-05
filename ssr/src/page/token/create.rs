@@ -34,6 +34,16 @@ fn TokenImage() -> impl IntoView {
             Some(())
         })
     };
+
+    let file_input_ref = create_node_ref::<leptos::html::Input>();
+
+    let on_edit_click = move |_| {
+        // Trigger the file input click
+        if let Some(input) = file_input_ref.get() {
+            input.click();
+        }
+    };
+
     let img_url = Signal::derive(move || img_file.with(|f| f.as_ref().map(|f| f.url.to_string())));
 
     view! {
@@ -50,7 +60,9 @@ fn TokenImage() -> impl IntoView {
                                 src=move || img_url().unwrap()
                             />
                              <div class="absolute bottom-0 right-0 bg-gray-600 p-1 rounded-full bg-white ">
-                             <img src="/img/edit.svg" class="bg-white" />
+                            <button on:click=on_edit_click>
+                                 <img src="/img/edit.svg" class="bg-white" />
+                            </button>
                           //   <button on:click=move|_|{img_file.set(None) ;  } >  <img src="/img/edit.svg" class="bg-white" /> </button>
                              </div>
                         }
@@ -62,6 +74,7 @@ fn TokenImage() -> impl IntoView {
                     </div>
 
                     <input type="file"
+                    //   ref=file_input_ref
                         on:change=on_file_input
                         id="dropzone-logo"
                         accept="image/*"
@@ -306,9 +319,9 @@ pub fn CreateToken() -> impl IntoView {
     });
 
     view! {
-                <div class="w-dvw min-h-dvh bg-black pt-4 flex flex-col gap-4">
+                <div class="w-dvw min-h-dvh bg-black pt-4 flex flex-col gap-4" style="padding-bottom:6rem" >
                     <Title justify_center=false>
-                        <div class="flex justify-between w-full">
+                        <div class="flex justify-between w-full" >
                             <BackButton fallback=fallback_url/>
                             <span class="font-bold justify-self-center">Create Meme Token </span>
                             <img src="/img/info.svg"/ >
@@ -423,6 +436,24 @@ pub fn CreateTokenSettings() -> impl IntoView {
     let ctx = CreateTokenCtx::default();
     provide_context(ctx);
 
+    let save_action = create_action(move |&()| async move {
+        let cans = auth_cans
+            .get_untracked()
+            .expect("Create token called without auth canisters");
+        let sns_form = ctx.form_state.get_untracked();
+        let sns_config = sns_form.try_into_config(&cans)?;
+
+        Ok::<_, String>(())
+    });
+    let saving = save_action.pending();
+
+    let save_disabled = create_memo(move |_| {
+        saving()
+            || auth_cans.with(|c| c.is_none())
+            || ctx.form_state.with(|f| f.logo_b64.is_none())
+            || ctx.invalid_cnt.get() != 0
+    });
+
     let set_sns_proposal_link = move |value: String| {
         ctx.form_state
             .update(|f| f.sns_form_setting.sns_proposal_link = Some(value));
@@ -461,14 +492,16 @@ pub fn CreateTokenSettings() -> impl IntoView {
         });
     };
 
+    let set_fields = move |value: String| {};
+
     view! {
-         <div class="w-dvw min-h-dvh bg-black pt-4 flex flex-col gap-4">
-               <Title justify_center=false>
-                    <div class="grid grid-cols-3 justify-start w-full">
+         <div class="w-dvw min-h-dvh bg-black pt-4 flex flex-col gap-4" style="padding-bottom:5rem;" >
+                   <Title justify_center=false >
+                    <div class="grid grid-cols-3 justify-start w-full" style="background: black" >
                         <BackButton fallback=fallback_url/>
                         <span class="font-bold justify-self-center">Settings</span>
                     </div>
-                </Title>
+                    </Title>
                 <div class="flex flex-col w-full px-6 md:px-8 gap-2 md:gap-8">
                 <InputBox
                         heading="SNS proposal link"
@@ -495,6 +528,106 @@ pub fn CreateTokenSettings() -> impl IntoView {
                         updater=set_transaction_fee
                         validator=non_empty_string_validator_for_u64
                  />
+                 <InputBox
+                        heading="Rejection Fee"
+                        placeholder="1 Token"
+                        input_type="number".into()
+                        updater=set_rejection_fee
+                        validator=non_empty_string_validator_for_u64
+                 />
+                 <InputBox
+                        heading="Initial Voting Period"
+                        placeholder="4 days"
+                        input_type="number".into()
+                        updater=set_initial_voting_period_in_days
+                        validator=non_empty_string_validator_for_u64
+                 />
+                 <InputBox
+                        heading="Maximum wait for quiet deadline extention"
+                        placeholder="1 day"
+                        input_type="number".into()
+                        updater=set_max_wait_deadline_extention
+                        validator=non_empty_string_validator_for_u64
+                 />
+                 <InputBox
+                        heading="Minimum creation stake"
+                        placeholder="1 token"
+                        input_type="number".into()
+                        updater=set_min_creation_stake
+                        validator=non_empty_string_validator_for_u64
+                 />
+                 <InputBox
+                        heading="Minimum dissolve delay"
+                        placeholder="90 days"
+                        input_type="number".into()
+                        updater=set_fields
+                        validator=non_empty_string_validator_for_u64
+                 />
+                 <InputBox
+                        heading="Age (duration)"
+                        placeholder="4 years"
+                        input_type="number".into()
+                        updater=set_fields
+                        validator=non_empty_string_validator_for_u64
+                 />
+                 <InputBox
+                        heading="Age (bonus)"
+                        placeholder="25%"
+                        input_type="number".into()
+                        updater=set_fields
+                        validator=non_empty_string_validator_for_u64
+                 />
+                 <InputBox
+                        heading="Minimum participants"
+                        placeholder="57"
+                        input_type="number".into()
+                        updater=set_fields
+                        validator=non_empty_string_validator_for_u64
+                 />
+                 <InputBox
+                        heading="Minimum direct participant icp"
+                        placeholder="100,000 tokens"
+                        input_type="number".into()
+                        updater=set_fields
+                        validator=non_empty_string_validator_for_u64
+                 />
+                 <InputBox
+                        heading="Maximum direct participant icp"
+                        placeholder="1000,000 tokens"
+                        input_type="number".into()
+                        updater=set_fields
+                        validator=non_empty_string_validator_for_u64
+                 />
+                 <InputBox
+                        heading="Minimum participant icp"
+                        placeholder="10 tokens"
+                        input_type="number".into()
+                        updater=set_fields
+                        validator=non_empty_string_validator_for_u64
+                 />
+                 <InputBox
+                        heading="Maximum participant icp"
+                        placeholder="10,000 tokens"
+                        input_type="number".into()
+                        updater=set_fields
+                        validator=non_empty_string_validator_for_u64
+                 />
+                 <InputBox
+                        heading="Restricted Country"
+                        placeholder="Antarctica"
+                        updater=set_fields
+                        validator=non_empty_string_validator
+                 />
+                 <div class="w-full flex justify-center">
+                            <button
+                                // on:click=move |_| create_action.dispatch(())
+                                disabled=save_disabled
+                                class="text-white disabled:text-neutral-500 md:text-xl py-4 md:py-4 font-bold w-full md:w-1/2 lg:w-1/3 rounded-full bg-primary-600 disabled:bg-primary-500/30"
+                            >
+                            Save
+                            </button>
+                 </div>
+                 <button class="w-full flex justify-center underline text-sm text-white my-4 " >Reset to default</button>
                  </div>
 
          </div>
