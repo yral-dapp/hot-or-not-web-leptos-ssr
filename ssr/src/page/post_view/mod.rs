@@ -7,7 +7,7 @@ pub mod video_loader;
 use std::collections::BinaryHeap;
 
 use crate::{
-    component::{scrolling_post_view::ScrollingPostViewMLFeed, spinner::FullScreenSpinner},
+    component::{scrolling_post_view::ScrollingPostView, spinner::FullScreenSpinner},
     consts::NSFW_TOGGLE_STORE,
     state::canisters::{authenticated_canisters, unauth_canisters},
     try_or_redirect,
@@ -114,7 +114,7 @@ pub fn CommonPostViewWithUpdates(
     });
 
     view! {
-        <ScrollingPostViewMLFeed
+        <ScrollingPostView
             video_queue
             current_idx
             recovering_state
@@ -124,70 +124,6 @@ pub fn CommonPostViewWithUpdates(
         />
     }
 }
-
-// #[component]
-// pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
-//     let PostViewCtx {
-//         fetch_cursor,
-//         video_queue,
-//         queue_end,
-//         ..
-//     } = expect_context();
-
-//     let (nsfw_enabled, _, _) = use_local_storage::<bool, FromToStringCodec>(NSFW_TOGGLE_STORE);
-//     let auth_canisters: RwSignal<Option<Canisters<true>>> = expect_context();
-
-//     let fetch_video_action = create_action(move |_| async move {
-//         loop {
-//             let Some(cursor) = fetch_cursor.try_get_untracked() else {
-//                 return;
-//             };
-//             let Some(auth_canisters) = auth_canisters.try_get_untracked() else {
-//                 return;
-//             };
-//             let Some(nsfw_enabled) = nsfw_enabled.try_get_untracked() else {
-//                 return;
-//             };
-//             let unauth_canisters = unauth_canisters();
-
-//             let chunks = if let Some(canisters) = auth_canisters.as_ref() {
-//                 let fetch_stream = VideoFetchStream::new(canisters, cursor);
-//                 fetch_stream.fetch_post_uids_chunked(3, nsfw_enabled).await
-//             } else {
-//                 let fetch_stream = VideoFetchStream::new(&unauth_canisters, cursor);
-//                 fetch_stream.fetch_post_uids_chunked(3, nsfw_enabled).await
-//             };
-
-//             let res = try_or_redirect!(chunks);
-//             let mut chunks = res.posts_stream;
-//             let mut cnt = 0;
-//             while let Some(chunk) = chunks.next().await {
-//                 cnt += chunk.len();
-//                 video_queue.try_update(|q| {
-//                     for uid in chunk {
-//                         let uid = try_or_redirect!(uid);
-//                         q.push(uid);
-//                     }
-//                 });
-//             }
-//             if res.end || cnt >= 8 {
-//                 queue_end.try_set(res.end);
-//                 break;
-//             }
-//             fetch_cursor.try_update(|c| c.advance());
-//         }
-
-//         fetch_cursor.try_update(|c| c.advance());
-//     });
-
-//     view! {
-//         <CommonPostViewWithUpdates
-//             initial_post
-//             fetch_video_action
-//             threshold_trigger_fetch=10
-//         />
-//     }
-// }
 
 #[component]
 pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl IntoView {
@@ -228,13 +164,6 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
                 let mut cnt = 0;
                 while let Some(chunk) = chunks.next().await {
                     cnt += chunk.len();
-                    // video_queue.try_update(|q| {
-                    //     for uid in chunk {
-                    //         let uid = try_or_redirect!(uid);
-                    //         q.push(uid);
-                    //     }
-                    // });
-
                     update!(move |video_queue, priority_q| {
                         for uid in chunk {
                             let uid = try_or_redirect!(uid);
@@ -258,13 +187,12 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
 
                 if res.end || cnt >= 8 {
                     queue_end.try_set(res.end);
-                    // break;
                 }
             }
 
             update!(move |video_queue, priority_q| {
                 let mut cnt = 0;
-                leptos::logging::log!("1 priority_q length: {}", priority_q.len());
+                // leptos::logging::log!("1 priority_q length: {}", priority_q.len());
                 while let Some(next) = priority_q.pop() {
                     video_queue.push(next);
                     cnt += 1;
