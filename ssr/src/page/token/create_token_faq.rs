@@ -13,41 +13,84 @@ pub fn CreateTokenFAQ() -> impl IntoView {
         Section {
             question: "Token name".to_string(),
             answer: Some(
-                "Add a name to your cryptocurrency as per your choice & taste.".to_string(),
+                "The name of the token issued by the SNS ledger. Must be a string of 4 to 255 bytes without leading or trailing spaces.
+E.g.: travel token".to_string(),
             ),
         },
         Section {
             question: "Description".to_string(),
-            answer: None,
+            answer: Some("Give some details around what the token represents. Must be a string of at most 2,000 bytes".into()),
+        },
+        Section {
+            question: "Token Logo".to_string(),
+            answer: Some("PNG image which will act as logo of your created token.Must have less than 341,334 bytes. The only supported format is PNG.".into()),
         },
         Section {
             question: "Token Symbol".to_string(),
-            answer: None,
+            answer: Some("The symbol of the token you would want. Must be a string of 3 to 5 without leading or trailing spaces.
+E.g: TRAV".into()),
         },
         Section {
-            question: "Supply".to_string(),
-            answer: None,
-        },
-        Section {
-            question: "What is ICP & do you want to raise ICP?".to_string(),
-            answer: None,
+            question: "Token supply".to_string(),
+            answer: Some("Total supply of the token. Please note the total supply of the token is halved and 50% of the supply is allocated to swap participants. E.g. If you give value of 10,000 the allocated developer’s token give to you is 5,000.".into()),
         },
     ];
 
     // Example 2: Advanced settings
     let sections2 = vec![
         Section {
-            question: "Token name".to_string(),
-            answer: None,
+            question: "Dapp cannister ID".to_string(),
+            answer: Some("The dapp canister(ID) that will be decentralized if the decentralization swap succeeds. This is system defined and cannot be changed".into()),
         },
         Section {
-            question: "Token name".to_string(),
-            answer: None,
+            question: "Transaction fee".to_string(),
+            answer: Some("Fee for sending, receiving token post creation (canister to canister sending)".into()),
+        },
+        Section {
+            question: "Rejection fee".to_string(),
+            answer: Some("Fee for proposal rejection once we raised the SNS proposal)".into()),
+        },
+        Section {
+            question: "Initial voting period".to_string(),
+            answer: Some("Duration for which the proposal remains live once raised.".into()),
+        },
+        Section {
+            question: "Maximum wait for quite deadline extension".to_string(),
+            answer: Some("Till how far into the sns swap process you can increase the duration for the swap".into()),
+        },
+        Section {
+            question: "Minimum creation stake".to_string(),
+            answer: Some("Minimum amount of tokens (e8s) to stake in each neuron".into()),
+        },
+
+        Section {
+            question: "Minimum dissolve delay".to_string(),
+            answer: Some("Time taken to disburse the liquid token from the neuron".into()),
+        },
+        Section {
+            question: "Max age bonus duration".to_string(),
+            answer: Some("Age at which participants will earn full bonus".into()),
+        },
+        Section {
+            question: "Max age bonus %".to_string(),
+            answer: Some("% reward post maximum age is hit".into()),
+        },
+        Section {
+            question: "Minimum participant".to_string(),
+            answer: Some("Min number of participant required for execution of SNS proposal".into()),
+        },
+        Section {
+            question: "Minimum direct participation icp".to_string(),
+            answer: Some("Minimum token required when direct participant is involved".into()),
+        },
+        Section {
+            question: "Maximum direct participation icp".to_string(),
+            answer: Some("Maximum token required when direct participant is involved".into()),
         },
     ];
 
     view! {
-        <div class="w-dvw min-h-dvh bg-black" >
+        <div class="w-dvw min-h-dvh bg-black" style="padding-bottom:5rem;" >
                  <Title justify_center=false >
                     <div class="grid grid-cols-3 justify-start w-full px-4" style="background: black" >
                         <BackButton fallback="/menu"/>
@@ -57,8 +100,8 @@ pub fn CreateTokenFAQ() -> impl IntoView {
 
             // Render two different use cases of the component
             <CreateTokenFaqView title="Create a token".to_string() sections=sections1/>
-            <CreateTokenFaqView title="For advanced settings".to_string() sections=sections2 />
-        </div>
+            <CreateTokenFaqView title="Advanced settings".to_string() sections=sections2 />
+            </div>
     }
 }
 

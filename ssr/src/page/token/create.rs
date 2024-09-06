@@ -507,7 +507,7 @@ pub fn CreateTokenSettings() -> impl IntoView {
     view! {
          <div class="w-dvw min-h-dvh bg-black pt-4 flex flex-col gap-4 p-4" style="padding-bottom:5rem;" >
                    <Title justify_center=false >
-                    <div class="grid grid-cols-3 justify-start w-full" style="background: black" >
+                    <div class="grid grid-cols-3 justify-between w-full" style="background: black" >
                         <BackButton fallback=fallback_url/>
                         <span class="font-bold justify-self-center">Settings</span>
                         <button on:click=move |_|{navigate_token_faq() }  > <img src="/img/info.svg"/ > </button>
