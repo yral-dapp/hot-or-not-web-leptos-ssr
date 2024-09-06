@@ -34,23 +34,22 @@ fn TokenImage() -> impl IntoView {
             Some(())
         })
     };
-/*
-    let file_input_ref = create_node_ref::<leptos::html::Input>();
+    /*
+        let file_input_ref = create_node_ref::<leptos::html::Input>();
 
-    let on_edit_click = move |_| {
-        // Trigger the file input click
-        if let Some(input) = file_input_ref.get() {
-            input.click();
-        }
-    };
-*/
+        let on_edit_click = move |_| {
+            // Trigger the file input click
+            if let Some(input) = file_input_ref.get() {
+                input.click();
+            }
+        };
+    */
     let img_url = Signal::derive(move || img_file.with(|f| f.as_ref().map(|f| f.url.to_string())));
 
-     let border_class =move ||  match img_url.with(|u| u.is_none() ) {
-                true => format!("relative w-20 h-20 rounded-full border-2 border-white/20"),
-                _ =>  format!("relative w-20 h-20 rounded-full border-2 border-primary-600")
-            };
-
+    let border_class = move || match img_url.with(|u| u.is_none()) {
+        true => format!("relative w-20 h-20 rounded-full border-2 border-white/20"),
+        _ => format!("relative w-20 h-20 rounded-full border-2 border-primary-600"),
+    };
 
     view! {
         <div class="flex flex-col space-y-4  rounded-lg text-white">
@@ -329,7 +328,7 @@ pub fn CreateToken() -> impl IntoView {
                         <div class="flex justify-between w-full" >
                             <BackButton fallback=fallback_url/>
                             <span class="font-bold justify-self-center">Create Meme Token </span>
-                            <img src="/img/info.svg"/ >
+                            <button on:click=move |_|{navigate_token_faq() }  > <img src="/img/info.svg"/ > </button>
                         </div>
                     </Title>
                     <div class="flex flex-col w-full px-6 md:px-8 gap-2 md:gap-8">
@@ -429,6 +428,11 @@ fn navigate_token_settings() {
     navigate("/token/create/settings", Default::default());
 }
 
+fn navigate_token_faq() {
+    let navigate = use_navigate();
+    navigate("/token/create/faq", Default::default());
+}
+
 #[component]
 pub fn CreateTokenSettings() -> impl IntoView {
     let auth_cans = auth_canisters_store();
@@ -506,6 +510,7 @@ pub fn CreateTokenSettings() -> impl IntoView {
                     <div class="grid grid-cols-3 justify-start w-full" style="background: black" >
                         <BackButton fallback=fallback_url/>
                         <span class="font-bold justify-self-center">Settings</span>
+                        <button on:click=move |_|{navigate_token_faq() }  > <img src="/img/info.svg"/ > </button>
                     </div>
                     </Title>
                 <label class="flex flex-cols-2 cursor-pointer px-1">

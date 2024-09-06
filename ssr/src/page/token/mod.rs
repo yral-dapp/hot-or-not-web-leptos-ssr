@@ -1,4 +1,5 @@
 pub mod create;
+pub mod create_token_faq;
 pub mod info;
 mod popups;
 mod sns_form;

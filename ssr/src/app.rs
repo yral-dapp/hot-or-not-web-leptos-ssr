@@ -15,8 +15,8 @@ use crate::{
         settings::Settings,
         terms::TermsOfService,
         token::{
-            create::CreateToken, create::CreateTokenSettings, info::TokenInfo,
-            transfer::TokenTransfer,
+            create::CreateToken, create::CreateTokenSettings, create_token_faq::CreateTokenFAQ,
+            info::TokenInfo, transfer::TokenTransfer,
         },
         upload::UploadPostPage,
         wallet::{tokens::Tokens, transactions::Transactions, Wallet},
@@ -154,6 +154,7 @@ pub fn App() -> impl IntoView {
                         <Route path="/logout" view=Logout/>
                         <Route path="/token/create" view=CreateToken/>
                         <Route path="/token/create/settings" view=CreateTokenSettings/>
+                        <Route path="/token/create/faq" view=CreateTokenFAQ/>
                         <Route path="/token/info/:token_root" view=TokenInfo/>
                         <Route path="/token/transfer/:token_root" view=TokenTransfer/>
                         <Route path="/tokens" view=Tokens/>
