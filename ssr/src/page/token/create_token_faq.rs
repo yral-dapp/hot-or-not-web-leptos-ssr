@@ -67,21 +67,21 @@ fn CreateTokenFaqView(title: String, sections: Vec<Section>) -> impl IntoView {
     let (open_section, set_open_section) = create_signal(None::<usize>);
 
     view! {
-        <div class="bg-black text-white p-6">
-            <header class="flex justify-between items-center mb-6">
+        <div class="bg-black text-white p-4">
+            <header class="flex justify-between items-centers">
                 <h1 class="text-lg font-bold">{title.clone()}</h1>
             </header>
 
-            <div class="space-y-4">
+            <div >
                 {sections.clone().into_iter().enumerate().map(|(index, section)| {
                     let is_open = move || open_section() == Some(index);
 
                     view! {
-                        <div class="border-b border-gray-200 dark:border-gray-700" >
+                        <div class="border-b border-gray-200 dark:border-gray-700 py-2 " >
                             <h2 id={format!("accordion-heading-{}", index)}>
                                 <button
                                     type="button"
-                                    class="flex items-center justify-between w-full py-5 font-medium text-white dark:text-gray-400 gap-3"
+                                    class="flex items-center justify-between w-full py-2 text-md font-medium text-white gap-3"
                                     on:click=move |_| {
                                         // Toggle section visibility
                                         set_open_section.update(|current| {
@@ -113,15 +113,15 @@ fn CreateTokenFaqView(title: String, sections: Vec<Section>) -> impl IntoView {
                                 </button>
                             </h2>
                             <div id={format!("accordion-body-{}", index)} class={move || if is_open() { "" } else { "hidden" }}>
-                                <div class="py-5">
                                     {if let Some(answer) = section.answer {
                                         view! {
+                                <div class="py-2 mb-2">
                                             <p class="text-xs text-gray-400">{answer}</p>
+                                </div>
                                         }
                                     } else {
-                                        view! { <p></p> }
+                                        view! { <div></div> }
                                     }}
-                                </div>
                             </div>
                         </div>
                     }
