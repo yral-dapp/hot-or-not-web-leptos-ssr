@@ -139,6 +139,7 @@ fn HNButtonOverlay(
     coin: RwSignal<CoinState>,
     bet_direction: RwSignal<Option<BetKind>>,
     refetch_bet: Trigger,
+    set_eligible_onboarding_post: Option<WriteSignal<bool>>,
 ) -> impl IntoView {
     let place_bet_action = create_action(
         move |(canisters, bet_direction, bet_amount): &(Canisters<true>, BetKind, u64)| {
@@ -165,6 +166,16 @@ fn HNButtonOverlay(
         }
     });
     let running = place_bet_action.pending();
+
+    if let Some(set_onboarding) = set_eligible_onboarding_post {
+        create_effect(move |_| {
+            if !running.get() {
+                set_onboarding.set(true)
+            } else {
+                set_onboarding.set(false)
+            }
+        });
+    };
 
     view! {
         <AuthCansProvider let:canisters>
@@ -392,9 +403,10 @@ fn MaybeHNButtons(
     bet_direction: RwSignal<Option<BetKind>>,
     coin: RwSignal<CoinState>,
     refetch_bet: Trigger,
+    set_eligible_onboarding_post: Option<WriteSignal<bool>>,
 ) -> impl IntoView {
     let post = store_value(post);
-    let is_betting_enabled = create_resource(
+    let is_betting_enabled: Resource<(), Option<bool>> = create_resource(
         move || (),
         move |_| {
             let post = post.get_value();
@@ -414,10 +426,11 @@ fn MaybeHNButtons(
         <Suspense fallback=LoaderWithShadowBg>
         {move || is_betting_enabled().and_then(|enabled| {
             if !enabled.unwrap_or_default() {
+                if let Some(set_onboarding) = set_eligible_onboarding_post {set_onboarding.set(false)};
                 return None;
             }
             Some(view! {
-                <HNButtonOverlay post=post.get_value() bet_direction coin refetch_bet/>
+                <HNButtonOverlay post=post.get_value() bet_direction coin refetch_bet set_eligible_onboarding_post />
             })
         })}
         </Suspense>
@@ -443,7 +456,10 @@ fn ShadowBg() -> impl IntoView {
 }
 
 #[component]
-pub fn HNGameOverlay(post: PostDetails) -> impl IntoView {
+pub fn HNGameOverlay(
+    post: PostDetails,
+    set_eligible_onboarding_post: Option<WriteSignal<bool>>,
+) -> impl IntoView {
     let bet_direction = create_rw_signal(None::<BetKind>);
     let coin = create_rw_signal(CoinState::C50);
 
@@ -494,6 +510,7 @@ pub fn HNGameOverlay(post: PostDetails) -> impl IntoView {
                                 post
                                 bet_direction coin
                                 refetch_bet
+                                set_eligible_onboarding_post
                             />
                         }
                     })

@@ -47,7 +47,7 @@ fn SinglePostViewInner(post: PostDetails) -> impl IntoView {
                     style:background-color="rgb(0, 0, 0)"
                     style:background-image=format!("url({bg_url})")
                 />
-                <VideoDetailsOverlay post=post.clone()/>
+                <VideoDetailsOverlay post=post.clone() set_eligible_onboarding_post=None/>
                 <VideoView
                     post=Some(post)
                     muted

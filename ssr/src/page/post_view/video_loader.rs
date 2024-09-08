@@ -1,15 +1,20 @@
 use std::cmp::Ordering;
 
+use codee::string::FromToStringCodec;
 use leptos::{html::Video, *};
+use leptos_use::storage::use_local_storage;
 use leptos_use::use_event_listener;
 
+use crate::consts::USER_ONBOARDING_STORE;
 use crate::utils::event_streaming::events::VideoWatched;
 use crate::{
     canister::{
         individual_user_template::PostViewDetailsFromFrontend,
         utils::{bg_url, mp4_url},
     },
-    component::{feed_popup::FeedPopUp, video_player::VideoPlayer},
+    component::{
+        feed_popup::FeedPopUp, onboarding_flow::OnboardingPopUp, video_player::VideoPlayer,
+    },
     state::{
         auth::account_connected_reader, canisters::unauth_canisters,
         local_storage::use_referrer_store,
@@ -34,11 +39,26 @@ pub fn BgView(
     let (show_refer_login_popup, set_show_refer_login_popup) = create_signal(true);
     let (referrer_store, _, _) = use_referrer_store();
 
+    let (is_eligible_onboarding_post, set_eligible_onboarding_post) = create_signal(true);
+    let (show_onboarding_popup, set_show_onboarding_popup) = create_signal(false);
+    let option_set_onboarding = Some(set_eligible_onboarding_post);
+    let (is_onboarded, set_onboarded, _) =
+        use_local_storage::<bool, FromToStringCodec>(USER_ONBOARDING_STORE);
+
     create_effect(move |_| {
         if current_idx.get() % 5 != 0 {
             set_show_login_popup.update(|n| *n = false);
         } else {
             set_show_login_popup.update(|n| *n = true);
+        }
+        Some(())
+    });
+
+    create_effect(move |_| {
+        if is_eligible_onboarding_post.get() && (!is_onboarded.get()) {
+            set_show_onboarding_popup.update(|show| *show = true);
+        } else {
+            set_show_onboarding_popup.update(|show| *show = false);
         }
         Some(())
     });
@@ -74,7 +94,12 @@ pub fn BgView(
                     login_text="Sign Up"
                 />
             </Show>
-            {move || post().map(|post| view! { <VideoDetailsOverlay post /> })}
+            <Show when=move || {
+                show_onboarding_popup.get()
+            }>
+                <OnboardingPopUp onboard_on_click=set_onboarded />
+            </Show>
+            {move || post().map(|post| view! { <VideoDetailsOverlay post set_eligible_onboarding_post=option_set_onboarding /> })}
             {children()}
         </div>
     }
