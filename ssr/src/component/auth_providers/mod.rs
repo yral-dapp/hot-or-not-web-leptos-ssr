@@ -1,19 +1,20 @@
 #[cfg(any(feature = "oauth-ssr", feature = "oauth-hydrate"))]
 mod google;
-#[cfg(feature = "local-auth")]
-mod local_storage;
+// #[cfg(feature = "local-auth")]
+// mod local_storage;
 
 use candid::Principal;
 use codee::string::FromToStringCodec;
 use ic_agent::Identity;
 use leptos::*;
 use leptos_use::storage::use_local_storage;
+use yral_auth_client::types::{DelegatedIdentityWire, SignedRefreshTokenClaim};
 
 use crate::{
-    auth::DelegatedIdentityWire,
     consts::ACCOUNT_CONNECTED_STORE,
+    try_or_redirect,
     state::{
-        auth::auth_state,
+        auth::{AuthState, auth_state, auth_client},
         canisters::{do_canister_auth, Canisters},
         local_storage::use_referrer_store,
     },
@@ -22,6 +23,66 @@ use crate::{
         MockPartialEq,
     },
 };
+
+
+
+#[server]
+async fn generate_claim_for_migration() -> Result<Option<SignedRefreshTokenClaim>, ServerFnError> {
+    use crate::utils::current_epoch;
+    use axum_extra::extract::cookie::{Key, SignedCookieJar};
+    use candid::Principal;
+    use hmac::{Hmac, Mac};
+    use http::{header, HeaderMap};
+    use leptos_axum::{extract, extract_with_state, ResponseOptions};
+    use serde::Deserialize;
+    use web_time::Duration;
+    use yral_auth_client::types::RefreshTokenClaim;
+
+    #[derive(Deserialize)]
+    struct RefreshToken {
+        principal: Principal,
+        expiry_epoch_ms: u128,
+    }
+
+    let key: Key = expect_context();
+    let jar: SignedCookieJar = extract_with_state(&key).await?;
+    let Some(cookie) = jar.get("user-identity") else {
+        return Ok(None);
+    };
+    let headers: HeaderMap = extract().await?;
+    let Some(host) = headers.get(header::HOST).map(|h| h.to_str()).transpose()? else {
+        return Ok(None);
+    };
+
+    let token: RefreshToken = serde_json::from_str(cookie.value())?;
+    if current_epoch().as_millis() > token.expiry_epoch_ms {
+        return Ok(None);
+    }
+
+    let signing = key.signing();
+    let mut mac = Hmac::<sha2::Sha256>::new_from_slice(signing)?;
+
+    let claim = RefreshTokenClaim {
+        namespace: "YRAL".into(),
+        principal: token.principal,
+        expiry_epoch: current_epoch() + Duration::from_secs(300),
+        referrer_host: url::Host::parse(host)?,
+    };
+    let raw = serde_json::to_vec(&claim)?;
+    mac.update(&raw);
+    let digest = mac.finalize().into_bytes();
+
+    let resp: ResponseOptions = expect_context();
+    resp.insert_header(
+        "Set-Cookie".parse()?,
+        "user-identity=; Max-Age=0; Path=/; Secure; HttpOnly; SameSite=None".parse()?,
+    );
+
+    Ok(Some(SignedRefreshTokenClaim {
+        claim,
+        digest: digest.to_vec(),
+    }))
+}
 
 #[server]
 async fn issue_referral_rewards(referee_canister: Principal) -> Result<(), ServerFnError> {
@@ -130,7 +191,11 @@ pub fn LoginProviders(show_modal: RwSignal<bool>, lock_closing: RwSignal<bool>) 
             let referrer = referrer_store.get_untracked();
 
             // This is some redundant work, but saves us 100+ lines of resource handling
-            let cans_wire = do_canister_auth(identity, referrer).await?;
+            let cans_wire = do_canister_auth(Some(identity), referrer).await?;
+            let Some(cans_wire) = cans_wire else {
+                return Ok(())
+            };
+
             let canisters = cans_wire.canisters()?;
 
             if let Err(e) = handle_user_login(canisters.clone(), referrer).await {
@@ -152,7 +217,7 @@ pub fn LoginProviders(show_modal: RwSignal<bool>, lock_closing: RwSignal<bool>) 
         login_complete: SignalSetter::map(move |val: DelegatedIdentityWire| {
             new_identity.set(Some(val.clone()));
             write_account_connected(true);
-            auth.set(Some(val));
+            auth.identity.set(Some(val));
             show_modal.set(false);
         }),
     };
@@ -165,12 +230,6 @@ pub fn LoginProviders(show_modal: RwSignal<bool>, lock_closing: RwSignal<bool>) 
             <span class="text-md">Continue with</span>
             <div class="flex w-full gap-4">
 
-                {
-                    #[cfg(feature = "local-auth")]
-                    view! {
-                        <local_storage::LocalStorageProvider></local_storage::LocalStorageProvider>
-                    }
-                }
                 {
                     #[cfg(any(feature = "oauth-ssr", feature = "oauth-hydrate"))]
                     view! { <google::GoogleAuthProvider></google::GoogleAuthProvider> }
@@ -312,5 +371,35 @@ mod server_fn_impl {
         ) -> Result<bool, ServerFnError> {
             Ok(true)
         }
+    }
+}
+
+#[component]
+pub fn AuthFrame(auth: RwSignal<Option<DelegatedIdentityWire>>) -> impl IntoView {
+    let auth_res = create_local_resource(
+        || (),
+        move |_| async move {
+            let auth_c = auth_client();
+            let id = if let Some(claim) = try_or_redirect!(generate_claim_for_migration().await) {
+                try_or_redirect!(auth_c.upgrade_refresh_token_claim(claim).await)
+            } else {
+                try_or_redirect!(auth_c.extract_or_generate_identity().await)
+            };
+            auth.set(Some(id));
+        },
+    );
+
+    view! { <Suspense>{move || auth_res.get().map(|_| ())}</Suspense> }
+}
+
+#[component]
+pub fn AuthProvider() -> impl IntoView {
+    let auth = auth_state().identity;
+    view! {
+        <div class="hidden">
+            <Show when=move || auth.with(|a| a.is_none())>
+                <AuthFrame auth/>
+            </Show>
+        </div>
     }
 }

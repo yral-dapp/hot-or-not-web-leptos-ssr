@@ -18,7 +18,10 @@ use crate::{
         wallet::{transactions::Transactions, Wallet},
     },
     state::{
-        audio_state::AudioState, canisters::Canisters, content_seed_client::ContentSeedClient,
+        audio_state::AudioState,
+        auth::{get_default_metadata_client, AuthState},
+        canisters::Canisters,
+        content_seed_client::ContentSeedClient,
         history::HistoryCtx,
     },
     utils::event_streaming::EventHistory,
@@ -31,7 +34,7 @@ use leptos_router::*;
 fn NotFound() -> impl IntoView {
     let mut outside_errors = Errors::default();
     outside_errors.insert_with_default_key(AppError::NotFound);
-    view! { <ErrorTemplate outside_errors /> }
+    view! { <ErrorTemplate outside_errors/> }
 }
 
 #[component(transparent)]
@@ -40,11 +43,11 @@ fn GoogleAuthRedirectHandlerRoute() -> impl IntoView {
     #[cfg(any(feature = "oauth-ssr", feature = "oauth-hydrate"))]
     {
         use crate::page::google_redirect::GoogleRedirectHandler;
-        view! { <Route path view=GoogleRedirectHandler /> }
+        view! { <Route path view=GoogleRedirectHandler/> }
     }
     #[cfg(not(any(feature = "oauth-ssr", feature = "oauth-hydrate")))]
     {
-        view! { <Route path view=NotFound /> }
+        view! { <Route path view=NotFound/> }
     }
 }
 
@@ -54,17 +57,20 @@ fn GoogleAuthRedirectorRoute() -> impl IntoView {
     #[cfg(any(feature = "oauth-ssr", feature = "oauth-hydrate"))]
     {
         use crate::page::google_redirect::GoogleRedirector;
-        view! { <Route path view=GoogleRedirector /> }
+        view! { <Route path view=GoogleRedirector/> }
     }
     #[cfg(not(any(feature = "oauth-ssr", feature = "oauth-hydrate")))]
     {
-        view! { <Route path view=NotFound /> }
+        view! { <Route path view=NotFound/> }
     }
 }
 
 #[component]
 pub fn App() -> impl IntoView {
     // Provides context that manages stylesheets, titles, meta tags, etc.
+
+    let auth_state = AuthState::default();
+
     provide_meta_context();
     provide_context(Canisters::default());
     provide_context(ContentSeedClient::default());
@@ -72,6 +78,8 @@ pub fn App() -> impl IntoView {
     provide_context(ProfilePostsContext::default());
     provide_context(AuthorizedUserToSeedContent::default());
     provide_context(AudioState::default());
+    provide_context(get_default_metadata_client());
+    provide_context(auth_state);
 
     #[cfg(feature = "hydrate")]
     {
@@ -97,12 +105,12 @@ pub fn App() -> impl IntoView {
     }
 
     view! {
-        <Stylesheet id="leptos" href="/pkg/hot-or-not-leptos-ssr.css" />
+        <Stylesheet id="leptos" href="/pkg/hot-or-not-leptos-ssr.css"/>
 
         // sets the document title
-        <Title text="Yral" />
+        <Title text="Yral"/>
 
-        <Link rel="manifest" href="/app.webmanifest" />
+        <Link rel="manifest" href="/app.webmanifest"/>
 
         // GA4 Global Site Tag (gtag.js) - Google Analytics
         // G-6W5Q2MRX0E to test locally | G-PLNNETMSLM

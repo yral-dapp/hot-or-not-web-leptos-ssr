@@ -129,17 +129,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "async-lock"
-version = "3.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ff6e472cdea888a4bd64f342f09b3f50e1886d32afe8df3d663c01140b811b18"
-dependencies = [
- "event-listener",
- "event-listener-strategy",
- "pin-project-lite",
-]
-
-[[package]]
 name = "async-recursion"
 version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -853,15 +842,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "concurrent-queue"
-version = "2.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4ca0197aee26d1ae37445ee532fefce43251d24cc7c166799f4d46817f1d3973"
-dependencies = [
- "crossbeam-utils",
-]
-
-[[package]]
 name = "config"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -980,12 +960,6 @@ checksum = "a97769d94ddab943e4510d138150169a2758b5ef3eb191a9ee688de3e23ef7b3"
 dependencies = [
  "cfg-if",
 ]
-
-[[package]]
-name = "crossbeam-utils"
-version = "0.8.20"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "22ec99545bb0ed0ea7bb9b8e1e9122ea386ff8a48c0922e43f36d45ab09e0e80"
 
 [[package]]
 name = "crunchy"
@@ -1446,27 +1420,6 @@ checksum = "534c5cf6194dfab3db3242765c03bbe257cf92f22b38f6bc0c58d59108a820ba"
 dependencies = [
  "libc",
  "windows-sys 0.52.0",
-]
-
-[[package]]
-name = "event-listener"
-version = "5.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6032be9bd27023a771701cc49f9f053c751055f71efb2e0ae5c15809093675ba"
-dependencies = [
- "concurrent-queue",
- "parking",
- "pin-project-lite",
-]
-
-[[package]]
-name = "event-listener-strategy"
-version = "0.5.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0f214dc438f977e6d4e3500aaa277f5ad94ca83fbbd9b1a15713ce2344ccc5a1"
-dependencies = [
- "event-listener",
- "pin-project-lite",
 ]
 
 [[package]]
@@ -2649,6 +2602,7 @@ dependencies = [
  "icondata",
  "icondata_core",
  "js-sys",
+ "jsonwebtoken",
  "k256",
  "leptos",
  "leptos-use",
@@ -2686,8 +2640,7 @@ dependencies = [
  "wasm-bindgen-futures",
  "web-sys",
  "web-time",
- "yral-metadata-client",
- "yral-metadata-types",
+ "yral-auth-client",
  "yral-testcontainers",
 ]
 
@@ -2974,11 +2927,10 @@ dependencies = [
 
 [[package]]
 name = "ic-agent"
-version = "0.36.0"
+version = "0.34.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ba85280257d8663adef20bf5c043b287b3a283d4f916073eb3ca9166a4a59d4b"
+checksum = "555eda283b8ba1a996d44d80b6c9a6d38a6cbb81797a7b7bbee134fdde64ce48"
 dependencies = [
- "async-lock",
  "backoff",
  "cached 0.46.1",
  "candid",
@@ -2995,11 +2947,11 @@ dependencies = [
  "k256",
  "leb128",
  "p256",
- "pem",
+ "pem 2.0.1",
  "pkcs8",
  "rand",
  "rangemap",
- "reqwest 0.12.5",
+ "reqwest 0.11.27",
  "ring",
  "rustls-webpki 0.101.7",
  "sec1",
@@ -3032,9 +2984,9 @@ dependencies = [
 
 [[package]]
 name = "ic-transport-types"
-version = "0.36.0"
+version = "0.34.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ce14c068bd053c0f5ab525326f3f358f265cdfcae279fbf6461fb529e9682acd"
+checksum = "7c06d3c1292368c813f8104d9d8294bda5577ea6fe4501a65997d0b7f155f15f"
 dependencies = [
  "candid",
  "hex",
@@ -3407,6 +3359,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1868808506b929d7b0cfa8f75951347aa71bb21144b7791bae35d9bccfcfe37a"
 dependencies = [
  "wasm-bindgen",
+]
+
+[[package]]
+name = "jsonwebtoken"
+version = "9.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b9ae10193d25051e74945f1ea2d0b42e03cc3b890f7e4cc5faa44997d808193f"
+dependencies = [
+ "base64 0.21.7",
+ "js-sys",
+ "pem 3.0.4",
+ "ring",
+ "serde",
+ "serde_json",
+ "simple_asn1",
 ]
 
 [[package]]
@@ -4258,12 +4225,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "parking"
-version = "2.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bb813b8af86854136c6922af0598d719255ecb2179515e6e7730d468f05c9cae"
-
-[[package]]
 name = "parking_lot"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4330,6 +4291,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6b13fe415cdf3c8e44518e18a7c95a13431d9bdf6d15367d82b23c377fdd441a"
 dependencies = [
  "base64 0.21.7",
+ "serde",
+]
+
+[[package]]
+name = "pem"
+version = "3.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8e459365e590736a54c3fa561947c84837534b8e9af6fc5bf781307e82658fae"
+dependencies = [
+ "base64 0.22.1",
  "serde",
 ]
 
@@ -4940,10 +4911,12 @@ dependencies = [
  "system-configuration",
  "tokio",
  "tokio-rustls 0.24.1",
+ "tokio-util",
  "tower-service",
  "url",
  "wasm-bindgen",
  "wasm-bindgen-futures",
+ "wasm-streams",
  "web-sys",
  "webpki-roots 0.25.4",
  "winreg 0.50.0",
@@ -4958,7 +4931,6 @@ dependencies = [
  "base64 0.22.1",
  "bytes",
  "encoding_rs",
- "futures-channel",
  "futures-core",
  "futures-util",
  "h2 0.4.5",
@@ -4991,12 +4963,10 @@ dependencies = [
  "tokio",
  "tokio-native-tls",
  "tokio-rustls 0.26.0",
- "tokio-util",
  "tower-service",
  "url",
  "wasm-bindgen",
  "wasm-bindgen-futures",
- "wasm-streams",
  "web-sys",
  "webpki-roots 0.26.3",
  "winreg 0.52.0",
@@ -6904,38 +6874,46 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cfe53a6657fd280eaa890a3bc59152892ffa3e30101319d168b781ed6529b049"
 
 [[package]]
+name = "yral-auth-client"
+version = "0.1.0"
+source = "git+https://github.com/go-bazzinga/yral-auth?rev=d2cbfc67be08d17596571d454d96cae1abc3b2ed#d2cbfc67be08d17596571d454d96cae1abc3b2ed"
+dependencies = [
+ "ic-agent",
+ "reqwest 0.12.5",
+ "serde",
+ "serde_json",
+ "server_fn",
+ "thiserror",
+ "url",
+ "yral-auth-types",
+ "yral-identity",
+]
+
+[[package]]
+name = "yral-auth-types"
+version = "0.1.0"
+source = "git+https://github.com/go-bazzinga/yral-auth?rev=d2cbfc67be08d17596571d454d96cae1abc3b2ed#d2cbfc67be08d17596571d454d96cae1abc3b2ed"
+dependencies = [
+ "candid",
+ "ic-agent",
+ "k256",
+ "serde",
+ "thiserror",
+ "url",
+ "web-time",
+ "yral-identity",
+]
+
+[[package]]
 name = "yral-identity"
 version = "0.1.0"
-source = "git+https://github.com/go-bazzinga/yral-identity.git?rev=6df2ed46e422302cb47d22ce30927756ee531a66#6df2ed46e422302cb47d22ce30927756ee531a66"
+source = "git+https://github.com/go-bazzinga/yral-identity.git?rev=735fec69ac2e27ac5bf2ce670e935ab78a524128#735fec69ac2e27ac5bf2ce670e935ab78a524128"
 dependencies = [
  "candid",
  "ic-agent",
  "serde",
  "thiserror",
  "web-time",
-]
-
-[[package]]
-name = "yral-metadata-client"
-version = "0.1.0"
-source = "git+https://github.com/go-bazzinga/yral-metadata?rev=c394bf9af3f32d81c1ac50b966c25dafafa2545b#c394bf9af3f32d81c1ac50b966c25dafafa2545b"
-dependencies = [
- "ic-agent",
- "reqwest 0.12.5",
- "thiserror",
- "yral-identity",
- "yral-metadata-types",
-]
-
-[[package]]
-name = "yral-metadata-types"
-version = "0.1.0"
-source = "git+https://github.com/go-bazzinga/yral-metadata?rev=c394bf9af3f32d81c1ac50b966c25dafafa2545b#c394bf9af3f32d81c1ac50b966c25dafafa2545b"
-dependencies = [
- "candid",
- "serde",
- "thiserror",
- "yral-identity",
 ]
 
 [[package]]

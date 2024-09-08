@@ -7,7 +7,7 @@ use crate::{
     auth::logout_identity,
     component::loading::Loading,
     consts::ACCOUNT_CONNECTED_STORE,
-    state::{auth::auth_state, canisters::auth_canisters_store},
+    state::{auth::{auth_client, auth_state}, canisters::auth_canisters_store},
     try_or_redirect_opt,
     utils::event_streaming::events::{LogoutClicked, LogoutConfirmation},
 };
@@ -22,13 +22,18 @@ pub fn Logout() -> impl IntoView {
     let auth_res = create_blocking_resource(
         || (),
         move |_| async move {
-            let id = try_or_redirect_opt!(logout_identity().await);
+            let auth_client = auth_client();
+
+            let id = try_or_redirect_opt!(auth_client.logout_identity().await);
 
             LogoutConfirmation.send_event(canister_store);
+
+
 
             let (_, write_account_connected, _) =
                 use_local_storage::<bool, FromToStringCodec>(ACCOUNT_CONNECTED_STORE);
             write_account_connected(false);
+
             Some(id)
         },
     );
@@ -41,10 +46,11 @@ pub fn Logout() -> impl IntoView {
                         .get()
                         .flatten()
                         .map(|id| {
-                            auth.set(Some(id));
+                            auth.identity.set(Some(id));
                             view! { <Redirect path="/menu"/> }
                         })
                 }}
+
             </Suspense>
         </Loading>
     }

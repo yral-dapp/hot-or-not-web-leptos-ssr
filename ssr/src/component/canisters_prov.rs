@@ -19,13 +19,11 @@ where
     let children = store_value(children);
     let loader = move || {
         let cans_wire = try_or_redirect_opt!(cans_res()?);
-        let cans = try_or_redirect_opt!(cans_wire.canisters());
+        let cans = try_or_redirect_opt!(cans_wire?.canisters());
         Some((children.get_value())(cans).into_view())
     };
 
-    view! {
-        <Suspense fallback=fallback>{loader}</Suspense>
-    }
+    view! { <Suspense fallback=fallback>{loader}</Suspense> }
 }
 
 #[component]
@@ -58,8 +56,7 @@ where
     view! {
         <Suspense fallback=fallback>
             {move || {
-                with_res()
-                    .map(move |d| (children.get_value())((cans.get_value(), d)).into_view())
+                with_res().map(move |d| (children.get_value())((cans.get_value(), d)).into_view())
             }}
 
         </Suspense>

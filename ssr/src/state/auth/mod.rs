@@ -1,13 +1,60 @@
+use std::{
+    env,
+    time::{Duration, SystemTime, UNIX_EPOCH},
+};
+
 use codee::string::FromToStringCodec;
 use leptos::*;
 use leptos_use::storage::use_local_storage;
+use serde::Serialize;
+use yral_auth_client::{types::DelegatedIdentityWire, AuthClient};
 
-use crate::{auth::DelegatedIdentityWire, consts::ACCOUNT_CONNECTED_STORE};
+use crate::consts::{ACCOUNT_CONNECTED_STORE, AUTH_API_BASE};
 
-pub type AuthState = RwSignal<Option<DelegatedIdentityWire>>;
+#[derive(Default, Clone)]
+pub struct AuthState {
+    pub identity: RwSignal<Option<DelegatedIdentityWire>>,
+}
+
+pub fn auth_client() -> AuthClient {
+    expect_context()
+}
 
 pub fn auth_state() -> AuthState {
     expect_context()
+}
+
+pub fn get_default_metadata_client() -> AuthClient {
+    AuthClient::with_base_url(AUTH_API_BASE.clone(), None)
+}
+
+#[cfg(feature = "backend-admin")]
+pub fn get_default_auth_client() -> AuthClient {
+    let private_key =
+        env::var("BACKEND_ADMIN_IDENTITY").expect("BACKEND ADMIN IDENTITY SHOULD BE PRESENT");
+    #[derive(Serialize)]
+    struct JwtAuth {
+        namespace: String,
+        exp: u128,
+    }
+
+    let exp_time = Duration::saturating_add(
+        SystemTime::now().duration_since(UNIX_EPOCH).unwrap(),
+        Duration::from_secs(60 * 60),
+    );
+
+    let encoding_key = jsonwebtoken::EncodingKey::from_ed_pem(private_key.as_bytes()).unwrap();
+    let token = jsonwebtoken::encode(
+        &jsonwebtoken::Header::new(jsonwebtoken::Algorithm::EdDSA),
+        &JwtAuth {
+            namespace: "YRAL".into(),
+            exp: exp_time.as_secs() as u128,
+        },
+        &encoding_key,
+    )
+    .unwrap();
+
+    AuthClient::with_base_url(AUTH_API_BASE.clone(), Some(&token))
 }
 
 /// Prevents hydration bugs if the value in store is used to conditionally show views

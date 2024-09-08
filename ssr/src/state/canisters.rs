@@ -4,11 +4,9 @@ use candid::Principal;
 use ic_agent::{identity::DelegatedIdentity, AgentError, Identity};
 use leptos::*;
 use serde::{Deserialize, Serialize};
-use yral_metadata_client::MetadataClient;
-use yral_metadata_types::UserMetadata;
+use yral_auth_client::{types::{metadata::UserMetadata, DelegatedIdentityWire}, AuthClient};
 
 use crate::{
-    auth::DelegatedIdentityWire,
     canister::{
         individual_user_template::{IndividualUserTemplate, Result9, UserCanisterDetails},
         platform_orchestrator::PlatformOrchestrator,
@@ -19,6 +17,11 @@ use crate::{
     consts::METADATA_API_BASE,
     utils::{ic::AgentWrapper, profile::ProfileDetails, MockPartialEq},
 };
+
+use super::auth::get_default_metadata_client;
+
+#[cfg(feature = "backend-admin")]
+use super::auth::get_default_auth_client;
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct CanistersAuthWire {
@@ -53,7 +56,7 @@ impl CanistersAuthWire {
 pub struct Canisters<const AUTH: bool> {
     agent: AgentWrapper,
     id: Option<Arc<DelegatedIdentity>>,
-    metadata_client: MetadataClient<false>,
+    metadata_client: AuthClient,
     user_canister: Principal,
     expiry: u64,
     profile_details: Option<ProfileDetails>,
@@ -61,10 +64,13 @@ pub struct Canisters<const AUTH: bool> {
 
 impl Default for Canisters<false> {
     fn default() -> Self {
+
+
+
         Self {
             agent: AgentWrapper::build(|b| b),
             id: None,
-            metadata_client: MetadataClient::with_base_url(METADATA_API_BASE.clone()),
+            metadata_client: get_default_metadata_client(),
             user_canister: Principal::anonymous(),
             expiry: 0,
             profile_details: None,
@@ -84,7 +90,7 @@ impl Canisters<true> {
 
         Canisters {
             agent: AgentWrapper::build(|b| b.with_arc_identity(id.clone())),
-            metadata_client: MetadataClient::with_base_url(METADATA_API_BASE.clone()),
+            metadata_client: get_default_metadata_client(),
             id: Some(id),
             user_canister: Principal::anonymous(),
             expiry,
@@ -221,9 +227,14 @@ async fn create_individual_canister(
 }
 
 pub async fn do_canister_auth(
-    auth: DelegatedIdentityWire,
+    auth: Option<DelegatedIdentityWire>,
     referrer: Option<Principal>,
-) -> Result<CanistersAuthWire, ServerFnError> {
+) -> Result<Option<CanistersAuthWire>, ServerFnError> {
+
+    let Some(auth) = auth else {
+        return Ok(None)
+    };
+
     let id = auth.clone().try_into()?;
     let mut canisters = Canisters::<true>::authenticated(id);
 
@@ -268,12 +279,12 @@ pub async fn do_canister_auth(
         profile_details,
     };
 
-    Ok(cans_wire)
+    Ok(Some(cans_wire))
 }
 
 pub type AuthCansResource = Resource<
     MockPartialEq<Option<DelegatedIdentityWire>>,
-    Result<CanistersAuthWire, ServerFnError>,
+    Result<Option<CanistersAuthWire>, ServerFnError>,
 >;
 
 /// The Authenticated Canisters helper resource

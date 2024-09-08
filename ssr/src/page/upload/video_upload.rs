@@ -339,7 +339,7 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
                 <Suspense>
                     {move || {
                         let uid = upload_action().flatten()?;
-                        let canisters = cans_res()?.ok()?.canisters().ok()?;
+                        let canisters = cans_res()?.ok()??.canisters().ok()?;
                         publish_action.dispatch((canisters, uid));
                         Some(())
                     }}

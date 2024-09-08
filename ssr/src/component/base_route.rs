@@ -5,12 +5,14 @@ use leptos::*;
 use leptos_router::*;
 
 use crate::consts::USER_CANISTER_ID_STORE;
+use crate::state::auth::{auth_client, auth_state};
+use yral_auth_client::types::DelegatedIdentityWire;
 use crate::{
     auth::{
         extract_identity, generate_anonymous_identity_if_required, set_anonymous_identity_cookie,
-        DelegatedIdentityWire,
     },
     component::spinner::FullScreenSpinner,
+    component::auth_providers::AuthProvider,
     state::{
         auth::AuthState,
         canisters::{do_canister_auth, AuthCansResource, Canisters},
@@ -28,29 +30,9 @@ struct Referrer {
 }
 
 #[component]
-fn CtxProvider(temp_identity: Option<JwkEcKey>, children: ChildrenFn) -> impl IntoView {
-    let auth = AuthState::default();
-    provide_context(auth);
-
+fn CtxProvider(children: ChildrenFn) -> impl IntoView {
     let canisters_store = create_rw_signal(None::<Canisters<true>>);
     provide_context(canisters_store);
-
-    let temp_identity_c = temp_identity.clone();
-    create_local_resource(
-        || (),
-        move |_| {
-            let temp_identity = temp_identity_c.clone();
-            async move {
-                let Some(id) = temp_identity else {
-                    return;
-                };
-                if let Err(e) = set_anonymous_identity_cookie(id).await {
-                    log::error!("Failed to set anonymous identity as cookie?! err {e}");
-                }
-            }
-        },
-    );
-
     let referrer_query = use_query::<Referrer>();
     let referrer_principal = Signal::derive(move || {
         referrer_query()
@@ -65,27 +47,15 @@ fn CtxProvider(temp_identity: Option<JwkEcKey>, children: ChildrenFn) -> impl In
         set_referrer_store(referrer_principal.get_untracked())
     });
 
+    let auth = auth_state();
+
     let canisters_res: AuthCansResource = create_resource(
-        move || MockPartialEq(auth()),
+        move || MockPartialEq(auth.identity.get()),
         move |auth_id| {
-            let temp_identity = temp_identity.clone();
             async move {
                 let ref_principal = referrer_principal.get_untracked();
-
-                if let Some(id_wire) = auth_id.0 {
-                    return do_canister_auth(id_wire, ref_principal).await;
-                }
-
-                let Some(jwk_key) = temp_identity else {
-                    let id_wire = extract_identity().await?.expect("No refresh cookie set?!");
-                    return do_canister_auth(id_wire, ref_principal).await;
-                };
-
-                let key = k256::SecretKey::from_jwk(&jwk_key)?;
-                let id = Secp256k1Identity::from_private_key(key);
-                let id_wire = DelegatedIdentityWire::delegate(&id);
-
-                do_canister_auth(id_wire, ref_principal).await
+                let res = do_canister_auth(auth_id.0, ref_principal).await;
+                res
             }
         },
     );
@@ -98,11 +68,15 @@ fn CtxProvider(temp_identity: Option<JwkEcKey>, children: ChildrenFn) -> impl In
                 canisters_res()
                     .map(|res| {
                         let cans_wire = try_or_redirect!(res);
+                        let Some(cans_wire) = cans_wire else {
+                            return;
+                        };
                         let cans = try_or_redirect!(cans_wire.canisters());
-
-                        let (_, set_user_canister_id, _) =  use_local_storage::<Option<Principal>, JsonSerdeCodec>(USER_CANISTER_ID_STORE);
+                        let (_, set_user_canister_id, _) = use_local_storage::<
+                            Option<Principal>,
+                            JsonSerdeCodec,
+                        >(USER_CANISTER_ID_STORE);
                         set_user_canister_id(Some(cans.user_canister()));
-
                         canisters_store.set(Some(cans));
                     })
             }}
@@ -113,28 +87,11 @@ fn CtxProvider(temp_identity: Option<JwkEcKey>, children: ChildrenFn) -> impl In
 
 #[component]
 pub fn BaseRoute() -> impl IntoView {
-    let temp_identity_res = create_blocking_resource(
-        || (),
-        |_| async move {
-            generate_anonymous_identity_if_required()
-                .await
-                .expect("Failed to generate anonymous identity?!")
-        },
-    );
 
     view! {
-        <Suspense fallback=FullScreenSpinner>
-            {move || {
-                temp_identity_res()
-                    .map(|temp_identity| {
-                        view! {
-                            <CtxProvider temp_identity>
-                                <Outlet/>
-                            </CtxProvider>
-                        }
-                    })
-            }}
-
-        </Suspense>
+        <CtxProvider>
+            <Outlet/>
+        </CtxProvider>
+        <AuthProvider/>
     }
 }
