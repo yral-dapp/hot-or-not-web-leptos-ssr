@@ -1,11 +1,11 @@
 use std::env;
 
-use candid::{Decode, Encode, Principal, CandidType, Deserialize};
+use candid::{Decode, Encode, Principal, CandidType, Deserialize, Nat};
 use ic_agent::Identity;
 use ic_base_types::PrincipalId;
 use leptos::{server, ServerFnError};
 use ic_agent::{identity::BasicIdentity, Agent};
-use icp_ledger::{AccountIdentifier, Memo, Subaccount, TimeStamp, Tokens as ledgerTokens, TransferArgs};
+use icp_ledger::Subaccount;
 
 use crate::consts::{AGENT_URL, ICP_LEDGER_CANISTER_ID};
 use crate::canister::sns_swap::{NewSaleTicketRequest, NewSaleTicketResponse, RefreshBuyerTokensRequest, RefreshBuyerTokensResponse};
@@ -88,7 +88,7 @@ async fn participate_in_swap(swap_canister: Principal) -> Result<(), ServerFnErr
         created_at_time: None,
     };
     let res = agent
-        .update(&ICP_LEDGER_CANISTER_ID, "icrc1_transfer")
+        .update(&Principal::from_text(ICP_LEDGER_CANISTER_ID).unwrap(), "icrc1_transfer")
         .with_arg(Encode!(&transfer_args).unwrap())
         .call_and_wait()
         .await
@@ -98,11 +98,12 @@ async fn participate_in_swap(swap_canister: Principal) -> Result<(), ServerFnErr
 
     // refresh_buyer_tokens
     let refresh_buyer_tokens_request = RefreshBuyerTokensRequest {
-        buyer: admin_principal,
+        buyer: admin_principal.to_string(),
         confirmation_text: None
     };
     let res = agent
         .update(&swap_canister, "refresh_buyer_tokens")
+        .with_arg(Encode!(&refresh_buyer_tokens_request).unwrap())
         .call_and_wait()
         .await
         .unwrap();
