@@ -28,7 +28,7 @@ pub fn OnboardingPopUp(onboard_on_click: WriteSignal<bool>) -> impl IntoView {
                     <div class="flex flex-col justify-center w-9/12 sm:w-4/12 relative gap-y-36">
                         <div class="relative self-center">
                             <p class="text-white text-center font-bold w-56 text-2xl leading-normal">
-                                A new experience awaits you
+                                A new Hot or Not game experience awaits you
                             </p>
                             <img
                                 class="-left-6 top-8 h-5 w-5 absolute"
@@ -55,12 +55,20 @@ pub fn OnboardingPopUp(onboard_on_click: WriteSignal<bool>) -> impl IntoView {
                                 src="/img/decorator/star.svg"
                             />
                         </div>
-                        <button
-                            class="self-center font-semibold rounded-full bg-primary-600 py-2 md:py-3 w-full max-w-80 text-center text-base md:text-xl text-white"
-                            on:click=move |_| onboarding_page_no.set(2)
-                        >
-                            Start Tutorial
-                        </button>
+                        <div class="flex flex-col items-center gap-y-4">
+                            <button
+                                class="self-center font-semibold rounded-full bg-primary-600 py-2 md:py-3 w-full max-w-80 text-center text-base md:text-xl text-white"
+                                on:click= move |_| onboarding_page_no.set(2)
+                            >
+                                Start Tutorial
+                            </button>
+                            <button
+                                class="text-white text-center font-medium text-base leading-normal font-sans"
+                                on:click=move |_| onboard_on_click.set(true)
+                            >
+                                Skip Tutorial
+                            </button>
+                        </div>
                     </div>
                 </div>
             </Show>
@@ -69,7 +77,7 @@ pub fn OnboardingPopUp(onboard_on_click: WriteSignal<bool>) -> impl IntoView {
                 <OnboardingTopCross onboard_on_click />
                 <OnboardingContent
                     header_text="Select your bet amount"
-                    body_text="Lorem ipsum dolor sit amet, consectetur elit. sed do eiusmod Lorem ipsum dolor sit amet consectetur elit, sed do eiusmod."
+                    body_text="Select your bet (50, 100, or 200) by tapping the coin or arrows"
                     onboarding_page_no
                 />
             </Show>
@@ -78,7 +86,7 @@ pub fn OnboardingPopUp(onboard_on_click: WriteSignal<bool>) -> impl IntoView {
                 <OnboardingTopCross onboard_on_click />
                 <OnboardingContent
                     header_text="Place your first bet"
-                    body_text="Lorem ipsum dolor sit amet, consectetur elit. sed do eiusmod Lorem ipsum dolor sit amet consectetur elit, sed do eiusmod."
+                    body_text="Do you think the video will be popular? Click 'Hot' and place your bet"
                     onboarding_page_no
                 />
             </Show>
@@ -87,7 +95,7 @@ pub fn OnboardingPopUp(onboard_on_click: WriteSignal<bool>) -> impl IntoView {
                 <OnboardingTopCross onboard_on_click />
                 <OnboardingContent
                     header_text="Place your first bet"
-                    body_text="Lorem ipsum dolor sit amet, consectetur elit. sed do eiusmod Lorem ipsum dolor sit amet consectetur elit, sed do eiusmod."
+                    body_text="If you think video won't be popular, click 'Not' and place your bet"
                     onboarding_page_no
                 />
             </Show>
@@ -107,7 +115,7 @@ pub fn OnboardingPopUp(onboard_on_click: WriteSignal<bool>) -> impl IntoView {
                             </div>
                             <div class="self-center">
                                 <p class="text-white text-center font-medium text-sm leading-normal">
-                                    You can buy coins
+                                    Refer and get COYNS
                                 </p>
                             </div>
                         </div>
@@ -117,7 +125,7 @@ pub fn OnboardingPopUp(onboard_on_click: WriteSignal<bool>) -> impl IntoView {
                             </div>
                             <div class="self-center">
                                 <p class="text-white text-center font-medium text-sm leading-normal">
-                                    Win lots of prizes
+                                    Play and earn
                                 </p>
                             </div>
                         </div>
