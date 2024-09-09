@@ -2,6 +2,7 @@ pub mod create;
 pub mod info;
 mod popups;
 mod sns_form;
+pub mod swapper;
 pub mod transfer;
 
 use candid::Principal;
