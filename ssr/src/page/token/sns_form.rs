@@ -44,7 +44,7 @@ impl NeuronForm {
 
 #[derive(Clone)]
 struct DistributionForm {
-    total: nns_pb::Tokens,
+    pub total: nns_pb::Tokens,
     neurons: Vec<NeuronForm>,
     initial_balances: InitialBalances,
 }
@@ -107,7 +107,7 @@ pub struct SnsFormState {
     pub proposals: Proposals,
     pub neurons: Neurons,
     pub voting: Voting,
-    distribution: DistributionForm,
+     distribution: DistributionForm,
     pub swap: Swap,
     pub nns_proposal: NnsProposal,
     pub sns_form_setting: SnsFormSettings,
@@ -122,6 +122,16 @@ pub struct SnsFormSettings {
     pub initial_voting_period_in_days: Option<u64>,
     pub max_wait_deadline_extention: Option<u64>,
     pub min_creation_stake: Option<u64>,
+    pub min_dissolve_delay: Option<u64>,
+    pub age_duration_in_years: Option<u64>,
+    pub age_bonus: Option<u64>,
+    pub min_participants: Option<u64>,
+    pub min_direct_participants_icp: Option<u64>,
+    pub max_direct_participants_icp: Option<u64>,
+    pub min_participants_icp: Option<u64>,
+    pub max_participants_icp: Option<u64>,
+    pub restricted_country: Option<String>,
+
 }
 
 impl Default for SnsFormState {

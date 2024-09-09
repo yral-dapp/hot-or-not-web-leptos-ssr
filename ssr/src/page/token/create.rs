@@ -15,7 +15,9 @@ use super::{popups::TokenCreationPopup, sns_form::SnsFormState};
 #[component]
 fn TokenImage() -> impl IntoView {
     let ctx = expect_context::<CreateTokenCtx>();
-    let img_file = create_rw_signal(None::<FileWithUrl>);
+    let img_file =ctx.file;
+
+    // let img_file = create_rw_signal(None::<FileWithUrl>);
     let logo_b64 = create_write_slice(ctx.form_state, |f, v| {
         f.logo_b64 = v;
     });
@@ -29,7 +31,9 @@ fn TokenImage() -> impl IntoView {
 
                 let input = _target.dyn_ref::<HtmlInputElement>()?;
                 let file = input.files()?.get(0)?;
-                img_file.set(Some(FileWithUrl::new(file.into())));
+                img_file.set(Some(FileWithUrl::new(file.clone().into())));
+                ctx.file.set(Some(FileWithUrl::new(file.into())));
+                
             }
             Some(())
         })
@@ -108,7 +112,7 @@ fn TokenImage() -> impl IntoView {
 #[component]
 fn TokenImgInput() -> impl IntoView {
     let ctx = expect_context::<CreateTokenCtx>();
-    let img_file = create_rw_signal(None::<FileWithUrl>);
+    let img_file =ctx.file;
     let logo_b64 = create_write_slice(ctx.form_state, |f, v| {
         f.logo_b64 = v;
     });
@@ -122,7 +126,8 @@ fn TokenImgInput() -> impl IntoView {
 
                 let input = _target.dyn_ref::<HtmlInputElement>()?;
                 let file = input.files()?.get(0)?;
-                img_file.set(Some(FileWithUrl::new(file.into())));
+                img_file.set(Some(FileWithUrl::new(file.clone().into())));
+                ctx.file.set(Some(FileWithUrl::new(file.into())));
             }
             Some(())
         })
@@ -243,9 +248,10 @@ input_component!(InputBox, input, {});
 input_component!(InputArea, textarea, rows = 4);
 
 #[derive(Clone, Copy, Default)]
-struct CreateTokenCtx {
+pub struct CreateTokenCtx {
     form_state: RwSignal<SnsFormState>,
     invalid_cnt: RwSignal<u32>,
+    file: RwSignal<Option<FileWithUrl>>
 }
 
 #[component]
@@ -258,8 +264,12 @@ pub fn CreateToken() -> impl IntoView {
         let id = cans.profile_details().username_or_principal();
         format!("/your-profile/{id}?tab=tokens")
     });
-    let ctx = CreateTokenCtx::default();
-    provide_context(ctx);
+    let ctx:  CreateTokenCtx = expect_context() ;
+    // use_context().unwrap_or_else(|| {
+    //     let ctx = CreateTokenCtx::default();
+    //     provide_context(ctx);
+    //     ctx
+    //  }); 
 
     let set_token_name = move |name: String| {
         ctx.form_state.update(|f| f.name = Some(name));
@@ -355,6 +365,7 @@ pub fn CreateToken() -> impl IntoView {
                                 placeholder="Add a name to your crypto currency"
                                 updater=set_token_name
                                 validator=non_empty_string_validator
+                                initial_value=(ctx.form_state)().name.unwrap_or_default()
                             />
                         </div>
         /*
@@ -374,12 +385,16 @@ pub fn CreateToken() -> impl IntoView {
                             placeholder="Fun & friendly internet currency inspired by the legendary Shiba Inu dog 'Kabosu'"
                             updater=set_token_desc
                             validator=non_empty_string_validator
+                            initial_value=(ctx.form_state)().description.unwrap_or_default()
+
                         />
                         <InputBox
                             heading="Token Symbol"
                             placeholder="Eg. DODGE"
                             updater=set_token_symbol
                             validator=non_empty_string_validator
+                            initial_value=(ctx.form_state)().symbol.unwrap_or_default()
+
                         />
           /*
                         <InputBox
@@ -394,9 +409,10 @@ pub fn CreateToken() -> impl IntoView {
                             heading="Distribution"
                             placeholder="Distribution Tokens"
                             input_type="number".into()
-                            initial_value="100000000".into()
                             updater=set_total_distribution
+                            initial_value="100000000".into()
                             validator=non_empty_string_validator_for_u64
+
                         />
 
                         <div class="w-full flex justify-center">
@@ -410,7 +426,9 @@ pub fn CreateToken() -> impl IntoView {
                         </div>
 
                         <div class="w-full flex justify-center underline text-sm text-white my-4 " >
-                         <button on:click=move |_|{navigate_token_settings() }  >  View advanced settings </button>
+                        <a href="/token/create/settings"  >  View advanced settings </a>
+                        
+                        //  <button on:click=move |_|{navigate_token_settings() }  >  View advanced settings </button>
                          </div>
                     </div>
                     <TokenCreationPopup
@@ -443,8 +461,11 @@ pub fn CreateTokenSettings() -> impl IntoView {
         let id = cans.profile_details().username_or_principal();
         format!("/your-profile/{id}?tab=tokens")
     });
-    let ctx = CreateTokenCtx::default();
-    provide_context(ctx);
+    let ctx:  CreateTokenCtx = use_context().unwrap_or_else(|| {
+        let ctx = CreateTokenCtx::default();
+        provide_context(ctx);
+        ctx
+     }); 
 
     let save_action = create_action(move |&()| async move {
         let cans = auth_cans
@@ -502,7 +523,61 @@ pub fn CreateTokenSettings() -> impl IntoView {
         });
     };
 
-    let set_fields = move |value: String| {};
+    let set_min_dissolve_delay = move |value: String| {
+        ctx.form_state.update(|f| {
+            f.sns_form_setting.min_dissolve_delay = value.parse::<u64>().ok();
+        });
+    };
+    let set_age_in_years = move |value: String| {
+        ctx.form_state.update(|f| {
+            f.sns_form_setting.age_duration_in_years = value.parse::<u64>().ok();
+        });
+    };
+
+    let set_age_bonus = move |value: String| {
+        ctx.form_state.update(|f| {
+            if let Ok(value) = value.parse::<u64>() {
+                if value <= 100  {   
+                f.sns_form_setting.age_bonus = Some(value) ;}
+            }
+        });
+    };
+
+    let set_min_participants = move |value: String| {
+        ctx.form_state.update(|f| {
+            f.sns_form_setting.min_participants = value.parse::<u64>().ok();
+        });
+    };
+
+    let set_min_direct_participants_icp = move |value: String| {
+        ctx.form_state.update(|f| {
+            f.sns_form_setting.min_direct_participants_icp = value.parse::<u64>().ok();
+        });
+    };
+
+    let set_max_direct_participants_icp = move |value: String| {
+        ctx.form_state.update(|f| {
+            f.sns_form_setting.max_direct_participants_icp = value.parse::<u64>().ok();
+        });
+    };
+
+    let set_min_participants_icp = move |value: String| {
+        ctx.form_state.update(|f| {
+            f.sns_form_setting.min_participants_icp = value.parse::<u64>().ok();
+        });
+    };
+
+    let set_max_participants_icp = move |value: String| {
+        ctx.form_state.update(|f| {
+            f.sns_form_setting.max_participants_icp = value.parse::<u64>().ok();
+        });
+    };
+
+    let set_restricted_country = move |value: String| {
+        ctx.form_state.update(|f| {
+            f.sns_form_setting.restricted_country = Some(value);
+        });
+    };
 
     view! {
          <div class="w-dvw min-h-dvh bg-black pt-4 flex flex-col gap-4 p-4" style="padding-bottom:5rem;" >
@@ -529,114 +604,135 @@ pub fn CreateTokenSettings() -> impl IntoView {
                         placeholder="https://your-proposal-link.com"
                         updater=set_sns_proposal_link
                         validator=non_empty_string_validator
+                        initial_value=(ctx.form_state)().sns_form_setting.sns_proposal_link.unwrap_or_default()
                 />
                 <InputBox
                         heading="NNS proposal link"
                         placeholder="https://your-proposal-link.com"
                         updater=set_nns_proposal_link
                         validator=non_empty_string_validator
+                        initial_value=(ctx.form_state)().sns_form_setting.nns_proposal_link.unwrap_or_default()
+
                 />
                 <InputBox
                         heading="Dapp Canister ID"
                         placeholder="#8539434643"
                         updater=set_dapp_canister_id
                         validator=non_empty_string_validator
+                        initial_value=(ctx.form_state)().sns_form_setting.dapp_canister_id.unwrap_or_default()
+
                 />
                 <InputBox
-                        heading="Transaction Fee"
+                        heading="Transaction Fee (e8s)"
                         placeholder="Fee"
                         input_type="number".into()
                         updater=set_transaction_fee
                         validator=non_empty_string_validator_for_u64
+                        initial_value=(ctx.form_state)().transaction_fee.e8s.unwrap_or(1).to_string()
+
                  />
                  <InputBox
-                        heading="Rejection Fee"
+                        heading="Rejection Fee (Token)"
                         placeholder="1 Token"
                         input_type="number".into()
                         updater=set_rejection_fee
                         validator=non_empty_string_validator_for_u64
+                        initial_value=(ctx.form_state)().sns_form_setting.rejection_fee.unwrap_or_default().e8s.unwrap_or(1).to_string()
+
                  />
                  <InputBox
-                        heading="Initial Voting Period"
+                        heading="Initial Voting Period (days)"
                         placeholder="4 days"
                         input_type="number".into()
                         updater=set_initial_voting_period_in_days
                         validator=non_empty_string_validator_for_u64
+                        initial_value=(ctx.form_state)().sns_form_setting.initial_voting_period_in_days.unwrap_or(4).to_string()
+
                  />
                  <InputBox
-                        heading="Maximum wait for quiet deadline extention"
+                        heading="Maximum wait for quiet deadline extention (days)"
                         placeholder="1 day"
                         input_type="number".into()
                         updater=set_max_wait_deadline_extention
                         validator=non_empty_string_validator_for_u64
+                        initial_value=(ctx.form_state)().sns_form_setting.max_wait_deadline_extention.unwrap_or(1).to_string()
+
                  />
                  <InputBox
-                        heading="Minimum creation stake"
+                        heading="Minimum creation stake (token)"
                         placeholder="1 token"
                         input_type="number".into()
                         updater=set_min_creation_stake
                         validator=non_empty_string_validator_for_u64
+                        initial_value=(ctx.form_state)().sns_form_setting.min_creation_stake.unwrap_or(1).to_string()
+
                  />
                  <InputBox
-                        heading="Minimum dissolve delay"
-                        placeholder="90 days"
+                        heading="Minimum dissolve delay (months)"
+                        placeholder="1 month"
                         input_type="number".into()
-                        updater=set_fields
+                        updater=set_min_dissolve_delay
                         validator=non_empty_string_validator_for_u64
+                        initial_value=(ctx.form_state)().sns_form_setting.min_dissolve_delay.unwrap_or(1).to_string()
+
                  />
                  <InputBox
-                        heading="Age (duration)"
+                        heading="Age (duration in years)"
                         placeholder="4 years"
                         input_type="number".into()
-                        updater=set_fields
+                        updater=set_age_in_years
                         validator=non_empty_string_validator_for_u64
+                        initial_value=(ctx.form_state)().sns_form_setting.age_duration_in_years.unwrap_or(4).to_string()
+
                  />
                  <InputBox
-                        heading="Age (bonus)"
+                        heading="Age (bonus %)"
                         placeholder="25%"
                         input_type="number".into()
-                        updater=set_fields
+                        updater=set_age_bonus
                         validator=non_empty_string_validator_for_u64
+                        initial_value=(ctx.form_state)().sns_form_setting.age_bonus.unwrap_or(25).to_string()
+
                  />
                  <InputBox
                         heading="Minimum participants"
                         placeholder="57"
                         input_type="number".into()
-                        updater=set_fields
+                        updater=set_min_participants
                         validator=non_empty_string_validator_for_u64
                  />
                  <InputBox
                         heading="Minimum direct participant icp"
                         placeholder="100,000 tokens"
                         input_type="number".into()
-                        updater=set_fields
+                        updater=set_min_direct_participants_icp
                         validator=non_empty_string_validator_for_u64
                  />
                  <InputBox
                         heading="Maximum direct participant icp"
                         placeholder="1000,000 tokens"
                         input_type="number".into()
-                        updater=set_fields
+                        updater=set_max_direct_participants_icp
                         validator=non_empty_string_validator_for_u64
                  />
                  <InputBox
                         heading="Minimum participant icp"
                         placeholder="10 tokens"
                         input_type="number".into()
-                        updater=set_fields
+                        updater=set_min_participants_icp
                         validator=non_empty_string_validator_for_u64
                  />
                  <InputBox
                         heading="Maximum participant icp"
                         placeholder="10,000 tokens"
                         input_type="number".into()
-                        updater=set_fields
+                        updater=set_max_participants_icp
                         validator=non_empty_string_validator_for_u64
                  />
                  <InputBox
                         heading="Restricted Country"
                         placeholder="Antarctica"
-                        updater=set_fields
+                        updater=set_restricted_country
                         validator=non_empty_string_validator
                  />
                  <div class="w-full flex justify-center">

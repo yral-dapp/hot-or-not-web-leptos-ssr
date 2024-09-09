@@ -15,7 +15,7 @@ use crate::{
         settings::Settings,
         terms::TermsOfService,
         token::{
-            create::CreateToken, create::CreateTokenSettings, create_token_faq::CreateTokenFAQ,
+            create::{CreateToken, CreateTokenCtx, CreateTokenSettings}, create_token_faq::CreateTokenFAQ,
             info::TokenInfo, transfer::TokenTransfer,
         },
         upload::UploadPostPage,
@@ -76,6 +76,7 @@ pub fn App() -> impl IntoView {
     provide_context(ProfilePostsContext::default());
     provide_context(AuthorizedUserToSeedContent::default());
     provide_context(AudioState::default());
+    provide_context(CreateTokenCtx::default());
 
     #[cfg(feature = "hydrate")]
     {
