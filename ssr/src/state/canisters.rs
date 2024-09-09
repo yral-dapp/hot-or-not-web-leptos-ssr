@@ -11,9 +11,7 @@ use yral_metadata_types::UserMetadata;
 use crate::{
     auth::DelegatedIdentityWire,
     canister::{
-        individual_user_template::{
-            IndividualUserTemplate, Result19, Result6, UserCanisterDetails,
-        },
+        individual_user_template::{IndividualUserTemplate, Result16, UserCanisterDetails},
         platform_orchestrator::PlatformOrchestrator,
         post_cache::PostCache,
         sns_governance::SnsGovernance,
@@ -293,8 +291,8 @@ pub async fn do_canister_auth(
         .await
         .map_err(|e| e.to_string())
     {
-        Ok(Result19::Ok(_)) => (),
-        Err(e) | Ok(Result19::Err(e)) => log::warn!("Failed to update last access time: {}", e),
+        Ok(Result16::Ok(_)) => (),
+        Err(e) | Ok(Result16::Err(e)) => log::warn!("Failed to update last access time: {}", e),
     }
     let profile_details = user.get_profile_details().await?.into();
 
