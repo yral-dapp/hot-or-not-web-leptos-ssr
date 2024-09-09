@@ -1,8 +1,5 @@
 use crate::{
-    canister::individual_user_template::Result6,
-    component::{back_btn::BackButton, img_to_png::ImgToPng, title::Title},
-    state::canisters::auth_canisters_store,
-    utils::web::FileWithUrl,
+    canister::individual_user_template::Result6, component::{back_btn::BackButton, img_to_png::ImgToPng, title::Title}, page::token::sns_form::SnsFormSettings, state::canisters::auth_canisters_store, utils::web::FileWithUrl
 };
 use leptos::*;
 use leptos_icons::*;
@@ -194,7 +191,7 @@ macro_rules! input_component {
             view! {
                 <div class="flex flex-col grow gap-y-1 text-sm md:text-base">
                      <span class="text-white font-semibold">{heading.clone()}</span>
-                     <$input_element prop:value=initial_value.unwrap_or_default() on:input=move |ev| {
+                     <$input_element prop:value={initial_value.unwrap_or_default()} on:input=move |ev| {
                         let value = event_target_value(&ev);
                         match validator(value) {
                             Some(v) => {
@@ -246,6 +243,8 @@ fn non_empty_string_validator_for_u64(s: String) -> Option<String> {
 
 input_component!(InputBox, input, {});
 input_component!(InputArea, textarea, rows = 4);
+input_component!(InputField, textarea, rows = 1);
+
 
 #[derive(Clone, Copy, Default)]
 pub struct CreateTokenCtx {
@@ -365,7 +364,7 @@ pub fn CreateToken() -> impl IntoView {
                                 placeholder="Add a name to your crypto currency"
                                 updater=set_token_name
                                 validator=non_empty_string_validator
-                                initial_value=(ctx.form_state)().name.unwrap_or_default()
+                                initial_value=(ctx.form_state.get_untracked()).name.unwrap_or_default()
                             />
                         </div>
         /*
@@ -380,12 +379,12 @@ pub fn CreateToken() -> impl IntoView {
                         </div>
           */
 
-                                                                                        <InputArea
+                        <InputArea
                             heading="Description"
                             placeholder="Fun & friendly internet currency inspired by the legendary Shiba Inu dog 'Kabosu'"
                             updater=set_token_desc
                             validator=non_empty_string_validator
-                            initial_value=(ctx.form_state)().description.unwrap_or_default()
+                            initial_value=(ctx.form_state.get_untracked()).description.unwrap_or_default()
 
                         />
                         <InputBox
@@ -393,7 +392,7 @@ pub fn CreateToken() -> impl IntoView {
                             placeholder="Eg. DODGE"
                             updater=set_token_symbol
                             validator=non_empty_string_validator
-                            initial_value=(ctx.form_state)().symbol.unwrap_or_default()
+                            initial_value=(ctx.form_state.get_untracked()).symbol.unwrap_or_default()
 
                         />
           /*
@@ -410,9 +409,9 @@ pub fn CreateToken() -> impl IntoView {
                             placeholder="Distribution Tokens"
                             input_type="number".into()
                             updater=set_total_distribution
-                            initial_value="100000000".into()
+                            // initial_value="100000000".into()
+                            initial_value=(ctx.form_state.get_untracked()).total_distrubution().e8s.unwrap_or(10000000).to_string()
                             validator=non_empty_string_validator_for_u64
-
                         />
 
                         <div class="w-full flex justify-center">
@@ -441,14 +440,22 @@ pub fn CreateToken() -> impl IntoView {
             }
 }
 
-fn navigate_token_settings() {
-    let navigate = use_navigate();
-    navigate("/token/create/settings", Default::default());
-}
 
 fn navigate_token_faq() {
     let navigate = use_navigate();
     navigate("/token/create/faq", Default::default());
+}
+
+fn clear_form(form_ref: &NodeRef<html::Form>) {
+    // Check if the reference is some and has the form element
+    // if let Some(form) = form_ref.get() {
+    //     // Use JavaScript to clear the form
+    //     // Use the web_sys crate for interacting with the DOM
+    //     use web_sys::HtmlFormElement;
+    //     if let Ok(form_element) = form.dyn_into::<web_sys::HtmlFormElement>() {
+    //         form_element.reset(); // Clear the form fields
+    //     }
+    // }
 }
 
 #[component]
@@ -578,6 +585,14 @@ pub fn CreateTokenSettings() -> impl IntoView {
             f.sns_form_setting.restricted_country = Some(value);
         });
     };
+    
+    let form_ref = create_node_ref::<html::Form>();
+
+    let reset_settings = move |_| {
+        clear_form(&form_ref);
+        ctx.form_state.update(|f |  f.sns_form_setting = SnsFormSettings::default() )
+    };
+
 
     view! {
          <div class="w-dvw min-h-dvh bg-black pt-4 flex flex-col gap-4 p-4" style="padding-bottom:5rem;" >
@@ -599,27 +614,29 @@ pub fn CreateTokenSettings() -> impl IntoView {
                  // <div class="relative w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-gray-600"></div>
                 </label>
 
-                <InputBox
+                <form node_ref=form_ref >
+
+                <InputField
                         heading="SNS proposal link"
                         placeholder="https://your-proposal-link.com"
                         updater=set_sns_proposal_link
                         validator=non_empty_string_validator
-                        initial_value=(ctx.form_state)().sns_form_setting.sns_proposal_link.unwrap_or_default()
+                        initial_value=(ctx.form_state.get_untracked()).sns_form_setting.sns_proposal_link.unwrap_or_default()
                 />
-                <InputBox
+                <InputField
                         heading="NNS proposal link"
                         placeholder="https://your-proposal-link.com"
                         updater=set_nns_proposal_link
                         validator=non_empty_string_validator
-                        initial_value=(ctx.form_state)().sns_form_setting.nns_proposal_link.unwrap_or_default()
+                        initial_value=(ctx.form_state.get_untracked()).sns_form_setting.nns_proposal_link.unwrap_or_default()
 
                 />
-                <InputBox
+                <InputField
                         heading="Dapp Canister ID"
                         placeholder="#8539434643"
                         updater=set_dapp_canister_id
                         validator=non_empty_string_validator
-                        initial_value=(ctx.form_state)().sns_form_setting.dapp_canister_id.unwrap_or_default()
+                        initial_value=(ctx.form_state.get_untracked()).sns_form_setting.dapp_canister_id.unwrap_or_default()
 
                 />
                 <InputBox
@@ -628,7 +645,7 @@ pub fn CreateTokenSettings() -> impl IntoView {
                         input_type="number".into()
                         updater=set_transaction_fee
                         validator=non_empty_string_validator_for_u64
-                        initial_value=(ctx.form_state)().transaction_fee.e8s.unwrap_or(1).to_string()
+                        initial_value=(ctx.form_state.get_untracked()).transaction_fee.e8s.unwrap_or(1).to_string()
 
                  />
                  <InputBox
@@ -637,7 +654,7 @@ pub fn CreateTokenSettings() -> impl IntoView {
                         input_type="number".into()
                         updater=set_rejection_fee
                         validator=non_empty_string_validator_for_u64
-                        initial_value=(ctx.form_state)().sns_form_setting.rejection_fee.unwrap_or_default().e8s.unwrap_or(1).to_string()
+                        initial_value=(ctx.form_state.get_untracked()).sns_form_setting.rejection_fee.unwrap_or_default().e8s.unwrap_or(1).to_string()
 
                  />
                  <InputBox
@@ -646,7 +663,7 @@ pub fn CreateTokenSettings() -> impl IntoView {
                         input_type="number".into()
                         updater=set_initial_voting_period_in_days
                         validator=non_empty_string_validator_for_u64
-                        initial_value=(ctx.form_state)().sns_form_setting.initial_voting_period_in_days.unwrap_or(4).to_string()
+                        initial_value=(ctx.form_state.get_untracked()).sns_form_setting.initial_voting_period_in_days.unwrap_or(4).to_string()
 
                  />
                  <InputBox
@@ -655,7 +672,7 @@ pub fn CreateTokenSettings() -> impl IntoView {
                         input_type="number".into()
                         updater=set_max_wait_deadline_extention
                         validator=non_empty_string_validator_for_u64
-                        initial_value=(ctx.form_state)().sns_form_setting.max_wait_deadline_extention.unwrap_or(1).to_string()
+                        initial_value=(ctx.form_state.get_untracked()).sns_form_setting.max_wait_deadline_extention.unwrap_or(1).to_string()
 
                  />
                  <InputBox
@@ -664,7 +681,7 @@ pub fn CreateTokenSettings() -> impl IntoView {
                         input_type="number".into()
                         updater=set_min_creation_stake
                         validator=non_empty_string_validator_for_u64
-                        initial_value=(ctx.form_state)().sns_form_setting.min_creation_stake.unwrap_or(1).to_string()
+                        initial_value=(ctx.form_state.get_untracked()).sns_form_setting.min_creation_stake.unwrap_or(1).to_string()
 
                  />
                  <InputBox
@@ -673,7 +690,7 @@ pub fn CreateTokenSettings() -> impl IntoView {
                         input_type="number".into()
                         updater=set_min_dissolve_delay
                         validator=non_empty_string_validator_for_u64
-                        initial_value=(ctx.form_state)().sns_form_setting.min_dissolve_delay.unwrap_or(1).to_string()
+                        initial_value=(ctx.form_state.get_untracked()).sns_form_setting.min_dissolve_delay.unwrap_or(1).to_string()
 
                  />
                  <InputBox
@@ -682,7 +699,7 @@ pub fn CreateTokenSettings() -> impl IntoView {
                         input_type="number".into()
                         updater=set_age_in_years
                         validator=non_empty_string_validator_for_u64
-                        initial_value=(ctx.form_state)().sns_form_setting.age_duration_in_years.unwrap_or(4).to_string()
+                        initial_value=(ctx.form_state.get_untracked()).sns_form_setting.age_duration_in_years.unwrap_or(4).to_string()
 
                  />
                  <InputBox
@@ -691,7 +708,7 @@ pub fn CreateTokenSettings() -> impl IntoView {
                         input_type="number".into()
                         updater=set_age_bonus
                         validator=non_empty_string_validator_for_u64
-                        initial_value=(ctx.form_state)().sns_form_setting.age_bonus.unwrap_or(25).to_string()
+                        initial_value=(ctx.form_state.get_untracked()).sns_form_setting.age_bonus.unwrap_or(25).to_string()
 
                  />
                  <InputBox
@@ -735,6 +752,7 @@ pub fn CreateTokenSettings() -> impl IntoView {
                         updater=set_restricted_country
                         validator=non_empty_string_validator
                  />
+                 </form>
                  <div class="w-full flex justify-center">
                             <button
                                 // on:click=move |_| create_action.dispatch(())
@@ -744,7 +762,7 @@ pub fn CreateTokenSettings() -> impl IntoView {
                             Save
                             </button>
                  </div>
-                 <button class="w-full flex justify-center underline text-sm text-white my-4 " >Reset to default</button>
+                 <button on:click=reset_settings class="w-full flex justify-center underline text-sm text-white my-4 " >Reset to default</button>
             </div>
 
     }

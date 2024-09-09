@@ -92,9 +92,6 @@ impl DistributionForm {
         }
     }
 
-    fn update_total_distribution(&mut self, total: nns_pb::Tokens) {
-        self.total = total;
-    }
 }
 
 #[derive(Clone)]
@@ -202,7 +199,27 @@ impl Default for SnsFormState {
 
 impl SnsFormState {
     pub fn try_update_total_distribution_tokens(&mut self, tokens: nns_pb::Tokens) {
-        self.distribution.update_total_distribution(tokens);
+        self.distribution.total = tokens;
+        self.distribution.neurons = 
+        vec![
+            NeuronForm {
+                stake: parse_tokens( &format!("{} tokens", ((tokens.e8s.unwrap_or_default()) as f32  * 0.49) as u64)).unwrap(),
+                memo: 0,
+                dissolve_delay: parse_duration("0 seconds").unwrap(),
+                vesting_period: parse_duration("2 seconds").unwrap(),
+            },
+            NeuronForm {
+                stake: parse_tokens( &format!("{} tokens", ((tokens.e8s.unwrap_or_default()) as f32  * 0.01) as u64)).unwrap(),
+                memo: 1,
+                dissolve_delay: parse_duration("2 seconds").unwrap(),
+                vesting_period: parse_duration("2 seconds").unwrap(),
+            },
+        ]
+        ;
+        self.distribution
+        .initial_balances
+        .swap = parse_tokens( &format!("{} tokens", ((tokens.e8s.unwrap_or_default()) as f32  * 0.5) as u64)).unwrap();
+
     }
 
     pub fn try_into_config(
@@ -236,5 +253,9 @@ impl SnsFormState {
             swap: self.swap,
             nns_proposal: self.nns_proposal,
         })
+    }
+
+    pub fn total_distrubution(&self) -> nns_pb::Tokens {
+        self.distribution.total
     }
 }
