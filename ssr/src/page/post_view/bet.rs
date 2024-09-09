@@ -178,7 +178,7 @@ fn HNButtonOverlay(
             });
         }
         </AuthCansProvider>
-        <div class="flex justify-center w-full touch-manipulation">
+        <div class="flex relative top-4 justify-center w-full touch-manipulation" style="top: 25px;" >
             <button
                 disabled=running
                 on:click=move |_| coin.update(|c| *c =  c.wrapping_next())
@@ -191,7 +191,7 @@ fn HNButtonOverlay(
         </div>
         <div class="flex flex-row gap-6 justify-center items-center w-full touch-manipulation">
             <HNButton disabled=running bet_direction kind=BetKind::Hot  />
-            <button disabled=running on:click=move |_| coin.update(|c| *c = c.wrapping_next())>
+            <button class="mt-6"  disabled=running on:click=move |_| coin.update(|c| *c = c.wrapping_next())>
                 <CoinStateView disabled=running class="mt-1 w-12 h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 drop-shadow-lg" coin />
             </button>
             <HNButton disabled=running bet_direction kind=BetKind::Not />
@@ -200,7 +200,7 @@ fn HNButtonOverlay(
         // most of the CSS is for alignment with above icons
         <div class="flex gap-6 justify-center items-center pt-2 mb-2 w-full text-base font-medium text-center md:text-lg lg:text-xl touch-manipulation">
             <p class="pb-4 mx-4 w-14 md:w-16 lg:w-18">Hot</p>
-            <div class="flex justify-center w-12 md:w-14 lg:w-16">
+            <div class="flex relative bottom-4 justify-center w-12 md:w-14 lg:w-16" style="bottom: 4px;"  >
                 <button
                     disabled=running
                     on:click=move |_| coin.update(|c| *c = c.wrapping_prev())
