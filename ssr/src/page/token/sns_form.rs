@@ -91,7 +91,6 @@ impl DistributionForm {
             initial_balances: self.initial_balances,
         }
     }
-
 }
 
 #[derive(Clone)]
@@ -104,7 +103,7 @@ pub struct SnsFormState {
     pub proposals: Proposals,
     pub neurons: Neurons,
     pub voting: Voting,
-     distribution: DistributionForm,
+    distribution: DistributionForm,
     pub swap: Swap,
     pub nns_proposal: NnsProposal,
     pub sns_form_setting: SnsFormSettings,
@@ -128,7 +127,6 @@ pub struct SnsFormSettings {
     pub min_participants_icp: Option<u64>,
     pub max_participants_icp: Option<u64>,
     pub restricted_country: Option<String>,
-
 }
 
 impl Default for SnsFormState {
@@ -200,26 +198,33 @@ impl Default for SnsFormState {
 impl SnsFormState {
     pub fn try_update_total_distribution_tokens(&mut self, tokens: nns_pb::Tokens) {
         self.distribution.total = tokens;
-        self.distribution.neurons = 
-        vec![
+        self.distribution.neurons = vec![
             NeuronForm {
-                stake: parse_tokens( &format!("{} tokens", ((tokens.e8s.unwrap_or_default()) as f32  * 0.49) as u64)).unwrap(),
+                stake: parse_tokens(&format!(
+                    "{} tokens",
+                    ((tokens.e8s.unwrap_or_default()) as f32 * 0.49) as u64
+                ))
+                .unwrap(),
                 memo: 0,
                 dissolve_delay: parse_duration("0 seconds").unwrap(),
                 vesting_period: parse_duration("2 seconds").unwrap(),
             },
             NeuronForm {
-                stake: parse_tokens( &format!("{} tokens", ((tokens.e8s.unwrap_or_default()) as f32  * 0.01) as u64)).unwrap(),
+                stake: parse_tokens(&format!(
+                    "{} tokens",
+                    ((tokens.e8s.unwrap_or_default()) as f32 * 0.01) as u64
+                ))
+                .unwrap(),
                 memo: 1,
                 dissolve_delay: parse_duration("2 seconds").unwrap(),
                 vesting_period: parse_duration("2 seconds").unwrap(),
             },
-        ]
-        ;
-        self.distribution
-        .initial_balances
-        .swap = parse_tokens( &format!("{} tokens", ((tokens.e8s.unwrap_or_default()) as f32  * 0.5) as u64)).unwrap();
-
+        ];
+        self.distribution.initial_balances.swap = parse_tokens(&format!(
+            "{} tokens",
+            ((tokens.e8s.unwrap_or_default()) as f32 * 0.5) as u64
+        ))
+        .unwrap();
     }
 
     pub fn try_into_config(

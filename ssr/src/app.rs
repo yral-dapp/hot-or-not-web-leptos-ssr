@@ -15,8 +15,10 @@ use crate::{
         settings::Settings,
         terms::TermsOfService,
         token::{
-            create::{CreateToken, CreateTokenCtx, CreateTokenSettings}, create_token_faq::CreateTokenFAQ,
-            info::TokenInfo, transfer::TokenTransfer,
+            create::{CreateToken, CreateTokenCtx, CreateTokenSettings},
+            create_token_faq::CreateTokenFAQ,
+            info::TokenInfo,
+            transfer::TokenTransfer,
         },
         upload::UploadPostPage,
         wallet::{tokens::Tokens, transactions::Transactions, Wallet},

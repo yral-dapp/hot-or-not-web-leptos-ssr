@@ -1,5 +1,9 @@
 use crate::{
-    canister::individual_user_template::Result6, component::{back_btn::BackButton, img_to_png::ImgToPng, title::Title}, page::token::sns_form::SnsFormSettings, state::canisters::auth_canisters_store, utils::web::FileWithUrl
+    canister::individual_user_template::Result6,
+    component::{back_btn::{go_back_or_fallback, BackButton}, img_to_png::ImgToPng, title::Title},
+    page::token::sns_form::SnsFormSettings,
+    state::canisters::auth_canisters_store,
+    utils::web::FileWithUrl,
 };
 use leptos::*;
 use leptos_icons::*;
@@ -12,7 +16,7 @@ use super::{popups::TokenCreationPopup, sns_form::SnsFormState};
 #[component]
 fn TokenImage() -> impl IntoView {
     let ctx = expect_context::<CreateTokenCtx>();
-    let img_file =ctx.file;
+    let img_file = ctx.file;
 
     // let img_file = create_rw_signal(None::<FileWithUrl>);
     let logo_b64 = create_write_slice(ctx.form_state, |f, v| {
@@ -30,21 +34,25 @@ fn TokenImage() -> impl IntoView {
                 let file = input.files()?.get(0)?;
                 img_file.set(Some(FileWithUrl::new(file.clone().into())));
                 ctx.file.set(Some(FileWithUrl::new(file.into())));
-                
             }
             Some(())
         })
     };
-    /*
+    
         let file_input_ref = create_node_ref::<leptos::html::Input>();
 
         let on_edit_click = move |_| {
             // Trigger the file input click
             if let Some(input) = file_input_ref.get() {
+            
+                img_file.set(None);
+                ctx.file.set(None);
+                input.set_value("");
                 input.click();
+                // input.click();
             }
         };
-    */
+   
     let img_url = Signal::derive(move || img_file.with(|f| f.as_ref().map(|f| f.url.to_string())));
 
     let border_class = move || match img_url.with(|u| u.is_none()) {
@@ -65,10 +73,10 @@ fn TokenImage() -> impl IntoView {
                                 class="object-conver h-full w-full rounded-full"
                                 src=move || img_url().unwrap()
                             />
-                             <div class="absolute bottom-0 right-0 bg-gray-600 p-1 rounded-full bg-white ">
-                          //  <button on:click=on_edit_click>
-                                 <img src="/img/edit.svg" class="bg-white" />
-                          //  </button>
+                             <div class="absolute bottom-0 right-0 p-1 rounded-full bg-white ">
+                           <button on:click=on_edit_click class="w-4 h-4 flex items-center justify-center rounded-full bg-white" >
+                                 <img src="/img/edit.svg" class="bg-white w-4 h-4 rounded-full" />
+                           </button>
                              </div>
                         }
                     }
@@ -79,12 +87,12 @@ fn TokenImage() -> impl IntoView {
                     </div>
 
                     <input type="file"
-                    //   ref=file_input_ref
-                        on:change=on_file_input
+                      ref=file_input_ref
+                      on:change=on_file_input
                         id="dropzone-logo"
                         accept="image/*"
                       class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-                    <div class="absolute bottom-0 right-0 bg-gray-600 p-1 rounded-full bg-white ">
+                    <div class="absolute bottom-0 right-0 p-1 rounded-full bg-white ">
                         <img src="/img/upload.svg" class="bg-white" />
                     </div>
                 </Show>
@@ -106,65 +114,67 @@ fn TokenImage() -> impl IntoView {
     }
 }
 
-#[component]
-fn TokenImgInput() -> impl IntoView {
-    let ctx = expect_context::<CreateTokenCtx>();
-    let img_file =ctx.file;
-    let logo_b64 = create_write_slice(ctx.form_state, |f, v| {
-        f.logo_b64 = v;
-    });
 
-    let on_file_input = move |ev: ev::Event| {
-        _ = ev.target().and_then(|_target| {
-            #[cfg(feature = "hydrate")]
-            {
-                use wasm_bindgen::JsCast;
-                use web_sys::HtmlInputElement;
 
-                let input = _target.dyn_ref::<HtmlInputElement>()?;
-                let file = input.files()?.get(0)?;
-                img_file.set(Some(FileWithUrl::new(file.clone().into())));
-                ctx.file.set(Some(FileWithUrl::new(file.into())));
-            }
-            Some(())
-        })
-    };
-    let img_url = Signal::derive(move || img_file.with(|f| f.as_ref().map(|f| f.url.to_string())));
+// #[component]
+// fn TokenImgInput() -> impl IntoView {
+//     let ctx = expect_context::<CreateTokenCtx>();
+//     let img_file = ctx.file;
+//     let logo_b64 = create_write_slice(ctx.form_state, |f, v| {
+//         f.logo_b64 = v;
+//     });
 
-    view! {
-        <div class="ml-2 md:ml-4 h-20 w-20 md:w-36 md:h-36 rounded-full">
-            <label for="dropzone-logo" class="flex flex-col h-full w-full cursor-pointer">
-                <Show
-                    when=move || img_url.with(|u| u.is_none())
-                    fallback=move || {
-                        view! {
-                            <img
-                                class="object-contain h-full w-full rounded-full"
-                                src=move || img_url().unwrap()
-                            />
-                        }
-                    }
-                >
+//     let on_file_input = move |ev: ev::Event| {
+//         _ = ev.target().and_then(|_target| {
+//             #[cfg(feature = "hydrate")]
+//             {
+//                 use wasm_bindgen::JsCast;
+//                 use web_sys::HtmlInputElement;
 
-                    <div class="flex flex-col items-center justify-center h-full w-full bg-white/10 rounded-full border-2 border-dashed border-neutral-600 hover:bg-white/15">
-                        <Icon
-                            icon=icondata::BiImageAddSolid
-                            class="text-center bg-white/30 text-4xl"
-                        />
-                    </div>
-                </Show>
-                <input
-                    on:change=on_file_input
-                    id="dropzone-logo"
-                    type="file"
-                    accept="image/*"
-                    class="sr-only"
-                />
-            </label>
-        </div>
-        <ImgToPng img_file=img_file output_b64=logo_b64/>
-    }
-}
+//                 let input = _target.dyn_ref::<HtmlInputElement>()?;
+//                 let file = input.files()?.get(0)?;
+//                 img_file.set(Some(FileWithUrl::new(file.clone().into())));
+//                 ctx.file.set(Some(FileWithUrl::new(file.into())));
+//             }
+//             Some(())
+//         })
+//     };
+//     let img_url = Signal::derive(move || img_file.with(|f| f.as_ref().map(|f| f.url.to_string())));
+
+//     view! {
+//         <div class="ml-2 md:ml-4 h-20 w-20 md:w-36 md:h-36 rounded-full">
+//             <label for="dropzone-logo" class="flex flex-col h-full w-full cursor-pointer">
+//                 <Show
+//                     when=move || img_url.with(|u| u.is_none())
+//                     fallback=move || {
+//                         view! {
+//                             <img
+//                                 class="object-contain h-full w-full rounded-full"
+//                                 src=move || img_url().unwrap()
+//                             />
+//                         }
+//                     }
+//                 >
+
+//                     <div class="flex flex-col items-center justify-center h-full w-full bg-white/10 rounded-full border-2 border-dashed border-neutral-600 hover:bg-white/15">
+//                         <Icon
+//                             icon=icondata::BiImageAddSolid
+//                             class="text-center bg-white/30 text-4xl"
+//                         />
+//                     </div>
+//                 </Show>
+//                 <input
+//                     on:change=on_file_input
+//                     id="dropzone-logo"
+//                     type="file"
+//                     accept="image/*"
+//                     class="sr-only"
+//                 />
+//             </label>
+//         </div>
+//         <ImgToPng img_file=img_file output_b64=logo_b64/>
+//     }
+// }
 
 macro_rules! input_component {
     ($name:ident, $input_element:ident, $attrs:expr) => {
@@ -228,6 +238,7 @@ macro_rules! input_component {
         }
     }
 }
+ 
 
 fn non_empty_string_validator(s: String) -> Option<String> {
     (!s.is_empty()).then_some(s)
@@ -245,12 +256,11 @@ input_component!(InputBox, input, {});
 input_component!(InputArea, textarea, rows = 4);
 input_component!(InputField, textarea, rows = 1);
 
-
 #[derive(Clone, Copy, Default)]
 pub struct CreateTokenCtx {
     form_state: RwSignal<SnsFormState>,
     invalid_cnt: RwSignal<u32>,
-    file: RwSignal<Option<FileWithUrl>>
+    file: RwSignal<Option<FileWithUrl>>,
 }
 
 #[component]
@@ -263,12 +273,12 @@ pub fn CreateToken() -> impl IntoView {
         let id = cans.profile_details().username_or_principal();
         format!("/your-profile/{id}?tab=tokens")
     });
-    let ctx:  CreateTokenCtx = expect_context() ;
+    let ctx: CreateTokenCtx = expect_context();
     // use_context().unwrap_or_else(|| {
     //     let ctx = CreateTokenCtx::default();
     //     provide_context(ctx);
     //     ctx
-    //  }); 
+    //  });
 
     let set_token_name = move |name: String| {
         ctx.form_state.update(|f| f.name = Some(name));
@@ -426,7 +436,7 @@ pub fn CreateToken() -> impl IntoView {
 
                         <div class="w-full flex justify-center underline text-sm text-white my-4 " >
                         <a href="/token/create/settings"  >  View advanced settings </a>
-                        
+
                         //  <button on:click=move |_|{navigate_token_settings() }  >  View advanced settings </button>
                          </div>
                     </div>
@@ -440,22 +450,26 @@ pub fn CreateToken() -> impl IntoView {
             }
 }
 
+fn navigate_token_settings() {
+    let navigate = use_navigate();
+    navigate("/token/create/settings", Default::default());
+}
 
 fn navigate_token_faq() {
     let navigate = use_navigate();
     navigate("/token/create/faq", Default::default());
 }
 
-fn clear_form(form_ref: &NodeRef<html::Form>) {
-    // Check if the reference is some and has the form element
-    // if let Some(form) = form_ref.get() {
-    //     // Use JavaScript to clear the form
-    //     // Use the web_sys crate for interacting with the DOM
-    //     use web_sys::HtmlFormElement;
-    //     if let Ok(form_element) = form.dyn_into::<web_sys::HtmlFormElement>() {
-    //         form_element.reset(); // Clear the form fields
+fn clear_form(_form_ref: &NodeRef<html::Form>) {
+    // #[cfg(feature = "hydrate")] {
+    // use web_sys::window;
+    //     if let Some(win) = window() {
+    //         _ = win.location().reload_with_forceget(false);
     //     }
     // }
+    go_back_or_fallback("/token/crate");
+    // navigate_token_settings();
+    
 }
 
 #[component]
@@ -468,11 +482,11 @@ pub fn CreateTokenSettings() -> impl IntoView {
         let id = cans.profile_details().username_or_principal();
         format!("/your-profile/{id}?tab=tokens")
     });
-    let ctx:  CreateTokenCtx = use_context().unwrap_or_else(|| {
+    let ctx: CreateTokenCtx = use_context().unwrap_or_else(|| {
         let ctx = CreateTokenCtx::default();
         provide_context(ctx);
         ctx
-     }); 
+    });
 
     let save_action = create_action(move |&()| async move {
         let cans = auth_cans
@@ -544,8 +558,9 @@ pub fn CreateTokenSettings() -> impl IntoView {
     let set_age_bonus = move |value: String| {
         ctx.form_state.update(|f| {
             if let Ok(value) = value.parse::<u64>() {
-                if value <= 100  {   
-                f.sns_form_setting.age_bonus = Some(value) ;}
+                if value <= 100 {
+                    f.sns_form_setting.age_bonus = Some(value);
+                }
             }
         });
     };
@@ -585,19 +600,19 @@ pub fn CreateTokenSettings() -> impl IntoView {
             f.sns_form_setting.restricted_country = Some(value);
         });
     };
-    
+
     let form_ref = create_node_ref::<html::Form>();
 
     let reset_settings = move |_| {
+        ctx.form_state
+        .update(|f| f.sns_form_setting = SnsFormSettings::default());
         clear_form(&form_ref);
-        ctx.form_state.update(|f |  f.sns_form_setting = SnsFormSettings::default() )
     };
-
 
     view! {
          <div class="w-dvw min-h-dvh bg-black pt-4 flex flex-col gap-4 p-4" style="padding-bottom:5rem;" >
                    <Title justify_center=false >
-                    <div class="grid grid-cols-3 justify-between w-full" style="background: black" >
+                    <div class="flex justify-between w-full" style="background: black" >
                         <BackButton fallback=fallback_url/>
                         <span class="font-bold justify-self-center">Settings</span>
                         <button on:click=move |_|{navigate_token_faq() }  > <img src="/img/info.svg"/ > </button>
