@@ -1,4 +1,4 @@
-use candid::{Principal, CandidType, Deserialize, Nat};
+use candid::{CandidType, Deserialize, Nat, Principal};
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Transaction {
