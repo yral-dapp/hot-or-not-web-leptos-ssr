@@ -42,7 +42,7 @@ pub struct PostViewCtx {
     video_queue: RwSignal<Vec<PostDetails>>,
     current_idx: RwSignal<usize>,
     queue_end: RwSignal<bool>,
-    priority_q: RwSignal<DoublePriorityQueue<PostDetails, (usize, Reverse<usize>)>>,
+    priority_q: RwSignal<DoublePriorityQueue<PostDetails, (usize, Reverse<usize>)>>, // we are using DoublePriorityQueue for GC in the future through pop_min
     batch_cnt: RwSignal<usize>,
 }
 
