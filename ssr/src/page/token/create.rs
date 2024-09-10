@@ -1,9 +1,12 @@
-
 use std::{env, str::FromStr};
 
 use crate::{
     canister::individual_user_template::Result7,
-    component::{back_btn::{go_back_or_fallback, BackButton}, img_to_png::ImgToPng, title::Title},
+    component::{
+        back_btn::{go_back_or_fallback, BackButton},
+        img_to_png::ImgToPng,
+        title::Title,
+    },
     page::token::{sns_form::SnsFormSettings, types},
     state::canisters::auth_canisters_store,
     utils::web::FileWithUrl,
@@ -13,17 +16,19 @@ use leptos_router::*;
 
 use sns_validation::pbs::nns_pb::Tokens;
 
-
 use super::{popups::TokenCreationPopup, sns_form::SnsFormState};
 
-use candid::{Decode, Encode, Principal, Nat};
+use candid::{Decode, Encode, Nat, Principal};
 use ic_agent::Identity;
-use ic_base_types::PrincipalId;
 use ic_agent::{identity::BasicIdentity, Agent};
+use ic_base_types::PrincipalId;
 use icp_ledger::Subaccount;
 
+use crate::canister::sns_swap::{
+    NewSaleTicketRequest, NewSaleTicketResponse, RefreshBuyerTokensRequest,
+    RefreshBuyerTokensResponse,
+};
 use crate::consts::{AGENT_URL, ICP_LEDGER_CANISTER_ID};
-use crate::canister::sns_swap::{NewSaleTicketRequest, NewSaleTicketResponse, RefreshBuyerTokensRequest, RefreshBuyerTokensResponse};
 
 #[server]
 async fn participate_in_swap(swap_canister: Principal) -> Result<(), ServerFnError> {
@@ -52,7 +57,8 @@ async fn participate_in_swap(swap_canister: Principal) -> Result<(), ServerFnErr
         .call_and_wait()
         .await
         .unwrap();
-    let new_sale_ticket_response: NewSaleTicketResponse = Decode!(&res, NewSaleTicketResponse).unwrap();
+    let new_sale_ticket_response: NewSaleTicketResponse =
+        Decode!(&res, NewSaleTicketResponse).unwrap();
     println!("new_sale_ticket_response: {:?}", new_sale_ticket_response);
 
     // transfer icp
@@ -69,7 +75,10 @@ async fn participate_in_swap(swap_canister: Principal) -> Result<(), ServerFnErr
         created_at_time: None,
     };
     let res = agent
-        .update(&Principal::from_str(ICP_LEDGER_CANISTER_ID).unwrap(), "icrc1_transfer")
+        .update(
+            &Principal::from_str(ICP_LEDGER_CANISTER_ID).unwrap(),
+            "icrc1_transfer",
+        )
         .with_arg(Encode!(&transfer_args).unwrap())
         .call_and_wait()
         .await
@@ -80,7 +89,7 @@ async fn participate_in_swap(swap_canister: Principal) -> Result<(), ServerFnErr
     // refresh_buyer_tokens
     let refresh_buyer_tokens_request = RefreshBuyerTokensRequest {
         buyer: admin_principal.to_string(),
-        confirmation_text: None
+        confirmation_text: None,
     };
     let res = agent
         .update(&swap_canister, "refresh_buyer_tokens")
@@ -88,8 +97,12 @@ async fn participate_in_swap(swap_canister: Principal) -> Result<(), ServerFnErr
         .call_and_wait()
         .await
         .unwrap();
-    let refresh_buyer_tokens_response: RefreshBuyerTokensResponse = Decode!(&res, RefreshBuyerTokensResponse).unwrap();
-    println!("refresh_buyer_tokens_response: {:?}", refresh_buyer_tokens_response);
+    let refresh_buyer_tokens_response: RefreshBuyerTokensResponse =
+        Decode!(&res, RefreshBuyerTokensResponse).unwrap();
+    println!(
+        "refresh_buyer_tokens_response: {:?}",
+        refresh_buyer_tokens_response
+    );
 
     Ok(())
 }
@@ -119,21 +132,20 @@ fn TokenImage() -> impl IntoView {
             Some(())
         })
     };
-    
-        let file_input_ref = create_node_ref::<leptos::html::Input>();
 
-        let on_edit_click = move |_| {
-            // Trigger the file input click
-            if let Some(input) = file_input_ref.get() {
-            
-                img_file.set(None);
-                ctx.file.set(None);
-                input.set_value("");
-                input.click();
-                // input.click();
-            }
-        };
-   
+    let file_input_ref = create_node_ref::<leptos::html::Input>();
+
+    let on_edit_click = move |_| {
+        // Trigger the file input click
+        if let Some(input) = file_input_ref.get() {
+            img_file.set(None);
+            ctx.file.set(None);
+            input.set_value("");
+            input.click();
+            // input.click();
+        }
+    };
+
     let img_url = Signal::derive(move || img_file.with(|f| f.as_ref().map(|f| f.url.to_string())));
 
     let border_class = move || match img_url.with(|u| u.is_none()) {
@@ -194,8 +206,6 @@ fn TokenImage() -> impl IntoView {
 
     }
 }
-
-
 
 // #[component]
 // fn TokenImgInput() -> impl IntoView {
@@ -319,7 +329,6 @@ macro_rules! input_component {
         }
     }
 }
- 
 
 fn non_empty_string_validator(s: String) -> Option<String> {
     (!s.is_empty()).then_some(s)
@@ -344,15 +353,14 @@ pub struct CreateTokenCtx {
     file: RwSignal<Option<FileWithUrl>>,
 }
 
- fn parse_token_e8s(s: &str) -> Result<Tokens, String> {
-        let e8s: u64 = s
-            .replace('_', "")
-            .parse::<u64>()
-            .map_err(|err| err.to_string())?;
+fn parse_token_e8s(s: &str) -> Result<Tokens, String> {
+    let e8s: u64 = s
+        .replace('_', "")
+        .parse::<u64>()
+        .map_err(|err| err.to_string())?;
 
-        Ok(Tokens { e8s: Some(e8s) })
-    }
-
+    Ok(Tokens { e8s: Some(e8s) })
+}
 
 #[component]
 pub fn CreateToken() -> impl IntoView {
@@ -566,7 +574,6 @@ fn clear_form(_form_ref: &NodeRef<html::Form>) {
     // }
     go_back_or_fallback("/token/crate");
     // navigate_token_settings();
-    
 }
 
 #[component]
@@ -702,7 +709,7 @@ pub fn CreateTokenSettings() -> impl IntoView {
 
     let reset_settings = move |_| {
         ctx.form_state
-        .update(|f| f.sns_form_setting = SnsFormSettings::default());
+            .update(|f| f.sns_form_setting = SnsFormSettings::default());
         clear_form(&form_ref);
     };
 

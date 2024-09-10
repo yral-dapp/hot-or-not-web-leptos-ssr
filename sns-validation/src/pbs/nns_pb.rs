@@ -99,7 +99,6 @@ impl Tokens {
         let e8s = self.e8s?.checked_sub(rhs.e8s?)?;
         Some(Tokens { e8s: Some(e8s) })
     }
-
 }
 
 impl Percentage {
