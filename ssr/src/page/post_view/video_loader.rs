@@ -62,7 +62,6 @@ pub fn BgView(
         } else {
             set_show_onboarding_popup.update(|show| *show = false);
         }
-        Some(())
     });
 
     view! {
