@@ -11,7 +11,7 @@ use sns_validation::{
 
 use crate::state::canisters::Canisters;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 struct NeuronForm {
     stake: nns_pb::Tokens,
     memo: u64,
@@ -42,7 +42,7 @@ impl NeuronForm {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 struct DistributionForm {
     pub total: nns_pb::Tokens,
     neurons: Vec<NeuronForm>,
@@ -71,20 +71,7 @@ impl DistributionForm {
             //     .into_iter()
             //     .map(|n| n.into_neuron(user_principal))
             //     .collect(),
-            neurons: vec![
-                NeuronForm {
-                    stake: parse_tokens("4_499_000 tokens").unwrap(),
-                    memo: 0,
-                    dissolve_delay: parse_duration("0 seconds").unwrap(),
-                    vesting_period: parse_duration("2 seconds").unwrap(),
-                },
-                NeuronForm {
-                    stake: parse_tokens("1_000 tokens").unwrap(),
-                    memo: 1,
-                    dissolve_delay: parse_duration("2 seconds").unwrap(),
-                    vesting_period: parse_duration("2 seconds").unwrap(),
-                },
-            ]
+            neurons: self.neurons
             .into_iter()
             .map(|n| n.into_neuron(user_principal))
             .collect(),
@@ -197,34 +184,32 @@ impl Default for SnsFormState {
 
 impl SnsFormState {
     pub fn try_update_total_distribution_tokens(&mut self, tokens: nns_pb::Tokens) {
-        self.distribution.total = tokens;
+        let tokens = tokens.e8s.unwrap() as u64;
+        let total = tokens;
+        let non_voting_neuron = (total as f64 * 0.49) as u64;
+        let voting_neuron = 2000 as u64;
+        let swap = total - (non_voting_neuron + voting_neuron);
+        let governance = 1000 as u64;
+        let non_voting_neuron = non_voting_neuron - governance;
+
+
+        self.distribution.total = nns_pb::Tokens {e8s: Some(total)};
         self.distribution.neurons = vec![
             NeuronForm {
-                stake: parse_tokens(&format!(
-                    "{} tokens",
-                    ((tokens.e8s.unwrap_or_default()) as f32 * 0.49) as u64
-                ))
-                .unwrap(),
+                stake: nns_pb::Tokens {e8s: Some(non_voting_neuron)},
                 memo: 0,
                 dissolve_delay: parse_duration("0 seconds").unwrap(),
                 vesting_period: parse_duration("2 seconds").unwrap(),
             },
             NeuronForm {
-                stake: parse_tokens(&format!(
-                    "{} tokens",
-                    ((tokens.e8s.unwrap_or_default()) as f32 * 0.01) as u64
-                ))
-                .unwrap(),
+                stake: nns_pb::Tokens {e8s: Some(voting_neuron)},
                 memo: 1,
                 dissolve_delay: parse_duration("2 seconds").unwrap(),
                 vesting_period: parse_duration("2 seconds").unwrap(),
             },
         ];
-        self.distribution.initial_balances.swap = parse_tokens(&format!(
-            "{} tokens",
-            ((tokens.e8s.unwrap_or_default()) as f32 * 0.5) as u64
-        ))
-        .unwrap();
+        self.distribution.initial_balances.swap = nns_pb::Tokens {e8s: Some(swap)};
+        self.distribution.initial_balances.governance = nns_pb::Tokens {e8s: Some(governance)};
     }
 
     pub fn try_into_config(
@@ -233,6 +218,9 @@ impl SnsFormState {
     ) -> Result<SnsConfigurationFile, String> {
         let user_principal = canisters.user_principal();
         let user_canister = canisters.user_canister();
+
+        let prt = self.distribution.clone();
+        log::info!("total distribution: {:?}", prt);
 
         Ok(SnsConfigurationFile {
             name: self.name.clone().ok_or("Name is required")?,

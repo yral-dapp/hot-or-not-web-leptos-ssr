@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use candid::{Decode, Encode, Principal};
+use candid::{Decode, Principal};
 use ic_agent::{identity::DelegatedIdentity, AgentError, Identity};
 use leptos::*;
 use serde::{Deserialize, Serialize};
@@ -121,7 +121,7 @@ impl Canisters<true> {
         init_payload: SnsInitPayload,
     ) -> Result<Result7, AgentError> {
         let agent = self.agent.get_agent().await;
-        let args = Encode!(&init_payload)?;
+        let args = candid::encode_args((init_payload, 20 as u64)).unwrap();
         let bytes = agent
             .update(&self.user_canister, "deploy_cdao_sns")
             .with_arg(args)
@@ -164,6 +164,25 @@ impl<const A: bool> Canisters<A> {
         PlatformOrchestrator(PLATFORM_ORCHESTRATOR_ID, agent)
     }
 
+    // pub async fn get_individual_canister_by_user_principal(
+    //     &self,
+    //     user_principal: Principal,
+    // ) -> Result<Option<Principal>, ServerFnError> {
+    //     let meta = self
+    //         .metadata_client
+    //         .get_user_metadata(user_principal)
+    //         .await?;
+    //     if let Some(meta) = meta {
+    //         return Ok(Some(meta.user_canister_id));
+    //     }
+    //     // Fallback to oldest user index
+    //     let user_idx = self.user_index_with(*FALLBACK_USER_INDEX).await;
+    //     let can = user_idx
+    //         .get_user_canister_id_from_user_principal_id(user_principal)
+    //         .await?;
+    //     Ok(can)
+    // }
+
     pub async fn get_individual_canister_by_user_principal(
         &self,
         user_principal: Principal,
@@ -172,15 +191,7 @@ impl<const A: bool> Canisters<A> {
             .metadata_client
             .get_user_metadata(user_principal)
             .await?;
-        if let Some(meta) = meta {
-            return Ok(Some(meta.user_canister_id));
-        }
-        // Fallback to oldest user index
-        let user_idx = self.user_index_with(*FALLBACK_USER_INDEX).await;
-        let can = user_idx
-            .get_user_canister_id_from_user_principal_id(user_principal)
-            .await?;
-        Ok(can)
+        Ok(meta.map(|m| m.user_canister_id))
     }
 
     pub async fn sns_governance(&self, canister_id: Principal) -> SnsGovernance<'_> {

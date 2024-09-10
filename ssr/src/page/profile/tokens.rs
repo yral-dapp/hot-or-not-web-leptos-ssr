@@ -78,14 +78,14 @@ fn TokenView(user_canister: Principal, token: TokenCans) -> impl IntoView {
                     <span class="text-white truncate">{info.name}</span>
                 </div>
                 <div class="flex flex-col gap-2 justify-self-end text-sm">
-                    <span class="text-white truncate">{format!("{} {}", info.balance, info.symbol)}</span>
+                    <span class="text-white truncate">{format!("{} {}", (info.balance / 10u64.pow(8)).to_string().replace("_", ","), info.symbol)}</span>
                     <div class="flex flex-row gap-1 items-center">
                         <span class="text-white">Details</span>
                         <div class="flex items-center justify-center w-4 h-4 bg-white/15 rounded-full">
                             <Icon class="text-white" icon=icondata::AiRightOutlined/>
                         </div>
                     </div>
-                </div>
+                </div>  
             </a>
         })}
         </Suspense>

@@ -14,14 +14,17 @@ use crate::{
 use leptos::*;
 use leptos_router::*;
 
-use sns_validation::pbs::nns_pb::Tokens;
+use sns_validation::{
+    humanize::parse_tokens,
+    pbs::nns_pb::Tokens
+};
 
 use super::{popups::TokenCreationPopup, sns_form::SnsFormState};
 
 use candid::{Decode, Encode, Nat, Principal};
 use ic_agent::Identity;
-use ic_agent::{identity::BasicIdentity, Agent};
 use ic_base_types::PrincipalId;
+use ic_agent::{identity::{BasicIdentity, Secp256k1Identity}, Agent};
 use icp_ledger::Subaccount;
 
 use crate::canister::sns_swap::{
@@ -37,7 +40,9 @@ async fn participate_in_swap(swap_canister: Principal) -> Result<(), ServerFnErr
     let admin_id_pem_by = admin_id_pem.as_bytes();
     let admin_id =
         BasicIdentity::from_pem(admin_id_pem_by).expect("Invalid `BACKEND_ADMIN_IDENTITY`");
+    // let admin_id = Secp256k1Identity::from_pem_file("/home/debjit/hot-or-not-backend-canister/scripts/canisters/docker/local-admin.pem".to_string()).unwrap();
     let admin_principal = admin_id.sender().unwrap();
+    log::debug!("admin_principal: {:?}", admin_principal.to_string());
 
     let agent = Agent::builder()
         .with_url(AGENT_URL)
@@ -66,7 +71,7 @@ async fn participate_in_swap(swap_canister: Principal) -> Result<(), ServerFnErr
     let transfer_args = types::Transaction {
         memo: Some(vec![0]),
         amount: Nat::from(1000000 as u64),
-        fee: Some(Nat::from(0 as u64)),
+        fee: Some(Nat::from(10000 as u64)),
         from_subaccount: None,
         to: types::Recipient {
             owner: swap_canister,
@@ -396,7 +401,7 @@ pub fn CreateToken() -> impl IntoView {
     */
     let set_total_distribution = move |total: String| {
         ctx.form_state.update(|f| {
-            (*f).try_update_total_distribution_tokens(parse_token_e8s(&total).unwrap())
+            (*f).try_update_total_distribution_tokens(parse_tokens(&format!("{} tokens", total)).unwrap());
         });
     };
 
@@ -525,7 +530,7 @@ pub fn CreateToken() -> impl IntoView {
                             input_type="number".into()
                             updater=set_total_distribution
                             // initial_value="100000000".into()
-                            initial_value=(ctx.form_state.get_untracked()).total_distrubution().e8s.unwrap_or_else(||100000000).to_string()
+                            initial_value=((ctx.form_state.get_untracked()).total_distrubution().e8s.unwrap_or_else(|| 1000000 * 10e8 as u64) / 10e8 as u64).to_string()
                             validator=non_empty_string_validator_for_u64
                         />
 

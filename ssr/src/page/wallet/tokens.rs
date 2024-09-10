@@ -10,10 +10,10 @@ use crate::{
         infinite_scroller::{CursoredDataProvider, InfiniteScroller, KeyedData, PageEntry},
         title::Title,
     },
-    state::canisters::{unauth_canisters, Canisters},
+    state::{auth::account_connected_reader, canisters::{authenticated_canisters, unauth_canisters, Canisters}},
     utils::{
         profile::propic_from_principal,
-        token::{token_metadata_by_root, TokenMetadata},
+        token::{claim_tokens_from_first_neuron, token_metadata_by_root, TokenCans, TokenMetadata},
     },
 };
 use leptos::*;
@@ -81,6 +81,41 @@ fn FallbackToken() -> impl IntoView {
     }
 }
 
+pub fn unlock_tokens(user_canister: Principal, token: TokenCans) {
+    let (is_connected, _) = account_connected_reader();
+    let auth_cans = authenticated_canisters();
+
+    let token_unlocking = auth_cans.derive(
+        || (),
+        move |cans_wire, _| async move {
+            let cans = cans_wire?.canisters()?;
+            // let token = token.clone();
+            let claim_result = claim_tokens_from_first_neuron(
+                &cans,
+                cans.user_principal(),
+                token.governance,
+                user_canister,
+                token.ledger,
+            )
+            .await;
+            if claim_result.is_err() {
+                leptos::logging::log!(
+                    "Failed to claim tokens from first neuron: {:?}",
+                    claim_result.err()
+                );
+            }
+            Ok::<_, ServerFnError>(())
+        },
+    );
+    create_effect(move |_| {
+        leptos::logging::log!("TokenView effect");
+        if is_connected() {
+            leptos::logging::log!("Unlocking tokens for token: {:?}", token.governance.clone());
+            token_unlocking();
+        }
+    });
+}
+
 #[component]
 pub fn TokenView(
     user_canister: Principal,
@@ -102,7 +137,7 @@ pub fn TokenView(
                     <span class="text-white truncate">{info.name.clone()}</span>
                 </div>
                 <div class="flex flex-row gap-2 items-center justify-self-end text-base text-white">
-                    <span class="truncate">{format!("{} {}", info.balance, info.symbol)}</span>
+                    <span class="truncate">{format!("{} {}", (info.balance.clone() / 10u64.pow(8)).to_string().replace("_", ","), info.symbol)}</span>
                     <div class="flex items-center justify-center w-8 h-8 bg-white/15 rounded-full">
                         <Icon icon=icondata::BsSend/>
                     </div>

@@ -98,6 +98,7 @@ fn TokenTransferInner(
         let cans = cans.clone();
         async move {
             let destination = destination_res.get_untracked().unwrap().unwrap();
+            let destination = cans.get_individual_canister_by_user_principal(destination).await.unwrap().unwrap();
             let amt = amt_res.get_untracked().unwrap().unwrap();
 
             let user = cans.authenticated_user().await;
