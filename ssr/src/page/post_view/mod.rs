@@ -166,7 +166,7 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
 
                 let res = try_or_redirect!(chunks);
                 let mut chunks = res.posts_stream;
-                let mut cnt = create_rw_signal(0);
+                let cnt = create_rw_signal(0);
                 while let Some(chunk) = chunks.next().await {
                     update!(move |video_queue, priority_q, cnt| {
                         for uid in chunk {
@@ -209,7 +209,7 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
             update!(move |video_queue, priority_q| {
                 let mut cnt = 0;
                 // leptos::logging::log!("1 priority_q length: {}", priority_q.len());
-                while let Some((next, pp)) = priority_q.pop_max() {
+                while let Some((next, _)) = priority_q.pop_max() {
                     // leptos::logging::log!(
                     //     "post pushing : {:?} {:?} {:?} {:?}",
                     //     next.canister_id.to_text(),
