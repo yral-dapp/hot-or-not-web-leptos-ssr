@@ -95,7 +95,10 @@ yral-testcontainers = { git = "https://github.com/go-bazzinga/yral-testcontainer
 sns-validation.workspace = true
 js-sys = "0.3.69"
 tonic-web-wasm-client = { version = "0.6" }
-tonic = { version = "0.12.0", default-features = false, features = ["prost", "codegen"] }
+tonic = { version = "0.12.0", default-features = false, features = [
+    "prost",
+    "codegen",
+] }
 prost = "0.13.0"
 
 [build-dependencies]
@@ -103,7 +106,9 @@ serde = { version = "1.0", features = ["derive"] }
 candid_parser = "0.1.1"
 serde_json = "1.0.110"
 convert_case = "0.6.0"
-tonic-build = { version = "0.12.0", default-features = false, features = ["prost"] }
+tonic-build = { version = "0.12.0", default-features = false, features = [
+    "prost",
+] }
 anyhow = "1.0.86"
 
 [features]
@@ -143,7 +148,7 @@ ssr = [
     "tonic/tls",
     "tonic/tls-webpki-roots",
     "tonic/transport",
-    "tonic-build/transport"
+    "tonic-build/transport",
 ]
 # Fetch mock referral history instead of history via canister
 mock-referral-history = ["dep:rand_chacha", "k256/arithmetic"]

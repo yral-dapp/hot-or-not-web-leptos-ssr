@@ -1,5 +1,5 @@
 use crate::{
-    canister::individual_user_template::Result18,
+    canister::individual_user_template::Result22,
     component::{
         back_btn::BackButton, canisters_prov::WithAuthCans, spinner::FullScreenSpinner,
         title::Title,
@@ -105,7 +105,7 @@ fn TokenTransferInner(
                 .transfer_token_to_user_canister(root, destination, None, amt)
                 .await
                 .map_err(|e| e.to_string())?;
-            if let Result18::Err(e) = res {
+            if let Result22::Err(e) = res {
                 return Err(format!("{e:?}"));
             }
 

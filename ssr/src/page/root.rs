@@ -35,6 +35,44 @@ async fn get_top_post_id() -> Result<Option<(Principal, u64)>, ServerFnError> {
     Ok(Some((top_item.publisher_canister_id, top_item.post_id)))
 }
 
+#[server]
+async fn get_top_post_id_mlcache() -> Result<Option<(Principal, u64)>, ServerFnError> {
+    use crate::auth::server_impl::extract_principal_from_cookie;
+    use axum_extra::extract::{cookie::Key, SignedCookieJar};
+    use leptos_axum::extract_with_state;
+
+    let key: Key = expect_context();
+    let jar: SignedCookieJar = extract_with_state(&key).await?;
+    let principal = extract_principal_from_cookie(&jar)?;
+    if principal.is_none() {
+        return get_top_post_id().await;
+    }
+
+    let canisters = unauth_canisters();
+    let user_canister_id = canisters
+        .get_individual_canister_by_user_principal(principal.unwrap())
+        .await?;
+    if user_canister_id.is_none() {
+        return get_top_post_id().await;
+    }
+
+    let user_canister = canisters.individual_user(user_canister_id.unwrap()).await;
+
+    let top_items = user_canister
+        .get_ml_feed_cache_paginated(0, 1)
+        .await
+        .unwrap();
+    if top_items.is_empty() {
+        return get_top_post_id().await;
+    }
+
+    let Some(top_item) = top_items.first() else {
+        return Ok(None);
+    };
+
+    Ok(Some((top_item.canister_id, top_item.post_id)))
+}
+
 // TODO: Use this when we shift to the new ml feed for first post
 // #[server]
 // async fn get_top_post_id_mlfeed() -> Result<Option<(Principal, u64)>, ServerFnError> {
@@ -62,7 +100,7 @@ async fn get_top_post_id() -> Result<Option<(Principal, u64)>, ServerFnError> {
 
 #[component]
 pub fn RootPage() -> impl IntoView {
-    let target_post = create_resource(|| (), |_| get_top_post_id());
+    let target_post = create_resource(|| (), |_| get_top_post_id_mlcache());
 
     view! {
         <Suspense fallback=FullScreenSpinner>

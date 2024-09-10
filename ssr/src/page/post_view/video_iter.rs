@@ -30,6 +30,7 @@ type PostsStream<'a> = Pin<Box<dyn Stream<Item = Vec<Result<PostDetails, PostVie
 #[derive(Debug, Eq, PartialEq)]
 pub enum FeedResultType {
     PostCache,
+    MLFeedCache,
     MLFeed,
 }
 
@@ -168,6 +169,39 @@ impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
             });
         }
     }
+}
+
+impl<'a> VideoFetchStream<'a, true> {
+    pub async fn fetch_post_uids_mlfeed_cache_chunked(
+        &self,
+        chunks: usize,
+        allow_nsfw: bool,
+    ) -> Result<FetchVideosRes<'a>, PostViewError> {
+        let cans_true = self.canisters;
+
+        let user_canister = cans_true.authenticated_user().await;
+        let top_posts_fut =
+            user_canister.get_ml_feed_cache_paginated(self.cursor.start, self.cursor.limit);
+
+        let top_posts = top_posts_fut.await?;
+        if top_posts.is_empty() {
+            return self.fetch_post_uids_chunked(chunks, allow_nsfw).await;
+        }
+
+        let end = false;
+        let chunk_stream = top_posts
+            .into_iter()
+            .map(move |item| get_post_uid(self.canisters, item.canister_id, item.post_id))
+            .collect::<FuturesOrdered<_>>()
+            .filter_map(|res| async { res.transpose() })
+            .chunks(chunks);
+
+        Ok(FetchVideosRes {
+            posts_stream: Box::pin(chunk_stream),
+            end,
+            res_type: FeedResultType::MLFeedCache,
+        })
+    }
 
     pub async fn fetch_post_uids_hybrid(
         &mut self,
@@ -175,13 +209,10 @@ impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
         _allow_nsfw: bool,
         video_queue: Vec<PostDetails>,
     ) -> Result<FetchVideosRes<'a>, PostViewError> {
-        // If video_queue len is < 10, fetch from fetch_post_uids_chunked
-        // else fetch from fetch_post_uids_ml_feed_chunked
-        // if that fails fallback to fetch_post_uids_chunked
-
         if video_queue.len() < 10 {
             self.cursor.set_limit(15);
-            self.fetch_post_uids_chunked(chunks, _allow_nsfw).await
+            self.fetch_post_uids_mlfeed_cache_chunked(chunks, _allow_nsfw)
+                .await
         } else {
             let res = self
                 .fetch_post_uids_ml_feed_chunked(chunks, _allow_nsfw, video_queue)
@@ -191,7 +222,8 @@ impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
                 Ok(res) => Ok(res),
                 Err(_) => {
                     self.cursor.set_limit(15);
-                    self.fetch_post_uids_chunked(chunks, _allow_nsfw).await
+                    self.fetch_post_uids_mlfeed_cache_chunked(chunks, _allow_nsfw)
+                        .await
                 }
             }
         }

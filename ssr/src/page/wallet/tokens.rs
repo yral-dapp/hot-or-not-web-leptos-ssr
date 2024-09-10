@@ -2,7 +2,7 @@ use candid::Principal;
 use ic_agent::AgentError;
 
 use crate::{
-    canister::individual_user_template::Result13,
+    canister::individual_user_template::Result14,
     component::{
         back_btn::BackButton,
         bullet_loader::BulletLoader,
@@ -44,8 +44,8 @@ impl CursoredDataProvider for TokenRootList {
             .get_token_roots_of_this_user_with_pagination_cursor(start as u64, end as u64)
             .await?;
         let tokens = match tokens {
-            Result13::Ok(v) => v,
-            Result13::Err(_) => vec![],
+            Result14::Ok(v) => v,
+            Result14::Err(_) => vec![],
         };
         let list_end = tokens.len() < (end - start);
         Ok(PageEntry {

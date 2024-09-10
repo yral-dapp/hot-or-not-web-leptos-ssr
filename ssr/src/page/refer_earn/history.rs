@@ -112,7 +112,7 @@ mod history_provider {
                 from: usize,
                 end: usize,
             ) -> Result<PageEntry<HistoryDetails>, AgentError> {
-                use crate::canister::individual_user_template::{MintEvent, Result14, TokenEvent};
+                use crate::canister::individual_user_template::{MintEvent, Result15, TokenEvent};
                 use crate::utils::route::failure_redirect;
                 let individual = self.0.authenticated_user().await;
                 let history = individual
@@ -122,8 +122,8 @@ mod history_provider {
                     )
                     .await?;
                 let history = match history {
-                    Result14::Ok(history) => history,
-                    Result14::Err(_) => {
+                    Result15::Ok(history) => history,
+                    Result15::Err(_) => {
                         failure_redirect("failed to get posts");
                         return Ok(PageEntry {
                             data: vec![],

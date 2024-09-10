@@ -12,7 +12,7 @@ use crate::{
     auth::DelegatedIdentityWire,
     canister::{
         individual_user_template::{
-            IndividualUserTemplate, Result19, Result6, UserCanisterDetails,
+            IndividualUserTemplate, Result23, Result7, UserCanisterDetails,
         },
         platform_orchestrator::PlatformOrchestrator,
         post_cache::PostCache,
@@ -119,7 +119,7 @@ impl Canisters<true> {
     pub async fn deploy_cdao_sns(
         &self,
         init_payload: SnsInitPayload,
-    ) -> Result<Result6, AgentError> {
+    ) -> Result<Result7, AgentError> {
         let agent = self.agent.get_agent().await;
         let args = Encode!(&init_payload)?;
         let bytes = agent
@@ -127,7 +127,7 @@ impl Canisters<true> {
             .with_arg(args)
             .call_and_wait()
             .await?;
-        Ok(Decode!(&bytes, Result6)?)
+        Ok(Decode!(&bytes, Result7)?)
     }
 
     pub fn profile_details(&self) -> ProfileDetails {
@@ -293,8 +293,8 @@ pub async fn do_canister_auth(
         .await
         .map_err(|e| e.to_string())
     {
-        Ok(Result19::Ok(_)) => (),
-        Err(e) | Ok(Result19::Err(e)) => log::warn!("Failed to update last access time: {}", e),
+        Ok(Result23::Ok(_)) => (),
+        Err(e) | Ok(Result23::Err(e)) => log::warn!("Failed to update last access time: {}", e),
     }
     let profile_details = user.get_profile_details().await?.into();
 

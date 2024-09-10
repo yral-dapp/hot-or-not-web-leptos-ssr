@@ -84,7 +84,10 @@ impl DistributionForm {
                     dissolve_delay: parse_duration("2 seconds").unwrap(),
                     vesting_period: parse_duration("2 seconds").unwrap(),
                 },
-            ].into_iter().map(|n| n.into_neuron(user_principal)).collect(),
+            ]
+            .into_iter()
+            .map(|n| n.into_neuron(user_principal))
+            .collect(),
             initial_balances: self.initial_balances,
         }
     }
@@ -156,7 +159,9 @@ impl Default for SnsFormState {
                 maximum_icp: None,
                 confirmation_text: None,
                 restricted_countries: None,
-                start_time: Some(nns_pb::GlobalTimeOfDay { seconds_after_utc_midnight: Some(1) }),
+                start_time: Some(nns_pb::GlobalTimeOfDay {
+                    seconds_after_utc_midnight: Some(1),
+                }),
                 neurons_fund_investment_icp: None,
             },
             nns_proposal: NnsProposal {

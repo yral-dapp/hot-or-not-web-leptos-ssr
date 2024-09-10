@@ -153,7 +153,7 @@ pub mod provider {
     mod canister {
         use super::{Canisters, CursoredDataProvider, TxnInfo, TxnTag};
         use crate::canister::individual_user_template::{
-            HotOrNotOutcomePayoutEvent, MintEvent, Result14, TokenEvent,
+            HotOrNotOutcomePayoutEvent, MintEvent, Result15, TokenEvent,
         };
         use crate::component::infinite_scroller::PageEntry;
         use ic_agent::AgentError;
@@ -213,8 +213,8 @@ pub mod provider {
                     )
                     .await?;
                 let history = match history {
-                    Result14::Ok(v) => v,
-                    Result14::Err(_) => vec![],
+                    Result15::Ok(v) => v,
+                    Result15::Err(_) => vec![],
                 };
                 let list_end = history.len() < (end - start);
                 Ok(PageEntry {

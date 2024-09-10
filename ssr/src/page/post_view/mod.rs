@@ -7,7 +7,7 @@ pub mod video_loader;
 use crate::{
     component::{scrolling_post_view::ScrollingPostView, spinner::FullScreenSpinner},
     consts::NSFW_TOGGLE_STORE,
-    state::canisters::{unauth_canisters, Canisters},
+    state::canisters::{authenticated_canisters, unauth_canisters, Canisters},
     try_or_redirect,
     utils::{
         posts::{get_post_uid, FetchCursor, PostDetails},
@@ -195,52 +195,52 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
     } = expect_context();
 
     let (nsfw_enabled, _, _) = use_local_storage::<bool, FromToStringCodec>(NSFW_TOGGLE_STORE);
-    let auth_canisters: RwSignal<Option<Canisters<true>>> = expect_context();
 
-    let fetch_video_action = create_action(move |_| async move {
-        loop {
-            let Some(mut cursor) = fetch_cursor.try_get_untracked() else {
-                return;
-            };
-            let Some(auth_canisters) = auth_canisters.try_get_untracked() else {
-                return;
-            };
-            let Some(nsfw_enabled) = nsfw_enabled.try_get_untracked() else {
-                return;
-            };
-            let unauth_canisters = unauth_canisters();
+    let auth_cans = authenticated_canisters();
 
-            let chunks = if let Some(canisters) = auth_canisters.as_ref() {
-                let mut fetch_stream = VideoFetchStream::new(canisters, cursor);
-                fetch_stream
+    let fetch_video_action = create_action(move |_| {
+        let auth_cans = auth_cans.clone();
+        async move {
+            loop {
+                let Some(cursor) = fetch_cursor.try_get_untracked() else {
+                    return;
+                };
+                let Some(nsfw_enabled) = nsfw_enabled.try_get_untracked() else {
+                    return;
+                };
+
+                let canisters = auth_cans.wait_untracked().await;
+                let cans_true = canisters.unwrap().canisters().unwrap();
+
+                let mut fetch_stream = VideoFetchStream::new(&cans_true, cursor);
+                let chunks = fetch_stream
                     .fetch_post_uids_hybrid(3, nsfw_enabled, video_queue.get_untracked())
-                    .await
-            } else {
-                cursor.set_limit(15);
-                let fetch_stream = VideoFetchStream::new(&unauth_canisters, cursor);
-                fetch_stream.fetch_post_uids_chunked(3, nsfw_enabled).await
-            };
+                    .await;
 
-            let res = try_or_redirect!(chunks);
-            let mut chunks = res.posts_stream;
-            let mut cnt = 0;
-            while let Some(chunk) = chunks.next().await {
-                cnt += chunk.len();
-                video_queue.try_update(|q| {
-                    for uid in chunk {
-                        let uid = try_or_redirect!(uid);
-                        q.push(uid);
-                    }
-                });
-            }
-            leptos::logging::log!("feed type: {:?}", res.res_type);
-            if res.res_type == FeedResultType::PostCache {
-                fetch_cursor.try_update(|c| c.advance_and_set_limit(30));
-            }
+                let res = try_or_redirect!(chunks);
+                let mut chunks = res.posts_stream;
+                let mut cnt = 0;
+                while let Some(chunk) = chunks.next().await {
+                    cnt += chunk.len();
+                    video_queue.try_update(|q| {
+                        for uid in chunk {
+                            let uid = try_or_redirect!(uid);
+                            q.push(uid);
+                        }
+                    });
+                }
+                leptos::logging::log!("feed type: {:?}", res.res_type);
+                if res.res_type != FeedResultType::MLFeed {
+                    fetch_cursor.try_update(|c| {
+                        c.set_limit(15);
+                        c.advance_and_set_limit(20)
+                    });
+                }
 
-            if res.end || cnt >= 8 {
-                queue_end.try_set(res.end);
-                break;
+                if res.end || cnt >= 8 {
+                    queue_end.try_set(res.end);
+                    break;
+                }
             }
         }
     });
