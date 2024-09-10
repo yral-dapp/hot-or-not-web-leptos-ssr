@@ -74,18 +74,6 @@ pub struct PostDetails {
     pub created_at: Duration,
 }
 
-// impl Ord for PostDetails {
-//     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-//         self.created_at.cmp(&other.created_at)
-//     }
-// }
-
-// impl PartialOrd for PostDetails {
-//     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-//         Some(self.cmp(other))
-//     }
-// }
-
 impl PostDetails {
     pub fn from_canister_post(
         authenticated: bool,

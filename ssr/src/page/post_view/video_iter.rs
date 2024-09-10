@@ -145,14 +145,6 @@ impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
                 }
             };
 
-            // leptos::logging::log!(
-            //     "ML Feed fetched: {:?}",
-            //     top_posts
-            //         .iter()
-            //         .map(|x| (x.0.to_text(), x.1))
-            //         .collect::<Vec<_>>()
-            // );
-
             let end = false;
             let chunk_stream = top_posts
                 .into_iter()
