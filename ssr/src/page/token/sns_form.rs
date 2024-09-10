@@ -44,7 +44,7 @@ impl NeuronForm {
 
 #[derive(Clone)]
 struct DistributionForm {
-    total: nns_pb::Tokens,
+    pub total: nns_pb::Tokens,
     neurons: Vec<NeuronForm>,
     initial_balances: InitialBalances,
 }
@@ -106,6 +106,27 @@ pub struct SnsFormState {
     distribution: DistributionForm,
     pub swap: Swap,
     pub nns_proposal: NnsProposal,
+    pub sns_form_setting: SnsFormSettings,
+}
+
+#[derive(Clone, Default)]
+pub struct SnsFormSettings {
+    pub sns_proposal_link: Option<String>,
+    pub nns_proposal_link: Option<String>,
+    pub dapp_canister_id: Option<String>,
+    pub rejection_fee: Option<nns_pb::Tokens>,
+    pub initial_voting_period_in_days: Option<u64>,
+    pub max_wait_deadline_extention: Option<u64>,
+    pub min_creation_stake: Option<u64>,
+    pub min_dissolve_delay: Option<u64>,
+    pub age_duration_in_years: Option<u64>,
+    pub age_bonus: Option<u64>,
+    pub min_participants: Option<u64>,
+    pub min_direct_participants_icp: Option<u64>,
+    pub max_direct_participants_icp: Option<u64>,
+    pub min_participants_icp: Option<u64>,
+    pub max_participants_icp: Option<u64>,
+    pub restricted_country: Option<String>,
 }
 
 impl Default for SnsFormState {
@@ -143,6 +164,7 @@ impl Default for SnsFormState {
                 },
             },
             distribution: DistributionForm::default(),
+            sns_form_setting: SnsFormSettings::default(),
             swap: Swap {
                 minimum_participants: 1,
                 minimum_direct_participation_icp: Some(parse_tokens("15 e8s").unwrap()),
@@ -174,6 +196,37 @@ impl Default for SnsFormState {
 }
 
 impl SnsFormState {
+    pub fn try_update_total_distribution_tokens(&mut self, tokens: nns_pb::Tokens) {
+        self.distribution.total = tokens;
+        self.distribution.neurons = vec![
+            NeuronForm {
+                stake: parse_tokens(&format!(
+                    "{} tokens",
+                    ((tokens.e8s.unwrap_or_default()) as f32 * 0.49) as u64
+                ))
+                .unwrap(),
+                memo: 0,
+                dissolve_delay: parse_duration("0 seconds").unwrap(),
+                vesting_period: parse_duration("2 seconds").unwrap(),
+            },
+            NeuronForm {
+                stake: parse_tokens(&format!(
+                    "{} tokens",
+                    ((tokens.e8s.unwrap_or_default()) as f32 * 0.01) as u64
+                ))
+                .unwrap(),
+                memo: 1,
+                dissolve_delay: parse_duration("2 seconds").unwrap(),
+                vesting_period: parse_duration("2 seconds").unwrap(),
+            },
+        ];
+        self.distribution.initial_balances.swap = parse_tokens(&format!(
+            "{} tokens",
+            ((tokens.e8s.unwrap_or_default()) as f32 * 0.5) as u64
+        ))
+        .unwrap();
+    }
+
     pub fn try_into_config(
         self,
         canisters: &Canisters<true>,
@@ -205,5 +258,9 @@ impl SnsFormState {
             swap: self.swap,
             nns_proposal: self.nns_proposal,
         })
+    }
+
+    pub fn total_distrubution(&self) -> nns_pb::Tokens {
+        self.distribution.total
     }
 }

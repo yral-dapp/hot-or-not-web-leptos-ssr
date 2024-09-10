@@ -18,8 +18,7 @@ fn TokenViewFallback() -> impl IntoView {
     }
 }
 
-#[component]
-fn TokenView(user_canister: Principal, token: TokenCans) -> impl IntoView {
+pub fn unlock_tokens(user_canister: Principal, token: TokenCans) {
     let (is_connected, _) = account_connected_reader();
     let auth_cans = authenticated_canisters();
 
@@ -52,6 +51,11 @@ fn TokenView(user_canister: Principal, token: TokenCans) -> impl IntoView {
             token_unlocking();
         }
     });
+}
+
+#[component]
+fn TokenView(user_canister: Principal, token: TokenCans) -> impl IntoView {
+    unlock_tokens(user_canister, token.clone());
 
     let token_info = create_resource(
         || (),
