@@ -34,7 +34,7 @@ use crate::canister::sns_swap::{
 use crate::consts::{AGENT_URL, ICP_LEDGER_CANISTER_ID};
 
 #[server]
-async fn participate_in_swap(swap_canister: Principal) -> Result<(), ServerFnError> {
+async fn participate_in_swap(swap_canister: Principal, tx_fee: u64) -> Result<(), ServerFnError> {
     let admin_id_pem: String =
         env::var("BACKEND_ADMIN_IDENTITY").expect("`BACKEND_ADMIN_IDENTITY` is required!");
     let admin_id_pem_by = admin_id_pem.as_bytes();
@@ -71,7 +71,7 @@ async fn participate_in_swap(swap_canister: Principal) -> Result<(), ServerFnErr
     let transfer_args = types::Transaction {
         memo: Some(vec![0]),
         amount: Nat::from(1000000 as u64),
-        fee: Some(Nat::from(10000 as u64)),
+        fee: Some(Nat::from(tx_fee as u64)),
         from_subaccount: None,
         to: types::Recipient {
             owner: swap_canister,
@@ -413,6 +413,7 @@ pub fn CreateToken() -> impl IntoView {
         let sns_config = sns_form.try_into_config(&cans)?;
 
         let create_sns = sns_config.try_convert_to_executed_sns_init()?;
+        let tx_fee = create_sns.transaction_fee_e8s.unwrap_or(0);
         let res = cans
             .deploy_cdao_sns(create_sns)
             .await
@@ -420,7 +421,7 @@ pub fn CreateToken() -> impl IntoView {
         match res {
             Result7::Ok(c) => {
                 log::debug!("deployed canister {}", c.governance);
-                let participated = participate_in_swap(c.swap).await;
+                let participated = participate_in_swap(c.swap, tx_fee).await;
                 if let Err(e) = participated {
                     return Err(format!("{e:?}"));
                 } else {
