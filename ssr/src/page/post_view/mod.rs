@@ -4,7 +4,8 @@ pub mod overlay;
 pub mod single_post;
 pub mod video_iter;
 pub mod video_loader;
-use std::collections::BinaryHeap;
+use priority_queue::DoublePriorityQueue;
+use std::cmp::Reverse;
 
 use crate::{
     component::{scrolling_post_view::ScrollingPostView, spinner::FullScreenSpinner},
@@ -41,7 +42,8 @@ pub struct PostViewCtx {
     video_queue: RwSignal<Vec<PostDetails>>,
     current_idx: RwSignal<usize>,
     queue_end: RwSignal<bool>,
-    priority_q: RwSignal<BinaryHeap<PostDetails>>,
+    priority_q: RwSignal<DoublePriorityQueue<PostDetails, (usize, Reverse<usize>)>>,
+    batch_cnt: RwSignal<usize>,
 }
 
 #[component]
@@ -132,6 +134,7 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
         video_queue,
         queue_end,
         priority_q,
+        batch_cnt,
         ..
     } = expect_context();
 
@@ -142,12 +145,14 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
     let fetch_video_action = create_action(move |_| {
         let auth_cans = auth_cans.clone();
         async move {
-            // loop {
-            while priority_q.get_untracked().len() < 30 {
+            while priority_q.with_untracked(|q| q.len()) < 15 {
                 let Some(cursor) = fetch_cursor.try_get_untracked() else {
                     return;
                 };
                 let Some(nsfw_enabled) = nsfw_enabled.try_get_untracked() else {
+                    return;
+                };
+                let Some(batch_cnt_val) = batch_cnt.try_get_untracked() else {
                     return;
                 };
 
@@ -161,18 +166,27 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
 
                 let res = try_or_redirect!(chunks);
                 let mut chunks = res.posts_stream;
-                let mut cnt = 0;
+                let mut cnt = create_rw_signal(0);
                 while let Some(chunk) = chunks.next().await {
-                    cnt += chunk.len();
-                    update!(move |video_queue, priority_q| {
+                    update!(move |video_queue, priority_q, cnt| {
                         for uid in chunk {
-                            let uid = try_or_redirect!(uid);
+                            let post_detail = try_or_redirect!(uid);
+
+                            // leptos::logging::log!(
+                            //     "post detail : {:?} {:?} {:?} / {:?}",
+                            //     post_detail.canister_id.to_text(),
+                            //     post_detail.post_id,
+                            //     cnt,
+                            //     batch_cnt_val
+                            // );
 
                             if video_queue.len() < 10 {
-                                video_queue.push(uid);
+                                video_queue.push(post_detail);
                             } else {
-                                priority_q.push(uid);
+                                priority_q.push(post_detail, (batch_cnt_val, Reverse(*cnt)));
                             }
+
+                            *cnt += 1;
                         }
                     });
                 }
@@ -181,22 +195,31 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
                 if res.res_type != FeedResultType::MLFeed {
                     fetch_cursor.try_update(|c| {
                         c.set_limit(15);
-                        c.advance_and_set_limit(30)
+                        c.advance_and_set_limit(15)
                     });
                 }
 
-                if res.end || cnt >= 8 {
+                if res.end {
                     queue_end.try_set(res.end);
                 }
+
+                batch_cnt.update(|x| *x += 1);
             }
 
             update!(move |video_queue, priority_q| {
                 let mut cnt = 0;
                 // leptos::logging::log!("1 priority_q length: {}", priority_q.len());
-                while let Some(next) = priority_q.pop() {
+                while let Some((next, pp)) = priority_q.pop_max() {
+                    // leptos::logging::log!(
+                    //     "post pushing : {:?} {:?} {:?} {:?}",
+                    //     next.canister_id.to_text(),
+                    //     next.post_id,
+                    //     pp.0,
+                    //     pp.1
+                    // );
                     video_queue.push(next);
                     cnt += 1;
-                    if cnt >= 15 {
+                    if cnt >= 10 {
                         break;
                     }
                 }
@@ -208,7 +231,7 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
         <CommonPostViewWithUpdates
             initial_post
             fetch_video_action
-            threshold_trigger_fetch=20
+            threshold_trigger_fetch=15
         />
     }
 }

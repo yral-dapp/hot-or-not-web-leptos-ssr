@@ -54,7 +54,7 @@ impl FetchCursor {
     }
 }
 
-#[derive(Clone, PartialEq, Debug, Hash, Eq, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Ord, PartialOrd, Debug, Hash, Eq, Serialize, Deserialize)]
 pub struct PostDetails {
     pub canister_id: Principal, // canister id of the publishing canister.
     pub post_id: u64,
@@ -74,17 +74,17 @@ pub struct PostDetails {
     pub created_at: Duration,
 }
 
-impl Ord for PostDetails {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.created_at.cmp(&other.created_at)
-    }
-}
+// impl Ord for PostDetails {
+//     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+//         self.created_at.cmp(&other.created_at)
+//     }
+// }
 
-impl PartialOrd for PostDetails {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(other))
-    }
-}
+// impl PartialOrd for PostDetails {
+//     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+//         Some(self.cmp(other))
+//     }
+// }
 
 impl PostDetails {
     pub fn from_canister_post(
