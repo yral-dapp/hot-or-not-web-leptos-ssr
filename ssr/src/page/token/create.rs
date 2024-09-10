@@ -1,14 +1,94 @@
 use leptos::*;
 use leptos_icons::*;
+use std::{env, str::FromStr};
 
 use crate::{
     canister::individual_user_template::Result7,
     component::{back_btn::BackButton, img_to_png::ImgToPng, title::Title},
+    page::token::types,
     state::canisters::auth_canisters_store,
     utils::web::FileWithUrl,
 };
 
 use super::{popups::TokenCreationPopup, sns_form::SnsFormState};
+
+use candid::{Decode, Encode, Principal, Nat};
+use ic_agent::Identity;
+use ic_base_types::PrincipalId;
+use ic_agent::{identity::BasicIdentity, Agent};
+use icp_ledger::Subaccount;
+
+use crate::consts::{AGENT_URL, ICP_LEDGER_CANISTER_ID};
+use crate::canister::sns_swap::{NewSaleTicketRequest, NewSaleTicketResponse, RefreshBuyerTokensRequest, RefreshBuyerTokensResponse};
+
+#[server]
+async fn participate_in_swap(swap_canister: Principal) -> Result<(), ServerFnError> {
+    let admin_id_pem: String =
+        env::var("BACKEND_ADMIN_IDENTITY").expect("`BACKEND_ADMIN_IDENTITY` is required!");
+    let admin_id_pem_by = admin_id_pem.as_bytes();
+    let admin_id =
+        BasicIdentity::from_pem(admin_id_pem_by).expect("Invalid `BACKEND_ADMIN_IDENTITY`");
+    let admin_principal = admin_id.sender().unwrap();
+
+    let agent = Agent::builder()
+        .with_url(AGENT_URL)
+        .with_identity(admin_id)
+        .build()
+        .unwrap();
+    agent.fetch_root_key().await.unwrap();
+
+    // new_sale_ticket
+    let new_sale_ticket_request = NewSaleTicketRequest {
+        amount_icp_e8s: 100_000,
+        subaccount: None,
+    };
+    let res = agent
+        .update(&swap_canister, "new_sale_ticket")
+        .with_arg(Encode!(&new_sale_ticket_request).unwrap())
+        .call_and_wait()
+        .await
+        .unwrap();
+    let new_sale_ticket_response: NewSaleTicketResponse = Decode!(&res, NewSaleTicketResponse).unwrap();
+    println!("new_sale_ticket_response: {:?}", new_sale_ticket_response);
+
+    // transfer icp
+    let subaccount = Subaccount::from(&PrincipalId(admin_principal));
+    let transfer_args = types::Transaction {
+        memo: Some(vec![0]),
+        amount: Nat::from(1000000 as u64),
+        fee: Some(Nat::from(0 as u64)),
+        from_subaccount: None,
+        to: types::Recipient {
+            owner: swap_canister,
+            subaccount: Some(subaccount.to_vec()),
+        },
+        created_at_time: None,
+    };
+    let res = agent
+        .update(&Principal::from_str(ICP_LEDGER_CANISTER_ID).unwrap(), "icrc1_transfer")
+        .with_arg(Encode!(&transfer_args).unwrap())
+        .call_and_wait()
+        .await
+        .unwrap();
+    let transfer_result: types::TransferResult = Decode!(&res, types::TransferResult).unwrap();
+    println!("transfer_result: {:?}", transfer_result);
+
+    // refresh_buyer_tokens
+    let refresh_buyer_tokens_request = RefreshBuyerTokensRequest {
+        buyer: admin_principal.to_string(),
+        confirmation_text: None
+    };
+    let res = agent
+        .update(&swap_canister, "refresh_buyer_tokens")
+        .with_arg(Encode!(&refresh_buyer_tokens_request).unwrap())
+        .call_and_wait()
+        .await
+        .unwrap();
+    let refresh_buyer_tokens_response: RefreshBuyerTokensResponse = Decode!(&res, RefreshBuyerTokensResponse).unwrap();
+    println!("refresh_buyer_tokens_response: {:?}", refresh_buyer_tokens_response);
+
+    Ok(())
+}
 
 #[component]
 fn TokenImgInput() -> impl IntoView {
@@ -173,6 +253,12 @@ pub fn CreateToken() -> impl IntoView {
         match res {
             Result7::Ok(c) => {
                 log::debug!("deployed canister {}", c.governance);
+                let participated = participate_in_swap(c.swap).await;
+                if let Err(e) = participated {
+                    return Err(format!("{e:?}"));
+                } else {
+                    log::debug!("participated in swap");
+                }
             }
             Result7::Err(e) => {
                 return Err(format!("{e:?}"));
