@@ -6,7 +6,6 @@ use crate::{
     utils::web::FileWithUrl,
 };
 use leptos::*;
-use leptos_icons::*;
 use leptos_router::*;
 
 use sns_validation::pbs::nns_pb::Tokens;
@@ -87,11 +86,11 @@ fn TokenImage() -> impl IntoView {
                     </div>
 
                     <input type="file"
-                      ref=file_input_ref
-                      on:change=on_file_input
+                        node_ref=file_input_ref
+                        on:change=on_file_input
                         id="dropzone-logo"
                         accept="image/*"
-                      class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                     <div class="absolute bottom-0 right-0 p-1 rounded-full bg-white ">
                         <img src="/img/upload.svg" class="bg-white" />
                     </div>
@@ -419,8 +418,8 @@ pub fn CreateToken() -> impl IntoView {
                             placeholder="Distribution Tokens"
                             input_type="number".into()
                             updater=set_total_distribution
-                            // initial_value="100000000".into()
-                            initial_value=(ctx.form_state.get_untracked()).total_distrubution().e8s.unwrap_or(10000000).to_string()
+                            initial_value="100000000".into()
+                            // initial_value=(ctx.form_state.get_untracked()).total_distrubution().e8s.unwrap_or(1).to_string()
                             validator=non_empty_string_validator_for_u64
                         />
 
@@ -450,10 +449,10 @@ pub fn CreateToken() -> impl IntoView {
             }
 }
 
-fn navigate_token_settings() {
-    let navigate = use_navigate();
-    navigate("/token/create/settings", Default::default());
-}
+// fn navigate_token_settings() {
+//     let navigate = use_navigate();
+//     navigate("/token/create/settings", Default::default());
+// }
 
 fn navigate_token_faq() {
     let navigate = use_navigate();
@@ -488,23 +487,23 @@ pub fn CreateTokenSettings() -> impl IntoView {
         ctx
     });
 
-    let save_action = create_action(move |&()| async move {
-        let cans = auth_cans
-            .get_untracked()
-            .expect("Create token called without auth canisters");
-        let sns_form = ctx.form_state.get_untracked();
-        let sns_config = sns_form.try_into_config(&cans)?;
+    // let save_action = create_action(move |&()| async move {
+    //     let cans = auth_cans
+    //         .get_untracked()
+    //         .expect("Create token called without auth canisters");
+    //     let sns_form = ctx.form_state.get_untracked();
+    //     let sns_config = sns_form.try_into_config(&cans)?;
 
-        Ok::<_, String>(())
-    });
-    let saving = save_action.pending();
+    //     Ok::<_, String>(())
+    // });
+    // let saving = save_action.pending();
 
-    let save_disabled = create_memo(move |_| {
-        saving()
-            || auth_cans.with(|c| c.is_none())
-            || ctx.form_state.with(|f| f.logo_b64.is_none())
-            || ctx.invalid_cnt.get() != 0
-    });
+    // let save_disabled = create_memo(move |_| {
+    //     saving()
+    //         || auth_cans.with(|c| c.is_none())
+    //         || ctx.form_state.with(|f| f.logo_b64.is_none())
+    //         || ctx.invalid_cnt.get() != 0
+    // });
 
     let set_sns_proposal_link = move |value: String| {
         ctx.form_state
@@ -768,15 +767,15 @@ pub fn CreateTokenSettings() -> impl IntoView {
                         validator=non_empty_string_validator
                  />
                  </form>
-                 <div class="w-full flex justify-center">
-                            <button
-                                // on:click=move |_| create_action.dispatch(())
-                                disabled=save_disabled
-                                class="text-white disabled:text-neutral-500 md:text-xl py-4 md:py-4 font-bold w-full md:w-1/2 lg:w-1/3 rounded-full bg-primary-600 disabled:bg-primary-500/30"
-                            >
-                            Save
-                            </button>
-                 </div>
+                //  <div class="w-full flex justify-center">
+                //             <button
+                //                 // on:click=move |_| create_action.dispatch(())
+                //                 disabled=save_disabled
+                //                 class="text-white disabled:text-neutral-500 md:text-xl py-4 md:py-4 font-bold w-full md:w-1/2 lg:w-1/3 rounded-full bg-primary-600 disabled:bg-primary-500/30"
+                //             >
+                //             Save
+                //             </button>
+                //  </div>
                  <button on:click=reset_settings class="w-full flex justify-center underline text-sm text-white my-4 " >Reset to default</button>
             </div>
 
