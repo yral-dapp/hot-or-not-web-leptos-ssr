@@ -10,6 +10,7 @@ use crate::{
         bullet_loader::BulletLoader, canisters_prov::AuthCansProvider, hn_icons::*,
         spinner::SpinnerFit,
     },
+    page::post_view::BetEligiblePostCtx,
     state::canisters::{unauth_canisters, Canisters},
     try_or_redirect_opt,
     utils::{
@@ -100,7 +101,7 @@ fn CoinStateView(
 
     view! {
         <div class:grayscale=disabled>
-            <Icon class=class icon/>
+            <Icon class=class icon />
         </div>
     }
 }
@@ -127,7 +128,7 @@ fn HNButton(
             on:click=move |_| bet_direction.set(Some(kind))
         >
             <Show when=move || !show_spinner() fallback=SpinnerFit>
-                <Icon class="h-full w-full drop-shadow-lg" icon=icon/>
+                <Icon class="h-full w-full drop-shadow-lg" icon=icon />
             </Show>
         </button>
     }
@@ -139,7 +140,6 @@ fn HNButtonOverlay(
     coin: RwSignal<CoinState>,
     bet_direction: RwSignal<Option<BetKind>>,
     refetch_bet: Trigger,
-    set_eligible_onboarding_post: Option<WriteSignal<bool>>,
 ) -> impl IntoView {
     let place_bet_action = create_action(
         move |(canisters, bet_direction, bet_amount): &(Canisters<true>, BetKind, u64)| {
@@ -167,43 +167,41 @@ fn HNButtonOverlay(
     });
     let running = place_bet_action.pending();
 
-    if let Some(set_onboarding) = set_eligible_onboarding_post {
-        create_effect(move |_| {
-            if !running.get() {
-                set_onboarding.set(true)
-            } else {
-                set_onboarding.set(false)
-            }
-        });
-    };
+    let BetEligiblePostCtx { can_place_bet } = expect_context();
+
+    create_effect(move |_| {
+        if !running.get() {
+            can_place_bet.set(true)
+        } else {
+            can_place_bet.set(false)
+        }
+    });
 
     view! {
         <AuthCansProvider let:canisters>
-        {
-            create_effect(move |_| {
-                let Some(bet_direction) = bet_direction() else {
-                    return;
-                };
-                let bet_amount = coin.get_untracked().into();
-                place_bet_action.dispatch((canisters.clone(), bet_direction, bet_amount));
-            });
-        }
+            {
+                create_effect(move |_| {
+                    let Some(bet_direction) = bet_direction() else {
+                        return;
+                    };
+                    let bet_amount = coin.get_untracked().into();
+                    place_bet_action.dispatch((canisters.clone(), bet_direction, bet_amount));
+                });
+            }
         </AuthCansProvider>
         <div class="flex w-full justify-center touch-manipulation">
-            <button
-                disabled=running
-                on:click=move |_| coin.update(|c| *c =  c.wrapping_next())
-            >
-                <Icon
-                    class="text-2xl justify-self-end text-white"
-                    icon=icondata::AiUpOutlined
-                />
+            <button disabled=running on:click=move |_| coin.update(|c| *c = c.wrapping_next())>
+                <Icon class="text-2xl justify-self-end text-white" icon=icondata::AiUpOutlined />
             </button>
         </div>
         <div class="flex flex-row w-full items-center justify-center gap-6 touch-manipulation">
-            <HNButton disabled=running bet_direction kind=BetKind::Hot  />
+            <HNButton disabled=running bet_direction kind=BetKind::Hot />
             <button disabled=running on:click=move |_| coin.update(|c| *c = c.wrapping_next())>
-                <CoinStateView disabled=running class="w-12 h-12 md:h-14 md:w-14 lg:w-16 lg:h-16 drop-shadow-lg" coin />
+                <CoinStateView
+                    disabled=running
+                    class="w-12 h-12 md:h-14 md:w-14 lg:w-16 lg:h-16 drop-shadow-lg"
+                    coin
+                />
             </button>
             <HNButton disabled=running bet_direction kind=BetKind::Not />
         </div>
@@ -212,34 +210,23 @@ fn HNButtonOverlay(
         <div class="flex w-full justify-center items-center gap-6 text-base md:text-lg lg:text-xl text-center font-medium pt-2 touch-manipulation">
             <p class="w-14 md:w-16 lg:w-18">Hot</p>
             <div class="flex justify-center w-12 md:w-14 lg:w-16">
-                <button
-                    disabled=running
-                    on:click=move |_| coin.update(|c| *c = c.wrapping_prev())
-                >
-                    <Icon
-                        class="text-2xl text-white"
-                        icon=icondata::AiDownOutlined
-                    />
+                <button disabled=running on:click=move |_| coin.update(|c| *c = c.wrapping_prev())>
+                    <Icon class="text-2xl text-white" icon=icondata::AiDownOutlined />
                 </button>
             </div>
             <p class="w-14 md:w-16 lg:w-18">Not</p>
         </div>
-        <ShadowBg/>
+        <ShadowBg />
     }
 }
 
 #[component]
 fn WinBadge() -> impl IntoView {
     view! {
-        // <!-- Win Badge as a full-width button -->
         <button class="w-full rounded-sm bg-primary-600 px-4 py-2 text-sm font-bold text-white">
             <div class="flex justify-center items-center">
                 <span class="">
-                    <Icon
-                        class="fill-white"
-                        style=""
-                        icon=icondata::RiTrophyFinanceFill
-                    />
+                    <Icon class="fill-white" style="" icon=icondata::RiTrophyFinanceFill />
                 </span>
                 <span class="ml-2">"You Won"</span>
             </div>
@@ -276,7 +263,7 @@ fn HNWonLost(participation: BetDetails) -> impl IntoView {
     view! {
         <div class="flex w-full justify-center items-center gap-6 rounded-xl bg-transparent p-4 shadow-sm">
             <div class="relative flex-shrink-0 drop-shadow-lg">
-                <CoinStateView class="w-14 h-14 md:w-16 md:h-16" coin/>
+                <CoinStateView class="w-14 h-14 md:w-16 md:h-16" coin />
                 <Icon class="absolute -bottom-0.5 -right-3 h-7 w-7 md:w-9 md:h-9" icon=hn_icon />
             </div>
 
@@ -284,17 +271,19 @@ fn HNWonLost(participation: BetDetails) -> impl IntoView {
             <div class="gap-2 w-full md:w-1/2 lg:w-1/3 flex flex-col">
                 // <!-- Result Text -->
                 <div class="text-sm leading-snug text-white rounded-full p-1">
-                    <p>You staked {bet_amount} tokens on {if is_hot { "Hot" } else { "Not" }}.</p>
-                    <p>{if let Some(reward) = participation.reward() {
-                        format!("You received {reward} tokens.")
-                    } else {
-                        format!("You lost {bet_amount} tokens.")
-                    }}</p>
+                    <p>You staked {bet_amount}tokens on {if is_hot { "Hot" } else { "Not" }}.</p>
+                    <p>
+                        {if let Some(reward) = participation.reward() {
+                            format!("You received {reward} tokens.")
+                        } else {
+                            format!("You lost {bet_amount} tokens.")
+                        }}
+                    </p>
                 </div>
                 {if won {
-                    view! { <WinBadge/> }
+                    view! { <WinBadge /> }
                 } else {
-                    view! { <LostBadge/> }
+                    view! { <LostBadge /> }
                 }}
             </div>
 
@@ -327,8 +316,11 @@ fn BetTimer(post: PostDetails, participation: BetDetails, refetch_bet: Trigger) 
     };
 
     view! {
-        <div class="flex flex-row justify-end items-center gap-1 w-full rounded-full py-px pe-4 text-white text-base md:text-lg" style=gradient>
-            <Icon icon=icondata::AiClockCircleFilled/>
+        <div
+            class="flex flex-row justify-end items-center gap-1 w-full rounded-full py-px pe-4 text-white text-base md:text-lg"
+            style=gradient
+        >
+            <Icon icon=icondata::AiClockCircleFilled />
             <span>{move || to_hh_mm_ss(time_remaining())}</span>
         </div>
     }
@@ -359,16 +351,18 @@ fn HNAwaitingResults(
         <div class="flex flex-col w-full items-center gap-1 p-4 shadow-sm">
             <div class="flex flex-row w-full justify-center items-end gap-4">
                 <div class="relative flex-shrink-0 drop-shadow-lg">
-                    <Icon class="w-12 h-12 md:w-14 md:h-14 lg:w-16 lg:h-16" icon=hn_icon/>
-                    <CoinStateView class="absolute bottom-0 -right-3 h-7 w-7 md:w-9 md:h-9 lg:w-11 lg:h-11" coin/>
+                    <Icon class="w-12 h-12 md:w-14 md:h-14 lg:w-16 lg:h-16" icon=hn_icon />
+                    <CoinStateView
+                        class="absolute bottom-0 -right-3 h-7 w-7 md:w-9 md:h-9 lg:w-11 lg:h-11"
+                        coin
+                    />
                 </div>
                 <div class="w-1/2 md:w-1/3 lg:w-1/4">
-                    <BetTimer post refetch_bet participation/>
+                    <BetTimer post refetch_bet participation />
                 </div>
             </div>
             <p class="text-center text-white bg-black/15 rounded-full p-1 ps-2">
-                You staked {bet_amount} tokens on {bet_direction_text}
-                Result is still pending
+                You staked {bet_amount}tokens on {bet_direction_text}Result is still pending
             </p>
         </div>
     }
@@ -392,8 +386,9 @@ pub fn HNUserParticipation(
             BetOutcome::Lost => {
                 view! { <HNWonLost participation /> }
             }
-        }.into_view()}
-        <ShadowBg/>
+        }
+            .into_view()}
+        <ShadowBg />
     }
 }
 
@@ -403,7 +398,6 @@ fn MaybeHNButtons(
     bet_direction: RwSignal<Option<BetKind>>,
     coin: RwSignal<CoinState>,
     refetch_bet: Trigger,
-    set_eligible_onboarding_post: Option<WriteSignal<bool>>,
 ) -> impl IntoView {
     let post = store_value(post);
     let is_betting_enabled: Resource<(), Option<bool>> = create_resource(
@@ -421,18 +415,29 @@ fn MaybeHNButtons(
             }
         },
     );
+    let BetEligiblePostCtx { can_place_bet } = expect_context();
 
     view! {
         <Suspense fallback=LoaderWithShadowBg>
-        {move || is_betting_enabled().and_then(|enabled| {
-            if !enabled.unwrap_or_default() {
-                if let Some(set_onboarding) = set_eligible_onboarding_post {set_onboarding.set(false)};
-                return None;
-            }
-            Some(view! {
-                <HNButtonOverlay post=post.get_value() bet_direction coin refetch_bet set_eligible_onboarding_post />
-            })
-        })}
+            {move || {
+                is_betting_enabled()
+                    .and_then(|enabled| {
+                        if !enabled.unwrap_or_default() {
+                            can_place_bet.set(false);
+                            return None;
+                        }
+                        Some(
+                            view! {
+                                <HNButtonOverlay
+                                    post=post.get_value()
+                                    bet_direction
+                                    coin
+                                    refetch_bet
+                                />
+                            },
+                        )
+                    })
+            }}
         </Suspense>
     }
 }
@@ -440,8 +445,8 @@ fn MaybeHNButtons(
 #[component]
 fn LoaderWithShadowBg() -> impl IntoView {
     view! {
-        <BulletLoader/>
-        <ShadowBg/>
+        <BulletLoader />
+        <ShadowBg />
     }
 }
 
@@ -456,10 +461,7 @@ fn ShadowBg() -> impl IntoView {
 }
 
 #[component]
-pub fn HNGameOverlay(
-    post: PostDetails,
-    set_eligible_onboarding_post: Option<WriteSignal<bool>>,
-) -> impl IntoView {
+pub fn HNGameOverlay(post: PostDetails) -> impl IntoView {
     let bet_direction = create_rw_signal(None::<BetKind>);
     let coin = create_rw_signal(CoinState::C50);
 
@@ -494,29 +496,30 @@ pub fn HNGameOverlay(
 
     view! {
         <AuthCansProvider fallback=LoaderWithShadowBg let:canisters>
-        {
-            let bet_participation_outcome = create_bet_participation_outcome(canisters);
-            view! {
-                {move || bet_participation_outcome().and_then(|res| {
-                    let participation = try_or_redirect_opt!(res);
-                    let post = post.get_value();
-                    Some(if let Some(participation) = participation {
-                        view! {
-                            <HNUserParticipation post refetch_bet participation/>
-                        }
-                    } else {
-                        view! {
-                            <MaybeHNButtons
-                                post
-                                bet_direction coin
-                                refetch_bet
-                                set_eligible_onboarding_post
-                            />
-                        }
-                    })
-                }).unwrap_or_else(|| view! { <LoaderWithShadowBg/> })}
+            {
+                let bet_participation_outcome = create_bet_participation_outcome(canisters);
+                view! {
+                    {move || {
+                        bet_participation_outcome()
+                            .and_then(|res| {
+                                let participation = try_or_redirect_opt!(res);
+                                let post = post.get_value();
+                                Some(
+                                    if let Some(participation) = participation {
+                                        view! {
+                                            <HNUserParticipation post refetch_bet participation />
+                                        }
+                                    } else {
+                                        view! {
+                                            <MaybeHNButtons post bet_direction coin refetch_bet />
+                                        }
+                                    },
+                                )
+                            })
+                            .unwrap_or_else(|| view! { <LoaderWithShadowBg /> })
+                    }}
+                }
             }
-        }
         </AuthCansProvider>
     }
 }

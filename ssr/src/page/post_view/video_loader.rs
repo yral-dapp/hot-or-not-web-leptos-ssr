@@ -6,6 +6,7 @@ use leptos_use::storage::use_local_storage;
 use leptos_use::use_event_listener;
 
 use crate::consts::USER_ONBOARDING_STORE;
+use crate::page::post_view::BetEligiblePostCtx;
 use crate::utils::event_streaming::events::VideoWatched;
 use crate::{
     canister::{
@@ -39,9 +40,10 @@ pub fn BgView(
     let (show_refer_login_popup, set_show_refer_login_popup) = create_signal(true);
     let (referrer_store, _, _) = use_referrer_store();
 
-    let (is_eligible_onboarding_post, set_eligible_onboarding_post) = create_signal(true);
+    let onboarding_eligible_post_context = BetEligiblePostCtx::default();
+    provide_context(onboarding_eligible_post_context.clone());
+
     let (show_onboarding_popup, set_show_onboarding_popup) = create_signal(false);
-    let option_set_onboarding = Some(set_eligible_onboarding_post);
     let (is_onboarded, set_onboarded, _) =
         use_local_storage::<bool, FromToStringCodec>(USER_ONBOARDING_STORE);
 
@@ -55,7 +57,7 @@ pub fn BgView(
     });
 
     create_effect(move |_| {
-        if is_eligible_onboarding_post.get() && (!is_onboarded.get()) {
+        if onboarding_eligible_post_context.can_place_bet.get() && (!is_onboarded.get()) {
             set_show_onboarding_popup.update(|show| *show = true);
         } else {
             set_show_onboarding_popup.update(|show| *show = false);
@@ -99,7 +101,7 @@ pub fn BgView(
             }>
                 <OnboardingPopUp onboard_on_click=set_onboarded />
             </Show>
-            {move || post().map(|post| view! { <VideoDetailsOverlay post set_eligible_onboarding_post=option_set_onboarding /> })}
+            {move || post().map(|post| view! { <VideoDetailsOverlay post /> })}
             {children()}
         </div>
     }

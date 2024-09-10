@@ -112,10 +112,7 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
 }
 
 #[component]
-pub fn VideoDetailsOverlay(
-    post: PostDetails,
-    set_eligible_onboarding_post: Option<WriteSignal<bool>>,
-) -> impl IntoView {
+pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
     let show_share = create_rw_signal(false);
     let show_report = create_rw_signal(false);
     let (report_option, set_report_option) =
@@ -227,7 +224,7 @@ pub fn VideoDetailsOverlay(
                     </button>
                 </div>
                 <div class="w-full bg-transparent pointer-events-auto">
-                    <HNGameOverlay post=post_c set_eligible_onboarding_post />
+                    <HNGameOverlay post=post_c />
                 </div>
             </div>
         </div>
