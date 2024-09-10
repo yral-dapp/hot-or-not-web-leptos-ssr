@@ -11,12 +11,11 @@ use crate::{
             VideoUploadSuccessful, VideoUploadUnsuccessful, VideoUploadVideoSelected,
         },
         route::go_to_root,
-        web::FileWithUrl,
         MockPartialEq,
     },
 };
 use futures::StreamExt;
-use gloo::timers::future::IntervalStream;
+use gloo::{file::ObjectUrl, timers::future::IntervalStream};
 use ic_agent::Identity;
 use leptos::{
     ev::durationchange,
@@ -38,6 +37,20 @@ pub fn DropBox() -> impl IntoView {
             </p>
             <p class="text-xs text-gray-400">Video File (Max 60s)</p>
         </div>
+    }
+}
+
+#[derive(Clone)]
+pub struct FileWithUrl {
+    file: gloo::file::File,
+    url: ObjectUrl,
+}
+
+impl FileWithUrl {
+    #[cfg(feature = "hydrate")]
+    fn new(file: gloo::file::File) -> Self {
+        let url = ObjectUrl::from(file.clone());
+        Self { file, url }
     }
 }
 

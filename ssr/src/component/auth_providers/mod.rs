@@ -202,7 +202,7 @@ mod server_fn_impl {
             referee_canister: Principal,
         ) -> Result<(), ServerFnError> {
             let canisters = unauth_canisters();
-            let user = canisters.individual_user(referee_canister).await;
+            let user = canisters.individual_user(referee_canister).await?;
             let referrer_details = user
                 .get_profile_details()
                 .await?
@@ -211,7 +211,7 @@ mod server_fn_impl {
 
             let referrer = canisters
                 .individual_user(referrer_details.user_canister_id)
-                .await;
+                .await?;
 
             let user_details = user.get_profile_details().await?;
 
@@ -251,7 +251,7 @@ mod server_fn_impl {
             use crate::{canister::user_index::Result_, state::admin_canisters::admin_canisters};
 
             let admin_cans = admin_canisters();
-            let user_idx = admin_cans.user_index_with(user_index).await;
+            let user_idx = admin_cans.user_index_with(user_index).await?;
             let res = user_idx
                 .issue_rewards_for_referral(
                     user_canister_id,
@@ -271,15 +271,15 @@ mod server_fn_impl {
             user_canister: Principal,
         ) -> Result<bool, ServerFnError> {
             use crate::{
-                canister::individual_user_template::{Result10, Result16, SessionType},
+                canister::individual_user_template::{Result12, Result23, SessionType},
                 state::admin_canisters::admin_canisters,
             };
 
             let admin_cans = admin_canisters();
-            let user = admin_cans.individual_user_for(user_canister).await;
+            let user = admin_cans.individual_user_for(user_canister).await?;
             if matches!(
                 user.get_session_type().await?,
-                Result10::Ok(SessionType::RegisteredSession)
+                Result12::Ok(SessionType::RegisteredSession)
             ) {
                 return Ok(false);
             }
@@ -287,8 +287,8 @@ mod server_fn_impl {
                 .await
                 .map_err(ServerFnError::from)
                 .and_then(|res| match res {
-                    Result16::Ok(_) => Ok(()),
-                    Result16::Err(e) => Err(ServerFnError::new(format!(
+                    Result23::Ok(_) => Ok(()),
+                    Result23::Err(e) => Err(ServerFnError::new(format!(
                         "failed to mark user as registered {e}"
                     ))),
                 })?;

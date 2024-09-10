@@ -1,5 +1,4 @@
 use crate::component::back_btn::BackButton;
-use crate::component::canisters_prov::with_cans;
 use crate::component::canisters_prov::{AuthCansProvider, WithAuthCans};
 use crate::component::content_upload::YoutubeUpload;
 use crate::component::modal::Modal;
@@ -191,7 +190,7 @@ pub fn Menu() -> impl IntoView {
         Some(())
     });
 
-    let authorized_fetch = with_cans(move |cans: Canisters<true>| async move {
+    let authorized_fetch = move |cans: Canisters<true>| async move {
         let user_principal = cans.user_principal();
         match is_authorized_to_seed_content.0.get_untracked() {
             Some((auth, principal)) if principal == user_principal => return auth,
@@ -204,7 +203,7 @@ pub fn Menu() -> impl IntoView {
             .check_if_authorized(user_principal)
             .await
             .unwrap_or_default()
-    });
+    };
 
     view! {
         <WithAuthCans with=authorized_fetch let:authorized>

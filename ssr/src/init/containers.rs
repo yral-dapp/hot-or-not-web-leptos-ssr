@@ -61,7 +61,7 @@ impl TestContainers {
         let id = Secp256k1Identity::from_private_key(sk);
         let cans = AdminCanisters::new(id.clone());
 
-        let user_index = cans.user_index_with(USER_INDEX_ID).await;
+        let user_index = cans.user_index_with(USER_INDEX_ID).await.unwrap();
         let admin_principal = id.sender().unwrap();
         let admin_canister = loop {
             let res = user_index

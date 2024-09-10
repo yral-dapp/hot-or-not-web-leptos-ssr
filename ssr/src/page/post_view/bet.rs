@@ -5,7 +5,7 @@ use leptos_use::use_interval_fn;
 use web_time::Duration;
 
 use crate::{
-    canister::individual_user_template::{BettingStatus, PlaceBetArg, Result2},
+    canister::individual_user_template::{BettingStatus, PlaceBetArg, Result3},
     component::{
         bullet_loader::BulletLoader, canisters_prov::AuthCansProvider, hn_icons::*,
         spinner::SpinnerFit,
@@ -62,7 +62,7 @@ async fn bet_on_post(
     post_id: u64,
     post_canister_id: Principal,
 ) -> Result<BettingStatus, ServerFnError> {
-    let user = canisters.authenticated_user().await;
+    let user = canisters.authenticated_user().await?;
 
     let place_bet_arg = PlaceBetArg {
         bet_amount,
@@ -74,8 +74,8 @@ async fn bet_on_post(
     let res = user.bet_on_currently_viewing_post(place_bet_arg).await?;
 
     let betting_status = match res {
-        Result2::Ok(p) => p,
-        Result2::Err(_e) => {
+        Result3::Ok(p) => p,
+        Result3::Err(_e) => {
             // todo send event that betting failed
             return Err(ServerFnError::new(
                 "bet on bet_on_currently_viewing_post error".to_string(),
@@ -400,7 +400,7 @@ fn MaybeHNButtons(
             let post = post.get_value();
             async move {
                 let canisters = unauth_canisters();
-                let user = canisters.individual_user(post.canister_id).await;
+                let user = canisters.individual_user(post.canister_id).await.ok()?;
                 let res = user
                     .get_hot_or_not_bet_details_for_this_post(post.post_id)
                     .await
@@ -463,7 +463,7 @@ pub fn HNGameOverlay(post: PostDetails) -> impl IntoView {
                 let cans = canisters.clone();
                 async move {
                     let post = post.get_value();
-                    let user = cans.authenticated_user().await;
+                    let user = cans.authenticated_user().await?;
                     let bet_participation = user
                         .get_individual_hot_or_not_bet_placed_by_this_profile(
                             post.canister_id,

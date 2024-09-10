@@ -51,7 +51,6 @@ fn ListSwitcher(user_canister: Principal) -> impl IntoView {
         with!(|cur_tab| match cur_tab.as_deref() {
             Some("posts") => 0,
             Some("speculations") => 1,
-            Some("tokens") => 2,
             _ => 0,
         })
     });
@@ -64,7 +63,7 @@ fn ListSwitcher(user_canister: Principal) -> impl IntoView {
     };
 
     view! {
-        <div class="relative flex flex-row w-11/12 md:w-9/12 text-center text-xl md:text-2xl">
+        <div class="relative flex flex-row w-7/12 text-center text-md md:text-lg lg:text-xl xl:text-2xl">
             <button class=move || tab_class(0) on:click=move |_| set_cur_tab(Some("posts".into()))>
                 <Icon icon=icondata::FiGrid/>
             </button>
@@ -74,19 +73,13 @@ fn ListSwitcher(user_canister: Principal) -> impl IntoView {
             >
                 <Icon icon=icondata::BsTrophy/>
             </button>
-            <button class=move || tab_class(2) on:click=move |_| set_cur_tab(Some("tokens".into()))>
-                <Icon icon=icondata::AiDollarCircleOutlined/>
-            </button>
         </div>
         <div class="flex flex-col gap-y-12 justify-center pb-12 w-11/12 sm:w-7/12">
-            <Show when=move || current_tab() == 0>
+            <Show
+                when=move || current_tab() == 0
+                fallback=move || view! { <ProfileSpeculations user_canister /> }
+            >
                 <ProfilePosts user_canister/>
-            </Show>
-            <Show when=move || current_tab() == 1>
-                <ProfileSpeculations user_canister />
-            </Show>
-            <Show when=move || current_tab() == 2>
-                <ProfileTokens user_canister />
             </Show>
         </div>
     }
@@ -164,7 +157,7 @@ pub fn ProfileView() -> impl IntoView {
             .get_individual_canister_by_user_principal(principal?)
             .await
             .ok()??;
-        let user = canisters.individual_user(user_canister).await;
+        let user = canisters.individual_user(user_canister).await.ok()?;
         let user_details = user.get_profile_details().await.ok()?;
         Some((user_details.into(), user_canister))
     });

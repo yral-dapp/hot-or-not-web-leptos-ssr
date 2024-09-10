@@ -9,7 +9,7 @@ use crate::{canister::post_cache, state::canisters::unauth_canisters};
 #[server]
 async fn get_top_post_id() -> Result<Option<(Principal, u64)>, ServerFnError> {
     let canisters = unauth_canisters();
-    let post_cache = canisters.post_cache().await;
+    let post_cache = canisters.post_cache().await?;
 
     let top_items = match post_cache
         .get_top_posts_aggregated_from_canisters_on_this_network_for_home_feed_cursor(

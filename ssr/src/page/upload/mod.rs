@@ -5,10 +5,7 @@ mod video_upload;
 use crate::{
     component::toggle::ToggleWithLabel,
     state::canisters::auth_canisters_store,
-    utils::{
-        event_streaming::events::{VideoUploadInitiated, VideoUploadUploadButtonClicked},
-        web::FileWithUrl,
-    },
+    utils::event_streaming::events::{VideoUploadInitiated, VideoUploadUploadButtonClicked},
 };
 
 use leptos::{
@@ -17,7 +14,7 @@ use leptos::{
 };
 
 use validators::{description_validator, hashtags_validator};
-use video_upload::{PreVideoUpload, VideoUploader};
+use video_upload::{FileWithUrl, PreVideoUpload, VideoUploader};
 
 #[derive(Clone)]
 struct UploadParams {

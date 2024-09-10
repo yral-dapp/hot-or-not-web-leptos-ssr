@@ -29,7 +29,7 @@ where
 }
 
 #[component]
-fn DataLoader<N, EF, D, St, DF>(
+fn DataLoader<N, EF, D, DFut, DF>(
     cans: Canisters<true>,
     fallback: ViewFn,
     with: DF,
@@ -38,12 +38,19 @@ fn DataLoader<N, EF, D, St, DF>(
 where
     N: IntoView + 'static,
     EF: Fn((Canisters<true>, D)) -> N + 'static + Clone,
+    DFut: Future<Output = D>,
     D: Serializable + Clone + 'static,
-    St: 'static + Clone,
-    DF: FnOnce(Canisters<true>) -> Resource<St, D> + 'static + Clone,
+    DF: Fn(Canisters<true>) -> DFut + 'static + Clone,
 {
     let can_c = cans.clone();
-    let with_res = (with)(can_c);
+    let with_res = create_resource(
+        || (),
+        move |_| {
+            let cans = can_c.clone();
+            let with = with.clone();
+            async move { (with)(cans).await }
+        },
+    );
 
     let cans = store_value(cans.clone());
     let children = store_value(children);
@@ -59,14 +66,8 @@ where
     }
 }
 
-pub fn with_cans<D: Serializable + Clone + 'static, DFut: Future<Output = D> + 'static>(
-    with: impl Fn(Canisters<true>) -> DFut + 'static + Clone,
-) -> impl FnOnce(Canisters<true>) -> Resource<(), D> + Clone {
-    move |cans: Canisters<true>| create_resource(|| (), move |_| (with.clone())(cans.clone()))
-}
-
 #[component]
-pub fn WithAuthCans<N, EF, D, St, DF>(
+pub fn WithAuthCans<N, EF, D, DFut, DF>(
     #[prop(into, optional)] fallback: ViewFn,
     with: DF,
     children: EF,
@@ -74,9 +75,9 @@ pub fn WithAuthCans<N, EF, D, St, DF>(
 where
     N: IntoView + 'static,
     EF: Fn((Canisters<true>, D)) -> N + 'static + Clone,
-    St: 'static + Clone,
+    DFut: Future<Output = D>,
     D: Serializable + Clone + 'static,
-    DF: FnOnce(Canisters<true>) -> Resource<St, D> + 'static + Clone,
+    DF: Fn(Canisters<true>) -> DFut + 'static + Clone,
 {
     view! {
         <AuthCansProvider fallback=fallback.clone() let:cans>
