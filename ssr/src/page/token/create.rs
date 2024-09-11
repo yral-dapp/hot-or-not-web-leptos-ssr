@@ -40,7 +40,10 @@ async fn participate_in_swap(swap_canister: Principal, tx_fee: u64) -> Result<()
     let admin_id_pem_by = admin_id_pem.as_bytes();
     let admin_id =
         BasicIdentity::from_pem(admin_id_pem_by).expect("Invalid `BACKEND_ADMIN_IDENTITY`");
-    // let admin_id = Secp256k1Identity::from_pem_file("/home/debjit/hot-or-not-backend-canister/scripts/canisters/docker/local-admin.pem".to_string()).unwrap();
+    // let admin_id = Secp256k1Identity::from_pem_file(
+    //     "/home/debjit/hot-or-not-backend-canister/scripts/canisters/docker/local-admin.pem"
+    //         .to_string(),
+    // ).expect("Invalid `BACKEND_ADMIN_IDENTITY`");
     let admin_principal = admin_id.sender().unwrap();
     log::debug!("admin_principal: {:?}", admin_principal.to_string());
 

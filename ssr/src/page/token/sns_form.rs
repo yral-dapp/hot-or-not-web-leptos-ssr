@@ -53,7 +53,20 @@ impl Default for DistributionForm {
     fn default() -> Self {
         Self {
             total: parse_tokens("10_000_000 tokens").unwrap(),
-            neurons: vec![NeuronForm::default()],
+            neurons: vec![
+                NeuronForm {
+                    stake: parse_tokens("4_499_000 tokens").unwrap(),
+                    memo: 0,
+                    dissolve_delay: parse_duration("0 seconds").unwrap(),
+                    vesting_period: parse_duration("2 seconds").unwrap(),
+                },
+                NeuronForm {
+                    stake: parse_tokens("1_000 tokens").unwrap(),
+                    memo: 1,
+                    dissolve_delay: parse_duration("2 seconds").unwrap(),
+                    vesting_period: parse_duration("2 seconds").unwrap(),
+                },
+            ],
             initial_balances: InitialBalances {
                 governance: parse_tokens("500_000 tokens").unwrap(),
                 swap: parse_tokens("5_000_000 tokens").unwrap(),
