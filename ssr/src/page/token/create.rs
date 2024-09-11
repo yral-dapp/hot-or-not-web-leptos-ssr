@@ -14,17 +14,17 @@ use crate::{
 use leptos::*;
 use leptos_router::*;
 
-use sns_validation::{
-    humanize::parse_tokens,
-    pbs::nns_pb::Tokens
-};
+use sns_validation::{humanize::parse_tokens, pbs::nns_pb::Tokens};
 
 use super::{popups::TokenCreationPopup, sns_form::SnsFormState};
 
 use candid::{Decode, Encode, Nat, Principal};
 use ic_agent::Identity;
+use ic_agent::{
+    identity::{BasicIdentity, Secp256k1Identity},
+    Agent,
+};
 use ic_base_types::PrincipalId;
-use ic_agent::{identity::{BasicIdentity, Secp256k1Identity}, Agent};
 use icp_ledger::Subaccount;
 
 use crate::canister::sns_swap::{
@@ -401,7 +401,9 @@ pub fn CreateToken() -> impl IntoView {
     */
     let set_total_distribution = move |total: String| {
         ctx.form_state.update(|f| {
-            (*f).try_update_total_distribution_tokens(parse_tokens(&format!("{} tokens", total)).unwrap());
+            (*f).try_update_total_distribution_tokens(
+                parse_tokens(&format!("{} tokens", total)).unwrap(),
+            );
         });
     };
 

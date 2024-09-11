@@ -71,10 +71,11 @@ impl DistributionForm {
             //     .into_iter()
             //     .map(|n| n.into_neuron(user_principal))
             //     .collect(),
-            neurons: self.neurons
-            .into_iter()
-            .map(|n| n.into_neuron(user_principal))
-            .collect(),
+            neurons: self
+                .neurons
+                .into_iter()
+                .map(|n| n.into_neuron(user_principal))
+                .collect(),
             initial_balances: self.initial_balances,
         }
     }
@@ -192,24 +193,29 @@ impl SnsFormState {
         let governance = 1000 as u64;
         let non_voting_neuron = non_voting_neuron - governance;
 
-
-        self.distribution.total = nns_pb::Tokens {e8s: Some(total)};
+        self.distribution.total = nns_pb::Tokens { e8s: Some(total) };
         self.distribution.neurons = vec![
             NeuronForm {
-                stake: nns_pb::Tokens {e8s: Some(non_voting_neuron)},
+                stake: nns_pb::Tokens {
+                    e8s: Some(non_voting_neuron),
+                },
                 memo: 0,
                 dissolve_delay: parse_duration("0 seconds").unwrap(),
                 vesting_period: parse_duration("2 seconds").unwrap(),
             },
             NeuronForm {
-                stake: nns_pb::Tokens {e8s: Some(voting_neuron)},
+                stake: nns_pb::Tokens {
+                    e8s: Some(voting_neuron),
+                },
                 memo: 1,
                 dissolve_delay: parse_duration("2 seconds").unwrap(),
                 vesting_period: parse_duration("2 seconds").unwrap(),
             },
         ];
-        self.distribution.initial_balances.swap = nns_pb::Tokens {e8s: Some(swap)};
-        self.distribution.initial_balances.governance = nns_pb::Tokens {e8s: Some(governance)};
+        self.distribution.initial_balances.swap = nns_pb::Tokens { e8s: Some(swap) };
+        self.distribution.initial_balances.governance = nns_pb::Tokens {
+            e8s: Some(governance),
+        };
     }
 
     pub fn try_into_config(
