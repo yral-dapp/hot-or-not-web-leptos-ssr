@@ -37,7 +37,7 @@ pub struct CfNeuron {
 /// investors in the decentralization swap.
 #[derive(candid::CandidType, candid::Deserialize, serde::Serialize, Eq)]
 #[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct NeuronBasketConstructionParameters {
     /// The number of neurons each investor will receive after the
     /// decentralization swap. The total tokens swapped for will be
@@ -50,7 +50,7 @@ pub struct NeuronBasketConstructionParameters {
 /// Constraints for the Neurons' Fund participation in an SNS swap.
 #[derive(candid::CandidType, candid::Deserialize, serde::Serialize, Eq)]
 #[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct NeuronsFundParticipationConstraints {
     /// The Neurons' Fund will not participate in this swap unless the direct
     /// contributions reach this threshold (in ICP e8s).
@@ -79,7 +79,7 @@ pub struct NeuronsFundParticipationConstraints {
 /// that from nns/governance/proto/ic_nns_governance/pb/v1/governance.proto.
 #[derive(candid::CandidType, candid::Deserialize, serde::Serialize, Eq)]
 #[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct IdealMatchedParticipationFunction {
     /// The encoding of the "ideal" matched participation function is defined in `crate::neurons_fund`.
     /// In the future, we could change this message to represent full abstract syntactic trees
@@ -111,7 +111,7 @@ pub struct IdealMatchedParticipationFunction {
 /// enabling equality comparison between two instances of this structure.
 #[derive(candid::CandidType, candid::Deserialize, serde::Serialize, Eq)]
 #[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct LinearScalingCoefficient {
     /// (Included) lower bound on the amount of direct participation (in ICP e8s) at which
     /// these coefficients apply.

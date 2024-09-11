@@ -8,13 +8,13 @@ use crate::{
         title::Title,
     },
     page::token::{sns_form::SnsFormSettings, types},
-    state::canisters::auth_canisters_store,
+    state::canisters::{auth_canisters_store, authenticated_canisters, CanistersAuthWire},
     utils::web::FileWithUrl,
 };
 use leptos::*;
 use leptos_router::*;
 
-use sns_validation::{humanize::parse_tokens, pbs::nns_pb::Tokens};
+use sns_validation::{humanize::parse_tokens, pbs::{nns_pb::Tokens, sns_pb::SnsInitPayload}};
 
 use super::{popups::TokenCreationPopup, sns_form::SnsFormState};
 
@@ -154,6 +154,25 @@ async fn participate_in_swap(swap_canister: Principal) -> Result<(), ServerFnErr
     );
 
     Ok(())
+}
+
+#[server]
+async fn deploy_cdao_canisters(cans_wire: CanistersAuthWire, create_sns: SnsInitPayload) -> Result<(), ServerFnError> {
+    let cans = cans_wire.canisters().unwrap();
+    let res = cans
+        .deploy_cdao_sns(create_sns)
+        .await
+        .map_err(|e| ServerFnError::new(format!("{e:?}")))?;
+
+    match res {
+        Result7::Ok(c) => {
+            log::debug!("deployed canister {}", c.governance);
+            return participate_in_swap(c.swap).await;
+        }
+        Result7::Err(e) => {
+            return Err(ServerFnError::new(format!("{e:?}")));
+        }
+    };
 }
 
 #[component]
@@ -463,26 +482,46 @@ pub fn CreateToken() -> impl IntoView {
         if !server_available {
             return Err("Server is not available".to_string());
         }
-        let res = cans
-            .deploy_cdao_sns(create_sns)
-            .await
-            .map_err(|e| e.to_string())?;
-        match res {
-            Result7::Ok(c) => {
-                log::debug!("deployed canister {}", c.governance);
-                let participated = participate_in_swap(c.swap).await;
-                if let Err(e) = participated {
-                    return Err(format!("{e:?}"));
-                } else {
-                    log::debug!("participated in swap");
+        // let res = cans
+        //     .deploy_cdao_sns(create_sns)
+        //     .await
+        //     .map_err(|e| e.to_string())?;
+        // match res {
+        //     Result7::Ok(c) => {
+        //         log::debug!("deployed canister {}", c.governance);
+        //         let participated = participate_in_swap(c.swap).await;
+        //         if let Err(e) = participated {
+        //             return Err(format!("{e:?}"));
+        //         } else {
+        //             log::debug!("participated in swap");
+        //         }
+        //     }
+        //     Result7::Err(e) => {
+        //         return Err(format!("{e:?}"));
+        //     }
+        // };
+        
+        let auth_cans = authenticated_canisters();
+        let cdao_deploy_res = auth_cans.derive(
+            || (), 
+            move |cans_wire, _| {
+                let create_sns = create_sns.clone();
+                async move {
+                    let cans_wire = cans_wire.unwrap();
+                    let res = deploy_cdao_canisters(cans_wire, create_sns)
+                        .await
+                        .map_err(|e| format!("{e:?}"));
+                    res                
                 }
             }
-            Result7::Err(e) => {
-                return Err(format!("{e:?}"));
-            }
-        };
+        );
 
-        Ok::<_, String>(())
+        if let Err(e) = cdao_deploy_res().unwrap() {
+            return Err(e);
+        } else {
+            log::debug!("deployed cdao canisters");
+        }
+        Ok(())
     });
     let creating = create_action.pending();
 

@@ -3,7 +3,7 @@
 /// must be populated.
 #[derive(candid::CandidType, candid::Deserialize, serde::Serialize, Eq)]
 #[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct SnsInitPayload {
     /// Fee of a transaction.
     pub transaction_fee_e8s: ::core::option::Option<u64>,
@@ -185,7 +185,7 @@ pub mod sns_init_payload {
     /// parameter.
     #[derive(candid::CandidType, candid::Deserialize, serde::Serialize, Eq)]
     #[allow(clippy::derive_partial_eq_without_eq)]
-    #[derive(Clone, PartialEq)]
+    #[derive(Clone, PartialEq, Debug)]
     pub enum InitialTokenDistribution {
         /// See `FractionalDeveloperVotingPower`
         FractionalDeveloperVotingPower(super::FractionalDeveloperVotingPower),
@@ -208,7 +208,7 @@ pub mod sns_init_payload {
 ///     - swap_distribution.total_e8s >= developer_distribution.developer_neurons.stake_e8s.sum
 #[derive(candid::CandidType, candid::Deserialize, serde::Serialize, Eq)]
 #[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct FractionalDeveloperVotingPower {
     /// The developer bucket.
     pub developer_distribution: ::core::option::Option<DeveloperDistribution>,
@@ -222,7 +222,7 @@ pub struct FractionalDeveloperVotingPower {
 /// The distributions awarded to developers at SNS genesis.
 #[derive(candid::CandidType, candid::Deserialize, serde::Serialize, Eq)]
 #[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct DeveloperDistribution {
     /// List of `NeuronDistribution` that specify a Neuron controller and Neuron stake in e8s (10E-8 of a token).
     /// For each entry in the developer_neurons list, a neuron will be created with a voting multiplier applied
@@ -234,7 +234,7 @@ pub struct DeveloperDistribution {
 /// has successfully completed.
 #[derive(candid::CandidType, candid::Deserialize, serde::Serialize, Eq)]
 #[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct TreasuryDistribution {
     /// The total token distribution denominated in e8s (10E-8 of a token) of the
     /// treasury bucket.
@@ -244,7 +244,7 @@ pub struct TreasuryDistribution {
 /// SNS Ledger at genesis.
 #[derive(candid::CandidType, candid::Deserialize, serde::Serialize, Eq)]
 #[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct SwapDistribution {
     /// The total token distribution denominated in e8s (10E-8 of a token) of the
     /// swap bucket. All tokens used in initial_swap_amount_e8s will be
@@ -258,7 +258,7 @@ pub struct SwapDistribution {
 /// The distributions airdropped at SNS genesis.
 #[derive(candid::CandidType, candid::Deserialize, serde::Serialize, Eq)]
 #[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, Default)]
+#[derive(Clone, PartialEq, Default, Debug)]
 pub struct AirdropDistribution {
     /// List of `NeuronDistribution` that specify a Neuron controller and Neuron stake in e8s
     /// (10E-8 of a token). For each entry in the airdrop_neurons list, a neuron will be
@@ -268,7 +268,7 @@ pub struct AirdropDistribution {
 /// A tuple of values used to create a Neuron available at SNS genesis.
 #[derive(candid::CandidType, candid::Deserialize, serde::Serialize, Eq)]
 #[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct NeuronDistribution {
     /// The initial `PrincipalId` given permissions on a neuron available at genesis.
     /// The permissions granted to the controller will be set to the SNS' configured
@@ -299,7 +299,7 @@ pub struct NeuronDistribution {
 /// / A Canister that will be transferred to an SNS.
 #[derive(candid::CandidType, candid::Deserialize, serde::Serialize, Eq)]
 #[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct DappCanisters {
     pub canisters: Vec<crate::pbs::nns_pb::Canister>,
 }
