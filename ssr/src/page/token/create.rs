@@ -14,6 +14,7 @@ use crate::{
 use leptos::*;
 use leptos_router::*;
 
+use server_fn::codec::Cbor;
 use sns_validation::{humanize::parse_tokens, pbs::{nns_pb::Tokens, sns_pb::SnsInitPayload}};
 
 use super::{popups::TokenCreationPopup, sns_form::SnsFormState};
@@ -156,9 +157,12 @@ async fn participate_in_swap(swap_canister: Principal) -> Result<(), ServerFnErr
     Ok(())
 }
 
-#[server]
+#[server(
+    input = Cbor
+)]
 async fn deploy_cdao_canisters(cans_wire: CanistersAuthWire, create_sns: SnsInitPayload) -> Result<(), ServerFnError> {
     let cans = cans_wire.canisters().unwrap();
+    log::debug!("deploying canisters {:?}", cans.user_canister().to_string());
     let res = cans
         .deploy_cdao_sns(create_sns)
         .await
