@@ -146,7 +146,7 @@ pub fn Wallet() -> impl IntoView {
                     <div class="flex flex-col gap-2 items-center">
                         <WithAuthCans fallback=BulletLoader with=tokens_fetch let:tokens>
                             <For each=move || tokens.1.clone() key=|token| *token let:token>
-                                <TokenView user_canister=tokens.0.user_canister() token_root=token/>
+                                <TokenView user_canister=tokens.0.user_canister() user_principal=tokens.0.user_principal() token_root=token/>
                             </For>
                         </WithAuthCans>
                     </div>

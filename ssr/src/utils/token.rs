@@ -35,8 +35,10 @@ pub struct TokenCans {
 pub async fn token_metadata_by_root<const A: bool>(
     cans: &Canisters<A>,
     user_canister: Principal,
+    user_principal: Principal,
     token_root: Principal,
 ) -> Result<Option<TokenMetadata>, ServerFnError> {
+    // let user_principal = cans
     let root = cans.sns_root(token_root).await;
     let sns_cans = root.list_sns_canisters(ListSnsCanistersArg {}).await?;
     let Some(governance) = sns_cans.governance else {
@@ -45,7 +47,7 @@ pub async fn token_metadata_by_root<const A: bool>(
     let Some(ledger) = sns_cans.ledger else {
         return Ok(None);
     };
-    let metadata = get_token_metadata(cans, user_canister, governance, ledger).await?;
+    let metadata = get_token_metadata(cans, user_canister, user_principal, governance, ledger).await?;
 
     Ok(Some(metadata))
 }
@@ -53,6 +55,7 @@ pub async fn token_metadata_by_root<const A: bool>(
 pub async fn get_token_metadata<const A: bool>(
     cans: &Canisters<A>,
     user_canister: Principal,
+    user_principal: Principal,
     governance: Principal,
     ledger: Principal,
 ) -> Result<TokenMetadata, AgentError> {
@@ -63,7 +66,7 @@ pub async fn get_token_metadata<const A: bool>(
     let symbol = ledger.icrc_1_symbol().await?;
 
     let acc = LedgerAccount {
-        owner: user_canister,
+        owner: user_principal,
         subaccount: None,
     };
     let balance = ledger.icrc_1_balance_of(acc).await?;
@@ -105,8 +108,6 @@ pub async fn claim_tokens_from_first_neuron(
     cans: &Canisters<true>,
     user_principal: Principal,
     governance: Principal,
-    user_canister: Principal,
-    ledger: Principal,
 ) -> Result<(), Box<dyn std::error::Error>> {
     // if !A {
     //     println!("!!!!! Not authenticated");
@@ -157,51 +158,52 @@ pub async fn claim_tokens_from_first_neuron(
     };
     let manage_neuron = governance_can.manage_neuron(manage_neuron_arg).await;
     if manage_neuron.is_ok() {
-        let manage_neuron_res = manage_neuron.unwrap().command.unwrap();
-        leptos::logging::log!("!!!!! manage_neuron_res: {:?}", manage_neuron_res);
-        match manage_neuron_res {
-            Command1::Disburse(_) => {
-                // transfer to canister
-                let ledger_can = cans.sns_ledger(ledger).await;
-                let transfer_resp = ledger_can
-                    .icrc_1_transfer(TransferArg {
-                        to: LedgerAccount {
-                            owner: user_canister,
-                            subaccount: None,
-                        },
-                        fee: None,
-                        memo: None,
-                        from_subaccount: None,
-                        amount: Nat::from(amount - 2),
-                        created_at_time: None,
-                    })
-                    .await?;
-                leptos::logging::log!("!!!!! transfer_resp: {:?}", transfer_resp);
-                // if transfer_resp() {
-                //     return Ok(());
-                // } else {
-                //     leptos::logging::log!("!!!!! Failed to transfer tokens");
-                //     leptos::logging::log!("!!!!! transfer_resp: {:?}", transfer_resp);
-                //     return Err("Failed to transfer tokens".into());
-                // }
-                match transfer_resp {
-                    TransferResult::Ok(block) => {
-                        leptos::logging::log!("!!!!! Successfully claimed tokens: {:?}", block);
-                        Ok(())
-                    }
-                    _ => {
-                        leptos::logging::log!("!!!!! Failed to claim tokens");
-                        leptos::logging::log!("!!!!! transfer_resp: {:?}", transfer_resp);
-                        Err("Failed to claim tokens".into())
-                    }
-                }
-                // return Ok(());
-            }
-            _ => {
-                leptos::logging::log!("!!!!! Failed to claim tokens");
-                Err("Failed to claim tokens".into())
-            }
-        }
+        // let manage_neuron_res = manage_neuron.unwrap().command.unwrap();
+        // leptos::logging::log!("!!!!! manage_neuron_res: {:?}", manage_neuron_res);
+        // match manage_neuron_res {
+        //     Command1::Disburse(_) => {
+        //         // transfer to canister
+        //         let ledger_can = cans.sns_ledger(ledger).await;
+        //         let transfer_resp = ledger_can
+        //             .icrc_1_transfer(TransferArg {
+        //                 to: LedgerAccount {
+        //                     owner: user_canister,
+        //                     subaccount: None,
+        //                 },
+        //                 fee: None,
+        //                 memo: None,
+        //                 from_subaccount: None,
+        //                 amount: Nat::from(amount - 2),
+        //                 created_at_time: None,
+        //             })
+        //             .await?;
+        //         leptos::logging::log!("!!!!! transfer_resp: {:?}", transfer_resp);
+        //         // if transfer_resp() {
+        //         //     return Ok(());
+        //         // } else {
+        //         //     leptos::logging::log!("!!!!! Failed to transfer tokens");
+        //         //     leptos::logging::log!("!!!!! transfer_resp: {:?}", transfer_resp);
+        //         //     return Err("Failed to transfer tokens".into());
+        //         // }
+        //         match transfer_resp {
+        //             TransferResult::Ok(block) => {
+        //                 leptos::logging::log!("!!!!! Successfully claimed tokens: {:?}", block);
+        //                 Ok(())
+        //             }
+        //             _ => {
+        //                 leptos::logging::log!("!!!!! Failed to claim tokens");
+        //                 leptos::logging::log!("!!!!! transfer_resp: {:?}", transfer_resp);
+        //                 Err("Failed to claim tokens".into())
+        //             }
+        //         }
+        //         // return Ok(());
+        //     }
+        //     _ => {
+        //         leptos::logging::log!("!!!!! Failed to claim tokens");
+        //         Err("Failed to claim tokens".into())
+        //     }
+        // }
+        Ok(())
     } else {
         Err("Failed to claim tokens".into())
     }

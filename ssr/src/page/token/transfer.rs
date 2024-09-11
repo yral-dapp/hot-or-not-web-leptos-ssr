@@ -98,11 +98,11 @@ fn TokenTransferInner(
         let cans = cans.clone();
         async move {
             let destination = destination_res.get_untracked().unwrap().unwrap();
-            let destination = cans
-                .get_individual_canister_by_user_principal(destination)
-                .await
-                .unwrap()
-                .unwrap();
+            // let destination = cans
+            //     .get_individual_canister_by_user_principal(destination)
+            //     .await
+            //     .unwrap()
+            //     .unwrap();
             let amt = amt_res.get_untracked().unwrap().unwrap();
 
             let user = cans.authenticated_user().await;
@@ -190,12 +190,13 @@ pub fn TokenTransfer() -> impl IntoView {
     let token_metadata_fetch = move |cans: Canisters<true>| {
         create_resource(params, move |params| {
             let cans = cans.clone();
+            let user_principal = cans.user_principal();
             async move {
                 let Ok(params) = params else {
                     return Ok::<_, ServerFnError>(None);
                 };
                 let user = cans.user_canister();
-                let meta = token_metadata_by_root(&cans, user, params.token_root).await?;
+                let meta = token_metadata_by_root(&cans, user, user_principal, params.token_root).await?;
                 Ok(meta.map(|m| (m, params.token_root)))
             }
         })

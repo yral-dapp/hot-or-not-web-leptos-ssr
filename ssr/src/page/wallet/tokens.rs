@@ -61,9 +61,10 @@ impl CursoredDataProvider for TokenRootList {
 async fn token_metadata_or_fallback(
     cans: Canisters<false>,
     user_canister: Principal,
+    user_principal: Principal,
     token_root: Principal,
 ) -> TokenMetadata {
-    let metadata = token_metadata_by_root(&cans, user_canister, token_root)
+    let metadata = token_metadata_by_root(&cans, user_canister, user_principal, token_root)
         .await
         .ok()
         .flatten();
@@ -84,7 +85,7 @@ fn FallbackToken() -> impl IntoView {
     }
 }
 
-pub fn unlock_tokens(user_canister: Principal, token: TokenCans) {
+pub fn unlock_tokens(token: TokenCans) {
     let (is_connected, _) = account_connected_reader();
     let auth_cans = authenticated_canisters();
 
@@ -97,8 +98,6 @@ pub fn unlock_tokens(user_canister: Principal, token: TokenCans) {
                 &cans,
                 cans.user_principal(),
                 token.governance,
-                user_canister,
-                token.ledger,
             )
             .await;
             if claim_result.is_err() {
@@ -122,13 +121,14 @@ pub fn unlock_tokens(user_canister: Principal, token: TokenCans) {
 #[component]
 pub fn TokenView(
     user_canister: Principal,
+    user_principal: Principal,
     token_root: Principal,
     #[prop(optional)] _ref: NodeRef<html::A>,
 ) -> impl IntoView {
     let cans = unauth_canisters();
     let info = create_resource(
         || (),
-        move |_| token_metadata_or_fallback(cans.clone(), user_canister, token_root),
+        move |_| token_metadata_or_fallback(cans.clone(), user_canister, user_principal, token_root),
     );
 
     view! {
@@ -154,6 +154,7 @@ pub fn TokenView(
 #[component]
 fn TokenList(canisters: Canisters<true>) -> impl IntoView {
     let user_canister = canisters.user_canister();
+    let user_principal = canisters.user_principal();
     let provider = TokenRootList(canisters);
 
     view! {
@@ -162,7 +163,7 @@ fn TokenList(canisters: Canisters<true>) -> impl IntoView {
                 provider
                 fetch_count=10
                 children=move |token_root, _ref| {
-                    view! { <TokenView user_canister token_root _ref=_ref.unwrap_or_default()/> }
+                    view! { <TokenView user_canister user_principal token_root _ref=_ref.unwrap_or_default()/> }
                 }
             />
         </div>

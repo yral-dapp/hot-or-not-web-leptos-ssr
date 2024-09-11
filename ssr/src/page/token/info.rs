@@ -106,7 +106,8 @@ pub fn TokenInfo() -> impl IntoView {
                     return Ok::<_, ServerFnError>(None);
                 };
                 let user = cans.user_canister();
-                let meta = token_metadata_by_root(&cans, user, params.token_root).await?;
+                let user_principal = cans.user_principal();
+                let meta = token_metadata_by_root(&cans, user, user_principal, params.token_root).await?;
                 Ok(meta.map(|m| (m, params.token_root)))
             }
         })

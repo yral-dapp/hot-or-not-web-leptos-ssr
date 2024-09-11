@@ -18,7 +18,7 @@ fn TokenViewFallback() -> impl IntoView {
     }
 }
 
-pub fn unlock_tokens(user_canister: Principal, token: TokenCans) {
+pub fn unlock_tokens(token: TokenCans) {
     let (is_connected, _) = account_connected_reader();
     let auth_cans = authenticated_canisters();
 
@@ -31,8 +31,6 @@ pub fn unlock_tokens(user_canister: Principal, token: TokenCans) {
                 &cans,
                 cans.user_principal(),
                 token.governance,
-                user_canister,
-                token.ledger,
             )
             .await;
             if claim_result.is_err() {
@@ -54,15 +52,15 @@ pub fn unlock_tokens(user_canister: Principal, token: TokenCans) {
 }
 
 #[component]
-fn TokenView(user_canister: Principal, token: TokenCans) -> impl IntoView {
-    unlock_tokens(user_canister, token.clone());
+fn TokenView(user_canister: Principal, user_principal: Principal, token: TokenCans) -> impl IntoView {
+    unlock_tokens(token.clone());
 
     let token_info = create_resource(
         || (),
         move |_| async move {
             let cans = unauth_canisters();
             let metadata =
-                get_token_metadata(&cans, user_canister, token.governance, token.ledger).await?;
+                get_token_metadata(&cans, user_canister, user_principal, token.governance, token.ledger).await?;
 
             Ok::<_, ServerFnError>(metadata)
         },
@@ -107,7 +105,7 @@ fn CreateYourToken() -> impl IntoView {
 }
 
 #[component]
-pub fn ProfileTokens(user_canister: Principal) -> impl IntoView {
+pub fn ProfileTokens(user_canister: Principal, user_principal: Principal) -> impl IntoView {
     let token_list = create_resource(
         || (),
         move |_| async move {
@@ -138,7 +136,7 @@ pub fn ProfileTokens(user_canister: Principal) -> impl IntoView {
                 let empty = tokens.is_empty();
                 view! {
                     {tokens.into_iter().map(|token| view! {
-                        <TokenView user_canister token/>
+                        <TokenView user_canister user_principal token/>
                     }).collect_view()}
                     <Show when=move || empty>
                         <CreateYourToken/>
