@@ -30,6 +30,12 @@ struct PostParams {
 }
 
 #[derive(Clone, Default)]
+pub struct BetEligiblePostCtx {
+    // This is true if betting is enabled for the current post and no bet has been placed
+    pub can_place_bet: RwSignal<bool>,
+}
+
+#[derive(Clone, Default)]
 pub struct PostViewCtx {
     fetch_cursor: RwSignal<FetchCursor>,
     // TODO: this is a dead simple with no GC
@@ -176,13 +182,7 @@ pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
         fetch_cursor.try_update(|c| c.advance());
     });
 
-    view! {
-        <CommonPostViewWithUpdates
-            initial_post
-            fetch_video_action
-            threshold_trigger_fetch=10
-        />
-    }
+    view! { <CommonPostViewWithUpdates initial_post fetch_video_action threshold_trigger_fetch=10 /> }
 }
 
 #[component]
@@ -245,13 +245,7 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
         }
     });
 
-    view! {
-        <CommonPostViewWithUpdates
-            initial_post
-            fetch_video_action
-            threshold_trigger_fetch=20
-        />
-    }
+    view! { <CommonPostViewWithUpdates initial_post fetch_video_action threshold_trigger_fetch=20 /> }
 }
 
 #[component]
@@ -302,15 +296,15 @@ pub fn PostView() -> impl IntoView {
 
     view! {
         <Suspense fallback=FullScreenSpinner>
-        {
-            {move || {
-                fetch_first_video_uid()
-                    .and_then(|initial_post| {
-                        let initial_post = initial_post.ok()?;
-                        Some(view! { <PostViewWithUpdatesMLFeed initial_post /> })
-                    })
+            {{
+                move || {
+                    fetch_first_video_uid()
+                        .and_then(|initial_post| {
+                            let initial_post = initial_post.ok()?;
+                            Some(view! { <PostViewWithUpdatesMLFeed initial_post /> })
+                        })
+                }
             }}
-        }
 
         </Suspense>
     }
