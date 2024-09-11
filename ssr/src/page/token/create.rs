@@ -501,27 +501,21 @@ pub fn CreateToken() -> impl IntoView {
         //     }
         // };
         
-        let auth_cans = authenticated_canisters();
-        let cdao_deploy_res = auth_cans.derive(
-            || (), 
-            move |cans_wire, _| {
-                let create_sns = create_sns.clone();
-                async move {
-                    let cans_wire = cans_wire.unwrap();
-                    let res = deploy_cdao_canisters(cans_wire, create_sns)
-                        .await
-                        .map_err(|e| format!("{e:?}"));
-                    res                
-                }
-            }
-        );
-
-        if let Err(e) = cdao_deploy_res().unwrap() {
-            return Err(e);
-        } else {
-            log::debug!("deployed cdao canisters");
-        }
-        Ok(())
+        let auth_cans = authenticated_canisters().wait_untracked().await.unwrap();
+        deploy_cdao_canisters(auth_cans, create_sns)
+            .await
+            .map_err(|e| format!("{e:?}"))
+        // let cdao_deploy_res = auth_cans.derive(
+        //     || (), 
+        //     move |cans_wire, _| {
+        //         let create_sns = create_sns.clone();
+        //         async move {
+        //             let cans_wire = cans_wire.unwrap();
+                    
+        //             res                
+        //         }
+        //     }
+        // );
     });
     let creating = create_action.pending();
 
