@@ -33,6 +33,47 @@ use crate::canister::sns_swap::{
 };
 use crate::consts::{AGENT_URL, ICP_LEDGER_CANISTER_ID};
 
+const ICP_TX_FEE: u64 = 10000;
+
+#[server]
+async fn is_server_available() -> Result<bool, ServerFnError>  {
+    // let admin_id_pem: String =
+    //     env::var("BACKEND_ADMIN_IDENTITY").expect("`BACKEND_ADMIN_IDENTITY` is required!");
+    // let admin_id_pem_by = admin_id_pem.as_bytes();
+    // let admin_id =
+    //     BasicIdentity::from_pem(admin_id_pem_by).expect("Invalid `BACKEND_ADMIN_IDENTITY`");
+    let admin_id = Secp256k1Identity::from_pem_file(
+        "/home/debjit/hot-or-not-backend-canister/scripts/canisters/docker/local-admin.pem"
+            .to_string(),
+    ).expect("Invalid `BACKEND_ADMIN_IDENTITY`");
+    let admin_principal = admin_id.sender().unwrap();
+    log::debug!("admin_principal: {:?}", admin_principal.to_string());
+
+    let agent = Agent::builder()
+        .with_url(AGENT_URL)
+        .with_identity(admin_id)
+        .build()
+        .unwrap();
+    agent.fetch_root_key().await.unwrap();
+
+    let balance_res = agent
+        .query(
+            &Principal::from_str(ICP_LEDGER_CANISTER_ID).unwrap(),
+            "icrc1_balance_of",
+        )
+        .with_arg(candid::encode_one(types::Icrc1BalanceOfArg{owner: admin_principal, subaccount: None}).unwrap())
+        .call()
+        .await
+        .unwrap();
+    let balance: Nat = Decode!(&balance_res, Nat).unwrap();
+    println!("balance: {:?}", balance);
+    if balance >= Nat::from(1000000 + ICP_TX_FEE) { // amount we participate + icp tx fee
+        Ok(true)
+    } else {
+        Ok(false)
+    }
+}
+
 #[server]
 async fn participate_in_swap(swap_canister: Principal, tx_fee: u64) -> Result<(), ServerFnError> {
     let admin_id_pem: String =
@@ -418,7 +459,10 @@ pub fn CreateToken() -> impl IntoView {
         let sns_config = sns_form.try_into_config(&cans)?;
 
         let create_sns = sns_config.try_convert_to_executed_sns_init()?;
-        let tx_fee = create_sns.transaction_fee_e8s.unwrap_or(0);
+        let server_available = is_server_available().await.map_err(|e| e.to_string())?;
+        if !server_available {
+            return Err("Server is not available".to_string());
+        }
         let res = cans
             .deploy_cdao_sns(create_sns)
             .await

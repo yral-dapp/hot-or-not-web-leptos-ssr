@@ -33,3 +33,9 @@ pub enum CustomTransferError {
     TooOld,
     InsufficientFunds { balance: Nat },
 }
+
+#[derive(CandidType, Deserialize)]
+pub struct Icrc1BalanceOfArg {
+  pub owner: Principal,
+  pub  subaccount: Option<serde_bytes::ByteBuf>,
+}
