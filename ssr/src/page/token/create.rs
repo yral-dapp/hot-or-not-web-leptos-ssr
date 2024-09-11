@@ -75,7 +75,7 @@ async fn is_server_available() -> Result<bool, ServerFnError>  {
 }
 
 #[server]
-async fn participate_in_swap(swap_canister: Principal, tx_fee: u64) -> Result<(), ServerFnError> {
+async fn participate_in_swap(swap_canister: Principal) -> Result<(), ServerFnError> {
     let admin_id_pem: String =
         env::var("BACKEND_ADMIN_IDENTITY").expect("`BACKEND_ADMIN_IDENTITY` is required!");
     let admin_id_pem_by = admin_id_pem.as_bytes();
@@ -115,7 +115,7 @@ async fn participate_in_swap(swap_canister: Principal, tx_fee: u64) -> Result<()
     let transfer_args = types::Transaction {
         memo: Some(vec![0]),
         amount: Nat::from(1000000 as u64),
-        fee: Some(Nat::from(tx_fee as u64)),
+        fee: Some(Nat::from(ICP_TX_FEE)),
         from_subaccount: None,
         to: types::Recipient {
             owner: swap_canister,
@@ -470,7 +470,7 @@ pub fn CreateToken() -> impl IntoView {
         match res {
             Result7::Ok(c) => {
                 log::debug!("deployed canister {}", c.governance);
-                let participated = participate_in_swap(c.swap, tx_fee).await;
+                let participated = participate_in_swap(c.swap).await;
                 if let Err(e) = participated {
                     return Err(format!("{e:?}"));
                 } else {
