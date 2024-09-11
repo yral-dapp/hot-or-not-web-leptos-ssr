@@ -8,7 +8,7 @@ use crate::{
         title::Title,
     },
     page::token::{sns_form::SnsFormSettings, types},
-    state::canisters::{auth_canisters_store, authenticated_canisters, CanistersAuthWire},
+    state::canisters::{auth_canisters_store, authenticated_canisters, AuthCansResource, CanistersAuthWire},
     utils::web::FileWithUrl,
 };
 use leptos::*;
@@ -470,52 +470,58 @@ pub fn CreateToken() -> impl IntoView {
         });
     };
 
-    let create_action = create_action(move |&()| async move {
-        let cans = auth_cans
-            .get_untracked()
-            .expect("Create token called without auth canisters");
-        let sns_form = ctx.form_state.get_untracked();
-        let sns_config = sns_form.try_into_config(&cans)?;
+    let auth_cans_wire = authenticated_canisters();
 
-        let create_sns = sns_config.try_convert_to_executed_sns_init()?;
-        let server_available = is_server_available().await.map_err(|e| e.to_string())?;
-        if !server_available {
-            return Err("Server is not available".to_string());
+    let create_action = create_action(move |&()| {
+        let auth_cans_wire = auth_cans_wire.clone();
+        async move {
+            let cans = auth_cans
+                .get_untracked()
+                .expect("Create token called without auth canisters");
+            let sns_form = ctx.form_state.get_untracked();
+            let sns_config = sns_form.try_into_config(&cans)?;
+    
+            // let auth_cans_wire = ;
+    
+            let create_sns = sns_config.try_convert_to_executed_sns_init()?;
+            let server_available = is_server_available().await.map_err(|e| e.to_string())?;
+            if !server_available {
+                return Err("Server is not available".to_string());
+            }
+            // let res = cans
+            //     .deploy_cdao_sns(create_sns)
+            //     .await
+            //     .map_err(|e| e.to_string())?;
+            // match res {
+            //     Result7::Ok(c) => {
+            //         log::debug!("deployed canister {}", c.governance);
+            //         let participated = participate_in_swap(c.swap).await;
+            //         if let Err(e) = participated {
+            //             return Err(format!("{e:?}"));
+            //         } else {
+            //             log::debug!("participated in swap");
+            //         }
+            //     }
+            //     Result7::Err(e) => {
+            //         return Err(format!("{e:?}"));
+            //     }
+            // };
+    
+            deploy_cdao_canisters(auth_cans_wire.wait_untracked().await.unwrap(), create_sns)
+                .await
+                .map_err(|e| format!("{e:?}"))
+            // let cdao_deploy_res = auth_cans.derive(
+            //     || (), 
+            //     move |cans_wire, _| {
+            //         let create_sns = create_sns.clone();
+            //         async move {
+            //             let cans_wire = cans_wire.unwrap();
+                        
+            //             res                
+            //         }
+            //     }
+            // );
         }
-        // let res = cans
-        //     .deploy_cdao_sns(create_sns)
-        //     .await
-        //     .map_err(|e| e.to_string())?;
-        // match res {
-        //     Result7::Ok(c) => {
-        //         log::debug!("deployed canister {}", c.governance);
-        //         let participated = participate_in_swap(c.swap).await;
-        //         if let Err(e) = participated {
-        //             return Err(format!("{e:?}"));
-        //         } else {
-        //             log::debug!("participated in swap");
-        //         }
-        //     }
-        //     Result7::Err(e) => {
-        //         return Err(format!("{e:?}"));
-        //     }
-        // };
-        
-        let auth_cans = authenticated_canisters().wait_untracked().await.unwrap();
-        deploy_cdao_canisters(auth_cans, create_sns)
-            .await
-            .map_err(|e| format!("{e:?}"))
-        // let cdao_deploy_res = auth_cans.derive(
-        //     || (), 
-        //     move |cans_wire, _| {
-        //         let create_sns = create_sns.clone();
-        //         async move {
-        //             let cans_wire = cans_wire.unwrap();
-                    
-        //             res                
-        //         }
-        //     }
-        // );
     });
     let creating = create_action.pending();
 
