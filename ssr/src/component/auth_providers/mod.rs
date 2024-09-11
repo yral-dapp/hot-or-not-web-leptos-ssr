@@ -271,7 +271,7 @@ mod server_fn_impl {
             user_canister: Principal,
         ) -> Result<bool, ServerFnError> {
             use crate::{
-                canister::individual_user_template::{Result6, Result9, SessionType},
+                canister::individual_user_template::{Result10, Result16, SessionType},
                 state::admin_canisters::admin_canisters,
             };
 
@@ -279,7 +279,7 @@ mod server_fn_impl {
             let user = admin_cans.individual_user_for(user_canister).await?;
             if matches!(
                 user.get_session_type().await?,
-                Result6::Ok(SessionType::RegisteredSession)
+                Result10::Ok(SessionType::RegisteredSession)
             ) {
                 return Ok(false);
             }
@@ -287,8 +287,8 @@ mod server_fn_impl {
                 .await
                 .map_err(ServerFnError::from)
                 .and_then(|res| match res {
-                    Result9::Ok(_) => Ok(()),
-                    Result9::Err(e) => Err(ServerFnError::new(format!(
+                    Result16::Ok(_) => Ok(()),
+                    Result16::Err(e) => Err(ServerFnError::new(format!(
                         "failed to mark user as registered {e}"
                     ))),
                 })?;

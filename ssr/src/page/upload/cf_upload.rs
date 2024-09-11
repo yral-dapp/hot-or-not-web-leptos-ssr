@@ -47,7 +47,7 @@ mod cf_impl {
     use leptos::ServerFnError;
 
     use crate::{
-        canister::individual_user_template::{PostDetailsFromFrontend, Result_},
+        canister::individual_user_template::{PostDetailsFromFrontend, Result1},
         state::canisters::Canisters,
     };
 
@@ -140,8 +140,8 @@ mod cf_impl {
             })
             .await?;
         let post_id = match res {
-            Result_::Ok(p) => p,
-            Result_::Err(e) => return Err(ServerFnError::new(e)),
+            Result1::Ok(p) => p,
+            Result1::Err(e) => return Err(ServerFnError::new(e)),
         };
         user.update_post_as_ready_to_view(post_id).await?;
         Ok(post_id)
