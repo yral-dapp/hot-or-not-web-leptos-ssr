@@ -5,6 +5,7 @@ use web_time::{Duration, SystemTime};
 
 pub mod ab_testing;
 pub mod event_streaming;
+pub mod host;
 pub mod ic;
 pub mod icon;
 pub mod ml_feed;
@@ -17,7 +18,6 @@ pub mod timestamp;
 pub mod types;
 pub mod user;
 pub mod web;
-pub mod host;
 
 pub fn current_epoch() -> Duration {
     web_time::SystemTime::now()

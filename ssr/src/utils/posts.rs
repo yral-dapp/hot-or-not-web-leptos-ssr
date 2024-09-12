@@ -6,7 +6,7 @@ use crate::{
     canister::individual_user_template::PostDetailsForFrontend, state::canisters::Canisters,
 };
 
-use super::{host::get_host, profile::propic_from_principal, types::PostStatus};
+use super::{profile::propic_from_principal, types::PostStatus};
 
 use ic_agent::AgentError;
 use thiserror::Error;
@@ -171,5 +171,3 @@ pub async fn get_post_uid<const AUTH: bool>(
 //         }
 //     }
 // }
-
-

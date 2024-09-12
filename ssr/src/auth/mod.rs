@@ -122,7 +122,7 @@ pub mod core_clients {
     pub struct CoreClients {
         pub google_oauth: openidconnect::core::CoreClient,
         pub hotornot_google_oauth: openidconnect::core::CoreClient,
-        pub icpump_google_oauth: openidconnect::core::CoreClient
+        pub icpump_google_oauth: openidconnect::core::CoreClient,
     }
 
     impl CoreClients {

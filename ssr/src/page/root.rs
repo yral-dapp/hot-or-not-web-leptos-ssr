@@ -2,7 +2,11 @@ use candid::Principal;
 use leptos::*;
 use leptos_router::*;
 
-use crate::{abselector, component::{canisters_prov::AuthCansProvider, spinner::FullScreenSpinner}, state::{auth::auth_state, canisters::authenticated_canisters}, utils::{ab_testing::ABComponent, host::get_host}};
+use crate::{
+    abselector,
+    component::{canisters_prov::AuthCansProvider, spinner::FullScreenSpinner},
+    utils::{ab_testing::ABComponent, host::get_host_async},
+};
 #[cfg(feature = "ssr")]
 use crate::{canister::post_cache, state::canisters::unauth_canisters};
 
@@ -98,10 +102,8 @@ async fn get_top_post_id_mlcache() -> Result<Option<(Principal, u64)>, ServerFnE
 //     Ok(Some((top_item.0, top_item.1)))
 // }
 
-
 #[component]
 pub fn CreatorDaoRootPage() -> impl IntoView {
-
     view! {
         <AuthCansProvider fallback=FullScreenSpinner let:canister>
 
@@ -139,15 +141,14 @@ pub fn YralRootPage() -> impl IntoView {
     }
 }
 
-
 #[component]
 pub fn RootPage() -> impl IntoView {
-
-    let host_str = create_resource(|| {}, |_| async {
-        let host_str = get_host().await;
-        host_str
-    });
-
+    let host_str = create_resource(
+        || {},
+        |_| async {
+            get_host_async().await
+        },
+    );
 
     view! {
         <Suspense fallback=FullScreenSpinner>
@@ -169,15 +170,12 @@ pub fn RootPage() -> impl IntoView {
 
         </Suspense>
     }
-
 }
 
-
 pub fn get_root_page_component(loc: String) -> impl Fn() -> Option<&'static str> {
-
     move || {
-
-        if loc.eq("localhost:3000") || loc.eq("icpump.fun")
+        if loc.eq("localhost:3000")
+            || loc.eq("icpump.fun")
             || loc.contains("go-bazzinga-hot-or-not-web-leptos-ssr.fly.dev")
         {
             Some("CreatorDaoRootPage")
