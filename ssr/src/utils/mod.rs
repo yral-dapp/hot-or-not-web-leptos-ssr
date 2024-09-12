@@ -17,6 +17,7 @@ pub mod timestamp;
 pub mod types;
 pub mod user;
 pub mod web;
+pub mod host;
 
 pub fn current_epoch() -> Duration {
     web_time::SystemTime::now()

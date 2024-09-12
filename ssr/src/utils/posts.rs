@@ -6,7 +6,7 @@ use crate::{
     canister::individual_user_template::PostDetailsForFrontend, state::canisters::Canisters,
 };
 
-use super::{profile::propic_from_principal, types::PostStatus};
+use super::{host::get_host, profile::propic_from_principal, types::PostStatus};
 
 use ic_agent::AgentError;
 use thiserror::Error;
@@ -155,38 +155,21 @@ pub async fn get_post_uid<const AUTH: bool>(
     )))
 }
 
-pub fn get_feed_component_identifier() -> impl Fn() -> Option<&'static str> {
-    move || {
-        let loc = get_host();
+// pub fn get_feed_component_identifier() -> impl Fn() -> Option<&'static str> {
+//     move || {
+//         let loc = get_host();
 
-        if loc == "yral.com"
-            || loc == "localhost:3000"
-            || loc == "hotornot.wtf"
-            || loc.contains("go-bazzinga-hot-or-not-web-leptos-ssr.fly.dev")
-        // || loc == "hot-or-not-web-leptos-ssr-staging.fly.dev"
-        {
-            Some("PostViewWithUpdatesMLFeed")
-        } else {
-            Some("PostViewWithUpdates")
-        }
-    }
-}
+//         if loc == "yral.com"
+//             || loc == "localhost:3000"
+//             || loc == "hotornot.wtf"
+//             || loc.contains("go-bazzinga-hot-or-not-web-leptos-ssr.fly.dev")
+//         // || loc == "hot-or-not-web-leptos-ssr-staging.fly.dev"
+//         {
+//             Some("PostViewWithUpdatesMLFeed")
+//         } else {
+//             Some("PostViewWithUpdates")
+//         }
+//     }
+// }
 
-pub fn get_host() -> String {
-    #[cfg(feature = "hydrate")]
-    {
-        use leptos::window;
-        window().location().host().unwrap().to_string()
-    }
 
-    #[cfg(not(feature = "hydrate"))]
-    {
-        use axum::http::request::Parts;
-        use http::header::HeaderMap;
-        use leptos::expect_context;
-
-        let parts: Parts = expect_context();
-        let headers = parts.headers;
-        headers.get("Host").unwrap().to_str().unwrap().to_string()
-    }
-}
