@@ -16,17 +16,6 @@ use crate::pbs::nns_pb;
 // avoid triggering mass rebuilds.
 pub(crate) const E8: u64 = 100_000_000;
 
-/// Parses decimal strings ending in "tokens" (plural), decimal strings end in
-/// "token" (singular) , or integer strings (again, base 10) ending in "e8s". In
-/// the case of "tokens" strings, the maximum number of digits after the
-/// (optional) decimal point is 8.
-///
-/// As with parse_fixed_point_decimal, "_" may be sprinkled throughout.
-///
-/// Whitespace around number is insignificant. E.g. " 42 tokens" is equivalent
-/// to "42tokens".
-///
-/// Inverse of [`format_tokens`].
 pub fn parse_tokens(s: &str) -> Result<nns_pb::Tokens, String> {
     let e8s = if let Some(s) = s.strip_suffix("tokens").map(|s| s.trim()) {
         parse_fixed_point_decimal(s, /* decimal_places = */ 8)?
@@ -42,16 +31,6 @@ pub fn parse_tokens(s: &str) -> Result<nns_pb::Tokens, String> {
     Ok(nns_pb::Tokens { e8s })
 }
 
-/// A wrapper around humantime::parse_duration that does some additional
-/// mechanical conversions.
-///
-/// To recapitulate the docs for humantime, "1w 2d 3h" gets parsed as
-///
-///   1 week + 2 days + 3 hours
-///       =
-///   (1 * (7 * 24 * 60 * 60) + 2 * 24 * 60 * 60 + 3 * (60 * 60)) seconds
-///
-/// Inverse of [`format_duration`].
 pub fn parse_duration(s: &str) -> Result<nns_pb::Duration, String> {
     humantime::parse_duration(s)
         .map(|d| nns_pb::Duration {
@@ -60,10 +39,6 @@ pub fn parse_duration(s: &str) -> Result<nns_pb::Duration, String> {
         .map_err(|err| err.to_string())
 }
 
-/// Similar to parse_fixed_point_decimal(s, 2), except a trailing percent sign
-/// is REQUIRED (and not fed into parse_fixed_point_decimal).
-///
-/// Inverse of [`format_percentage`].
 pub fn parse_percentage(s: &str) -> Result<nns_pb::Percentage, String> {
     let number = s
         .strip_suffix('%')
@@ -75,11 +50,6 @@ pub fn parse_percentage(s: &str) -> Result<nns_pb::Percentage, String> {
     Ok(nns_pb::Percentage { basis_points })
 }
 
-/// Inverse of [`format_time_of_day`].
-///
-/// Parses a string in the form "hh:mm UTC".
-///
-/// TODO(NNS1-2295): Support an optional "ss" suffix. E.g. "hh:mm:ss UTC".
 pub fn parse_time_of_day(s: &str) -> Result<nns_pb::GlobalTimeOfDay, String> {
     const FORMAT: &str = "hh:mm UTC";
     let error = format!("Unable to parse time of day \"{s}\". Format should be \"{FORMAT}\"",);
@@ -125,23 +95,6 @@ static FP_REGEX: LazyLock<Regex> = LazyLock::new(|| {
     .unwrap()
 });
 
-/// Parses strings like "123_456.789" into 123456789. Notice that in this
-/// example, the decimal point in the result has been shifted to the right by 3
-/// places. The amount of such shifting is specified using the decimal_places
-/// parameter.
-///
-/// Also, notice that "_" (underscore) can be sprinkled as you wish in the input
-/// for readability. No need to use groups of size 3, although it is
-/// recommended, since that's what people are used to.
-///
-/// s is considered invalid if the number of digits after the decimal point >
-/// decimal_places.
-///
-/// The decimal point is optional, but if it is included, it must have at least
-/// one digit on each side (of course, the digit can be "0").
-///
-/// Prefixes (such as "0") do not change the base; base 10 is always
-/// used. Therefore, s = "0xDEAD_BEEF" is invalid, for example.
 fn parse_fixed_point_decimal(s: &str, decimal_places: usize) -> Result<u64, String> {
     let found = FP_REGEX
         .captures(s)
@@ -173,7 +126,6 @@ fn parse_fixed_point_decimal(s: &str, decimal_places: usize) -> Result<u64, Stri
     Ok(shift_decimal_right(whole, decimal_places)? + fractional)
 }
 
-/// Multiplies n by 10^count.
 fn shift_decimal_right<I>(n: u64, count: I) -> Result<u64, String>
 where
     u32: TryFrom<I>,
@@ -191,11 +143,6 @@ where
         .ok_or_else(|| format!("Too large of a decimal shift: {} >> {}", n, count))
 }
 
-/// The inverse of [`parse_tokens`].
-///
-/// One wrinkle: if e8s is None, then this is equivalent to e8s = Some(0). This
-/// follows the same logic as Protocol Buffers. If the caller wants None to be
-/// treated differently, they must do it themselves.
 pub fn format_tokens(tokens: &nns_pb::Tokens) -> String {
     let nns_pb::Tokens { e8s } = tokens;
     let e8s = e8s.unwrap_or(0);
@@ -222,11 +169,6 @@ pub fn format_tokens(tokens: &nns_pb::Tokens) -> String {
     format!("{}{} {}", group_digits(whole), fractional, units)
 }
 
-/// The inverse of [`parse_duration`].
-///
-/// One wrinkle: if seconds is None, then this is equivalent to seconds =
-/// Some(0). This follows the same logic as Protocol Buffers. If the caller
-/// wants None to be treated differently, they must do it themselves.
 pub fn format_duration(duration: &nns_pb::Duration) -> String {
     let nns_pb::Duration { seconds } = duration;
     let seconds = seconds.unwrap_or(0);
@@ -234,11 +176,6 @@ pub fn format_duration(duration: &nns_pb::Duration) -> String {
     humantime::format_duration(std::time::Duration::from_secs(seconds)).to_string()
 }
 
-/// The inverse of [`parse_percentage`].
-///
-/// One wrinkle: if basis_points is None, then this is equivalent to
-/// basis_points = Some(0). This follows the same logic as Protocol Buffers. If
-/// the caller wants None to be treated differently, they must do it themselves.
 pub fn format_percentage(percentage: &nns_pb::Percentage) -> String {
     let nns_pb::Percentage { basis_points } = percentage;
     let basis_points = basis_points.unwrap_or(0);
@@ -255,14 +192,6 @@ pub fn format_percentage(percentage: &nns_pb::Percentage) -> String {
     format!("{}{}%", group_digits(whole), fractional)
 }
 
-/// The inverse of [`parse_time_of_day`].
-///
-/// Returns a string in the form "hh:mm UTC".
-///
-/// Will assume midnight if time_of_day.seconds_since_utc_midnight is None.
-///
-/// TODO(NNS1-2295): Additionally output ":ss" if the value doesn't slice evenly
-/// into hours and minutes. E.g. "hh:mm:ss UTC".
 pub fn format_time_of_day(time_of_day: &nns_pb::GlobalTimeOfDay) -> String {
     let (hours, minutes) = time_of_day.as_hh_mm().unwrap_or((0, 0));
 

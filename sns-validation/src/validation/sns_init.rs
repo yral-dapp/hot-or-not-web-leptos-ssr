@@ -19,34 +19,22 @@ use crate::{
 
 use super::neurons_fund;
 
-/// The maximum count of dapp canisters that can be initially decentralized.
 pub const MAX_DAPP_CANISTERS_COUNT: usize = 25;
 
-/// The maximum number of characters allowed for confirmation text.
 pub const MAX_CONFIRMATION_TEXT_LENGTH: usize = 1_000;
 
-/// The maximum number of bytes allowed for confirmation text.
 pub const MAX_CONFIRMATION_TEXT_BYTES: usize = 8 * MAX_CONFIRMATION_TEXT_LENGTH;
 
-/// The minimum number of characters allowed for confirmation text.
 pub const MIN_CONFIRMATION_TEXT_LENGTH: usize = 1;
 
-/// The maximum number of fallback controllers can be included in the SnsInitPayload.
 pub const MAX_FALLBACK_CONTROLLER_PRINCIPAL_IDS_COUNT: usize = 15;
 
-/// The maximum amount of ICP that can be directly contributed to a
-/// decentralization swap.
-/// Aka, the ceiling for the value `max_direct_participation_icp_e8s`.
 pub const MAX_DIRECT_ICP_CONTRIBUTION_TO_SWAP: u64 = 1_000_000_000 * E8;
 
-/// Maximum allowed number of SNS neurons for direct swap participants that an SNS may create.
-/// This constant must not exceed `NervousSystemParameters::MAX_NUMBER_OF_NEURONS_CEILING`.
 pub const MAX_NEURONS_FOR_DIRECT_PARTICIPANTS: u64 = 100_000;
 
-/// Minimum allowed number of SNS neurons per neuron basket.
 pub const MIN_SNS_NEURONS_PER_BASKET: u64 = 2;
 
-/// Maximum allowed number of SNS neurons per neuron basket.
 pub const MAX_SNS_NEURONS_PER_BASKET: u64 = 10;
 
 enum MinDirectParticipationThresholdValidationError {
@@ -159,9 +147,6 @@ impl std::fmt::Display for MaxNeuronsFundParticipationValidationError {
     }
 }
 
-/// Wraps around `swap::neurons_fund::NeuronsFundParticipationConstraintsValidationError`,
-/// extending it with non-local error cases (i.e., those related to fields other than
-/// `neurons_fund_participation_constraints` itself).
 enum NeuronsFundParticipationConstraintsValidationError {
     SetBeforeProposalExecution,
     RelatedFieldUnspecified(String),
@@ -267,7 +252,6 @@ impl FractionalDeveloperVotingPower {
             .ok_or_else(|| "Expected swap distribution to exist".to_string())
     }
 
-    /// Validate the NeuronDistributions in the Developer and Airdrop bucket
     fn validate_neurons(
         &self,
         developer_distribution: &DeveloperDistribution,
@@ -449,7 +433,6 @@ impl FractionalDeveloperVotingPower {
         Ok(())
     }
 
-    /// Validate an instance of FractionalDeveloperVotingPower
     pub fn validate(
         &self,
         nervous_system_parameters: &NervousSystemParameters,
@@ -507,8 +490,6 @@ impl FractionalDeveloperVotingPower {
         Ok(())
     }
 
-    /// Safely get the sum of all the e8 denominated neuron distributions. The maximum amount
-    /// of tokens e8s must be less than or equal to u64::MAX.
     fn get_total_distributions(distributions: &Vec<NeuronDistribution>) -> Result<u64, String> {
         let mut distribution_total: u64 = 0;
         for distribution in distributions {
@@ -528,8 +509,6 @@ impl FractionalDeveloperVotingPower {
 }
 
 impl SnsInitPayload {
-    /// Returns a complete NervousSystemParameter struct with its corresponding SnsInitPayload
-    /// fields filled out.
     fn get_nervous_system_parameters(&self) -> NervousSystemParameters {
         let nervous_system_parameters = NervousSystemParameters::with_default_values();
         let all_permissions = NeuronPermissionList {
@@ -612,9 +591,6 @@ impl SnsInitPayload {
         }
     }
 
-    /// Validates all the fields that are shared with CreateServiceNervousSystem.
-    /// For use in e.g. the SNS CLI or in NNS Governance before the proposal has
-    /// been executed.
     pub fn validate_pre_execution(&self) -> Result<Self, String> {
         let validation_fns = [
             self.validate_token_symbol(),
@@ -1679,38 +1655,6 @@ impl SnsInitPayload {
         Ok(())
     }
 
-    /// Validates that swap participation-related parameters<sup>*</sup> pass the following checks:
-    /// (1) All participation-related parameters are set.
-    /// (2) All participation-related parameters are within expected constant lower/upper bounds.
-    /// (3) Minimum is less than or equal to maximum for the same parameter.
-    /// (4) One participation cannot exceed the maximum ICP amount that the swap can obtain.
-    /// (5) No more than `MAX_DIRECT_ICP_CONTRIBUTION_TO_SWAP` may be collected from direct swap
-    ///     participants.
-    /// (6) If the minimum required number of participants participate each with the minimum
-    ///     required amount of ICP, the maximum ICP amount that the swap can obtain is not exceeded.
-    /// (7) Determines the smallest SNS neuron size is greated than the SNS ledger transaction fee.
-    /// (8) Required ICP participation amount is big enough to ensure that all participants will
-    ///     end up with enough SNS tokens to form the right number of SNS neurons (after paying for
-    ///     the SNS ledger transaction fee to create each such SNS neuron).
-    /// (9) The maximum possible number of SNS neurons created for direct participants (in case
-    ///     the swap succeeds) does not exceed `MAX_NEURONS_FOR_DIRECT_PARTICIPANTS`.
-    ///
-    /// * -- In the context of this function, swap participation-related parameters include:
-    /// - `min_direct_participation_icp_e8s` - Required ICP amount for the swap to succeed.
-    /// - `max_direct_participation_icp_e8s` - Maximum ICP amount that the swap can obtain.
-    /// - `min_participant_icp_e8s`          - Required ICP participation amount.
-    /// - `max_participant_icp_e8s`          - Maximum ICP amount from one participant.
-    /// - `min_participants`                 - Required number of *direct* participants for the swap
-    ///                                        to succeed. This does not restrict the number of
-    ///                                        *Neurons' Fund* participants.
-    /// - `initial_token_distribution.swap_distribution.initial_swap_amount_e8s`
-    ///                                      - How many SNS tokens will be distributed amoung all
-    ///                                        the swap participants if the swap succeeds.
-    /// - `neuron_basket_construction_parameters`
-    ///                                      - How many SNS neurons will be created per participant.
-    /// - `neuron_minimum_stake_e8s`         - Determines the smallest SNS neuron size.
-    /// - `sns_transaction_fee_e8s`          - SNS ledger transaction fee, in particular, charged
-    ///                                        for SNS neuron creation at swap finalization.
     fn validate_participation_constraints(&self) -> Result<(), String> {
         // (1)
         let min_direct_participation_icp_e8s = self
@@ -2089,7 +2033,6 @@ impl SnsInitPayload {
             })
     }
 
-    /// Checks that all parameters whose values can only be known after the CreateServiceNervousSystem proposal is executed are present.
     pub fn validate_all_post_execution_swap_parameters_are_set(&self) -> Result<(), String> {
         let mut missing_one_proposal_fields = vec![];
         if self.nns_proposal_id.is_none() {
@@ -2120,7 +2063,6 @@ impl SnsInitPayload {
         }
     }
 
-    /// Checks that all parameters used by the one-proposal flow are present, except for those whose values can't be known before the CreateServiceNervousSystem proposal is executed.
     pub fn validate_all_non_legacy_pre_execution_swap_parameters_are_set(
         &self,
     ) -> Result<(), String> {
