@@ -424,7 +424,6 @@ pub fn HNUserParticipation(
             refetch_bet.notify();
         }
     });
-    let running = place_bet_action.pending();
     view! {
 
         {match participation.outcome {
