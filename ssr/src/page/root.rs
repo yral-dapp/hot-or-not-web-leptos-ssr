@@ -143,12 +143,7 @@ pub fn YralRootPage() -> impl IntoView {
 
 #[component]
 pub fn RootPage() -> impl IntoView {
-    let host_str = create_resource(
-        || {},
-        |_| async {
-            get_host_async().await
-        },
-    );
+    let host_str = create_resource(|| {}, |_| async { get_host_async().await });
 
     view! {
         <Suspense fallback=FullScreenSpinner>

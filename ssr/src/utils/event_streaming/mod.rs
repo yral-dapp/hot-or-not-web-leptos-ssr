@@ -27,7 +27,6 @@ pub struct EventHistory {
 
 #[cfg(feature = "ga4")]
 pub fn send_event(event_name: &str, params: &serde_json::Value) {
-
     use super::host::get_host;
 
     let event_history: EventHistory = expect_context();

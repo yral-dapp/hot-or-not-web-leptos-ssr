@@ -16,9 +16,7 @@ pub async fn get_host_async() -> String {
     }
 }
 
-
 pub fn get_host() -> String {
-
     #[cfg(feature = "hydrate")]
     {
         use leptos::window;
