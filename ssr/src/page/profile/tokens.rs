@@ -85,7 +85,7 @@ fn TokenView(user_canister: Principal, token: TokenCans) -> impl IntoView {
                             <Icon class="text-white" icon=icondata::AiRightOutlined/>
                         </div>
                     </div>
-                </div>  
+                </div>
             </a>
         })}
         </Suspense>

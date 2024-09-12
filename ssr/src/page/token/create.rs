@@ -1,5 +1,3 @@
-use std::{env, str::FromStr};
-
 use crate::{
     canister::individual_user_template::Result7,
     component::{
@@ -13,18 +11,19 @@ use crate::{
 };
 use leptos::*;
 use leptos_router::*;
+use std::{env, str::FromStr};
 
-use sns_validation::{
-    humanize::parse_tokens,
-    pbs::nns_pb::Tokens
-};
+use sns_validation::{humanize::parse_tokens, pbs::nns_pb::Tokens};
 
 use super::{popups::TokenCreationPopup, sns_form::SnsFormState};
 
 use candid::{Decode, Encode, Nat, Principal};
 use ic_agent::Identity;
+use ic_agent::{
+    identity::{BasicIdentity, Secp256k1Identity},
+    Agent,
+};
 use ic_base_types::PrincipalId;
-use ic_agent::{identity::{BasicIdentity, Secp256k1Identity}, Agent};
 use icp_ledger::Subaccount;
 
 use crate::canister::sns_swap::{
@@ -131,6 +130,7 @@ fn TokenImage() -> impl IntoView {
 
                 let input = _target.dyn_ref::<HtmlInputElement>()?;
                 let file = input.files()?.get(0)?;
+
                 img_file.set(Some(FileWithUrl::new(file.clone().into())));
                 ctx.file.set(Some(FileWithUrl::new(file.into())));
             }
@@ -138,14 +138,11 @@ fn TokenImage() -> impl IntoView {
         })
     };
 
-    let file_input_ref = create_node_ref::<leptos::html::Input>();
+    let file_input_ref: NodeRef<html::Input> = create_node_ref::<leptos::html::Input>();
 
     let on_edit_click = move |_| {
         // Trigger the file input click
         if let Some(input) = file_input_ref.get() {
-            img_file.set(None);
-            ctx.file.set(None);
-            input.set_value("");
             input.click();
             // input.click();
         }
@@ -159,57 +156,46 @@ fn TokenImage() -> impl IntoView {
     };
 
     view! {
-        <div class="flex flex-col space-y-4  rounded-lg text-white">
+           <div class="flex flex-col space-y-4  rounded-lg text-white">
 
-            <div class="flex items-center space-x-4">
-                <div class= move || border_class()  >
-            <Show
-                    when=move || img_url.with(|u| u.is_none())
-                    fallback=move || {
-                        view! {
-                            <img
-                                class="object-conver h-full w-full rounded-full"
-                                src=move || img_url().unwrap()
-                            />
-                             <div class="absolute bottom-0 right-0 p-1 rounded-full bg-white ">
-                           <button on:click=on_edit_click class="w-4 h-4 flex items-center justify-center rounded-full bg-white" >
-                                 <img src="/img/edit.svg" class="bg-white w-4 h-4 rounded-full" />
-                           </button>
-                             </div>
-                        }
-                    }
-                >
+               <div class="flex items-center space-x-4">
+                   <div class= move || border_class()  >
 
-              <div class="flex items-center justify-center w-full h-full rounded-full">
-                        <span class="text-xs text-center text-gray-400 font-medium">"Add custom logo"</span>
-                    </div>
 
-                    <input type="file"
-                        node_ref=file_input_ref
-                        on:change=on_file_input
-                        id="dropzone-logo"
-                        accept="image/*"
-                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-                    <div class="absolute bottom-0 right-0 p-1 rounded-full bg-white ">
-                        <img src="/img/upload.svg" class="bg-white" />
-                    </div>
-                </Show>
+                       <div class="flex items-center justify-center w-full h-full rounded-full">
+                           <span class="text-xs text-center text-gray-400 font-medium">"Add custom logo"</span>
+                       </div>
 
-                </div>
-               /*  <div class="flex-1">
-                    <InputBox
-                        heading="Token name"
-                        placeholder="Add a name to your crypto currency"
-                        updater=set_token_name
-                        validator=non_empty_string_validator
-                    />
+                       <input type="file"
+                           node_ref=file_input_ref
+                           on:change=on_file_input
+                           id="dropzone-logo"
+                           accept="image/*"
+                       class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                       <div class="absolute bottom-0 right-0 p-1 rounded-full bg-white ">
+                           <img src="/img/upload.svg" class="bg-white" />
+                       </div>
+                   <Show when = move || img_url.with(|u| u.is_some()) fallback=|| view! {  <div></div> }>
+                       <img
+                       class="absolute top-0 object-conver h-full w-full rounded-full"
+                       src=move || img_url().unwrap()
+                       />
+                       <div class="absolute bottom-0 right-0 p-1 rounded-full bg-white ">
+                       <button on:click=on_edit_click class="w-4 h-4 flex items-center justify-center rounded-full bg-white" >
+                        <img src="/img/edit.svg" class="bg-white w-4 h-4 rounded-full" />
+                       </button>
+                       </div>
+                   </Show>
 
-                </div> */
+
+
+                   </div>
+
+
+               </div>
             </div>
-         </div>
-                 <ImgToPng img_file=img_file output_b64=logo_b64/>
-
-    }
+                    <ImgToPng img_file=img_file output_b64=logo_b64/>
+       }
 }
 
 // #[component]
@@ -358,6 +344,16 @@ pub struct CreateTokenCtx {
     file: RwSignal<Option<FileWithUrl>>,
 }
 
+impl CreateTokenCtx {
+    pub fn reset() {
+        let ctx: Self = expect_context();
+
+        ctx.file.set(None);
+        ctx.form_state.set(SnsFormState::default());
+        ctx.invalid_cnt.set(0);
+    }
+}
+
 fn parse_token_e8s(s: &str) -> Result<Tokens, String> {
     let e8s: u64 = s
         .replace('_', "")
@@ -377,6 +373,7 @@ pub fn CreateToken() -> impl IntoView {
         let id = cans.profile_details().username_or_principal();
         format!("/your-profile/{id}?tab=tokens")
     });
+
     let ctx: CreateTokenCtx = expect_context();
     // use_context().unwrap_or_else(|| {
     //     let ctx = CreateTokenCtx::default();
@@ -401,11 +398,14 @@ pub fn CreateToken() -> impl IntoView {
     */
     let set_total_distribution = move |total: String| {
         ctx.form_state.update(|f| {
-            (*f).try_update_total_distribution_tokens(parse_tokens(&format!("{} tokens", total)).unwrap());
+            (*f).try_update_total_distribution_tokens(
+                parse_tokens(&format!("{} tokens", total)).unwrap(),
+            );
         });
     };
 
     let create_action = create_action(move |&()| async move {
+        // return Ok(());
         let cans = auth_cans
             .get_untracked()
             .expect("Create token called without auth canisters");
@@ -421,10 +421,12 @@ pub fn CreateToken() -> impl IntoView {
         match res {
             Result7::Ok(c) => {
                 log::debug!("deployed canister {}", c.governance);
-                let participated = participate_in_swap(c.swap, tx_fee).await;
+                let participated: Result<(), ServerFnError> =
+                    participate_in_swap(c.swap, tx_fee).await;
                 if let Err(e) = participated {
                     return Err(format!("{e:?}"));
                 } else {
+                    ctx.form_state.set(SnsFormState::default());
                     log::debug!("participated in swap");
                 }
             }
@@ -441,7 +443,13 @@ pub fn CreateToken() -> impl IntoView {
         creating()
             || auth_cans.with(|c| c.is_none())
             || ctx.form_state.with(|f| f.logo_b64.is_none())
+            || ctx.form_state.with(|f: &SnsFormState| f.name.is_none())
+            || ctx
+                .form_state
+                .with(|f: &SnsFormState| f.description.is_none())
+            || ctx.form_state.with(|f| f.symbol.is_none())
             || ctx.invalid_cnt.get() != 0
+            || ctx.file.with(|f| f.is_none())
     });
 
     let create_act_value = create_action.value();
@@ -553,6 +561,7 @@ pub fn CreateToken() -> impl IntoView {
                     </div>
                     <TokenCreationPopup
                         creation_action=create_action
+                        img_url=Signal::derive(move || ctx.file.with(|f| f.clone()).unwrap().url.to_string())
                         token_name=Signal::derive(move || {
                             ctx.form_state.with(|f| f.name.clone()).unwrap_or_default()
                         })

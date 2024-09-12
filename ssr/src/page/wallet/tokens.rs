@@ -10,7 +10,10 @@ use crate::{
         infinite_scroller::{CursoredDataProvider, InfiniteScroller, KeyedData, PageEntry},
         title::Title,
     },
-    state::{auth::account_connected_reader, canisters::{authenticated_canisters, unauth_canisters, Canisters}},
+    state::{
+        auth::account_connected_reader,
+        canisters::{authenticated_canisters, unauth_canisters, Canisters},
+    },
     utils::{
         profile::propic_from_principal,
         token::{claim_tokens_from_first_neuron, token_metadata_by_root, TokenCans, TokenMetadata},
