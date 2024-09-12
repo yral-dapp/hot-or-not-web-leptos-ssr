@@ -4,19 +4,85 @@ use crate::{
         back_btn::BackButton, canisters_prov::WithAuthCans, spinner::FullScreenSpinner,
         title::Title,
     },
-    state::canisters::Canisters,
+    page::token::types,
+    state::canisters::{Canisters, CanistersAuthWire},
     utils::{
         token::{token_metadata_by_root, TokenMetadata},
         web::{copy_to_clipboard, paste_from_clipboard},
     },
 };
-use candid::{Nat, Principal};
+use candid::{Nat, Principal, Encode, Decode};
+use ic_agent::Agent;
 use leptos::*;
 use leptos_icons::*;
 use leptos_router::*;
 use leptos_use::use_event_listener;
+use server_fn::codec::Cbor;
 
 use super::TokenParams;
+
+use crate::consts::AGENT_URL;
+
+#[server(
+    input = Cbor
+)]
+async fn transfer_token_to_user_principal(
+    cans_wire: CanistersAuthWire,
+    destination_canister: Principal,
+    destination_principal: Principal,
+    ledger_canister: Principal,
+    root_canister: Principal,
+    amount: Nat,
+) -> Result<(), ServerFnError> {
+    let cans = cans_wire.canisters().unwrap();
+    let user_id = cans.identity();
+    let user_id = user_id.to_owned();
+    let user_principal = user_id.sender()?;
+    log::debug!("user_principal: {:?}", user_principal.to_string());
+
+    let agent = Agent::builder()
+        .with_url(AGENT_URL)
+        .with_identity(user_id)
+        .build()
+        .unwrap();
+    agent.fetch_root_key().await.unwrap();
+
+    let transfer_args = types::Transaction {
+        memo: Some(vec![0]),
+        amount,
+        fee: None,
+        from_subaccount: None,
+        to: types::Recipient {
+            owner: destination_principal,
+            subaccount: None,
+        },
+        created_at_time: None,
+    };
+    let res = agent
+        .update(
+            &ledger_canister,
+            "icrc1_transfer",
+        )
+        .with_arg(Encode!(&transfer_args).unwrap())
+        .call_and_wait()
+        .await
+        .unwrap();
+    let transfer_result: types::TransferResult = Decode!(&res, types::TransferResult).unwrap();
+    println!("transfer_result: {:?}", transfer_result);
+
+    let res = agent
+        .update(
+            &destination_canister,
+            "add_token",
+        )
+        .with_arg(candid::encode_one(root_canister).unwrap())
+        .call_and_wait()
+        .await
+        .unwrap();
+    println!("add_token res: {:?}", res);
+    
+    Ok(())
+}
 
 #[component]
 fn FormError<V: 'static>(#[prop(into)] res: Signal<Result<V, String>>) -> impl IntoView {
@@ -98,11 +164,11 @@ fn TokenTransferInner(
         let cans = cans.clone();
         async move {
             let destination = destination_res.get_untracked().unwrap().unwrap();
-            // let destination = cans
-            //     .get_individual_canister_by_user_principal(destination)
-            //     .await
-            //     .unwrap()
-            //     .unwrap();
+            let destination_canister = cans
+                .get_individual_canister_by_user_principal(destination)
+                .await
+                .unwrap()
+                .unwrap();
             let amt = amt_res.get_untracked().unwrap().unwrap();
 
             let user = cans.authenticated_user().await;
