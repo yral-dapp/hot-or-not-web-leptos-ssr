@@ -1,5 +1,5 @@
 use crate::{
-    canister::{individual_user_template::Result22, sns_root::ListSnsCanistersArg},
+    canister::{individual_user_template::Result22, sns_ledger::{TransferArg, Account}, sns_root::ListSnsCanistersArg},
     component::{
         back_btn::BackButton, canisters_prov::WithAuthCans, spinner::FullScreenSpinner,
         title::Title,
@@ -38,8 +38,34 @@ async fn transfer_token_to_user_principal(
     let user_id = cans.identity();
     // let user_id = user_id.to_owned();
     // let user_principal = user_id.sender()?;
-    let agent = cans.get_agent().await;
-    log::debug!("user_principal: {:?}", user_principal.to_string());
+    // let agent = cans.agent.get_agent().await;
+    // let user_principal = agent.get_principal()?;
+    // log::debug!("user_principal: {:?}", user_principal.to_string());
+    let sns_ledger = cans.sns_ledger(ledger_canister).await;
+    let res = sns_ledger.icrc_1_transfer(TransferArg {
+        memo: Some(serde_bytes::ByteBuf::from(vec![0])),
+        amount: amount.clone(),
+        fee: None,
+        from_subaccount: None,
+        to: Account {
+            owner: destination_principal,
+            subaccount: None,
+        },
+        created_at_time: None,
+    }).await.unwrap();
+    log::debug!("transfer res: {:?}", res);
+    let res = sns_ledger.icrc_1_transfer(TransferArg {
+        memo: Some(serde_bytes::ByteBuf::from(vec![1])),
+        amount: Nat::from(1 as u64),
+        fee: None,
+        from_subaccount: None,
+        to: Account {
+            owner: destination_canister,
+            subaccount: None,
+        },
+        created_at_time: None,
+    }).await.unwrap();
+    log::debug!("transfer res: {:?}", res);
 
     // let agent = Agent::builder()
     //     .with_url(AGENT_URL)
@@ -48,39 +74,43 @@ async fn transfer_token_to_user_principal(
     //     .unwrap();
     // agent.fetch_root_key().await.unwrap();
 
-    let transfer_args = types::Transaction {
-        memo: Some(vec![0]),
-        amount,
-        fee: None,
-        from_subaccount: None,
-        to: types::Recipient {
-            owner: destination_principal,
-            subaccount: None,
-        },
-        created_at_time: None,
-    };
-    let res = agent
-        .update(
-            &ledger_canister,
-            "icrc1_transfer",
-        )
-        .with_arg(Encode!(&transfer_args).unwrap())
-        .call_and_wait()
-        .await
-        .unwrap();
-    let transfer_result: types::TransferResult = Decode!(&res, types::TransferResult).unwrap();
-    println!("transfer_result: {:?}", transfer_result);
+    // let transfer_args = types::Transaction {
+    //     memo: Some(vec![0]),
+    //     amount,
+    //     fee: None,
+    //     from_subaccount: None,
+    //     to: types::Recipient {
+    //         owner: destination_principal,
+    //         subaccount: None,
+    //     },
+    //     created_at_time: None,
+    // };
+    // let res = agent
+    //     .update(
+    //         &ledger_canister,
+    //         "icrc1_transfer",
+    //     )
+    //     .with_arg(Encode!(&transfer_args).unwrap())
+    //     .call_and_wait()
+    //     .await
+    //     .unwrap();
+    // let transfer_result: types::TransferResult = Decode!(&res, types::TransferResult).unwrap();
+    // println!("transfer_result: {:?}", transfer_result);
 
-    let res = agent
-        .update(
-            &destination_canister,
-            "add_token",
-        )
-        .with_arg(candid::encode_one(root_canister).unwrap())
-        .call_and_wait()
-        .await
-        .unwrap();
+    let destination_canister = cans.individual_user(destination_canister).await;
+    let res = destination_canister.add_token(root_canister).await.unwrap();
     println!("add_token res: {:?}", res);
+
+    // let res = agent
+    //     .update(
+    //         &destination_canister,
+    //         "add_token",
+    //     )
+    //     .with_arg(candid::encode_one(root_canister).unwrap())
+    //     .call_and_wait()
+    //     .await
+    //     .unwrap();
+    // println!("add_token res: {:?}", res);
     
     Ok(())
 }
