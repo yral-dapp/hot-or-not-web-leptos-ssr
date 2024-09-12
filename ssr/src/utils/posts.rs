@@ -54,7 +54,7 @@ impl FetchCursor {
     }
 }
 
-#[derive(Clone, PartialEq, Debug, Hash, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Ord, PartialOrd, Debug, Hash, Eq, Serialize, Deserialize)]
 pub struct PostDetails {
     pub canister_id: Principal, // canister id of the publishing canister.
     pub post_id: u64,

@@ -1,3 +1,4 @@
+use crate::page::view_profile_redirect::ProfileInfo;
 use crate::{
     component::{base_route::BaseRoute, nav::NavBar},
     error_template::{AppError, ErrorTemplate},
@@ -29,6 +30,7 @@ use crate::{
     },
     utils::event_streaming::EventHistory,
 };
+
 use leptos::*;
 use leptos_meta::*;
 use leptos_router::*;
@@ -161,7 +163,8 @@ pub fn App() -> impl IntoView {
                         <Route path="/token/info/:token_root" view=TokenInfo/>
                         <Route path="/token/transfer/:token_root" view=TokenTransfer/>
                         <Route path="/tokens" view=Tokens/>
-                    </Route>
+                    <Route path="/your-profile" view=ProfileInfo />
+        </Route>
                 </Routes>
 
             </main>

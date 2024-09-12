@@ -2722,6 +2722,7 @@ dependencies = [
  "log",
  "once_cell",
  "openidconnect",
+ "priority-queue",
  "prost 0.13.2",
  "rand_chacha",
  "redb",
@@ -4859,6 +4860,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "353e1ca18966c16d9deb1c69278edbc5f194139612772bd9537af60ac231e1e6"
 dependencies = [
  "elliptic-curve",
+]
+
+[[package]]
+name = "priority-queue"
+version = "2.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "560bcab673ff7f6ca9e270c17bf3affd8a05e3bd9207f123b0d45076fd8197e8"
+dependencies = [
+ "autocfg",
+ "equivalent",
+ "indexmap 2.5.0",
 ]
 
 [[package]]
