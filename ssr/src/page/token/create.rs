@@ -26,7 +26,7 @@ use ic_agent::{
     Agent,
 };
 use ic_base_types::PrincipalId;
-use icp_ledger::Subaccount;
+use icp_ledger::{AccountIdentifier, Subaccount};
 
 use crate::canister::sns_swap::{
     NewSaleTicketRequest, NewSaleTicketResponse, RefreshBuyerTokensRequest,
@@ -37,7 +37,7 @@ use crate::consts::{AGENT_URL, ICP_LEDGER_CANISTER_ID};
 const ICP_TX_FEE: u64 = 10000;
 
 #[server]
-async fn is_server_available() -> Result<bool, ServerFnError>  {
+async fn is_server_available() -> Result<(bool, AccountIdentifier), ServerFnError>  {
     // let admin_id_pem: String =
     //     env::var("BACKEND_ADMIN_IDENTITY").expect("`BACKEND_ADMIN_IDENTITY` is required!");
     // let admin_id_pem_by = admin_id_pem.as_bytes();
@@ -68,10 +68,11 @@ async fn is_server_available() -> Result<bool, ServerFnError>  {
         .unwrap();
     let balance: Nat = Decode!(&balance_res, Nat).unwrap();
     println!("balance: {:?}", balance);
+    let acc_id = AccountIdentifier::new(PrincipalId(admin_principal), None);
     if balance >= Nat::from(1000000 + ICP_TX_FEE) { // amount we participate + icp tx fee
-        Ok(true)
+        Ok((true, acc_id))
     } else {
-        Ok(false)
+        Ok((false, acc_id))
     }
 }
 
@@ -489,7 +490,8 @@ pub fn CreateToken() -> impl IntoView {
     
             let create_sns = sns_config.try_convert_to_executed_sns_init()?;
             let server_available = is_server_available().await.map_err(|e| e.to_string())?;
-            if !server_available {
+            log::debug!("Server details: {}, {}", server_available.0, server_available.1);
+            if !server_available.0 {
                 return Err("Server is not available".to_string());
             }
             // let res = cans

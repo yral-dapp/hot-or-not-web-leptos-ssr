@@ -8,9 +8,7 @@ use crate::{
     component::{
         back_btn::BackButton, canisters_prov::WithAuthCans, spinner::FullScreenSpinner,
         title::Title,
-    },
-    state::canisters::Canisters,
-    utils::token::{token_metadata_by_root, TokenMetadata},
+    }, page::wallet::tokens::nat_to_human, state::canisters::Canisters, utils::token::{token_metadata_by_root, TokenMetadata}
 };
 
 #[component]
@@ -68,7 +66,7 @@ fn TokenInfoInner(root: Principal, meta: TokenMetadata) -> impl IntoView {
                         <div class="flex flex-row justify-between border-b p-1 border-white items-center">
                             <span class="text-xs md:text-sm text-green-500">Balance</span>
                             <span class="text-lg md:text-xl text-white">
-                                <span class="font-bold">{format!("{} ", meta.balance)}</span>
+                                <span class="font-bold">{format!("{} ", nat_to_human(meta.balance))}</span>
                                 {meta.symbol}
                             </span>
                         </div>

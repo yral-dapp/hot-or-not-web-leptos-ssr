@@ -1,4 +1,4 @@
-use candid::Principal;
+use candid::{Principal, Nat};
 use ic_agent::AgentError;
 
 use crate::{
@@ -56,6 +56,10 @@ impl CursoredDataProvider for TokenRootList {
             end: list_end,
         })
     }
+}
+
+pub fn nat_to_human(balance: Nat) -> String {
+    (balance.clone() / 10u64.pow(8)).to_string().replace("_", ",")
 }
 
 async fn token_metadata_or_fallback(
@@ -140,7 +144,7 @@ pub fn TokenView(
                     <span class="text-white truncate">{info.name.clone()}</span>
                 </div>
                 <div class="flex flex-row gap-2 items-center justify-self-end text-base text-white">
-                    <span class="truncate">{format!("{} {}", (info.balance.clone() / 10u64.pow(8)).to_string().replace("_", ","), info.symbol)}</span>
+                    <span class="truncate">{format!("{} {}", nat_to_human(info.balance.clone()), info.symbol)}</span>
                     <div class="flex items-center justify-center w-8 h-8 bg-white/15 rounded-full">
                         <Icon icon=icondata::BsSend/>
                     </div>

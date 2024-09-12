@@ -1,11 +1,11 @@
 use crate::{
-    canister::individual_user_template::Result22,
+    canister::{individual_user_template::Result22, sns_root::ListSnsCanistersArg},
     component::{
         back_btn::BackButton, canisters_prov::WithAuthCans, spinner::FullScreenSpinner,
         title::Title,
     },
-    page::token::types,
-    state::canisters::{Canisters, CanistersAuthWire},
+    page::{token::types, wallet::tokens::nat_to_human},
+    state::canisters::{authenticated_canisters, Canisters, CanistersAuthWire},
     utils::{
         token::{token_metadata_by_root, TokenMetadata},
         web::{copy_to_clipboard, paste_from_clipboard},
@@ -36,16 +36,17 @@ async fn transfer_token_to_user_principal(
 ) -> Result<(), ServerFnError> {
     let cans = cans_wire.canisters().unwrap();
     let user_id = cans.identity();
-    let user_id = user_id.to_owned();
-    let user_principal = user_id.sender()?;
+    // let user_id = user_id.to_owned();
+    // let user_principal = user_id.sender()?;
+    let agent = cans.get_agent().await;
     log::debug!("user_principal: {:?}", user_principal.to_string());
 
-    let agent = Agent::builder()
-        .with_url(AGENT_URL)
-        .with_identity(user_id)
-        .build()
-        .unwrap();
-    agent.fetch_root_key().await.unwrap();
+    // let agent = Agent::builder()
+    //     .with_url(AGENT_URL)
+    //     .with_identity(user_id)
+    //     .build()
+    //     .unwrap();
+    // agent.fetch_root_key().await.unwrap();
 
     let transfer_args = types::Transaction {
         memo: Some(vec![0]),
@@ -160,8 +161,11 @@ fn TokenTransferInner(
         }
     });
 
+    let auth_cans_wire = authenticated_canisters();
+
     let send_action = create_action(move |&()| {
         let cans = cans.clone();
+        let auth_cans_wire = auth_cans_wire.clone();
         async move {
             let destination = destination_res.get_untracked().unwrap().unwrap();
             let destination_canister = cans
@@ -169,18 +173,34 @@ fn TokenTransferInner(
                 .await
                 .unwrap()
                 .unwrap();
-            let amt = amt_res.get_untracked().unwrap().unwrap();
+            // let amt = amt_res.get_untracked().unwrap().unwrap();
 
-            let user = cans.authenticated_user().await;
-            let res = user
-                .transfer_token_to_user_canister(root, destination, None, amt)
-                .await
-                .map_err(|e| e.to_string())?;
-            if let Result22::Err(e) = res {
-                return Err(format!("{e:?}"));
-            }
+            // let user = cans.authenticated_user().await;
+            // let res = user
+            //     .transfer_token_to_user_canister(root, destination, None, amt)
+            //     .await
+            //     .map_err(|e| e.to_string())?;
+            // if let Result22::Err(e) = res {
+            //     return Err(format!("{e:?}"));
+            // }
 
-            Ok(())
+            // Ok(())
+
+            let root_canister = cans.sns_root(root.clone()).await;
+            let sns_cans = root_canister.list_sns_canisters(ListSnsCanistersArg {}).await.unwrap();
+            let ledger_canister = sns_cans.ledger.unwrap();
+            log::debug!("ledger_canister: {:?}", ledger_canister);
+
+            let res = transfer_token_to_user_principal(
+                auth_cans_wire.wait_untracked().await.unwrap(),
+                destination_canister,
+                destination,
+                ledger_canister,
+                root,
+                amt_res.get_untracked().unwrap().unwrap(),
+            ).await;
+            log::debug!("transfer_token_to_user_principal res: {:?}", res);
+            res
         }
     });
 
@@ -201,7 +221,7 @@ fn TokenTransferInner(
                 <div class="flex flex-col w-full gap-2 items-center">
                     <div class="flex flex-row justify-between w-full text-sm md:text-base text-white">
                         <span>Source:</span>
-                        <span>{format!("{} {}", info.balance, info.symbol)}</span>
+                        <span>{format!("{} {}", nat_to_human(info.balance), info.symbol)}</span>
                     </div>
                     <div class="flex flex-row gap-2 w-full items-center">
                         <p class="text-sm md:text-md text-white/80">{source_addr.to_string()}</p>
