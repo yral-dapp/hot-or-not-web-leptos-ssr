@@ -1,5 +1,9 @@
 use crate::{
-    canister::{individual_user_template::Result22, sns_ledger::{TransferArg, Account}, sns_root::ListSnsCanistersArg},
+    canister::{
+        individual_user_template::Result22,
+        sns_ledger::{Account, TransferArg},
+        sns_root::ListSnsCanistersArg,
+    },
     component::{
         back_btn::BackButton, canisters_prov::WithAuthCans, spinner::FullScreenSpinner,
         title::Title,
@@ -11,7 +15,7 @@ use crate::{
         web::{copy_to_clipboard, paste_from_clipboard},
     },
 };
-use candid::{Nat, Principal, Encode, Decode};
+use candid::{Decode, Encode, Nat, Principal};
 use ic_agent::Agent;
 use leptos::*;
 use leptos_icons::*;
@@ -42,29 +46,35 @@ async fn transfer_token_to_user_principal(
     // let user_principal = agent.get_principal()?;
     // log::debug!("user_principal: {:?}", user_principal.to_string());
     let sns_ledger = cans.sns_ledger(ledger_canister).await;
-    let res = sns_ledger.icrc_1_transfer(TransferArg {
-        memo: Some(serde_bytes::ByteBuf::from(vec![0])),
-        amount: amount.clone(),
-        fee: None,
-        from_subaccount: None,
-        to: Account {
-            owner: destination_principal,
-            subaccount: None,
-        },
-        created_at_time: None,
-    }).await.unwrap();
+    let res = sns_ledger
+        .icrc_1_transfer(TransferArg {
+            memo: Some(serde_bytes::ByteBuf::from(vec![0])),
+            amount: amount.clone(),
+            fee: None,
+            from_subaccount: None,
+            to: Account {
+                owner: destination_principal,
+                subaccount: None,
+            },
+            created_at_time: None,
+        })
+        .await
+        .unwrap();
     log::debug!("transfer res: {:?}", res);
-    let res = sns_ledger.icrc_1_transfer(TransferArg {
-        memo: Some(serde_bytes::ByteBuf::from(vec![1])),
-        amount: Nat::from(1 as u64),
-        fee: None,
-        from_subaccount: None,
-        to: Account {
-            owner: destination_canister,
-            subaccount: None,
-        },
-        created_at_time: None,
-    }).await.unwrap();
+    let res = sns_ledger
+        .icrc_1_transfer(TransferArg {
+            memo: Some(serde_bytes::ByteBuf::from(vec![1])),
+            amount: Nat::from(1 as u64),
+            fee: None,
+            from_subaccount: None,
+            to: Account {
+                owner: destination_canister,
+                subaccount: None,
+            },
+            created_at_time: None,
+        })
+        .await
+        .unwrap();
     log::debug!("transfer res: {:?}", res);
 
     // let agent = Agent::builder()
@@ -111,7 +121,7 @@ async fn transfer_token_to_user_principal(
     //     .await
     //     .unwrap();
     // println!("add_token res: {:?}", res);
-    
+
     Ok(())
 }
 
@@ -217,7 +227,10 @@ fn TokenTransferInner(
             // Ok(())
 
             let root_canister = cans.sns_root(root.clone()).await;
-            let sns_cans = root_canister.list_sns_canisters(ListSnsCanistersArg {}).await.unwrap();
+            let sns_cans = root_canister
+                .list_sns_canisters(ListSnsCanistersArg {})
+                .await
+                .unwrap();
             let ledger_canister = sns_cans.ledger.unwrap();
             log::debug!("ledger_canister: {:?}", ledger_canister);
 
@@ -228,7 +241,8 @@ fn TokenTransferInner(
                 ledger_canister,
                 root,
                 amt_res.get_untracked().unwrap().unwrap(),
-            ).await;
+            )
+            .await;
             log::debug!("transfer_token_to_user_principal res: {:?}", res);
             res
         }
@@ -312,7 +326,8 @@ pub fn TokenTransfer() -> impl IntoView {
                     return Ok::<_, ServerFnError>(None);
                 };
                 let user = cans.user_canister();
-                let meta = token_metadata_by_root(&cans, user, user_principal, params.token_root).await?;
+                let meta =
+                    token_metadata_by_root(&cans, user, user_principal, params.token_root).await?;
                 Ok(meta.map(|m| (m, params.token_root)))
             }
         })

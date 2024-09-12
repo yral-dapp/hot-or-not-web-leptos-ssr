@@ -47,7 +47,8 @@ pub async fn token_metadata_by_root<const A: bool>(
     let Some(ledger) = sns_cans.ledger else {
         return Ok(None);
     };
-    let metadata = get_token_metadata(cans, user_canister, user_principal, governance, ledger).await?;
+    let metadata =
+        get_token_metadata(cans, user_canister, user_principal, governance, ledger).await?;
 
     Ok(Some(metadata))
 }

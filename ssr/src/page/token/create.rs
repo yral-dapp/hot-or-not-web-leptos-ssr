@@ -8,14 +8,19 @@ use crate::{
         title::Title,
     },
     page::token::{sns_form::SnsFormSettings, types},
-    state::canisters::{auth_canisters_store, authenticated_canisters, AuthCansResource, CanistersAuthWire},
+    state::canisters::{
+        auth_canisters_store, authenticated_canisters, AuthCansResource, CanistersAuthWire,
+    },
     utils::web::FileWithUrl,
 };
 use leptos::*;
 use leptos_router::*;
 
 use server_fn::codec::Cbor;
-use sns_validation::{humanize::parse_tokens, pbs::{nns_pb::Tokens, sns_pb::SnsInitPayload}};
+use sns_validation::{
+    humanize::parse_tokens,
+    pbs::{nns_pb::Tokens, sns_pb::SnsInitPayload},
+};
 
 use super::{popups::TokenCreationPopup, sns_form::SnsFormState};
 
@@ -37,7 +42,7 @@ use crate::consts::{AGENT_URL, ICP_LEDGER_CANISTER_ID};
 const ICP_TX_FEE: u64 = 10000;
 
 #[server]
-async fn is_server_available() -> Result<(bool, AccountIdentifier), ServerFnError>  {
+async fn is_server_available() -> Result<(bool, AccountIdentifier), ServerFnError> {
     // let admin_id_pem: String =
     //     env::var("BACKEND_ADMIN_IDENTITY").expect("`BACKEND_ADMIN_IDENTITY` is required!");
     // let admin_id_pem_by = admin_id_pem.as_bytes();
@@ -46,7 +51,8 @@ async fn is_server_available() -> Result<(bool, AccountIdentifier), ServerFnErro
     let admin_id = Secp256k1Identity::from_pem_file(
         "/home/debjit/hot-or-not-backend-canister/scripts/canisters/docker/local-admin.pem"
             .to_string(),
-    ).expect("Invalid `BACKEND_ADMIN_IDENTITY`");
+    )
+    .expect("Invalid `BACKEND_ADMIN_IDENTITY`");
     let admin_principal = admin_id.sender().unwrap();
     log::debug!("admin_principal: {:?}", admin_principal.to_string());
 
@@ -62,14 +68,21 @@ async fn is_server_available() -> Result<(bool, AccountIdentifier), ServerFnErro
             &Principal::from_str(ICP_LEDGER_CANISTER_ID).unwrap(),
             "icrc1_balance_of",
         )
-        .with_arg(candid::encode_one(types::Icrc1BalanceOfArg{owner: admin_principal, subaccount: None}).unwrap())
+        .with_arg(
+            candid::encode_one(types::Icrc1BalanceOfArg {
+                owner: admin_principal,
+                subaccount: None,
+            })
+            .unwrap(),
+        )
         .call()
         .await
         .unwrap();
     let balance: Nat = Decode!(&balance_res, Nat).unwrap();
     println!("balance: {:?}", balance);
     let acc_id = AccountIdentifier::new(PrincipalId(admin_principal), None);
-    if balance >= Nat::from(1000000 + ICP_TX_FEE) { // amount we participate + icp tx fee
+    if balance >= Nat::from(1000000 + ICP_TX_FEE) {
+        // amount we participate + icp tx fee
         Ok((true, acc_id))
     } else {
         Ok((false, acc_id))
@@ -161,7 +174,10 @@ async fn participate_in_swap(swap_canister: Principal) -> Result<(), ServerFnErr
 #[server(
     input = Cbor
 )]
-async fn deploy_cdao_canisters(cans_wire: CanistersAuthWire, create_sns: SnsInitPayload) -> Result<(), ServerFnError> {
+async fn deploy_cdao_canisters(
+    cans_wire: CanistersAuthWire,
+    create_sns: SnsInitPayload,
+) -> Result<(), ServerFnError> {
     let cans = cans_wire.canisters().unwrap();
     log::debug!("deploying canisters {:?}", cans.user_canister().to_string());
     let res = cans
@@ -485,12 +501,16 @@ pub fn CreateToken() -> impl IntoView {
                 .expect("Create token called without auth canisters");
             let sns_form = ctx.form_state.get_untracked();
             let sns_config = sns_form.try_into_config(&cans)?;
-    
+
             // let auth_cans_wire = ;
-    
+
             let create_sns = sns_config.try_convert_to_executed_sns_init()?;
             let server_available = is_server_available().await.map_err(|e| e.to_string())?;
-            log::debug!("Server details: {}, {}", server_available.0, server_available.1);
+            log::debug!(
+                "Server details: {}, {}",
+                server_available.0,
+                server_available.1
+            );
             if !server_available.0 {
                 return Err("Server is not available".to_string());
             }
@@ -512,18 +532,18 @@ pub fn CreateToken() -> impl IntoView {
             //         return Err(format!("{e:?}"));
             //     }
             // };
-    
+
             deploy_cdao_canisters(auth_cans_wire.wait_untracked().await.unwrap(), create_sns)
                 .await
                 .map_err(|e| format!("{e:?}"))
             // let cdao_deploy_res = auth_cans.derive(
-            //     || (), 
+            //     || (),
             //     move |cans_wire, _| {
             //         let create_sns = create_sns.clone();
             //         async move {
             //             let cans_wire = cans_wire.unwrap();
-                        
-            //             res                
+
+            //             res
             //         }
             //     }
             // );

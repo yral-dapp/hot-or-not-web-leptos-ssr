@@ -1,4 +1,4 @@
-use candid::{Principal, Nat};
+use candid::{Nat, Principal};
 use ic_agent::AgentError;
 
 use crate::{
@@ -59,7 +59,9 @@ impl CursoredDataProvider for TokenRootList {
 }
 
 pub fn nat_to_human(balance: Nat) -> String {
-    (balance.clone() / 10u64.pow(8)).to_string().replace("_", ",")
+    (balance.clone() / 10u64.pow(8))
+        .to_string()
+        .replace("_", ",")
 }
 
 async fn token_metadata_or_fallback(
@@ -98,19 +100,18 @@ pub fn unlock_tokens(token_root: Principal) {
         move |cans_wire, _| async move {
             let cans = cans_wire?.canisters()?;
             let root_canister = cans.sns_root(token_root).await;
-            let token_cans = root_canister.list_sns_canisters(ListSnsCanistersArg {}).await?;
+            let token_cans = root_canister
+                .list_sns_canisters(ListSnsCanistersArg {})
+                .await?;
             let governance = token_cans.governance;
             if governance.is_none() {
                 log::debug!("No governance canister found for token");
                 return Ok(());
             }
             // let token = token.clone();
-            let claim_result = claim_tokens_from_first_neuron(
-                &cans,
-                cans.user_principal(),
-                governance.unwrap(),
-            )
-            .await;
+            let claim_result =
+                claim_tokens_from_first_neuron(&cans, cans.user_principal(), governance.unwrap())
+                    .await;
             if claim_result.is_err() {
                 leptos::logging::log!(
                     "Failed to claim tokens from first neuron: {:?}",
@@ -140,7 +141,9 @@ pub fn TokenView(
     unlock_tokens(token_root);
     let info = create_resource(
         || (),
-        move |_| token_metadata_or_fallback(cans.clone(), user_canister, user_principal, token_root),
+        move |_| {
+            token_metadata_or_fallback(cans.clone(), user_canister, user_principal, token_root)
+        },
     );
 
     view! {

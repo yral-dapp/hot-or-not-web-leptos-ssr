@@ -3,10 +3,13 @@ use leptos::*;
 use leptos_icons::*;
 
 use crate::{
-    component::{bullet_loader::BulletLoader, token_confetti_symbol::TokenConfettiSymbol}, page::wallet::tokens::nat_to_human, state::{
+    component::{bullet_loader::BulletLoader, token_confetti_symbol::TokenConfettiSymbol},
+    page::wallet::tokens::nat_to_human,
+    state::{
         auth::account_connected_reader,
         canisters::{authenticated_canisters, unauth_canisters},
-    }, utils::token::{claim_tokens_from_first_neuron, get_token_metadata, TokenCans}
+    },
+    utils::token::{claim_tokens_from_first_neuron, get_token_metadata, TokenCans},
 };
 
 #[component]
@@ -25,12 +28,9 @@ pub fn unlock_tokens(token: TokenCans) {
         move |cans_wire, _| async move {
             let cans = cans_wire?.canisters()?;
             // let token = token.clone();
-            let claim_result = claim_tokens_from_first_neuron(
-                &cans,
-                cans.user_principal(),
-                token.governance,
-            )
-            .await;
+            let claim_result =
+                claim_tokens_from_first_neuron(&cans, cans.user_principal(), token.governance)
+                    .await;
             if claim_result.is_err() {
                 leptos::logging::log!(
                     "Failed to claim tokens from first neuron: {:?}",
@@ -50,15 +50,25 @@ pub fn unlock_tokens(token: TokenCans) {
 }
 
 #[component]
-fn TokenView(user_canister: Principal, user_principal: Principal, token: TokenCans) -> impl IntoView {
+fn TokenView(
+    user_canister: Principal,
+    user_principal: Principal,
+    token: TokenCans,
+) -> impl IntoView {
     unlock_tokens(token.clone());
 
     let token_info = create_resource(
         || (),
         move |_| async move {
             let cans = unauth_canisters();
-            let metadata =
-                get_token_metadata(&cans, user_canister, user_principal, token.governance, token.ledger).await?;
+            let metadata = get_token_metadata(
+                &cans,
+                user_canister,
+                user_principal,
+                token.governance,
+                token.ledger,
+            )
+            .await?;
 
             Ok::<_, ServerFnError>(metadata)
         },

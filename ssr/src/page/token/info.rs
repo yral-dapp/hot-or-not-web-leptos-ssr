@@ -8,7 +8,10 @@ use crate::{
     component::{
         back_btn::BackButton, canisters_prov::WithAuthCans, spinner::FullScreenSpinner,
         title::Title,
-    }, page::wallet::tokens::nat_to_human, state::canisters::Canisters, utils::token::{token_metadata_by_root, TokenMetadata}
+    },
+    page::wallet::tokens::nat_to_human,
+    state::canisters::Canisters,
+    utils::token::{token_metadata_by_root, TokenMetadata},
 };
 
 #[component]
@@ -105,7 +108,8 @@ pub fn TokenInfo() -> impl IntoView {
                 };
                 let user = cans.user_canister();
                 let user_principal = cans.user_principal();
-                let meta = token_metadata_by_root(&cans, user, user_principal, params.token_root).await?;
+                let meta =
+                    token_metadata_by_root(&cans, user, user_principal, params.token_root).await?;
                 Ok(meta.map(|m| (m, params.token_root)))
             }
         })

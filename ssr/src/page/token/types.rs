@@ -36,6 +36,6 @@ pub enum CustomTransferError {
 
 #[derive(CandidType, Deserialize)]
 pub struct Icrc1BalanceOfArg {
-  pub owner: Principal,
-  pub  subaccount: Option<serde_bytes::ByteBuf>,
+    pub owner: Principal,
+    pub subaccount: Option<serde_bytes::ByteBuf>,
 }
