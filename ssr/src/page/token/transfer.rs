@@ -1,6 +1,5 @@
 use crate::{
     canister::{
-        individual_user_template::Result22,
         sns_ledger::{Account, TransferArg},
         sns_root::ListSnsCanistersArg,
     },
@@ -8,15 +7,14 @@ use crate::{
         back_btn::BackButton, canisters_prov::WithAuthCans, spinner::FullScreenSpinner,
         title::Title,
     },
-    page::{token::types, wallet::tokens::nat_to_human},
+    page::wallet::tokens::nat_to_human,
     state::canisters::{authenticated_canisters, Canisters, CanistersAuthWire},
     utils::{
         token::{token_metadata_by_root, TokenMetadata},
         web::{copy_to_clipboard, paste_from_clipboard},
     },
 };
-use candid::{Decode, Encode, Nat, Principal};
-use ic_agent::Agent;
+use candid::{Nat, Principal};
 use leptos::*;
 use leptos_icons::*;
 use leptos_router::*;
@@ -24,8 +22,6 @@ use leptos_use::use_event_listener;
 use server_fn::codec::Cbor;
 
 use super::TokenParams;
-
-use crate::consts::AGENT_URL;
 
 #[server(
     input = Cbor
@@ -39,7 +35,6 @@ async fn transfer_token_to_user_principal(
     amount: Nat,
 ) -> Result<(), ServerFnError> {
     let cans = cans_wire.canisters().unwrap();
-    let user_id = cans.identity();
     // let user_id = user_id.to_owned();
     // let user_principal = user_id.sender()?;
     // let agent = cans.agent.get_agent().await;
@@ -64,7 +59,7 @@ async fn transfer_token_to_user_principal(
     let res = sns_ledger
         .icrc_1_transfer(TransferArg {
             memo: Some(serde_bytes::ByteBuf::from(vec![1])),
-            amount: Nat::from(1 as u64),
+            amount: Nat::from(1_u64),
             fee: None,
             from_subaccount: None,
             to: Account {
@@ -226,7 +221,7 @@ fn TokenTransferInner(
 
             // Ok(())
 
-            let root_canister = cans.sns_root(root.clone()).await;
+            let root_canister = cans.sns_root(root).await;
             let sns_cans = root_canister
                 .list_sns_canisters(ListSnsCanistersArg {})
                 .await
@@ -325,9 +320,8 @@ pub fn TokenTransfer() -> impl IntoView {
                 let Ok(params) = params else {
                     return Ok::<_, ServerFnError>(None);
                 };
-                let user = cans.user_canister();
-                let meta =
-                    token_metadata_by_root(&cans, user, user_principal, params.token_root).await?;
+                // let user = cans.user_canister();
+                let meta = token_metadata_by_root(&cans, user_principal, params.token_root).await?;
                 Ok(meta.map(|m| (m, params.token_root)))
             }
         })

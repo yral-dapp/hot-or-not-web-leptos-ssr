@@ -50,25 +50,15 @@ pub fn unlock_tokens(token: TokenCans) {
 }
 
 #[component]
-fn TokenView(
-    user_canister: Principal,
-    user_principal: Principal,
-    token: TokenCans,
-) -> impl IntoView {
+fn TokenView(user_principal: Principal, token: TokenCans) -> impl IntoView {
     unlock_tokens(token.clone());
 
     let token_info = create_resource(
         || (),
         move |_| async move {
             let cans = unauth_canisters();
-            let metadata = get_token_metadata(
-                &cans,
-                user_canister,
-                user_principal,
-                token.governance,
-                token.ledger,
-            )
-            .await?;
+            let metadata =
+                get_token_metadata(&cans, user_principal, token.governance, token.ledger).await?;
 
             Ok::<_, ServerFnError>(metadata)
         },
@@ -144,7 +134,7 @@ pub fn ProfileTokens(user_canister: Principal, user_principal: Principal) -> imp
                 let empty = tokens.is_empty();
                 view! {
                     {tokens.into_iter().map(|token| view! {
-                        <TokenView user_canister user_principal token/>
+                        <TokenView user_principal token/>
                     }).collect_view()}
                     <Show when=move || empty>
                         <CreateYourToken/>

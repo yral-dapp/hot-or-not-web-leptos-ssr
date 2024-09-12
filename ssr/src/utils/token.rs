@@ -6,10 +6,10 @@ use serde::{Deserialize, Serialize};
 use crate::{
     canister::{
         sns_governance::{
-            Account, Amount, Command, Command1, Disburse, DissolveState, GetMetadataArg,
-            ListNeurons, ManageNeuron, Neuron,
+            Account, Amount, Command, Disburse, DissolveState, GetMetadataArg, ListNeurons,
+            ManageNeuron, Neuron,
         },
-        sns_ledger::{Account as LedgerAccount, TransferArg, TransferResult},
+        sns_ledger::Account as LedgerAccount,
         sns_root::ListSnsCanistersArg,
     },
     state::canisters::Canisters,
@@ -34,7 +34,6 @@ pub struct TokenCans {
 
 pub async fn token_metadata_by_root<const A: bool>(
     cans: &Canisters<A>,
-    user_canister: Principal,
     user_principal: Principal,
     token_root: Principal,
 ) -> Result<Option<TokenMetadata>, ServerFnError> {
@@ -47,15 +46,13 @@ pub async fn token_metadata_by_root<const A: bool>(
     let Some(ledger) = sns_cans.ledger else {
         return Ok(None);
     };
-    let metadata =
-        get_token_metadata(cans, user_canister, user_principal, governance, ledger).await?;
+    let metadata = get_token_metadata(cans, user_principal, governance, ledger).await?;
 
     Ok(Some(metadata))
 }
 
 pub async fn get_token_metadata<const A: bool>(
     cans: &Canisters<A>,
-    user_canister: Principal,
     user_principal: Principal,
     governance: Principal,
     ledger: Principal,

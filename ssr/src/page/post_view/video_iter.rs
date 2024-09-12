@@ -108,7 +108,6 @@ impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
         #[cfg(feature = "hydrate")]
         {
             use crate::utils::ml_feed::ml_feed_grpcweb::MLFeed;
-            use leptos::expect_context;
 
             let ml_feed: MLFeed = expect_context();
 

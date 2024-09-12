@@ -8,9 +8,7 @@ use crate::{
         title::Title,
     },
     page::token::{sns_form::SnsFormSettings, types},
-    state::canisters::{
-        auth_canisters_store, authenticated_canisters, AuthCansResource, CanistersAuthWire,
-    },
+    state::canisters::{auth_canisters_store, authenticated_canisters, CanistersAuthWire},
     utils::web::FileWithUrl,
 };
 use leptos::*;
@@ -26,10 +24,7 @@ use super::{popups::TokenCreationPopup, sns_form::SnsFormState};
 
 use candid::{Decode, Encode, Nat, Principal};
 use ic_agent::Identity;
-use ic_agent::{
-    identity::{BasicIdentity, Secp256k1Identity},
-    Agent,
-};
+use ic_agent::{identity::BasicIdentity, Agent};
 use ic_base_types::PrincipalId;
 use icp_ledger::{AccountIdentifier, Subaccount};
 
@@ -43,16 +38,16 @@ const ICP_TX_FEE: u64 = 10000;
 
 #[server]
 async fn is_server_available() -> Result<(bool, AccountIdentifier), ServerFnError> {
-    // let admin_id_pem: String =
-    //     env::var("BACKEND_ADMIN_IDENTITY").expect("`BACKEND_ADMIN_IDENTITY` is required!");
-    // let admin_id_pem_by = admin_id_pem.as_bytes();
-    // let admin_id =
-    //     BasicIdentity::from_pem(admin_id_pem_by).expect("Invalid `BACKEND_ADMIN_IDENTITY`");
-    let admin_id = Secp256k1Identity::from_pem_file(
-        "/home/debjit/hot-or-not-backend-canister/scripts/canisters/docker/local-admin.pem"
-            .to_string(),
-    )
-    .expect("Invalid `BACKEND_ADMIN_IDENTITY`");
+    let admin_id_pem: String =
+        env::var("BACKEND_ADMIN_IDENTITY").expect("`BACKEND_ADMIN_IDENTITY` is required!");
+    let admin_id_pem_by = admin_id_pem.as_bytes();
+    let admin_id =
+        BasicIdentity::from_pem(admin_id_pem_by).expect("Invalid `BACKEND_ADMIN_IDENTITY`");
+    // let admin_id = Secp256k1Identity::from_pem_file(
+    //     "/home/debjit/hot-or-not-backend-canister/scripts/canisters/docker/local-admin.pem"
+    //         .to_string(),
+    // )
+    // .expect("Invalid `BACKEND_ADMIN_IDENTITY`");
     let admin_principal = admin_id.sender().unwrap();
     log::debug!("admin_principal: {:?}", admin_principal.to_string());
 
@@ -81,7 +76,7 @@ async fn is_server_available() -> Result<(bool, AccountIdentifier), ServerFnErro
     let balance: Nat = Decode!(&balance_res, Nat).unwrap();
     println!("balance: {:?}", balance);
     let acc_id = AccountIdentifier::new(PrincipalId(admin_principal), None);
-    if balance >= Nat::from(1000000 + ICP_TX_FEE) {
+    if balance >= (1000000 + ICP_TX_FEE) {
         // amount we participate + icp tx fee
         Ok((true, acc_id))
     } else {
@@ -129,7 +124,7 @@ async fn participate_in_swap(swap_canister: Principal) -> Result<(), ServerFnErr
     let subaccount = Subaccount::from(&PrincipalId(admin_principal));
     let transfer_args = types::Transaction {
         memo: Some(vec![0]),
-        amount: Nat::from(1000000 as u64),
+        amount: Nat::from(1000000_u64),
         fee: Some(Nat::from(ICP_TX_FEE)),
         from_subaccount: None,
         to: types::Recipient {
@@ -188,12 +183,10 @@ async fn deploy_cdao_canisters(
     match res {
         Result7::Ok(c) => {
             log::debug!("deployed canister {}", c.governance);
-            return participate_in_swap(c.swap).await;
+            participate_in_swap(c.swap).await
         }
-        Result7::Err(e) => {
-            return Err(ServerFnError::new(format!("{e:?}")));
-        }
-    };
+        Result7::Err(e) => Err(ServerFnError::new(format!("{e:?}"))),
+    }
 }
 
 #[component]
@@ -238,15 +231,15 @@ fn TokenImage() -> impl IntoView {
     let img_url = Signal::derive(move || img_file.with(|f| f.as_ref().map(|f| f.url.to_string())));
 
     let border_class = move || match img_url.with(|u| u.is_none()) {
-        true => format!("relative w-20 h-20 rounded-full border-2 border-white/20"),
-        _ => format!("relative w-20 h-20 rounded-full border-2 border-primary-600"),
+        true => "relative w-20 h-20 rounded-full border-2 border-white/20".to_string(),
+        _ => "relative w-20 h-20 rounded-full border-2 border-primary-600".to_string(),
     };
 
     view! {
         <div class="flex flex-col space-y-4  rounded-lg text-white">
 
             <div class="flex items-center space-x-4">
-                <div class= move || border_class()  >
+                <div class= border_class  >
             <Show
                     when=move || img_url.with(|u| u.is_none())
                     fallback=move || {
@@ -558,13 +551,13 @@ pub fn CreateToken() -> impl IntoView {
             || ctx.invalid_cnt.get() != 0
     });
 
-    let create_act_value = create_action.value();
-    let create_act_res = Signal::derive(move || {
-        if creating() {
-            return None;
-        }
-        create_act_value()
-    });
+    // let create_act_value = create_action.value();
+    // let create_act_res = Signal::derive(move || {
+    //     if creating() {
+    //         return None;
+    //     }
+    //     create_act_value()
+    // });
 
     view! {
                 <div class="w-dvw min-h-dvh bg-black pt-4 flex flex-col gap-4" style="padding-bottom:6rem" >
