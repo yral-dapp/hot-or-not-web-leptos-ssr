@@ -2,7 +2,7 @@ use candid::{Principal, Nat};
 use ic_agent::AgentError;
 
 use crate::{
-    canister::individual_user_template::Result14,
+    canister::{individual_user_template::Result14, sns_root::ListSnsCanistersArg},
     component::{
         back_btn::BackButton,
         bullet_loader::BulletLoader,
@@ -89,7 +89,7 @@ fn FallbackToken() -> impl IntoView {
     }
 }
 
-pub fn unlock_tokens(token: TokenCans) {
+pub fn unlock_tokens(token_root: Principal) {
     let (is_connected, _) = account_connected_reader();
     let auth_cans = authenticated_canisters();
 
@@ -97,11 +97,18 @@ pub fn unlock_tokens(token: TokenCans) {
         || (),
         move |cans_wire, _| async move {
             let cans = cans_wire?.canisters()?;
+            let root_canister = cans.sns_root(token_root).await;
+            let token_cans = root_canister.list_sns_canisters(ListSnsCanistersArg {}).await?;
+            let governance = token_cans.governance;
+            if governance.is_none() {
+                log::debug!("No governance canister found for token");
+                return Ok(());
+            }
             // let token = token.clone();
             let claim_result = claim_tokens_from_first_neuron(
                 &cans,
                 cans.user_principal(),
-                token.governance,
+                governance.unwrap(),
             )
             .await;
             if claim_result.is_err() {
@@ -116,7 +123,7 @@ pub fn unlock_tokens(token: TokenCans) {
     create_effect(move |_| {
         leptos::logging::log!("TokenView effect");
         if is_connected() {
-            leptos::logging::log!("Unlocking tokens for token: {:?}", token.governance.clone());
+            leptos::logging::log!("Unlocking tokens for token");
             token_unlocking();
         }
     });
@@ -130,6 +137,7 @@ pub fn TokenView(
     #[prop(optional)] _ref: NodeRef<html::A>,
 ) -> impl IntoView {
     let cans = unauth_canisters();
+    unlock_tokens(token_root);
     let info = create_resource(
         || (),
         move |_| token_metadata_or_fallback(cans.clone(), user_canister, user_principal, token_root),
