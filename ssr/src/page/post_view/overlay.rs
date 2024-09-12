@@ -91,14 +91,14 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
     let liking = like_toggle.pending();
 
     view! {
-        <div class="flex flex-col items-center ">
+        <div class="flex flex-col items-center">
             <button
                 on:click=move |_| like_toggle.dispatch(())
                 disabled=move || liking() || liked.with(|l| l.is_none())
             >
                 <img src=icon_name style="width: 27.55px; height: 27.55px;"/>
             </button>
-            <span class="text-sm md:text-md ">{likes}</span>
+            <span class="text-sm md:text-md">{likes}</span>
             <WithAuthCans with=liked_fetch let:d>
                 {move || {
                     likes.set(d.1.1);
@@ -182,114 +182,119 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
     });
 
     view! {
-        <div class="flex absolute bottom-0 left-0 flex-col flex-nowrap justify-between px-2 pt-5 pb-20 w-full h-full text-white bg-transparent pointer-events-none md:px-6 z-[4]">
-            <div class="flex pointer-events-auto flex-row gap-2 w-9/12 rounded-s-full bg-gradient-to-r from-black/25 via-80% via-black/10 items-center p-2">
-                <div class="flex w-fit">
-                    <a
-                        href=profile_url.clone()
-                        class="w-10 h-10 rounded-full border-2 md:w-12 md:h-12 overflow-clip border-primary-600"
-                    >
-                        <img class="object-cover w-full h-full" src=post.propic_url/>
-                    </a>
-                </div>
-                <div class="flex flex-col justify-center min-w-0">
-                    <div class="flex flex-row gap-1 text-xs md:text-sm lg:text-base">
-                        <span class="font-semibold truncate">
-                            <a
-                                href=profile_url
-                            >
-                                {post.display_name}
-                            </a>
-                        </span>
-                        <span class="font-semibold">"|"</span>
-                        <span class="flex flex-row gap-1 items-center">
-                            <Icon class="text-sm md:text-base lg:text-lg" icon=icondata::AiEyeOutlined/>
-                            {post.views}
-                        </span>
+            <div class="flex absolute relative bottom-0 left-0 flex-col flex-nowrap justify-between px-2 pt-5 w-full h-full text-white bg-transparent pointer-events-none md:px-6 z-[4]">
+                <div class="flex pointer-events-auto flex-row gap-2 w-9/12 rounded-s-full bg-gradient-to-r from-black/25 via-80% via-black/10 items-center p-2">
+                    <div class="flex w-fit">
+                        <a
+                            href=profile_url.clone()
+                            class="w-10 h-10 rounded-full border-2 md:w-12 md:h-12 overflow-clip border-primary-600"
+                        >
+                            <img class="object-cover w-full h-full" src=post.propic_url/>
+                        </a>
                     </div>
-                    <ExpandableText description=post.description/>
+                    <div class="flex flex-col justify-center min-w-0">
+                        <div class="flex flex-row gap-1 text-xs md:text-sm lg:text-base">
+                            <span class="font-semibold truncate">
+                                <a
+                                    href=profile_url
+                                >
+                                    {post.display_name}
+                                </a>
+                            </span>
+                            <span class="font-semibold">"|"</span>
+                            <span class="flex flex-row gap-1 items-center">
+                                <Icon class="text-sm md:text-base lg:text-lg" icon=icondata::AiEyeOutlined/>
+                                {post.views}
+                            </span>
+                        </div>
+                        <ExpandableText description=post.description/>
+                    </div>
                 </div>
-            </div>
-            <div class="flex flex-col gap-2 w-full">
-                <div class="flex flex-col gap-6 items-end self-end text-2xl pointer-events-auto md:text-3xl lg:text-4xl">
-                    <button on:click=move |_| show_report.set(true)>
-                        <Icon class="drop-shadow-lg w-[27.55px] h-[27.55px]" icon=icondata::TbMessageReport/>
-                    </button>
-                    <a href="/refer-earn">
-                        <Icon class="drop-shadow-lg w-[27.55px] h-[27.55px]" icon=icondata::AiGiftFilled/>
-                    </a>
-                    <LikeAndAuthCanLoader post=post_c.clone() />
-                    <button on:click=move |_| share()  >
-                        <Icon class="drop-shadow-lg w-[27.55px] h-[27.55px] " icon=HomeFeedShareIcon />
-                    </button>
-                </div>
-                <div class="w-full bg-transparent pointer-events-auto">
-                    <HNGameOverlay post=post_c />
-                </div>
-            </div>
-        </div>
-        <Modal show=show_share>
-            <div class="flex flex-col gap-4 justify-center items-center text-white">
-                <span class="text-lg">Share</span>
-                <div class="flex flex-row gap-2 w-full">
-                    <p class="overflow-x-scroll p-2 max-w-full whitespace-nowrap rounded-full text-md bg-white/10">
-                        {video_url}
-                    </p>
-                    <button on:click=move |_| click_copy(video_url())>
-                        <Icon class="text-xl" icon=icondata::FaCopyRegular/>
-                    </button>
-                </div>
-            </div>
 
-            <Show when=show_copied_popup>
-                <div class="flex flex-col justify-center items-center">
-                    <span class="flex absolute flex-row justify-center items-center mt-80 w-28 h-10 text-center rounded-md shadow-lg bg-white/90">
-                        <p>Link Copied!</p>
-                    </span>
-                </div>
-            </Show>
-        </Modal>
-        <Modal show=show_report>
-            <div class="flex flex-col gap-4 justify-center items-center text-white">
-                <span class="text-lg">Report Post</span>
-                <span class="text-lg">Please select a reason:</span>
-                <div class="max-w-full text-black text-md">
-                    <select
-                        class="block p-2 w-full text-sm rounded-lg"
-                        on:change=move |ev| {
-                            let new_value = event_target_value(&ev);
-                            set_report_option(new_value);
-                        }
-                    >
-
-                        <SelectOption
-                            value=report_option
-                            is=format!("{}", ReportOption::Nudity.as_str())
-                        />
-                        <SelectOption
-                            value=report_option
-                            is=format!("{}", ReportOption::Violence.as_str())
-                        />
-                        <SelectOption
-                            value=report_option
-                            is=format!("{}", ReportOption::Offensive.as_str())
-                        />
-                        <SelectOption
-                            value=report_option
-                            is=format!("{}", ReportOption::Spam.as_str())
-                        />
-                        <SelectOption
-                            value=report_option
-                            is=format!("{}", ReportOption::Other.as_str())
-                        />
-                    </select>
-                </div>
-                <button on:click=move |_| click_report.dispatch(())>
-                    <div class="p-1 bg-pink-500 rounded-lg">Submit</div>
+           <div class="relative w-full">
+             <div class="flex absolute right-0 bottom-4 flex-col gap-2 w-full" style="padding-bottom: 160px;" >
+               <div class="flex flex-col gap-6 items-end self-end text-2xl pointer-events-auto md:text-3xl lg:text-4xl">
+                <button on:click=move |_| show_report.set(true)>
+                    <Icon class="drop-shadow-lg w-[27.55px] h-[27.55px]" icon=icondata::TbMessageReport/>
+                </button>
+                <a href="/refer-earn">
+                    <Icon class="drop-shadow-lg w-[27.55px] h-[27.55px]" icon=icondata::AiGiftFilled/>
+                </a>
+                <LikeAndAuthCanLoader post=post_c.clone() />
+                <button on:click=move |_| share()>
+                    <Icon class="drop-shadow-lg w-[27.55px] h-[27.55px]" icon=HomeFeedShareIcon />
                 </button>
             </div>
-        </Modal>
-    }
+        </div>
+
+        <div class="w-full bg-transparent pointer-events-auto" style="padding-bottom: 70px;">
+            <HNGameOverlay post=post_c />
+        </div>
+    </div>
+
+            </div>
+            <Modal show=show_share>
+                <div class="flex flex-col gap-4 justify-center items-center text-white">
+                    <span class="text-lg">Share</span>
+                    <div class="flex flex-row gap-2 w-full">
+                        <p class="overflow-x-scroll p-2 max-w-full whitespace-nowrap rounded-full text-md bg-white/10">
+                            {video_url}
+                        </p>
+                        <button on:click=move |_| click_copy(video_url())>
+                            <Icon class="text-xl" icon=icondata::FaCopyRegular/>
+                        </button>
+                    </div>
+                </div>
+
+                <Show when=show_copied_popup>
+                    <div class="flex flex-col justify-center items-center">
+                        <span class="flex absolute flex-row justify-center items-center mt-80 w-28 h-10 text-center rounded-md shadow-lg bg-white/90">
+                            <p>Link Copied!</p>
+                        </span>
+                    </div>
+                </Show>
+            </Modal>
+            <Modal show=show_report>
+                <div class="flex flex-col gap-4 justify-center items-center text-white">
+                    <span class="text-lg">Report Post</span>
+                    <span class="text-lg">Please select a reason:</span>
+                    <div class="max-w-full text-black text-md">
+                        <select
+                            class="block p-2 w-full text-sm rounded-lg"
+                            on:change=move |ev| {
+                                let new_value = event_target_value(&ev);
+                                set_report_option(new_value);
+                            }
+                        >
+
+                            <SelectOption
+                                value=report_option
+                                is=format!("{}", ReportOption::Nudity.as_str())
+                            />
+                            <SelectOption
+                                value=report_option
+                                is=format!("{}", ReportOption::Violence.as_str())
+                            />
+                            <SelectOption
+                                value=report_option
+                                is=format!("{}", ReportOption::Offensive.as_str())
+                            />
+                            <SelectOption
+                                value=report_option
+                                is=format!("{}", ReportOption::Spam.as_str())
+                            />
+                            <SelectOption
+                                value=report_option
+                                is=format!("{}", ReportOption::Other.as_str())
+                            />
+                        </select>
+                    </div>
+                    <button on:click=move |_| click_report.dispatch(())>
+                        <div class="p-1 bg-pink-500 rounded-lg">Submit</div>
+                    </button>
+                </div>
+            </Modal>
+        }
 }
 
 #[component]
