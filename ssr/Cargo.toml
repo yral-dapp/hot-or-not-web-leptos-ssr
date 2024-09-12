@@ -36,10 +36,7 @@ serde-wasm-bindgen = "0.6.5"
 futures = "0.3.30"
 leptos-use = "0.12.0"
 codee = { version = "0.1.2", features = ["json_serde"] }
-reqwest = { version = "0.12", default-features = false, features = [
-    "json",
-    "http2",
-] }
+reqwest = { version = "0.12", default-features = false, features = ["json", "http2"] }
 serde_bytes = "0.11.14"
 hex = "0.4.3"
 leptos_icons = "0.3.0"
@@ -56,7 +53,7 @@ serde_json = "1.0"
 crc32fast = "1.4.0"
 uts2ts = "0.4.1"
 rand_chacha = { version = "0.3.1", optional = true }
-web-sys = { version = "0.3", features = [
+web-sys = { version = "0.3.70", features = [
     "Clipboard",
     "Navigator",
     "ShareData",
@@ -118,6 +115,7 @@ hydrate = [
     "ic-agent/wasm-bindgen",
     "dep:web-sys",
     "reqwest/native-tls",
+        "reqwest/blocking",
     "dep:rand_chacha",
     "tonic/codegen",
 ]
@@ -134,6 +132,7 @@ ssr = [
     "leptos-use/ssr",
     "leptos-use/axum",
     "reqwest/rustls-tls",
+            "reqwest/blocking",
     "dep:redis",
     "yral-metadata-client/rustls-tls",
     "dep:redb",
