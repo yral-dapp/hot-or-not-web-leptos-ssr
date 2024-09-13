@@ -57,7 +57,7 @@ fn CreateTokenSuccessPopup(
             text=move || {
                 view! {
                     Token
-                    <span class="text-primary-600">{token_name.clone()}</span>
+                    <span class="text-primary-600">{format!(" {token_name} ")}</span>
                     successfully created!
                 }
             }
@@ -123,9 +123,10 @@ fn CreateTokenErrorPopup(
         <ErrorPopup
             error
             header=move || {
+                let token_name = token_name.clone();
                 view! {
                     Token
-                    <span class="text-primary-600">{token_name.clone()}</span>
+                    <span class="text-primary-600">{move || format!(" {} ", token_name.with(|t| t.clone()))}</span>
                     creation failed!
                 }
             }
@@ -181,8 +182,8 @@ fn TokenTransferSuccessPopup(
     let amount_str = amount.humanize();
     view! {
         <SuccessPopup
-            img=|| view! { <TokenConfettiSymbol class="w-full"/> }
-            text=move || { format!("{} {} Successfully sent", amount_str, token_name) }
+            img=|| view! { <TokenConfettiSymbol class="w-8/12"/> }
+            text=move || { format!("{amount_str} {token_name} Successfully sent") }
 
             previous_link="/wallet"
             previous_text="Back to wallet"
@@ -202,7 +203,7 @@ fn TokenTransferErrorPopup(
             header=move || {
                 view! {
                     Failed to transfer
-                    <span class="text-primary-600">{token_name.clone()}</span>
+                    <span class="text-primary-600">{format!(" {token_name} ")}</span>
                     token
                 }
             }
