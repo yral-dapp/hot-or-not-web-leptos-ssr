@@ -2,13 +2,12 @@ use candid::Principal;
 use leptos::*;
 use leptos_router::*;
 
-use crate::{
-    abselector,
-    component::{canisters_prov::AuthCansProvider, spinner::FullScreenSpinner},
-    utils::{ab_testing::ABComponent, host::get_host_async},
-};
 #[cfg(feature = "ssr")]
 use crate::{canister::post_cache, state::canisters::unauth_canisters};
+use crate::{
+    component::{canisters_prov::AuthCansProvider, spinner::FullScreenSpinner},
+    utils::host::get_host,
+};
 
 #[server]
 async fn get_top_post_id() -> Result<Option<(Principal, u64)>, ServerFnError> {
@@ -143,39 +142,18 @@ pub fn YralRootPage() -> impl IntoView {
 
 #[component]
 pub fn RootPage() -> impl IntoView {
-    let host_str = create_resource(|| {}, |_| async { get_host_async().await });
-
-    view! {
-        <Suspense fallback=FullScreenSpinner>
-            {move || {
-                host_str()
-                    .and_then(|loc| {
-                        let component_CreatorDaoRootPage: ABComponent = Box::new(move || Some(
-                            view! { <CreatorDaoRootPage/> },
-                        ));
-                        let component_YralRootPage: ABComponent = Box::new(move || Some(
-                            view! { <YralRootPage/> },
-                        ));
-                        abselector!(
-                            get_root_page_component(loc), component_CreatorDaoRootPage,
-                            component_YralRootPage
-                        )()
-                    })
-            }}
-
-        </Suspense>
+    if show_cdao_page() {
+        view! {
+            <CreatorDaoRootPage/>
+        }
+    } else {
+        view! {
+            <YralRootPage/>
+        }
     }
 }
 
-pub fn get_root_page_component(loc: String) -> impl Fn() -> Option<&'static str> {
-    move || {
-        if loc.eq("localhost:3000")
-            || loc.eq("icpump.fun")
-            || loc.contains("go-bazzinga-hot-or-not-web-leptos-ssr.fly.dev")
-        {
-            Some("CreatorDaoRootPage")
-        } else {
-            Some("YralRootPage")
-        }
-    }
+pub fn show_cdao_page() -> bool {
+    let host = get_host();
+    host == ("icpump.fun") || host.contains("go-bazzinga-hot-or-not-web-leptos-ssr.fly.dev")
 }
