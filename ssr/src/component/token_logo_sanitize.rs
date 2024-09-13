@@ -4,7 +4,7 @@ use leptos_use::use_event_listener;
 use crate::utils::web::FileWithUrl;
 
 #[component]
-pub fn ImgToPng(
+pub fn TokenLogoSanitize(
     #[prop(into)] img_file: Signal<Option<FileWithUrl>>,
     #[prop(into)] output_b64: SignalSetter<Option<String>>,
 ) -> impl IntoView {
@@ -23,14 +23,42 @@ pub fn ImgToPng(
             let canvas: &HtmlCanvasElement = &canvas_elem;
             let img_elem = img_ref.get_untracked().unwrap();
             let img: &HtmlImageElement = &img_elem;
+            let im_w = img.width();
+            let im_h = img.height();
 
-            canvas.set_width(img.width());
-            canvas.set_height(img.height());
+            let min_dim = im_w.min(im_h);
+            let canvas_dim = min_dim.min(200);
+            canvas.set_width(canvas_dim);
+            canvas.set_height(canvas_dim);
 
+            let mut crop_x = 0.;
+            let mut crop_y = 0.;
+            let mut scaled_width = im_w as f64;
+            let mut scaled_height = im_h as f64;
+
+            if im_w > im_h {
+                crop_x = (scaled_width - scaled_height) / 2.;
+                scaled_width = scaled_height;
+            } else {
+                crop_y = (scaled_height - scaled_width) / 2.;
+                scaled_height = scaled_width;
+            }
+
+            let canvas_dim_f64 = canvas_dim as f64;
             let ctx_raw = canvas.get_context("2d").unwrap().unwrap();
             let ctx: &CanvasRenderingContext2d = ctx_raw.dyn_ref().unwrap();
-            ctx.draw_image_with_html_image_element(img, 0.0, 0.0)
-                .unwrap();
+            ctx.draw_image_with_html_image_element_and_sw_and_sh_and_dx_and_dy_and_dw_and_dh(
+                img,
+                crop_x,
+                crop_y,
+                scaled_width,
+                scaled_height,
+                0.0,
+                0.0,
+                canvas_dim_f64,
+                canvas_dim_f64,
+            )
+            .unwrap();
 
             let png_data = canvas.to_data_url_with_type("image/png").unwrap();
 

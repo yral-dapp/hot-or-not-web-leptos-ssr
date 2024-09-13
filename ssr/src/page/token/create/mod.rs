@@ -2,7 +2,7 @@
 mod server_impl;
 
 use crate::{
-    component::{back_btn::BackButton, img_to_png::ImgToPng, title::Title},
+    component::{back_btn::BackButton, title::Title, token_logo_sanitize::TokenLogoSanitize},
     state::canisters::{auth_canisters_store, authenticated_canisters, CanistersAuthWire},
     utils::web::FileWithUrl,
 };
@@ -41,11 +41,10 @@ async fn deploy_cdao_canisters(
 fn TokenImage() -> impl IntoView {
     let ctx = expect_context::<CreateTokenCtx>();
     let img_file = ctx.file;
+    let fstate = ctx.form_state;
 
     // let img_file = create_rw_signal(None::<FileWithUrl>);
-    let logo_b64 = create_write_slice(ctx.form_state, |f, v| {
-        f.logo_b64 = v;
-    });
+    let (logo_b64, set_logo_b64) = slice!(fstate.logo_b64);
 
     let on_file_input = move |ev: ev::Event| {
         _ = ev.target().and_then(|_target| {
@@ -57,8 +56,7 @@ fn TokenImage() -> impl IntoView {
                 let input = _target.dyn_ref::<HtmlInputElement>()?;
                 let file = input.files()?.get(0)?;
 
-                img_file.set(Some(FileWithUrl::new(file.clone().into())));
-                ctx.file.set(Some(FileWithUrl::new(file.into())));
+                img_file.set(Some(FileWithUrl::new(file.into())));
             }
             Some(())
         })
@@ -74,9 +72,7 @@ fn TokenImage() -> impl IntoView {
         }
     };
 
-    let img_url = Signal::derive(move || img_file.with(|f| f.as_ref().map(|f| f.url.to_string())));
-
-    let border_class = move || match img_url.with(|u| u.is_none()) {
+    let border_class = move || match logo_b64.with(|u| u.is_none()) {
         true => "relative w-20 h-20 rounded-full border-2 border-white/20".to_string(),
         _ => "relative w-20 h-20 rounded-full border-2 border-primary-600".to_string(),
     };
@@ -105,12 +101,12 @@ fn TokenImage() -> impl IntoView {
                         <img src="/img/upload.svg" class="bg-white"/>
                     </div>
                     <Show
-                        when=move || img_url.with(|u| u.is_some())
+                        when=move || logo_b64.with(|u| u.is_some())
                         fallback=|| view! { <div></div> }
                     >
                         <img
                             class="absolute top-0 object-conver h-full w-full rounded-full"
-                            src=move || img_url().unwrap()
+                            src=move || logo_b64().unwrap()
                         />
                         <div class="absolute bottom-0 right-0 p-1 rounded-full bg-white ">
                             <button
@@ -126,7 +122,7 @@ fn TokenImage() -> impl IntoView {
 
             </div>
         </div>
-        <ImgToPng img_file=img_file output_b64=logo_b64/>
+        <TokenLogoSanitize img_file=img_file output_b64=set_logo_b64/>
     }
 }
 
