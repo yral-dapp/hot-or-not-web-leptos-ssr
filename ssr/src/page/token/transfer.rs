@@ -20,7 +20,7 @@ use leptos_router::*;
 use leptos_use::use_event_listener;
 use server_fn::codec::Cbor;
 
-use super::TokenParams;
+use super::{popups::TokenTransferPopup, TokenParams};
 
 #[server(
     input = Cbor
@@ -227,24 +227,27 @@ fn TokenTransferInner(
                 .unwrap();
             let ledger_canister = sns_cans.ledger.unwrap();
             log::debug!("ledger_canister: {:?}", ledger_canister);
+            let amt = amt_res.get_untracked().unwrap().unwrap();
 
-            let res = transfer_token_to_user_principal(
+            transfer_token_to_user_principal(
                 auth_cans_wire.wait_untracked().await.unwrap(),
                 destination_canister,
                 destination,
                 ledger_canister,
                 root,
-                amt_res.get_untracked().unwrap().unwrap(),
+                amt.clone(),
             )
-            .await;
-            log::debug!("transfer_token_to_user_principal res: {:?}", res);
-            res
+            .await?;
+
+            Ok::<_, ServerFnError>(amt)
         }
     });
+    let sending = send_action.pending();
 
     let valid = move || {
         amt_res.with(|r| matches!(r, Ok(Some(_))))
             && destination_res.with(|r| matches!(r, Ok(Some(_))))
+            && !sending()
     };
 
     view! {
@@ -322,6 +325,7 @@ fn TokenTransferInner(
                     Send
                 </button>
             </div>
+            <TokenTransferPopup token_name=info.symbol transfer_action=send_action/>
         </div>
     }
 }

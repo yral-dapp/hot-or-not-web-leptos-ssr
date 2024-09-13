@@ -2,70 +2,86 @@ use leptos::*;
 use leptos_icons::*;
 
 use crate::{
-    component::overlay::PopupOverlay, page::token::create::CreateTokenCtx,
+    component::{overlay::PopupOverlay, token_confetti_symbol::TokenConfettiSymbol},
+    page::token::create::CreateTokenCtx,
     state::canisters::auth_canisters_store,
+    utils::token::TokenBalance,
 };
 
 #[component]
-fn SuccessPopup(#[prop(into)] token_name: String, #[prop(into)] img_url: String) -> impl IntoView {
-    CreateTokenCtx::reset();
-    let cans = auth_canisters_store();
-    let profile_url = move || {
-        let Some(cans) = cans() else {
-            return "/menu".into();
-        };
-        let profile_id = cans.user_principal();
-        format!("/your-profile/{profile_id}?tab=tokens")
-    };
+fn SuccessPopup<ImgIV: IntoView, Img: Fn() -> ImgIV, TxtIV: IntoView, Txt: Fn() -> TxtIV>(
+    img: Img,
+    text: Txt,
+    #[prop(into)] previous_link: MaybeSignal<String>,
+    #[prop(into)] previous_text: String,
+) -> impl IntoView {
     view! {
         <div class="flex flex-col items-center w-full h-full gap-6">
-            // <TokenConfettiSymbol class="w-full"/>
-            <img
-                class="relative w-20 h-20 rounded-full border-2 border-primary-600 object-conver"
-                style="height:15rem; width:15rem"
-                src=img_url
-            />
-            <span class="text-2xl md:text-3xl font-bold text-center">
-                Token <span class="text-primary-600">{token_name}</span> successfully created!
-            </span>
-            <button
-                on:click=move |_| navigate_to_profile(profile_url())
+            {img()} <span class="text-2xl md:text-3xl font-bold text-center">{text()}</span>
+            <a
+                href=previous_link
                 class="w-3/4 py-4 text-lg text-center text-white bg-primary-600 rounded-full"
             >
-                Back to profile
-            </button>
+                {previous_text}
+            </a>
         </div>
     }
 }
 
-fn navigate_to_profile(url: String) {
-    let navigate = leptos_router::use_navigate();
-    navigate(&url, Default::default());
-}
-
 #[component]
-fn ErrorPopup(
-    error: String,
-    token_name: MaybeSignal<String>,
-    close_popup: WriteSignal<bool>,
+fn CreateTokenSuccessPopup(
+    #[prop(into)] token_name: String,
+    #[prop(into)] img_url: String,
 ) -> impl IntoView {
+    CreateTokenCtx::reset();
     let cans = auth_canisters_store();
-    let profile_url = move || {
+    let profile_url = Signal::derive(move || {
         let Some(cans) = cans() else {
             return "/menu".into();
         };
         let profile_id = cans.user_principal();
         format!("/your-profile/{profile_id}?tab=tokens")
-    };
+    });
+    view! {
+        <SuccessPopup
+            img=move || {
+                view! {
+                    <img
+                        class="relative w-20 h-20 rounded-full border-2 border-primary-600 object-conver"
+                        style="height:15rem; width:15rem"
+                        src=img_url.clone()
+                    />
+                }
+            }
 
+            text=move || {
+                view! {
+                    Token
+                    <span class="text-primary-600">{token_name.clone()}</span>
+                    successfully created!
+                }
+            }
+
+            previous_link=profile_url
+            previous_text="Back to profile"
+        />
+    }
+}
+
+#[component]
+fn ErrorPopup<HeadIV: IntoView, Head: Fn() -> HeadIV>(
+    error: String,
+    header: Head,
+    #[prop(into)] previous_link: MaybeSignal<String>,
+    #[prop(into)] previous_text: String,
+    close_popup: WriteSignal<bool>,
+) -> impl IntoView {
     view! {
         <div class="flex flex-col items-center w-full h-full gap-6">
             <div class="flex flex-row items-center justify-center bg-amber-100 text-orange-400 rounded-full p-3 text-2xl md:text-3xl">
                 <Icon icon=icondata::BsExclamationTriangle/>
             </div>
-            <span class="text-2xl md:text-3xl font-bold text-center">
-                Token <span class="text-primary-600">{token_name}</span> creation failed!
-            </span>
+            <span class="text-2xl md:text-3xl font-bold text-center">{header()}</span>
             <textarea
                 prop:value=error
                 disabled
@@ -79,12 +95,45 @@ fn ErrorPopup(
                 Retry
             </button>
             <a
-                href=profile_url
+                href=previous_link
                 class="py-3 text-lg md:text-xl w-full rounded-full text-black text-center bg-white border border-black"
             >
-                Back to profile
+                {previous_text}
             </a>
         </div>
+    }
+}
+
+#[component]
+fn CreateTokenErrorPopup(
+    error: String,
+    token_name: MaybeSignal<String>,
+    close_popup: WriteSignal<bool>,
+) -> impl IntoView {
+    let cans = auth_canisters_store();
+    let profile_url = Signal::derive(move || {
+        let Some(cans) = cans() else {
+            return "/menu".into();
+        };
+        let profile_id = cans.user_principal();
+        format!("/your-profile/{profile_id}?tab=tokens")
+    });
+
+    view! {
+        <ErrorPopup
+            error
+            header=move || {
+                view! {
+                    Token
+                    <span class="text-primary-600">{token_name.clone()}</span>
+                    creation failed!
+                }
+            }
+
+            previous_link=profile_url
+            previous_text="Back to profile"
+            close_popup
+        />
     }
 }
 
@@ -102,7 +151,7 @@ pub fn TokenCreationPopup(
             modal=move |res| match res {
                 Ok(_) => {
                     view! {
-                        <SuccessPopup
+                        <CreateTokenSuccessPopup
                             img_url=img_url.get_untracked().clone()
                             token_name=token_name.get_untracked().clone()
                         />
@@ -110,10 +159,87 @@ pub fn TokenCreationPopup(
                 }
                 Err(e) => {
                     view! {
-                        <ErrorPopup
+                        <CreateTokenErrorPopup
                             close_popup=close_popup.write_only()
                             error=e
                             token_name=token_name.clone()
+                        />
+                    }
+                }
+            }
+
+            close=close_popup
+        />
+    }
+}
+
+#[component]
+fn TokenTransferSuccessPopup(
+    #[prop(into)] token_name: String,
+    amount: TokenBalance,
+) -> impl IntoView {
+    let amount_str = amount.humanize();
+    view! {
+        <SuccessPopup
+            img=|| view! { <TokenConfettiSymbol class="w-full"/> }
+            text=move || { format!("{} {} Successfully sent", amount_str, token_name) }
+
+            previous_link="/wallet"
+            previous_text="Back to wallet"
+        />
+    }
+}
+
+#[component]
+fn TokenTransferErrorPopup(
+    #[prop(into)] error: String,
+    #[prop(into)] token_name: String,
+    close_popup: WriteSignal<bool>,
+) -> impl IntoView {
+    view! {
+        <ErrorPopup
+            error
+            header=move || {
+                view! {
+                    Failed to transfer
+                    <span class="text-primary-600">{token_name.clone()}</span>
+                    token
+                }
+            }
+
+            previous_link="/wallet"
+            previous_text="Back to wallet"
+            close_popup
+        />
+    }
+}
+
+#[component]
+pub fn TokenTransferPopup(
+    transfer_action: Action<(), Result<TokenBalance, ServerFnError>>,
+    #[prop(into)] token_name: MaybeSignal<String>,
+) -> impl IntoView {
+    let close_popup = create_rw_signal(false);
+
+    view! {
+        <PopupOverlay
+            action=transfer_action
+            loading_message="Token transfer in progress"
+            modal=move |res| match res {
+                Ok(amount) => {
+                    view! {
+                        <TokenTransferSuccessPopup
+                            token_name=token_name.get_untracked().clone()
+                            amount
+                        />
+                    }
+                }
+                Err(e) => {
+                    view! {
+                        <TokenTransferErrorPopup
+                            error=e.to_string()
+                            token_name=token_name.get_untracked().clone()
+                            close_popup=close_popup.write_only()
                         />
                     }
                 }

@@ -146,6 +146,7 @@ fn CreateTokenFaqView(title: String, sections: Vec<Section>) -> impl IntoView {
                                             class=move || {
                                                 if is_open() { "w-3 h-3" } else { "w-3 h-3 rotate-180" }
                                             }
+
                                             aria-hidden="true"
                                             xmlns="http://www.w3.org/2000/svg"
                                             fill="none"

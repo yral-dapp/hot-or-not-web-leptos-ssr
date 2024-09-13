@@ -401,6 +401,7 @@ pub fn CreateToken() -> impl IntoView {
                 img_url=Signal::derive(move || {
                     ctx.file.with(|f| f.clone()).unwrap().url.to_string()
                 })
+
                 token_name=Signal::derive(move || {
                     ctx.form_state.with(|f| f.name.clone()).unwrap_or_default()
                 })

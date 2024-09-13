@@ -141,29 +141,28 @@ pub fn TokenView(
     view! {
         <Suspense fallback=FallbackToken>
             {move || {
-                info
-                    .map(|info| {
-                        view! {
-                            <a
-                                href=format!("/token/info/{token_root}")
-                                _ref=_ref
-                                class="grid grid-cols-2 grid-rows-1 w-full items-center p-4 rounded-xl border-2 border-neutral-700 bg-white/15"
-                            >
-                                <div class="flex flex-row gap-2 items-center justify-self-start">
-                                    <img class="w-12 h-12 rounded-full" src=info.logo_b64.clone()/>
-                                    <span class="text-white truncate">{info.name.clone()}</span>
+                info.map(|info| {
+                    view! {
+                        <a
+                            href=format!("/token/info/{token_root}")
+                            _ref=_ref
+                            class="grid grid-cols-2 grid-rows-1 w-full items-center p-4 rounded-xl border-2 border-neutral-700 bg-white/15"
+                        >
+                            <div class="flex flex-row gap-2 items-center justify-self-start">
+                                <img class="w-12 h-12 rounded-full" src=info.logo_b64.clone()/>
+                                <span class="text-white truncate">{info.name.clone()}</span>
+                            </div>
+                            <div class="flex flex-row gap-2 items-center justify-self-end text-base text-white">
+                                <span class="truncate">
+                                    {format!("{} {}", info.balance.humanize(), info.symbol)}
+                                </span>
+                                <div class="flex items-center justify-center w-8 h-8 bg-white/15 rounded-full">
+                                    <Icon icon=icondata::BsSend/>
                                 </div>
-                                <div class="flex flex-row gap-2 items-center justify-self-end text-base text-white">
-                                    <span class="truncate">
-                                        {format!("{} {}", info.balance.humanize(), info.symbol)}
-                                    </span>
-                                    <div class="flex items-center justify-center w-8 h-8 bg-white/15 rounded-full">
-                                        <Icon icon=icondata::BsSend/>
-                                    </div>
-                                </div>
-                            </a>
-                        }
-                    })
+                            </div>
+                        </a>
+                    }
+                })
             }}
 
         </Suspense>
