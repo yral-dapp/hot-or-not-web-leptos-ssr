@@ -9,9 +9,10 @@ use crate::{
     state::canisters::{auth_canisters_store, authenticated_canisters, CanistersAuthWire},
     utils::web::FileWithUrl,
 };
+use k256::pkcs8::der::DateTime;
 use leptos::*;
 use leptos_router::*;
-use std::{env, str::FromStr};
+use std::{env, str::FromStr, time::{Duration, SystemTime}};
 
 use server_fn::codec::Cbor;
 use sns_validation::pbs::sns_pb::SnsInitPayload;
@@ -414,11 +415,25 @@ input_component!(InputBox, input, {});
 input_component!(InputArea, textarea, rows = 4);
 input_component!(InputField, textarea, rows = 1);
 
+
+#[derive(Clone, Copy, PartialEq)]
+pub enum CreateTokenStatus {
+    InDraft, 
+    InProgress
+}
+
+impl Default for CreateTokenStatus {
+    fn default() -> Self {
+        Self::InDraft
+    }
+}
+
 #[derive(Clone, Copy, Default)]
 pub struct CreateTokenCtx {
     form_state: RwSignal<SnsFormState>,
     invalid_cnt: RwSignal<u32>,
     file: RwSignal<Option<FileWithUrl>>,
+    pub  status: RwSignal<CreateTokenStatus>,
 }
 
 impl CreateTokenCtx {
@@ -485,6 +500,10 @@ pub fn CreateToken() -> impl IntoView {
 
     let create_action = create_action(move |&()| {
         let auth_cans_wire = auth_cans_wire.clone();
+        ctx.status.update(|f| {
+            *f =  CreateTokenStatus::InProgress 
+        });
+        
         async move {
             let cans = auth_cans
                 .get_untracked()
@@ -542,17 +561,20 @@ pub fn CreateToken() -> impl IntoView {
     let creating = create_action.pending();
 
     let create_disabled = create_memo(move |_| {
-        creating()
-            || auth_cans.with(|c| c.is_none())
-            || ctx.form_state.with(|f| f.logo_b64.is_none())
-            || ctx.form_state.with(|f: &SnsFormState| f.name.is_none())
-            || ctx
+       !( !creating()
+            && auth_cans.with(|c| c.is_some())
+            && ctx.form_state.with(|f| f.logo_b64.is_some())
+            && ctx.form_state.with(|f: &SnsFormState| f.name.is_some() && !(f.name.as_ref().unwrap().is_empty())  )
+            && ctx
                 .form_state
-                .with(|f: &SnsFormState| f.description.is_none())
-            || ctx.form_state.with(|f| f.symbol.is_none())
-            || ctx.invalid_cnt.get() != 0
-            || ctx.file.with(|f| f.is_none())
-    });
+                .with(|f: &SnsFormState| f.description.is_some() 
+                // && (f.description.as_ref().unwrap().len() >= 10 )
+            )
+            && ctx.form_state.with(|f| f.symbol.is_some() && !(f.symbol.as_ref().unwrap().is_empty()) )
+            // || ctx.invalid_cnt.get() != 0
+            // || ctx.file.with(|f| f.is_none())
+        )    
+        });
 
     // let create_act_value = create_action.value();
     // let create_act_res = Signal::derive(move || {

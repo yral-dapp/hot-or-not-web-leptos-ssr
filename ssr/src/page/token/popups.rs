@@ -2,7 +2,7 @@ use leptos::*;
 use leptos_icons::*;
 
 use crate::{
-    component::overlay::PopupOverlay, page::token::create::CreateTokenCtx,
+    component::overlay::PopupOverlay, page::token::create::{CreateTokenCtx, CreateTokenStatus},
     state::canisters::auth_canisters_store,
 };
 
@@ -92,18 +92,23 @@ pub fn TokenCreationPopup(
     #[prop(into)] img_url: MaybeSignal<String>,
 ) -> impl IntoView {
     let close_popup = create_rw_signal(false);
+    let ctx: CreateTokenCtx = expect_context();
     view! {
         <PopupOverlay
             action=creation_action
             loading_message="Token creation in progress"
             modal=move |res| match res {
-                Ok(_) =>
+                Ok(_) =>{
+                    CreateTokenCtx::reset();
                     view! {
                     <SuccessPopup img_url=img_url.get_untracked().clone() token_name=token_name.get_untracked().clone()/>
-                },
-                Err(e) => view! {
+                }},
+                Err(e) => {
+                    ctx.status.update(|f| *f = CreateTokenStatus::InDraft);
+                    view! {
+                    
                     <ErrorPopup close_popup=close_popup.write_only() error=e token_name=token_name.clone()/>
-                }
+                }}
             }
             close=close_popup
         />
