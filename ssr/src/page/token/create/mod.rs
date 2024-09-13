@@ -1,18 +1,19 @@
+#[cfg(feature = "ssr")]
+mod server_impl;
+
 use crate::{
-    canister::individual_user_template::Result7,
     component::{
         back_btn::{go_back_or_fallback, BackButton},
         img_to_png::ImgToPng,
         title::Title,
     },
-    page::token::{sns_form::SnsFormSettings, types},
+    page::token::sns_form::SnsFormSettings,
     state::canisters::{auth_canisters_store, authenticated_canisters, CanistersAuthWire},
     utils::web::FileWithUrl,
 };
-use k256::pkcs8::der::DateTime;
 use leptos::*;
 use leptos_router::*;
-use std::{env, str::FromStr, time::{Duration, SystemTime}};
+use std::env;
 
 use server_fn::codec::Cbor;
 use sns_validation::pbs::sns_pb::SnsInitPayload;
@@ -20,150 +21,11 @@ use sns_validation::{humanize::parse_tokens, pbs::nns_pb::Tokens};
 
 use super::{popups::TokenCreationPopup, sns_form::SnsFormState};
 
-use candid::{Decode, Encode, Nat, Principal};
-use ic_agent::identity::BasicIdentity;
-use ic_agent::Agent;
-use ic_agent::Identity;
-use ic_base_types::PrincipalId;
 use icp_ledger::AccountIdentifier;
-use icp_ledger::Subaccount;
-
-use crate::canister::sns_swap::{
-    NewSaleTicketRequest, NewSaleTicketResponse, RefreshBuyerTokensRequest,
-    RefreshBuyerTokensResponse,
-};
-use crate::consts::{AGENT_URL, ICP_LEDGER_CANISTER_ID};
-
-const ICP_TX_FEE: u64 = 10000;
 
 #[server]
 async fn is_server_available() -> Result<(bool, AccountIdentifier), ServerFnError> {
-    let admin_id_pem: String =
-        env::var("BACKEND_ADMIN_IDENTITY").expect("`BACKEND_ADMIN_IDENTITY` is required!");
-    let admin_id_pem_by = admin_id_pem.as_bytes();
-    let admin_id =
-        BasicIdentity::from_pem(admin_id_pem_by).expect("Invalid `BACKEND_ADMIN_IDENTITY`");
-    // let admin_id = Secp256k1Identity::from_pem_file(
-    //     "/home/debjit/hot-or-not-backend-canister/scripts/canisters/docker/local-admin.pem"
-    //         .to_string(),
-    // )
-    // .expect("Invalid `BACKEND_ADMIN_IDENTITY`");
-    let admin_principal = admin_id.sender().unwrap();
-    log::debug!("admin_principal: {:?}", admin_principal.to_string());
-
-    let agent = Agent::builder()
-        .with_url(AGENT_URL)
-        .with_identity(admin_id)
-        .build()
-        .unwrap();
-    agent.fetch_root_key().await.unwrap();
-
-    let balance_res = agent
-        .query(
-            &Principal::from_str(ICP_LEDGER_CANISTER_ID).unwrap(),
-            "icrc1_balance_of",
-        )
-        .with_arg(
-            candid::encode_one(types::Icrc1BalanceOfArg {
-                owner: admin_principal,
-                subaccount: None,
-            })
-            .unwrap(),
-        )
-        .call()
-        .await
-        .unwrap();
-    let balance: Nat = Decode!(&balance_res, Nat).unwrap();
-    println!("balance: {:?}", balance);
-    let acc_id = AccountIdentifier::new(PrincipalId(admin_principal), None);
-    if balance >= (1000000 + ICP_TX_FEE) {
-        // amount we participate + icp tx fee
-        Ok((true, acc_id))
-    } else {
-        Ok((false, acc_id))
-    }
-}
-
-#[server]
-async fn participate_in_swap(swap_canister: Principal) -> Result<(), ServerFnError> {
-    let admin_id_pem: String =
-        env::var("BACKEND_ADMIN_IDENTITY").expect("`BACKEND_ADMIN_IDENTITY` is required!");
-    let admin_id_pem_by = admin_id_pem.as_bytes();
-    let admin_id =
-        BasicIdentity::from_pem(admin_id_pem_by).expect("Invalid `BACKEND_ADMIN_IDENTITY`");
-    // let admin_id = Secp256k1Identity::from_pem_file(
-    //     "/home/debjit/hot-or-not-backend-canister/scripts/canisters/docker/local-admin.pem"
-    //         .to_string(),
-    // ).expect("Invalid `BACKEND_ADMIN_IDENTITY`");
-    let admin_principal = admin_id.sender().unwrap();
-    log::debug!("admin_principal: {:?}", admin_principal.to_string());
-
-    let agent = Agent::builder()
-        .with_url(AGENT_URL)
-        .with_identity(admin_id)
-        .build()
-        .unwrap();
-    agent.fetch_root_key().await.unwrap();
-
-    // new_sale_ticket
-    let new_sale_ticket_request = NewSaleTicketRequest {
-        amount_icp_e8s: 100_000,
-        subaccount: None,
-    };
-    let res = agent
-        .update(&swap_canister, "new_sale_ticket")
-        .with_arg(Encode!(&new_sale_ticket_request).unwrap())
-        .call_and_wait()
-        .await
-        .unwrap();
-    let new_sale_ticket_response: NewSaleTicketResponse =
-        Decode!(&res, NewSaleTicketResponse).unwrap();
-    println!("new_sale_ticket_response: {:?}", new_sale_ticket_response);
-
-    // transfer icp
-    let subaccount = Subaccount::from(&PrincipalId(admin_principal));
-    let transfer_args = types::Transaction {
-        memo: Some(vec![0]),
-        amount: Nat::from(1000000_u64),
-        fee: Some(Nat::from(ICP_TX_FEE)),
-        from_subaccount: None,
-        to: types::Recipient {
-            owner: swap_canister,
-            subaccount: Some(subaccount.to_vec()),
-        },
-        created_at_time: None,
-    };
-    let res = agent
-        .update(
-            &Principal::from_str(ICP_LEDGER_CANISTER_ID).unwrap(),
-            "icrc1_transfer",
-        )
-        .with_arg(Encode!(&transfer_args).unwrap())
-        .call_and_wait()
-        .await
-        .unwrap();
-    let transfer_result: types::TransferResult = Decode!(&res, types::TransferResult).unwrap();
-    println!("transfer_result: {:?}", transfer_result);
-
-    // refresh_buyer_tokens
-    let refresh_buyer_tokens_request = RefreshBuyerTokensRequest {
-        buyer: admin_principal.to_string(),
-        confirmation_text: None,
-    };
-    let res = agent
-        .update(&swap_canister, "refresh_buyer_tokens")
-        .with_arg(Encode!(&refresh_buyer_tokens_request).unwrap())
-        .call_and_wait()
-        .await
-        .unwrap();
-    let refresh_buyer_tokens_response: RefreshBuyerTokensResponse =
-        Decode!(&res, RefreshBuyerTokensResponse).unwrap();
-    println!(
-        "refresh_buyer_tokens_response: {:?}",
-        refresh_buyer_tokens_response
-    );
-
-    Ok(())
+    server_impl::is_server_available().await
 }
 
 #[server(
@@ -173,20 +35,7 @@ async fn deploy_cdao_canisters(
     cans_wire: CanistersAuthWire,
     create_sns: SnsInitPayload,
 ) -> Result<(), ServerFnError> {
-    let cans = cans_wire.canisters().unwrap();
-    log::debug!("deploying canisters {:?}", cans.user_canister().to_string());
-    let res = cans
-        .deploy_cdao_sns(create_sns)
-        .await
-        .map_err(|e| ServerFnError::new(format!("{e:?}")))?;
-
-    match res {
-        Result7::Ok(c) => {
-            log::debug!("deployed canister {}", c.governance);
-            participate_in_swap(c.swap).await
-        }
-        Result7::Err(e) => Err(ServerFnError::new(format!("{e:?}"))),
-    }
+    server_impl::deploy_cdao_canisters(cans_wire, create_sns).await
 }
 
 #[component]
@@ -415,25 +264,19 @@ input_component!(InputBox, input, {});
 input_component!(InputArea, textarea, rows = 4);
 input_component!(InputField, textarea, rows = 1);
 
-
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, Default, PartialEq)]
 pub enum CreateTokenStatus {
-    InDraft, 
-    InProgress
-}
-
-impl Default for CreateTokenStatus {
-    fn default() -> Self {
-        Self::InDraft
-    }
+    #[default]
+    InDraft,
+    InProgress,
 }
 
 #[derive(Clone, Copy, Default)]
 pub struct CreateTokenCtx {
-    form_state: RwSignal<SnsFormState>,
+    pub form_state: RwSignal<SnsFormState>,
     invalid_cnt: RwSignal<u32>,
-    file: RwSignal<Option<FileWithUrl>>,
-    pub  status: RwSignal<CreateTokenStatus>,
+    pub file: RwSignal<Option<FileWithUrl>>,
+    pub status: RwSignal<CreateTokenStatus>,
 }
 
 impl CreateTokenCtx {
@@ -500,10 +343,6 @@ pub fn CreateToken() -> impl IntoView {
 
     let create_action = create_action(move |&()| {
         let auth_cans_wire = auth_cans_wire.clone();
-        ctx.status.update(|f| {
-            *f =  CreateTokenStatus::InProgress 
-        });
-        
         async move {
             let cans = auth_cans
                 .get_untracked()
@@ -521,6 +360,7 @@ pub fn CreateToken() -> impl IntoView {
                 server_available.1
             );
             if !server_available.0 {
+                ctx.status.update(|f| *f = CreateTokenStatus::InDraft);
                 return Err("Server is not available".to_string());
             }
             // let res = cans
@@ -542,9 +382,17 @@ pub fn CreateToken() -> impl IntoView {
             //     }
             // };
 
-            deploy_cdao_canisters(auth_cans_wire.wait_untracked().await.unwrap(), create_sns)
-                .await
-                .map_err(|e| format!("{e:?}"))
+            let res =
+                deploy_cdao_canisters(auth_cans_wire.wait_untracked().await.unwrap(), create_sns)
+                    .await
+                    .map_err(|e| format!("{e:?}"));
+
+            if res.is_ok() {
+                CreateTokenCtx::reset();
+            } else {
+                ctx.status.update(|f| *f = CreateTokenStatus::InDraft);
+            }
+            res
             // let cdao_deploy_res = auth_cans.derive(
             //     || (),
             //     move |cans_wire, _| {
@@ -558,23 +406,43 @@ pub fn CreateToken() -> impl IntoView {
             // );
         }
     });
+
+    let run_action_and_navigate = move |_| {
+        ctx.status.update(|f| *f = CreateTokenStatus::InProgress);
+
+        navigate_to_profile();
+
+        create_action.dispatch(());
+    };
+
+    create_effect(move |_| {
+        if let Some(result) = create_action.value().get() {
+            // Action completed, you can do something here like logging or showing a notification
+            log::info!("Action completed in background: {:?}", result);
+            if result.is_ok() {
+                CreateTokenCtx::reset();
+            } else {
+                ctx.status.update(|f| *f = CreateTokenStatus::InDraft);
+            }
+        }
+    });
+
     let creating = create_action.pending();
 
     let create_disabled = create_memo(move |_| {
-       !( !creating()
-            && auth_cans.with(|c| c.is_some())
-            && ctx.form_state.with(|f| f.logo_b64.is_some())
-            && ctx.form_state.with(|f: &SnsFormState| f.name.is_some() && !(f.name.as_ref().unwrap().is_empty())  )
-            && ctx
-                .form_state
-                .with(|f: &SnsFormState| f.description.is_some() 
-                // && (f.description.as_ref().unwrap().len() >= 10 )
-            )
-            && ctx.form_state.with(|f| f.symbol.is_some() && !(f.symbol.as_ref().unwrap().is_empty()) )
-            // || ctx.invalid_cnt.get() != 0
-            // || ctx.file.with(|f| f.is_none())
-        )    
-        });
+        creating()
+            || !(auth_cans.with(|c| c.is_some())
+                && ctx.form_state.with(|f| f.logo_b64.is_some())
+                && ctx.form_state.with(|f: &SnsFormState| {
+                    f.name.is_some() && !f.name.as_ref().unwrap().is_empty()
+                })
+                && ctx.form_state.with(|f: &SnsFormState| {
+                    f.description.is_some() && !f.description.as_ref().unwrap().is_empty()
+                })
+                && ctx
+                    .form_state
+                    .with(|f| f.symbol.is_some() && !f.symbol.as_ref().unwrap().is_empty()))
+    });
 
     // let create_act_value = create_action.value();
     // let create_act_res = Signal::derive(move || {
@@ -669,7 +537,7 @@ pub fn CreateToken() -> impl IntoView {
 
                         <div class="w-full flex justify-center">
                             <button
-                                on:click=move |_| create_action.dispatch(())
+                                on:click=run_action_and_navigate
                                 disabled=create_disabled
                                 class="text-white disabled:text-neutral-500 md:text-xl py-4 md:py-4 font-bold w-full md:w-1/2 lg:w-1/3 rounded-full bg-primary-600 disabled:bg-primary-500/30"
                             >
@@ -685,7 +553,7 @@ pub fn CreateToken() -> impl IntoView {
                     </div>
                     <TokenCreationPopup
                         creation_action=create_action
-                        img_url=Signal::derive(move || ctx.file.with(|f| f.clone()).unwrap().url.to_string())
+                        // img_url=Signal::derive(move || ctx.file.with(|f| f.clone()).unwrap().url.to_string())
                         token_name=Signal::derive(move || {
                             ctx.form_state.with(|f| f.name.clone()).unwrap_or_default()
                         })
@@ -698,6 +566,11 @@ pub fn CreateToken() -> impl IntoView {
 //     let navigate = use_navigate();
 //     navigate("/token/create/settings", Default::default());
 // }
+//
+fn navigate_to_profile() {
+    let navigate = use_navigate();
+    navigate("/your-profile/{profile_id}?tab=tokens", Default::default());
+}
 
 fn navigate_token_faq() {
     let navigate = use_navigate();
@@ -863,12 +736,14 @@ pub fn CreateTokenSettings() -> impl IntoView {
                     </Title>
                 <label class="flex flex-cols-2 cursor-pointer px-1">
                 <span class="flex-1 text-sm font-medium text-gray-400 dark:text-gray-500">Do you want to raise ICP?</span>
-                <div>
-                  <input type="checkbox" value="" class="sr-only peer" checked disabled />
-                    <div class="relative w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:bg-gray-600">
-                    <div class="absolute top-0.5 left-0.5 bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform peer-checked:translate-x-5 dark:border-gray-600"></div>
-                    </div>
-                </div>
+                <span class="text-sm font-medium text-gray-400 dark:text-gray-500">Coming Soon</span>
+
+                // <div>
+                //   <input type="checkbox" value="" class="sr-only peer" checked disabled />
+                //     <div class="relative w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:bg-gray-600">
+                //     <div class="absolute top-0.5 left-0.5 bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform peer-checked:translate-x-5 dark:border-gray-600"></div>
+                //     </div>
+                // </div>
                  // <div class="relative w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-gray-600"></div>
                 </label>
 

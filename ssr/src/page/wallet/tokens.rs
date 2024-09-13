@@ -10,6 +10,7 @@ use crate::{
         infinite_scroller::{CursoredDataProvider, InfiniteScroller, KeyedData, PageEntry},
         title::Title,
     },
+    page::profile::TokenCreationInProgress,
     state::{
         auth::account_connected_reader,
         canisters::{authenticated_canisters, unauth_canisters, Canisters},
@@ -170,6 +171,7 @@ fn TokenList(canisters: Canisters<true>) -> impl IntoView {
 
     view! {
         <div class="flex flex-col w-full gap-2 items-center">
+            <TokenCreationInProgress />
             <InfiniteScroller
                 provider
                 fetch_count=10

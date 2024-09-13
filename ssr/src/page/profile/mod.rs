@@ -12,7 +12,11 @@ use leptos_icons::*;
 use leptos_router::*;
 
 use crate::{
-    component::{back_btn::BackButton, connect::ConnectLogin, spinner::FullScreenSpinner},
+    component::{
+        back_btn::BackButton, bullet_loader::BulletLoader, connect::ConnectLogin,
+        spinner::FullScreenSpinner,
+    },
+    page::token::create::{CreateTokenCtx, CreateTokenStatus},
     state::{auth::account_connected_reader, canisters::unauth_canisters},
     utils::{posts::PostDetails, profile::ProfileDetails},
 };
@@ -32,6 +36,31 @@ pub struct ProfilePostsContext {
 #[derive(Params, PartialEq)]
 struct ProfileParams {
     id: String,
+}
+
+#[component]
+pub fn TokenCreationInProgress() -> impl IntoView {
+    let ctx: CreateTokenCtx = expect_context();
+    view! {
+        <Show when=move|| ctx.status.get_untracked() == CreateTokenStatus::InProgress >
+        <div class="w-full grid grid-cols-2 p-4 rounded-xl border-2 items-center border-neutral-700 bg-white/15">
+            <div class="flex flex-row gap-2 items-center justify-self-start">
+                <img class="w-12 h-12 rounded-full" src=move ||ctx.form_state.get_untracked().logo_b64.unwrap()/>
+                    <span class="text-white truncate">{move || ctx.form_state.get_untracked().name.unwrap()}</span>
+            </div>
+            <div class="flex flex-col gap-2 justify-self-end text-sm">
+                <span class="text-white truncate">Minting Token</span>
+                <div class="flex flex-row gap-1 items-end">
+                    <BulletLoader/>
+                    // <span class="text-white">Details</span>
+                    // <div class="flex items-center justify-center w-4 h-4 bg-white/15 rounded-full">
+                    //     <Icon class="text-white" icon=icondata::AiRightOutlined/>
+                    // </div>
+                </div>
+            </div>
+        </div>
+        </Show>
+    }
 }
 
 #[component]

@@ -1,16 +1,19 @@
-use candid::Principal;
-use leptos::*;
-use leptos_icons::*;
-
+use super::TokenCreationInProgress;
 use crate::{
     component::{bullet_loader::BulletLoader, token_confetti_symbol::TokenConfettiSymbol},
-    page::{token::create::{CreateTokenCtx, CreateTokenStatus}, wallet::tokens::nat_to_human},
+    page::{
+        token::create::{CreateTokenCtx, CreateTokenStatus},
+        wallet::tokens::nat_to_human,
+    },
     state::{
         auth::account_connected_reader,
         canisters::{authenticated_canisters, unauth_canisters},
     },
     utils::token::{claim_tokens_from_first_neuron, get_token_metadata, TokenCans},
 };
+use candid::Principal;
+use leptos::*;
+use leptos_icons::*;
 
 #[component]
 fn TokenViewFallback() -> impl IntoView {
@@ -104,7 +107,7 @@ fn CreateYourToken() -> impl IntoView {
 
 #[component]
 pub fn ProfileTokens(user_canister: Principal, user_principal: Principal) -> impl IntoView {
-    let ctx: CreateTokenCtx = expect_context(); 
+    let ctx: CreateTokenCtx = expect_context();
     let token_list = create_resource(
         || (),
         move |_| async move {
@@ -131,18 +134,21 @@ pub fn ProfileTokens(user_canister: Principal, user_principal: Principal) -> imp
                     <BulletLoader/>
                 </div>
             }>
+             <TokenCreationInProgress />
             {move || token_list().map(|tokens| tokens.unwrap_or_default()).map(|tokens| {
                 let empty = tokens.is_empty();
                 let all_five_tokens_created = tokens.len() == 5;
-                let token_creation_in_progress = ctx.status.get_untracked() == CreateTokenStatus::InProgress;
+                let token_creation_in_progress = move || ctx.status.get() == CreateTokenStatus::InProgress;
                 view! {
                     {tokens.into_iter().map(|token| view! {
                         <TokenView user_principal token/>
                     }).collect_view()}
-                    <Show when=move || empty>
+                    <Show when=move || empty && !token_creation_in_progress()>
                     <CreateYourToken/>
+                    // <a href="/token/create" class="text-xl bg-primary-600 py-4 w-2/3 md:w-1/2 lg:w-1/3 rounded-full text-center text-white">Create</a>
+
                     </Show>
-                    <Show when = move|| !all_five_tokens_created && !token_creation_in_progress  >
+                    <Show when = move|| !all_five_tokens_created && (empty || !token_creation_in_progress())  >
                         <a href="/token/create" class="text-xl bg-primary-600 py-4 w-2/3 md:w-1/2 lg:w-1/3 rounded-full text-center text-white">Create</a>
                     </Show>
                 }

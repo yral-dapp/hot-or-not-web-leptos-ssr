@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use candid::Principal;
 use ic_agent::{agent::AgentBuilder, Agent, Identity};
 
 use crate::consts::AGENT_URL;
@@ -28,5 +29,9 @@ impl AgentWrapper {
 
     pub fn set_arc_id(&mut self, id: Arc<impl Identity + 'static>) {
         self.0.set_arc_identity(id);
+    }
+
+    pub fn principal(&self) -> Result<Principal, String> {
+        self.0.get_principal()
     }
 }

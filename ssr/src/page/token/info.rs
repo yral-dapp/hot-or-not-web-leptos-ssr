@@ -87,7 +87,7 @@ fn TokenInfoInner(root: Principal, meta: TokenMetadata) -> impl IntoView {
                         <TokenDetails meta=meta_c.clone() />
                     </Show>
                 </div>
-                <a href=format!("/token/transfer/{root}") class="flex flex-row justify-self-end justify-center text-white md:text-lg w-full md:w-1/2 rounded-full p-3 bg-primary-600">
+                <a href=format!("/token/transfer/{root}") class="flex flex-row justify-self-center justify-center text-white md:text-lg w-full md:w-1/2 rounded-full p-3 bg-primary-600">
                     Send
                 </a>
             </div>

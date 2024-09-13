@@ -2,13 +2,14 @@ use leptos::*;
 use leptos_icons::*;
 
 use crate::{
-    component::overlay::PopupOverlay, page::token::create::{CreateTokenCtx, CreateTokenStatus},
+    component::overlay::PopupOverlay,
+    page::token::create::{CreateTokenCtx, CreateTokenStatus},
     state::canisters::auth_canisters_store,
 };
 
 #[component]
 fn SuccessPopup(#[prop(into)] token_name: String, #[prop(into)] img_url: String) -> impl IntoView {
-    CreateTokenCtx::reset();
+    // CreateTokenCtx::reset();
     let cans = auth_canisters_store();
     let profile_url = move || {
         let Some(cans) = cans() else {
@@ -49,6 +50,8 @@ fn ErrorPopup(
     token_name: MaybeSignal<String>,
     close_popup: WriteSignal<bool>,
 ) -> impl IntoView {
+    let ctx: CreateTokenCtx = expect_context();
+    ctx.status.update(|f| *f = CreateTokenStatus::InDraft);
     let cans = auth_canisters_store();
     let profile_url = move || {
         let Some(cans) = cans() else {
@@ -89,24 +92,25 @@ fn ErrorPopup(
 pub fn TokenCreationPopup(
     creation_action: Action<(), Result<(), String>>,
     #[prop(into)] token_name: MaybeSignal<String>,
-    #[prop(into)] img_url: MaybeSignal<String>,
+    // #[prop(into)] img_url: String,
 ) -> impl IntoView {
     let close_popup = create_rw_signal(false);
     let ctx: CreateTokenCtx = expect_context();
+    let img_url = Signal::derive(move || ctx.file.with(|f| f.clone()).unwrap().url.to_string());
     view! {
         <PopupOverlay
             action=creation_action
             loading_message="Token creation in progress"
             modal=move |res| match res {
                 Ok(_) =>{
-                    CreateTokenCtx::reset();
+                    // CreateTokenCtx::reset();
                     view! {
-                    <SuccessPopup img_url=img_url.get_untracked().clone() token_name=token_name.get_untracked().clone()/>
+                    <SuccessPopup img_url=img_url.get_untracked() token_name=token_name.get_untracked().clone()/>
                 }},
                 Err(e) => {
                     ctx.status.update(|f| *f = CreateTokenStatus::InDraft);
                     view! {
-                    
+
                     <ErrorPopup close_popup=close_popup.write_only() error=e token_name=token_name.clone()/>
                 }}
             }

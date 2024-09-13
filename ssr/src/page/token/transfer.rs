@@ -4,8 +4,8 @@ use crate::{
         sns_root::ListSnsCanistersArg,
     },
     component::{
-        back_btn::BackButton, canisters_prov::WithAuthCans, spinner::FullScreenSpinner,
-        title::Title,
+        back_btn::BackButton, bullet_loader::BulletLoader, canisters_prov::WithAuthCans,
+        spinner::FullScreenSpinner, title::Title,
     },
     page::wallet::tokens::nat_to_human,
     state::canisters::{authenticated_canisters, Canisters, CanistersAuthWire},
@@ -243,6 +243,10 @@ fn TokenTransferInner(
         }
     });
 
+    let sending = send_action.pending();
+
+    let send_disabled = create_memo(move |_| sending());
+
     let valid = move || {
         amt_res.with(|r| matches!(r, Ok(Some(_))))
             && destination_res.with(|r| matches!(r, Ok(Some(_))))
@@ -300,8 +304,10 @@ fn TokenTransferInner(
                     <span>Transaction Fee (billed to source)</span>
                     <span>{format!("{} {}", info.fees, info.symbol)}</span>
                 </div>
-                <button on:click=move |_| send_action.dispatch(()) disabled=move || !valid() class="flex flex-row justify-center text-white md:text-lg w-full md:w-1/2 rounded-full p-3 bg-primary-600 disabled:opacity-50">
-                    Send
+                <button disabled=send_disabled on:click=move |_| send_action.dispatch(()) disabled=move || !valid() class="flex flex-row justify-center text-white md:text-lg w-full md:w-1/2 rounded-full p-3 bg-primary-600 disabled:opacity-50">
+                <Show when=move ||sending() fallback=move||view!{"Send"}>
+                <BulletLoader/>
+                </Show>
                 </button>
             </div>
         </div>
