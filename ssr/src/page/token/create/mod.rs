@@ -1,17 +1,19 @@
+#[cfg(feature = "ssr")]
+mod server_impl;
+
 use crate::{
-    canister::individual_user_template::Result7,
     component::{
         back_btn::{go_back_or_fallback, BackButton},
         img_to_png::ImgToPng,
         title::Title,
     },
-    page::token::{sns_form::SnsFormSettings, types},
+    page::token::sns_form::SnsFormSettings,
     state::canisters::{auth_canisters_store, authenticated_canisters, CanistersAuthWire},
     utils::web::FileWithUrl,
 };
 use leptos::*;
 use leptos_router::*;
-use std::{env, str::FromStr};
+use std::env;
 
 use server_fn::codec::Cbor;
 use sns_validation::pbs::sns_pb::SnsInitPayload;
@@ -19,151 +21,11 @@ use sns_validation::{humanize::parse_tokens, pbs::nns_pb::Tokens};
 
 use super::{popups::TokenCreationPopup, sns_form::SnsFormState};
 
-use candid::{Decode, Encode, Nat, Principal};
-use ic_agent::identity::BasicIdentity;
-use ic_agent::Agent;
-use ic_agent::Identity;
-use ic_base_types::PrincipalId;
 use icp_ledger::AccountIdentifier;
-use icp_ledger::Subaccount;
-
-use crate::canister::sns_swap::{
-    NewSaleTicketRequest, NewSaleTicketResponse, RefreshBuyerTokensRequest,
-    RefreshBuyerTokensResponse,
-};
-use crate::consts::{AGENT_URL, ICP_LEDGER_CANISTER_ID};
-
-#[cfg(feature = "ssr")]
-const ICP_TX_FEE: u64 = 10000;
 
 #[server]
 async fn is_server_available() -> Result<(bool, AccountIdentifier), ServerFnError> {
-    let admin_id_pem: String =
-        env::var("BACKEND_ADMIN_IDENTITY").expect("`BACKEND_ADMIN_IDENTITY` is required!");
-    let admin_id_pem_by = admin_id_pem.as_bytes();
-    let admin_id =
-        BasicIdentity::from_pem(admin_id_pem_by).expect("Invalid `BACKEND_ADMIN_IDENTITY`");
-    // let admin_id = Secp256k1Identity::from_pem_file(
-    //     "/home/debjit/hot-or-not-backend-canister/scripts/canisters/docker/local-admin.pem"
-    //         .to_string(),
-    // )
-    // .expect("Invalid `BACKEND_ADMIN_IDENTITY`");
-    let admin_principal = admin_id.sender().unwrap();
-    log::debug!("admin_principal: {:?}", admin_principal.to_string());
-
-    let agent = Agent::builder()
-        .with_url(AGENT_URL)
-        .with_identity(admin_id)
-        .build()
-        .unwrap();
-    agent.fetch_root_key().await.unwrap();
-
-    let balance_res = agent
-        .query(
-            &Principal::from_str(ICP_LEDGER_CANISTER_ID).unwrap(),
-            "icrc1_balance_of",
-        )
-        .with_arg(
-            candid::encode_one(types::Icrc1BalanceOfArg {
-                owner: admin_principal,
-                subaccount: None,
-            })
-            .unwrap(),
-        )
-        .call()
-        .await
-        .unwrap();
-    let balance: Nat = Decode!(&balance_res, Nat).unwrap();
-    println!("balance: {:?}", balance);
-    let acc_id = AccountIdentifier::new(PrincipalId(admin_principal), None);
-    if balance >= (1000000 + ICP_TX_FEE) {
-        // amount we participate + icp tx fee
-        Ok((true, acc_id))
-    } else {
-        Ok((false, acc_id))
-    }
-}
-
-#[server]
-async fn participate_in_swap(swap_canister: Principal) -> Result<(), ServerFnError> {
-    let admin_id_pem: String =
-        env::var("BACKEND_ADMIN_IDENTITY").expect("`BACKEND_ADMIN_IDENTITY` is required!");
-    let admin_id_pem_by = admin_id_pem.as_bytes();
-    let admin_id =
-        BasicIdentity::from_pem(admin_id_pem_by).expect("Invalid `BACKEND_ADMIN_IDENTITY`");
-    // let admin_id = Secp256k1Identity::from_pem_file(
-    //     "/home/debjit/hot-or-not-backend-canister/scripts/canisters/docker/local-admin.pem"
-    //         .to_string(),
-    // ).expect("Invalid `BACKEND_ADMIN_IDENTITY`");
-    let admin_principal = admin_id.sender().unwrap();
-    log::debug!("admin_principal: {:?}", admin_principal.to_string());
-
-    let agent = Agent::builder()
-        .with_url(AGENT_URL)
-        .with_identity(admin_id)
-        .build()
-        .unwrap();
-    agent.fetch_root_key().await.unwrap();
-
-    // new_sale_ticket
-    let new_sale_ticket_request = NewSaleTicketRequest {
-        amount_icp_e8s: 100_000,
-        subaccount: None,
-    };
-    let res = agent
-        .update(&swap_canister, "new_sale_ticket")
-        .with_arg(Encode!(&new_sale_ticket_request).unwrap())
-        .call_and_wait()
-        .await
-        .unwrap();
-    let new_sale_ticket_response: NewSaleTicketResponse =
-        Decode!(&res, NewSaleTicketResponse).unwrap();
-    println!("new_sale_ticket_response: {:?}", new_sale_ticket_response);
-
-    // transfer icp
-    let subaccount = Subaccount::from(&PrincipalId(admin_principal));
-    let transfer_args = types::Transaction {
-        memo: Some(vec![0]),
-        amount: Nat::from(1000000_u64),
-        fee: Some(Nat::from(ICP_TX_FEE)),
-        from_subaccount: None,
-        to: types::Recipient {
-            owner: swap_canister,
-            subaccount: Some(subaccount.to_vec()),
-        },
-        created_at_time: None,
-    };
-    let res = agent
-        .update(
-            &Principal::from_str(ICP_LEDGER_CANISTER_ID).unwrap(),
-            "icrc1_transfer",
-        )
-        .with_arg(Encode!(&transfer_args).unwrap())
-        .call_and_wait()
-        .await
-        .unwrap();
-    let transfer_result: types::TransferResult = Decode!(&res, types::TransferResult).unwrap();
-    println!("transfer_result: {:?}", transfer_result);
-
-    // refresh_buyer_tokens
-    let refresh_buyer_tokens_request = RefreshBuyerTokensRequest {
-        buyer: admin_principal.to_string(),
-        confirmation_text: None,
-    };
-    let res = agent
-        .update(&swap_canister, "refresh_buyer_tokens")
-        .with_arg(Encode!(&refresh_buyer_tokens_request).unwrap())
-        .call_and_wait()
-        .await
-        .unwrap();
-    let refresh_buyer_tokens_response: RefreshBuyerTokensResponse =
-        Decode!(&res, RefreshBuyerTokensResponse).unwrap();
-    println!(
-        "refresh_buyer_tokens_response: {:?}",
-        refresh_buyer_tokens_response
-    );
-
-    Ok(())
+    server_impl::is_server_available().await
 }
 
 #[server(
@@ -173,20 +35,7 @@ async fn deploy_cdao_canisters(
     cans_wire: CanistersAuthWire,
     create_sns: SnsInitPayload,
 ) -> Result<(), ServerFnError> {
-    let cans = cans_wire.canisters().unwrap();
-    log::debug!("deploying canisters {:?}", cans.user_canister().to_string());
-    let res = cans
-        .deploy_cdao_sns(create_sns)
-        .await
-        .map_err(|e| ServerFnError::new(format!("{e:?}")))?;
-
-    match res {
-        Result7::Ok(c) => {
-            log::debug!("deployed canister {}", c.governance);
-            participate_in_swap(c.swap).await
-        }
-        Result7::Err(e) => Err(ServerFnError::new(format!("{e:?}"))),
-    }
+    server_impl::deploy_cdao_canisters(cans_wire, create_sns).await
 }
 
 #[component]
