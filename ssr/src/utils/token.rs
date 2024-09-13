@@ -1,3 +1,9 @@
+use std::{
+    cmp::{Ordering, PartialEq, PartialOrd},
+    ops::{Add, AddAssign, Sub, SubAssign},
+    str::FromStr,
+};
+
 use candid::{Nat, Principal};
 use ic_agent::AgentError;
 use leptos::ServerFnError;
@@ -15,13 +21,107 @@ use crate::{
     state::canisters::Canisters,
 };
 
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct TokenBalance {
+    e8s: Nat,
+    decimals: u8,
+}
+
+impl TokenBalance {
+    pub fn new(e8s: Nat, decimals: u8) -> Self {
+        Self { e8s, decimals }
+    }
+
+    /// Token Balance but with 8 decimals (default for Cdao)
+    pub fn new_cdao(e8s: Nat) -> Self {
+        Self::new(e8s, 8u8)
+    }
+
+    /// Parse a numeric value
+    /// multiplied by 8 decimals (1e8)
+    pub fn parse_cdao(tokens: &str) -> Result<Self, candid::Error> {
+        let e8s = Nat::from_str(tokens)? * Nat::from(1e8 as u64);
+        Ok(Self::new_cdao(e8s))
+    }
+
+    pub fn humanize(&self) -> String {
+        (self.e8s.clone() / 10u64.pow(self.decimals as u32))
+            .to_string()
+            .replace("_", ",")
+    }
+}
+
+impl From<TokenBalance> for Nat {
+    fn from(value: TokenBalance) -> Nat {
+        value.e8s
+    }
+}
+
+impl Add<Nat> for TokenBalance {
+    type Output = Self;
+
+    fn add(self, other: Nat) -> Self {
+        Self {
+            e8s: self.e8s + other,
+            decimals: self.decimals,
+        }
+    }
+}
+
+impl AddAssign<Nat> for TokenBalance {
+    fn add_assign(&mut self, rhs: Nat) {
+        self.e8s += rhs;
+    }
+}
+
+impl PartialEq<Nat> for TokenBalance {
+    fn eq(&self, other: &Nat) -> bool {
+        self.e8s.eq(other)
+    }
+}
+
+impl PartialOrd<Nat> for TokenBalance {
+    fn partial_cmp(&self, other: &Nat) -> Option<Ordering> {
+        self.e8s.partial_cmp(other)
+    }
+}
+
+impl Sub<Nat> for TokenBalance {
+    type Output = Self;
+
+    fn sub(self, rhs: Nat) -> Self {
+        Self {
+            e8s: self.e8s - rhs,
+            decimals: self.decimals,
+        }
+    }
+}
+
+impl SubAssign<Nat> for TokenBalance {
+    fn sub_assign(&mut self, rhs: Nat) {
+        self.e8s -= rhs;
+    }
+}
+
+impl PartialEq for TokenBalance {
+    fn eq(&self, other: &Self) -> bool {
+        self.e8s.eq(&other.e8s)
+    }
+}
+
+impl PartialOrd for TokenBalance {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        self.e8s.partial_cmp(&other.e8s)
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone)]
 pub struct TokenMetadata {
     pub logo_b64: String,
     pub name: String,
     pub description: String,
     pub symbol: String,
-    pub balance: Nat,
+    pub balance: TokenBalance,
     pub fees: Nat,
 }
 
@@ -67,7 +167,7 @@ pub async fn get_token_metadata<const A: bool>(
         owner: user_principal,
         subaccount: None,
     };
-    let balance = ledger.icrc_1_balance_of(acc).await?;
+    let balance_e8s = ledger.icrc_1_balance_of(acc).await?;
     let fees = ledger.icrc_1_fee().await?;
 
     Ok(TokenMetadata {
@@ -76,7 +176,7 @@ pub async fn get_token_metadata<const A: bool>(
         description: metadata.description.unwrap_or_default(),
         symbol,
         fees,
-        balance,
+        balance: TokenBalance::new_cdao(balance_e8s),
     })
 }
 

@@ -1,4 +1,4 @@
-use candid::{Nat, Principal};
+use candid::Principal;
 use ic_agent::AgentError;
 
 use crate::{
@@ -16,7 +16,9 @@ use crate::{
     },
     utils::{
         profile::propic_from_principal,
-        token::{claim_tokens_from_first_neuron, token_metadata_by_root, TokenMetadata},
+        token::{
+            claim_tokens_from_first_neuron, token_metadata_by_root, TokenBalance, TokenMetadata,
+        },
     },
 };
 use leptos::*;
@@ -58,12 +60,6 @@ impl CursoredDataProvider for TokenRootList {
     }
 }
 
-pub fn nat_to_human(balance: Nat) -> String {
-    (balance.clone() / 10u64.pow(8))
-        .to_string()
-        .replace('_', ",")
-}
-
 async fn token_metadata_or_fallback(
     cans: Canisters<false>,
     user_principal: Principal,
@@ -78,7 +74,7 @@ async fn token_metadata_or_fallback(
         name: "<ERROR>".to_string(),
         description: "Unknown".to_string(),
         symbol: "??".to_string(),
-        balance: 0u32.into(),
+        balance: TokenBalance::new_cdao(0u32.into()),
         fees: 0u32.into(),
     })
 }
@@ -151,7 +147,7 @@ pub fn TokenView(
                     <span class="text-white truncate">{info.name.clone()}</span>
                 </div>
                 <div class="flex flex-row gap-2 items-center justify-self-end text-base text-white">
-                    <span class="truncate">{format!("{} {}", nat_to_human(info.balance.clone()), info.symbol)}</span>
+                    <span class="truncate">{format!("{} {}", info.balance.humanize(), info.symbol)}</span>
                     <div class="flex items-center justify-center w-8 h-8 bg-white/15 rounded-full">
                         <Icon icon=icondata::BsSend/>
                     </div>

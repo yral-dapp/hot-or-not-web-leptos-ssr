@@ -7,10 +7,9 @@ use crate::{
         back_btn::BackButton, canisters_prov::WithAuthCans, spinner::FullScreenSpinner,
         title::Title,
     },
-    page::wallet::tokens::nat_to_human,
     state::canisters::{authenticated_canisters, Canisters, CanistersAuthWire},
     utils::{
-        token::{token_metadata_by_root, TokenMetadata},
+        token::{token_metadata_by_root, TokenBalance, TokenMetadata},
         web::{copy_to_clipboard, paste_from_clipboard},
     },
 };
@@ -32,7 +31,7 @@ async fn transfer_token_to_user_principal(
     destination_principal: Principal,
     ledger_canister: Principal,
     root_canister: Principal,
-    amount: Nat,
+    amount: TokenBalance,
 ) -> Result<(), ServerFnError> {
     let cans = cans_wire.canisters().unwrap();
     // let user_id = user_id.to_owned();
@@ -44,7 +43,7 @@ async fn transfer_token_to_user_principal(
     let res = sns_ledger
         .icrc_1_transfer(TransferArg {
             memo: Some(serde_bytes::ByteBuf::from(vec![0])),
-            amount: amount.clone(),
+            amount: amount.clone().into(),
             fee: None,
             from_subaccount: None,
             to: Account {
@@ -166,24 +165,24 @@ fn TokenTransferInner(
 
     let amount_ref = create_node_ref::<html::Input>();
     let max_amt = if info.balance < info.fees {
-        0u32.into()
+        TokenBalance::new_cdao(0u32.into())
     } else {
-        (info.balance.clone() - info.fees.clone()) / Nat::from(10e8 as u64)
+        info.balance.clone() - info.fees.clone()
     };
     let max_amt_c = max_amt.clone();
     let set_max_amt = move || {
         let input = amount_ref()?;
-        input.set_value(&max_amt.to_string());
+        input.set_value(&max_amt.humanize());
         Some(())
     };
 
-    let amt_res = create_rw_signal(Ok::<_, String>(None::<Nat>));
+    let amt_res = create_rw_signal(Ok::<_, String>(None::<TokenBalance>));
     _ = use_event_listener(amount_ref, ev::input, move |_| {
         let Some(input) = amount_ref() else {
             return;
         };
         let amt_raw = input.value();
-        let Ok(amt) = Nat::parse(amt_raw.as_bytes()) else {
+        let Ok(amt) = TokenBalance::parse_cdao(&amt_raw) else {
             amt_res.set(Err("Invalid amount".to_string()));
             return;
         };
@@ -235,7 +234,7 @@ fn TokenTransferInner(
                 destination,
                 ledger_canister,
                 root,
-                amt_res.get_untracked().unwrap().unwrap() * Nat::from(10e8 as u64),
+                amt_res.get_untracked().unwrap().unwrap(),
             )
             .await;
             log::debug!("transfer_token_to_user_principal res: {:?}", res);
@@ -260,7 +259,7 @@ fn TokenTransferInner(
                 <div class="flex flex-col w-full gap-2 items-center">
                     <div class="flex flex-row justify-between w-full text-sm md:text-base text-white">
                         <span>Source:</span>
-                        <span>{format!("{} {}", nat_to_human(info.balance), info.symbol)}</span>
+                        <span>{format!("{} {}", info.balance.humanize(), info.symbol)}</span>
                     </div>
                     <div class="flex flex-row gap-2 w-full items-center">
                         <p class="text-sm md:text-md text-white/80">{source_addr.to_string()}</p>
