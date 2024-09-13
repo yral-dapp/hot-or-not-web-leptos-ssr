@@ -2,23 +2,19 @@ use candid::Principal;
 use ic_agent::AgentError;
 
 use crate::{
-    canister::{individual_user_template::Result14, sns_root::ListSnsCanistersArg},
+    canister::individual_user_template::Result14,
     component::{
         back_btn::BackButton,
         bullet_loader::BulletLoader,
         canisters_prov::AuthCansProvider,
+        claim_tokens::ClaimTokensOrRedirectError,
         infinite_scroller::{CursoredDataProvider, InfiniteScroller, KeyedData, PageEntry},
         title::Title,
     },
-    state::{
-        auth::account_connected_reader,
-        canisters::{authenticated_canisters, unauth_canisters, Canisters},
-    },
+    state::canisters::{unauth_canisters, Canisters},
     utils::{
         profile::propic_from_principal,
-        token::{
-            claim_tokens_from_first_neuron, token_metadata_by_root, TokenBalance, TokenMetadata,
-        },
+        token::{token_metadata_by_root, TokenBalance, TokenMetadata},
     },
 };
 use leptos::*;
@@ -86,45 +82,6 @@ fn FallbackToken() -> impl IntoView {
     }
 }
 
-pub fn unlock_tokens(token_root: Principal) {
-    let (is_connected, _) = account_connected_reader();
-    let auth_cans = authenticated_canisters();
-
-    let token_unlocking = auth_cans.derive(
-        || (),
-        move |cans_wire, _| async move {
-            let cans = cans_wire?.canisters()?;
-            let root_canister = cans.sns_root(token_root).await;
-            let token_cans = root_canister
-                .list_sns_canisters(ListSnsCanistersArg {})
-                .await?;
-            let governance = token_cans.governance;
-            if governance.is_none() {
-                log::debug!("No governance canister found for token");
-                return Ok(());
-            }
-            // let token = token.clone();
-            let claim_result =
-                claim_tokens_from_first_neuron(&cans, cans.user_principal(), governance.unwrap())
-                    .await;
-            if claim_result.is_err() {
-                leptos::logging::log!(
-                    "Failed to claim tokens from first neuron: {:?}",
-                    claim_result.err()
-                );
-            }
-            Ok::<_, ServerFnError>(())
-        },
-    );
-    create_effect(move |_| {
-        leptos::logging::log!("TokenView effect");
-        if is_connected() {
-            leptos::logging::log!("Unlocking tokens for token");
-            token_unlocking();
-        }
-    });
-}
-
 #[component]
 pub fn TokenView(
     user_principal: Principal,
@@ -132,13 +89,14 @@ pub fn TokenView(
     #[prop(optional)] _ref: NodeRef<html::A>,
 ) -> impl IntoView {
     let cans = unauth_canisters();
-    unlock_tokens(token_root);
+
     let info = create_resource(
         || (),
         move |_| token_metadata_or_fallback(cans.clone(), user_principal, token_root),
     );
 
     view! {
+        <ClaimTokensOrRedirectError token_root/>
         <Suspense fallback=FallbackToken>
             {move || {
                 info.map(|info| {

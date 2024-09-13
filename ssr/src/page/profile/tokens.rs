@@ -3,12 +3,12 @@ use leptos::*;
 use leptos_icons::*;
 
 use crate::{
-    component::{bullet_loader::BulletLoader, token_confetti_symbol::TokenConfettiSymbol},
-    state::{
-        auth::account_connected_reader,
-        canisters::{authenticated_canisters, unauth_canisters},
+    component::{
+        bullet_loader::BulletLoader, claim_tokens::ClaimTokensOrRedirectError,
+        token_confetti_symbol::TokenConfettiSymbol,
     },
-    utils::token::{claim_tokens_from_first_neuron, get_token_metadata, TokenCans},
+    state::canisters::unauth_canisters,
+    utils::token::{get_token_metadata, TokenCans},
 };
 
 #[component]
@@ -18,40 +18,8 @@ fn TokenViewFallback() -> impl IntoView {
     }
 }
 
-pub fn unlock_tokens(token: TokenCans) {
-    let (is_connected, _) = account_connected_reader();
-    let auth_cans = authenticated_canisters();
-
-    let token_unlocking = auth_cans.derive(
-        || (),
-        move |cans_wire, _| async move {
-            let cans = cans_wire?.canisters()?;
-            // let token = token.clone();
-            let claim_result =
-                claim_tokens_from_first_neuron(&cans, cans.user_principal(), token.governance)
-                    .await;
-            if claim_result.is_err() {
-                leptos::logging::log!(
-                    "Failed to claim tokens from first neuron: {:?}",
-                    claim_result.err()
-                );
-            }
-            Ok::<_, ServerFnError>(())
-        },
-    );
-    create_effect(move |_| {
-        leptos::logging::log!("TokenView effect");
-        if is_connected() {
-            leptos::logging::log!("Unlocking tokens for token: {:?}", token.governance.clone());
-            token_unlocking();
-        }
-    });
-}
-
 #[component]
 fn TokenView(user_principal: Principal, token: TokenCans) -> impl IntoView {
-    unlock_tokens(token.clone());
-
     let token_info = create_resource(
         || (),
         move |_| async move {
@@ -65,6 +33,7 @@ fn TokenView(user_principal: Principal, token: TokenCans) -> impl IntoView {
     let token_link = move || format!("/token/info/{}", token.root);
 
     view! {
+        <ClaimTokensOrRedirectError token_root=token.root/>
         <Suspense fallback=TokenViewFallback>
             {move || {
                 token_info()
