@@ -168,7 +168,7 @@ fn TokenTransferInner(
     let max_amt = if info.balance < info.fees {
         0u32.into()
     } else {
-        info.balance.clone() - info.fees.clone()
+        (info.balance.clone() - info.fees.clone()) / Nat::from(10e8 as u64)
     };
     let max_amt_c = max_amt.clone();
     let set_max_amt = move || {
@@ -235,7 +235,7 @@ fn TokenTransferInner(
                 destination,
                 ledger_canister,
                 root,
-                amt_res.get_untracked().unwrap().unwrap(),
+                amt_res.get_untracked().unwrap().unwrap() * Nat::from(10e8 as u64),
             )
             .await;
             log::debug!("transfer_token_to_user_principal res: {:?}", res);
