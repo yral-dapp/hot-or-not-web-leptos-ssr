@@ -2,7 +2,7 @@ use leptos::*;
 use leptos_icons::*;
 
 use crate::{
-    component::{overlay::PopupOverlay, token_confetti_symbol::TokenConfettiSymbol},
+    component::overlay::PopupOverlay,
     page::token::create::CreateTokenCtx,
     state::canisters::auth_canisters_store,
 };

@@ -236,7 +236,7 @@ fn TokenImage() -> impl IntoView {
         <div class="flex flex-col space-y-4  rounded-lg text-white">
 
             <div class="flex items-center space-x-4">
-                <div class= move || border_class()  >
+                <div class= border_class  >
 
 
                     <div class="flex items-center justify-center w-full h-full rounded-full">
