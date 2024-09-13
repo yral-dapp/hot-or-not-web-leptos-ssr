@@ -55,13 +55,13 @@ fn TokenInfoInner(root: Principal, meta: TokenMetadata) -> impl IntoView {
                     <span class="font-bold justify-self-center">Token details</span>
                 </div>
             </Title>
-            <div class="grid grid-rows-2 w-full px-8 md:px-10 items-center">
+            <div class="flex flex-col w-full px-8 md:px-10 items-center gap-8">
                 <div class="flex flex-col justify-self-start w-full gap-6 md:gap-8 items-center">
                     <div class="flex flex-col gap-4 w-full bg-white/5 p-4 drop-shadow-lg rounded-xl">
                         <div class="flex flex-row justify-between items-center">
                             <div class="flex flex-row gap-2 items-center">
                                 <img
-                                    class="object-contain h-14 w-14 md:w-18 md:h-18 rounded-full"
+                                    class="object-cover h-14 w-14 md:w-18 md:h-18 rounded-full"
                                     src=meta.logo_b64
                                 />
                                 <span class="text-base md:text-lg font-semibold text-white">
@@ -100,7 +100,7 @@ fn TokenInfoInner(root: Principal, meta: TokenMetadata) -> impl IntoView {
                 </div>
                 <a
                     href=format!("/token/transfer/{root}")
-                    class="flex flex-row justify-self-end justify-center text-white md:text-lg w-full md:w-1/2 rounded-full p-3 bg-primary-600"
+                    class="flex flex-row justify-self-center justify-center text-white md:text-lg w-full md:w-1/2 rounded-full p-3 bg-primary-600"
                 >
                     Send
                 </a>
