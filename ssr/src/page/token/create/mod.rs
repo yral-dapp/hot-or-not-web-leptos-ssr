@@ -2,22 +2,21 @@
 mod server_impl;
 
 use crate::{
-    component::{
-        back_btn::{go_back_or_fallback, BackButton},
-        img_to_png::ImgToPng,
-        title::Title,
-    },
-    page::token::sns_form::SnsFormSettings,
+    component::{back_btn::BackButton, img_to_png::ImgToPng, title::Title},
     state::canisters::{auth_canisters_store, authenticated_canisters, CanistersAuthWire},
     utils::web::FileWithUrl,
 };
 use leptos::*;
-use leptos_router::*;
 use std::env;
 
 use server_fn::codec::Cbor;
-use sns_validation::pbs::sns_pb::SnsInitPayload;
 use sns_validation::{humanize::parse_tokens, pbs::nns_pb::Tokens};
+use sns_validation::{
+    humanize::{
+        format_duration, format_percentage, format_tokens, parse_duration, parse_percentage,
+    },
+    pbs::sns_pb::SnsInitPayload,
+};
 
 use super::{popups::TokenCreationPopup, sns_form::SnsFormState};
 
@@ -125,66 +124,6 @@ fn TokenImage() -> impl IntoView {
     }
 }
 
-// #[component]
-// fn TokenImgInput() -> impl IntoView {
-//     let ctx = expect_context::<CreateTokenCtx>();
-//     let img_file = ctx.file;
-//     let logo_b64 = create_write_slice(ctx.form_state, |f, v| {
-//         f.logo_b64 = v;
-//     });
-
-//     let on_file_input = move |ev: ev::Event| {
-//         _ = ev.target().and_then(|_target| {
-//             #[cfg(feature = "hydrate")]
-//             {
-//                 use wasm_bindgen::JsCast;
-//                 use web_sys::HtmlInputElement;
-
-//                 let input = _target.dyn_ref::<HtmlInputElement>()?;
-//                 let file = input.files()?.get(0)?;
-//                 img_file.set(Some(FileWithUrl::new(file.clone().into())));
-//                 ctx.file.set(Some(FileWithUrl::new(file.into())));
-//             }
-//             Some(())
-//         })
-//     };
-//     let img_url = Signal::derive(move || img_file.with(|f| f.as_ref().map(|f| f.url.to_string())));
-
-//     view! {
-//         <div class="ml-2 md:ml-4 h-20 w-20 md:w-36 md:h-36 rounded-full">
-//             <label for="dropzone-logo" class="flex flex-col h-full w-full cursor-pointer">
-//                 <Show
-//                     when=move || img_url.with(|u| u.is_none())
-//                     fallback=move || {
-//                         view! {
-//                             <img
-//                                 class="object-contain h-full w-full rounded-full"
-//                                 src=move || img_url().unwrap()
-//                             />
-//                         }
-//                     }
-//                 >
-
-//                     <div class="flex flex-col items-center justify-center h-full w-full bg-white/10 rounded-full border-2 border-dashed border-neutral-600 hover:bg-white/15">
-//                         <Icon
-//                             icon=icondata::BiImageAddSolid
-//                             class="text-center bg-white/30 text-4xl"
-//                         />
-//                     </div>
-//                 </Show>
-//                 <input
-//                     on:change=on_file_input
-//                     id="dropzone-logo"
-//                     type="file"
-//                     accept="image/*"
-//                     class="sr-only"
-//                 />
-//             </label>
-//         </div>
-//         <ImgToPng img_file=img_file output_b64=logo_b64/>
-//     }
-// }
-
 macro_rules! input_component {
     ($name:ident, $input_element:ident, $attrs:expr) => {
         #[component]
@@ -192,7 +131,7 @@ macro_rules! input_component {
             #[prop(into)] heading: String,
             #[prop(into)] placeholder: String,
             #[prop(optional)] initial_value: Option<String>,
-            #[prop(optional)] input_type: Option<String>,
+            #[prop(optional, into)] input_type: Option<String>,
             updater: U,
             validator: V,
         ) -> impl IntoView {
@@ -210,7 +149,7 @@ macro_rules! input_component {
             view! {
                 <div class="flex flex-col grow gap-y-1 text-sm md:text-base">
                      <span class="text-white font-semibold">{heading.clone()}</span>
-                     <$input_element prop:value={initial_value.unwrap_or_default()} on:input=move |ev| {
+                     <$input_element value={initial_value.unwrap_or_default()} on:input=move |ev| {
                         let value = event_target_value(&ev);
                         match validator(value) {
                             Some(v) => {
@@ -236,12 +175,11 @@ macro_rules! input_component {
                         type=input_type.unwrap_or_else(|| "text".into() )
                          />
 
-                <Show when=move || show_error() && error() fallback=move || view!{
-                                            <span class="text-red-500 font-semibold">  </span>
-                } >
-                        <span class="text-red-500 font-semibold">Invalid </span>
-                    </Show>
-
+                    <span class="text-red-500 font-semibold">
+                        <Show when=move || show_error() && error()>
+                                "Invalid "
+                        </Show>
+                    </span>
                 </div>
             }
         }
@@ -252,12 +190,11 @@ fn non_empty_string_validator(s: String) -> Option<String> {
     (!s.is_empty()).then_some(s)
 }
 
-fn non_empty_string_validator_for_u64(s: String) -> Option<String> {
-    if !s.is_empty() && s.parse::<u64>().is_ok() {
-        Some(s)
-    } else {
-        None
+fn non_empty_string_validator_for_u64(s: String) -> Option<u64> {
+    if s.is_empty() {
+        return None;
     }
+    s.parse().ok()
 }
 
 input_component!(InputBox, input, {});
@@ -302,11 +239,6 @@ pub fn CreateToken() -> impl IntoView {
     });
 
     let ctx: CreateTokenCtx = expect_context();
-    // use_context().unwrap_or_else(|| {
-    //     let ctx = CreateTokenCtx::default();
-    //     provide_context(ctx);
-    //     ctx
-    //  });
 
     let set_token_name = move |name: String| {
         ctx.form_state.update(|f| f.name = Some(name));
@@ -317,13 +249,7 @@ pub fn CreateToken() -> impl IntoView {
     let set_token_desc = move |desc: String| {
         ctx.form_state.update(|f| f.description = Some(desc));
     };
-    /*
-        let set_transaction_fee = move |fee: String| {
-            ctx.form_state
-                .update(|f| f.transaction_fee = parse_token_e8s(&fee).unwrap());
-        };
-    */
-    let set_total_distribution = move |total: String| {
+    let set_total_distribution = move |total: u64| {
         ctx.form_state.update(|f| {
             (*f).try_update_total_distribution_tokens(
                 parse_tokens(&format!("{} tokens", total)).unwrap(),
@@ -331,18 +257,22 @@ pub fn CreateToken() -> impl IntoView {
         });
     };
 
-    let auth_cans_wire = authenticated_canisters();
+    let cans_wire_res = authenticated_canisters();
 
     let create_action = create_action(move |&()| {
-        let auth_cans_wire = auth_cans_wire.clone();
+        let cans_wire_res = cans_wire_res.clone();
         async move {
-            let cans = auth_cans
-                .get_untracked()
-                .expect("Create token called without auth canisters");
+            let cans_wire = cans_wire_res
+                .wait_untracked()
+                .await
+                .map_err(|e| e.to_string())?;
+            let cans = cans_wire
+                .clone()
+                .canisters()
+                .map_err(|_| "Unable to authenticate".to_string())?;
+
             let sns_form = ctx.form_state.get_untracked();
             let sns_config = sns_form.try_into_config(&cans)?;
-
-            // let auth_cans_wire = ;
 
             let create_sns = sns_config.try_convert_to_executed_sns_init()?;
             let server_available = is_server_available().await.map_err(|e| e.to_string())?;
@@ -354,39 +284,10 @@ pub fn CreateToken() -> impl IntoView {
             if !server_available.0 {
                 return Err("Server is not available".to_string());
             }
-            // let res = cans
-            //     .deploy_cdao_sns(create_sns)
-            //     .await
-            //     .map_err(|e| e.to_string())?;
-            // match res {
-            //     Result7::Ok(c) => {
-            //         log::debug!("deployed canister {}", c.governance);
-            //         let participated = participate_in_swap(c.swap).await;
-            //         if let Err(e) = participated {
-            //             return Err(format!("{e:?}"));
-            //         } else {
-            //             log::debug!("participated in swap");
-            //         }
-            //     }
-            //     Result7::Err(e) => {
-            //         return Err(format!("{e:?}"));
-            //     }
-            // };
 
-            deploy_cdao_canisters(auth_cans_wire.wait_untracked().await.unwrap(), create_sns)
+            deploy_cdao_canisters(cans_wire, create_sns)
                 .await
-                .map_err(|e| format!("{e:?}"))
-            // let cdao_deploy_res = auth_cans.derive(
-            //     || (),
-            //     move |cans_wire, _| {
-            //         let create_sns = create_sns.clone();
-            //         async move {
-            //             let cans_wire = cans_wire.unwrap();
-
-            //             res
-            //         }
-            //     }
-            // );
+                .map_err(|e| e.to_string())
         }
     });
     let creating = create_action.pending();
@@ -418,7 +319,7 @@ pub fn CreateToken() -> impl IntoView {
                         <div class="flex justify-between w-full" >
                             <BackButton fallback=fallback_url/>
                             <span class="font-bold justify-self-center">Create Meme Token </span>
-                            <button on:click=move |_|{navigate_token_faq() }  > <img src="/img/info.svg"/ > </button>
+                            <a href="/token/create/faq"><img src="/img/info.svg" /></a>
                         </div>
                     </Title>
                     <div class="flex flex-col w-full px-6 md:px-8 gap-2 md:gap-8">
@@ -445,7 +346,7 @@ pub fn CreateToken() -> impl IntoView {
                                 placeholder="Add a name to your crypto currency"
                                 updater=set_token_name
                                 validator=non_empty_string_validator
-                                initial_value=(ctx.form_state.get_untracked()).name.unwrap_or_default()
+                                initial_value=ctx.form_state.with_untracked(|f| f.name.clone()).unwrap_or_default()
                             />
                         </div>
         /*
@@ -465,7 +366,7 @@ pub fn CreateToken() -> impl IntoView {
                             placeholder="Fun & friendly internet currency inspired by the legendary Shiba Inu dog 'Kabosu'"
                             updater=set_token_desc
                             validator=non_empty_string_validator
-                            initial_value=(ctx.form_state.get_untracked()).description.unwrap_or_default()
+                            initial_value=ctx.form_state.with_untracked(|f| f.description.clone()).unwrap_or_default()
 
                         />
                         <InputBox
@@ -473,25 +374,16 @@ pub fn CreateToken() -> impl IntoView {
                             placeholder="Eg. DODGE"
                             updater=set_token_symbol
                             validator=non_empty_string_validator
-                            initial_value=(ctx.form_state.get_untracked()).symbol.unwrap_or_default()
+                            initial_value=ctx.form_state.with_untracked(|f| f.symbol.clone()).unwrap_or_default()
 
                         />
-          /*
-                        <InputBox
-                            heading="Transaction Fee"
-                            placeholder="Fee"
-                            input_type="number".into()
-                            updater=set_transaction_fee
-                            validator=non_empty_string_validator_for_u64
-                        />
-        */
                         <InputBox
                             heading="Distribution"
                             placeholder="Distribution Tokens"
-                            input_type="number".into()
+                            input_type="number"
                             updater=set_total_distribution
                             // initial_value="100000000".into()
-                            initial_value=((ctx.form_state.get_untracked()).total_distrubution().e8s.unwrap_or_else(|| 1000000 * 10e8 as u64) / 10e8 as u64).to_string()
+                            initial_value=(ctx.form_state.with_untracked(|f| f.total_distrubution().e8s.unwrap_or_else(|| 1000000 * 10e8 as u64) / 10e8 as u64)).to_string()
                             validator=non_empty_string_validator_for_u64
                         />
 
@@ -522,27 +414,6 @@ pub fn CreateToken() -> impl IntoView {
             }
 }
 
-// fn navigate_token_settings() {
-//     let navigate = use_navigate();
-//     navigate("/token/create/settings", Default::default());
-// }
-
-fn navigate_token_faq() {
-    let navigate = use_navigate();
-    navigate("/token/create/faq", Default::default());
-}
-
-fn clear_form(_form_ref: &NodeRef<html::Form>) {
-    // #[cfg(feature = "hydrate")] {
-    // use web_sys::window;
-    //     if let Some(win) = window() {
-    //         _ = win.location().reload_with_forceget(false);
-    //     }
-    // }
-    go_back_or_fallback("/token/crate");
-    // navigate_token_settings();
-}
-
 #[component]
 pub fn CreateTokenSettings() -> impl IntoView {
     let auth_cans = auth_canisters_store();
@@ -558,126 +429,50 @@ pub fn CreateTokenSettings() -> impl IntoView {
         provide_context(ctx);
         ctx
     });
+    let fstate = ctx.form_state;
 
-    // let save_action = create_action(move |&()| async move {
-    //     let cans = auth_cans
-    //         .get_untracked()
-    //         .expect("Create token called without auth canisters");
-    //     let sns_form = ctx.form_state.get_untracked();
-    //     let sns_config = sns_form.try_into_config(&cans)?;
+    let validate_tokens = |value: String| parse_tokens(&value).ok();
+    let validate_tokens_e8s = |value: String| parse_token_e8s(&value).ok();
+    let (transaction_fee, set_transaction_fee) = slice!(fstate.transaction_fee);
+    let (rejection_fee, set_rejection_fee) = slice!(fstate.proposals.rejection_fee);
 
-    //     Ok::<_, String>(())
-    // });
-    // let saving = save_action.pending();
+    let validate_duration = |value: String| parse_duration(&value).ok();
+    let (initial_voting_period, set_initial_voting_period) =
+        slice!(fstate.proposals.initial_voting_period);
+    let (max_wait_deadline_extension, set_max_wait_deadline_extension) =
+        slice!(fstate.proposals.maximum_wait_for_quiet_deadline_extension);
+    let (min_creation_stake, set_min_creation_stake) =
+        slice!(fstate.neurons.minimum_creation_stake);
+    let (min_dissolve_delay, set_min_dissolve_delay) = slice!(fstate.voting.minimum_dissolve_delay);
+    let (age, set_age) = slice!(fstate.voting.maximum_voting_power_bonuses.age.duration);
 
-    // let save_disabled = create_memo(move |_| {
-    //     saving()
-    //         || auth_cans.with(|c| c.is_none())
-    //         || ctx.form_state.with(|f| f.logo_b64.is_none())
-    //         || ctx.invalid_cnt.get() != 0
-    // });
+    let validate_percentage = |value: String| parse_percentage(&value).ok();
+    let (age_bonus, set_age_bonus) = slice!(fstate.voting.maximum_voting_power_bonuses.age.bonus);
+    let (min_participants, set_min_participants) = slice!(fstate.swap.minimum_participants);
 
-    let set_sns_proposal_link = move |value: String| {
-        ctx.form_state
-            .update(|f| f.sns_form_setting.sns_proposal_link = Some(value));
+    let optional_tokens_validator = |value: String| {
+        if value.is_empty() {
+            return Some(None);
+        }
+        Some(Some(parse_tokens(&value).ok()?))
     };
+    let (min_direct_participants_icp, set_min_direct_participants_icp) =
+        slice!(fstate.swap.minimum_direct_participation_icp);
+    let (max_direct_participants_icp, set_max_direct_participants_icp) =
+        slice!(fstate.swap.maximum_direct_participation_icp);
+    let (min_participants_icp, set_min_participants_icp) =
+        slice!(fstate.swap.minimum_participant_icp);
+    let (max_participants_icp, set_max_participants_icp) =
+        slice!(fstate.swap.maximum_participant_icp);
 
-    let set_nns_proposal_link = move |value: String| {
-        ctx.form_state
-            .update(|f| f.sns_form_setting.nns_proposal_link = Some(value));
-    };
-    let set_dapp_canister_id = move |value: String| {
-        ctx.form_state
-            .update(|f| f.sns_form_setting.dapp_canister_id = Some(value));
-    };
-    let set_transaction_fee = move |value: String| {
-        ctx.form_state
-            .update(|f| f.transaction_fee = parse_token_e8s(&value).unwrap());
-    };
-    let set_rejection_fee = move |value: String| {
-        ctx.form_state.update(|f| {
-            f.sns_form_setting.rejection_fee = parse_token_e8s(&value).ok();
-        });
-    };
-    let set_initial_voting_period_in_days = move |value: String| {
-        ctx.form_state.update(|f| {
-            f.sns_form_setting.initial_voting_period_in_days = value.parse::<u64>().ok();
-        });
-    };
-    let set_max_wait_deadline_extention = move |value: String| {
-        ctx.form_state.update(|f| {
-            f.sns_form_setting.max_wait_deadline_extention = value.parse::<u64>().ok();
-        });
-    };
-    let set_min_creation_stake = move |value: String| {
-        ctx.form_state.update(|f| {
-            f.sns_form_setting.min_creation_stake = value.parse::<u64>().ok();
-        });
-    };
-
-    let set_min_dissolve_delay = move |value: String| {
-        ctx.form_state.update(|f| {
-            f.sns_form_setting.min_dissolve_delay = value.parse::<u64>().ok();
-        });
-    };
-    let set_age_in_years = move |value: String| {
-        ctx.form_state.update(|f| {
-            f.sns_form_setting.age_duration_in_years = value.parse::<u64>().ok();
-        });
-    };
-
-    let set_age_bonus = move |value: String| {
-        ctx.form_state.update(|f| {
-            if let Ok(value) = value.parse::<u64>() {
-                if value <= 100 {
-                    f.sns_form_setting.age_bonus = Some(value);
-                }
-            }
-        });
-    };
-
-    let set_min_participants = move |value: String| {
-        ctx.form_state.update(|f| {
-            f.sns_form_setting.min_participants = value.parse::<u64>().ok();
-        });
-    };
-
-    let set_min_direct_participants_icp = move |value: String| {
-        ctx.form_state.update(|f| {
-            f.sns_form_setting.min_direct_participants_icp = value.parse::<u64>().ok();
-        });
-    };
-
-    let set_max_direct_participants_icp = move |value: String| {
-        ctx.form_state.update(|f| {
-            f.sns_form_setting.max_direct_participants_icp = value.parse::<u64>().ok();
-        });
-    };
-
-    let set_min_participants_icp = move |value: String| {
-        ctx.form_state.update(|f| {
-            f.sns_form_setting.min_participants_icp = value.parse::<u64>().ok();
-        });
-    };
-
-    let set_max_participants_icp = move |value: String| {
-        ctx.form_state.update(|f| {
-            f.sns_form_setting.max_participants_icp = value.parse::<u64>().ok();
-        });
-    };
-
-    let set_restricted_country = move |value: String| {
-        ctx.form_state.update(|f| {
-            f.sns_form_setting.restricted_country = Some(value);
-        });
-    };
-
-    let form_ref = create_node_ref::<html::Form>();
+    // let set_restricted_country = move |value: String| {
+    //     ctx.form_state.update(|f| {
+    //         f.sns_form_setting.restricted_country = Some(value);
+    //     });
+    // };
 
     let reset_settings = move |_| {
-        ctx.form_state
-            .update(|f| f.sns_form_setting = SnsFormSettings::default());
-        clear_form(&form_ref);
+        ctx.form_state.update(|f| f.reset_advanced_settings());
     };
 
     view! {
@@ -686,168 +481,125 @@ pub fn CreateTokenSettings() -> impl IntoView {
                     <div class="flex justify-between w-full" style="background: black" >
                         <BackButton fallback=fallback_url/>
                         <span class="font-bold justify-self-center">Settings</span>
-                        <button on:click=move |_|{navigate_token_faq() }  > <img src="/img/info.svg"/ > </button>
+                        <a href="/token/create/faq"><img src="/img/info.svg" /></a>
                     </div>
                     </Title>
                 <label class="flex flex-cols-2 cursor-pointer px-1">
                 <span class="flex-1 text-sm font-medium text-gray-400 dark:text-gray-500">Do you want to raise ICP?</span>
                 <div>
-                  <input type="checkbox" value="" class="sr-only peer" checked disabled />
-                    <div class="relative w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:bg-gray-600">
-                    <div class="absolute top-0.5 left-0.5 bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform peer-checked:translate-x-5 dark:border-gray-600"></div>
-                    </div>
+                    <span class="text-sm font-medium text-gray-400 dark:text-gray-500">Coming Soon!</span>
+                //   <input type="checkbox" value="" class="sr-only peer" checked disabled />
+                    // <div class="relative w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:bg-gray-600">
+                    //     <div class="absolute top-0.5 left-0.5 bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform peer-checked:translate-x-5 dark:border-gray-600"/>
+                    // </div>
                 </div>
                  // <div class="relative w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-gray-600"></div>
                 </label>
 
-                <form node_ref=form_ref >
-
-                <InputField
-                        heading="SNS proposal link"
-                        placeholder="https://your-proposal-link.com"
-                        updater=set_sns_proposal_link
-                        validator=non_empty_string_validator
-                        initial_value=(ctx.form_state.get_untracked()).sns_form_setting.sns_proposal_link.unwrap_or_default()
-                />
-                <InputField
-                        heading="NNS proposal link"
-                        placeholder="https://your-proposal-link.com"
-                        updater=set_nns_proposal_link
-                        validator=non_empty_string_validator
-                        initial_value=(ctx.form_state.get_untracked()).sns_form_setting.nns_proposal_link.unwrap_or_default()
-
-                />
-                <InputField
-                        heading="Dapp Canister ID"
-                        placeholder="#8539434643"
-                        updater=set_dapp_canister_id
-                        validator=non_empty_string_validator
-                        initial_value=(ctx.form_state.get_untracked()).sns_form_setting.dapp_canister_id.unwrap_or_default()
-
-                />
                 <InputBox
                         heading="Transaction Fee (e8s)"
-                        placeholder="Fee"
-                        input_type="number".into()
+                        input_type="number"
+                        placeholder="100"
                         updater=set_transaction_fee
-                        validator=non_empty_string_validator_for_u64
-                        initial_value=(ctx.form_state.get_untracked()).transaction_fee.e8s.unwrap_or(1).to_string()
-
+                        validator=validate_tokens_e8s
+                        initial_value=transaction_fee.get_untracked().e8s.unwrap_or(1).to_string()
                  />
                  <InputBox
                         heading="Rejection Fee (Token)"
                         placeholder="1 Token"
-                        input_type="number".into()
                         updater=set_rejection_fee
-                        validator=non_empty_string_validator_for_u64
-                        initial_value=(ctx.form_state.get_untracked()).sns_form_setting.rejection_fee.unwrap_or_default().e8s.unwrap_or(1).to_string()
-
+                        validator=validate_tokens
+                        initial_value=format_tokens(&rejection_fee.get_untracked())
                  />
                  <InputBox
                         heading="Initial Voting Period (days)"
                         placeholder="4 days"
-                        input_type="number".into()
-                        updater=set_initial_voting_period_in_days
-                        validator=non_empty_string_validator_for_u64
-                        initial_value=(ctx.form_state.get_untracked()).sns_form_setting.initial_voting_period_in_days.unwrap_or(4).to_string()
-
+                        updater=set_initial_voting_period
+                        validator=validate_duration
+                        initial_value=format_duration(&initial_voting_period.get_untracked())
                  />
                  <InputBox
                         heading="Maximum wait for quiet deadline extention (days)"
                         placeholder="1 day"
-                        input_type="number".into()
-                        updater=set_max_wait_deadline_extention
-                        validator=non_empty_string_validator_for_u64
-                        initial_value=(ctx.form_state.get_untracked()).sns_form_setting.max_wait_deadline_extention.unwrap_or(1).to_string()
+                        updater=set_max_wait_deadline_extension
+                        validator=validate_duration
+                        initial_value=format_duration(&max_wait_deadline_extension.get_untracked())
 
                  />
                  <InputBox
                         heading="Minimum creation stake (token)"
                         placeholder="1 token"
-                        input_type="number".into()
                         updater=set_min_creation_stake
-                        validator=non_empty_string_validator_for_u64
-                        initial_value=(ctx.form_state.get_untracked()).sns_form_setting.min_creation_stake.unwrap_or(1).to_string()
+                        validator=validate_tokens
+                        initial_value=format_tokens(&min_creation_stake.get_untracked())
 
                  />
                  <InputBox
                         heading="Minimum dissolve delay (months)"
                         placeholder="1 month"
-                        input_type="number".into()
                         updater=set_min_dissolve_delay
-                        validator=non_empty_string_validator_for_u64
-                        initial_value=(ctx.form_state.get_untracked()).sns_form_setting.min_dissolve_delay.unwrap_or(1).to_string()
+                        validator=validate_duration
+                        initial_value=format_duration(&min_dissolve_delay.get_untracked())
 
                  />
                  <InputBox
                         heading="Age (duration in years)"
                         placeholder="4 years"
-                        input_type="number".into()
-                        updater=set_age_in_years
-                        validator=non_empty_string_validator_for_u64
-                        initial_value=(ctx.form_state.get_untracked()).sns_form_setting.age_duration_in_years.unwrap_or(4).to_string()
+                        updater=set_age
+                        validator=validate_duration
+                        initial_value=format_duration(&age.get_untracked())
 
                  />
                  <InputBox
                         heading="Age (bonus %)"
                         placeholder="25%"
-                        input_type="number".into()
                         updater=set_age_bonus
-                        validator=non_empty_string_validator_for_u64
-                        initial_value=(ctx.form_state.get_untracked()).sns_form_setting.age_bonus.unwrap_or(25).to_string()
+                        validator=validate_percentage
+                        initial_value=format_percentage(&age_bonus.get_untracked())
 
                  />
                  <InputBox
                         heading="Minimum participants"
                         placeholder="57"
-                        input_type="number".into()
+                        input_type="number"
                         updater=set_min_participants
                         validator=non_empty_string_validator_for_u64
+                        initial_value=min_participants.get_untracked().to_string()
                  />
                  <InputBox
                         heading="Minimum direct participant icp"
                         placeholder="100,000 tokens"
-                        input_type="number".into()
                         updater=set_min_direct_participants_icp
-                        validator=non_empty_string_validator_for_u64
+                        validator=optional_tokens_validator
+                        initial_value=min_direct_participants_icp.with_untracked(|p| p.as_ref().map(format_tokens)).unwrap_or_default()
                  />
                  <InputBox
                         heading="Maximum direct participant icp"
-                        placeholder="1000,000 tokens"
-                        input_type="number".into()
+                        placeholder="1000000 tokens"
                         updater=set_max_direct_participants_icp
-                        validator=non_empty_string_validator_for_u64
+                        validator=optional_tokens_validator
+                        initial_value=max_direct_participants_icp.with_untracked(|p| p.as_ref().map(format_tokens)).unwrap_or_default()
                  />
                  <InputBox
                         heading="Minimum participant icp"
                         placeholder="10 tokens"
-                        input_type="number".into()
                         updater=set_min_participants_icp
-                        validator=non_empty_string_validator_for_u64
+                        validator=validate_tokens
+                        initial_value=format_tokens(&min_participants_icp.get_untracked())
                  />
                  <InputBox
                         heading="Maximum participant icp"
                         placeholder="10,000 tokens"
-                        input_type="number".into()
                         updater=set_max_participants_icp
-                        validator=non_empty_string_validator_for_u64
+                        validator=validate_tokens
+                        initial_value=format_tokens(&max_participants_icp.get_untracked())
                  />
-                 <InputBox
-                        heading="Restricted Country"
-                        placeholder="Antarctica"
-                        updater=set_restricted_country
-                        validator=non_empty_string_validator
-                 />
-                 </form>
-                //  <div class="w-full flex justify-center">
-                //             <button
-                //                 // on:click=move |_| create_action.dispatch(())
-                //                 disabled=save_disabled
-                //                 class="text-white disabled:text-neutral-500 md:text-xl py-4 md:py-4 font-bold w-full md:w-1/2 lg:w-1/3 rounded-full bg-primary-600 disabled:bg-primary-500/30"
-                //             >
-                //             Save
-                //             </button>
-                //  </div>
+                //  <InputBox
+                //         heading="Restricted Country"
+                //         placeholder="Antarctica"
+                //         updater=set_restricted_country
+                //         validator=non_empty_string_validator
+                //  />
                  <button on:click=reset_settings class="w-full flex justify-center underline text-sm text-white my-4 " >Reset to default</button>
             </div>
 

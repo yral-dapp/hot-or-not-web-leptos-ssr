@@ -99,15 +99,15 @@ pub fn NavBar() -> impl IntoView {
             // "/leaderboard" => 1,
             "/upload" => 2,
             "/wallet" | "/transactions" => 3,
-            "/token/info" => 3,
             "/menu" | "/leaderboard" => 4,
-            s if s.starts_with("/token/info") => 3,
-            s if s.starts_with("/your-profile") => 5,
             s if s.starts_with("/hot-or-not") => {
                 home_path.set(path);
                 0
             }
             s if s.starts_with("/profile") => 0,
+            s if s.starts_with("/token/info") => 3,
+            s if s.starts_with("/token/create") => 5,
+            s if s.starts_with("/your-profile") => 5,
             _ => 4,
         }
     });
