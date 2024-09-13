@@ -569,7 +569,15 @@ pub fn CreateToken() -> impl IntoView {
 //
 fn navigate_to_profile() {
     let navigate = use_navigate();
-    navigate("/your-profile/{profile_id}?tab=tokens", Default::default());
+    let cans = auth_canisters_store();
+    let profile_url = move || {
+        let Some(cans) = cans() else {
+            return "/menu".into();
+        };
+        let profile_id = cans.user_principal();
+        format!("/your-profile/{profile_id}?tab=tokens")
+    };
+    navigate(profile_url.into(), Default::default());
 }
 
 fn navigate_token_faq() {
