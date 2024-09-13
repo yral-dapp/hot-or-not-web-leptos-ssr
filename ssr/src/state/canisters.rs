@@ -121,7 +121,7 @@ impl Canisters<true> {
         init_payload: SnsInitPayload,
     ) -> Result<Result7, AgentError> {
         let agent = self.agent.get_agent().await;
-        let args = candid::encode_args((init_payload, 20_u64)).unwrap();
+        let args = candid::encode_args((init_payload, 60_u64)).unwrap();
         let bytes = agent
             .update(&self.user_canister, "deploy_cdao_sns")
             .with_arg(args)
