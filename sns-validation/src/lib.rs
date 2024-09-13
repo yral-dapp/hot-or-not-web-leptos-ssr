@@ -1,4 +1,3 @@
-#![feature(lazy_cell)]
 pub mod config;
 mod consts;
 pub mod humanize;

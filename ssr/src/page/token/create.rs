@@ -6,7 +6,7 @@ use crate::{
         title::Title,
     },
     page::token::{sns_form::SnsFormSettings, types},
-    state::canisters::auth_canisters_store,
+    state::canisters::{auth_canisters_store, authenticated_canisters, CanistersAuthWire},
     utils::web::FileWithUrl,
 };
 use leptos::*;
@@ -14,17 +14,20 @@ use leptos_router::*;
 use std::{env, str::FromStr};
 
 use sns_validation::{humanize::parse_tokens, pbs::nns_pb::Tokens};
+use server_fn::codec::Cbor;
+use sns_validation::pbs::sns_pb::SnsInitPayload;
 
 use super::{popups::TokenCreationPopup, sns_form::SnsFormState};
 
 use candid::{Decode, Encode, Nat, Principal};
 use ic_agent::Identity;
-use ic_agent::{
-    identity::{BasicIdentity, Secp256k1Identity},
-    Agent,
-};
-use ic_base_types::PrincipalId;
+use ic_agent::
+    identity::BasicIdentity
+;
 use icp_ledger::Subaccount;
+use ic_agent::Agent;
+use ic_base_types::PrincipalId;
+use icp_ledger::AccountIdentifier;
 
 use crate::canister::sns_swap::{
     NewSaleTicketRequest, NewSaleTicketResponse, RefreshBuyerTokensRequest,
@@ -32,14 +35,67 @@ use crate::canister::sns_swap::{
 };
 use crate::consts::{AGENT_URL, ICP_LEDGER_CANISTER_ID};
 
+const ICP_TX_FEE: u64 = 10000;
+
 #[server]
-async fn participate_in_swap(swap_canister: Principal, tx_fee: u64) -> Result<(), ServerFnError> {
+async fn is_server_available() -> Result<(bool, AccountIdentifier), ServerFnError> {
     let admin_id_pem: String =
         env::var("BACKEND_ADMIN_IDENTITY").expect("`BACKEND_ADMIN_IDENTITY` is required!");
     let admin_id_pem_by = admin_id_pem.as_bytes();
     let admin_id =
         BasicIdentity::from_pem(admin_id_pem_by).expect("Invalid `BACKEND_ADMIN_IDENTITY`");
-    // let admin_id = Secp256k1Identity::from_pem_file("/home/debjit/hot-or-not-backend-canister/scripts/canisters/docker/local-admin.pem".to_string()).unwrap();
+    // let admin_id = Secp256k1Identity::from_pem_file(
+    //     "/home/debjit/hot-or-not-backend-canister/scripts/canisters/docker/local-admin.pem"
+    //         .to_string(),
+    // )
+    // .expect("Invalid `BACKEND_ADMIN_IDENTITY`");
+    let admin_principal = admin_id.sender().unwrap();
+    log::debug!("admin_principal: {:?}", admin_principal.to_string());
+
+    let agent = Agent::builder()
+        .with_url(AGENT_URL)
+        .with_identity(admin_id)
+        .build()
+        .unwrap();
+    agent.fetch_root_key().await.unwrap();
+
+    let balance_res = agent
+        .query(
+            &Principal::from_str(ICP_LEDGER_CANISTER_ID).unwrap(),
+            "icrc1_balance_of",
+        )
+        .with_arg(
+            candid::encode_one(types::Icrc1BalanceOfArg {
+                owner: admin_principal,
+                subaccount: None,
+            })
+            .unwrap(),
+        )
+        .call()
+        .await
+        .unwrap();
+    let balance: Nat = Decode!(&balance_res, Nat).unwrap();
+    println!("balance: {:?}", balance);
+    let acc_id = AccountIdentifier::new(PrincipalId(admin_principal), None);
+    if balance >= (1000000 + ICP_TX_FEE) {
+        // amount we participate + icp tx fee
+        Ok((true, acc_id))
+    } else {
+        Ok((false, acc_id))
+    }
+}
+
+#[server]
+async fn participate_in_swap(swap_canister: Principal) -> Result<(), ServerFnError> {
+    let admin_id_pem: String =
+        env::var("BACKEND_ADMIN_IDENTITY").expect("`BACKEND_ADMIN_IDENTITY` is required!");
+    let admin_id_pem_by = admin_id_pem.as_bytes();
+    let admin_id =
+        BasicIdentity::from_pem(admin_id_pem_by).expect("Invalid `BACKEND_ADMIN_IDENTITY`");
+    // let admin_id = Secp256k1Identity::from_pem_file(
+    //     "/home/debjit/hot-or-not-backend-canister/scripts/canisters/docker/local-admin.pem"
+    //         .to_string(),
+    // ).expect("Invalid `BACKEND_ADMIN_IDENTITY`");
     let admin_principal = admin_id.sender().unwrap();
     log::debug!("admin_principal: {:?}", admin_principal.to_string());
 
@@ -69,8 +125,8 @@ async fn participate_in_swap(swap_canister: Principal, tx_fee: u64) -> Result<()
     let subaccount = Subaccount::from(&PrincipalId(admin_principal));
     let transfer_args = types::Transaction {
         memo: Some(vec![0]),
-        amount: Nat::from(1000000 as u64),
-        fee: Some(Nat::from(tx_fee as u64)),
+        amount: Nat::from(1000000_u64),
+        fee: Some(Nat::from(ICP_TX_FEE)),
         from_subaccount: None,
         to: types::Recipient {
             owner: swap_canister,
@@ -109,6 +165,29 @@ async fn participate_in_swap(swap_canister: Principal, tx_fee: u64) -> Result<()
     );
 
     Ok(())
+}
+
+#[server(
+    input = Cbor
+)]
+async fn deploy_cdao_canisters(
+    cans_wire: CanistersAuthWire,
+    create_sns: SnsInitPayload,
+) -> Result<(), ServerFnError> {
+    let cans = cans_wire.canisters().unwrap();
+    log::debug!("deploying canisters {:?}", cans.user_canister().to_string());
+    let res = cans
+        .deploy_cdao_sns(create_sns)
+        .await
+        .map_err(|e| ServerFnError::new(format!("{e:?}")))?;
+
+    match res {
+        Result7::Ok(c) => {
+            log::debug!("deployed canister {}", c.governance);
+            participate_in_swap(c.swap).await
+        }
+        Result7::Err(e) => Err(ServerFnError::new(format!("{e:?}"))),
+    }
 }
 
 #[component]
@@ -151,8 +230,8 @@ fn TokenImage() -> impl IntoView {
     let img_url = Signal::derive(move || img_file.with(|f| f.as_ref().map(|f| f.url.to_string())));
 
     let border_class = move || match img_url.with(|u| u.is_none()) {
-        true => format!("relative w-20 h-20 rounded-full border-2 border-white/20"),
-        _ => format!("relative w-20 h-20 rounded-full border-2 border-primary-600"),
+        true => "relative w-20 h-20 rounded-full border-2 border-white/20".to_string(),
+        _ => "relative w-20 h-20 rounded-full border-2 border-primary-600".to_string(),
     };
 
     view! {
@@ -404,38 +483,63 @@ pub fn CreateToken() -> impl IntoView {
         });
     };
 
-    let create_action = create_action(move |&()| async move {
-        // return Ok(());
-        let cans = auth_cans
-            .get_untracked()
-            .expect("Create token called without auth canisters");
-        let sns_form = ctx.form_state.get_untracked();
-        let sns_config = sns_form.try_into_config(&cans)?;
+    let auth_cans_wire = authenticated_canisters();
 
-        let create_sns = sns_config.try_convert_to_executed_sns_init()?;
-        let tx_fee = create_sns.transaction_fee_e8s.unwrap_or(0);
-        let res = cans
-            .deploy_cdao_sns(create_sns)
-            .await
-            .map_err(|e| e.to_string())?;
-        match res {
-            Result7::Ok(c) => {
-                log::debug!("deployed canister {}", c.governance);
-                let participated: Result<(), ServerFnError> =
-                    participate_in_swap(c.swap, tx_fee).await;
-                if let Err(e) = participated {
-                    return Err(format!("{e:?}"));
-                } else {
-                    ctx.form_state.set(SnsFormState::default());
-                    log::debug!("participated in swap");
-                }
-            }
-            Result7::Err(e) => {
-                return Err(format!("{e:?}"));
-            }
-        };
+    let create_action = create_action(move |&()| {
+        let auth_cans_wire = auth_cans_wire.clone();
+        async move {
+            let cans = auth_cans
+                .get_untracked()
+                .expect("Create token called without auth canisters");
+            let sns_form = ctx.form_state.get_untracked();
+            let sns_config = sns_form.try_into_config(&cans)?;
 
-        Ok::<_, String>(())
+            // let auth_cans_wire = ;
+
+            let create_sns = sns_config.try_convert_to_executed_sns_init()?;
+            let server_available = is_server_available().await.map_err(|e| e.to_string())?;
+            log::debug!(
+                "Server details: {}, {}",
+                server_available.0,
+                server_available.1
+            );
+            if !server_available.0 {
+                return Err("Server is not available".to_string());
+            }
+            // let res = cans
+            //     .deploy_cdao_sns(create_sns)
+            //     .await
+            //     .map_err(|e| e.to_string())?;
+            // match res {
+            //     Result7::Ok(c) => {
+            //         log::debug!("deployed canister {}", c.governance);
+            //         let participated = participate_in_swap(c.swap).await;
+            //         if let Err(e) = participated {
+            //             return Err(format!("{e:?}"));
+            //         } else {
+            //             log::debug!("participated in swap");
+            //         }
+            //     }
+            //     Result7::Err(e) => {
+            //         return Err(format!("{e:?}"));
+            //     }
+            // };
+
+            deploy_cdao_canisters(auth_cans_wire.wait_untracked().await.unwrap(), create_sns)
+                .await
+                .map_err(|e| format!("{e:?}"))
+            // let cdao_deploy_res = auth_cans.derive(
+            //     || (),
+            //     move |cans_wire, _| {
+            //         let create_sns = create_sns.clone();
+            //         async move {
+            //             let cans_wire = cans_wire.unwrap();
+
+            //             res
+            //         }
+            //     }
+            // );
+        }
     });
     let creating = create_action.pending();
 
@@ -452,13 +556,13 @@ pub fn CreateToken() -> impl IntoView {
             || ctx.file.with(|f| f.is_none())
     });
 
-    let create_act_value = create_action.value();
-    let create_act_res = Signal::derive(move || {
-        if creating() {
-            return None;
-        }
-        create_act_value()
-    });
+    // let create_act_value = create_action.value();
+    // let create_act_res = Signal::derive(move || {
+    //     if creating() {
+    //         return None;
+    //     }
+    //     create_act_value()
+    // });
 
     view! {
                 <div class="w-dvw min-h-dvh bg-black pt-4 flex flex-col gap-4" style="padding-bottom:6rem" >

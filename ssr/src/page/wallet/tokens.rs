@@ -1,8 +1,8 @@
-use candid::Principal;
+use candid::{Nat, Principal};
 use ic_agent::AgentError;
 
 use crate::{
-    canister::individual_user_template::Result14,
+    canister::{individual_user_template::Result14, sns_root::ListSnsCanistersArg},
     component::{
         back_btn::BackButton,
         bullet_loader::BulletLoader,
@@ -16,7 +16,7 @@ use crate::{
     },
     utils::{
         profile::propic_from_principal,
-        token::{claim_tokens_from_first_neuron, token_metadata_by_root, TokenCans, TokenMetadata},
+        token::{claim_tokens_from_first_neuron, token_metadata_by_root, TokenMetadata},
     },
 };
 use leptos::*;
@@ -58,12 +58,18 @@ impl CursoredDataProvider for TokenRootList {
     }
 }
 
+pub fn nat_to_human(balance: Nat) -> String {
+    (balance.clone() / 10u64.pow(8))
+        .to_string()
+        .replace('_', ",")
+}
+
 async fn token_metadata_or_fallback(
     cans: Canisters<false>,
-    user_canister: Principal,
+    user_principal: Principal,
     token_root: Principal,
 ) -> TokenMetadata {
-    let metadata = token_metadata_by_root(&cans, user_canister, token_root)
+    let metadata = token_metadata_by_root(&cans, user_principal, token_root)
         .await
         .ok()
         .flatten();
@@ -84,7 +90,7 @@ fn FallbackToken() -> impl IntoView {
     }
 }
 
-pub fn unlock_tokens(user_canister: Principal, token: TokenCans) {
+pub fn unlock_tokens(token_root: Principal) {
     let (is_connected, _) = account_connected_reader();
     let auth_cans = authenticated_canisters();
 
@@ -92,15 +98,19 @@ pub fn unlock_tokens(user_canister: Principal, token: TokenCans) {
         || (),
         move |cans_wire, _| async move {
             let cans = cans_wire?.canisters()?;
+            let root_canister = cans.sns_root(token_root).await;
+            let token_cans = root_canister
+                .list_sns_canisters(ListSnsCanistersArg {})
+                .await?;
+            let governance = token_cans.governance;
+            if governance.is_none() {
+                log::debug!("No governance canister found for token");
+                return Ok(());
+            }
             // let token = token.clone();
-            let claim_result = claim_tokens_from_first_neuron(
-                &cans,
-                cans.user_principal(),
-                token.governance,
-                user_canister,
-                token.ledger,
-            )
-            .await;
+            let claim_result =
+                claim_tokens_from_first_neuron(&cans, cans.user_principal(), governance.unwrap())
+                    .await;
             if claim_result.is_err() {
                 leptos::logging::log!(
                     "Failed to claim tokens from first neuron: {:?}",
@@ -113,7 +123,7 @@ pub fn unlock_tokens(user_canister: Principal, token: TokenCans) {
     create_effect(move |_| {
         leptos::logging::log!("TokenView effect");
         if is_connected() {
-            leptos::logging::log!("Unlocking tokens for token: {:?}", token.governance.clone());
+            leptos::logging::log!("Unlocking tokens for token");
             token_unlocking();
         }
     });
@@ -121,14 +131,15 @@ pub fn unlock_tokens(user_canister: Principal, token: TokenCans) {
 
 #[component]
 pub fn TokenView(
-    user_canister: Principal,
+    user_principal: Principal,
     token_root: Principal,
     #[prop(optional)] _ref: NodeRef<html::A>,
 ) -> impl IntoView {
     let cans = unauth_canisters();
+    unlock_tokens(token_root);
     let info = create_resource(
         || (),
-        move |_| token_metadata_or_fallback(cans.clone(), user_canister, token_root),
+        move |_| token_metadata_or_fallback(cans.clone(), user_principal, token_root),
     );
 
     view! {
@@ -140,7 +151,7 @@ pub fn TokenView(
                     <span class="text-white truncate">{info.name.clone()}</span>
                 </div>
                 <div class="flex flex-row gap-2 items-center justify-self-end text-base text-white">
-                    <span class="truncate">{format!("{} {}", (info.balance.clone() / 10u64.pow(8)).to_string().replace("_", ","), info.symbol)}</span>
+                    <span class="truncate">{format!("{} {}", nat_to_human(info.balance.clone()), info.symbol)}</span>
                     <div class="flex items-center justify-center w-8 h-8 bg-white/15 rounded-full">
                         <Icon icon=icondata::BsSend/>
                     </div>
@@ -153,8 +164,9 @@ pub fn TokenView(
 
 #[component]
 fn TokenList(canisters: Canisters<true>) -> impl IntoView {
-    let user_canister = canisters.user_canister();
-    let provider = TokenRootList(canisters);
+    // let user_canister = canisters.user_canister();
+    let user_principal = canisters.user_principal();
+    let provider: TokenRootList = TokenRootList(canisters);
 
     view! {
         <div class="flex flex-col w-full gap-2 items-center">
@@ -162,7 +174,7 @@ fn TokenList(canisters: Canisters<true>) -> impl IntoView {
                 provider
                 fetch_count=10
                 children=move |token_root, _ref| {
-                    view! { <TokenView user_canister token_root _ref=_ref.unwrap_or_default()/> }
+                    view! { <TokenView user_principal token_root _ref=_ref.unwrap_or_default()/> }
                 }
             />
         </div>

@@ -1,10 +1,14 @@
 use crate::{
-    canister::individual_user_template::Result22,
+    canister::{
+        sns_ledger::{Account, TransferArg},
+        sns_root::ListSnsCanistersArg,
+    },
     component::{
         back_btn::BackButton, canisters_prov::WithAuthCans, spinner::FullScreenSpinner,
         title::Title,
     },
-    state::canisters::Canisters,
+    page::wallet::tokens::nat_to_human,
+    state::canisters::{authenticated_canisters, Canisters, CanistersAuthWire},
     utils::{
         token::{token_metadata_by_root, TokenMetadata},
         web::{copy_to_clipboard, paste_from_clipboard},
@@ -15,8 +19,106 @@ use leptos::*;
 use leptos_icons::*;
 use leptos_router::*;
 use leptos_use::use_event_listener;
+use server_fn::codec::Cbor;
 
 use super::TokenParams;
+
+#[server(
+    input = Cbor
+)]
+async fn transfer_token_to_user_principal(
+    cans_wire: CanistersAuthWire,
+    destination_canister: Principal,
+    destination_principal: Principal,
+    ledger_canister: Principal,
+    root_canister: Principal,
+    amount: Nat,
+) -> Result<(), ServerFnError> {
+    let cans = cans_wire.canisters().unwrap();
+    // let user_id = user_id.to_owned();
+    // let user_principal = user_id.sender()?;
+    // let agent = cans.agent.get_agent().await;
+    // let user_principal = agent.get_principal()?;
+    // log::debug!("user_principal: {:?}", user_principal.to_string());
+    let sns_ledger = cans.sns_ledger(ledger_canister).await;
+    let res = sns_ledger
+        .icrc_1_transfer(TransferArg {
+            memo: Some(serde_bytes::ByteBuf::from(vec![0])),
+            amount: amount.clone(),
+            fee: None,
+            from_subaccount: None,
+            to: Account {
+                owner: destination_principal,
+                subaccount: None,
+            },
+            created_at_time: None,
+        })
+        .await
+        .unwrap();
+    log::debug!("transfer res: {:?}", res);
+    let res = sns_ledger
+        .icrc_1_transfer(TransferArg {
+            memo: Some(serde_bytes::ByteBuf::from(vec![1])),
+            amount: Nat::from(1_u64),
+            fee: None,
+            from_subaccount: None,
+            to: Account {
+                owner: destination_canister,
+                subaccount: None,
+            },
+            created_at_time: None,
+        })
+        .await
+        .unwrap();
+    log::debug!("transfer res: {:?}", res);
+
+    // let agent = Agent::builder()
+    //     .with_url(AGENT_URL)
+    //     .with_identity(user_id)
+    //     .build()
+    //     .unwrap();
+    // agent.fetch_root_key().await.unwrap();
+
+    // let transfer_args = types::Transaction {
+    //     memo: Some(vec![0]),
+    //     amount,
+    //     fee: None,
+    //     from_subaccount: None,
+    //     to: types::Recipient {
+    //         owner: destination_principal,
+    //         subaccount: None,
+    //     },
+    //     created_at_time: None,
+    // };
+    // let res = agent
+    //     .update(
+    //         &ledger_canister,
+    //         "icrc1_transfer",
+    //     )
+    //     .with_arg(Encode!(&transfer_args).unwrap())
+    //     .call_and_wait()
+    //     .await
+    //     .unwrap();
+    // let transfer_result: types::TransferResult = Decode!(&res, types::TransferResult).unwrap();
+    // println!("transfer_result: {:?}", transfer_result);
+
+    let destination_canister = cans.individual_user(destination_canister).await;
+    let res = destination_canister.add_token(root_canister).await.unwrap();
+    println!("add_token res: {:?}", res);
+
+    // let res = agent
+    //     .update(
+    //         &destination_canister,
+    //         "add_token",
+    //     )
+    //     .with_arg(candid::encode_one(root_canister).unwrap())
+    //     .call_and_wait()
+    //     .await
+    //     .unwrap();
+    // println!("add_token res: {:?}", res);
+
+    Ok(())
+}
 
 #[component]
 fn FormError<V: 'static>(#[prop(into)] res: Signal<Result<V, String>>) -> impl IntoView {
@@ -94,27 +196,50 @@ fn TokenTransferInner(
         }
     });
 
+    let auth_cans_wire = authenticated_canisters();
+
     let send_action = create_action(move |&()| {
         let cans = cans.clone();
+        let auth_cans_wire = auth_cans_wire.clone();
         async move {
             let destination = destination_res.get_untracked().unwrap().unwrap();
-            let destination = cans
+            let destination_canister = cans
                 .get_individual_canister_by_user_principal(destination)
                 .await
                 .unwrap()
                 .unwrap();
-            let amt = amt_res.get_untracked().unwrap().unwrap();
+            // let amt = amt_res.get_untracked().unwrap().unwrap();
 
-            let user = cans.authenticated_user().await;
-            let res = user
-                .transfer_token_to_user_canister(root, destination, None, amt)
+            // let user = cans.authenticated_user().await;
+            // let res = user
+            //     .transfer_token_to_user_canister(root, destination, None, amt)
+            //     .await
+            //     .map_err(|e| e.to_string())?;
+            // if let Result22::Err(e) = res {
+            //     return Err(format!("{e:?}"));
+            // }
+
+            // Ok(())
+
+            let root_canister = cans.sns_root(root).await;
+            let sns_cans = root_canister
+                .list_sns_canisters(ListSnsCanistersArg {})
                 .await
-                .map_err(|e| e.to_string())?;
-            if let Result22::Err(e) = res {
-                return Err(format!("{e:?}"));
-            }
+                .unwrap();
+            let ledger_canister = sns_cans.ledger.unwrap();
+            log::debug!("ledger_canister: {:?}", ledger_canister);
 
-            Ok(())
+            let res = transfer_token_to_user_principal(
+                auth_cans_wire.wait_untracked().await.unwrap(),
+                destination_canister,
+                destination,
+                ledger_canister,
+                root,
+                amt_res.get_untracked().unwrap().unwrap(),
+            )
+            .await;
+            log::debug!("transfer_token_to_user_principal res: {:?}", res);
+            res
         }
     });
 
@@ -135,7 +260,7 @@ fn TokenTransferInner(
                 <div class="flex flex-col w-full gap-2 items-center">
                     <div class="flex flex-row justify-between w-full text-sm md:text-base text-white">
                         <span>Source:</span>
-                        <span>{format!("{} {}", info.balance, info.symbol)}</span>
+                        <span>{format!("{} {}", nat_to_human(info.balance), info.symbol)}</span>
                     </div>
                     <div class="flex flex-row gap-2 w-full items-center">
                         <p class="text-sm md:text-md text-white/80">{source_addr.to_string()}</p>
@@ -190,12 +315,13 @@ pub fn TokenTransfer() -> impl IntoView {
     let token_metadata_fetch = move |cans: Canisters<true>| {
         create_resource(params, move |params| {
             let cans = cans.clone();
+            let user_principal = cans.user_principal();
             async move {
                 let Ok(params) = params else {
                     return Ok::<_, ServerFnError>(None);
                 };
-                let user = cans.user_canister();
-                let meta = token_metadata_by_root(&cans, user, params.token_root).await?;
+                // let user = cans.user_canister();
+                let meta = token_metadata_by_root(&cans, user_principal, params.token_root).await?;
                 Ok(meta.map(|m| (m, params.token_root)))
             }
         })

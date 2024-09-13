@@ -52,11 +52,24 @@ struct DistributionForm {
 impl Default for DistributionForm {
     fn default() -> Self {
         Self {
-            total: parse_tokens("10_000_000 tokens").unwrap(),
-            neurons: vec![NeuronForm::default()],
+            total: parse_tokens("10_002_003 tokens").unwrap(),
+            neurons: vec![
+                NeuronForm {
+                    stake: parse_tokens("4_500_001 tokens").unwrap(),
+                    memo: 0,
+                    dissolve_delay: parse_duration("0 seconds").unwrap(),
+                    vesting_period: parse_duration("2 seconds").unwrap(),
+                },
+                NeuronForm {
+                    stake: parse_tokens("1_000 tokens").unwrap(),
+                    memo: 1,
+                    dissolve_delay: parse_duration("2 seconds").unwrap(),
+                    vesting_period: parse_duration("2 seconds").unwrap(),
+                },
+            ],
             initial_balances: InitialBalances {
                 governance: parse_tokens("500_000 tokens").unwrap(),
-                swap: parse_tokens("5_000_000 tokens").unwrap(),
+                swap: parse_tokens("5_001_002 tokens").unwrap(),
             },
         }
     }
@@ -185,15 +198,21 @@ impl Default for SnsFormState {
 
 impl SnsFormState {
     pub fn try_update_total_distribution_tokens(&mut self, tokens: nns_pb::Tokens) {
-        let tokens = tokens.e8s.unwrap() as u64;
+        let tx_fee = self.transaction_fee.e8s.unwrap();
+        let tokens = tokens.e8s.unwrap();
         let total = tokens;
-        let non_voting_neuron = (total as f64 * 0.49) as u64;
-        let voting_neuron = 2000 as u64;
-        let swap = total - (non_voting_neuron + voting_neuron);
-        let governance = 1000 as u64;
+
+        let non_voting_neuron = (total as f64 * 0.5) as u64 + tx_fee;
+        let voting_neuron = 2000_u64;
+
+        let swap = non_voting_neuron + voting_neuron + 1;
+        let governance = 0_u64;
+
         let non_voting_neuron = non_voting_neuron - governance;
 
-        self.distribution.total = nns_pb::Tokens { e8s: Some(total) };
+        self.distribution.total = nns_pb::Tokens {
+            e8s: Some(voting_neuron + non_voting_neuron + swap + governance),
+        };
         self.distribution.neurons = vec![
             NeuronForm {
                 stake: nns_pb::Tokens {

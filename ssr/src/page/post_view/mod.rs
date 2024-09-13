@@ -4,6 +4,9 @@ pub mod overlay;
 pub mod single_post;
 pub mod video_iter;
 pub mod video_loader;
+use priority_queue::DoublePriorityQueue;
+use std::cmp::Reverse;
+
 use crate::{
     component::{scrolling_post_view::ScrollingPostView, spinner::FullScreenSpinner},
     consts::NSFW_TOGGLE_STORE,
@@ -30,6 +33,12 @@ struct PostParams {
 }
 
 #[derive(Clone, Default)]
+pub struct BetEligiblePostCtx {
+    // This is true if betting is enabled for the current post and no bet has been placed
+    pub can_place_bet: RwSignal<bool>,
+}
+
+#[derive(Clone, Default)]
 pub struct PostViewCtx {
     fetch_cursor: RwSignal<FetchCursor>,
     // TODO: this is a dead simple with no GC
@@ -39,6 +48,8 @@ pub struct PostViewCtx {
     video_queue: RwSignal<Vec<PostDetails>>,
     current_idx: RwSignal<usize>,
     queue_end: RwSignal<bool>,
+    priority_q: RwSignal<DoublePriorityQueue<PostDetails, (usize, Reverse<usize>)>>, // we are using DoublePriorityQueue for GC in the future through pop_min
+    batch_cnt: RwSignal<usize>,
 }
 
 #[component]
@@ -52,6 +63,7 @@ pub fn CommonPostViewWithUpdates(
         video_queue,
         current_idx,
         queue_end,
+        ..
     } = expect_context();
 
     let recovering_state = create_rw_signal(false);
@@ -176,13 +188,7 @@ pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
         fetch_cursor.try_update(|c| c.advance());
     });
 
-    view! {
-        <CommonPostViewWithUpdates
-            initial_post
-            fetch_video_action
-            threshold_trigger_fetch=10
-        />
-    }
+    view! { <CommonPostViewWithUpdates initial_post fetch_video_action threshold_trigger_fetch=10 /> }
 }
 
 #[component]
@@ -191,6 +197,8 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
         fetch_cursor,
         video_queue,
         queue_end,
+        priority_q,
+        batch_cnt,
         ..
     } = expect_context();
 
@@ -201,11 +209,14 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
     let fetch_video_action = create_action(move |_| {
         let auth_cans = auth_cans.clone();
         async move {
-            loop {
+            while priority_q.with_untracked(|q| q.len()) < 15 {
                 let Some(cursor) = fetch_cursor.try_get_untracked() else {
                     return;
                 };
                 let Some(nsfw_enabled) = nsfw_enabled.try_get_untracked() else {
+                    return;
+                };
+                let Some(batch_cnt_val) = batch_cnt.try_get_untracked() else {
                     return;
                 };
 
@@ -219,29 +230,48 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
 
                 let res = try_or_redirect!(chunks);
                 let mut chunks = res.posts_stream;
-                let mut cnt = 0;
+                let cnt = create_rw_signal(0);
                 while let Some(chunk) = chunks.next().await {
-                    cnt += chunk.len();
-                    video_queue.try_update(|q| {
+                    update!(move |video_queue, priority_q, cnt| {
                         for uid in chunk {
-                            let uid = try_or_redirect!(uid);
-                            q.push(uid);
+                            let post_detail = try_or_redirect!(uid);
+
+                            if video_queue.len() < 10 {
+                                video_queue.push(post_detail);
+                            } else {
+                                priority_q.push(post_detail, (batch_cnt_val, Reverse(*cnt)));
+                            }
+
+                            *cnt += 1;
                         }
                     });
                 }
+
                 leptos::logging::log!("feed type: {:?}", res.res_type);
                 if res.res_type != FeedResultType::MLFeed {
                     fetch_cursor.try_update(|c| {
                         c.set_limit(15);
-                        c.advance_and_set_limit(20)
+                        c.advance_and_set_limit(15)
                     });
                 }
 
-                if res.end || cnt >= 8 {
+                if res.end {
                     queue_end.try_set(res.end);
-                    break;
                 }
+
+                batch_cnt.update(|x| *x += 1);
             }
+
+            update!(move |video_queue, priority_q| {
+                let mut cnt = 0;
+                while let Some((next, _)) = priority_q.pop_max() {
+                    video_queue.push(next);
+                    cnt += 1;
+                    if cnt >= 10 {
+                        break;
+                    }
+                }
+            });
         }
     });
 
@@ -249,7 +279,7 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
         <CommonPostViewWithUpdates
             initial_post
             fetch_video_action
-            threshold_trigger_fetch=20
+            threshold_trigger_fetch=15
         />
     }
 }
@@ -302,15 +332,15 @@ pub fn PostView() -> impl IntoView {
 
     view! {
         <Suspense fallback=FullScreenSpinner>
-        {
-            {move || {
-                fetch_first_video_uid()
-                    .and_then(|initial_post| {
-                        let initial_post = initial_post.ok()?;
-                        Some(view! { <PostViewWithUpdatesMLFeed initial_post /> })
-                    })
+            {{
+                move || {
+                    fetch_first_video_uid()
+                        .and_then(|initial_post| {
+                            let initial_post = initial_post.ok()?;
+                            Some(view! { <PostViewWithUpdatesMLFeed initial_post /> })
+                        })
+                }
             }}
-        }
 
         </Suspense>
     }

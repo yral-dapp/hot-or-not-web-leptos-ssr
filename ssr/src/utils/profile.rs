@@ -17,7 +17,7 @@ use crate::{
 
 use super::{current_epoch, posts::PostDetails};
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ProfileDetails {
     pub username: Option<String>,
     pub lifetime_earnings: u64,

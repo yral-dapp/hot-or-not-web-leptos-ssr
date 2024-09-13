@@ -18,4 +18,5 @@ pub mod settings;
 pub mod terms;
 pub mod token;
 pub mod upload;
+pub mod view_profile_redirect;
 pub mod wallet;

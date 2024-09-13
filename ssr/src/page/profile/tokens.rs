@@ -4,6 +4,7 @@ use leptos_icons::*;
 
 use crate::{
     component::{bullet_loader::BulletLoader, token_confetti_symbol::TokenConfettiSymbol},
+    page::wallet::tokens::nat_to_human,
     state::{
         auth::account_connected_reader,
         canisters::{authenticated_canisters, unauth_canisters},
@@ -18,7 +19,7 @@ fn TokenViewFallback() -> impl IntoView {
     }
 }
 
-pub fn unlock_tokens(user_canister: Principal, token: TokenCans) {
+pub fn unlock_tokens(token: TokenCans) {
     let (is_connected, _) = account_connected_reader();
     let auth_cans = authenticated_canisters();
 
@@ -27,14 +28,9 @@ pub fn unlock_tokens(user_canister: Principal, token: TokenCans) {
         move |cans_wire, _| async move {
             let cans = cans_wire?.canisters()?;
             // let token = token.clone();
-            let claim_result = claim_tokens_from_first_neuron(
-                &cans,
-                cans.user_principal(),
-                token.governance,
-                user_canister,
-                token.ledger,
-            )
-            .await;
+            let claim_result =
+                claim_tokens_from_first_neuron(&cans, cans.user_principal(), token.governance)
+                    .await;
             if claim_result.is_err() {
                 leptos::logging::log!(
                     "Failed to claim tokens from first neuron: {:?}",
@@ -54,15 +50,15 @@ pub fn unlock_tokens(user_canister: Principal, token: TokenCans) {
 }
 
 #[component]
-fn TokenView(user_canister: Principal, token: TokenCans) -> impl IntoView {
-    unlock_tokens(user_canister, token.clone());
+fn TokenView(user_principal: Principal, token: TokenCans) -> impl IntoView {
+    unlock_tokens(token.clone());
 
     let token_info = create_resource(
         || (),
         move |_| async move {
             let cans = unauth_canisters();
             let metadata =
-                get_token_metadata(&cans, user_canister, token.governance, token.ledger).await?;
+                get_token_metadata(&cans, user_principal, token.governance, token.ledger).await?;
 
             Ok::<_, ServerFnError>(metadata)
         },
@@ -78,7 +74,7 @@ fn TokenView(user_canister: Principal, token: TokenCans) -> impl IntoView {
                     <span class="text-white truncate">{info.name}</span>
                 </div>
                 <div class="flex flex-col gap-2 justify-self-end text-sm">
-                    <span class="text-white truncate">{format!("{} {}", (info.balance / 10u64.pow(8)).to_string().replace("_", ","), info.symbol)}</span>
+                    <span class="text-white truncate">{format!("{} {}", nat_to_human(info.balance), info.symbol)}</span>
                     <div class="flex flex-row gap-1 items-center">
                         <span class="text-white">Details</span>
                         <div class="flex items-center justify-center w-4 h-4 bg-white/15 rounded-full">
@@ -107,7 +103,7 @@ fn CreateYourToken() -> impl IntoView {
 }
 
 #[component]
-pub fn ProfileTokens(user_canister: Principal) -> impl IntoView {
+pub fn ProfileTokens(user_canister: Principal, user_principal: Principal) -> impl IntoView {
     let token_list = create_resource(
         || (),
         move |_| async move {
@@ -138,7 +134,7 @@ pub fn ProfileTokens(user_canister: Principal) -> impl IntoView {
                 let empty = tokens.is_empty();
                 view! {
                     {tokens.into_iter().map(|token| view! {
-                        <TokenView user_canister token/>
+                        <TokenView user_principal token/>
                     }).collect_view()}
                     <Show when=move || empty>
                         <CreateYourToken/>

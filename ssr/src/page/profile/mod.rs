@@ -45,7 +45,7 @@ fn Stat(stat: u64, #[prop(into)] info: String) -> impl IntoView {
 }
 
 #[component]
-fn ListSwitcher(user_canister: Principal) -> impl IntoView {
+fn ListSwitcher(user_canister: Principal, user_principal: Principal) -> impl IntoView {
     let (cur_tab, set_cur_tab) = create_query_signal::<String>("tab");
     let current_tab = create_memo(move |_| {
         with!(|cur_tab| match cur_tab.as_deref() {
@@ -86,7 +86,7 @@ fn ListSwitcher(user_canister: Principal) -> impl IntoView {
                 <ProfileSpeculations user_canister />
             </Show>
             <Show when=move || current_tab() == 2>
-                <ProfileTokens user_canister />
+                <ProfileTokens user_canister user_principal />
             </Show>
         </div>
     }
@@ -141,7 +141,7 @@ fn ProfileViewInner(user: ProfileDetails, user_canister: Principal) -> impl Into
                     <Stat stat=user.hots info="Hots"/>
                     <Stat stat=user.nots info="Nots"/>
                 </div>
-                <ListSwitcher user_canister/>
+                <ListSwitcher user_canister user_principal=user.principal/>
             </div>
         </div>
     }

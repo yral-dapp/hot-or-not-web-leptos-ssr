@@ -9,6 +9,7 @@ use crate::{
         back_btn::BackButton, canisters_prov::WithAuthCans, spinner::FullScreenSpinner,
         title::Title,
     },
+    page::wallet::tokens::nat_to_human,
     state::canisters::Canisters,
     utils::token::{token_metadata_by_root, TokenMetadata},
 };
@@ -68,7 +69,7 @@ fn TokenInfoInner(root: Principal, meta: TokenMetadata) -> impl IntoView {
                         <div class="flex flex-row justify-between border-b p-1 border-white items-center">
                             <span class="text-xs md:text-sm text-green-500">Balance</span>
                             <span class="text-lg md:text-xl text-white">
-                                <span class="font-bold">{format!("{} ", meta.balance)}</span>
+                                <span class="font-bold">{format!("{} ", nat_to_human(meta.balance))}</span>
                                 {meta.symbol}
                             </span>
                         </div>
@@ -105,8 +106,9 @@ pub fn TokenInfo() -> impl IntoView {
                 let Ok(params) = params else {
                     return Ok::<_, ServerFnError>(None);
                 };
-                let user = cans.user_canister();
-                let meta = token_metadata_by_root(&cans, user, params.token_root).await?;
+                // let user = cans.user_canister();
+                let user_principal = cans.user_principal();
+                let meta = token_metadata_by_root(&cans, user_principal, params.token_root).await?;
                 Ok(meta.map(|m| (m, params.token_root)))
             }
         })
