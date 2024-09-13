@@ -31,14 +31,9 @@ pub fn ExternalUser(user: Option<ProfileDetails>) -> impl IntoView {
     view! {
         <div class="flex flex-row items-center gap-1 w-full h-8 px-3 pt-3 text-ellipsis z-20">
             <div class="w-5 h-5 flex-shrink-0 rounded-full border-2 border-white bg-white">
-                <img
-                    class="rounded-full object-cover object-center"
-                    src=propic
-                />
+                <img class="rounded-full object-cover object-center" src=propic/>
             </div>
-            <div class="max-w-full text-xs truncate font-semibold">
-                {name}
-            </div>
+            <div class="max-w-full text-xs truncate font-semibold">{name}</div>
         </div>
     }
 }
@@ -95,7 +90,10 @@ fn BetTimer(post: PostDetails, details: BetDetails) -> impl IntoView {
 
     view! {
         <div class="flex items-start w-full h-6 px-3 bg-transparent">
-            <div class="flex flex-row justify-center items-center gap-1 w-full rounded-full py-px text-white text-xs" style=gradient>
+            <div
+                class="flex flex-row justify-center items-center gap-1 w-full rounded-full py-px text-white text-xs"
+                style=gradient
+            >
                 <Icon icon=icondata::AiClockCircleFilled/>
                 <span>{move || to_hh_mm_ss(time_remaining())}</span>
             </div>
@@ -141,7 +139,7 @@ pub fn Speculation(details: BetDetails, _ref: NodeRef<html::Div>) -> impl IntoVi
             amt,
             view! {
                 <div class="flex w-full justify-center items-center text-white bg-primary-600 h-6 gap-0.5">
-                    <Icon class="text-sm fill-white" icon=icondata::RiTrophyFinanceFill />
+                    <Icon class="text-sm fill-white" icon=icondata::RiTrophyFinanceFill/>
                     <span class="text-xs font-medium">You Won</span>
                 </div>
             }.into_view(),
@@ -171,10 +169,9 @@ pub fn Speculation(details: BetDetails, _ref: NodeRef<html::Div>) -> impl IntoVi
                 <Suspense>
                     {move || {
                         let post = post_details().flatten()?;
-                        Some(view! {
-                            <BetTimer post details=details.get_value()/>
-                        })
+                        Some(view! { <BetTimer post details=details.get_value()/> })
                     }}
+
                 </Suspense>
             },
         ),
@@ -182,7 +179,10 @@ pub fn Speculation(details: BetDetails, _ref: NodeRef<html::Div>) -> impl IntoVi
 
     view! {
         <div _ref=_ref class="relative w-1/2 md:w-1/3 lg:w-1/4 px-1">
-            <a href=profile_post_url class="relative flex flex-col justify-between aspect-[3/5] rounded-md text-white">
+            <a
+                href=profile_post_url
+                class="relative flex flex-col justify-between aspect-[3/5] rounded-md text-white"
+            >
                 <Suspense fallback=|| {
                     view! {
                         <div class="absolute top-0 left-0 h-full w-full z-10 bg-white/10 animate-pulse rounded-md"></div>

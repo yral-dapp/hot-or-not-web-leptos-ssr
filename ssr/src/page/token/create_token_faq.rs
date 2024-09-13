@@ -90,18 +90,18 @@ E.g: TRAV".into()),
     ];
 
     view! {
-        <div class="w-dvw min-h-dvh bg-black" style="padding-bottom:5rem;" >
-                 <Title justify_center=false >
-                    <div class="grid grid-cols-3 justify-start w-full px-4" style="background: black" >
-                        <BackButton fallback="/menu"/>
-                        <span class="font-bold justify-self-center">Help</span>
-                    </div>
-                    </Title>
+        <div class="w-dvw min-h-dvh bg-black" style="padding-bottom:5rem;">
+            <Title justify_center=false>
+                <div class="grid grid-cols-3 justify-start w-full px-4" style="background: black">
+                    <BackButton fallback="/menu"/>
+                    <span class="font-bold justify-self-center">Help</span>
+                </div>
+            </Title>
 
             // Render two different use cases of the component
             <CreateTokenFaqView title="Create a token".to_string() sections=sections1/>
-            <CreateTokenFaqView title="Advanced settings".to_string() sections=sections2 />
-            </div>
+            <CreateTokenFaqView title="Advanced settings".to_string() sections=sections2/>
+        </div>
     }
 }
 
@@ -115,60 +115,71 @@ fn CreateTokenFaqView(title: String, sections: Vec<Section>) -> impl IntoView {
                 <h1 class="text-lg font-bold">{title.clone()}</h1>
             </header>
 
-            <div >
-                {sections.clone().into_iter().enumerate().map(|(index, section)| {
-                    let is_open = move || open_section() == Some(index);
-
-                    view! {
-                        <div class="border-b border-gray-200 dark:border-gray-700 py-2 " >
-                            <h2 id={format!("accordion-heading-{}", index)}>
-                                <button
-                                    type="button"
-                                    class="flex items-center justify-between w-full py-2 text-md font-medium text-white gap-3"
-                                    on:click=move |_| {
-                                        // Toggle section visibility
-                                        set_open_section.update(|current| {
-                                            if *current == Some(index) {
-                                                *current = None;
-                                            } else {
-                                                *current = Some(index);
-                                            }
-                                        });
-                                    }
-                                >
-                                    <span>{section.question.clone()}</span>
-                                    <svg
-                                        data-accordion-icon
-                                        class={move || if is_open() { "w-3 h-3" } else { "w-3 h-3 rotate-180" }}
-                                        aria-hidden="true"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        fill="none"
-                                        viewBox="0 0 10 6"
+            <div>
+                {sections
+                    .clone()
+                    .into_iter()
+                    .enumerate()
+                    .map(|(index, section)| {
+                        let is_open = move || open_section() == Some(index);
+                        view! {
+                            <div class="border-b border-gray-200 dark:border-gray-700 py-2 ">
+                                <h2 id=format!("accordion-heading-{}", index)>
+                                    <button
+                                        type="button"
+                                        class="flex items-center justify-between w-full py-2 text-md font-medium text-white gap-3"
+                                        on:click=move |_| {
+                                            set_open_section
+                                                .update(|current| {
+                                                    if *current == Some(index) {
+                                                        *current = None;
+                                                    } else {
+                                                        *current = Some(index);
+                                                    }
+                                                });
+                                        }
                                     >
-                                        <path
-                                            stroke="currentColor"
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M9 5 5 1 1 5"
-                                        />
-                                    </svg>
-                                </button>
-                            </h2>
-                            <div id={format!("accordion-body-{}", index)} class={move || if is_open() { "" } else { "hidden" }}>
+
+                                        <span>{section.question.clone()}</span>
+                                        <svg
+                                            data-accordion-icon
+                                            class=move || {
+                                                if is_open() { "w-3 h-3" } else { "w-3 h-3 rotate-180" }
+                                            }
+                                            aria-hidden="true"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            fill="none"
+                                            viewBox="0 0 10 6"
+                                        >
+                                            <path
+                                                stroke="currentColor"
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M9 5 5 1 1 5"
+                                            ></path>
+                                        </svg>
+                                    </button>
+                                </h2>
+                                <div
+                                    id=format!("accordion-body-{}", index)
+                                    class=move || if is_open() { "" } else { "hidden" }
+                                >
                                     {if let Some(answer) = section.answer {
                                         view! {
-                                <div class="py-2 mb-2">
-                                            <p class="text-xs text-gray-400">{answer}</p>
-                                </div>
+                                            <div class="py-2 mb-2">
+                                                <p class="text-xs text-gray-400">{answer}</p>
+                                            </div>
                                         }
                                     } else {
                                         view! { <div></div> }
                                     }}
+
+                                </div>
                             </div>
-                        </div>
-                    }
-                }).collect_view()}
+                        }
+                    })
+                    .collect_view()}
             </div>
         </div>
     }

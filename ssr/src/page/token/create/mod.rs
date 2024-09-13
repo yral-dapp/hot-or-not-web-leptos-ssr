@@ -85,42 +85,48 @@ fn TokenImage() -> impl IntoView {
         <div class="flex flex-col space-y-4  rounded-lg text-white">
 
             <div class="flex items-center space-x-4">
-                <div class= border_class  >
-
+                <div class=border_class>
 
                     <div class="flex items-center justify-center w-full h-full rounded-full">
-                        <span class="text-xs text-center text-gray-400 font-medium">"Add custom logo"</span>
+                        <span class="text-xs text-center text-gray-400 font-medium">
+                            "Add custom logo"
+                        </span>
                     </div>
 
-                    <input type="file"
+                    <input
+                        type="file"
                         node_ref=file_input_ref
                         on:change=on_file_input
                         id="dropzone-logo"
                         accept="image/*"
-                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-                    <div class="absolute bottom-0 right-0 p-1 rounded-full bg-white ">
-                        <img src="/img/upload.svg" class="bg-white" />
-                    </div>
-                <Show when = move || img_url.with(|u| u.is_some()) fallback=|| view! {  <div></div> }>
-                    <img
-                    class="absolute top-0 object-conver h-full w-full rounded-full"
-                    src=move || img_url().unwrap()
+                        class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                     />
                     <div class="absolute bottom-0 right-0 p-1 rounded-full bg-white ">
-                    <button on:click=on_edit_click class="w-4 h-4 flex items-center justify-center rounded-full bg-white" >
-                     <img src="/img/edit.svg" class="bg-white w-4 h-4 rounded-full" />
-                    </button>
+                        <img src="/img/upload.svg" class="bg-white"/>
                     </div>
-                </Show>
-
-
+                    <Show
+                        when=move || img_url.with(|u| u.is_some())
+                        fallback=|| view! { <div></div> }
+                    >
+                        <img
+                            class="absolute top-0 object-conver h-full w-full rounded-full"
+                            src=move || img_url().unwrap()
+                        />
+                        <div class="absolute bottom-0 right-0 p-1 rounded-full bg-white ">
+                            <button
+                                on:click=on_edit_click
+                                class="w-4 h-4 flex items-center justify-center rounded-full bg-white"
+                            >
+                                <img src="/img/edit.svg" class="bg-white w-4 h-4 rounded-full"/>
+                            </button>
+                        </div>
+                    </Show>
 
                 </div>
 
-
             </div>
-         </div>
-                 <ImgToPng img_file=img_file output_b64=logo_b64/>
+        </div>
+        <ImgToPng img_file=img_file output_b64=logo_b64/>
     }
 }
 
@@ -314,104 +320,94 @@ pub fn CreateToken() -> impl IntoView {
     // });
 
     view! {
-                <div class="w-dvw min-h-dvh bg-black pt-4 flex flex-col gap-4" style="padding-bottom:6rem" >
-                    <Title justify_center=false>
-                        <div class="flex justify-between w-full" >
-                            <BackButton fallback=fallback_url/>
-                            <span class="font-bold justify-self-center">Create Meme Token </span>
-                            <a href="/token/create/faq"><img src="/img/info.svg" /></a>
-                        </div>
-                    </Title>
-                    <div class="flex flex-col w-full px-6 md:px-8 gap-2 md:gap-8">
-                       /*  <Show when=move || {
-                            create_act_res.with(|v| v.as_ref().map(|v| v.is_err()).unwrap_or_default())
-                        }>
-                            <div class="flex flex-col w-full items-center gap-2">
-                                <span class="text-red-500 font-semibold text-center">
-                                    Error creating token:
-                                </span>
-                                <textarea
-                                    prop:value=create_act_res().unwrap().err().unwrap()
-                                    disabled
-                                    rows=3
-                                    class="bg-white/10 text-xs md:text-sm text-red-500/60 w-full md:w-2/3 resize-none p-2"
-                                ></textarea>
-                            </div>
-                        </Show>
-                        */
-                        <div class="flex flex-row w-full gap-4  justify-between items-center">
-                        <TokenImage/>
-                            <InputBox
-                                heading="Token name"
-                                placeholder="Add a name to your crypto currency"
-                                updater=set_token_name
-                                validator=non_empty_string_validator
-                                initial_value=ctx.form_state.with_untracked(|f| f.name.clone()).unwrap_or_default()
-                            />
-                        </div>
-        /*
-                       <div class="flex flex-row w-full justify-between items-center">
-                            <TokenImgInput/>
-                            <InputBox
-                                heading="Token name"
-                                placeholder="Add a name to your crypto currency"
-                                updater=set_token_name
-                                validator=non_empty_string_validator
-                            />
-                        </div>
-          */
-
-                        <InputArea
-                            heading="Description"
-                            placeholder="Fun & friendly internet currency inspired by the legendary Shiba Inu dog 'Kabosu'"
-                            updater=set_token_desc
-                            validator=non_empty_string_validator
-                            initial_value=ctx.form_state.with_untracked(|f| f.description.clone()).unwrap_or_default()
-
-                        />
-                        <InputBox
-                            heading="Token Symbol"
-                            placeholder="Eg. DODGE"
-                            updater=set_token_symbol
-                            validator=non_empty_string_validator
-                            initial_value=ctx.form_state.with_untracked(|f| f.symbol.clone()).unwrap_or_default()
-
-                        />
-                        <InputBox
-                            heading="Distribution"
-                            placeholder="Distribution Tokens"
-                            input_type="number"
-                            updater=set_total_distribution
-                            // initial_value="100000000".into()
-                            initial_value=(ctx.form_state.with_untracked(|f| f.total_distrubution().e8s.unwrap_or_else(|| 1000000 * 10e8 as u64) / 10e8 as u64)).to_string()
-                            validator=non_empty_string_validator_for_u64
-                        />
-
-                        <div class="w-full flex justify-center">
-                            <button
-                                on:click=move |_| create_action.dispatch(())
-                                disabled=create_disabled
-                                class="text-white disabled:text-neutral-500 md:text-xl py-4 md:py-4 font-bold w-full md:w-1/2 lg:w-1/3 rounded-full bg-primary-600 disabled:bg-primary-500/30"
-                            >
-                                {move || if creating() { "Creating..." } else { "Create" }}
-                            </button>
-                        </div>
-
-                        <div class="w-full flex justify-center underline text-sm text-white my-4 " >
-                        <a href="/token/create/settings"  >  View advanced settings </a>
-
-                        //  <button on:click=move |_|{navigate_token_settings() }  >  View advanced settings </button>
-                         </div>
-                    </div>
-                    <TokenCreationPopup
-                        creation_action=create_action
-                        img_url=Signal::derive(move || ctx.file.with(|f| f.clone()).unwrap().url.to_string())
-                        token_name=Signal::derive(move || {
-                            ctx.form_state.with(|f| f.name.clone()).unwrap_or_default()
-                        })
-    />
+        <div class="w-dvw min-h-dvh bg-black pt-4 flex flex-col gap-4" style="padding-bottom:6rem">
+            <Title justify_center=false>
+                <div class="flex justify-between w-full">
+                    <BackButton fallback=fallback_url/>
+                    <span class="font-bold justify-self-center">Create Meme Token</span>
+                    <a href="/token/create/faq">
+                        <img src="/img/info.svg"/>
+                    </a>
                 </div>
-            }
+            </Title>
+            <div class="flex flex-col w-full px-6 md:px-8 gap-2 md:gap-8">
+                <div class="flex flex-row w-full gap-4  justify-between items-center">
+                    <TokenImage/>
+                    <InputBox
+                        heading="Token name"
+                        placeholder="Add a name to your crypto currency"
+                        updater=set_token_name
+                        validator=non_empty_string_validator
+                        initial_value=ctx
+                            .form_state
+                            .with_untracked(|f| f.name.clone())
+                            .unwrap_or_default()
+                    />
+                </div>
+                <InputArea
+                    heading="Description"
+                    placeholder="Fun & friendly internet currency inspired by the legendary Shiba Inu dog 'Kabosu'"
+                    updater=set_token_desc
+                    validator=non_empty_string_validator
+                    initial_value=ctx
+                        .form_state
+                        .with_untracked(|f| f.description.clone())
+                        .unwrap_or_default()
+                />
+
+                <InputBox
+                    heading="Token Symbol"
+                    placeholder="Eg. DODGE"
+                    updater=set_token_symbol
+                    validator=non_empty_string_validator
+                    initial_value=ctx
+                        .form_state
+                        .with_untracked(|f| f.symbol.clone())
+                        .unwrap_or_default()
+                />
+
+                <InputBox
+                    heading="Distribution"
+                    placeholder="Distribution Tokens"
+                    input_type="number"
+                    updater=set_total_distribution
+                    // initial_value="100000000".into()
+                    initial_value=(ctx
+                        .form_state
+                        .with_untracked(|f| {
+                            f.total_distrubution().e8s.unwrap_or_else(|| 1000000 * 10e8 as u64)
+                                / 10e8 as u64
+                        }))
+                        .to_string()
+                    validator=non_empty_string_validator_for_u64
+                />
+
+                <div class="w-full flex justify-center">
+                    <button
+                        on:click=move |_| create_action.dispatch(())
+                        disabled=create_disabled
+                        class="text-white disabled:text-neutral-500 md:text-xl py-4 md:py-4 font-bold w-full md:w-1/2 lg:w-1/3 rounded-full bg-primary-600 disabled:bg-primary-500/30"
+                    >
+                        {move || if creating() { "Creating..." } else { "Create" }}
+                    </button>
+                </div>
+
+                <div class="w-full flex justify-center underline text-sm text-white my-4 ">
+                    <a href="/token/create/settings">View advanced settings</a>
+                </div>
+            </div>
+            <TokenCreationPopup
+                creation_action=create_action
+                img_url=Signal::derive(move || {
+                    ctx.file.with(|f| f.clone()).unwrap().url.to_string()
+                })
+                token_name=Signal::derive(move || {
+                    ctx.form_state.with(|f| f.name.clone()).unwrap_or_default()
+                })
+            />
+
+        </div>
+    }
 }
 
 #[component]
@@ -476,132 +472,149 @@ pub fn CreateTokenSettings() -> impl IntoView {
     };
 
     view! {
-         <div class="w-dvw min-h-dvh bg-black pt-4 flex flex-col gap-4 p-4" style="padding-bottom:5rem;" >
-                   <Title justify_center=false >
-                    <div class="flex justify-between w-full" style="background: black" >
-                        <BackButton fallback=fallback_url/>
-                        <span class="font-bold justify-self-center">Settings</span>
-                        <a href="/token/create/faq"><img src="/img/info.svg" /></a>
-                    </div>
-                    </Title>
-                <label class="flex flex-cols-2 cursor-pointer px-1">
-                <span class="flex-1 text-sm font-medium text-gray-400 dark:text-gray-500">Do you want to raise ICP?</span>
-                <div>
-                    <span class="text-sm font-medium text-gray-400 dark:text-gray-500">Coming Soon!</span>
-                //   <input type="checkbox" value="" class="sr-only peer" checked disabled />
-                    // <div class="relative w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:bg-gray-600">
-                    //     <div class="absolute top-0.5 left-0.5 bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform peer-checked:translate-x-5 dark:border-gray-600"/>
-                    // </div>
+        <div
+            class="w-dvw min-h-dvh bg-black pt-4 flex flex-col gap-4 p-4"
+            style="padding-bottom:5rem;"
+        >
+            <Title justify_center=false>
+                <div class="flex justify-between w-full" style="background: black">
+                    <BackButton fallback=fallback_url/>
+                    <span class="font-bold justify-self-center">Settings</span>
+                    <a href="/token/create/faq">
+                        <img src="/img/info.svg"/>
+                    </a>
                 </div>
-                 // <div class="relative w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-gray-600"></div>
-                </label>
+            </Title>
+            <label class="flex flex-cols-2 cursor-pointer px-1">
+                <span class="flex-1 text-sm font-medium text-gray-400 dark:text-gray-500">
+                    Do you want to raise ICP?
+                </span>
+                <div>
+                    <span class="text-sm font-medium text-gray-400 dark:text-gray-500">
+                        Coming Soon!
+                    </span>
+                // <input type="checkbox" value="" class="sr-only peer" checked disabled />
+                // <div class="relative w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:bg-gray-600">
+                // <div class="absolute top-0.5 left-0.5 bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform peer-checked:translate-x-5 dark:border-gray-600"/>
+                // </div>
+                </div>
+            // <div class="relative w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-gray-600"></div>
+            </label>
 
-                <InputBox
-                        heading="Transaction Fee (e8s)"
-                        input_type="number"
-                        placeholder="100"
-                        updater=set_transaction_fee
-                        validator=validate_tokens_e8s
-                        initial_value=transaction_fee.get_untracked().e8s.unwrap_or(1).to_string()
-                 />
-                 <InputBox
-                        heading="Rejection Fee (Token)"
-                        placeholder="1 Token"
-                        updater=set_rejection_fee
-                        validator=validate_tokens
-                        initial_value=format_tokens(&rejection_fee.get_untracked())
-                 />
-                 <InputBox
-                        heading="Initial Voting Period (days)"
-                        placeholder="4 days"
-                        updater=set_initial_voting_period
-                        validator=validate_duration
-                        initial_value=format_duration(&initial_voting_period.get_untracked())
-                 />
-                 <InputBox
-                        heading="Maximum wait for quiet deadline extention (days)"
-                        placeholder="1 day"
-                        updater=set_max_wait_deadline_extension
-                        validator=validate_duration
-                        initial_value=format_duration(&max_wait_deadline_extension.get_untracked())
+            <InputBox
+                heading="Transaction Fee (e8s)"
+                input_type="number"
+                placeholder="100"
+                updater=set_transaction_fee
+                validator=validate_tokens_e8s
+                initial_value=transaction_fee.get_untracked().e8s.unwrap_or(1).to_string()
+            />
+            <InputBox
+                heading="Rejection Fee (Token)"
+                placeholder="1 Token"
+                updater=set_rejection_fee
+                validator=validate_tokens
+                initial_value=format_tokens(&rejection_fee.get_untracked())
+            />
+            <InputBox
+                heading="Initial Voting Period (days)"
+                placeholder="4 days"
+                updater=set_initial_voting_period
+                validator=validate_duration
+                initial_value=format_duration(&initial_voting_period.get_untracked())
+            />
+            <InputBox
+                heading="Maximum wait for quiet deadline extention (days)"
+                placeholder="1 day"
+                updater=set_max_wait_deadline_extension
+                validator=validate_duration
+                initial_value=format_duration(&max_wait_deadline_extension.get_untracked())
+            />
 
-                 />
-                 <InputBox
-                        heading="Minimum creation stake (token)"
-                        placeholder="1 token"
-                        updater=set_min_creation_stake
-                        validator=validate_tokens
-                        initial_value=format_tokens(&min_creation_stake.get_untracked())
+            <InputBox
+                heading="Minimum creation stake (token)"
+                placeholder="1 token"
+                updater=set_min_creation_stake
+                validator=validate_tokens
+                initial_value=format_tokens(&min_creation_stake.get_untracked())
+            />
 
-                 />
-                 <InputBox
-                        heading="Minimum dissolve delay (months)"
-                        placeholder="1 month"
-                        updater=set_min_dissolve_delay
-                        validator=validate_duration
-                        initial_value=format_duration(&min_dissolve_delay.get_untracked())
+            <InputBox
+                heading="Minimum dissolve delay (months)"
+                placeholder="1 month"
+                updater=set_min_dissolve_delay
+                validator=validate_duration
+                initial_value=format_duration(&min_dissolve_delay.get_untracked())
+            />
 
-                 />
-                 <InputBox
-                        heading="Age (duration in years)"
-                        placeholder="4 years"
-                        updater=set_age
-                        validator=validate_duration
-                        initial_value=format_duration(&age.get_untracked())
+            <InputBox
+                heading="Age (duration in years)"
+                placeholder="4 years"
+                updater=set_age
+                validator=validate_duration
+                initial_value=format_duration(&age.get_untracked())
+            />
 
-                 />
-                 <InputBox
-                        heading="Age (bonus %)"
-                        placeholder="25%"
-                        updater=set_age_bonus
-                        validator=validate_percentage
-                        initial_value=format_percentage(&age_bonus.get_untracked())
+            <InputBox
+                heading="Age (bonus %)"
+                placeholder="25%"
+                updater=set_age_bonus
+                validator=validate_percentage
+                initial_value=format_percentage(&age_bonus.get_untracked())
+            />
 
-                 />
-                 <InputBox
-                        heading="Minimum participants"
-                        placeholder="57"
-                        input_type="number"
-                        updater=set_min_participants
-                        validator=non_empty_string_validator_for_u64
-                        initial_value=min_participants.get_untracked().to_string()
-                 />
-                 <InputBox
-                        heading="Minimum direct participant icp"
-                        placeholder="100,000 tokens"
-                        updater=set_min_direct_participants_icp
-                        validator=optional_tokens_validator
-                        initial_value=min_direct_participants_icp.with_untracked(|p| p.as_ref().map(format_tokens)).unwrap_or_default()
-                 />
-                 <InputBox
-                        heading="Maximum direct participant icp"
-                        placeholder="1000000 tokens"
-                        updater=set_max_direct_participants_icp
-                        validator=optional_tokens_validator
-                        initial_value=max_direct_participants_icp.with_untracked(|p| p.as_ref().map(format_tokens)).unwrap_or_default()
-                 />
-                 <InputBox
-                        heading="Minimum participant icp"
-                        placeholder="10 tokens"
-                        updater=set_min_participants_icp
-                        validator=validate_tokens
-                        initial_value=format_tokens(&min_participants_icp.get_untracked())
-                 />
-                 <InputBox
-                        heading="Maximum participant icp"
-                        placeholder="10,000 tokens"
-                        updater=set_max_participants_icp
-                        validator=validate_tokens
-                        initial_value=format_tokens(&max_participants_icp.get_untracked())
-                 />
-                //  <InputBox
-                //         heading="Restricted Country"
-                //         placeholder="Antarctica"
-                //         updater=set_restricted_country
-                //         validator=non_empty_string_validator
-                //  />
-                 <button on:click=reset_settings class="w-full flex justify-center underline text-sm text-white my-4 " >Reset to default</button>
-            </div>
-
+            <InputBox
+                heading="Minimum participants"
+                placeholder="57"
+                input_type="number"
+                updater=set_min_participants
+                validator=non_empty_string_validator_for_u64
+                initial_value=min_participants.get_untracked().to_string()
+            />
+            <InputBox
+                heading="Minimum direct participant icp"
+                placeholder="100,000 tokens"
+                updater=set_min_direct_participants_icp
+                validator=optional_tokens_validator
+                initial_value=min_direct_participants_icp
+                    .with_untracked(|p| p.as_ref().map(format_tokens))
+                    .unwrap_or_default()
+            />
+            <InputBox
+                heading="Maximum direct participant icp"
+                placeholder="1000000 tokens"
+                updater=set_max_direct_participants_icp
+                validator=optional_tokens_validator
+                initial_value=max_direct_participants_icp
+                    .with_untracked(|p| p.as_ref().map(format_tokens))
+                    .unwrap_or_default()
+            />
+            <InputBox
+                heading="Minimum participant icp"
+                placeholder="10 tokens"
+                updater=set_min_participants_icp
+                validator=validate_tokens
+                initial_value=format_tokens(&min_participants_icp.get_untracked())
+            />
+            <InputBox
+                heading="Maximum participant icp"
+                placeholder="10,000 tokens"
+                updater=set_max_participants_icp
+                validator=validate_tokens
+                initial_value=format_tokens(&max_participants_icp.get_untracked())
+            />
+            // <InputBox
+            // heading="Restricted Country"
+            // placeholder="Antarctica"
+            // updater=set_restricted_country
+            // validator=non_empty_string_validator
+            // />
+            <button
+                on:click=reset_settings
+                class="w-full flex justify-center underline text-sm text-white my-4 "
+            >
+                Reset to default
+            </button>
+        </div>
     }
 }

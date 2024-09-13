@@ -115,7 +115,7 @@ pub fn RootPage() -> impl IntoView {
                             Ok(None) => "/error?err=No Posts Found".to_string(),
                             Err(e) => format!("/error?err={e}"),
                         };
-                        view! { <Redirect path=url /> }
+                        view! { <Redirect path=url/> }
                     })
             }}
 

@@ -18,7 +18,9 @@ fn TokenField(#[prop(into)] label: String, #[prop(into)] value: String) -> impl 
     view! {
         <div class="flex flex-col gap-1 w-full">
             <span class="text-white text-sm md:text-base">{label}</span>
-            <p class="bg-white/5 text-base md:text-lg text-white/50 px-2 py-4 rounded-xl w-full">{value}</p>
+            <p class="bg-white/5 text-base md:text-lg text-white/50 px-2 py-4 rounded-xl w-full">
+                {value}
+            </p>
         </div>
     }
 }
@@ -58,17 +60,27 @@ fn TokenInfoInner(root: Principal, meta: TokenMetadata) -> impl IntoView {
                     <div class="flex flex-col gap-4 w-full bg-white/5 p-4 drop-shadow-lg rounded-xl">
                         <div class="flex flex-row justify-between items-center">
                             <div class="flex flex-row gap-2 items-center">
-                                <img class="object-contain h-14 w-14 md:w-18 md:h-18 rounded-full" src=meta.logo_b64 />
-                                <span class="text-base md:text-lg font-semibold text-white">{meta.name}</span>
+                                <img
+                                    class="object-contain h-14 w-14 md:w-18 md:h-18 rounded-full"
+                                    src=meta.logo_b64
+                                />
+                                <span class="text-base md:text-lg font-semibold text-white">
+                                    {meta.name}
+                                </span>
                             </div>
                             <div class="p-1 bg-white/15 rounded-full">
-                                <Icon class="text-sm md:text-base text-white" icon=icondata::BsArrowUpRight/>
+                                <Icon
+                                    class="text-sm md:text-base text-white"
+                                    icon=icondata::BsArrowUpRight
+                                />
                             </div>
                         </div>
                         <div class="flex flex-row justify-between border-b p-1 border-white items-center">
                             <span class="text-xs md:text-sm text-green-500">Balance</span>
                             <span class="text-lg md:text-xl text-white">
-                                <span class="font-bold">{format!("{} ", meta.balance.humanize())}</span>
+                                <span class="font-bold">
+                                    {format!("{} ", meta.balance.humanize())}
+                                </span>
                                 {meta.symbol}
                             </span>
                         </div>
@@ -83,10 +95,13 @@ fn TokenInfoInner(root: Principal, meta: TokenMetadata) -> impl IntoView {
                         </button>
                     </div>
                     <Show when=detail_toggle>
-                        <TokenDetails meta=meta_c.clone() />
+                        <TokenDetails meta=meta_c.clone()/>
                     </Show>
                 </div>
-                <a href=format!("/token/transfer/{root}") class="flex flex-row justify-self-end justify-center text-white md:text-lg w-full md:w-1/2 rounded-full p-3 bg-primary-600">
+                <a
+                    href=format!("/token/transfer/{root}")
+                    class="flex flex-row justify-self-end justify-center text-white md:text-lg w-full md:w-1/2 rounded-full p-3 bg-primary-600"
+                >
                     Send
                 </a>
             </div>
@@ -115,11 +130,12 @@ pub fn TokenInfo() -> impl IntoView {
 
     view! {
         <WithAuthCans fallback=FullScreenSpinner with=token_metadata_fetch let:info>
-        {match info.1 {
-            Err(e) => view! { <Redirect path=format!("/error?err={e}") /> },
-            Ok(None) => view! { <Redirect path="/" /> },
-            Ok(Some((meta, root))) => view! { <TokenInfoInner root meta /> },
-        }}
+            {match info.1 {
+                Err(e) => view! { <Redirect path=format!("/error?err={e}")/> },
+                Ok(None) => view! { <Redirect path="/"/> },
+                Ok(Some((meta, root))) => view! { <TokenInfoInner root meta/> },
+            }}
+
         </WithAuthCans>
     }
 }

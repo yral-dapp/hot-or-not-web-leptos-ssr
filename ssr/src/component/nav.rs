@@ -113,7 +113,6 @@ pub fn NavBar() -> impl IntoView {
     });
 
     view! {
-
         <div class="flex fixed bottom-0 left-0 z-50 flex-row justify-between items-center px-6 w-full bg-black/80">
             <NavIcon
                 idx=0
@@ -122,7 +121,7 @@ pub fn NavBar() -> impl IntoView {
                 filled_icon=HomeSymbolFilled
                 cur_selected=cur_selected
             />
-         <NavIcon
+            <NavIcon
                 idx=3
                 href="/wallet"
                 icon=WalletSymbol
@@ -130,7 +129,7 @@ pub fn NavBar() -> impl IntoView {
                 cur_selected=cur_selected
             />
             <UploadIcon idx=2 cur_selected/>
-           <NavIcon
+            <NavIcon
                 idx=5
                 href="/your-profile"
                 icon=ProfileIcon

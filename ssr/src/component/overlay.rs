@@ -155,7 +155,10 @@ pub fn PopupOverlay<
 
     view! {
         <ShadowOverlay show=show_popup>
-            <Show when=move || res.with(|r| r.is_some()) fallback=move || view! { <ActionRunningOverlay message=loading_msg_s.get_value()/> }>
+            <Show
+                when=move || res.with(|r| r.is_some())
+                fallback=move || view! { <ActionRunningOverlay message=loading_msg_s.get_value()/> }
+            >
                 <div class="px-4 pt-4 pb-12 mx-6 w-full lg:w-1/2 max-h-[65%] rounded-xl bg-white">
                     {move || (modal_s.get_value())(res().unwrap())}
                 </div>

@@ -28,11 +28,9 @@ fn ProfileGreeter(details: ProfileDetails) -> impl IntoView {
     view! {
         <div class="flex flex-col">
             <span class="text-white/50 text-md">Welcome!</span>
-            <span
-                class="text-white text-lg md:text-xl truncate"
+            <span class="text-white text-lg md:text-xl truncate">
                 // TEMP: Workaround for hydration bug until leptos 0.7
                 // class=("md:w-5/12", move || !is_connected())
-            >
                 {details.display_name_or_fallback()}
             </span>
         </div>
@@ -119,11 +117,10 @@ pub fn Wallet() -> impl IntoView {
                     <span class="text-md lg:text-lg uppercase">Your Coyns Balance</span>
                     <Suspense fallback=BalanceFallback>
                         {move || {
-                            let balance = try_or_redirect_opt!(balance_fetch()?);
-                            Some(view! {
-                                <div class="text-xl lg:text-2xl">{balance}</div>
-                            })
+                            let balance = try_or_redirect_opt!(balance_fetch() ?);
+                            Some(view! { <div class="text-xl lg:text-2xl">{balance}</div> })
                         }}
+
                     </Suspense>
                 </div>
                 <Show when=move || !is_connected()>
@@ -146,7 +143,10 @@ pub fn Wallet() -> impl IntoView {
                     <div class="flex flex-col gap-2 items-center">
                         <WithAuthCans fallback=BulletLoader with=tokens_fetch let:tokens>
                             <For each=move || tokens.1.clone() key=|token| *token let:token>
-                                <TokenView user_principal=tokens.0.user_principal() token_root=token/>
+                                <TokenView
+                                    user_principal=tokens.0.user_principal()
+                                    token_root=token
+                                />
                             </For>
                         </WithAuthCans>
                     </div>
@@ -160,11 +160,21 @@ pub fn Wallet() -> impl IntoView {
                     </div>
                     <div class="flex flex-col divide-y divide-white/10">
                         <Suspense fallback=BulletLoader>
-                            {move || history_fetch().map(|history| view! {
-                                <For each=move || history.clone().unwrap_or_default() key=|inf| inf.key() let:info>
-                                    <TxnView info/>
-                                </For>
-                            })}
+                            {move || {
+                                history_fetch()
+                                    .map(|history| {
+                                        view! {
+                                            <For
+                                                each=move || history.clone().unwrap_or_default()
+                                                key=|inf| inf.key()
+                                                let:info
+                                            >
+                                                <TxnView info/>
+                                            </For>
+                                        }
+                                    })
+                            }}
+
                         </Suspense>
                     </div>
                 </div>

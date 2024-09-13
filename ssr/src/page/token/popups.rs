@@ -23,13 +23,13 @@ fn SuccessPopup(#[prop(into)] token_name: String, #[prop(into)] img_url: String)
             <img
                 class="relative w-20 h-20 rounded-full border-2 border-primary-600 object-conver"
                 style="height:15rem; width:15rem"
-                 src=img_url
+                src=img_url
             />
             <span class="text-2xl md:text-3xl font-bold text-center">
                 Token <span class="text-primary-600">{token_name}</span> successfully created!
             </span>
             <button
-                on:click=move |_|navigate_to_profile( profile_url())
+                on:click=move |_| navigate_to_profile(profile_url())
                 class="w-3/4 py-4 text-lg text-center text-white bg-primary-600 rounded-full"
             >
                 Back to profile
@@ -71,14 +71,17 @@ fn ErrorPopup(
                 disabled
                 rows=3
                 class="bg-black/10 text-xs md:text-sm text-red-500 w-full md:w-2/3 resize-none p-2"
-            />
+            ></textarea>
             <button
                 on:click=move |_| close_popup.set(true)
                 class="py-3 text-lg md:text-xl w-full rounded-full bg-primary-600 text-white text-center"
             >
                 Retry
             </button>
-            <a href=profile_url class="py-3 text-lg md:text-xl w-full rounded-full text-black text-center bg-white border border-black">
+            <a
+                href=profile_url
+                class="py-3 text-lg md:text-xl w-full rounded-full text-black text-center bg-white border border-black"
+            >
                 Back to profile
             </a>
         </div>
@@ -97,14 +100,25 @@ pub fn TokenCreationPopup(
             action=creation_action
             loading_message="Token creation in progress"
             modal=move |res| match res {
-                Ok(_) =>
+                Ok(_) => {
                     view! {
-                    <SuccessPopup img_url=img_url.get_untracked().clone() token_name=token_name.get_untracked().clone()/>
-                },
-                Err(e) => view! {
-                    <ErrorPopup close_popup=close_popup.write_only() error=e token_name=token_name.clone()/>
+                        <SuccessPopup
+                            img_url=img_url.get_untracked().clone()
+                            token_name=token_name.get_untracked().clone()
+                        />
+                    }
+                }
+                Err(e) => {
+                    view! {
+                        <ErrorPopup
+                            close_popup=close_popup.write_only()
+                            error=e
+                            token_name=token_name.clone()
+                        />
+                    }
                 }
             }
+
             close=close_popup
         />
     }

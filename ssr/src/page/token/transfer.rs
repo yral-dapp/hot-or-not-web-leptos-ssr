@@ -264,7 +264,10 @@ fn TokenTransferInner(
                     <div class="flex flex-row gap-2 w-full items-center">
                         <p class="text-sm md:text-md text-white/80">{source_addr.to_string()}</p>
                         <button on:click=move |_| copy_source()>
-                            <Icon class="text-white text-lg md:text-xl" icon=icondata::FaCopyRegular/>
+                            <Icon
+                                class="text-white text-lg md:text-xl"
+                                icon=icondata::FaCopyRegular
+                            />
                         </button>
                     </div>
                 </div>
@@ -275,17 +278,29 @@ fn TokenTransferInner(
                         class=("border-red", move || destination_res.with(|r| r.is_err()))
                         class="flex flex-row gap-2 w-full justify-between p-3 bg-white/5 rounded-lg border"
                     >
-                        <input _ref=destination_ref class="text-white bg-transparent w-full text-base md:text-lg placeholder-white/40 focus:outline-none"/>
+                        <input
+                            _ref=destination_ref
+                            class="text-white bg-transparent w-full text-base md:text-lg placeholder-white/40 focus:outline-none"
+                        />
                         <button on:click=move |_| paste_destination.dispatch(())>
-                            <Icon class="text-neutral-600 text-lg md:text-xl" icon=icondata::BsClipboard/>
+                            <Icon
+                                class="text-neutral-600 text-lg md:text-xl"
+                                icon=icondata::BsClipboard
+                            />
                         </button>
                     </div>
-                    <FormError res=destination_res />
+                    <FormError res=destination_res/>
                 </div>
                 <div class="flex flex-col w-full gap-1">
                     <div class="flex flex-row justify-between w-full text-sm md:text-base text-white">
                         <span>Amount</span>
-                        <button class="flex flex-row gap-1 items-center" on:click=move |_| _ = set_max_amt()><Icon icon=icondata::AiEnterOutlined/> " Max"</button>
+                        <button
+                            class="flex flex-row gap-1 items-center"
+                            on:click=move |_| _ = set_max_amt()
+                        >
+                            <Icon icon=icondata::AiEnterOutlined/>
+                            " Max"
+                        </button>
                     </div>
                     <input
                         _ref=amount_ref
@@ -299,7 +314,11 @@ fn TokenTransferInner(
                     <span>Transaction Fee (billed to source)</span>
                     <span>{format!("{} {}", info.fees, info.symbol)}</span>
                 </div>
-                <button on:click=move |_| send_action.dispatch(()) disabled=move || !valid() class="flex flex-row justify-center text-white md:text-lg w-full md:w-1/2 rounded-full p-3 bg-primary-600 disabled:opacity-50">
+                <button
+                    on:click=move |_| send_action.dispatch(())
+                    disabled=move || !valid()
+                    class="flex flex-row justify-center text-white md:text-lg w-full md:w-1/2 rounded-full p-3 bg-primary-600 disabled:opacity-50"
+                >
                     Send
                 </button>
             </div>
@@ -327,12 +346,16 @@ pub fn TokenTransfer() -> impl IntoView {
     };
 
     view! {
-        <WithAuthCans fallback=FullScreenSpinner with=token_metadata_fetch children=|(cans, res)| {
-            match res {
-                Err(e) => view! { <Redirect path=format!("/error?err={e}") /> },
-                Ok(None) => view! { <Redirect path="/" /> },
-                Ok(Some((info, root))) => view! { <TokenTransferInner cans info root /> },
+        <WithAuthCans
+            fallback=FullScreenSpinner
+            with=token_metadata_fetch
+            children=|(cans, res)| {
+                match res {
+                    Err(e) => view! { <Redirect path=format!("/error?err={e}")/> },
+                    Ok(None) => view! { <Redirect path="/"/> },
+                    Ok(Some((info, root))) => view! { <TokenTransferInner cans info root/> },
+                }
             }
-        }/>
+        />
     }
 }
