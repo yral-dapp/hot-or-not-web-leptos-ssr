@@ -42,7 +42,7 @@ struct ProfileParams {
 pub fn TokenCreationInProgress() -> impl IntoView {
     let ctx: CreateTokenCtx = expect_context();
     view! {
-        <Show when=move|| ctx.status.get_untracked() == CreateTokenStatus::InProgress >
+        <Show when=move|| ctx.status.get_untracked() != CreateTokenStatus::InDraft >
         <div class="w-full grid grid-cols-2 p-4 rounded-xl border-2 items-center border-neutral-700 bg-white/15">
             <div class="flex flex-row gap-2 items-center justify-self-start">
                 <img class="w-12 h-12 rounded-full" src=move ||ctx.form_state.get_untracked().logo_b64.unwrap()/>
@@ -51,7 +51,13 @@ pub fn TokenCreationInProgress() -> impl IntoView {
             <div class="flex flex-col gap-2 justify-self-end text-sm">
                 <span class="text-white truncate">Minting Token</span>
                 <div class="flex flex-row gap-1 items-end">
-                    <BulletLoader/>
+                <Show when=move || ctx.status.get_untracked() == CreateTokenStatus::InProgress fallback=move|| view! {
+                    <a href="/token/create" class="items-center justify-center">
+                        <span class="text-bold" style="color:red">Error occured</span>
+                    </a>
+                } >
+                <BulletLoader/>
+                </Show>
                     // <span class="text-white">Details</span>
                     // <div class="flex items-center justify-center w-4 h-4 bg-white/15 rounded-full">
                     //     <Icon class="text-white" icon=icondata::AiRightOutlined/>

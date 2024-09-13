@@ -269,6 +269,7 @@ pub enum CreateTokenStatus {
     #[default]
     InDraft,
     InProgress,
+    InError,
 }
 
 #[derive(Clone, Copy, Default)]
@@ -360,7 +361,7 @@ pub fn CreateToken() -> impl IntoView {
                 server_available.1
             );
             if !server_available.0 {
-                ctx.status.update(|f| *f = CreateTokenStatus::InDraft);
+                ctx.status.update(|f| *f = CreateTokenStatus::InError);
                 return Err("Server is not available".to_string());
             }
             // let res = cans
@@ -390,7 +391,7 @@ pub fn CreateToken() -> impl IntoView {
             if res.is_ok() {
                 CreateTokenCtx::reset();
             } else {
-                ctx.status.update(|f| *f = CreateTokenStatus::InDraft);
+                ctx.status.update(|f| *f = CreateTokenStatus::InError);
             }
             res
             // let cdao_deploy_res = auth_cans.derive(
@@ -410,7 +411,7 @@ pub fn CreateToken() -> impl IntoView {
     let run_action_and_navigate = move |_| {
         ctx.status.update(|f| *f = CreateTokenStatus::InProgress);
 
-        navigate_to_profile();
+        navigate_to_profile(fallback_url());
 
         create_action.dispatch(());
     };
@@ -567,17 +568,10 @@ pub fn CreateToken() -> impl IntoView {
 //     navigate("/token/create/settings", Default::default());
 // }
 //
-fn navigate_to_profile() {
+fn navigate_to_profile(url: String) {
     let navigate = use_navigate();
-    let cans = auth_canisters_store();
-    let profile_url = move || {
-        let Some(cans) = cans() else {
-            return "/menu".into();
-        };
-        let profile_id = cans.user_principal();
-        format!("/your-profile/{profile_id}?tab=tokens")
-    };
-    navigate(profile_url.into(), Default::default());
+
+    navigate(&url, Default::default());
 }
 
 fn navigate_token_faq() {

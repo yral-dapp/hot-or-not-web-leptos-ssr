@@ -138,7 +138,7 @@ pub fn ProfileTokens(user_canister: Principal, user_principal: Principal) -> imp
             {move || token_list().map(|tokens| tokens.unwrap_or_default()).map(|tokens| {
                 let empty = tokens.is_empty();
                 let all_five_tokens_created = tokens.len() == 5;
-                let token_creation_in_progress = move || ctx.status.get() == CreateTokenStatus::InProgress;
+                let token_creation_in_progress = move || ctx.status.get() != CreateTokenStatus::InDraft;
                 view! {
                     {tokens.into_iter().map(|token| view! {
                         <TokenView user_principal token/>
