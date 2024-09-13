@@ -324,7 +324,7 @@ fn TokenTransferInner(
                     <FormError res=amt_res/>
                 </div>
                 <div class="flex flex-col text-sm md:text-base text-white/60 w-full">
-                    <span>Transaction Fee (billed to source)</span>
+                    <span>Transaction Fee (billed to source, e8s)</span>
                     <span>{format!("{} {}", info.fees, info.symbol)}</span>
                 </div>
                 <button
