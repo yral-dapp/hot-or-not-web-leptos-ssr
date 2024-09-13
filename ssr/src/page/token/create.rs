@@ -33,6 +33,7 @@ use crate::canister::sns_swap::{
 };
 use crate::consts::{AGENT_URL, ICP_LEDGER_CANISTER_ID};
 
+#[cfg(feature = "ssr")]
 const ICP_TX_FEE: u64 = 10000;
 
 #[server]
