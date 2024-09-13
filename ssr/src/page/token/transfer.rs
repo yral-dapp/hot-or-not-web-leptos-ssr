@@ -149,6 +149,11 @@ fn TokenTransferInner(
         let input = destination_ref()?;
         let principal = paste_from_clipboard().await?;
         input.set_value(&principal);
+        #[cfg(feature = "hydrate")]
+        {
+            use web_sys::InputEvent;
+            _ = input.dispatch_event(&InputEvent::new("input").unwrap());
+        }
         Some(())
     });
 
@@ -172,7 +177,12 @@ fn TokenTransferInner(
     let max_amt_c = max_amt.clone();
     let set_max_amt = move || {
         let input = amount_ref()?;
-        input.set_value(&max_amt.humanize());
+        input.set_value(&max_amt.to_tokens());
+        #[cfg(feature = "hydrate")]
+        {
+            use web_sys::InputEvent;
+            _ = input.dispatch_event(&InputEvent::new("input").unwrap());
+        }
         Some(())
     };
 

@@ -45,10 +45,17 @@ impl TokenBalance {
         Ok(Self::new_cdao(e8s))
     }
 
+    // Human friendly token amount
     pub fn humanize(&self) -> String {
         (self.e8s.clone() / 10u64.pow(self.decimals as u32))
             .to_string()
             .replace("_", ",")
+    }
+
+    // Returns number of tokens(not e8s)
+    pub fn to_tokens(&self) -> String {
+        let tokens = self.e8s.clone() / Nat::from(10u64.pow(self.decimals as u32));
+        tokens.0.to_str_radix(10)
     }
 }
 
