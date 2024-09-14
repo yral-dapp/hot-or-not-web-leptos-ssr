@@ -176,20 +176,18 @@ impl Default for SnsFormState {
 
 impl SnsFormState {
     pub fn try_update_total_distribution_tokens(&mut self, tokens: nns_pb::Tokens) {
-        let tx_fee = self.transaction_fee.e8s.unwrap();
+        // let tx_fee = self.transaction_fee.e8s.unwrap();
         let tokens = tokens.e8s.unwrap();
         let total = tokens;
-
-        let non_voting_neuron = total + 2 * tx_fee;
-        let voting_neuron = 2000_u64;
-
-        let swap = non_voting_neuron + voting_neuron + 1;
+        let swap = tokens / 2;
         let governance = 0_u64;
 
-        let non_voting_neuron = non_voting_neuron - governance;
+        let voting_neuron = 2000_u64;
+        let non_voting_neuron = total - (swap + voting_neuron + governance);
+
 
         self.distribution.total = nns_pb::Tokens {
-            e8s: Some(voting_neuron + non_voting_neuron + swap + governance),
+            e8s: Some(total),
         };
         self.distribution.neurons = vec![
             NeuronForm {
