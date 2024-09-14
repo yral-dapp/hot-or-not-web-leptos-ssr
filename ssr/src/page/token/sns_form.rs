@@ -52,10 +52,10 @@ struct DistributionForm {
 impl Default for DistributionForm {
     fn default() -> Self {
         Self {
-            total: parse_tokens("10_002_003 tokens").unwrap(),
+            total: parse_tokens("2_002_003 tokens").unwrap(),
             neurons: vec![
                 NeuronForm {
-                    stake: parse_tokens("4_500_001 tokens").unwrap(),
+                    stake: parse_tokens("1_000_001 tokens").unwrap(),
                     memo: 0,
                     dissolve_delay: parse_duration("0 seconds").unwrap(),
                     vesting_period: parse_duration("2 seconds").unwrap(),
@@ -68,8 +68,8 @@ impl Default for DistributionForm {
                 },
             ],
             initial_balances: InitialBalances {
-                governance: parse_tokens("500_000 tokens").unwrap(),
-                swap: parse_tokens("5_001_002 tokens").unwrap(),
+                governance: parse_tokens("0 tokens").unwrap(),
+                swap: parse_tokens("1_001_002 tokens").unwrap(),
             },
         }
     }
@@ -180,7 +180,7 @@ impl SnsFormState {
         let tokens = tokens.e8s.unwrap();
         let total = tokens;
 
-        let non_voting_neuron = (total as f64 * 0.5) as u64 + tx_fee;
+        let non_voting_neuron = total as u64 + 2 * tx_fee;
         let voting_neuron = 2000_u64;
 
         let swap = non_voting_neuron + voting_neuron + 1;

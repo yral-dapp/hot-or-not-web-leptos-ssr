@@ -379,13 +379,7 @@ pub fn CreateToken() -> impl IntoView {
                     input_type="number"
                     updater=set_total_distribution
                     // initial_value="100000000".into()
-                    initial_value=(ctx
-                        .form_state
-                        .with_untracked(|f| {
-                            f.total_distrubution().e8s.unwrap_or_else(|| 1000000 * 1e8 as u64)
-                                / 1e8 as u64
-                        }))
-                        .to_string()
+                    initial_value="1000000".to_string()
                     validator=non_empty_string_validator_for_u64
                 />
 
