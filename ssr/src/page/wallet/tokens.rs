@@ -71,7 +71,7 @@ async fn token_metadata_or_fallback(
         description: "Unknown".to_string(),
         symbol: "??".to_string(),
         balance: TokenBalance::new_cdao(0u32.into()),
-        fees: 0u32.into(),
+        fees: TokenBalance::new_cdao(0u32.into()),
     })
 }
 

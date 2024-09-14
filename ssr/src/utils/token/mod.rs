@@ -10,6 +10,7 @@ use std::{
 use candid::{Encode, Nat, Principal};
 use ic_agent::AgentError;
 use leptos::ServerFnError;
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -40,8 +41,9 @@ impl TokenBalance {
 
     /// Parse a numeric value
     /// multiplied by 8 decimals (1e8)
-    pub fn parse_cdao(tokens: &str) -> Result<Self, candid::Error> {
-        let e8s = Nat::from_str(tokens)? * Nat::from(1e8 as u64);
+    pub fn parse_cdao(token_str: &str) -> Result<Self, rust_decimal::Error> {
+        let tokens = (Decimal::from_str(token_str)? * Decimal::new(1e8 as i64, 0)).floor();
+        let e8s = Nat::from_str(&tokens.to_string()).unwrap();
         Ok(Self::new_cdao(e8s))
     }
 
@@ -50,6 +52,13 @@ impl TokenBalance {
         (self.e8s.clone() / 10u64.pow(self.decimals as u32))
             .to_string()
             .replace("_", ",")
+    }
+
+    // Humanize the amount, but as a float
+    pub fn humanize_float(&self) -> String {
+        let tokens = Decimal::from_str(&self.e8s.0.to_str_radix(10)).unwrap()
+            / Decimal::new(10i64.pow(self.decimals as u32), 0);
+        tokens.to_string()
     }
 
     // Returns number of tokens(not e8s)
@@ -111,6 +120,23 @@ impl SubAssign<Nat> for TokenBalance {
     }
 }
 
+impl Sub for TokenBalance {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self {
+        Self {
+            e8s: self.e8s - rhs.e8s,
+            decimals: self.decimals,
+        }
+    }
+}
+
+impl SubAssign<TokenBalance> for TokenBalance {
+    fn sub_assign(&mut self, rhs: TokenBalance) {
+        self.e8s -= rhs.e8s;
+    }
+}
+
 impl PartialEq for TokenBalance {
     fn eq(&self, other: &Self) -> bool {
         self.e8s.eq(&other.e8s)
@@ -130,7 +156,7 @@ pub struct TokenMetadata {
     pub description: String,
     pub symbol: String,
     pub balance: TokenBalance,
-    pub fees: Nat,
+    pub fees: TokenBalance,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -183,7 +209,7 @@ pub async fn get_token_metadata<const A: bool>(
         name: metadata.name.unwrap_or_default(),
         description: metadata.description.unwrap_or_default(),
         symbol,
-        fees,
+        fees: TokenBalance::new_cdao(fees),
         balance: TokenBalance::new_cdao(balance_e8s),
     })
 }
