@@ -52,10 +52,10 @@ struct DistributionForm {
 impl Default for DistributionForm {
     fn default() -> Self {
         Self {
-            total: parse_tokens("2_002_003 tokens").unwrap(),
+            total: parse_tokens("2_502_007 tokens").unwrap(),
             neurons: vec![
                 NeuronForm {
-                    stake: parse_tokens("1_000_001 tokens").unwrap(),
+                    stake: parse_tokens("1_250_003 tokens").unwrap(),
                     memo: 0,
                     dissolve_delay: parse_duration("0 seconds").unwrap(),
                     vesting_period: parse_duration("2 seconds").unwrap(),
@@ -69,7 +69,7 @@ impl Default for DistributionForm {
             ],
             initial_balances: InitialBalances {
                 governance: parse_tokens("0 tokens").unwrap(),
-                swap: parse_tokens("1_001_002 tokens").unwrap(),
+                swap: parse_tokens("1_251_004 tokens").unwrap(),
             },
         }
     }
