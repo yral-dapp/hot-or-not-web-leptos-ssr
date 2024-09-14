@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 
 pub mod ab_testing;
 pub mod event_streaming;
+pub mod host;
 pub mod ic;
 pub mod icon;
 pub mod ml_feed;

@@ -73,9 +73,29 @@ fn init_google_oauth() -> crate::auth::core_clients::CoreClients {
     )
     .set_redirect_uri(RedirectUrl::new(redirect_uri).unwrap());
 
+    let client_id =
+        env::var("ICPUMPFUN_GOOGLE_CLIENT_ID").expect("`ICPUMPFUN_GOOGLE_CLIENT_ID` is required!");
+    let client_secret = env::var("ICPUMPFUN_GOOGLE_CLIENT_SECRET")
+        .expect("`ICPUMPFUN_GOOGLE_CLIENT_SECRET` is required!");
+    let redirect_uri = env::var("ICPUMPFUN_GOOGLE_REDIRECT_URL")
+        .expect("`ICPUMPFUN_GOOGLE_REDIRECT_URL` is required!");
+
+    let icpump_google_oauth = CoreClient::new(
+        ClientId::new(client_id),
+        Some(ClientSecret::new(client_secret)),
+        IssuerUrl::new(GOOGLE_ISSUER_URL.to_string()).unwrap(),
+        AuthUrl::new(GOOGLE_AUTH_URL.to_string()).unwrap(),
+        Some(TokenUrl::new(GOOGLE_TOKEN_URL.to_string()).unwrap()),
+        None,
+        // We don't validate id_tokens against Google's public keys
+        Default::default(),
+    )
+    .set_redirect_uri(RedirectUrl::new(redirect_uri).unwrap());
+
     CoreClients {
         google_oauth,
         hotornot_google_oauth,
+        icpump_google_oauth,
     }
 }
 

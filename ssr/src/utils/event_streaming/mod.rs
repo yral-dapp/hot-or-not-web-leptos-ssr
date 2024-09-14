@@ -27,7 +27,7 @@ pub struct EventHistory {
 
 #[cfg(feature = "ga4")]
 pub fn send_event(event_name: &str, params: &serde_json::Value) {
-    use super::posts::get_host;
+    use super::host::get_host;
 
     let event_history: EventHistory = expect_context();
 
@@ -60,7 +60,7 @@ pub fn send_user_id(user_id: String) {
 
 #[cfg(feature = "ga4")]
 pub fn send_event_warehouse(event_name: &str, params: &serde_json::Value) {
-    use super::posts::get_host;
+    use super::host::get_host;
 
     let event_name = event_name.to_string();
 
