@@ -234,7 +234,7 @@ pub mod provider {
             ChaCha8Rng,
         };
 
-        use crate::{component::infinite_scroller::PageEntry, utils::current_epoch};
+        use crate::{component::infinite_scroller::PageEntry, utils::time::current_epoch};
 
         use super::*;
 

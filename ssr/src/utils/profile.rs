@@ -15,7 +15,7 @@ use crate::{
     state::canisters::Canisters,
 };
 
-use super::{current_epoch, posts::PostDetails};
+use super::{posts::PostDetails, time::current_epoch};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ProfileDetails {

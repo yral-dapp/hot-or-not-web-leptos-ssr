@@ -16,7 +16,7 @@ use crate::{
     utils::{
         posts::PostDetails,
         profile::{BetDetails, BetKind, BetOutcome},
-        timestamp::to_hh_mm_ss,
+        time::to_hh_mm_ss,
         MockPartialEq,
     },
 };

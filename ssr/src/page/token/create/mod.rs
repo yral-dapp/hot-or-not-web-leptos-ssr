@@ -326,14 +326,6 @@ pub fn CreateToken() -> impl IntoView {
             || ctx.invalid_cnt.get() != 0
     });
 
-    // let create_act_value = create_action.value();
-    // let create_act_res = Signal::derive(move || {
-    //     if creating() {
-    //         return None;
-    //     }
-    //     create_act_value()
-    // });
-
     view! {
         <div class="w-dvw min-h-dvh bg-black pt-4 flex flex-col gap-4" style="padding-bottom:6rem">
             <Title justify_center=false>

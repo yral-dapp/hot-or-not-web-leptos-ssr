@@ -5,7 +5,7 @@ use crate::component::canisters_prov::AuthCansProvider;
 use crate::component::infinite_scroller::InfiniteScroller;
 use crate::{
     state::canisters::Canisters,
-    utils::{profile::propic_from_principal, timestamp::get_day_month},
+    utils::{profile::propic_from_principal, time::get_day_month},
 };
 use history_provider::*;
 
@@ -173,7 +173,7 @@ mod history_provider {
             ChaCha8Rng,
         };
 
-        use crate::utils::current_epoch;
+        use crate::utils::time::current_epoch;
 
         use super::*;
 
