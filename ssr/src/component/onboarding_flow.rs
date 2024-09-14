@@ -23,7 +23,7 @@ pub fn OnboardingPopUp(onboard_on_click: WriteSignal<bool>) -> impl IntoView {
             style=style
         >
             <Show when=move || { onboarding_page_no.get() == 1 }>
-                <OnboardingTopDecorator />
+                <OnboardingTopDecorator/>
                 <div class="flex flex-row justify-center">
                     <div class="flex flex-col justify-center w-9/12 sm:w-4/12 relative gap-y-36">
                         <div class="relative self-center">
@@ -58,7 +58,7 @@ pub fn OnboardingPopUp(onboard_on_click: WriteSignal<bool>) -> impl IntoView {
                         <div class="flex flex-col items-center gap-y-4">
                             <button
                                 class="self-center font-semibold rounded-full bg-primary-600 py-2 md:py-3 w-full max-w-80 text-center text-base md:text-xl text-white"
-                                on:click= move |_| onboarding_page_no.set(2)
+                                on:click=move |_| onboarding_page_no.set(2)
                             >
                                 Start Tutorial
                             </button>
@@ -74,7 +74,7 @@ pub fn OnboardingPopUp(onboard_on_click: WriteSignal<bool>) -> impl IntoView {
             </Show>
 
             <Show when=move || { onboarding_page_no.get() == 2 }>
-                <OnboardingTopCross onboard_on_click />
+                <OnboardingTopCross onboard_on_click/>
                 <OnboardingContent
                     header_text="Select your bet amount"
                     body_text="Select your bet (50, 100, or 200) by tapping the coin or arrows"
@@ -83,7 +83,7 @@ pub fn OnboardingPopUp(onboard_on_click: WriteSignal<bool>) -> impl IntoView {
             </Show>
 
             <Show when=move || { onboarding_page_no.get() == 3 }>
-                <OnboardingTopCross onboard_on_click />
+                <OnboardingTopCross onboard_on_click/>
                 <OnboardingContent
                     header_text="Place your first bet"
                     body_text="Do you think the video will be popular? Click 'Hot' and place your bet"
@@ -92,7 +92,7 @@ pub fn OnboardingPopUp(onboard_on_click: WriteSignal<bool>) -> impl IntoView {
             </Show>
 
             <Show when=move || { onboarding_page_no.get() == 4 }>
-                <OnboardingTopCross onboard_on_click />
+                <OnboardingTopCross onboard_on_click/>
                 <OnboardingContent
                     header_text="Place your first bet"
                     body_text="If you think video won't be popular, click 'Not' and place your bet"
@@ -101,7 +101,7 @@ pub fn OnboardingPopUp(onboard_on_click: WriteSignal<bool>) -> impl IntoView {
             </Show>
 
             <Show when=move || { onboarding_page_no.get() == 5 }>
-                <OnboardingTopDecorator />
+                <OnboardingTopDecorator/>
                 <div class="flex flex-row justify-center">
                     <div class="flex flex-col justify-center w-9/12 sm:w-4/12 relative">
                         <div class="self-center">
@@ -111,7 +111,7 @@ pub fn OnboardingPopUp(onboard_on_click: WriteSignal<bool>) -> impl IntoView {
                         </div>
                         <div class="flex flex-col justify-center gap-y-3 mt-12">
                             <div class="self-center">
-                                <img src="/img/decorator/buy_coin.svg" />
+                                <img src="/img/decorator/buy_coin.svg"/>
                             </div>
                             <div class="self-center">
                                 <p class="text-white text-center font-medium text-sm leading-normal">
@@ -121,7 +121,7 @@ pub fn OnboardingPopUp(onboard_on_click: WriteSignal<bool>) -> impl IntoView {
                         </div>
                         <div class="flex flex-col justify-center gap-y-3 mt-12">
                             <div class="self-center">
-                                <img src="/img/decorator/prizes.svg" />
+                                <img src="/img/decorator/prizes.svg"/>
                             </div>
                             <div class="self-center">
                                 <p class="text-white text-center font-medium text-sm leading-normal">
@@ -147,10 +147,10 @@ pub fn OnboardingTopDecorator() -> impl IntoView {
     view! {
         <div class="top-0 w-full flex justify-center">
             <div class="absolute left-0 top-0">
-                <img src="/img/decorator/decore-left.svg" />
+                <img src="/img/decorator/decore-left.svg"/>
             </div>
             <div class="absolute right-0 top-0">
-                <img src="/img/decorator/decore-right.svg" />
+                <img src="/img/decorator/decore-right.svg"/>
             </div>
         </div>
     }
@@ -165,7 +165,7 @@ pub fn OnboardingTopCross(onboard_on_click: WriteSignal<bool>) -> impl IntoView 
                     class="text-white bg-transparent bg-opacity-70"
                     on:click=move |_| onboard_on_click.set(true)
                 >
-                    <Icon class="w-[24px] h-[24px]" icon=icondata::ChCross />
+                    <Icon class="w-[24px] h-[24px]" icon=icondata::ChCross/>
                 </button>
             </div>
         </div>

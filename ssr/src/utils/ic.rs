@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
-use ic_agent::{agent::AgentBuilder, Agent, AgentError, Identity};
+use candid::Principal;
+use ic_agent::{agent::AgentBuilder, Agent, Identity};
 
 use crate::consts::AGENT_URL;
 
@@ -14,16 +15,23 @@ impl AgentWrapper {
         Self(builder.build().unwrap())
     }
 
-    pub async fn get_agent(&self) -> Result<&Agent, AgentError> {
+    pub async fn get_agent(&self) -> &Agent {
         let agent = &self.0;
         #[cfg(any(feature = "local-bin", feature = "local-lib"))]
         {
-            agent.fetch_root_key().await?;
+            agent
+                .fetch_root_key()
+                .await
+                .expect("AGENT: fetch_root_key failed");
         }
-        Ok(agent)
+        agent
     }
 
     pub fn set_arc_id(&mut self, id: Arc<impl Identity + 'static>) {
         self.0.set_arc_identity(id);
+    }
+
+    pub fn principal(&self) -> Result<Principal, String> {
+        self.0.get_principal()
     }
 }

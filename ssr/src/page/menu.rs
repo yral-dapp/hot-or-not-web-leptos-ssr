@@ -1,4 +1,5 @@
 use crate::component::back_btn::BackButton;
+use crate::component::canisters_prov::with_cans;
 use crate::component::canisters_prov::{AuthCansProvider, WithAuthCans};
 use crate::component::content_upload::YoutubeUpload;
 use crate::component::modal::Modal;
@@ -190,7 +191,7 @@ pub fn Menu() -> impl IntoView {
         Some(())
     });
 
-    let authorized_fetch = move |cans: Canisters<true>| async move {
+    let authorized_fetch = with_cans(move |cans: Canisters<true>| async move {
         let user_principal = cans.user_principal();
         match is_authorized_to_seed_content.0.get_untracked() {
             Some((auth, principal)) if principal == user_principal => return auth,
@@ -203,82 +204,83 @@ pub fn Menu() -> impl IntoView {
             .check_if_authorized(user_principal)
             .await
             .unwrap_or_default()
-    };
+    });
 
     view! {
-         <WithAuthCans with=authorized_fetch let:authorized>
-             {is_authorized_to_seed_content.0.set(Some((authorized.1, authorized.0.user_principal())))}
-         </WithAuthCans>
-         <Modal show=show_content_modal>
-             <AuthCansProvider fallback=Spinner let:canisters>
-                 <YoutubeUpload
-                     canisters
-                     url=query_map.get().0.get("text").cloned().unwrap_or_default()
-                 />
-             </AuthCansProvider>
-         </Modal>
-         <div class="min-h-screen w-full flex flex-col text-white pt-2 pb-12 bg-black items-center divide-y divide-white/10">
-             <div class="flex flex-col items-center w-full gap-20 pb-16">
-                 <Title justify_center=false>
-                     <div class="flex flex-row justify-between">
-                         <BackButton fallback="/".to_string()/>
-                         <span class="font-bold text-2xl">Menu</span>
-                         <div></div>
-                     </div>
-                 </Title>
-                 <div class="flex flex-col items-center w-full gap-4">
-                     <div class="flex flex-row w-full max-w-lg justify-center gap-4 items-center px-4">
-                         <ProfileInfo/>
-                     </div>
-                     <Show when=move || !is_connected()>
-                         <div class="w-full px-8 md:w-4/12 xl:w-2/12">
-                             <ConnectLogin/>
-                         </div>
-                         <div class="w-full px-8 text-center text-sm font-sans">
-                             {r#"Your Yral account has been setup. Login with Google to not lose progress."#}
-                         </div>
-                     </Show>
-                     <Show when=move || is_authorized_to_seed_content.0.get().map(|(a, _)| a).unwrap_or_default() && is_connected()>
-                         <div class="w-full px-8 md:w-4/12 xl:w-2/12">
-                             <button
-                                 class="font-bold rounded-full bg-primary-600 py-2 md:py-3 w-full text-center text-lg md:text-xl text-white"
-                                 on:click=move |_| show_content_modal.set(true)
-                             >
-                                 Upload Content
-                             </button>
-                         </div>
-                     </Show>
+        <WithAuthCans with=authorized_fetch let:authorized>
+            {is_authorized_to_seed_content
+                .0
+                .set(Some((authorized.1, authorized.0.user_principal())))}
+        </WithAuthCans>
+        <Modal show=show_content_modal>
+            <AuthCansProvider fallback=Spinner let:canisters>
+                <YoutubeUpload
+                    canisters
+                    url=query_map.get().0.get("text").cloned().unwrap_or_default()
+                />
+            </AuthCansProvider>
+        </Modal>
+        <div class="min-h-screen w-full flex flex-col text-white pt-2 pb-12 bg-black items-center divide-y divide-white/10">
+            <div class="flex flex-col items-center w-full gap-20 pb-16">
+                <Title justify_center=false>
+                    <div class="flex flex-row justify-between">
+                        <BackButton fallback="/".to_string()/>
+                        <span class="font-bold text-2xl">Menu</span>
+                        <div></div>
+                    </div>
+                </Title>
+                <div class="flex flex-col items-center w-full gap-4">
+                    <div class="flex flex-row w-full max-w-lg justify-center gap-4 items-center px-4">
+                        <ProfileInfo/>
+                    </div>
+                    <Show when=move || !is_connected()>
+                        <div class="w-full px-8 md:w-4/12 xl:w-2/12">
+                            <ConnectLogin/>
+                        </div>
+                        <div class="w-full px-8 text-center text-sm font-sans">
+                            {r#"Your Yral account has been setup. Login with Google to not lose progress."#}
+                        </div>
+                    </Show>
+                    <Show when=move || {
+                        is_authorized_to_seed_content.0.get().map(|(a, _)| a).unwrap_or_default()
+                            && is_connected()
+                    }>
+                        <div class="w-full px-8 md:w-4/12 xl:w-2/12">
+                            <button
+                                class="font-bold rounded-full bg-primary-600 py-2 md:py-3 w-full text-center text-lg md:text-xl text-white"
+                                on:click=move |_| show_content_modal.set(true)
+                            >
+                                Upload Content
+                            </button>
+                        </div>
+                    </Show>
 
-                 </div>
-             </div>
-             <div class="flex flex-col py-12 px-8 gap-8 w-full text-lg">
-                 <NsfwToggle/>
-                 <MenuItem
-                     href="/account-transfer"
-                     text="HotorNot Account Transfer"
-                     icon=icondata::FaMoneyBillTransferSolid
-                 />
-                 <MenuItem href="/refer-earn" text="Refer & Earn" icon=icondata::AiGiftFilled/>
-    <MenuItem href="/leaderboard" text="Leaderboard" icon=icondata::ChTrophy/>
-                 <MenuItem
-                     href=social::TELEGRAM
-                     text="Talk to the team"
-                     icon=icondata::BiWhatsapp
-                     target="_blank"
-                 />
-                 <MenuItem href="/terms-of-service" text="Terms of Service" icon=icondata::TbBook2/>
-                 <MenuItem href="/privacy-policy" text="Privacy Policy" icon=icondata::TbLock/>
-                 <MenuItem
-                     href="/settings"
-                     text="Settings"
-                     icon=icondata::BiCogRegular
-                 />
-                 <Show when=is_connected>
-                     <MenuItem href="/logout" text="Logout" icon=icondata::FiLogOut/>
-                 </Show>
-             // <MenuItem href="/install-app" text="Install App" icon=icondata::TbDownload/>
-             </div>
-             <MenuFooter/>
-         </div>
-     }
+                </div>
+            </div>
+            <div class="flex flex-col py-12 px-8 gap-8 w-full text-lg">
+                <NsfwToggle/>
+                <MenuItem
+                    href="/account-transfer"
+                    text="HotorNot Account Transfer"
+                    icon=icondata::FaMoneyBillTransferSolid
+                />
+                <MenuItem href="/refer-earn" text="Refer & Earn" icon=icondata::AiGiftFilled/>
+                <MenuItem href="/leaderboard" text="Leaderboard" icon=icondata::ChTrophy/>
+                <MenuItem
+                    href=social::TELEGRAM
+                    text="Talk to the team"
+                    icon=icondata::BiWhatsapp
+                    target="_blank"
+                />
+                <MenuItem href="/terms-of-service" text="Terms of Service" icon=icondata::TbBook2/>
+                <MenuItem href="/privacy-policy" text="Privacy Policy" icon=icondata::TbLock/>
+                <MenuItem href="/settings" text="Settings" icon=icondata::BiCogRegular/>
+                <Show when=is_connected>
+                    <MenuItem href="/logout" text="Logout" icon=icondata::FiLogOut/>
+                </Show>
+            // <MenuItem href="/install-app" text="Install App" icon=icondata::TbDownload/>
+            </div>
+            <MenuFooter/>
+        </div>
+    }
 }

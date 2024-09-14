@@ -95,12 +95,10 @@ pub fn BgView(
                     login_text="Sign Up"
                 />
             </Show>
-            <Show when=move || {
-                show_onboarding_popup.get()
-            }>
-                <OnboardingPopUp onboard_on_click=set_onboarded />
+            <Show when=move || { show_onboarding_popup.get() }>
+                <OnboardingPopUp onboard_on_click=set_onboarded/>
             </Show>
-            {move || post().map(|post| view! { <VideoDetailsOverlay post /> })}
+            {move || post().map(|post| view! { <VideoDetailsOverlay post/> })}
             {children()}
         </div>
     }
@@ -166,7 +164,6 @@ pub fn VideoView(
                 let send_view_res = canisters
                     .individual_user(canister_id)
                     .await
-                    .ok()?
                     .update_post_add_view_details(post_id, payload)
                     .await;
 
@@ -249,11 +246,5 @@ pub fn VideoViewForQueue(
 
     let post = Signal::derive(move || video_queue.with(|q| q.get(idx).cloned()));
 
-    view! {
-        <VideoView
-            post
-            _ref=container_ref
-            muted
-        />
-    }
+    view! { <VideoView post _ref=container_ref muted/> }
 }

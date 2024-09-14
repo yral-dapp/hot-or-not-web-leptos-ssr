@@ -12,7 +12,7 @@ use rand_chacha::rand_core::OsRng;
 use serde::{Deserialize, Serialize};
 use web_time::Duration;
 
-use crate::{consts::auth::DELEGATION_MAX_AGE, utils::current_epoch};
+use crate::{consts::auth::DELEGATION_MAX_AGE, utils::time::current_epoch};
 
 /// Delegated identity that can be serialized over the wire
 #[derive(Serialize, Deserialize, Clone)]

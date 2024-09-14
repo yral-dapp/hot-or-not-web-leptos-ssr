@@ -38,9 +38,12 @@ pub fn go_back_or_fallback(fallback: &str) {
 }
 
 #[component]
-pub fn BackButton(#[prop(into)] fallback: String) -> impl IntoView {
+pub fn BackButton(#[prop(into)] fallback: MaybeSignal<String>) -> impl IntoView {
     view! {
-        <button on:click=move |_| go_back_or_fallback(&fallback) class="items-center">
+        <button
+            on:click=move |_| go_back_or_fallback(&fallback.get_untracked())
+            class="items-center"
+        >
             <Icon icon=icondata::AiLeftOutlined/>
         </button>
     }

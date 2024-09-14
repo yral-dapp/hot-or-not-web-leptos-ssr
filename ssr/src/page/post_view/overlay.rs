@@ -1,6 +1,8 @@
 use crate::{
     component::{
-        canisters_prov::WithAuthCans, hn_icons::HomeFeedShareIcon, modal::Modal,
+        canisters_prov::{with_cans, WithAuthCans},
+        hn_icons::HomeFeedShareIcon,
+        modal::Modal,
         option::SelectOption,
     },
     state::canisters::{auth_canisters_store, Canisters},
@@ -58,9 +60,7 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
                     LikeVideo.send_event(post_details, likes, canister_store);
                 }
             });
-            let Ok(individual) = canisters.individual_user(post_canister).await else {
-                return;
-            };
+            let individual = canisters.individual_user(post_canister).await;
             match individual
                 .update_post_toggle_like_status_by_caller(post_id)
                 .await
@@ -74,7 +74,7 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
         }
     });
 
-    let liked_fetch = move |cans: Canisters<true>| async move {
+    let liked_fetch = with_cans(move |cans: Canisters<true>| async move {
         if let Some(liked) = initial_liked.0 {
             return (liked, initial_liked.1);
         }
@@ -86,7 +86,7 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
                 (false, likes.try_get_untracked().unwrap_or_default())
             }
         }
-    };
+    });
 
     let liking = like_toggle.pending();
 
@@ -107,7 +107,6 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
 
             </WithAuthCans>
         </div>
-
     }
 }
 
@@ -195,15 +194,14 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
                 <div class="flex flex-col justify-center min-w-0">
                     <div class="flex flex-row text-xs md:text-sm lg:text-base gap-1">
                         <span class="font-semibold truncate">
-                            <a
-                                href=profile_url
-                            >
-                                {post.display_name}
-                            </a>
+                            <a href=profile_url>{post.display_name}</a>
                         </span>
                         <span class="font-semibold">"|"</span>
                         <span class="flex flex-row gap-1 items-center">
-                            <Icon class="text-sm md:text-base lg:text-lg" icon=icondata::AiEyeOutlined/>
+                            <Icon
+                                class="text-sm md:text-base lg:text-lg"
+                                icon=icondata::AiEyeOutlined
+                            />
                             {post.views}
                         </span>
                     </div>
@@ -218,13 +216,13 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
                     <a href="/refer-earn">
                         <Icon class="drop-shadow-lg" icon=icondata::AiGiftFilled/>
                     </a>
-                    <LikeAndAuthCanLoader post=post_c.clone() />
+                    <LikeAndAuthCanLoader post=post_c.clone()/>
                     <button on:click=move |_| share()>
-                        <Icon class="drop-shadow-lg" icon=HomeFeedShareIcon />
+                        <Icon class="drop-shadow-lg" icon=HomeFeedShareIcon/>
                     </button>
                 </div>
                 <div class="w-full bg-transparent pointer-events-auto">
-                    <HNGameOverlay post=post_c />
+                    <HNGameOverlay post=post_c/>
                 </div>
             </div>
         </div>

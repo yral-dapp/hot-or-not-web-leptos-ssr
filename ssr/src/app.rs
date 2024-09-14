@@ -15,8 +15,14 @@ use crate::{
         root::{RootPage, YralRootPage},
         settings::Settings,
         terms::TermsOfService,
+        token::{
+            create::{CreateToken, CreateTokenCtx, CreateTokenSettings},
+            create_token_faq::CreateTokenFAQ,
+            info::TokenInfo,
+            transfer::TokenTransfer,
+        },
         upload::UploadPostPage,
-        wallet::{transactions::Transactions, Wallet},
+        wallet::{tokens::Tokens, transactions::Transactions, Wallet},
     },
     state::{
         audio_state::AudioState, canisters::Canisters, content_seed_client::ContentSeedClient,
@@ -74,6 +80,7 @@ pub fn App() -> impl IntoView {
     provide_context(ProfilePostsContext::default());
     provide_context(AuthorizedUserToSeedContent::default());
     provide_context(AudioState::default());
+    provide_context(CreateTokenCtx::default());
 
     #[cfg(feature = "hydrate")]
     {
@@ -151,6 +158,12 @@ pub fn App() -> impl IntoView {
                         <Route path="/leaderboard" view=Leaderboard/>
                         <Route path="/account-transfer" view=AccountTransfer/>
                         <Route path="/logout" view=Logout/>
+                        <Route path="/token/create" view=CreateToken/>
+                        <Route path="/token/create/settings" view=CreateTokenSettings/>
+                        <Route path="/token/create/faq" view=CreateTokenFAQ/>
+                        <Route path="/token/info/:token_root" view=TokenInfo/>
+                        <Route path="/token/transfer/:token_root" view=TokenTransfer/>
+                        <Route path="/tokens" view=Tokens/>
                         <Route path="/your-profile" view=ProfileInfo/>
                     </Route>
                 </Routes>

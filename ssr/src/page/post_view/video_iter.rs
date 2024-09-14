@@ -18,7 +18,7 @@ pub async fn post_liked_by_me(
     post_canister: Principal,
     post_id: u64,
 ) -> Result<(bool, u64), PostViewError> {
-    let individual = canisters.individual_user(post_canister).await?;
+    let individual = canisters.individual_user(post_canister).await;
     let post = individual
         .get_individual_post_details_by_id(post_id)
         .await?;
@@ -55,7 +55,7 @@ impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
         chunks: usize,
         allow_nsfw: bool,
     ) -> Result<FetchVideosRes<'a>, PostViewError> {
-        let post_cache = self.canisters.post_cache().await?;
+        let post_cache = self.canisters.post_cache().await;
         let top_posts_fut = post_cache
             .get_top_posts_aggregated_from_canisters_on_this_network_for_home_feed_cursor(
                 self.cursor.start,
@@ -108,7 +108,6 @@ impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
         #[cfg(feature = "hydrate")]
         {
             use crate::utils::ml_feed::ml_feed_grpcweb::MLFeed;
-            use leptos::expect_context;
 
             let ml_feed: MLFeed = expect_context();
 
@@ -179,7 +178,7 @@ impl<'a> VideoFetchStream<'a, true> {
     ) -> Result<FetchVideosRes<'a>, PostViewError> {
         let cans_true = self.canisters;
 
-        let user_canister = cans_true.authenticated_user().await?;
+        let user_canister = cans_true.authenticated_user().await;
         let top_posts_fut =
             user_canister.get_ml_feed_cache_paginated(self.cursor.start, self.cursor.limit);
 
