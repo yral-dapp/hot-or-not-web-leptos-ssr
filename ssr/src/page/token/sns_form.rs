@@ -185,10 +185,7 @@ impl SnsFormState {
         let voting_neuron = 2000_u64;
         let non_voting_neuron = total - (swap + voting_neuron + governance);
 
-
-        self.distribution.total = nns_pb::Tokens {
-            e8s: Some(total),
-        };
+        self.distribution.total = nns_pb::Tokens { e8s: Some(total) };
         self.distribution.neurons = vec![
             NeuronForm {
                 stake: nns_pb::Tokens {
