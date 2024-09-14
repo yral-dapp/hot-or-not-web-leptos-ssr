@@ -107,16 +107,16 @@ pub fn TxnView(info: TxnInfo, #[prop(optional)] _ref: NodeRef<html::Div>) -> imp
     );
 
     view! {
-        <div _ref=_ref class="grid grid-cols-2 grid-rows-1 w-full items-center py-4">
+        <div _ref=_ref class="grid grid-cols-2 grid-rows-1 items-center py-4 w-full">
             <div class="flex flex-row gap-2">
-                <div class="grid grid-cols-1 place-items-center place-content-center p-2 rounded-full text-primary-600 text-xl lg:text-2xl">
+                <div class="grid grid-cols-1 place-content-center place-items-center p-2 text-xl rounded-full lg:text-2xl text-primary-600">
                     <Icon icon=info.tag.icondata()/>
                 </div>
                 <div class="flex flex-col">
-                    <span class="text-md md:text-lg font-semibold text-white">
+                    <span class="font-semibold text-white md:text-lg text-md">
                         {info.tag.to_text()}
                     </span>
-                    <span class="text-sm md:text-md text-white/50">{info.amount} COYNs</span>
+                    <span class="text-sm text-white/50 md:text-md">{info.amount} COYNs</span>
                 </div>
             </div>
             <span class=move || {
@@ -125,7 +125,7 @@ pub fn TxnView(info: TxnInfo, #[prop(optional)] _ref: NodeRef<html::Div>) -> imp
                 } else {
                     "text-red-600 justify-self-end"
                 }
-            }>{bal_res} COYNs</span>
+            } style="padding-right: 10px;" >{bal_res} COYNs</span>
         </div>
     }
 }
