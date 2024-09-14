@@ -52,10 +52,10 @@ struct DistributionForm {
 impl Default for DistributionForm {
     fn default() -> Self {
         Self {
-            total: parse_tokens("2_502_006 tokens").unwrap(),
+            total: parse_tokens("2_502_005 tokens").unwrap(),
             neurons: vec![
                 NeuronForm {
-                    stake: parse_tokens("1_250_002 tokens").unwrap(),
+                    stake: parse_tokens("1_250_001 tokens").unwrap(),
                     memo: 0,
                     dissolve_delay: parse_duration("0 seconds").unwrap(),
                     vesting_period: parse_duration("2 seconds").unwrap(),
