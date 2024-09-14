@@ -1,8 +1,6 @@
 use crate::{
     canister::{
-        sns_governance::{
-            Account, Amount, Command, Command1, Disburse, DissolveState, ManageNeuron, Neuron,
-        },
+        sns_governance::{Account, Amount, Command, Command1, Disburse, ManageNeuron, Neuron},
         sns_ledger::{Account as LedgerAccount, TransferArg, TransferResult},
     },
     state::canisters::CanistersAuthWire,
@@ -15,7 +13,7 @@ pub async fn claim_tokens_from_first_neuron(
     cans_wire: CanistersAuthWire,
     governance_principal: Principal,
     ledger_principal: Principal,
-    raw_neurons: Vec<u8>,
+    raw_neuron: Vec<u8>,
 ) -> Result<(), ServerFnError> {
     let cans = cans_wire.canisters()?;
     let user_principal = cans.user_principal();
@@ -24,34 +22,16 @@ pub async fn claim_tokens_from_first_neuron(
     log::trace!("!!!!! root: {:?}", governance_principal);
 
     let governance = cans.sns_governance(governance_principal).await;
-    let neurons = Decode!(&raw_neurons, Vec<Neuron>)?;
+    let neuron = Decode!(&raw_neuron, Neuron)?;
 
-    if neurons.len() < 2 || neurons[1].cached_neuron_stake_e8s == 0 {
+    let neuron_id = neuron
+        .id
+        .map(|id| id.id)
+        .ok_or_else(|| ServerFnError::new("invalid neuron"))?;
+    let amount = neuron.cached_neuron_stake_e8s;
+    if amount == 0 {
         return Ok(());
     }
-    // let neuron = neurons[0];
-    let mut ix = 0;
-    // if let Some(neuron) = neurons.get(1) {
-    //     if let Some(dissolve) = neuron.dissolve_state {
-    //         match dissolve {
-    //             DissolveState::DissolveDelaySeconds(x) => {
-    //                 if x > 0 {
-    //                     ix = 1;
-    //                 }
-    //             }
-    //             _ => {}
-    //         }
-    //     }
-    // }
-    if neurons[1].dissolve_state.is_some() {
-        if let Some(DissolveState::DissolveDelaySeconds(x)) = neurons[1].dissolve_state.as_ref() {
-            if *x == 0 {
-                ix = 1;
-            }
-        }
-    }
-    let neuron_id = neurons[ix].id.as_ref().unwrap().id.clone();
-    let amount = neurons[ix].cached_neuron_stake_e8s;
     let manage_neuron_arg = ManageNeuron {
         subaccount: neuron_id,
         command: Some(Command::Disburse(Disburse {

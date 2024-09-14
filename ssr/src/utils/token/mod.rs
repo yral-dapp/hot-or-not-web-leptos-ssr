@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     canister::{
-        sns_governance::{GetMetadataArg, ListNeurons, Neuron, SnsGovernance},
+        sns_governance::{DissolveState, GetMetadataArg, ListNeurons, Neuron, SnsGovernance},
         sns_ledger::Account as LedgerAccount,
         sns_root::ListSnsCanistersArg,
     },
@@ -193,13 +193,13 @@ pub async fn claim_tokens_from_first_neuron(
     cans_wire: CanistersAuthWire,
     governance_principal: Principal,
     ledger_principal: Principal,
-    raw_neurons: Vec<u8>,
+    raw_neuron: Vec<u8>,
 ) -> Result<(), ServerFnError> {
     server_impl::claim_tokens_from_first_neuron(
         cans_wire,
         governance_principal,
         ledger_principal,
-        raw_neurons,
+        raw_neuron,
     )
     .await
 }
@@ -243,7 +243,18 @@ pub async fn claim_tokens_from_first_neuron_if_required(
     if neurons.len() < 2 || neurons[1].cached_neuron_stake_e8s == 0 {
         return Ok(());
     }
+    let ix = if matches!(
+        neurons[1].dissolve_state.as_ref(),
+        Some(DissolveState::DissolveDelaySeconds(0))
+    ) {
+        1
+    } else {
+        0
+    };
+    if neurons[ix].cached_neuron_stake_e8s == 0 {
+        return Ok(());
+    }
 
-    let raw_neurons = Encode!(&neurons).unwrap();
+    let raw_neurons = Encode!(&neurons[ix]).unwrap();
     claim_tokens_from_first_neuron(cans_wire, governance, ledger, raw_neurons).await
 }
