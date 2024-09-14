@@ -382,8 +382,8 @@ pub fn CreateToken() -> impl IntoView {
                     initial_value=(ctx
                         .form_state
                         .with_untracked(|f| {
-                            f.total_distrubution().e8s.unwrap_or_else(|| 1000000 * 10e8 as u64)
-                                / 10e8 as u64
+                            f.total_distrubution().e8s.unwrap_or_else(|| 1000000 * 1e8 as u64)
+                                / 1e8 as u64
                         }))
                         .to_string()
                     validator=non_empty_string_validator_for_u64
