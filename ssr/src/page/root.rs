@@ -9,7 +9,7 @@ use crate::{canister::post_cache, state::canisters::unauth_canisters};
 #[server]
 async fn get_top_post_id() -> Result<Option<(Principal, u64)>, ServerFnError> {
     let canisters = unauth_canisters();
-    let post_cache = canisters.post_cache().await?;
+    let post_cache = canisters.post_cache().await;
 
     let top_items = match post_cache
         .get_top_posts_aggregated_from_canisters_on_this_network_for_home_feed_cursor(
@@ -56,7 +56,7 @@ async fn get_top_post_id_mlcache() -> Result<Option<(Principal, u64)>, ServerFnE
         return get_top_post_id().await;
     }
 
-    let user_canister = canisters.individual_user(user_canister_id.unwrap()).await?;
+    let user_canister = canisters.individual_user(user_canister_id.unwrap()).await;
 
     let top_items = user_canister
         .get_ml_feed_cache_paginated(0, 1)
@@ -115,7 +115,7 @@ pub fn RootPage() -> impl IntoView {
                             Ok(None) => "/error?err=No Posts Found".to_string(),
                             Err(e) => format!("/error?err={e}"),
                         };
-                        view! { <Redirect path=url /> }
+                        view! { <Redirect path=url/> }
                     })
             }}
 

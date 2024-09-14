@@ -17,7 +17,7 @@ use rand_chacha::rand_core::OsRng;
 
 use crate::{
     consts::auth::{REFRESH_MAX_AGE, REFRESH_TOKEN_COOKIE},
-    utils::current_epoch,
+    utils::time::current_epoch,
 };
 
 use self::store::{KVStore, KVStoreImpl};

@@ -4,6 +4,7 @@ mod posts;
 mod profile_iter;
 pub mod profile_post;
 mod speculation;
+mod tokens;
 
 use candid::Principal;
 use leptos::*;
@@ -18,6 +19,7 @@ use crate::{
 
 use posts::ProfilePosts;
 use speculation::ProfileSpeculations;
+use tokens::ProfileTokens;
 
 #[derive(Clone, Default)]
 pub struct ProfilePostsContext {
@@ -43,12 +45,13 @@ fn Stat(stat: u64, #[prop(into)] info: String) -> impl IntoView {
 }
 
 #[component]
-fn ListSwitcher(user_canister: Principal) -> impl IntoView {
+fn ListSwitcher(user_canister: Principal, user_principal: Principal) -> impl IntoView {
     let (cur_tab, set_cur_tab) = create_query_signal::<String>("tab");
     let current_tab = create_memo(move |_| {
         with!(|cur_tab| match cur_tab.as_deref() {
             Some("posts") => 0,
             Some("speculations") => 1,
+            Some("tokens") => 2,
             _ => 0,
         })
     });
@@ -61,7 +64,7 @@ fn ListSwitcher(user_canister: Principal) -> impl IntoView {
     };
 
     view! {
-        <div class="relative flex flex-row w-7/12 text-center text-md md:text-lg lg:text-xl xl:text-2xl">
+        <div class="relative flex flex-row w-11/12 md:w-9/12 text-center text-xl md:text-2xl">
             <button class=move || tab_class(0) on:click=move |_| set_cur_tab(Some("posts".into()))>
                 <Icon icon=icondata::FiGrid/>
             </button>
@@ -71,13 +74,19 @@ fn ListSwitcher(user_canister: Principal) -> impl IntoView {
             >
                 <Icon icon=icondata::BsTrophy/>
             </button>
+            <button class=move || tab_class(2) on:click=move |_| set_cur_tab(Some("tokens".into()))>
+                <Icon icon=icondata::AiDollarCircleOutlined/>
+            </button>
         </div>
         <div class="flex flex-col gap-y-12 justify-center pb-12 w-11/12 sm:w-7/12">
-            <Show
-                when=move || current_tab() == 0
-                fallback=move || view! { <ProfileSpeculations user_canister /> }
-            >
+            <Show when=move || current_tab() == 0>
                 <ProfilePosts user_canister/>
+            </Show>
+            <Show when=move || current_tab() == 1>
+                <ProfileSpeculations user_canister/>
+            </Show>
+            <Show when=move || current_tab() == 2>
+                <ProfileTokens user_canister user_principal/>
             </Show>
         </div>
     }
@@ -132,7 +141,7 @@ fn ProfileViewInner(user: ProfileDetails, user_canister: Principal) -> impl Into
                     <Stat stat=user.hots info="Hots"/>
                     <Stat stat=user.nots info="Nots"/>
                 </div>
-                <ListSwitcher user_canister/>
+                <ListSwitcher user_canister user_principal=user.principal/>
             </div>
         </div>
     }
@@ -155,7 +164,7 @@ pub fn ProfileView() -> impl IntoView {
             .get_individual_canister_by_user_principal(principal?)
             .await
             .ok()??;
-        let user = canisters.individual_user(user_canister).await.ok()?;
+        let user = canisters.individual_user(user_canister).await;
         let user_details = user.get_profile_details().await.ok()?;
         Some((user_details.into(), user_canister))
     });

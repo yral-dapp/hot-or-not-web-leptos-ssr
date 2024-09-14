@@ -129,7 +129,7 @@ mod cf_impl {
         enable_hot_or_not: bool,
         is_nsfw: bool,
     ) -> Result<u64, ServerFnError> {
-        let user = canisters.authenticated_user().await?;
+        let user = canisters.authenticated_user().await;
         let res = user
             .add_post_v_2(PostDetailsFromFrontend {
                 hashtags,
