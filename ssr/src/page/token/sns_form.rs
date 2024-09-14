@@ -180,7 +180,7 @@ impl SnsFormState {
         let tokens = tokens.e8s.unwrap();
         let total = tokens;
 
-        let non_voting_neuron = total as u64 + 2 * tx_fee;
+        let non_voting_neuron = total + 2 * tx_fee;
         let voting_neuron = 2000_u64;
 
         let swap = non_voting_neuron + voting_neuron + 1;
@@ -249,9 +249,5 @@ impl SnsFormState {
             swap: self.swap,
             nns_proposal: self.nns_proposal,
         })
-    }
-
-    pub fn total_distrubution(&self) -> nns_pb::Tokens {
-        self.distribution.total
     }
 }
