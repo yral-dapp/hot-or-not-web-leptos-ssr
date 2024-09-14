@@ -250,4 +250,8 @@ impl SnsFormState {
             nns_proposal: self.nns_proposal,
         })
     }
+
+    pub fn total_distrubution(&self) -> nns_pb::Tokens {
+        self.distribution.total
+    }
 }
