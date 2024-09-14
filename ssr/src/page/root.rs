@@ -108,7 +108,7 @@ pub fn CreatorDaoRootPage() -> impl IntoView {
 
             {move || {
                 let principal = canister.profile_details().principal;
-                let redirect_url = format!("/your-profile/{principal}");
+                let redirect_url = format!("/your-profile/{principal}?tab=tokens");
                 view! { <Redirect path=redirect_url/> }
             }}
 
