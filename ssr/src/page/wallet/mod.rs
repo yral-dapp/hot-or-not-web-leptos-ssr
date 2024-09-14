@@ -1,10 +1,6 @@
 pub mod tokens;
 pub mod transactions;
 mod txn;
-use candid::Principal;
-use leptos::*;
-use tokens::{TokenRootList, TokenView};
-
 use crate::{
     component::{
         back_btn::BackButton,
@@ -17,24 +13,47 @@ use crate::{
     try_or_redirect_opt,
     utils::profile::ProfileDetails,
 };
+use candid::Principal;
+use leptos::*;
+use leptos_icons::*;
+use std::time::Duration;
+use tokens::{TokenRootList, TokenView};
 use txn::{provider::get_history_provider, TxnView};
 
 #[component]
 fn ProfileGreeter(details: ProfileDetails) -> impl IntoView {
-    // let (is_connected, _) = account_connected_reader();
+    let display_name = details.display_name_or_fallback();
 
+    let (icon, set_icon) = create_signal(icondata::BsCopy);
+
+    let copy_to_clipboard = move || {
+        let display_name_clone = display_name.clone();
+        let _ = leptos::window()
+            .navigator()
+            .clipboard()
+            .write_text(&display_name_clone);
+        set_icon(icondata::BsCheckSquare);
+        leptos::set_timeout(
+            move || {
+                set_icon(icondata::BsCopy);
+            },
+            Duration::from_millis(2000),
+        );
+    };
     view! {
-        <div class="flex flex-col">
-            <span class="text-white/50 text-md">Welcome!</span>
-            <span class="text-white text-lg md:text-xl truncate">
-                // TEMP: Workaround for hydration bug until leptos 0.7
-                // class=("md:w-5/12", move || !is_connected())
-                {details.display_name_or_fallback()}
-            </span>
+    <div class="flex flex-col">
+        // <span class="text-white/50 text-md">Welcome!</span>
+     <div class="flex overflow-hidden justify-center items-center px-10 mx-1 space-x-2 rounded-xl border-2 border-neutral-700 h-[2.5rem] items md:h-[5rem]" >
+        <span class="text-lg text-white md:text-xl truncate">
+            // TEMP: Workaround for hydration bug until leptos 0.7
+            // class=("md:w-5/12", move || !is_connected())
+            {details.display_name_or_fallback()}
+         </span>
+       <button on:click=move |_| copy_to_clipboard() class="justify-self-end">
+                <Icon class="w-6 h-6 text-white cursor-pointer" icon=icon />
+            </button>
         </div>
-        <div class="w-16 aspect-square overflow-clip justify-self-end rounded-full">
-            <img class="h-full w-full object-cover" src=details.profile_pic_or_random()/>
-        </div>
+    </div>
     }
 }
 
@@ -43,9 +62,9 @@ fn FallbackGreeter() -> impl IntoView {
     view! {
         <div class="flex flex-col">
             <span class="text-white/50 text-md">Welcome!</span>
-            <div class="w-3/4 rounded-full py-2 bg-white/40 animate-pulse"></div>
+            <div class="py-2 w-3/4 rounded-full animate-pulse bg-white/40"></div>
         </div>
-        <div class="w-16 aspect-square overflow-clip rounded-full justify-self-end bg-white/40 animate-pulse"></div>
+        <div class="justify-self-end w-16 rounded-full animate-pulse aspect-square overflow-clip bg-white/40"></div>
     }
 }
 
@@ -53,7 +72,7 @@ const RECENT_TXN_CNT: usize = 10;
 
 #[component]
 fn BalanceFallback() -> impl IntoView {
-    view! { <div class="w-1/4 rounded-full py-3 mt-1 bg-white/30 animate-pulse"></div> }
+    view! { <div class="py-3 mt-1 w-1/4 rounded-full animate-pulse bg-white/30"></div> }
 }
 
 #[component]
@@ -123,19 +142,24 @@ pub fn Wallet() -> impl IntoView {
 
     view! {
         <div>
-            <div class="top-0 bg-black text-white w-full items-center z-50 pt-4 pl-4">
+            <div class="flex top-0 z-50 justify-between items-center pt-4 pr-4 pl-4 w-full text-white bg-black">
                 <div class="flex flex-row justify-start">
                     <BackButton fallback="/".to_string()/>
                 </div>
+             <AuthCansProvider fallback=FallbackGreeter let:cans>
+            <div class="justify-self-end w-16 rounded-full aspect-square overflow-clip">
+                <img class="object-cover w-full h-full" src=cans.profile_details().profile_pic_or_random() />
+           </div>
+            </AuthCansProvider>
             </div>
-            <div class="flex flex-col w-dvw min-h-dvh bg-black gap-4 px-4 pt-4 pb-12">
-                <div class="grid grid-cols-2 grid-rows-1 items-center w-full">
+            <div class="flex flex-col gap-4 px-4 pt-4 pb-12 bg-black w-dvw min-h-dvh">
+                <div class="grid grid-cols-1 grid-rows-1 items-center w-full">
                     <AuthCansProvider fallback=FallbackGreeter let:cans>
                         <ProfileGreeter details=cans.profile_details()/>
                     </AuthCansProvider>
                 </div>
-                <div class="flex flex-col w-full items-center mt-6 text-white">
-                    <span class="text-md lg:text-lg uppercase">Your Coyns Balance</span>
+                <div class="flex flex-col items-center mt-6 w-full text-white">
+                    <span class="uppercase lg:text-lg text-md">Your Coyns Balance</span>
                     <Suspense fallback=BalanceFallback>
                         {move || {
                             let balance = try_or_redirect_opt!(balance_fetch() ?);
@@ -145,8 +169,8 @@ pub fn Wallet() -> impl IntoView {
                     </Suspense>
                 </div>
                 <Show when=move || !is_connected()>
-                    <div class="flex flex-col w-full py-5 items-center">
-                        <div class="flex flex-row w-9/12 md:w-5/12 items-center">
+                    <div class="flex flex-col items-center py-5 w-full">
+                        <div class="flex flex-row items-center w-9/12 md:w-5/12">
                             <ConnectLogin
                                 login_text="Login to claim your COYNs"
                                 cta_location="wallet"
@@ -154,10 +178,10 @@ pub fn Wallet() -> impl IntoView {
                         </div>
                     </div>
                 </Show>
-                <div class="flex flex-col w-full gap-2">
-                    <div class="flex flex-row w-full items-end justify-between">
-                        <span class="text-white text-sm md:text-md">My Tokens</span>
-                        <a href="/tokens" class="text-white/50 text-md md:text-lg">
+                <div class="flex flex-col gap-2 w-full">
+                    <div class="flex flex-row justify-between items-end w-full">
+                        <span class="text-sm text-white md:text-md">My Tokens</span>
+                        <a href="/tokens" class="md:text-lg text-white/50 text-md">
                             See All
                         </a>
                     </div>
@@ -165,10 +189,10 @@ pub fn Wallet() -> impl IntoView {
                         <TokensFetch/>
                     </div>
                 </div>
-                <div class="flex flex-col w-full gap-2">
-                    <div class="flex flex-row w-full items-end justify-between">
-                        <span class="text-white text-sm md:text-md">Recent Transactions</span>
-                        <a href="/transactions" class="text-white/50 text-md md:text-lg">
+                <div class="flex flex-col gap-2 w-full">
+                    <div class="flex flex-row justify-between items-end w-full">
+                        <span class="text-sm text-white md:text-md">Recent Transactions</span>
+                        <a href="/transactions" class="md:text-lg text-white/50 text-md">
                             See All
                         </a>
                     </div>
