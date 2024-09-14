@@ -127,9 +127,9 @@ fn TokenImage() -> impl IntoView {
 }
 
 macro_rules! input_component {
-    ($name:ident, $input_element:ident, $attrs:expr) => {
+    ($name:ident, $input_element:ident, $input_type:ident, $attrs:expr) => {
         #[component]
-        fn $name<T: 'static, U: Fn(T) + 'static, V: Fn(String) -> Option<T> + 'static>(
+        fn $name<T: 'static, U: Fn(T) + 'static + Copy, V: Fn(String) -> Option<T> + 'static + Copy>(
             #[prop(into)] heading: String,
             #[prop(into)] placeholder: String,
             #[prop(optional)] initial_value: Option<String>,
@@ -143,6 +143,45 @@ macro_rules! input_component {
             if error.get_untracked() {
                 ctx.invalid_cnt.update(|c| *c += 1);
             }
+            let input_ref = create_node_ref::<html::$input_type>();
+            let on_input = move || {
+                let Some(input) = input_ref() else {
+                    return;
+                };
+                let value = input.value();
+                match validator(value) {
+                    Some(v) => {
+                        if error.get_untracked() {
+                            ctx.invalid_cnt.update(|c| *c -= 1);
+                        }
+                        error.set(false);
+                        updater(v);
+                    },
+                    None => {
+                        show_error.set(true);
+                        if error.get_untracked() {
+                            return;
+                        }
+                        error.set(true);
+                        ctx.invalid_cnt.update(|c| *c += 1);
+                        }
+                    }
+            };
+            create_effect(move |prev| {
+                ctx.on_form_reset.track();
+                // Do not trigger on render
+                if prev.is_none() {
+                    return;
+                }
+                let cur_show_err = show_error.get_untracked();
+                on_input();
+                // this is necessary
+                // if the user had not previously input anything,
+                // we don't want to show an error
+                if !cur_show_err {
+                    show_error.set(false);
+                }
+            });
 
             let input_class =move ||  match show_error() && error() {
                 false => format!("w-full p-3  md:p-4 md:py-5 text-white outline-none bg-white/10 border-2 border-solid border-white/20 text-xs  rounded-xl placeholder-neutral-600"),
@@ -151,32 +190,14 @@ macro_rules! input_component {
             view! {
                 <div class="flex flex-col grow gap-y-1 text-sm md:text-base">
                      <span class="text-white font-semibold">{heading.clone()}</span>
-                     <$input_element value={initial_value.unwrap_or_default()} on:input=move |ev| {
-                        let value = event_target_value(&ev);
-                        match validator(value) {
-                            Some(v) => {
-                                if error.get_untracked() {
-                                    ctx.invalid_cnt.update(|c| *c -= 1);
-                                }
-                                error.set(false);
-                                updater(v);
-                            },
-                            None => {
-                                show_error.set(true);
-                                if error.get_untracked() {
-                                    return;
-                                }
-                                error.set(true);
-                                ctx.invalid_cnt.update(|c| *c += 1);
-                                }
-                            }
-                        }
-                        $attrs
+                     <$input_element
+                        _ref=input_ref
+                        value={initial_value.unwrap_or_default()}
+                        on:input=move |_| on_input()
                         placeholder=placeholder
                         class=move || input_class()
                         type=input_type.unwrap_or_else(|| "text".into() )
-                         />
-
+                    />
                     <span class="text-red-500 font-semibold">
                         <Show when=move || show_error() && error()>
                                 "Invalid "
@@ -199,14 +220,15 @@ fn non_empty_string_validator_for_u64(s: String) -> Option<u64> {
     s.parse().ok()
 }
 
-input_component!(InputBox, input, {});
-input_component!(InputArea, textarea, rows = 4);
-input_component!(InputField, textarea, rows = 1);
+input_component!(InputBox, input, Input, {});
+input_component!(InputArea, textarea, Textarea, rows = 4);
+input_component!(InputField, textarea, Textarea, rows = 1);
 
 #[derive(Clone, Copy, Default)]
 pub struct CreateTokenCtx {
     form_state: RwSignal<SnsFormState>,
     invalid_cnt: RwSignal<u32>,
+    on_form_reset: Trigger,
 }
 
 impl CreateTokenCtx {
@@ -406,14 +428,7 @@ pub fn CreateToken() -> impl IntoView {
 
 #[component]
 pub fn CreateTokenSettings() -> impl IntoView {
-    let auth_cans = auth_canisters_store();
-    let fallback_url = Signal::derive(move || {
-        let Some(cans) = auth_cans() else {
-            return "/token/create".to_string();
-        };
-        let id = cans.profile_details().username_or_principal();
-        format!("/your-profile/{id}?tab=tokens")
-    });
+    let fallback_url = "/token/create";
     let ctx: CreateTokenCtx = use_context().unwrap_or_else(|| {
         let ctx = CreateTokenCtx::default();
         provide_context(ctx);
@@ -461,8 +476,12 @@ pub fn CreateTokenSettings() -> impl IntoView {
     //     });
     // };
 
+    let form_ref = create_node_ref::<html::Form>();
     let reset_settings = move |_| {
-        ctx.form_state.update(|f| f.reset_advanced_settings());
+        let Some(form) = form_ref() else { return };
+        form.reset();
+        // ctx.form_state.update(|f| f.reset_advanced_settings());
+        ctx.on_form_reset.notify();
     };
 
     view! {
@@ -494,115 +513,116 @@ pub fn CreateTokenSettings() -> impl IntoView {
                 </div>
             // <div class="relative w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-gray-600"></div>
             </label>
+            <form _ref=form_ref>
+                <InputBox
+                    heading="Transaction Fee (e8s)"
+                    input_type="number"
+                    placeholder="100"
+                    updater=set_transaction_fee
+                    validator=validate_tokens_e8s
+                    initial_value=transaction_fee.get_untracked().e8s.unwrap_or(1).to_string()
+                />
+                <InputBox
+                    heading="Rejection Fee (Token)"
+                    placeholder="1 Token"
+                    updater=set_rejection_fee
+                    validator=validate_tokens
+                    initial_value=format_tokens(&rejection_fee.get_untracked())
+                />
+                <InputBox
+                    heading="Initial Voting Period (days)"
+                    placeholder="4 days"
+                    updater=set_initial_voting_period
+                    validator=validate_duration
+                    initial_value=format_duration(&initial_voting_period.get_untracked())
+                />
+                <InputBox
+                    heading="Maximum wait for quiet deadline extention (days)"
+                    placeholder="1 day"
+                    updater=set_max_wait_deadline_extension
+                    validator=validate_duration
+                    initial_value=format_duration(&max_wait_deadline_extension.get_untracked())
+                />
 
-            <InputBox
-                heading="Transaction Fee (e8s)"
-                input_type="number"
-                placeholder="100"
-                updater=set_transaction_fee
-                validator=validate_tokens_e8s
-                initial_value=transaction_fee.get_untracked().e8s.unwrap_or(1).to_string()
-            />
-            <InputBox
-                heading="Rejection Fee (Token)"
-                placeholder="1 Token"
-                updater=set_rejection_fee
-                validator=validate_tokens
-                initial_value=format_tokens(&rejection_fee.get_untracked())
-            />
-            <InputBox
-                heading="Initial Voting Period (days)"
-                placeholder="4 days"
-                updater=set_initial_voting_period
-                validator=validate_duration
-                initial_value=format_duration(&initial_voting_period.get_untracked())
-            />
-            <InputBox
-                heading="Maximum wait for quiet deadline extention (days)"
-                placeholder="1 day"
-                updater=set_max_wait_deadline_extension
-                validator=validate_duration
-                initial_value=format_duration(&max_wait_deadline_extension.get_untracked())
-            />
+                <InputBox
+                    heading="Minimum creation stake (token)"
+                    placeholder="1 token"
+                    updater=set_min_creation_stake
+                    validator=validate_tokens
+                    initial_value=format_tokens(&min_creation_stake.get_untracked())
+                />
 
-            <InputBox
-                heading="Minimum creation stake (token)"
-                placeholder="1 token"
-                updater=set_min_creation_stake
-                validator=validate_tokens
-                initial_value=format_tokens(&min_creation_stake.get_untracked())
-            />
+                <InputBox
+                    heading="Minimum dissolve delay (months)"
+                    placeholder="1 month"
+                    updater=set_min_dissolve_delay
+                    validator=validate_duration
+                    initial_value=format_duration(&min_dissolve_delay.get_untracked())
+                />
 
-            <InputBox
-                heading="Minimum dissolve delay (months)"
-                placeholder="1 month"
-                updater=set_min_dissolve_delay
-                validator=validate_duration
-                initial_value=format_duration(&min_dissolve_delay.get_untracked())
-            />
+                <InputBox
+                    heading="Age (duration in years)"
+                    placeholder="4 years"
+                    updater=set_age
+                    validator=validate_duration
+                    initial_value=format_duration(&age.get_untracked())
+                />
 
-            <InputBox
-                heading="Age (duration in years)"
-                placeholder="4 years"
-                updater=set_age
-                validator=validate_duration
-                initial_value=format_duration(&age.get_untracked())
-            />
+                <InputBox
+                    heading="Age (bonus %)"
+                    placeholder="25%"
+                    updater=set_age_bonus
+                    validator=validate_percentage
+                    initial_value=format_percentage(&age_bonus.get_untracked())
+                />
 
-            <InputBox
-                heading="Age (bonus %)"
-                placeholder="25%"
-                updater=set_age_bonus
-                validator=validate_percentage
-                initial_value=format_percentage(&age_bonus.get_untracked())
-            />
-
-            <InputBox
-                heading="Minimum participants"
-                placeholder="57"
-                input_type="number"
-                updater=set_min_participants
-                validator=non_empty_string_validator_for_u64
-                initial_value=min_participants.get_untracked().to_string()
-            />
-            <InputBox
-                heading="Minimum direct participant icp"
-                placeholder="100,000 tokens"
-                updater=set_min_direct_participants_icp
-                validator=optional_tokens_validator
-                initial_value=min_direct_participants_icp
-                    .with_untracked(|p| p.as_ref().map(format_tokens))
-                    .unwrap_or_default()
-            />
-            <InputBox
-                heading="Maximum direct participant icp"
-                placeholder="1000000 tokens"
-                updater=set_max_direct_participants_icp
-                validator=optional_tokens_validator
-                initial_value=max_direct_participants_icp
-                    .with_untracked(|p| p.as_ref().map(format_tokens))
-                    .unwrap_or_default()
-            />
-            <InputBox
-                heading="Minimum participant icp"
-                placeholder="10 tokens"
-                updater=set_min_participants_icp
-                validator=validate_tokens
-                initial_value=format_tokens(&min_participants_icp.get_untracked())
-            />
-            <InputBox
-                heading="Maximum participant icp"
-                placeholder="10,000 tokens"
-                updater=set_max_participants_icp
-                validator=validate_tokens
-                initial_value=format_tokens(&max_participants_icp.get_untracked())
-            />
-            // <InputBox
-            // heading="Restricted Country"
-            // placeholder="Antarctica"
-            // updater=set_restricted_country
-            // validator=non_empty_string_validator
-            // />
+                <InputBox
+                    heading="Minimum participants"
+                    placeholder="57"
+                    input_type="number"
+                    updater=set_min_participants
+                    validator=non_empty_string_validator_for_u64
+                    initial_value=min_participants.get_untracked().to_string()
+                />
+                <InputBox
+                    heading="Minimum direct participant icp"
+                    placeholder="100,000 tokens"
+                    updater=set_min_direct_participants_icp
+                    validator=optional_tokens_validator
+                    initial_value=min_direct_participants_icp
+                        .with_untracked(|p| p.as_ref().map(format_tokens))
+                        .unwrap_or_default()
+                />
+                <InputBox
+                    heading="Maximum direct participant icp"
+                    placeholder="1000000 tokens"
+                    updater=set_max_direct_participants_icp
+                    validator=optional_tokens_validator
+                    initial_value=max_direct_participants_icp
+                        .with_untracked(|p| p.as_ref().map(format_tokens))
+                        .unwrap_or_default()
+                />
+                <InputBox
+                    heading="Minimum participant icp"
+                    placeholder="10 tokens"
+                    updater=set_min_participants_icp
+                    validator=validate_tokens
+                    initial_value=format_tokens(&min_participants_icp.get_untracked())
+                />
+                <InputBox
+                    heading="Maximum participant icp"
+                    placeholder="10,000 tokens"
+                    updater=set_max_participants_icp
+                    validator=validate_tokens
+                    initial_value=format_tokens(&max_participants_icp.get_untracked())
+                />
+                // <InputBox
+                // heading="Restricted Country"
+                // placeholder="Antarctica"
+                // updater=set_restricted_country
+                // validator=non_empty_string_validator
+                // />
+            </form>
             <button
                 on:click=reset_settings
                 class="w-full flex justify-center underline text-sm text-white my-4 "

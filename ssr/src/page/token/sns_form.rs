@@ -254,30 +254,4 @@ impl SnsFormState {
     pub fn total_distrubution(&self) -> nns_pb::Tokens {
         self.distribution.total
     }
-
-    pub fn reset_advanced_settings(&mut self) {
-        let default_state = Self::default();
-        self.transaction_fee = default_state.transaction_fee;
-        self.proposals.rejection_fee = default_state.proposals.rejection_fee;
-        self.proposals.initial_voting_period = default_state.proposals.initial_voting_period;
-        self.proposals.maximum_wait_for_quiet_deadline_extension = default_state
-            .proposals
-            .maximum_wait_for_quiet_deadline_extension;
-        self.neurons.minimum_creation_stake = default_state.neurons.minimum_creation_stake;
-        self.voting.minimum_dissolve_delay = default_state.voting.minimum_dissolve_delay;
-        self.voting.maximum_voting_power_bonuses.age.duration = default_state
-            .voting
-            .maximum_voting_power_bonuses
-            .age
-            .duration;
-        self.voting.maximum_voting_power_bonuses.age.bonus =
-            default_state.voting.maximum_voting_power_bonuses.age.bonus;
-        self.swap.minimum_participants = default_state.swap.minimum_participants;
-        self.swap.minimum_direct_participation_icp =
-            default_state.swap.minimum_direct_participation_icp;
-        self.swap.maximum_direct_participation_icp =
-            default_state.swap.maximum_direct_participation_icp;
-        self.swap.minimum_participant_icp = default_state.swap.minimum_participant_icp;
-        self.swap.maximum_participant_icp = default_state.swap.maximum_participant_icp;
-    }
 }
