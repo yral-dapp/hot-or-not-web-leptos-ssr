@@ -240,6 +240,10 @@ pub async fn claim_tokens_from_first_neuron_if_required(
     let governance_can = cans.sns_governance(governance).await;
 
     let neurons = get_neurons(&governance_can, cans.user_principal()).await?;
+    if neurons.len() < 2 || neurons[1].cached_neuron_stake_e8s == 0 {
+        return Ok(());
+    }
+
     let raw_neurons = Encode!(&neurons).unwrap();
     claim_tokens_from_first_neuron(cans_wire, governance, ledger, raw_neurons).await
 }

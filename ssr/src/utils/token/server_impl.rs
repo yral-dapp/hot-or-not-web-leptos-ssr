@@ -63,9 +63,17 @@ pub async fn claim_tokens_from_first_neuron(
         })),
     };
     let manage_neuron = governance.manage_neuron(manage_neuron_arg).await?;
-    if !matches!(manage_neuron.command, Some(Command1::Disburse(_))) {
-        return Err(ServerFnError::new("Failed to claim tokens"));
+    match manage_neuron.command {
+        Some(Command1::Disburse(_)) => (),
+        Some(Command1::Error(e)) => {
+            return Err(ServerFnError::new(format!(
+                "failed to claim tokens: {}",
+                e.error_message
+            )))
+        }
+        _ => return Err(ServerFnError::new("Failed to claim tokens")),
     }
+
     // Transfer to canister
     let user_canister = cans.user_canister();
     let ledger = cans.sns_ledger(ledger_principal).await;
