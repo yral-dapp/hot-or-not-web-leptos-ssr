@@ -1,6 +1,7 @@
 pub mod tokens;
 pub mod transactions;
 mod txn;
+use candid::Principal;
 use leptos::*;
 use tokens::{TokenRootList, TokenView};
 
@@ -8,14 +9,11 @@ use crate::{
     component::{
         back_btn::BackButton,
         bullet_loader::BulletLoader,
-        canisters_prov::{with_cans, AuthCansProvider, WithAuthCans},
+        canisters_prov::AuthCansProvider,
         connect::ConnectLogin,
         infinite_scroller::{CursoredDataProvider, KeyedData},
     },
-    state::{
-        auth::account_connected_reader,
-        canisters::{authenticated_canisters, Canisters},
-    },
+    state::{auth::account_connected_reader, canisters::authenticated_canisters},
     try_or_redirect_opt,
     utils::profile::ProfileDetails,
 };
@@ -59,6 +57,45 @@ fn BalanceFallback() -> impl IntoView {
 }
 
 #[component]
+fn TokensFetch() -> impl IntoView {
+    let auth_cans = authenticated_canisters();
+    let tokens_fetch = auth_cans.derive(
+        || (),
+        |cans_wire, _| async move {
+            let cans = cans_wire?.canisters()?;
+            let user_principal = cans.user_principal();
+            let tokens_prov = TokenRootList(cans);
+            let tokens = tokens_prov.get_by_cursor(0, 5).await?;
+            Ok::<_, ServerFnError>((user_principal, tokens.data))
+        },
+    );
+
+    view! {
+        <Suspense fallback=BulletLoader>
+            {move || {
+                tokens_fetch()
+                    .map(|tokens_res| {
+                        let tokens = tokens_res.as_ref().map(|t| t.1.clone()).unwrap_or_default();
+                        let user_principal = tokens_res.as_ref().map(|t| t.0).unwrap_or(Principal::anonymous());
+                        view! {
+                            <For
+                                each=move || tokens.clone()
+                                key=|inf| inf.key()
+                                let:token_root
+                            >
+                                <TokenView
+                                    user_principal
+                                    token_root
+                                />
+                            </For>
+                        }
+                    })
+            }}
+        </Suspense>
+    }
+}
+
+#[component]
 pub fn Wallet() -> impl IntoView {
     let (is_connected, _) = account_connected_reader();
 
@@ -83,22 +120,6 @@ pub fn Wallet() -> impl IntoView {
             Ok::<_, ServerFnError>(page.data)
         },
     );
-    // let tokens_fetch = auth_cans.derive(
-    //     || (),
-    //     |cans_wire, _| async move {
-    //         let cans = cans_wire?.canisters()?;
-    //         let tokens_prov = TokenRootList(cans);
-    //         let tokens = tokens_prov.get_by_cursor(0, 5).await;
-    //         Ok::<_, ServerFnError>(tokens.map(|t| t.data).unwrap_or_default())
-    //     },
-    // );
-    let tokens_fetch = with_cans(|cans: Canisters<true>| {
-        let tokens_prov = TokenRootList(cans);
-        async move {
-            let tokens = tokens_prov.get_by_cursor(0, 5).await;
-            tokens.map(|t| t.data).unwrap_or_default()
-        }
-    });
 
     view! {
         <div>
@@ -141,14 +162,7 @@ pub fn Wallet() -> impl IntoView {
                         </a>
                     </div>
                     <div class="flex flex-col gap-2 items-center">
-                        <WithAuthCans fallback=BulletLoader with=tokens_fetch let:tokens>
-                            <For each=move || tokens.1.clone() key=|token| *token let:token>
-                                <TokenView
-                                    user_principal=tokens.0.user_principal()
-                                    token_root=token
-                                />
-                            </For>
-                        </WithAuthCans>
+                        <TokensFetch/>
                     </div>
                 </div>
                 <div class="flex flex-col w-full gap-2">
