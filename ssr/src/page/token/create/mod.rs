@@ -40,7 +40,7 @@ async fn deploy_cdao_canisters(
 #[component]
 fn TokenImage() -> impl IntoView {
     let ctx = expect_context::<CreateTokenCtx>();
-    let img_file = ctx.file;
+    let img_file = create_rw_signal(None::<FileWithUrl>);
     let fstate = ctx.form_state;
 
     // let img_file = create_rw_signal(None::<FileWithUrl>);
@@ -207,14 +207,12 @@ input_component!(InputField, textarea, rows = 1);
 pub struct CreateTokenCtx {
     form_state: RwSignal<SnsFormState>,
     invalid_cnt: RwSignal<u32>,
-    file: RwSignal<Option<FileWithUrl>>,
 }
 
 impl CreateTokenCtx {
     pub fn reset() {
         let ctx: Self = expect_context();
 
-        ctx.file.set(None);
         ctx.form_state.set(SnsFormState::default());
         ctx.invalid_cnt.set(0);
     }
@@ -304,7 +302,6 @@ pub fn CreateToken() -> impl IntoView {
                 .with(|f: &SnsFormState| f.description.is_none())
             || ctx.form_state.with(|f| f.symbol.is_none())
             || ctx.invalid_cnt.get() != 0
-            || ctx.file.with(|f| f.is_none())
     });
 
     // let create_act_value = create_action.value();
@@ -395,7 +392,7 @@ pub fn CreateToken() -> impl IntoView {
             <TokenCreationPopup
                 creation_action=create_action
                 img_url=Signal::derive(move || {
-                    ctx.file.with(|f| f.clone()).unwrap().url.to_string()
+                    ctx.form_state.with(|f| f.logo_b64.clone()).unwrap()
                 })
 
                 token_name=Signal::derive(move || {
