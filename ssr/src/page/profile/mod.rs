@@ -164,7 +164,6 @@ pub fn ProfileView() -> impl IntoView {
     let user_details = create_resource(
         || {},
         move |_| async move {
-
             let canisters = unauth_canisters();
 
             let user_canister = canisters
@@ -174,9 +173,8 @@ pub fn ProfileView() -> impl IntoView {
             let user = canisters.individual_user(user_canister).await;
             let user_details = user.get_profile_details().await.ok()?;
             Some((user_details.into(), user_canister))
-        }, 
+        },
     );
-
 
     view! {
         <Suspense>
@@ -191,7 +189,6 @@ pub fn ProfileView() -> impl IntoView {
 
         </Suspense>
     }
-    
 }
 
 #[component]
@@ -208,8 +205,6 @@ pub fn YourProfileView() -> impl IntoView {
 
 #[component]
 pub fn ProfileComponent(user_details: Option<(ProfileDetails, Principal)>) -> impl IntoView {
-    
-
     let ProfilePostsContext {
         video_queue,
         start_index,
