@@ -104,15 +104,7 @@ async fn get_top_post_id_mlcache() -> Result<Option<(Principal, u64)>, ServerFnE
 #[component]
 pub fn CreatorDaoRootPage() -> impl IntoView {
     view! {
-        <AuthCansProvider fallback=FullScreenSpinner let:canister>
-
-            {move || {
-                let principal = canister.profile_details().principal;
-                let redirect_url = format!("/your-profile/{principal}?tab=tokens");
-                view! { <Redirect path=redirect_url/> }
-            }}
-
-        </AuthCansProvider>
+        <Redirect path="/board"/>
     }
 }
 
@@ -155,5 +147,7 @@ pub fn RootPage() -> impl IntoView {
 
 pub fn show_cdao_page() -> bool {
     let host = get_host();
-    host == ("icpump.fun") || host.contains("go-bazzinga-hot-or-not-web-leptos-ssr.fly.dev")
+    host == "icpump.fun"
+        || host == "localhost:3000"
+        || host.contains("go-bazzinga-hot-or-not-web-leptos-ssr.fly.dev")
 }

@@ -1,3 +1,4 @@
+use crate::page::icpump::ICPumpLanding;
 use crate::page::view_profile_redirect::ProfileInfo;
 use crate::{
     component::{base_route::BaseRoute, nav::NavBar},
@@ -165,6 +166,7 @@ pub fn App() -> impl IntoView {
                         <Route path="/token/transfer/:token_root" view=TokenTransfer/>
                         <Route path="/tokens" view=Tokens/>
                         <Route path="/your-profile" view=ProfileInfo/>
+                        <Route path="/board" view=ICPumpLanding/>
                     </Route>
                 </Routes>
 
