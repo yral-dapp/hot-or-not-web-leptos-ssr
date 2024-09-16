@@ -104,15 +104,10 @@ async fn get_top_post_id_mlcache() -> Result<Option<(Principal, u64)>, ServerFnE
 #[component]
 pub fn CreatorDaoRootPage() -> impl IntoView {
     view! {
-        <AuthCansProvider fallback=FullScreenSpinner let:canister>
-
-            {move || {
-                let principal = canister.profile_details().principal;
-                let redirect_url = format!("/your-profile/{principal}?tab=tokens");
-                view! { <Redirect path=redirect_url/> }
-            }}
-
-        </AuthCansProvider>
+        {move || {
+            let redirect_url = format!("/your-profile?tab=tokens");
+            view! { <Redirect path=redirect_url/> }
+        }}
     }
 }
 
@@ -143,13 +138,9 @@ pub fn YralRootPage() -> impl IntoView {
 #[component]
 pub fn RootPage() -> impl IntoView {
     if show_cdao_page() {
-        view! {
-            <CreatorDaoRootPage/>
-        }
+        view! { <CreatorDaoRootPage/> }
     } else {
-        view! {
-            <YralRootPage/>
-        }
+        view! { <YralRootPage/> }
     }
 }
 
