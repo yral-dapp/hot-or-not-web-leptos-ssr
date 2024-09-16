@@ -1,9 +1,11 @@
+use candid::Principal;
 use ic_agent::Identity;
 use leptos::html::Input;
 use leptos::{create_effect, MaybeSignal, ReadSignal, RwSignal, SignalGetUntracked};
 use leptos::{create_signal, ev, expect_context, html::Video, NodeRef, SignalGet, SignalSet};
 use leptos_use::use_event_listener;
 use serde_json::json;
+use sns_validation::pbs::sns_pb::SnsInitPayload;
 use wasm_bindgen::JsCast;
 
 use super::EventHistory;
@@ -35,6 +37,11 @@ pub enum AnalyticsEvent {
     LogoutConfirmation(LogoutConfirmation),
     ErrorEvent(ErrorEvent),
     ProfileViewVideo(ProfileViewVideo),
+    TokenCreationStarted(TokenCreationStarted),
+    TokenCreationCompleted(TokenCreationCompleted),
+    TokenCreationFailed(TokenCreationFailed),
+    TokensClaimedFromNeuron(TokensClaimedFromNeuron),
+    TokensTransferred(TokensTransferred),
 }
 
 #[derive(Default)]
@@ -721,6 +728,156 @@ impl ProfileViewVideo {
                     "canister_id": user.canister_id,
                     "video_id": video_id,
                     "profile_feed": "main",
+                }),
+            );
+        }
+    }
+}
+
+#[derive(Default)]
+pub struct TokenCreationStarted;
+
+impl TokenCreationStarted {
+    pub fn send_event(
+        &self,
+        sns_init_payload: SnsInitPayload,
+        cans_store: RwSignal<Option<Canisters<true>>>,
+    ) {
+        #[cfg(all(feature = "hydrate", feature = "ga4"))]
+        {
+            let user = user_details_can_store_or_ret!(cans_store);
+            let details = user.details;
+
+            let user_id = details.principal;
+            let canister_id = user.canister_id;
+
+            // token_creation_started - analytics
+            send_event(
+                "token_creation_started",
+                &json!({
+                    "user_id": user_id,
+                    "canister_id": canister_id,
+                    "token_name": sns_init_payload.token_name,
+                    "token_symbol": sns_init_payload.token_symbol,
+                    "name": sns_init_payload.name
+                }),
+            );
+        }
+    }
+}
+
+#[derive(Default)]
+pub struct TokenCreationCompleted;
+
+impl TokenCreationCompleted {
+    pub fn send_event(
+        &self,
+        sns_init_payload: SnsInitPayload,
+        cans_store: RwSignal<Option<Canisters<true>>>,
+    ) {
+        #[cfg(all(feature = "hydrate", feature = "ga4"))]
+        {
+            let user = user_details_can_store_or_ret!(cans_store);
+            let details = user.details;
+
+            let user_id = details.principal;
+            let canister_id = user.canister_id;
+
+            // token_creation_completed - analytics
+            send_event(
+                "token_creation_completed",
+                &json!({
+                    "user_id": user_id,
+                    "canister_id": canister_id,
+                    "token_name": sns_init_payload.token_name,
+                    "token_symbol": sns_init_payload.token_symbol,
+                    "name": sns_init_payload.name
+                }),
+            );
+        }
+    }
+}
+
+#[derive(Default)]
+pub struct TokenCreationFailed;
+
+impl TokenCreationFailed {
+    pub fn send_event(
+        &self,
+        error_str: String,
+        sns_init_payload: SnsInitPayload,
+        cans_store: RwSignal<Option<Canisters<true>>>,
+    ) {
+        #[cfg(all(feature = "hydrate", feature = "ga4"))]
+        {
+            let user = user_details_can_store_or_ret!(cans_store);
+            let details = user.details;
+
+            let user_id = details.principal;
+            let canister_id = user.canister_id;
+
+            // token_creation_failed - analytics
+            send_event(
+                "token_creation_failed",
+                &json!({
+                    "user_id": user_id,
+                    "canister_id": canister_id,
+                    "token_name": sns_init_payload.token_name,
+                    "token_symbol": sns_init_payload.token_symbol,
+                    "name": sns_init_payload.name,
+                    "description": sns_init_payload.description,
+                    "error": error_str
+                }),
+            );
+        }
+    }
+}
+
+#[derive(Default)]
+pub struct TokensClaimedFromNeuron;
+
+impl TokensClaimedFromNeuron {
+    pub fn send_event(&self, amount: u64, cans_store: Canisters<true>) {
+        #[cfg(all(feature = "hydrate", feature = "ga4"))]
+        {
+            let details = cans_store.profile_details();
+
+            let user_id = details.principal;
+            let canister_id = cans_store.user_canister();
+
+            // tokens_claimed_from_neuron - analytics
+            send_event(
+                "tokens_claimed_from_neuron",
+                &json!({
+                    "user_id": user_id,
+                    "canister_id": canister_id,
+                    "amount": amount
+                }),
+            );
+        }
+    }
+}
+
+#[derive(Default)]
+pub struct TokensTransferred;
+
+impl TokensTransferred {
+    pub fn send_event(&self, amount: String, to: Principal, cans_store: Canisters<true>) {
+        #[cfg(all(feature = "hydrate", feature = "ga4"))]
+        {
+            let details = cans_store.profile_details();
+
+            let user_id = details.principal;
+            let canister_id = cans_store.user_canister();
+
+            // tokens_transferred - analytics
+            send_event(
+                "tokens_transferred",
+                &json!({
+                    "user_id": user_id,
+                    "canister_id": canister_id,
+                    "amount": amount,
+                    "to": to
                 }),
             );
         }
