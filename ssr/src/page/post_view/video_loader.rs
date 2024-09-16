@@ -46,7 +46,7 @@ pub fn BgView(
     let (show_onboarding_popup, _set_show_onboarding_popup) = create_signal(false);
     let (_is_onboarded, set_onboarded, _) =
         use_local_storage::<bool, FromToStringCodec>(USER_ONBOARDING_STORE);
-    let (is_pwa_installed, set_is_pwa_installed, _) =
+    let (is_pwa_installed, _set_is_pwa_installed, _) =
         use_local_storage::<bool, FromToStringCodec>("pwainstalled");
 
     create_effect(move |_| {
