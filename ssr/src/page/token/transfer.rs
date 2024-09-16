@@ -125,7 +125,7 @@ fn FormError<V: 'static>(#[prop(into)] res: Signal<Result<V, String>>) -> impl I
 
     view! {
         <Show when=move || res.with(|r| r.is_err())>
-            <div class="flex flex-row items-center gap-1 w-full text-sm md:text-base">
+            <div class="flex flex-row gap-1 items-center w-full text-sm md:text-base">
                 <Icon class="text-red-600" icon=icondata::AiInfoCircleOutlined/>
                 <span class="text-white/60">{move || err().unwrap()}</span>
             </div>
@@ -140,10 +140,23 @@ fn TokenTransferInner(
     info: TokenMetadata,
 ) -> impl IntoView {
     let source_addr = cans.user_principal();
+    let (edit_mode, set_edit_mode) = create_signal(false);
+    let (editable_addr, set_editable_addr) = create_signal(source_addr.to_string());
     let copy_source = move || {
         let _ = copy_to_clipboard(&source_addr.to_string());
     };
+    let toggle_edit_mode = move || {
+        set_edit_mode.update(|edit| *edit = !*edit);
+    };
 
+    // Event to handle the change of the source address when edited
+    let handle_edit = move |event: Event| {
+        let input: HtmlInputElement = event.target_unchecked_into();
+        editable_addr.set(input.value());
+    }; // Save the edited address
+    let save_edited_address = move || {
+        set_edit_mode.set(false); // Turn off edit mode after saving
+    };
     let destination_ref = create_node_ref::<html::Input>();
     let paste_destination = create_action(move |&()| async move {
         let input = destination_ref()?;
@@ -261,51 +274,77 @@ fn TokenTransferInner(
     };
 
     view! {
-        <div class="w-dvw min-h-dvh bg-neutral-800 flex flex-col gap-4">
+        <div class="flex flex-col gap-4 w-dvw min-h-dvh bg-neutral-800">
             <Title justify_center=false>
                 <div class="grid grid-cols-3 justify-start w-full">
                     <BackButton fallback="/wallet"/>
-                    <span class="font-bold justify-self-center">Send {info.name}</span>
+                    <span class="justify-self-center font-bold">Send {info.name}</span>
                 </div>
             </Title>
-            <div class="flex flex-col w-full gap-4 md:gap-6 items-center p-4">
-                <div class="flex flex-col w-full gap-2 items-center">
-                    <div class="flex flex-row justify-between w-full text-sm md:text-base text-white">
+            <div class="flex flex-col gap-4 items-center p-4 w-full md:gap-6">
+                <div class="flex flex-col gap-2 items-center w-full">
+                    <div class="flex flex-row justify-between w-full text-sm text-white md:text-base">
                         <span>Source:</span>
                         <span>{format!("{} {}", info.balance.humanize(), info.symbol)}</span>
                     </div>
-                    <div class="flex flex-row gap-2 w-full items-center">
-                        <p class="text-sm md:text-md text-white/80">{source_addr.to_string()}</p>
-                        <button on:click=move |_| copy_source()>
-                            <Icon
-                                class="text-white text-lg md:text-xl"
-                                icon=icondata::FaCopyRegular
-                            />
-                        </button>
-                    </div>
+                    <div class="flex flex-row gap-2 items-center w-full">
+                       {move || if edit_mode() {
+                            // If in edit mode, show an input field to edit the address
+                            view! {
+                                <input
+                                    class="p-2 w-full text-white bg-transparent rounded-lg border border-gray-400"
+                                    value={editable_addr()}
+                                    on:input=handle_edit
+                                />
+                                <button on:click=move |_| save_edited_address()>
+                                    <Icon
+                                        class="text-lg text-white md:text-xl"
+                                        icon=icondata::AiEnterOutlined
+                                    />
+                                </button>
+                            }
+                        } else {
+                            // If not in edit mode, show the address as text and the edit icon
+                            view! {
+                                <p class="text-sm text-white/80 md:text-md">{editable_addr()}</p>
+                                <button on:click=move |_| copy_source()>
+                                    <Icon
+                                        class="text-lg text-white md:text-xl"
+                                        icon=icondata::FaCopyRegular
+                                    />
+                                </button>
+                                <button on:click=move |_| toggle_edit_mode()>
+                                    <Icon
+                                        class="text-lg text-white md:text-xl"
+                                        icon=icondata::FiEdit2
+                                    />
+                                </button>
+                            }
+                        }}
+                 </div>
                 </div>
-                <div class="flex flex-col w-full gap-1">
-                    <span class="text-white text-sm md:text-base">Destination</span>
+                <div class="flex flex-col gap-1 w-full">
+                    <span class="text-sm text-white md:text-base">Destination</span>
                     <div
                         class=("border-white/15", move || destination_res.with(|r| r.is_ok()))
                         class=("border-red", move || destination_res.with(|r| r.is_err()))
-                        class="flex flex-row gap-2 w-full justify-between p-3 bg-white/5 rounded-lg border"
+                        class="flex flex-row gap-2 justify-between p-3 w-full rounded-lg border bg-white/5"
                     >
                         <input
                             _ref=destination_ref
-                            class="text-white bg-transparent w-full text-base md:text-lg placeholder-white/40 focus:outline-none"
+                            class="w-full text-base text-white bg-transparent md:text-lg focus:outline-none placeholder-white/40"
                         />
                         <button on:click=move |_| paste_destination.dispatch(())>
                             <Icon
-                                class="text-neutral-600 text-lg md:text-xl"
+                                class="text-lg md:text-xl text-neutral-600"
                                 icon=icondata::BsClipboard
                             />
                         </button>
                     </div>
                     <FormError res=destination_res/>
                 </div>
-                <div class="flex flex-col w-full gap-1">
-                    <div class="flex flex-row justify-between w-full text-sm md:text-base text-white">
+                <div class="flex flex-col gap-1 w-full">
+                    <div class="flex flex-row justify-between w-full text-sm text-white md:text-base">
                         <span>Amount</span>
                         <button
                             class="flex flex-row gap-1 items-center"
@@ -319,18 +358,18 @@ fn TokenTransferInner(
                         _ref=amount_ref
                         class=("border-white/15", move || amt_res.with(|r| r.is_ok()))
                         class=("border-red", move || amt_res.with(|r| r.is_err()))
-                        class="w-full p-3 bg-white/5 rounded-lg border text-white placeholder-white/40 focus:outline-none text-base md:text-lg"
+                        class="p-3 w-full text-base text-white rounded-lg border md:text-lg focus:outline-none bg-white/5 placeholder-white/40"
                     />
                     <FormError res=amt_res/>
                 </div>
-                <div class="flex flex-col text-sm md:text-base text-white/60 w-full">
+                <div class="flex flex-col w-full text-sm md:text-base text-white/60">
                     <span>Transaction Fee (billed to source)</span>
                     <span>{format!("{} {}", info.fees.humanize_float(), info.symbol)}</span>
                 </div>
                 <button
                     on:click=move |_| send_action.dispatch(())
                     disabled=move || !valid()
-                    class="flex flex-row justify-center text-white md:text-lg w-full md:w-1/2 rounded-full p-3 bg-primary-600 disabled:opacity-50"
+                    class="flex flex-row justify-center p-3 w-full text-white rounded-full md:w-1/2 md:text-lg disabled:opacity-50 bg-primary-600"
                 >
                     Send
                 </button>
