@@ -161,33 +161,54 @@ pub fn ProfileView() -> impl IntoView {
         })
     };
 
-    view! { <ProfileComponent user_principal=principal()/> }
+    let user_details = create_resource(
+        || {},
+        move |_| async move {
+
+            let canisters = unauth_canisters();
+
+            let user_canister = canisters
+                .get_individual_canister_by_user_principal(principal()?)
+                .await
+                .ok()??;
+            let user = canisters.individual_user(user_canister).await;
+            let user_details = user.get_profile_details().await.ok()?;
+            Some((user_details.into(), user_canister))
+        }, 
+    );
+
+
+    view! {
+        <Suspense>
+
+            {move || {
+                user_details
+                    .get()
+                    .map(|user_details| {
+                        view! { <ProfileComponent user_details/> }
+                    })
+            }}
+
+        </Suspense>
+    }
+    
 }
 
 #[component]
 pub fn YourProfileView() -> impl IntoView {
     view! {
         <AuthCansProvider fallback=FullScreenSpinner let:canister>
-            <ProfileComponent user_principal=Some(canister.user_principal())/>
+            <ProfileComponent user_details=Some((
+                canister.profile_details(),
+                canister.user_canister(),
+            ))/>
         </AuthCansProvider>
     }
 }
 
 #[component]
-pub fn ProfileComponent(#[prop(into)] user_principal: Option<Principal>) -> impl IntoView {
-    let user_details = create_resource(
-        || {},
-        move |_| async move {
-            let canisters = unauth_canisters();
-            let user_canister = canisters
-                .get_individual_canister_by_user_principal(user_principal?)
-                .await
-                .ok()??;
-            let user = canisters.individual_user(user_canister).await;
-            let user_details = user.get_profile_details().await.ok()?;
-            Some((user_details.into(), user_canister))
-        },
-    );
+pub fn ProfileComponent(user_details: Option<(ProfileDetails, Principal)>) -> impl IntoView {
+    
 
     let ProfilePostsContext {
         video_queue,
@@ -203,23 +224,12 @@ pub fn ProfileComponent(#[prop(into)] user_principal: Option<Principal>) -> impl
     });
 
     view! {
-        <Suspense fallback=FullScreenSpinner>
-            {move || {
-                user_details
-                    .get()
-                    .map(|user| {
-                        view! {
-                            {move || {
-                                if let Some((user, user_canister)) = user.clone() {
-                                    view! { <ProfileViewInner user user_canister/> }
-                                } else {
-                                    view! { <Redirect path="/"/> }
-                                }
-                            }}
-                        }
-                    })
-            }}
-
-        </Suspense>
+        {move || {
+            if let Some((user, user_canister)) = user_details.clone() {
+                view! { <ProfileViewInner user user_canister/> }
+            } else {
+                view! { <Redirect path="/"/> }
+            }
+        }}
     }
 }
