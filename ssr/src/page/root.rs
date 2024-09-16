@@ -4,10 +4,7 @@ use leptos_router::*;
 
 #[cfg(feature = "ssr")]
 use crate::{canister::post_cache, state::canisters::unauth_canisters};
-use crate::{
-    component::{canisters_prov::AuthCansProvider, spinner::FullScreenSpinner},
-    utils::host::get_host,
-};
+use crate::{component::spinner::FullScreenSpinner, utils::host::get_host};
 
 #[server]
 async fn get_top_post_id() -> Result<Option<(Principal, u64)>, ServerFnError> {
@@ -105,7 +102,7 @@ async fn get_top_post_id_mlcache() -> Result<Option<(Principal, u64)>, ServerFnE
 pub fn CreatorDaoRootPage() -> impl IntoView {
     view! {
         {move || {
-            let redirect_url = format!("/your-profile?tab=tokens");
+            let redirect_url = "/your-profile?tab=tokens".to_string();
             view! { <Redirect path=redirect_url/> }
         }}
     }
