@@ -4,10 +4,7 @@ use leptos_router::*;
 
 #[cfg(feature = "ssr")]
 use crate::{canister::post_cache, state::canisters::unauth_canisters};
-use crate::{
-    component::{canisters_prov::AuthCansProvider, spinner::FullScreenSpinner},
-    utils::host::get_host,
-};
+use crate::{component::spinner::FullScreenSpinner, utils::host::get_host};
 
 #[server]
 async fn get_top_post_id() -> Result<Option<(Principal, u64)>, ServerFnError> {
@@ -104,15 +101,10 @@ async fn get_top_post_id_mlcache() -> Result<Option<(Principal, u64)>, ServerFnE
 #[component]
 pub fn CreatorDaoRootPage() -> impl IntoView {
     view! {
-        <AuthCansProvider fallback=FullScreenSpinner let:canister>
-
-            {move || {
-                let principal = canister.profile_details().principal;
-                let redirect_url = format!("/your-profile/{principal}?tab=tokens");
-                view! { <Redirect path=redirect_url/> }
-            }}
-
-        </AuthCansProvider>
+        {move || {
+            let redirect_url = "/your-profile?tab=tokens".to_string();
+            view! { <Redirect path=redirect_url/> }
+        }}
     }
 }
 
@@ -143,13 +135,9 @@ pub fn YralRootPage() -> impl IntoView {
 #[component]
 pub fn RootPage() -> impl IntoView {
     if show_cdao_page() {
-        view! {
-            <CreatorDaoRootPage/>
-        }
+        view! { <CreatorDaoRootPage/> }
     } else {
-        view! {
-            <YralRootPage/>
-        }
+        view! { <YralRootPage/> }
     }
 }
 
