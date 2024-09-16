@@ -1,0 +1,59 @@
+let installPrompt = null;
+
+// Function to trigger PWA installation
+export function triggerPwaInstall() {
+  if (installPrompt) {
+    console.log("Prompt available, triggering...");
+    installPrompt.prompt();
+    installPrompt.userChoice.then((choice) => {
+      if (choice.outcome === "accepted") {
+        console.log("User accepted the install prompt");
+      } else {
+        console.log("User dismissed the install prompt");
+      }
+      installPrompt = null; // Reset the prompt
+    });
+  } else {
+    console.error("Install prompt not available.");
+    return Promise.reject("Install prompt not available.");
+  }
+}
+
+// Function to check if the PWA is already installed
+export async function isPwaInstalled() {
+  try {
+    const relatedApps = await navigator.getInstalledRelatedApps();
+    const isInstalled = relatedApps.some((app) => app.id === "your-app-id");
+    return isInstalled;
+  } catch (error) {
+    console.error("Error checking if PWA is installed:", error);
+    return false;
+  }
+}
+
+const installButton = document.querySelector("#installApp");
+
+window.addEventListener("beforeinstallprompt", (event) => {
+  console.log("beforeinstallprompt event fired", event);
+  event.preventDefault(); // Prevent default prompt from showing
+  installPrompt = event; // Save the event for triggering later
+
+  if (installButton) {
+    installButton.removeAttribute("hidden"); // Show the install button
+  }
+});
+
+window.addEventListener("appinstalled", () => {
+  console.log("PWA installed");
+  installPrompt = null;
+  if (installButton) {
+    installButton.setAttribute("hidden", ""); // Hide the install button
+  }
+});
+
+window.addEventListener("load", () => {
+  console.log("Page loaded");
+  if (!installPrompt) {
+    console.warn("Install prompt never fired. Check installability criteria.");
+  }
+});

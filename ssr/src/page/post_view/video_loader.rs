@@ -39,7 +39,7 @@ pub fn BgView(
 
     let (show_refer_login_popup, set_show_refer_login_popup) = create_signal(true);
     let (referrer_store, _, _) = use_referrer_store();
-
+    let (show_pwa_download_popup, set_show_pwa_download_popup) = create_signal(true);
     let onboarding_eligible_post_context = BetEligiblePostCtx::default();
     provide_context(onboarding_eligible_post_context.clone());
 
@@ -57,17 +57,17 @@ pub fn BgView(
     });
 
     create_effect(move |_| {
-        if onboarding_eligible_post_context.can_place_bet.get() && (!is_onboarded.get()) {
-            set_show_onboarding_popup.update(|show| *show = true);
+        if current_idx.get() % 9 != 0 {
+            set_show_pwa_download_popup.update(|n| *n = false);
         } else {
-            set_show_onboarding_popup.update(|show| *show = false);
+            set_show_pwa_download_popup.update(|n| *n = true);
         }
+        Some(())
     });
-
     view! {
-        <div class="bg-transparent w-full h-full relative overflow-hidden">
+        <div class="overflow-hidden relative w-full h-full bg-transparent">
             <div
-                class="absolute top-0 left-0 bg-cover bg-center w-full h-full z-[1] blur-lg"
+                class="absolute top-0 left-0 w-full h-full bg-center bg-cover z-[1] blur-lg"
                 style:background-color="rgb(0, 0, 0)"
                 style:background-image=move || format!("url({})", bg_url(uid()))
             ></div>
@@ -81,6 +81,7 @@ pub fn BgView(
                     Await You!"
                     body_text="SignUp/Login to save your progress and claim your rewards."
                     login_text="Login"
+                    is_pwa_download=false
                 />
             </Show>
             <Show when=move || {
@@ -93,8 +94,21 @@ pub fn BgView(
                     Rewards Now!"
                     body_text="SignUp from this link to get 500 COYNs as referral rewards."
                     login_text="Sign Up"
+                  is_pwa_download=false
                 />
             </Show>
+                     <Show when=move || {
+                  current_idx.get() != 0 && current_idx.get() % 9 == 0 && is_connected.get()
+                && show_pwa_download_popup.get()
+                              }>
+                  <FeedPopUp
+    on_click=move |_| { }
+                      header_text="Never Miss a Moment Again!"
+                      body_text="Get the YRAL app to catch the latest videos and connect on the go."
+                      download_pwa_text="Download Now"
+                   is_pwa_download=true
+                  />
+              </Show>
             <Show when=move || { show_onboarding_popup.get() }>
                 <OnboardingPopUp onboard_on_click=set_onboarded/>
             </Show>
