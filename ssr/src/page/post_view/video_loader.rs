@@ -46,6 +46,8 @@ pub fn BgView(
     let (show_onboarding_popup, _set_show_onboarding_popup) = create_signal(false);
     let (_is_onboarded, set_onboarded, _) =
         use_local_storage::<bool, FromToStringCodec>(USER_ONBOARDING_STORE);
+    let (is_pwa_installed, set_is_pwa_installed, _) =
+        use_local_storage::<bool, FromToStringCodec>("pwainstalled");
 
     create_effect(move |_| {
         if current_idx.get() % 5 != 0 {
@@ -99,7 +101,7 @@ pub fn BgView(
             </Show>
                      <Show when=move || {
                   current_idx.get() != 0 && current_idx.get() % 9 == 0 && is_connected.get()
-                && show_pwa_download_popup.get()
+                && show_pwa_download_popup.get() && !is_pwa_installed.get()
                               }>
                   <FeedPopUp
     on_click=move |_| { }

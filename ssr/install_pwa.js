@@ -35,6 +35,9 @@ const installButton = document.querySelector("#installApp");
 
 window.addEventListener("beforeinstallprompt", (event) => {
   console.log("beforeinstallprompt event fired", event);
+  console.log("PWA not  installed");
+  localStorage.setItem("pwainstalled", "false");
+
   event.preventDefault(); // Prevent default prompt from showing
   installPrompt = event; // Save the event for triggering later
 
@@ -45,6 +48,8 @@ window.addEventListener("beforeinstallprompt", (event) => {
 
 window.addEventListener("appinstalled", () => {
   console.log("PWA installed");
+  localStorage.setItem("pwainstalled", "true");
+
   installPrompt = null;
   if (installButton) {
     installButton.setAttribute("hidden", ""); // Hide the install button
@@ -53,7 +58,12 @@ window.addEventListener("appinstalled", () => {
 
 window.addEventListener("load", () => {
   console.log("Page loaded");
+
   if (!installPrompt) {
     console.warn("Install prompt never fired. Check installability criteria.");
+    console.log("pwa installed");
+    // const pwainstalled = localStorage.getItem("pwainstalled") === "true";
+
+    localStorage.setItem("pwainstalled", "true");
   }
 });
