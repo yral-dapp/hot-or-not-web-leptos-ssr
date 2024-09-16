@@ -43,8 +43,8 @@ pub fn BgView(
     let onboarding_eligible_post_context = BetEligiblePostCtx::default();
     provide_context(onboarding_eligible_post_context.clone());
 
-    let (show_onboarding_popup, set_show_onboarding_popup) = create_signal(false);
-    let (is_onboarded, set_onboarded, _) =
+    let (show_onboarding_popup, _set_show_onboarding_popup) = create_signal(false);
+    let (_is_onboarded, set_onboarded, _) =
         use_local_storage::<bool, FromToStringCodec>(USER_ONBOARDING_STORE);
 
     create_effect(move |_| {
