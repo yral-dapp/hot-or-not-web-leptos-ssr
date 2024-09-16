@@ -12,7 +12,10 @@ use leptos_icons::*;
 use leptos_router::*;
 
 use crate::{
-    component::{back_btn::BackButton, connect::ConnectLogin, spinner::FullScreenSpinner},
+    component::{
+        back_btn::BackButton, canisters_prov::AuthCansProvider, connect::ConnectLogin,
+        spinner::FullScreenSpinner,
+    },
     state::{auth::account_connected_reader, canisters::unauth_canisters},
     utils::{posts::PostDetails, profile::ProfileDetails},
 };
@@ -158,16 +161,33 @@ pub fn ProfileView() -> impl IntoView {
         })
     };
 
-    let user_details = create_resource(principal, |principal| async move {
-        let canisters = unauth_canisters();
-        let user_canister = canisters
-            .get_individual_canister_by_user_principal(principal?)
-            .await
-            .ok()??;
-        let user = canisters.individual_user(user_canister).await;
-        let user_details = user.get_profile_details().await.ok()?;
-        Some((user_details.into(), user_canister))
-    });
+    view! { <ProfileComponent user_principal=principal()/> }
+}
+
+#[component]
+pub fn YourProfileView() -> impl IntoView {
+    view! {
+        <AuthCansProvider fallback=FullScreenSpinner let:canister>
+            <ProfileComponent user_principal=Some(canister.user_principal())/>
+        </AuthCansProvider>
+    }
+}
+
+#[component]
+pub fn ProfileComponent(#[prop(into)] user_principal: Option<Principal>) -> impl IntoView {
+    let user_details = create_resource(
+        || {},
+        move |_| async move {
+            let canisters = unauth_canisters();
+            let user_canister = canisters
+                .get_individual_canister_by_user_principal(user_principal?)
+                .await
+                .ok()??;
+            let user = canisters.individual_user(user_canister).await;
+            let user_details = user.get_profile_details().await.ok()?;
+            Some((user_details.into(), user_canister))
+        },
+    );
 
     let ProfilePostsContext {
         video_queue,
