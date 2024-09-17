@@ -17,8 +17,8 @@ use crate::{
 fn TokenField(#[prop(into)] label: String, #[prop(into)] value: String) -> impl IntoView {
     view! {
         <div class="flex flex-col gap-1 w-full">
-            <span class="text-white text-sm md:text-base">{label}</span>
-            <p class="bg-white/5 text-base md:text-lg text-white/50 px-2 py-4 rounded-xl w-full">
+            <span class="text-sm text-white md:text-base">{label}</span>
+            <p class="py-4 px-2 w-full text-base rounded-xl md:text-lg bg-white/5 text-white/50">
                 {value}
             </p>
         </div>
@@ -28,7 +28,7 @@ fn TokenField(#[prop(into)] label: String, #[prop(into)] value: String) -> impl 
 #[component]
 fn TokenDetails(meta: TokenMetadata) -> impl IntoView {
     view! {
-        <div class="flex flex-col w-full gap-6 p-4 rounded-xl bg-white/5">
+        <div class="flex flex-col gap-6 p-4 w-full rounded-xl bg-white/5">
             <TokenField label="Description" value=meta.description/>
             <TokenField label="Symbol" value=meta.symbol/>
         </div>
@@ -48,36 +48,36 @@ fn TokenInfoInner(root: Principal, meta: TokenMetadata) -> impl IntoView {
     });
 
     view! {
-        <div class="w-dvw min-h-dvh bg-neutral-800 flex flex-col gap-4">
+        <div class="flex flex-col gap-4 w-dvw min-h-dvh bg-neutral-800">
             <Title justify_center=false>
                 <div class="grid grid-cols-3 justify-start w-full">
                     <BackButton fallback="/wallet"/>
-                    <span class="font-bold justify-self-center">Token details</span>
+                    <span class="justify-self-center font-bold">Token details</span>
                 </div>
             </Title>
-            <div class="flex flex-col w-full px-8 md:px-10 items-center gap-8">
-                <div class="flex flex-col justify-self-start w-full gap-6 md:gap-8 items-center">
-                    <div class="flex flex-col gap-4 w-full bg-white/5 p-4 drop-shadow-lg rounded-xl">
+            <div class="flex flex-col gap-8 items-center px-8 w-full md:px-10">
+                <div class="flex flex-col gap-6 justify-self-start items-center w-full md:gap-8">
+                    <div class="flex flex-col gap-4 p-4 w-full rounded-xl bg-white/5 drop-shadow-lg">
                         <div class="flex flex-row justify-between items-center">
                             <div class="flex flex-row gap-2 items-center">
                                 <img
-                                    class="object-cover h-14 w-14 md:w-18 md:h-18 rounded-full"
+                                    class="object-cover w-14 h-14 rounded-full md:w-18 md:h-18"
                                     src=meta.logo_b64
                                 />
-                                <span class="text-base md:text-lg font-semibold text-white">
+                                <span class="text-base font-semibold text-white md:text-lg">
                                     {meta.name}
                                 </span>
                             </div>
-                            <div class="p-1 bg-white/15 rounded-full">
+                            <div class="p-1 rounded-full bg-white/15">
                                 <Icon
-                                    class="text-sm md:text-base text-white"
-                                    icon=icondata::BsArrowUpRight
+                                    class="text-sm text-white md:text-base"
+                                    icon=icondata::ChShare
                                 />
                             </div>
                         </div>
-                        <div class="flex flex-row justify-between border-b p-1 border-white items-center">
-                            <span class="text-xs md:text-sm text-green-500">Balance</span>
-                            <span class="text-lg md:text-xl text-white">
+                        <div class="flex flex-row justify-between items-center p-1 border-b border-white">
+                            <span class="text-xs text-green-500 md:text-sm">Balance</span>
+                            <span class="text-lg text-white md:text-xl">
                                 <span class="font-bold">
                                     {format!("{} ", meta.balance.humanize())}
                                 </span>
@@ -86,11 +86,11 @@ fn TokenInfoInner(root: Principal, meta: TokenMetadata) -> impl IntoView {
                         </div>
                         <button
                             on:click=move |_| detail_toggle.update(|t| *t = !*t)
-                            class="w-full bg-transparent p-1 flex flex-row justify-center items-center gap-2 text-white"
+                            class="flex flex-row gap-2 justify-center items-center p-1 w-full text-white bg-transparent"
                         >
                             <span class="text-xs md:text-sm">View details</span>
-                            <div class="p-1 bg-white/15 rounded-full">
-                                <Icon class="text-xs md:text-sm text-white" icon=view_detail_icon/>
+                            <div class="p-1 rounded-full bg-white/15">
+                                <Icon class="text-xs text-white md:text-sm" icon=view_detail_icon/>
                             </div>
                         </button>
                     </div>
@@ -100,7 +100,7 @@ fn TokenInfoInner(root: Principal, meta: TokenMetadata) -> impl IntoView {
                 </div>
                 <a
                     href=format!("/token/transfer/{root}")
-                    class="flex flex-row justify-self-center justify-center text-white md:text-lg w-full md:w-1/2 rounded-full p-3 bg-primary-600"
+                    class="flex flex-row justify-center justify-self-center p-3 w-full text-white rounded-full md:w-1/2 md:text-lg bg-primary-600"
                 >
                     Send
                 </a>

@@ -1,3 +1,4 @@
+use crate::page::token::popups::ShareProfilePopup;
 use candid::Principal;
 use ic_agent::AgentError;
 
@@ -78,7 +79,7 @@ async fn token_metadata_or_fallback(
 #[component]
 fn FallbackToken() -> impl IntoView {
     view! {
-        <div class="w-full items-center h-20 rounded-xl border-2 border-neutral-700 bg-white/15 animate-pulse"></div>
+        <div class="items-center w-full h-20 rounded-xl border-2 animate-pulse border-neutral-700 bg-white/15"></div>
     }
 }
 
@@ -94,7 +95,9 @@ pub fn TokenView(
         || (),
         move |_| token_metadata_or_fallback(cans.clone(), user_principal, token_root),
     );
+    let show_popup = create_rw_signal(false);
 
+    let share_action = create_action(move |&()| async move { Ok(()) });
     view! {
         <ClaimTokensOrRedirectError token_root/>
         <Suspense fallback=FallbackToken>
@@ -104,21 +107,32 @@ pub fn TokenView(
                         <a
                             href=format!("/token/info/{token_root}")
                             _ref=_ref
-                            class="grid grid-cols-2 grid-rows-1 w-full items-center p-4 rounded-xl border-2 border-neutral-700 bg-white/15"
+                            class="grid grid-cols-2 grid-rows-1 items-center p-4 w-full rounded-xl border-2 border-neutral-700 bg-white/15"
                         >
-                            <div class="flex flex-row gap-2 items-center justify-self-start">
+                            <div class="flex flex-row gap-2 justify-self-start items-center">
                                 <img class="w-12 h-12 rounded-full" src=info.logo_b64.clone()/>
                                 <span class="text-white truncate">{info.name.clone()}</span>
                             </div>
-                            <div class="flex flex-row gap-2 items-center justify-self-end text-base text-white">
+                            <div class="flex flex-row gap-2 justify-self-end items-center text-base text-white">
                                 <span class="truncate">
                                     {format!("{} {}", info.balance.humanize(), info.symbol)}
                                 </span>
-                                <div class="flex items-center justify-center w-8 h-8 bg-white/15 rounded-full">
+                        <button
+                        on:click=move |_| share_action.dispatch(())>
+                                <div class="flex justify-center items-center w-8 h-8 rounded-full bg-white/15">
                                     <Icon icon=icondata::BsSend/>
                                 </div>
+                    </button>
                             </div>
-                        </a>
+                                           {move ||
+                            view! {
+                                <ShareProfilePopup
+                                    sharing_action=share_action
+
+                                />
+
+                        } }
+                    </a>
                     }
                 })
             }}
@@ -134,7 +148,7 @@ fn TokenList(canisters: Canisters<true>) -> impl IntoView {
     let provider: TokenRootList = TokenRootList(canisters);
 
     view! {
-        <div class="flex flex-col w-full gap-2 items-center">
+        <div class="flex flex-col gap-2 items-center w-full">
             <InfiniteScroller
                 provider
                 fetch_count=10
@@ -150,11 +164,11 @@ fn TokenList(canisters: Canisters<true>) -> impl IntoView {
 #[component]
 pub fn Tokens() -> impl IntoView {
     view! {
-        <div class="felx items-center flex-col w-dvw min-h-dvh gap-6 bg-black pt-4 px-4 pb-12">
+        <div class="flex-col gap-6 items-center px-4 pt-4 pb-12 bg-black felx w-dvw min-h-dvh">
             <Title justify_center=false>
                 <div class="flex flex-row justify-between">
                     <BackButton fallback="/wallet".to_string()/>
-                    <span class="text-xl text-white font-bold">Tokens</span>
+                    <span class="text-xl font-bold text-white">Tokens</span>
                     <div></div>
                 </div>
             </Title>

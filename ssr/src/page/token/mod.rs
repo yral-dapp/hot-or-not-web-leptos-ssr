@@ -1,7 +1,7 @@
 pub mod create;
 pub mod create_token_faq;
 pub mod info;
-mod popups;
+pub mod popups;
 mod sns_form;
 pub mod transfer;
 pub mod types;

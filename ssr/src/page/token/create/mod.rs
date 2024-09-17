@@ -78,13 +78,13 @@ fn TokenImage() -> impl IntoView {
     };
 
     view! {
-        <div class="flex flex-col space-y-4  rounded-lg text-white">
+        <div class="flex flex-col space-y-4 text-white rounded-lg">
 
             <div class="flex items-center space-x-4">
                 <div class=border_class>
 
-                    <div class="flex items-center justify-center w-full h-full rounded-full">
-                        <span class="text-xs text-center text-gray-400 font-medium">
+                    <div class="flex justify-center items-center w-full h-full rounded-full">
+                        <span class="text-xs font-medium text-center text-gray-400">
                             "Add custom logo"
                         </span>
                     </div>
@@ -97,7 +97,7 @@ fn TokenImage() -> impl IntoView {
                         accept="image/*"
                         class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                     />
-                    <div class="absolute bottom-0 right-0 p-1 rounded-full bg-white ">
+                    <div class="absolute right-0 bottom-0 p-1 bg-white rounded-full">
                         <img src="/img/upload.svg" class="bg-white"/>
                     </div>
                     <Show
@@ -105,15 +105,15 @@ fn TokenImage() -> impl IntoView {
                         fallback=|| view! { <div></div> }
                     >
                         <img
-                            class="absolute top-0 object-conver h-full w-full rounded-full"
+                            class="absolute top-0 w-full h-full rounded-full object-conver"
                             src=move || logo_b64().unwrap()
                         />
-                        <div class="absolute bottom-0 right-0 p-1 rounded-full bg-white ">
+                        <div class="absolute right-0 bottom-0 p-1 bg-white rounded-full">
                             <button
                                 on:click=on_edit_click
-                                class="w-4 h-4 flex items-center justify-center rounded-full bg-white"
+                                class="flex justify-center items-center w-4 h-4 bg-white rounded-full"
                             >
-                                <img src="/img/edit.svg" class="bg-white w-4 h-4 rounded-full"/>
+                                <img src="/img/edit.svg" class="w-4 h-4 bg-white rounded-full"/>
                             </button>
                         </div>
                     </Show>
@@ -188,8 +188,8 @@ macro_rules! input_component {
                 _ =>  format!("w-full p-3  md:p-4 md:py-5 text-white outline-none bg-white/10 border-2 border-solid border-red-500 text-xs  rounded-xl placeholder-neutral-600")
             };
             view! {
-                <div class="flex flex-col grow gap-y-1 text-sm md:text-base">
-                     <span class="text-white font-semibold">{heading.clone()}</span>
+                <div class="flex flex-col gap-y-1 text-sm md:text-base grow">
+                     <span class="font-semibold text-white">{heading.clone()}</span>
                      <$input_element
                         _ref=input_ref
                         value={initial_value.unwrap_or_default()}
@@ -198,7 +198,7 @@ macro_rules! input_component {
                         class=move || input_class()
                         type=input_type.unwrap_or_else(|| "text".into() )
                     />
-                    <span class="text-red-500 font-semibold">
+                    <span class="font-semibold text-red-500">
                         <Show when=move || show_error() && error()>
                                 "Invalid "
                         </Show>
@@ -327,18 +327,18 @@ pub fn CreateToken() -> impl IntoView {
     });
 
     view! {
-        <div class="w-dvw min-h-dvh bg-black pt-4 flex flex-col gap-4" style="padding-bottom:6rem">
+        <div class="flex flex-col gap-4 pt-4 bg-black w-dvw min-h-dvh" style="padding-bottom:6rem">
             <Title justify_center=false>
                 <div class="flex justify-between w-full">
                     <BackButton fallback=fallback_url/>
-                    <span class="font-bold justify-self-center">Create Meme Token</span>
+                    <span class="justify-self-center font-bold">Create Meme Token</span>
                     <a href="/token/create/faq">
                         <img src="/img/info.svg"/>
                     </a>
                 </div>
             </Title>
-            <div class="flex flex-col w-full px-6 md:px-8 gap-2 md:gap-8">
-                <div class="flex flex-row w-full gap-4  justify-between items-center">
+            <div class="flex flex-col gap-2 px-6 w-full md:gap-8 md:px-8">
+                <div class="flex flex-row gap-4 justify-between items-center w-full">
                     <TokenImage/>
                     <InputBox
                         heading="Token name"
@@ -389,17 +389,17 @@ pub fn CreateToken() -> impl IntoView {
                     validator=non_empty_string_validator_for_u64
                 />
 
-                <div class="w-full flex justify-center">
+                <div class="flex justify-center w-full">
                     <button
                         on:click=move |_| create_action.dispatch(())
                         disabled=create_disabled
-                        class="text-white disabled:text-neutral-500 md:text-xl py-4 md:py-4 font-bold w-full md:w-1/2 lg:w-1/3 rounded-full bg-primary-600 disabled:bg-primary-500/30"
+                        class="py-4 w-full font-bold text-white rounded-full md:py-4 md:w-1/2 md:text-xl lg:w-1/3 bg-primary-600 disabled:text-neutral-500 disabled:bg-primary-500/30"
                     >
                         {move || if creating() { "Creating..." } else { "Create" }}
                     </button>
                 </div>
 
-                <div class="w-full flex justify-center underline text-sm text-white my-4 ">
+                <div class="flex justify-center my-4 w-full text-sm text-white underline">
                     <a href="/token/create/settings">View advanced settings</a>
                 </div>
             </div>
@@ -478,19 +478,19 @@ pub fn CreateTokenSettings() -> impl IntoView {
 
     view! {
         <div
-            class="w-dvw min-h-dvh bg-black pt-4 flex flex-col gap-4 p-4"
+            class="flex flex-col gap-4 p-4 pt-4 bg-black w-dvw min-h-dvh"
             style="padding-bottom:5rem;"
         >
             <Title justify_center=false>
                 <div class="flex justify-between w-full" style="background: black">
                     <BackButton fallback=fallback_url/>
-                    <span class="font-bold justify-self-center">Settings</span>
+                    <span class="justify-self-center font-bold">Settings</span>
                     <a href="/token/create/faq">
                         <img src="/img/info.svg"/>
                     </a>
                 </div>
             </Title>
-            <label class="flex flex-cols-2 cursor-pointer px-1">
+            <label class="flex px-1 cursor-pointer flex-cols-2">
                 <span class="flex-1 text-sm font-medium text-gray-400 dark:text-gray-500">
                     Do you want to raise ICP?
                 </span>
@@ -499,11 +499,11 @@ pub fn CreateTokenSettings() -> impl IntoView {
                         Coming Soon!
                     </span>
                 // <input type="checkbox" value="" class="sr-only peer" checked disabled />
-                // <div class="relative w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:bg-gray-600">
-                // <div class="absolute top-0.5 left-0.5 bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform peer-checked:translate-x-5 dark:border-gray-600"/>
+                // <div class="relative w-11 h-6 bg-gray-200 rounded-full dark:bg-gray-700 peer peer-checked:bg-gray-600">
+                // <div class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full border border-gray-300 transition-transform dark:border-gray-600 peer-checked:translate-x-5"/>
                 // </div>
                 </div>
-            // <div class="relative w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-gray-600"></div>
+            // <div class="relative w-11 h-6 bg-gray-200 rounded-full dark:bg-gray-700 peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-gray-600"></div>
             </label>
             <form _ref=form_ref>
                 <InputBox
@@ -617,7 +617,7 @@ pub fn CreateTokenSettings() -> impl IntoView {
             </form>
             <button
                 on:click=reset_settings
-                class="w-full flex justify-center underline text-sm text-white my-4 "
+                class="flex justify-center my-4 w-full text-sm text-white underline"
             >
                 Reset to default
             </button>
