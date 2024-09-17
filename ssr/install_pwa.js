@@ -1,23 +1,6 @@
-let installPrompt = null;
+let installPrompt;
 
 // Function to trigger PWA installation
-export function triggerPwaInstall() {
-  if (installPrompt) {
-    console.log("Prompt available, triggering...");
-    installPrompt.prompt();
-    installPrompt.userChoice.then((choice) => {
-      if (choice.outcome === "accepted") {
-        console.log("User accepted the install prompt");
-      } else {
-        console.log("User dismissed the install prompt");
-      }
-      installPrompt = null; // Reset the prompt
-    });
-  } else {
-    console.error("Install prompt not available.");
-    return Promise.reject("Install prompt not available.");
-  }
-}
 
 // Function to check if the PWA is already installed
 export async function isPwaInstalled() {
@@ -67,3 +50,20 @@ window.addEventListener("load", () => {
     localStorage.setItem("pwainstalled", "true");
   }
 });
+export function triggerPwaInstall() {
+  if (installPrompt) {
+    console.log("Prompt available, triggering...");
+    installPrompt.prompt();
+    installPrompt.userChoice.then((choice) => {
+      if (choice.outcome === "accepted") {
+        console.log("User accepted the install prompt");
+      } else {
+        console.log("User dismissed the install prompt");
+      }
+      installPrompt = null; // Reset the prompt
+    });
+  } else {
+    console.error("Install prompt not available.");
+    return Promise.reject("Install prompt not available.");
+  }
+}
