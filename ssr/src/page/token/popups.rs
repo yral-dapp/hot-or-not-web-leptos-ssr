@@ -53,7 +53,7 @@ fn CreateTokenSuccessPopup(
 
                         <div class="absolute top-0 left-0 w-full h-full flex justify-center items-center">
                             <img src=img_url.clone() class="w-24 h-24 rounded-full rounded-full border-2 border-primary-600 object-conver" />
-                        </div> 
+                        </div>
 
                         <div class="absolute top-0 left-0 w-16 h-16">
                             <img
