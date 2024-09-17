@@ -1,5 +1,6 @@
 pub mod tokens;
 pub mod transactions;
+use crate::page::token::popups::ShareProfilePopup;
 mod txn;
 use crate::{
     component::{
@@ -40,6 +41,8 @@ fn ProfileGreeter(details: ProfileDetails) -> impl IntoView {
             Duration::from_millis(2000),
         );
     };
+    let share_action = create_action(move |&()| async move { Ok(()) });
+
     view! {
     <div class="flex flex-col">
         // <span class="text-white/50 text-md">Welcome!</span>
@@ -49,10 +52,20 @@ fn ProfileGreeter(details: ProfileDetails) -> impl IntoView {
             // class=("md:w-5/12", move || !is_connected())
             {details.display_name_or_fallback()}
          </span>
-       <button on:click=move |_| copy_to_clipboard() class="justify-self-end">
-                <Icon class="w-6 h-6 text-white cursor-pointer" icon=icon />
+       <button
+                        on:click=move |_| share_action.dispatch(())>
+                <Icon class="w-6 h-6 text-white cursor-pointer" icon=icondata::ChShare />
             </button>
         </div>
+            {move ||
+                            view! {
+                                <ShareProfilePopup
+                                    sharing_action=share_action
+
+                                />
+
+                        } }
+
     </div>
     }
 }

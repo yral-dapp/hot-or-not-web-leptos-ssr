@@ -120,7 +120,7 @@ pub fn TokenView(
                         <button
                         on:click=move |_| share_action.dispatch(())>
                                 <div class="flex justify-center items-center w-8 h-8 rounded-full bg-white/15">
-                                    <Icon icon=icondata::BsSend/>
+                                    <Icon icon=icondata::ChShare/>
                                 </div>
                     </button>
                             </div>
