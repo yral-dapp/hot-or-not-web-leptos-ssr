@@ -791,7 +791,9 @@ impl TokenCreationCompleted {
                     "canister_id": canister_id,
                     "token_name": sns_init_payload.token_name,
                     "token_symbol": sns_init_payload.token_symbol,
-                    "name": sns_init_payload.name
+                    "name": sns_init_payload.name,
+                    "description": sns_init_payload.description,
+                    "logo": sns_init_payload.logo
                 }),
             );
         }
