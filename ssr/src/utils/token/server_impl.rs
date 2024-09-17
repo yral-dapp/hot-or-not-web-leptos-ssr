@@ -4,6 +4,7 @@ use crate::{
         sns_ledger::{Account as LedgerAccount, TransferArg, TransferResult},
     },
     state::canisters::CanistersAuthWire,
+    utils::event_streaming::events::TokensClaimedFromNeuron,
 };
 use candid::{Decode, Nat, Principal};
 use leptos::ServerFnError;
@@ -44,7 +45,9 @@ pub async fn claim_tokens_from_first_neuron(
     };
     let manage_neuron = governance.manage_neuron(manage_neuron_arg).await?;
     match manage_neuron.command {
-        Some(Command1::Disburse(_)) => (),
+        Some(Command1::Disburse(_)) => {
+            TokensClaimedFromNeuron.send_event(amount, cans.clone());
+        }
         Some(Command1::Error(e)) => {
             return Err(ServerFnError::new(format!(
                 "failed to claim tokens: {}",
