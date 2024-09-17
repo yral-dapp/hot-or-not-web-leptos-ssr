@@ -46,11 +46,39 @@ fn CreateTokenSuccessPopup(
         <SuccessPopup
             img=move || {
                 view! {
-                    <img
-                        class="relative w-20 h-20 rounded-full border-2 border-primary-600 object-conver"
-                        style="height:15rem; width:15rem"
-                        src=img_url.clone()
-                    />
+                    <div >
+
+                    </div>
+                    <div class="relative w-40 h-40">
+
+                        <div class="absolute top-0 left-0 w-full h-full flex justify-center items-center">
+                            <img src=img_url.clone() class="w-24 h-24 rounded-full rounded-full border-2 border-primary-600 object-conver" />
+                        </div> 
+
+                        <div class="absolute top-0 left-0 w-16 h-16">
+                            <img
+                                class="w-16 h-16"
+                                src="/img/creator-dao/left-confetti.svg"
+                            />
+                        </div>
+                        <div class="absolute bottom-0 right-0 w-16 h-16">
+                            <img
+                                class="w-16 h-16"
+                                src="/img/creator-dao/right-confetti.svg"
+                            />
+                        </div>
+                        <div class="absolute top-4 right-0 w-6 h-6 bg-pink-500 rounded-full"></div>
+
+                    </div>
+                    // <img
+                    //     class="z-1 w-4 h-4 rounded-full border-2 border-primary-600 object-conver"
+                    //     src="/img/creator-dao/left-confetti.svg"
+                    // />
+                    // <img
+                    //     class="relative w-20 h-20 rounded-full border-2 border-primary-600 object-conver"
+                    //     style="height:15rem; width:15rem"
+                    //     src=img_url.clone()
+                    // />
                 }
             }
 
