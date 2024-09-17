@@ -103,7 +103,7 @@ fn ProfileLoaded(user_details: ProfileDetails) -> impl IntoView {
             </span>
             <a
                 class="text-primary-600 text-md"
-                href=format!("/your-profile/{}", user_details.username_or_principal())
+                href="/your-profile"
             >
                 View Profile
             </a>

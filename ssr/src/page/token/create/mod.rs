@@ -252,13 +252,7 @@ fn parse_token_e8s(s: &str) -> Result<Tokens, String> {
 #[component]
 pub fn CreateToken() -> impl IntoView {
     let auth_cans = auth_canisters_store();
-    let fallback_url = Signal::derive(move || {
-        let Some(cans) = auth_cans() else {
-            return "/menu".to_string();
-        };
-        let id = cans.profile_details().username_or_principal();
-        format!("/your-profile/{id}?tab=tokens")
-    });
+    let fallback_url = String::from("/your-profile?tab=tokens");
 
     let ctx: CreateTokenCtx = expect_context();
 
@@ -608,12 +602,12 @@ pub fn CreateTokenSettings() -> impl IntoView {
                     validator=validate_tokens
                     initial_value=format_tokens(&max_participants_icp.get_untracked())
                 />
-                // <InputBox
-                // heading="Restricted Country"
-                // placeholder="Antarctica"
-                // updater=set_restricted_country
-                // validator=non_empty_string_validator
-                // />
+            // <InputBox
+            // heading="Restricted Country"
+            // placeholder="Antarctica"
+            // updater=set_restricted_country
+            // validator=non_empty_string_validator
+            // />
             </form>
             <button
                 on:click=reset_settings
