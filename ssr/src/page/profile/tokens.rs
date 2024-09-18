@@ -33,7 +33,7 @@ fn TokenView(user_principal: Principal, token: TokenCans) -> impl IntoView {
     let token_link = move || format!("/token/info/{}", token.root);
 
     view! {
-        <ClaimTokensOrRedirectError token_root=token.root/>
+        <ClaimTokensOrRedirectError token_root=token.root />
         <Suspense fallback=TokenViewFallback>
             {move || {
                 token_info()
@@ -45,7 +45,7 @@ fn TokenView(user_principal: Principal, token: TokenCans) -> impl IntoView {
                                 class="w-full grid grid-cols-2 p-4 rounded-xl border-2 items-center border-neutral-700 bg-white/15"
                             >
                                 <div class="flex flex-row gap-2 items-center justify-self-start">
-                                    <img class="w-12 h-12 rounded-full" src=info.logo_b64/>
+                                    <img class="w-12 h-12 rounded-full" src=info.logo_b64 />
                                     <span class="text-white truncate">{info.name}</span>
                                 </div>
                                 <div class="flex flex-col gap-2 justify-self-end text-sm">
@@ -55,7 +55,7 @@ fn TokenView(user_principal: Principal, token: TokenCans) -> impl IntoView {
                                     <div class="flex flex-row gap-1 items-center">
                                         <span class="text-white">Details</span>
                                         <div class="flex items-center justify-center w-4 h-4 bg-white/15 rounded-full">
-                                            <Icon class="text-white" icon=icondata::AiRightOutlined/>
+                                            <Icon class="text-white" icon=icondata::AiRightOutlined />
                                         </div>
                                     </div>
                                 </div>
@@ -73,15 +73,19 @@ fn CreateYourToken() -> impl IntoView {
     view! {
         <div class="w-full flex flex-col items-center gap-4">
             <span class="text-2xl text-primary-600 text-center">
-                Create your own <br/> <span class="text-white">Meme Coin</span>
+                Create your own <br /> <span class="text-white">Meme Coin</span>
             </span>
-            <TokenConfettiSymbol class="w-2/3 md:w-1/2 lg:w-1/3 mx-8"/>
+            <TokenConfettiSymbol class="w-2/3 md:w-1/2 lg:w-1/3 mx-8" />
         </div>
     }
 }
 
 #[component]
-pub fn ProfileTokens(user_canister: Principal, user_principal: Principal) -> impl IntoView {
+pub fn ProfileTokens(
+    is_native_profile: bool,
+    user_canister: Principal,
+    user_principal: Principal,
+) -> impl IntoView {
     let token_list = create_resource(
         || (),
         move |_| async move {
@@ -106,7 +110,7 @@ pub fn ProfileTokens(user_canister: Principal, user_principal: Principal) -> imp
             <Suspense fallback=|| {
                 view! {
                     <div class="w-full flex justify-center items-center py-9">
-                        <BulletLoader/>
+                        <BulletLoader />
                     </div>
                 }
             }>
@@ -118,22 +122,24 @@ pub fn ProfileTokens(user_canister: Principal, user_principal: Principal) -> imp
                             view! {
                                 {tokens
                                     .into_iter()
-                                    .map(|token| view! { <TokenView user_principal token/> })
+                                    .map(|token| view! { <TokenView user_principal token /> })
                                     .collect_view()}
-                                <Show when=move || empty>
-                                    <CreateYourToken/>
+                                <Show when=move || { is_native_profile && empty }>
+                                    <CreateYourToken />
                                 </Show>
                             }
                         })
                 }}
 
             </Suspense>
-            <a
-                href="/token/create"
-                class="text-xl bg-primary-600 py-4 w-2/3 md:w-1/2 lg:w-1/3 rounded-full text-center text-white"
-            >
-                Create
-            </a>
+            <Show when=move || is_native_profile>
+                <a
+                    href="/token/create"
+                    class="text-xl bg-primary-600 py-4 w-2/3 md:w-1/2 lg:w-1/3 rounded-full text-center text-white"
+                >
+                    Create
+                </a>
+            </Show>
         </div>
     }
 }

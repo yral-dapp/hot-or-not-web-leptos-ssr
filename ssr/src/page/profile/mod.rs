@@ -48,7 +48,11 @@ fn Stat(stat: u64, #[prop(into)] info: String) -> impl IntoView {
 }
 
 #[component]
-fn ListSwitcher(user_canister: Principal, user_principal: Principal) -> impl IntoView {
+fn ListSwitcher(
+    is_native_profile: bool,
+    user_canister: Principal,
+    user_principal: Principal,
+) -> impl IntoView {
     let (cur_tab, set_cur_tab) = create_query_signal::<String>("tab");
     let current_tab = create_memo(move |_| {
         with!(|cur_tab| match cur_tab.as_deref() {
@@ -89,14 +93,18 @@ fn ListSwitcher(user_canister: Principal, user_principal: Principal) -> impl Int
                 <ProfileSpeculations user_canister/>
             </Show>
             <Show when=move || current_tab() == 2>
-                <ProfileTokens user_canister user_principal/>
+                <ProfileTokens is_native_profile user_canister user_principal />
             </Show>
         </div>
     }
 }
 
 #[component]
-fn ProfileViewInner(user: ProfileDetails, user_canister: Principal) -> impl IntoView {
+fn ProfileViewInner(
+    is_native_profile: bool,
+    user: ProfileDetails,
+    user_canister: Principal,
+) -> impl IntoView {
     let username_or_principal = user.username_or_principal();
     let profile_pic = user.profile_pic_or_random();
     let display_name = user.display_name_or_fallback();
@@ -144,7 +152,7 @@ fn ProfileViewInner(user: ProfileDetails, user_canister: Principal) -> impl Into
                     <Stat stat=user.hots info="Hots"/>
                     <Stat stat=user.nots info="Nots"/>
                 </div>
-                <ListSwitcher user_canister user_principal=user.principal/>
+                <ListSwitcher is_native_profile user_canister user_principal=user.principal />
             </div>
         </div>
     }
@@ -183,7 +191,7 @@ pub fn ProfileView() -> impl IntoView {
                 user_details
                     .get()
                     .map(|user_details| {
-                        view! { <ProfileComponent user_details/> }
+                        view! { <ProfileComponent is_native_profile=false user_details /> }
                     })
             }}
 
@@ -195,16 +203,21 @@ pub fn ProfileView() -> impl IntoView {
 pub fn YourProfileView() -> impl IntoView {
     view! {
         <AuthCansProvider fallback=FullScreenSpinner let:canister>
-            <ProfileComponent user_details=Some((
-                canister.profile_details(),
-                canister.user_canister(),
-            ))/>
+            <ProfileComponent is_native_profile=true
+                user_details=Some((
+                    canister.profile_details(),
+                    canister.user_canister(),
+                ))
+            />
         </AuthCansProvider>
     }
 }
 
 #[component]
-pub fn ProfileComponent(user_details: Option<(ProfileDetails, Principal)>) -> impl IntoView {
+pub fn ProfileComponent(
+    is_native_profile: bool,
+    user_details: Option<(ProfileDetails, Principal)>,
+) -> impl IntoView {
     let ProfilePostsContext {
         video_queue,
         start_index,
@@ -221,7 +234,7 @@ pub fn ProfileComponent(user_details: Option<(ProfileDetails, Principal)>) -> im
     view! {
         {move || {
             if let Some((user, user_canister)) = user_details.clone() {
-                view! { <ProfileViewInner user user_canister/> }
+                view! { <ProfileViewInner is_native_profile user user_canister /> }
             } else {
                 view! { <Redirect path="/"/> }
             }
