@@ -44,7 +44,7 @@ jobs:
           HOTORNOT_GOOGLE_CLIENT_SECRET: ${{ secrets.HOT_OR_NOT_WTF_DOMAIN_GOOGLE_LOGIN_AUTH_CLIENT_SECRET }}
           ICPUMPFUN_GOOGLE_CLIENT_SECRET: ${{secrets.IC_PUMP_FUN_GOOGLE_AUTH_CLIENT_SECRET}}
       - name: Deploy a docker container to Fly.io
-        run: flyctl deploy --remote-only -c fly-prod.toml
+        run: flyctl deploy --remote-only -c fly-prod.toml --depot=false
         env:
           FLY_API_TOKEN: ${{ secrets.HOT_OR_NOT_WEB_LEPTOS_SSR_FLY_IO_GITHUB_ACTION }}
 
