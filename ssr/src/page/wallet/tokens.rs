@@ -93,9 +93,6 @@ pub fn TokenView(
         move |_| token_metadata_or_fallback(cans.clone(), user_principal, token_root),
     );
 
-    
-
-
 
     view! {
         <ClaimTokensOrRedirectError token_root/>

@@ -1,12 +1,13 @@
 use leptos::*;
 use leptos_icons::*;
 use leptos_router::*;
+use leptos_use::use_window;
 
 use crate::{
     component::{back_btn::BackButton, spinner::FullScreenSpinner, title::Title},
     page::token::TokenInfoParams,
     state::canisters::unauth_canisters,
-    utils::token::{token_metadata_by_root, TokenMetadata},
+    utils::{token::{token_metadata_by_root, TokenMetadata}, web::share_url},
 };
 
 #[component]
@@ -32,7 +33,7 @@ fn TokenDetails(meta: TokenMetadata) -> impl IntoView {
 }
 
 #[component]
-fn TokenInfoInner(meta: TokenMetadata) -> impl IntoView {
+fn TokenInfoInner(meta: TokenMetadata, principal: String, root: String) -> impl IntoView {
     let meta_c = meta.clone();
     let detail_toggle = create_rw_signal(false);
     let view_detail_icon = Signal::derive(move || {
@@ -42,6 +43,22 @@ fn TokenInfoInner(meta: TokenMetadata) -> impl IntoView {
             icondata::AiDownOutlined
         }
     });
+
+    let base_url = || {
+        use_window()
+            .as_ref()
+            .and_then(|w| w.location().origin().ok())
+    };
+
+
+    let share_profile_url = move || {
+       let url =  base_url()
+            .map(|b| format!("{b}/token/info/{root}/{principal}"))
+            .unwrap_or_default();
+        share_url(&url);
+    };
+
+    
 
     view! {
         <div class="w-dvw min-h-dvh bg-neutral-800 flex flex-col gap-4">
@@ -64,12 +81,19 @@ fn TokenInfoInner(meta: TokenMetadata) -> impl IntoView {
                                     {meta.name}
                                 </span>
                             </div>
-                            <div class="p-1 bg-white/15 rounded-full">
-                                <Icon
-                                    class="text-sm md:text-base text-white"
-                                    icon=icondata::BsArrowUpRight
-                                />
-                            </div>
+                            <button
+                                on:click= move|_| share_profile_url()
+                                class="text-white text-center p-1 text-lg md:text-xl bg-primary-600 rounded-full"
+                            >
+                            <Icon icon=icondata::AiShareAltOutlined/>
+                           
+                            </button>
+                            // <div class="p-1 bg-white/15 rounded-full">
+                            //     <Icon
+                            //         class="text-sm md:text-base text-white"
+                            //         icon=icondata::BsArrowUpRight
+                            //     />
+                            // </div>
                         </div>
                         <div class="flex flex-row justify-between border-b p-1 border-white items-center">
                             <span class="text-xs md:text-sm text-green-500">Balance</span>
@@ -107,10 +131,15 @@ pub fn TokenInfo() -> impl IntoView {
         let Ok(params) = params else {
             return Ok::<_, ServerFnError>(None);
         };
+        let principal = params.user_principal.to_text().clone();
+        let root = params.token_root.to_text().clone();
+
         let cans = unauth_canisters();
         let meta = token_metadata_by_root(&cans, params.user_principal, params.token_root).await?;
-        Ok(meta)
+        Ok(Some((meta, principal, root )))
     });
+
+    
 
     view! {
         <Suspense fallback=FullScreenSpinner>
@@ -119,8 +148,8 @@ pub fn TokenInfo() -> impl IntoView {
                     .and_then(|info| info.ok())
                     .map(|info| {
                         match info {
-                            Some(metadata) => view! { <TokenInfoInner meta=metadata /> },
-                            None => view! { <Redirect path="/" /> },
+                            Some((Some(metadata), principal, root)) => view! { <TokenInfoInner meta=metadata principal=principal root=root /> },
+                            _ => view! { <Redirect path="/" /> },
                         }
                     })
             }}
