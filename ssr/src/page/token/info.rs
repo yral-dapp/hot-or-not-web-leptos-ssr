@@ -7,7 +7,10 @@ use crate::{
     component::{back_btn::BackButton, spinner::FullScreenSpinner, title::Title},
     page::token::TokenInfoParams,
     state::canisters::unauth_canisters,
-    utils::{token::{token_metadata_by_root, TokenMetadata}, web::share_url},
+    utils::{
+        token::{token_metadata_by_root, TokenMetadata},
+        web::share_url,
+    },
 };
 
 #[component]
@@ -50,15 +53,12 @@ fn TokenInfoInner(meta: TokenMetadata, principal: String, root: String) -> impl 
             .and_then(|w| w.location().origin().ok())
     };
 
-
     let share_profile_url = move || {
-       let url =  base_url()
+        let url = base_url()
             .map(|b| format!("{b}/token/info/{root}/{principal}"))
             .unwrap_or_default();
         share_url(&url);
     };
-
-    
 
     view! {
         <div class="w-dvw min-h-dvh bg-neutral-800 flex flex-col gap-4">
@@ -86,7 +86,7 @@ fn TokenInfoInner(meta: TokenMetadata, principal: String, root: String) -> impl 
                                 class="text-white text-center p-1 text-lg md:text-xl bg-primary-600 rounded-full"
                             >
                             <Icon icon=icondata::AiShareAltOutlined/>
-                           
+
                             </button>
                             // <div class="p-1 bg-white/15 rounded-full">
                             //     <Icon
@@ -136,10 +136,8 @@ pub fn TokenInfo() -> impl IntoView {
 
         let cans = unauth_canisters();
         let meta = token_metadata_by_root(&cans, params.user_principal, params.token_root).await?;
-        Ok(Some((meta, principal, root )))
+        Ok(Some((meta, principal, root)))
     });
-
-    
 
     view! {
         <Suspense fallback=FullScreenSpinner>

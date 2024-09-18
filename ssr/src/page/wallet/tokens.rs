@@ -3,17 +3,21 @@ use ic_agent::AgentError;
 use leptos_use::use_window;
 
 use crate::{
-    canister::individual_user_template::Result14, component::{
+    canister::individual_user_template::Result14,
+    component::{
         back_btn::BackButton,
         bullet_loader::BulletLoader,
         canisters_prov::AuthCansProvider,
         claim_tokens::ClaimTokensOrRedirectError,
         infinite_scroller::{CursoredDataProvider, InfiniteScroller, KeyedData, PageEntry},
         title::Title,
-    }, state::canisters::{unauth_canisters, Canisters}, utils::{
+    },
+    state::canisters::{unauth_canisters, Canisters},
+    utils::{
         profile::propic_from_principal,
-        token::{token_metadata_by_root, TokenBalance, TokenMetadata}, web::share_url,
-    }
+        token::{token_metadata_by_root, TokenBalance, TokenMetadata},
+        web::share_url,
+    },
 };
 use leptos::*;
 use leptos_icons::*;
@@ -93,14 +97,13 @@ pub fn TokenView(
         move |_| token_metadata_or_fallback(cans.clone(), user_principal, token_root),
     );
 
-
     view! {
         <ClaimTokensOrRedirectError token_root/>
         <Suspense fallback=FallbackToken>
             {move || {
-                info.map( |info| 
+                info.map( |info|
                     {
-                        
+
                         let base_url = || {
                             use_window()
                                 .as_ref()
@@ -108,8 +111,8 @@ pub fn TokenView(
                         };
                         let username_or_principal =  user_principal.to_text();
                         let principal = user_principal.to_text();
-                        
-                    
+
+
                         let share_profile_url = move || {
                             let url =  base_url()
                                  .map(|b| format!("{b}/profile/{}?tab=tokens", &username_or_principal))
@@ -135,7 +138,7 @@ pub fn TokenView(
                                     class="text-white text-center p-1 text-lg md:text-xl bg-primary-600 rounded-full"
                                     >
                                     <Icon icon=icondata::AiShareAltOutlined/>
-       
+
                                 </button>
                                 // <div class="flex items-center justify-center w-8 h-8 bg-white/15 rounded-full">
 

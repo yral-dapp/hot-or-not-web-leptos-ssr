@@ -3,10 +3,9 @@ pub mod transactions;
 mod txn;
 use candid::Principal;
 use leptos::*;
+use leptos_icons::*;
 use leptos_use::use_window;
 use tokens::{TokenRootList, TokenView};
-use leptos_icons::*;
-
 
 use crate::{
     component::{
@@ -31,9 +30,9 @@ fn ProfileGreeter(details: ProfileDetails) -> impl IntoView {
             .and_then(|w| w.location().origin().ok())
     };
 
-    let username_or_principal =  details.username_or_principal().clone();
+    let username_or_principal = details.username_or_principal().clone();
     let share_profile_url = move || {
-       let url =  base_url()
+        let url = base_url()
             .map(|b| format!("{b}/profile/{}?tab=tokens", username_or_principal))
             .unwrap_or_default();
         share_url(&url);
@@ -47,18 +46,18 @@ fn ProfileGreeter(details: ProfileDetails) -> impl IntoView {
             // TEMP: Workaround for hydration bug until leptos 0.7
             // class=("md:w-5/12", move || !is_connected())
             {details.display_name_or_fallback()}
-           
+
             </span>
          <button
         on:click= move|_| share_profile_url()
             class="text-white text-center p-1 text-lg md:text-xl bg-primary-600 rounded-full"
         >
         <Icon icon=icondata::AiShareAltOutlined/>
-       
+
         </button>
             </div>
-           
-           
+
+
 
         </div>
         <div class="w-16 aspect-square overflow-clip justify-self-end rounded-full">
@@ -93,7 +92,7 @@ fn TokensFetch() -> impl IntoView {
         |cans_wire, _| async move {
             let cans = cans_wire?.canisters()?;
             let user_principal = cans.user_principal();
-            
+
             let tokens_prov = TokenRootList(cans);
             let tokens = tokens_prov.get_by_cursor(0, 5).await?;
             Ok::<_, ServerFnError>((user_principal, tokens.data))
