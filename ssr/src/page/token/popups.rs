@@ -1,4 +1,4 @@
-use crate::component::canisters_prov::{AuthCansProvider, WithAuthCans};
+use crate::component::canisters_prov::AuthCansProvider;
 use crate::utils::profile::ProfileDetails;
 use crate::utils::web::share_url;
 use crate::{

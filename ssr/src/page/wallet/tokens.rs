@@ -95,7 +95,6 @@ pub fn TokenView(
         || (),
         move |_| token_metadata_or_fallback(cans.clone(), user_principal, token_root),
     );
-    let show_popup = create_rw_signal(false);
 
     let share_action = create_action(move |&()| async move { Ok(()) });
     // let creating = create_action.pending();

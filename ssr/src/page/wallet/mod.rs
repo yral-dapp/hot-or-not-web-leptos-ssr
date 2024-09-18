@@ -23,24 +23,24 @@ use txn::{provider::get_history_provider, TxnView};
 
 #[component]
 fn ProfileGreeter(details: ProfileDetails) -> impl IntoView {
-    let display_name = details.display_name_or_fallback();
+    // let display_name = details.display_name_or_fallback();
 
-    let (icon, set_icon) = create_signal(icondata::BsCopy);
-
-    let copy_to_clipboard = move || {
-        let display_name_clone = display_name.clone();
-        let _ = leptos::window()
-            .navigator()
-            .clipboard()
-            .write_text(&display_name_clone);
-        set_icon(icondata::BsCheckSquare);
-        leptos::set_timeout(
-            move || {
-                set_icon(icondata::BsCopy);
-            },
-            Duration::from_millis(2000),
-        );
-    };
+    // let (_icon, set_icon) = create_signal(icondata::BsCopy);
+    //
+    // let copy_to_clipboard = move || {
+    //     let display_name_clone = display_name.clone();
+    //     let _ = leptos::window()
+    //         .navigator()
+    //         .clipboard()
+    //         .write_text(&display_name_clone);
+    //     set_icon(icondata::BsCheckSquare);
+    //     leptos::set_timeout(
+    //         move || {
+    //             set_icon(icondata::BsCopy);
+    //         },
+    //         Duration::from_millis(2000),
+    //     );
+    // };
     let share_action = create_action(move |&()| async move { Ok(()) });
 
     view! {
