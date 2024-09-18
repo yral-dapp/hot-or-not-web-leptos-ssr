@@ -4,7 +4,6 @@ use crate::utils::web::share_url;
 use crate::{
     component::{overlay::PopupOverlay, token_confetti_symbol::TokenConfettiSymbol},
     page::token::create::CreateTokenCtx,
-    state::canisters::auth_canisters_store,
     utils::token::TokenBalance,
 };
 use leptos::*;
@@ -37,14 +36,7 @@ fn CreateTokenSuccessPopup(
     #[prop(into)] img_url: String,
 ) -> impl IntoView {
     CreateTokenCtx::reset();
-    let cans = auth_canisters_store();
-    let profile_url = Signal::derive(move || {
-        let Some(cans) = cans() else {
-            return "/menu".into();
-        };
-        let profile_id = cans.user_principal();
-        format!("/your-profile/{profile_id}?tab=tokens")
-    });
+    let profile_url = "/your-profile?tab=tokens";
     view! {
         <SuccessPopup
             img=move || {
@@ -113,14 +105,7 @@ fn CreateTokenErrorPopup(
     token_name: MaybeSignal<String>,
     close_popup: WriteSignal<bool>,
 ) -> impl IntoView {
-    let cans = auth_canisters_store();
-    let profile_url = Signal::derive(move || {
-        let Some(cans) = cans() else {
-            return "/menu".into();
-        };
-        let profile_id = cans.user_principal();
-        format!("/your-profile/{profile_id}?tab=tokens")
-    });
+    let profile_url = String::from("/your-profile?tab=tokens");
 
     view! {
         <ErrorPopup
@@ -129,7 +114,9 @@ fn CreateTokenErrorPopup(
                 let token_name = token_name.clone();
                 view! {
                     Token
-                    <span class="text-primary-600">{move || format!(" {} ", token_name.with(|t| t.clone()))}</span>
+                    <span class="text-primary-600">
+                        {move || format!(" {} ", token_name.with(|t| t.clone()))}
+                    </span>
                     creation failed!
                 }
             }

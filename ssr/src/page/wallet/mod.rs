@@ -4,7 +4,6 @@ use crate::page::token::popups::ShareProfilePopup;
 mod txn;
 use crate::{
     component::{
-        back_btn::BackButton,
         bullet_loader::BulletLoader,
         canisters_prov::AuthCansProvider,
         connect::ConnectLogin,
@@ -155,18 +154,8 @@ pub fn Wallet() -> impl IntoView {
 
     view! {
         <div>
-            <div class="flex top-0 z-50 justify-between items-center pt-4 pr-4 pl-4 w-full text-white bg-black">
-                <div class="flex flex-row justify-start">
-                    <BackButton fallback="/".to_string()/>
-                </div>
-             <AuthCansProvider fallback=FallbackGreeter let:cans>
-            <div class="justify-self-end w-16 rounded-full aspect-square overflow-clip">
-                <img class="object-cover w-full h-full" src=cans.profile_details().profile_pic_or_random() />
-           </div>
-            </AuthCansProvider>
-            </div>
-            <div class="flex flex-col gap-4 px-4 pt-4 pb-12 bg-black w-dvw min-h-dvh">
-                <div class="grid grid-cols-1 grid-rows-1 items-center w-full">
+            <div class="flex flex-col w-dvw min-h-dvh bg-black gap-4 px-4 pt-4 pb-12">
+                <div class="grid grid-cols-2 grid-rows-1 items-center w-full">
                     <AuthCansProvider fallback=FallbackGreeter let:cans>
                         <ProfileGreeter details=cans.profile_details()/>
                     </AuthCansProvider>

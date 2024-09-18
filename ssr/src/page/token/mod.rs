@@ -14,3 +14,9 @@ use leptos_router::Params;
 struct TokenParams {
     token_root: Principal,
 }
+
+#[derive(Params, PartialEq, Clone)]
+struct TokenInfoParams {
+    token_root: Principal,
+    user_principal: Principal,
+}
