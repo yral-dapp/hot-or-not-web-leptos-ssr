@@ -9,6 +9,7 @@ use crate::{
     },
     state::canisters::{authenticated_canisters, Canisters, CanistersAuthWire},
     utils::{
+        event_streaming::events::TokensTransferred,
         token::{token_metadata_by_root, TokenBalance, TokenMetadata},
         web::{copy_to_clipboard, paste_from_clipboard},
     },
@@ -248,6 +249,8 @@ fn TokenTransferInner(
                 amt.clone(),
             )
             .await?;
+
+            TokensTransferred.send_event(amt.e8s.to_string(), destination, cans.clone());
 
             Ok::<_, ServerFnError>(amt)
         }
