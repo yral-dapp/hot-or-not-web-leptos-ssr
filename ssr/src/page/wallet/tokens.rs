@@ -98,6 +98,20 @@ pub fn TokenView(
     let show_popup = create_rw_signal(false);
 
     let share_action = create_action(move |&()| async move { Ok(()) });
+    // let creating = create_action.pending();
+    //
+    // let create_disabled = create_memo(move |_| {
+    //     creating()
+    //         || auth_cans.with(|c| c.is_none())
+    //         || ctx.form_state.with(|f| f.logo_b64.is_none())
+    //         || ctx.form_state.with(|f: &SnsFormState| f.name.is_none())
+    //         || ctx
+    //             .form_state
+    //             .with(|f: &SnsFormState| f.description.is_none())
+    //         || ctx.form_state.with(|f| f.symbol.is_none())
+    //         || ctx.invalid_cnt.get() != 0
+    // });
+
     view! {
         <ClaimTokensOrRedirectError token_root/>
         <Suspense fallback=FallbackToken>

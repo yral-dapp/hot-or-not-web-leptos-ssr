@@ -1,3 +1,6 @@
+use crate::component::canisters_prov::{AuthCansProvider, WithAuthCans};
+use crate::utils::profile::ProfileDetails;
+use crate::utils::web::share_url;
 use crate::{
     component::{overlay::PopupOverlay, token_confetti_symbol::TokenConfettiSymbol},
     page::token::create::CreateTokenCtx,
@@ -6,6 +9,7 @@ use crate::{
 };
 use leptos::*;
 use leptos_icons::*;
+use urlencoding;
 
 #[component]
 fn SuccessPopup<ImgIV: IntoView, Img: Fn() -> ImgIV, TxtIV: IntoView, Txt: Fn() -> TxtIV>(
@@ -250,70 +254,159 @@ pub fn TokenTransferPopup(
     }
 }
 #[component]
-fn ShareProfileContent() -> impl IntoView {
+fn ProfileLoading() -> impl IntoView {
     view! {
-        <div class="flex flex-col gap-6 items-center p-6 w-full h-full bg-white rounded-lg shadow-lg">
-            // <img
-            //     class="object-cover w-20 h-20 rounded-full border-2 border-primary-600"
-            //     style="height:10rem; width:10rem"
-            //     src=profile_image_url
-            // />
-            <span class="text-2xl font-bold text-center md:text-3xl">
-                "Hey! Check out my YRAL profile 👇 {profile_link}. I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter"
-            </span>
-            <div class="flex gap-4">
-                <a href="/" >
-                    <Icon
-                        class="text-sm md:text-base text-primary-600"
-                        icon=icondata::BsFacebook
-                    />
-                </a>
-                <a href="/">
-                    <Icon
-                        class="text-sm md:text-base text-primary-600"
-                        icon=icondata::BsTwitterX
-                    />
-                </a>
-                <a href="/">
-                    <Icon
-                        class="text-sm md:text-base text-primary-600"
-                        icon=icondata::FaSquareInstagramBrands
-                    />
-                </a>
-                <a href="/">
-
-                    <Icon
-                        class="text-sm md:text-base text-primary-600"
-                        icon=icondata::FaSquareWhatsappBrands
-                    />
-                </a>
-            </div>
-            <a
-                href="/"
-                class="py-4 w-3/4 text-lg text-center text-white rounded-full bg-primary-600"
-                target="_blank"
-            >
-                View Profile
-            </a>
+        <div class="rounded-full animate-pulse basis-4/12 aspect-square overflow-clip bg-white/20"></div>
+        <div class="flex flex-col gap-2 animate-pulse basis-8/12">
+            <div class="w-full h-4 rounded-full bg-white/20"></div>
+            <div class="w-full h-4 rounded-full bg-white/20"></div>
         </div>
     }
 }
 
 #[component]
-pub fn ShareProfilePopup(sharing_action: Action<(), Result<(), String>>) -> impl IntoView {
-    let close_popup = create_rw_signal(false);
+fn ShareProfileContent(
+    user_details: ProfileDetails,
+    #[prop(into)] previous_link: MaybeSignal<String>,
+    #[prop(into)] previous_text: String,
+) -> impl IntoView {
+    let profile_link = format!(
+        "https://yral.com/profile/{}?tab=tokens",
+        user_details.username_or_principal()
+    );
+
+    let message = format!(
+        "Hey! Check out my YRAL profile 👇 {}. I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter",
+        profile_link
+    );
+
+    // Encode the message for URLs
+    let encoded_message = urlencoding::encode(&message);
+    let encoded_link = urlencoding::encode(&profile_link);
+
+    // Facebook share URL using Dialog API
+    let fb_url = format!(
+        "http://www.facebook.com/share.php?u={}&title={}",
+        profile_link,
+        urlencoding::encode("Check out this profile")
+    );
+
+    // WhatsApp share URL
+    let whatsapp_url = format!("https://wa.me/?text={}", encoded_message);
+
+    // Twitter share URL
+    let twitter_url = format!("https://twitter.com/intent/tweet?text={}", encoded_message);
+
+    // LinkedIn share URL
+    let linkedin_url = format!(
+        "https://www.linkedin.com/shareArticle?mini=true&url={}&title={}",
+        profile_link, encoded_message
+    );
+
+    // Functions to handle the share actions for each platform
+    let share_fb = move |_| {
+        share_url(&fb_url);
+    };
+
+    let share_twitter = move |_| {
+        share_url(&twitter_url);
+    };
+
+    let share_whatsapp = move |_| {
+        share_url(&whatsapp_url);
+    };
+
+    let share_linkedin = move |_| {
+        share_url(&linkedin_url);
+    };
 
     view! {
+        <div class="flex flex-col gap-6 items-center p-6 w-full h-full bg-white rounded-lg shadow-lg">
+            <div class="flex flex-col gap-2 items-center">
+        <img class="w-16 h-16 md:w-20 md:h-20" src="/img/android-chrome-384x384.png" alt="YRAL Logo" />
+
+        <span class="text-xl font-semibold text-center md:text-2xl">
+            Share this app
+        </span>
+    </div>
+            <div class="flex gap-4">
+                // Facebook button
+                <button on:click=share_fb>
+                    <Icon
+                        class="text-3xl md:text-4xl text-primary-600"
+                        icon=icondata::BsFacebook
+                    />
+                </button>
+
+                // Twitter button
+                <button on:click=share_twitter>
+                    <Icon
+                        class="text-3xl md:text-4xl text-primary-600"
+                        icon=icondata::BsTwitterX
+                    />
+                </button>
+
+                // WhatsApp button
+                <button on:click=share_whatsapp>
+                    <Icon
+                        class="text-3xl md:text-4xl text-primary-600"
+                        icon=icondata::FaSquareWhatsappBrands
+                    />
+                </button>
+
+                // LinkedIn button
+                <button on:click=share_linkedin>
+                    <Icon
+                        class="text-3xl md:text-4xl text-primary-600"
+                        icon=icondata::TbBrandLinkedin
+                    />
+                </button>
+            </div>
+          <div class="flex overflow-x-auto justify-center items-center px-10 mx-1 space-x-2 w-full rounded-xl border-2 border-neutral-700 h-[2.5rem] md:h-[5rem]">
+        <span class="text-lg text-black md:text-xl truncate">
+                {&profile_link}
+            </span>
+            <button >
+                <Icon class="w-6 h-6 text-black cursor-pointer" icon=icondata::BiCopyRegular />
+            </button>
+        </div>
+
+           <a
+                href=previous_link
+                class="py-4 w-3/4 text-lg text-center text-white rounded-full bg-primary-600"
+            >
+                {previous_text}
+            </a>
+        </div>
+    }
+}
+#[component]
+pub fn ShareProfilePopup(sharing_action: Action<(), Result<(), String>>) -> impl IntoView {
+    let close_popup = create_rw_signal(false);
+    // let cans = auth_canisters_store();
+    // let profile_url = Signal::derive(move || {
+    //     let Some(cans) = cans() else {
+    //         return "/menu".into();
+    //     };
+    //     let profile_id = cans.user_principal();
+    //     format!("/your-profile/{profile_id}?tab=tokens")
+    // });
+    view! {
          <PopupOverlay
-                     loading_message="Token creation in progress"
+                     loading_message=""
 
      action=sharing_action
              modal=move |_| {
                  view! {
-                     <ShareProfileContent
+                     <AuthCansProvider fallback=ProfileLoading let:canisters>
 
+                     <ShareProfileContent
+                     user_details=canisters.profile_details()
+                        previous_link="/wallet"
+            previous_text="Back to wallet"
 
                      />
+                     </AuthCansProvider>
                  }
              }
     close=close_popup
