@@ -282,7 +282,7 @@ fn ShareProfileContent(
 
     // Encode the message for URLs
     let encoded_message = urlencoding::encode(&message);
-    let encoded_link = urlencoding::encode(&profile_link);
+    // let encoded_link = urlencoding::encode(&profile_link);
 
     // Facebook share URL using Dialog API
     let fb_url = format!(
