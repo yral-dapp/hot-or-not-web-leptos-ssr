@@ -4,7 +4,10 @@ use leptos_icons::*;
 use leptos_router::*;
 
 use crate::{
-    component::{back_btn::BackButton, bullet_loader::BulletLoader, canisters_prov::AuthCansProvider, spinner::FullScreenSpinner, title::Title},
+    component::{
+        back_btn::BackButton, bullet_loader::BulletLoader, canisters_prov::AuthCansProvider,
+        spinner::FullScreenSpinner, title::Title,
+    },
     page::token::TokenInfoParams,
     state::canisters::unauth_canisters,
     utils::token::{token_metadata_by_root, TokenMetadata},
@@ -36,7 +39,7 @@ fn TokenDetails(meta: TokenMetadata) -> impl IntoView {
 fn TokenInfoInner(
     root: Principal,
     user_principal: Principal,
-    meta: TokenMetadata
+    meta: TokenMetadata,
 ) -> impl IntoView {
     let meta_c = meta.clone();
     let detail_toggle = create_rw_signal(false);
