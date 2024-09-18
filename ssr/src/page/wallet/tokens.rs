@@ -140,10 +140,6 @@ pub fn TokenView(
                                     <Icon icon=icondata::AiShareAltOutlined/>
 
                                 </button>
-                                // <div class="flex items-center justify-center w-8 h-8 bg-white/15 rounded-full">
-
-                                //     <Icon icon=icondata::BsSend/>
-                                // </div>
                             </div>
                         </a>
                     }

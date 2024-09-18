@@ -88,12 +88,6 @@ fn TokenInfoInner(meta: TokenMetadata, principal: String, root: String) -> impl 
                             <Icon icon=icondata::AiShareAltOutlined/>
 
                             </button>
-                            // <div class="p-1 bg-white/15 rounded-full">
-                            //     <Icon
-                            //         class="text-sm md:text-base text-white"
-                            //         icon=icondata::BsArrowUpRight
-                            //     />
-                            // </div>
                         </div>
                         <div class="flex flex-row justify-between border-b p-1 border-white items-center">
                             <span class="text-xs md:text-sm text-green-500">Balance</span>
