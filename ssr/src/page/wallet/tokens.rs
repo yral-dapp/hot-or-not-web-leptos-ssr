@@ -1,21 +1,19 @@
 use candid::Principal;
 use ic_agent::AgentError;
+use leptos_use::use_window;
 
 use crate::{
-    canister::individual_user_template::Result14,
-    component::{
+    canister::individual_user_template::Result14, component::{
         back_btn::BackButton,
         bullet_loader::BulletLoader,
         canisters_prov::AuthCansProvider,
         claim_tokens::ClaimTokensOrRedirectError,
         infinite_scroller::{CursoredDataProvider, InfiniteScroller, KeyedData, PageEntry},
         title::Title,
-    },
-    state::canisters::{unauth_canisters, Canisters},
-    utils::{
+    }, state::canisters::{unauth_canisters, Canisters}, utils::{
         profile::propic_from_principal,
-        token::{token_metadata_by_root, TokenBalance, TokenMetadata},
-    },
+        token::{token_metadata_by_root, TokenBalance, TokenMetadata}, web::share_url,
+    }
 };
 use leptos::*;
 use leptos_icons::*;
@@ -95,14 +93,35 @@ pub fn TokenView(
         move |_| token_metadata_or_fallback(cans.clone(), user_principal, token_root),
     );
 
+    
+
+
+
     view! {
         <ClaimTokensOrRedirectError token_root/>
         <Suspense fallback=FallbackToken>
             {move || {
-                info.map(|info| {
+                info.map( |info| 
+                    {
+                        
+                        let base_url = || {
+                            use_window()
+                                .as_ref()
+                                .and_then(|w| w.location().origin().ok())
+                        };
+                        let username_or_principal =  user_principal.to_text();
+                        let principal = user_principal.to_text();
+                        
+                    
+                        let share_profile_url = move || {
+                            let url =  base_url()
+                                 .map(|b| format!("{b}/profile/{}?tab=tokens", &username_or_principal))
+                                 .unwrap_or_default();
+                             share_url(&url);
+                         };
                     view! {
                         <a
-                            href=format!("/token/info/{token_root}")
+                            href=format!("/token/info/{token_root}/{principal}")
                             _ref=_ref
                             class="grid grid-cols-2 grid-rows-1 w-full items-center p-4 rounded-xl border-2 border-neutral-700 bg-white/15"
                         >
@@ -114,9 +133,17 @@ pub fn TokenView(
                                 <span class="truncate">
                                     {format!("{} {}", info.balance.humanize(), info.symbol)}
                                 </span>
-                                <div class="flex items-center justify-center w-8 h-8 bg-white/15 rounded-full">
-                                    <Icon icon=icondata::BsSend/>
-                                </div>
+                                <button
+                                    on:click=move|_| share_profile_url()
+                                    class="text-white text-center p-1 text-lg md:text-xl bg-primary-600 rounded-full"
+                                    >
+                                    <Icon icon=icondata::AiShareAltOutlined/>
+       
+                                </button>
+                                // <div class="flex items-center justify-center w-8 h-8 bg-white/15 rounded-full">
+
+                                //     <Icon icon=icondata::BsSend/>
+                                // </div>
                             </div>
                         </a>
                     }
