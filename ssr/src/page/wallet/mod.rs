@@ -17,7 +17,7 @@ use crate::{
 use candid::Principal;
 use leptos::*;
 use leptos_icons::*;
-use std::time::Duration;
+// use std::time::Duration;
 use tokens::{TokenRootList, TokenView};
 use txn::{provider::get_history_provider, TxnView};
 
