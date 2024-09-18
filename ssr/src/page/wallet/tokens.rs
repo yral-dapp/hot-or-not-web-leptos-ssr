@@ -100,9 +100,11 @@ pub fn TokenView(
         <Suspense fallback=FallbackToken>
             {move || {
                 info.map(|info| {
+             let principal = user_principal.to_text();
+
                     view! {
                         <a
-                            href=format!("/token/info/{token_root}")
+                            href=format!("/token/info/{token_root}/{principal}")
                             _ref=_ref
                             class="grid grid-cols-2 grid-rows-1 w-full items-center p-4 rounded-xl border-2 border-neutral-700 bg-white/15"
                         >
