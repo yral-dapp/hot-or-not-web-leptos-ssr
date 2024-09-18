@@ -23,9 +23,20 @@ fn init_cf() -> gob_cloudflare::CloudflareAuth {
 }
 
 fn init_cookie_key() -> Key {
-    let cookie_key_str = env::var("COOKIE_KEY").expect("`COOKIE_KEY` is required!");
-    let cookie_key_raw =
-        hex::decode(cookie_key_str).expect("Invalid `COOKIE_KEY` (must be length 128 hex)");
+    let cookie_key_raw = {
+        #[cfg(not(feature = "local-bin"))]
+        {
+            let cookie_key_str = env::var("COOKIE_KEY").expect("`COOKIE_KEY` is required!");
+            hex::decode(cookie_key_str).expect("Invalid `COOKIE_KEY` (must be length 128 hex)")
+        }
+        #[cfg(feature = "local-bin")]
+        {
+            use rand_chacha::rand_core::{OsRng, RngCore};
+            let mut cookie_key = [0u8; 64];
+            OsRng.fill_bytes(&mut cookie_key);
+            cookie_key.to_vec()
+        }
+    };
     Key::from(&cookie_key_raw)
 }
 
