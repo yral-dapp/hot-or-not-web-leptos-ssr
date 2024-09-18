@@ -34,7 +34,7 @@ ic-agent = { version = "0.36.0", default-features = false, features = [
     "reqwest",
 ] }
 ic-base-types = { git = "https://github.com/dfinity/ic", rev = "tags/release-2024-05-29_23-02-base" }
-icp-ledger = { git = "https://github.com/dfinity/ic", rev = "tags/release-2024-05-29_23-02-base"}
+icp-ledger = { git = "https://github.com/dfinity/ic", rev = "tags/release-2024-05-29_23-02-base" }
 serde-wasm-bindgen = "0.6.5"
 futures = "0.3.30"
 leptos-use = "0.12.0"
@@ -105,6 +105,8 @@ tonic = { version = "0.12.0", default-features = false, features = [
 prost = "0.13.0"
 priority-queue = "2.1.0"
 rust_decimal = "1.36"
+# firebase-js-rs = { git = "https://github.com/wa1aric/firebase-js-rs.git" }
+firestore = { version = "0.43.1", optional = true }
 
 [build-dependencies]
 serde = { version = "1.0", features = ["derive"] }
@@ -154,6 +156,7 @@ ssr = [
     "tonic/tls-webpki-roots",
     "tonic/transport",
     "tonic-build/transport",
+    "dep:firestore",
 ]
 # Fetch mock referral history instead of history via canister
 mock-referral-history = ["dep:rand_chacha", "k256/arithmetic"]
@@ -168,6 +171,7 @@ cloudflare = ["dep:gob-cloudflare"]
 backend-admin = []
 ga4 = []
 mock-wallet-history = ["dep:rand_chacha"]
+firestore = []
 release-bin = [
     "ssr",
     "cloudflare",
@@ -176,6 +180,7 @@ release-bin = [
     "backend-admin",
     "oauth-ssr",
     "ga4",
+    "firestore",
 ]
 release-lib = [
     "hydrate",
@@ -184,6 +189,7 @@ release-lib = [
     "backend-admin",
     "oauth-hydrate",
     "ga4",
+    "firestore",
 ]
 local-bin = [
     "ssr",

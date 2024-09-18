@@ -99,6 +99,20 @@ fn init_google_oauth() -> crate::auth::core_clients::CoreClients {
     }
 }
 
+#[cfg(feature = "firestore")]
+async fn init_firestoredb() -> firestore::FirestoreDb {
+    use firestore::{FirestoreDb, FirestoreDbOptions};
+    // let options = FirestoreDbOptions::new("icpump".to_string());
+
+    // TODO: add this for prod
+    let options = FirestoreDbOptions::new("hot-or-not-feed-intelligence".to_string())
+        .with_database_id("ic-pump-fun".to_string());
+
+    FirestoreDb::with_options(options)
+        .await
+        .expect("failed to create db")
+}
+
 #[cfg(feature = "ga4")]
 async fn init_grpc_offchain_channel() -> tonic::transport::Channel {
     use crate::consts::OFF_CHAIN_AGENT_GRPC_URL;
@@ -211,6 +225,8 @@ impl AppStateBuilder {
             google_oauth_clients: init_google_oauth(),
             #[cfg(feature = "ga4")]
             grpc_offchain_channel: init_grpc_offchain_channel().await,
+            #[cfg(feature = "firestore")]
+            firestore_db: init_firestoredb().await,
         };
 
         AppStateRes {

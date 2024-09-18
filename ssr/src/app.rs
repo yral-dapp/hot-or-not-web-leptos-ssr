@@ -32,6 +32,8 @@ use crate::{
     utils::event_streaming::EventHistory,
 };
 
+// use firebase_js_rs::app::initialize_app;
+// use firebase_js_rs::Config;
 use leptos::*;
 use leptos_meta::*;
 use leptos_router::*;
@@ -87,6 +89,23 @@ pub fn App() -> impl IntoView {
     {
         use crate::utils::ml_feed::ml_feed_grpcweb::MLFeed;
         provide_context(MLFeed::default());
+
+        // firestore
+
+        // let config = Config::initialize(
+        //     "AIzaSyASDBb33McHVMntTDAJripGRpAmubygwFo",
+        //     Some("icpump.firebaseapp.com".to_string()),
+        //     None,
+        //     Some(String::from("icpump")),
+        //     Some("icpump.appspot.com".to_string()),
+        //     Some("1038497022920".to_string()),
+        //     Some("1:1038497022920:web:c5b2322dd133fa95a036fd".to_string()),
+        // );
+
+        // // Initialize Firebase
+        // let firebase_app = initialize_app(config).unwrap();
+
+        // provide_context(firebase_app);
     }
 
     // History Tracking
@@ -130,6 +149,10 @@ pub fn App() -> impl IntoView {
                 "#}
             </Script>
         </Show>
+
+
+        // <Script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></Script>
+        // <Script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></Script>
 
         // content for this welcome page
         <Router fallback=|| view! { <NotFound/> }.into_view()>

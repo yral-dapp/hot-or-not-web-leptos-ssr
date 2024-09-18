@@ -1,3 +1,4 @@
+pub mod icpump;
 #[cfg(feature = "ssr")]
 mod server_impl;
 
