@@ -347,3 +347,16 @@ pub fn PostView() -> impl IntoView {
         </Suspense>
     }
 }
+
+// #[component]
+// pub fn PostView() -> impl IntoView {
+//     if show_cdao_page() {
+//         view! {
+//             <CreatorDaoRootPage/>
+//         }
+//     } else {
+//         view! {
+//             <YralPostView/>
+//         }
+//     }
+// }

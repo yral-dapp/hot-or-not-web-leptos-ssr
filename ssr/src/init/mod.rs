@@ -1,7 +1,11 @@
 #[cfg(feature = "local-bin")]
 pub mod containers;
 
-use std::env;
+use std::{
+    env,
+    fs::OpenOptions,
+    io::{BufWriter, Write},
+};
 
 use axum_extra::extract::cookie::Key;
 use leptos::LeptosOptions;
@@ -108,6 +112,36 @@ fn init_google_oauth() -> crate::auth::core_clients::CoreClients {
         hotornot_google_oauth,
         icpump_google_oauth,
     }
+}
+
+#[cfg(feature = "firestore")]
+async fn init_firestoredb() -> firestore::FirestoreDb {
+    use firestore::{FirestoreDb, FirestoreDbOptions};
+
+    // firestore-rs needs the service account key to be in a file
+    let sa_key_file = env::var("HON_GOOGLE_SERVICE_ACCOUNT").expect("HON_GOOGLE_SERVICE_ACCOUNT");
+    let file = OpenOptions::new()
+        .write(true)
+        .create(true)
+        .truncate(true)
+        .open("hon_google_service_account.json")
+        .expect("create file");
+
+    let mut f = BufWriter::new(file);
+    f.write_all(sa_key_file.as_bytes()).expect("write file");
+    f.flush().expect("flush file");
+
+    env::set_var(
+        "GOOGLE_APPLICATION_CREDENTIALS",
+        "hon_google_service_account.json",
+    );
+
+    let options = FirestoreDbOptions::new("hot-or-not-feed-intelligence".to_string())
+        .with_database_id("ic-pump-fun".to_string());
+
+    FirestoreDb::with_options(options)
+        .await
+        .expect("failed to create db")
 }
 
 #[cfg(feature = "ga4")]
@@ -222,6 +256,8 @@ impl AppStateBuilder {
             google_oauth_clients: init_google_oauth(),
             #[cfg(feature = "ga4")]
             grpc_offchain_channel: init_grpc_offchain_channel().await,
+            #[cfg(feature = "firestore")]
+            firestore_db: init_firestoredb().await,
         };
 
         AppStateRes {
