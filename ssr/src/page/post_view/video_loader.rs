@@ -1,15 +1,21 @@
 use std::cmp::Ordering;
 
+use codee::string::FromToStringCodec;
 use leptos::{html::Video, *};
+use leptos_use::storage::use_local_storage;
 use leptos_use::use_event_listener;
 
+use crate::consts::USER_ONBOARDING_STORE;
+use crate::page::post_view::BetEligiblePostCtx;
 use crate::utils::event_streaming::events::VideoWatched;
 use crate::{
     canister::{
         individual_user_template::PostViewDetailsFromFrontend,
         utils::{bg_url, mp4_url},
     },
-    component::{feed_popup::FeedPopUp, video_player::VideoPlayer},
+    component::{
+        feed_popup::FeedPopUp, onboarding_flow::OnboardingPopUp, video_player::VideoPlayer,
+    },
     state::{
         auth::account_connected_reader, canisters::unauth_canisters,
         local_storage::use_referrer_store,
@@ -34,6 +40,13 @@ pub fn BgView(
     let (show_refer_login_popup, set_show_refer_login_popup) = create_signal(true);
     let (referrer_store, _, _) = use_referrer_store();
 
+    let onboarding_eligible_post_context = BetEligiblePostCtx::default();
+    provide_context(onboarding_eligible_post_context.clone());
+
+    let (show_onboarding_popup, set_show_onboarding_popup) = create_signal(false);
+    let (is_onboarded, set_onboarded, _) =
+        use_local_storage::<bool, FromToStringCodec>(USER_ONBOARDING_STORE);
+
     create_effect(move |_| {
         if current_idx.get() % 5 != 0 {
             set_show_login_popup.update(|n| *n = false);
@@ -41,6 +54,14 @@ pub fn BgView(
             set_show_login_popup.update(|n| *n = true);
         }
         Some(())
+    });
+
+    create_effect(move |_| {
+        if onboarding_eligible_post_context.can_place_bet.get() && (!is_onboarded.get()) {
+            set_show_onboarding_popup.update(|show| *show = true);
+        } else {
+            set_show_onboarding_popup.update(|show| *show = false);
+        }
     });
 
     view! {
@@ -74,7 +95,10 @@ pub fn BgView(
                     login_text="Sign Up"
                 />
             </Show>
-            {move || post().map(|post| view! { <VideoDetailsOverlay post /> })}
+            <Show when=move || { show_onboarding_popup.get() }>
+                <OnboardingPopUp onboard_on_click=set_onboarded/>
+            </Show>
+            {move || post().map(|post| view! { <VideoDetailsOverlay post/> })}
             {children()}
         </div>
     }
@@ -140,7 +164,6 @@ pub fn VideoView(
                 let send_view_res = canisters
                     .individual_user(canister_id)
                     .await
-                    .ok()?
                     .update_post_add_view_details(post_id, payload)
                     .await;
 
@@ -223,11 +246,5 @@ pub fn VideoViewForQueue(
 
     let post = Signal::derive(move || video_queue.with(|q| q.get(idx).cloned()));
 
-    view! {
-        <VideoView
-            post
-            _ref=container_ref
-            muted
-        />
-    }
+    view! { <VideoView post _ref=container_ref muted/> }
 }

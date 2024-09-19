@@ -5,17 +5,18 @@ use leptos_use::use_interval_fn;
 use web_time::Duration;
 
 use crate::{
-    canister::individual_user_template::{BettingStatus, PlaceBetArg, Result2},
+    canister::individual_user_template::{BettingStatus, PlaceBetArg, Result3},
     component::{
         bullet_loader::BulletLoader, canisters_prov::AuthCansProvider, hn_icons::*,
         spinner::SpinnerFit,
     },
+    page::post_view::BetEligiblePostCtx,
     state::canisters::{unauth_canisters, Canisters},
     try_or_redirect_opt,
     utils::{
         posts::PostDetails,
         profile::{BetDetails, BetKind, BetOutcome},
-        timestamp::to_hh_mm_ss,
+        time::to_hh_mm_ss,
         MockPartialEq,
     },
 };
@@ -69,7 +70,7 @@ async fn bet_on_post(
     post_id: u64,
     post_canister_id: Principal,
 ) -> Result<BettingStatus, ServerFnError> {
-    let user = canisters.authenticated_user().await?;
+    let user = canisters.authenticated_user().await;
 
     let place_bet_arg = PlaceBetArg {
         bet_amount,
@@ -81,8 +82,8 @@ async fn bet_on_post(
     let res = user.bet_on_currently_viewing_post(place_bet_arg).await?;
 
     let betting_status = match res {
-        Result2::Ok(p) => p,
-        Result2::Err(_e) => {
+        Result3::Ok(p) => p,
+        Result3::Err(_e) => {
             // todo send event that betting failed
             return Err(ServerFnError::new(
                 "bet on bet_on_currently_viewing_post error".to_string(),
@@ -189,8 +190,19 @@ fn HNButtonOverlay(
         }
     });
 
+    let BetEligiblePostCtx { can_place_bet } = expect_context();
+
+    create_effect(move |_| {
+        if !running.get() {
+            can_place_bet.set(true)
+        } else {
+            can_place_bet.set(false)
+        }
+    });
+
     view! {
         <AuthCansProvider let:canisters>
+
             {
                 create_effect(move |_| {
                     let Some(bet_direction) = bet_direction() else {
@@ -223,7 +235,7 @@ fn HNButtonOverlay(
                     coin
                 />
             </button>
-            <HNButton disabled=running bet_direction kind=BetKind::Not />
+            <HNButton disabled=running bet_direction kind=BetKind::Not/>
         </div>
         // Bottom row: Hot <down arrow> Not
         // most of the CSS is for alignment with above icons
@@ -309,6 +321,7 @@ fn HNWonLost(participation: BetDetails) -> impl IntoView {
                 } else {
                     view! { <LostBadge /> }
                 }}
+
             </div>
 
         </div>
@@ -385,8 +398,8 @@ fn HNAwaitingResults(
                     <BetTimer post refetch_bet participation />
                 </div>
             </div>
-            <p class="p-1 text-center text-white rounded-full bg-black/15 ps-2">
-                You staked {bet_amount}tokens on {bet_direction_text}Result is still pending
+            <p class="text-center text-white bg-black/15 rounded-full p-1 ps-2">
+                You staked {bet_amount} tokens on {bet_direction_text} Result is still pending
             </p>
         </div>
     }
@@ -401,14 +414,14 @@ pub fn HNUserParticipation(
     view! {
         {match participation.outcome {
             BetOutcome::AwaitingResult => {
-                view! { <HNAwaitingResults post refetch_bet participation /> }
+                view! { <HNAwaitingResults post refetch_bet participation/> }
             }
             BetOutcome::Won(_) => {
-                view! { <HNWonLost participation /> }
+                view! { <HNWonLost participation/> }
             }
             BetOutcome::Draw(_) => view! { "Draw" }.into_view(),
             BetOutcome::Lost => {
-                view! { <HNWonLost participation /> }
+                view! { <HNWonLost participation/> }
             }
         }
             .into_view()}
@@ -424,13 +437,13 @@ fn MaybeHNButtons(
     refetch_bet: Trigger,
 ) -> impl IntoView {
     let post = store_value(post);
-    let is_betting_enabled = create_resource(
+    let is_betting_enabled: Resource<(), Option<bool>> = create_resource(
         move || (),
         move |_| {
             let post = post.get_value();
             async move {
                 let canisters = unauth_canisters();
-                let user = canisters.individual_user(post.canister_id).await.ok()?;
+                let user = canisters.individual_user(post.canister_id).await;
                 let res = user
                     .get_hot_or_not_bet_details_for_this_post(post.post_id)
                     .await
@@ -439,6 +452,7 @@ fn MaybeHNButtons(
             }
         },
     );
+    let BetEligiblePostCtx { can_place_bet } = expect_context();
 
     view! {
         <Suspense fallback=LoaderWithShadowBg>
@@ -446,6 +460,7 @@ fn MaybeHNButtons(
                 is_betting_enabled()
                     .and_then(|enabled| {
                         if !enabled.unwrap_or_default() {
+                            can_place_bet.set(false);
                             return None;
                         }
                         Some(
@@ -478,7 +493,7 @@ fn ShadowBg() -> impl IntoView {
         <div
             class="absolute bottom-0 left-0 h-2/5 w-dvw -z-[1]"
             style="background: linear-gradient(to bottom, #00000000 0%, #00000099 45%, #000000a8 100%, #000000cc 100%, #000000a8 100%);"
-        />
+        ></div>
     }
 }
 
@@ -503,7 +518,7 @@ pub fn HNGameOverlay(post: PostDetails) -> impl IntoView {
                 let cans = canisters.clone();
                 async move {
                     let post = post.get_value();
-                    let user = cans.authenticated_user().await?;
+                    let user = cans.authenticated_user().await;
                     let bet_participation = user
                         .get_individual_hot_or_not_bet_placed_by_this_profile(
                             post.canister_id,

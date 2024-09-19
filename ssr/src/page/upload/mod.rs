@@ -5,7 +5,11 @@ mod video_upload;
 use crate::{
     component::toggle::ToggleWithLabel,
     state::canisters::auth_canisters_store,
-    utils::event_streaming::events::{VideoUploadInitiated, VideoUploadUploadButtonClicked},
+    utils::{
+        event_streaming::events::{VideoUploadInitiated, VideoUploadUploadButtonClicked},
+        host::show_cdao_page,
+        web::FileWithUrl,
+    },
 };
 
 use leptos::{
@@ -13,8 +17,9 @@ use leptos::{
     *,
 };
 
+use leptos_router::Redirect;
 use validators::{description_validator, hashtags_validator};
-use video_upload::{FileWithUrl, PreVideoUpload, VideoUploader};
+use video_upload::{PreVideoUpload, VideoUploader};
 
 #[derive(Clone)]
 struct UploadParams {
@@ -156,7 +161,14 @@ fn PreUploadView(trigger_upload: WriteSignal<Option<UploadParams>>) -> impl Into
 }
 
 #[component]
-pub fn UploadPostPage() -> impl IntoView {
+pub fn CreatorDaoCreatePage() -> impl IntoView {
+    view! {
+        <Redirect path="/token/create"/>
+    }
+}
+
+#[component]
+pub fn YralUploadPostPage() -> impl IntoView {
     let trigger_upload = create_rw_signal(None::<UploadParams>);
 
     view! {
@@ -174,5 +186,18 @@ pub fn UploadPostPage() -> impl IntoView {
                 </Show>
             </div>
         </div>
+    }
+}
+
+#[component]
+pub fn UploadPostPage() -> impl IntoView {
+    if show_cdao_page() {
+        view! {
+            <CreatorDaoCreatePage/>
+        }
+    } else {
+        view! {
+            <YralUploadPostPage/>
+        }
     }
 }

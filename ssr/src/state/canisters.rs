@@ -1,26 +1,32 @@
 use std::sync::Arc;
 
-use candid::Principal;
+use candid::{Decode, Principal};
 use ic_agent::{identity::DelegatedIdentity, AgentError, Identity};
 use leptos::*;
 use serde::{Deserialize, Serialize};
+use sns_validation::pbs::sns_pb::SnsInitPayload;
 use yral_metadata_client::MetadataClient;
 use yral_metadata_types::UserMetadata;
 
 use crate::{
     auth::DelegatedIdentityWire,
     canister::{
-        individual_user_template::{IndividualUserTemplate, Result16, UserCanisterDetails},
+        individual_user_template::{
+            IndividualUserTemplate, Result23, Result7, UserCanisterDetails,
+        },
         platform_orchestrator::PlatformOrchestrator,
         post_cache::PostCache,
-        user_index::UserIndex,
+        sns_governance::SnsGovernance,
+        sns_ledger::SnsLedger,
+        sns_root::SnsRoot,
+        user_index::{Result1, UserIndex},
         PLATFORM_ORCHESTRATOR_ID, POST_CACHE_ID,
     },
-    consts::{FALLBACK_USER_INDEX, METADATA_API_BASE},
+    consts::METADATA_API_BASE,
     utils::{ic::AgentWrapper, profile::ProfileDetails, MockPartialEq, ParentResource},
 };
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct CanistersAuthWire {
     id: DelegatedIdentityWire,
     user_canister: Principal,
@@ -106,8 +112,22 @@ impl Canisters<true> {
         self.user_canister
     }
 
-    pub async fn authenticated_user(&self) -> Result<IndividualUserTemplate<'_>, AgentError> {
+    pub async fn authenticated_user(&self) -> IndividualUserTemplate<'_> {
         self.individual_user(self.user_canister).await
+    }
+
+    pub async fn deploy_cdao_sns(
+        &self,
+        init_payload: SnsInitPayload,
+    ) -> Result<Result7, AgentError> {
+        let agent = self.agent.get_agent().await;
+        let args = candid::encode_args((init_payload, 90_u64)).unwrap();
+        let bytes = agent
+            .update(&self.user_canister, "deploy_cdao_sns")
+            .with_arg(args)
+            .call_and_wait()
+            .await?;
+        Ok(Decode!(&bytes, Result7)?)
     }
 
     pub fn profile_details(&self) -> ProfileDetails {
@@ -124,30 +144,24 @@ impl Canisters<true> {
 }
 
 impl<const A: bool> Canisters<A> {
-    pub async fn post_cache(&self) -> Result<PostCache<'_>, AgentError> {
-        let agent = self.agent.get_agent().await?;
-        Ok(PostCache(POST_CACHE_ID, agent))
+    pub async fn post_cache(&self) -> PostCache<'_> {
+        let agent = self.agent.get_agent().await;
+        PostCache(POST_CACHE_ID, agent)
     }
 
-    pub async fn individual_user(
-        &self,
-        user_canister: Principal,
-    ) -> Result<IndividualUserTemplate<'_>, AgentError> {
-        let agent = self.agent.get_agent().await?;
-        Ok(IndividualUserTemplate(user_canister, agent))
+    pub async fn individual_user(&self, user_canister: Principal) -> IndividualUserTemplate<'_> {
+        let agent = self.agent.get_agent().await;
+        IndividualUserTemplate(user_canister, agent)
     }
 
-    pub async fn user_index_with(
-        &self,
-        subnet_principal: Principal,
-    ) -> Result<UserIndex<'_>, AgentError> {
-        let agent = self.agent.get_agent().await?;
-        Ok(UserIndex(subnet_principal, agent))
+    pub async fn user_index_with(&self, subnet_principal: Principal) -> UserIndex<'_> {
+        let agent = self.agent.get_agent().await;
+        UserIndex(subnet_principal, agent)
     }
 
-    pub async fn orchestrator(&self) -> Result<PlatformOrchestrator<'_>, AgentError> {
-        let agent = self.agent.get_agent().await?;
-        Ok(PlatformOrchestrator(PLATFORM_ORCHESTRATOR_ID, agent))
+    pub async fn orchestrator(&self) -> PlatformOrchestrator<'_> {
+        let agent = self.agent.get_agent().await;
+        PlatformOrchestrator(PLATFORM_ORCHESTRATOR_ID, agent)
     }
 
     pub async fn get_individual_canister_by_user_principal(
@@ -161,12 +175,35 @@ impl<const A: bool> Canisters<A> {
         if let Some(meta) = meta {
             return Ok(Some(meta.user_canister_id));
         }
-        // Fallback to oldest user index
-        let user_idx = self.user_index_with(*FALLBACK_USER_INDEX).await?;
-        let can = user_idx
-            .get_user_canister_id_from_user_principal_id(user_principal)
-            .await?;
-        Ok(can)
+        #[cfg(any(feature = "local-bin", feature = "local-lib"))]
+        {
+            Ok(None)
+        }
+        #[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
+        {
+            use crate::consts::FALLBACK_USER_INDEX;
+            // Fallback to oldest user index
+            let user_idx = self.user_index_with(*FALLBACK_USER_INDEX).await;
+            let can = user_idx
+                .get_user_canister_id_from_user_principal_id(user_principal)
+                .await?;
+            Ok(can)
+        }
+    }
+
+    pub async fn sns_governance(&self, canister_id: Principal) -> SnsGovernance<'_> {
+        let agent = self.agent.get_agent().await;
+        SnsGovernance(canister_id, agent)
+    }
+
+    pub async fn sns_ledger(&self, canister_id: Principal) -> SnsLedger<'_> {
+        let agent = self.agent.get_agent().await;
+        SnsLedger(canister_id, agent)
+    }
+
+    pub async fn sns_root(&self, canister_id: Principal) -> SnsRoot<'_> {
+        let agent = self.agent.get_agent().await;
+        SnsRoot(canister_id, agent)
     }
 
     async fn subnet_indexes(&self) -> Result<Vec<Principal>, AgentError> {
@@ -181,7 +218,7 @@ impl<const A: bool> Canisters<A> {
             // TODO: this is temporary
             let blacklisted =
                 HashSet::from([Principal::from_text("rimrc-piaaa-aaaao-aaljq-cai").unwrap()]);
-            let orchestrator = self.orchestrator().await?;
+            let orchestrator = self.orchestrator().await;
             Ok(orchestrator
                 .get_all_available_subnet_orchestrators()
                 .await?
@@ -209,10 +246,14 @@ async fn create_individual_canister(
 
     let discrim = u128::from_be_bytes(by);
     let subnet_idx = subnet_idxs[(discrim % subnet_idxs.len() as u128) as usize];
-    let idx = canisters.user_index_with(subnet_idx).await?;
-    let user_canister = idx
-        .get_requester_principals_canister_id_create_if_not_exists_and_optionally_allow_referrer()
-        .await?;
+    let idx = canisters.user_index_with(subnet_idx).await;
+    let user_canister = match idx
+        .get_requester_principals_canister_id_create_if_not_exists()
+        .await?
+    {
+        Result1::Ok(val) => Ok(val),
+        Result1::Err(e) => Err(ServerFnError::new(e)),
+    }?;
 
     canisters
         .metadata_client
@@ -244,7 +285,7 @@ pub async fn do_canister_auth(
         create_individual_canister(&canisters).await?
     };
 
-    let user = canisters.authenticated_user().await?;
+    let user = canisters.authenticated_user().await;
 
     if let Some(referrer_principal_id) = referrer {
         let referrer_canister = canisters
@@ -264,8 +305,8 @@ pub async fn do_canister_auth(
         .await
         .map_err(|e| e.to_string())
     {
-        Ok(Result16::Ok(_)) => (),
-        Err(e) | Ok(Result16::Err(e)) => log::warn!("Failed to update last access time: {}", e),
+        Ok(Result23::Ok(_)) => (),
+        Err(e) | Ok(Result23::Err(e)) => log::warn!("Failed to update last access time: {}", e),
     }
     let profile_details = user.get_profile_details().await?.into();
 

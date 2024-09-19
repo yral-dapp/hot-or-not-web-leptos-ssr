@@ -19,7 +19,12 @@ fn NotifInnerComponent(details: ProfileDetails) -> impl IntoView {
         <h2>{details.username_or_principal()}</h2>
         <br/>
         <div class="flex flex-row gap-2 text-black">
-            <button class="p-2 bg-gray-200 rounded-md" on:click=move |_| on_token_click.dispatch(())>"Get Token"</button>
+            <button
+                class="p-2 bg-gray-200 rounded-md"
+                on:click=move |_| on_token_click.dispatch(())
+            >
+                "Get Token"
+            </button>
         </div>
     }
 }
