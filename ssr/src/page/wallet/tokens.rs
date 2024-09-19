@@ -129,33 +129,38 @@ pub fn TokenView(
                         };
                     };
                     view! {
-                        <a
-                            href=format!("/token/info/{token_root}/{principal}")
-                            _ref=_ref
-                            class="grid grid-cols-2 grid-rows-1 items-center p-4 w-full rounded-xl border-2 border-neutral-700 bg-white/15"
-                        >
-                            <div class="flex flex-row gap-2 justify-self-start items-center">
-                                <img class="w-12 h-12 rounded-full" src=info.logo_b64.clone() />
-                                <span class="text-white truncate">{info.name.clone()}</span>
-                            </div>
-                            <div class="flex flex-row gap-2 justify-self-end items-center text-base text-white">
-                                <span class="truncate">
-                                    {format!("{} {}", info.balance.humanize(), info.symbol)}
-                                </span>
-                                <button
-                                    on:click=move |event| {
-                                        event.prevent_default();
-                                        event.stop_propagation();
-                                        share_profile_url();
-                                    }
-                                    class="p-1 text-lg text-center text-white rounded-full md:text-xl bg-primary-600"
+                        <div class="relative w-full grid grid-cols-[1fr,auto] items-center p-4 rounded-xl border-2 border-neutral-700 bg-white/15">
+                            <a
+                                href=format!("/token/info/{token_root}/{principal}")
+                                class="flex items-center w-full"
+                            >
+                                <div class="flex flex-row flex-grow gap-2 items-center">
+                                    <img class="w-12 h-12 rounded-full" src=info.logo_b64.clone() />
+                                    <span class="text-white truncate">{info.name.clone()}</span>
+                                </div>
+                                <div
+                                    class="flex flex-row gap-2 items-center ml-auto text-base text-white"
+                                    style="padding-right:33px; "
                                 >
-                                    <Icon icon=icondata::AiShareAltOutlined />
+                                    <span class="truncate">
+                                        {format!("{} {}", info.balance.humanize(), info.symbol)}
+                                    </span>
+                                </div>
+                            </a>
 
-                                </button>
-                                <ShareProfilePopup sharing_action=share_action share_link message />
-                            </div>
-                        </a>
+                            <button
+                                on:click=move |event| {
+                                    event.prevent_default();
+                                    event.stop_propagation();
+                                    share_profile_url();
+                                }
+                                class="absolute right-4 top-1/2 p-1 text-lg text-center text-white rounded-full transform -translate-y-1/2 md:text-xl bg-primary-600"
+                            >
+                                <Icon icon=icondata::AiShareAltOutlined />
+                            </button>
+
+                            <ShareProfilePopup sharing_action=share_action share_link message />
+                        </div>
                     }
                 })
             }}
