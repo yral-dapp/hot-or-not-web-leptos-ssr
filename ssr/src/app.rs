@@ -1,6 +1,5 @@
 use crate::page::icpump::ICPumpLanding;
 use crate::page::profile::YourProfileView;
-use crate::page::view_profile_redirect::ProfileInfo;
 use crate::{
     component::{base_route::BaseRoute, nav::NavBar},
     error_template::{AppError, ErrorTemplate},

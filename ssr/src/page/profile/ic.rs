@@ -9,6 +9,7 @@ use crate::{
     utils::profile::PROFILE_CHUNK_SZ,
 };
 
+#[allow(private_bounds)]
 #[component]
 pub fn ProfileStream<Prov, EF, N>(
     provider: Prov,

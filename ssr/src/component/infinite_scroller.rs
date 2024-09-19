@@ -60,10 +60,7 @@ where
                 data: mut fetched,
                 end: list_end,
             } = match provider.get_by_cursor(cursor, cursor + fetch_count).await {
-                Ok(t) => {
-                    leptos::logging::log!("2 Fetching tokens res : {:?} {}", t.data.len(), t.end);
-                    t
-                }
+                Ok(t) => t,
                 Err(e) => {
                     log::warn!("failed to fetch data err {e}");
                     PageEntry {
