@@ -49,7 +49,6 @@ fn Stat(stat: u64, #[prop(into)] info: String) -> impl IntoView {
 
 #[component]
 fn ListSwitcher(
-    is_native_profile: bool,
     user_canister: Principal,
     user_principal: Principal,
 ) -> impl IntoView {
@@ -93,7 +92,7 @@ fn ListSwitcher(
                 <ProfileSpeculations user_canister/>
             </Show>
             <Show when=move || current_tab() == 2>
-                <ProfileTokens is_native_profile user_canister user_principal />
+                <ProfileTokens user_canister user_principal />
             </Show>
         </div>
     }
@@ -101,7 +100,6 @@ fn ListSwitcher(
 
 #[component]
 fn ProfileViewInner(
-    is_native_profile: bool,
     user: ProfileDetails,
     user_canister: Principal,
 ) -> impl IntoView {
@@ -152,7 +150,7 @@ fn ProfileViewInner(
                     <Stat stat=user.hots info="Hots"/>
                     <Stat stat=user.nots info="Nots"/>
                 </div>
-                <ListSwitcher is_native_profile user_canister user_principal=user.principal />
+                <ListSwitcher user_canister user_principal=user.principal />
             </div>
         </div>
     }
@@ -191,7 +189,7 @@ pub fn ProfileView() -> impl IntoView {
                 user_details
                     .get()
                     .map(|user_details| {
-                        view! { <ProfileComponent is_native_profile=false user_details /> }
+                        view! { <ProfileComponent user_details /> }
                     })
             }}
 
@@ -203,8 +201,7 @@ pub fn ProfileView() -> impl IntoView {
 pub fn YourProfileView() -> impl IntoView {
     view! {
         <AuthCansProvider fallback=FullScreenSpinner let:canister>
-            <ProfileComponent is_native_profile=true
-                user_details=Some((
+            <ProfileComponent user_details=Some((
                     canister.profile_details(),
                     canister.user_canister(),
                 ))
@@ -215,7 +212,6 @@ pub fn YourProfileView() -> impl IntoView {
 
 #[component]
 pub fn ProfileComponent(
-    is_native_profile: bool,
     user_details: Option<(ProfileDetails, Principal)>,
 ) -> impl IntoView {
     let ProfilePostsContext {
@@ -234,7 +230,7 @@ pub fn ProfileComponent(
     view! {
         {move || {
             if let Some((user, user_canister)) = user_details.clone() {
-                view! { <ProfileViewInner is_native_profile user user_canister /> }
+                view! { <ProfileViewInner user user_canister /> }
             } else {
                 view! { <Redirect path="/"/> }
             }

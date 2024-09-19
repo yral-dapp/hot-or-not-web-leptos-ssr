@@ -7,7 +7,7 @@ use crate::{
         bullet_loader::BulletLoader, claim_tokens::ClaimTokensOrRedirectError,
         token_confetti_symbol::TokenConfettiSymbol,
     },
-    state::canisters::unauth_canisters,
+    state::canisters::{authenticated_canisters, unauth_canisters},
     utils::token::{get_token_metadata, TokenCans},
 };
 
@@ -69,11 +69,13 @@ fn TokenView(user_principal: Principal, token: TokenCans) -> impl IntoView {
 }
 
 #[component]
-fn CreateYourToken() -> impl IntoView {
+fn CreateYourToken(
+    header_text: &'static str,
+) -> impl IntoView {
     view! {
         <div class="w-full flex flex-col items-center gap-4">
             <span class="text-2xl text-primary-600 text-center">
-                Create your own <br /> <span class="text-white">Meme Coin</span>
+                { header_text } <br /> <span class="text-white">Meme Coin</span>
             </span>
             <TokenConfettiSymbol class="w-2/3 md:w-1/2 lg:w-1/3 mx-8" />
         </div>
@@ -82,7 +84,6 @@ fn CreateYourToken() -> impl IntoView {
 
 #[component]
 pub fn ProfileTokens(
-    is_native_profile: bool,
     user_canister: Principal,
     user_principal: Principal,
 ) -> impl IntoView {
@@ -105,6 +106,8 @@ pub fn ProfileTokens(
         },
     );
 
+    let cans_res = authenticated_canisters();
+
     view! {
         <div class="flex flex-col w-full items-center gap-4">
             <Suspense fallback=|| {
@@ -119,27 +122,36 @@ pub fn ProfileTokens(
                         .map(|tokens| tokens.unwrap_or_default())
                         .map(|tokens| {
                             let empty = tokens.is_empty();
+                            let canisters = (cans_res.0)().unwrap().ok().unwrap().canisters().ok().unwrap();
+                            let is_native_profile = canisters.profile_details().principal == user_principal;
                             view! {
                                 {tokens
                                     .into_iter()
                                     .map(|token| view! { <TokenView user_principal token /> })
                                     .collect_view()}
-                                <Show when=move || { is_native_profile && empty }>
-                                    <CreateYourToken />
+                                <Show when=move || { empty }>
+                                    <CreateYourToken header_text=(||{
+                                        if is_native_profile {
+                                            "Create your own"
+                                        } else {
+                                            "They have not created any"
+                                        }
+                                    })()
+                                    />
+                                </Show>
+                                <Show when=move || is_native_profile>
+                                    <a
+                                        href="/token/create"
+                                        class="text-xl bg-primary-600 py-4 w-2/3 md:w-1/2 lg:w-1/3 rounded-full text-center text-white"
+                                    >
+                                        Create
+                                    </a>
                                 </Show>
                             }
                         })
                 }}
 
             </Suspense>
-            <Show when=move || is_native_profile>
-                <a
-                    href="/token/create"
-                    class="text-xl bg-primary-600 py-4 w-2/3 md:w-1/2 lg:w-1/3 rounded-full text-center text-white"
-                >
-                    Create
-                </a>
-            </Show>
         </div>
     }
 }
