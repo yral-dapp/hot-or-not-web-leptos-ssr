@@ -336,47 +336,30 @@ fn ShareProfileContent(
     let share_whatsapp = move |_| {
         share_url(&whatsapp_url);
     };
-    // let (linkedin_url, set_linkedin_url) = create_signal(String::new());
-    // let (linkedin_app_url, set_linkedin_app_url) = create_signal(String::new());
-    let (error_occurred, set_error_occurred) = create_signal(false);
     let window = use_window();
     let linkedin_cloned_url = linkedin_url.clone();
     let linkedin_app_cloned_url = linkedin_app_url.clone();
-    let error_occurred_cloned = error_occurred.clone();
 
     let share_linkedin = move || {
         if let Some(win) = window.as_ref() {
-            // Attempt to open the app URL
-            let result = win.location().set_href(&linkedin_app_cloned_url);
-            if result.is_err() {
-                // Log error and set signal
-                log::error!("Failed to set app URL: {:?}", result.err());
-                set_error_occurred(true);
+            // Try opening the LinkedIn app URL
+            match win.location().set_href(&linkedin_app_cloned_url) {
+                Ok(_) => {
+                    log::info!("Opened LinkedIn app successfully.");
+                }
+                Err(e) => {
+                    log::error!("Failed to open LinkedIn app: {:?}", e);
 
-                // Redirect to the web URL after a short delay if app URL fails
-                leptos::set_timeout(
-                    move || {
-                        if let Err(e) = win.location().set_href(&linkedin_cloned_url) {
-                            log::error!("Failed to set web URL: {:?}", e);
-                        }
-                    },
-                    Duration::from_millis(1000), // Delay of 1 second
-                );
-            } else {
-                // URL set successfully
-                set_error_occurred(false);
+                    // Fallback: If the app link fails, open the web URL
+                    if let Err(web_err) = win.location().set_href(&linkedin_cloned_url) {
+                        log::error!("Failed to redirect to LinkedIn web URL: {:?}", web_err);
+                    } else {
+                        log::info!("Redirected to LinkedIn web URL.");
+                    }
+                }
             }
         }
     };
-
-    // Log any changes to the error state
-    create_effect(move |_| {
-        if error_occurred() {
-            log::info!("An error occurred while trying to open the LinkedIn app.");
-        } else {
-            log::info!("Successfully set the LinkedIn URL.");
-        }
-    });
 
     // let share_linkedin = move || {
     //     log::info!("linkedin url: {}", linkedin_cloned_url);
