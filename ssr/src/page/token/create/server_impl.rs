@@ -78,7 +78,7 @@ mod real_impl {
         let transfer_args = Transaction {
             memo: Some(vec![0]),
             amount: Nat::from(1000000_u64),
-            fee: Some(Nat::from(ICP_TX_FEE)),
+            fee: None,
             from_subaccount: None,
             to: Recipient {
                 owner: swap_canister,
