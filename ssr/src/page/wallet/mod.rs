@@ -11,7 +11,6 @@ use tokens::{TokenRootList, TokenView};
 
 use crate::{
     component::{
-        back_btn::BackButton,
         bullet_loader::BulletLoader,
         canisters_prov::AuthCansProvider,
         connect::ConnectLogin,
@@ -191,11 +190,6 @@ pub fn Wallet() -> impl IntoView {
 
     view! {
         <div>
-            <div class="top-0 bg-black text-white w-full items-center z-50 pt-4 pl-4">
-                <div class="flex flex-row justify-start">
-                    <BackButton fallback="/".to_string()/>
-                </div>
-            </div>
             <div class="flex flex-col w-dvw min-h-dvh bg-black gap-4 px-4 pt-4 pb-12">
                 <div class="grid grid-cols-2 grid-rows-1 items-center w-full">
                     <AuthCansProvider fallback=FallbackGreeter let:cans>
