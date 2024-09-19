@@ -1,6 +1,5 @@
 use candid::Principal;
 use ic_agent::AgentError;
-use leptos::{ev::MouseEvent, *};
 use leptos_use::use_window;
 
 use crate::page::wallet::ShareProfilePopup;
@@ -21,6 +20,7 @@ use crate::{
         token::{token_metadata_by_root, TokenBalance, TokenMetadata},
     },
 };
+use leptos::*;
 use leptos_icons::*;
 
 #[derive(Clone)]
@@ -127,8 +127,8 @@ pub fn TokenView(
 
                          let link  = share_link.clone();
 
-                         let share_profile_url =move |event: MouseEvent| {
-                         event.stop_propagation();
+                         let share_profile_url = move || {
+
                          let has_share_support = check_share_support();
 
                          match has_share_support {
@@ -153,7 +153,7 @@ pub fn TokenView(
                                     {format!("{} {}", info.balance.humanize(), info.symbol)}
                                 </span>
                                 <button
-                                    on:click=move |event: MouseEvent| share_profile_url(event)
+                                    on:click=move |_| share_profile_url()
                                     class="p-1 text-lg text-center text-white rounded-full md:text-xl bg-primary-600"
                                     >
                                     <Icon icon=icondata::AiShareAltOutlined/>
