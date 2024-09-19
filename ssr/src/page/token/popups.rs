@@ -1,6 +1,6 @@
 use crate::component::canisters_prov::AuthCansProvider;
 use crate::utils::profile::ProfileDetails;
-// use crate::utils::web::share_url;
+use crate::utils::web::share_url;
 use crate::{
     component::{overlay::PopupOverlay, token_confetti_symbol::TokenConfettiSymbol},
     page::token::create::CreateTokenCtx,
@@ -265,21 +265,19 @@ fn ShareProfileContent(
     );
 
     let message = format!(
-        r#"
-        Hey! Check out my YRAL profile 👇:
-        <a href="{profile_link}" style="color: #1d4ed8; text-decoration: none;" target="_blank">{profile_link}</a>.
-        I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter
-        "#,
-        profile_link = profile_link
+        "Hey! Check out my YRAL profile 👇 {}. I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter",
+        profile_link
     );
 
     // Encode the message for URLs
     let encoded_message = urlencoding::encode(&message);
     // let encoded_link = urlencoding::encode(&profile_link);
 
-    // Facebook share URL usinog Dialog API
-    let fb = urlencoding::encode("https://yral.com/");
-    let fb_url = format!("http://www.facebook.com/sharer/sharer.php?u={}", fb);
+    // Facebook share URL using Dialog API
+    let fb_url = format!(
+        "http://www.facebook.com/share.php?u={}&title={}",
+        profile_link, encoded_message
+    );
 
     // WhatsApp share URL
     let whatsapp_url = format!("https://wa.me/?text={}", encoded_message);
@@ -292,88 +290,11 @@ fn ShareProfileContent(
         "https://www.linkedin.com/shareArticle?mini=true&url={}&title={}",
         profile_link, encoded_message
     );
-    // let linkedin_app_url = format!(
-    //     "linkedin://shareArticle?mini=true&url={}&title={}",
-    //     urlencoding::encode(&profile_link),
-    //     encoded_message
-    // );
 
-    // let open_linkedin = move || {
-    //     // Create a temporary iframe to test if the app is installed
-    //     let document = web_sys::window().unwrap().document().unwrap();
-    //     let iframe = document.create_element("iframe").unwrap();
-    //     iframe.set_attribute("style", "display: none;").unwrap();
-    //     iframe.set_attribute("src", &linkedin_app_url).unwrap();
-    //     document.body().unwrap().append_child(&iframe).unwrap();
-    //
-    //     // Redirect to LinkedIn website if the app is not installed
-    //     let timeout = web_sys::window()
-    //         .unwrap()
-    //         .set_timeout_with_callback_and_timeout(
-    //             &Closure::wrap(Box::new(move || {
-    //                 web_sys::window()
-    //                     .unwrap()
-    //                     .location()
-    //                     .set_href(&linkedin_url)
-    //                     .unwrap();
-    //             }) as Box<dyn Fn()>)
-    //             .as_ref()
-    //             .unchecked_ref(),
-    //             1000,
-    //         )
-    //         .unwrap();
-    // };
-    //
-
-    // Functions to handle the share actions for each platform
-    // let share_fb = move |_| {
-    //     share_url(&fb_url);
-    // };
-    //
     // let share_twitter = move |_| {
     //     share_url(&twitter_url);
     // };
-    //
-    // let share_whatsapp = move |_| {
-    //     share_url(&whatsapp_url);
-    // };
-    // let window = use_window();
-    // let linkedin_cloned_url = linkedin_url.clone();
-    // let linkedin_app_cloned_url = linkedin_app_url.clone();
-    //
-    // let share_linkedin = move || {
-    //     if let Some(win) = window.as_ref() {
-    //         // Try opening the LinkedIn app URL
-    //         match win.location().set_href(&linkedin_app_cloned_url) {
-    //             Ok(_) => {
-    //                 log::info!("Opened LinkedIn app successfully.");
-    //             }
-    //             Err(app_err) => {
-    //                 log::error!("Failed to open LinkedIn app: {:?}", app_err);
-    //
-    //                 // Fallback: Try to open the web URL if the app link fails
-    //                 match win.location().set_href(&linkedin_cloned_url) {
-    //                     Ok(_) => {
-    //                         log::info!("Redirected to LinkedIn web URL successfully.");
-    //                     }
-    //                     Err(web_err) => {
-    //                         log::error!("Failed to redirect to LinkedIn web URL: {:?}", web_err);
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     } else {
-    //         log::error!("Window object is not available.");
-    //     }
-    // };
 
-    // let share_linkedin = move || {
-    //     log::info!("linkedin url: {}", linkedin_cloned_url);
-    //     if let Some(win) = window.as_ref() {
-    //         // Use window.open() to open the URL
-    //         win.open(&linkedin_cloned_url);
-    //     }
-    // };
     let window1 = use_window();
 
     // Capture the current URL (or some other dynamic URL based on your logic)
@@ -414,7 +335,7 @@ fn ShareProfileContent(
                <img class="w-16 h-16 md:w-20 md:h-20" src="/img/yral-logo-1024.png" alt="YRAL Logo" />
 
                <span class="text-xl font-semibold text-center md:text-2xl">
-                       <p inner_html={message} />
+                    {message}
                </span>
            </div>
                    <div class="flex gap-4">
