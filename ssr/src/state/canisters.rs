@@ -19,7 +19,7 @@ use crate::{
         sns_governance::SnsGovernance,
         sns_ledger::SnsLedger,
         sns_root::SnsRoot,
-        user_index::UserIndex,
+        user_index::{Result1, UserIndex},
         PLATFORM_ORCHESTRATOR_ID, POST_CACHE_ID,
     },
     consts::{FALLBACK_USER_INDEX, METADATA_API_BASE},
@@ -209,7 +209,6 @@ impl<const A: bool> Canisters<A> {
         SnsRoot(canister_id, agent)
     }
 
-    #[allow(dead_code)]
     async fn subnet_indexes(&self) -> Result<Vec<Principal>, AgentError> {
         #[cfg(any(feature = "local-bin", feature = "local-lib"))]
         {
@@ -240,7 +239,7 @@ pub fn unauth_canisters() -> Canisters<false> {
 async fn create_individual_canister(
     canisters: &Canisters<true>,
 ) -> Result<Principal, ServerFnError> {
-    // let subnet_idxs = canisters.subnet_indexes().await?;
+    let subnet_idxs = canisters.subnet_indexes().await?;
 
     let mut by = [0u8; 16];
     let principal = canisters.identity().sender().unwrap();
@@ -248,13 +247,16 @@ async fn create_individual_canister(
     let cnt = by.len().min(principal_by.len());
     by[..cnt].copy_from_slice(&principal_by[..cnt]);
 
-    // let discrim = u128::from_be_bytes(by);
-    // let subnet_idx = subnet_idxs[(discrim % subnet_idxs.len() as u128) as usize];
-    let subnet_idx = Principal::from_text("znhy2-2qaaa-aaaag-acofq-cai").unwrap();
+    let discrim = u128::from_be_bytes(by);
+    let subnet_idx = subnet_idxs[(discrim % subnet_idxs.len() as u128) as usize];
     let idx = canisters.user_index_with(subnet_idx).await;
-    let user_canister = idx
-        .get_requester_principals_canister_id_create_if_not_exists_and_optionally_allow_referrer()
-        .await?;
+    let user_canister = match idx
+        .get_requester_principals_canister_id_create_if_not_exists()
+        .await?
+    {
+        Result1::Ok(val) => Ok(val),
+        Result1::Err(e) => Err(ServerFnError::new(e)),
+    }?;
 
     canisters
         .metadata_client
