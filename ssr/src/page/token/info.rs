@@ -2,16 +2,17 @@ use candid::Principal;
 use leptos::*;
 use leptos_icons::*;
 use leptos_router::*;
-use leptos_use::use_window;
 
 use crate::{
-    component::{back_btn::BackButton, spinner::FullScreenSpinner, title::Title},
-    component::{bullet_loader::BulletLoader, canisters_prov::AuthCansProvider, share_popup::*},
+    component::{
+        back_btn::BackButton, bullet_loader::BulletLoader, canisters_prov::AuthCansProvider,
+        share_popup::*, spinner::FullScreenSpinner, title::Title,
+    },
     page::token::TokenInfoParams,
     state::canisters::unauth_canisters,
     utils::{
+        host::get_host,
         token::{token_metadata_by_root, TokenMetadata},
-        web::{check_share_support, share_url},
     },
 };
 
@@ -31,8 +32,8 @@ fn TokenField(#[prop(into)] label: String, #[prop(into)] value: String) -> impl 
 fn TokenDetails(meta: TokenMetadata) -> impl IntoView {
     view! {
         <div class="flex flex-col w-full gap-6 p-4 rounded-xl bg-white/5">
-            <TokenField label="Description" value=meta.description />
-            <TokenField label="Symbol" value=meta.symbol />
+            <TokenField label="Description" value=meta.description/>
+            <TokenField label="Symbol" value=meta.symbol/>
         </div>
     }
 }
@@ -53,43 +54,20 @@ fn TokenInfoInner(
         }
     });
 
-    let base_url = || {
-        use_window()
-            .as_ref()
-            .and_then(|w| w.location().origin().ok())
+    let share_link = {
+        let base_url = get_host();
+        format!("{base_url}/token/info/{root}/{user_principal}")
     };
-
-    let share_link = base_url()
-        .map(|b| format!("{b}/token/info/{root}/{user_principal}"))
-        .unwrap_or_default();
-
-    let share_action = create_action(move |&()| async move { Ok(()) });
-
     let message = format!(
         "Hey! Check out the token: {} I created on YRAL 👇 {}. I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter",
         meta.symbol,  share_link.clone()
     );
 
-    let link = share_link.clone();
-
-    let share_profile_url = move || {
-        let has_share_support = check_share_support();
-
-        match has_share_support {
-            Some(_) => {
-                share_url(&link);
-            }
-            None => {
-                share_action.dispatch(());
-            }
-        };
-    };
-
     view! {
         <div class="w-dvw min-h-dvh bg-neutral-800 flex flex-col gap-4">
             <Title justify_center=false>
                 <div class="grid grid-cols-3 justify-start w-full">
-                    <BackButton fallback="/wallet" />
+                    <BackButton fallback="/wallet"/>
                     <span class="font-bold justify-self-center">Token details</span>
                 </div>
             </Title>
@@ -106,19 +84,7 @@ fn TokenInfoInner(
                                     {meta.name}
                                 </span>
                             </div>
-                            <button
-                                on:click= move|_| share_profile_url()
-                                class="text-white text-center p-1 text-lg md:text-xl bg-primary-600 rounded-full"
-                            >
-                            <Icon icon=icondata::AiShareAltOutlined/>
-
-                            </button>
-                            <SharePopup
-                                sharing_action=share_action
-                                share_link=share_link.clone()
-                                message
-
-                            />
+                            <ShareButtonWithFallbackPopup share_link message/>
                         </div>
                         <div class="flex flex-row justify-between border-b p-1 border-white items-center">
                             <span class="text-xs md:text-sm text-green-500">Balance</span>
@@ -129,24 +95,22 @@ fn TokenInfoInner(
                                 {meta.symbol}
                             </span>
                         </div>
-                    <button
+                        <button
                             on:click=move |_| detail_toggle.update(|t| *t = !*t)
                             class="w-full bg-transparent p-1 flex flex-row justify-center items-center gap-2 text-white"
                         >
                             <span class="text-xs md:text-sm">View details</span>
                             <div class="p-1 bg-white/15 rounded-full">
-                                <Icon class="text-xs md:text-sm text-white" icon=view_detail_icon />
+                                <Icon class="text-xs md:text-sm text-white" icon=view_detail_icon/>
                             </div>
                         </button>
                     </div>
                     <Show when=detail_toggle>
-                        <TokenDetails meta=meta_c.clone() />
+                        <TokenDetails meta=meta_c.clone()/>
                     </Show>
                 </div>
                 <AuthCansProvider fallback=BulletLoader let:canisters>
-                    <Show when=move || {
-                        user_principal == canisters.profile_details().principal
-                    }>
+                    <Show when=move || { user_principal == canisters.profile_details().principal }>
                         <a
                             href=format!("/token/transfer/{root}")
                             class="flex flex-row justify-self-center justify-center text-white md:text-lg w-full md:w-1/2 rounded-full p-3 bg-primary-600"
@@ -183,11 +147,14 @@ pub fn TokenInfo() -> impl IntoView {
                     .and_then(|info| info.ok())
                     .map(|info| {
                         match info {
-                            Some((metadata,(root,user_principal))) => view! { <TokenInfoInner root user_principal meta=metadata /> },
-                            None => view! { <Redirect path="/" /> },
+                            Some((metadata, (root, user_principal))) => {
+                                view! { <TokenInfoInner root user_principal meta=metadata/> }
+                            }
+                            None => view! { <Redirect path="/"/> },
                         }
                     })
             }}
+
         </Suspense>
     }
 }
