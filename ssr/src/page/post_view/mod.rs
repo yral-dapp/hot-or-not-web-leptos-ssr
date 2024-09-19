@@ -281,7 +281,7 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
 }
 
 #[component]
-pub fn YralPostView() -> impl IntoView {
+pub fn PostView() -> impl IntoView {
     let params = use_params::<PostParams>();
     let initial_canister_and_post = create_rw_signal(params.get_untracked().ok());
 
@@ -343,15 +343,15 @@ pub fn YralPostView() -> impl IntoView {
     }
 }
 
-#[component]
-pub fn PostView() -> impl IntoView {
-    if show_cdao_page() {
-        view! {
-            <CreatorDaoRootPage/>
-        }
-    } else {
-        view! {
-            <YralPostView/>
-        }
-    }
-}
+// #[component]
+// pub fn PostView() -> impl IntoView {
+//     if show_cdao_page() {
+//         view! {
+//             <CreatorDaoRootPage/>
+//         }
+//     } else {
+//         view! {
+//             <YralPostView/>
+//         }
+//     }
+// }

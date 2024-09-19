@@ -2854,7 +2854,6 @@ dependencies = [
  "bb8-redis",
  "candid",
  "candid_parser",
- "chrono",
  "circular-buffer",
  "codee",
  "console_error_panic_hook",
@@ -2900,6 +2899,7 @@ dependencies = [
  "serde_json",
  "simple_logger",
  "sns-validation",
+ "speedate",
  "testcontainers",
  "thiserror",
  "tokio",
@@ -6439,6 +6439,16 @@ checksum = "ce305eb0b4296696835b71df73eb912e0f1ffd2556a501fcede6e0c50349191c"
 dependencies = [
  "libc",
  "windows-sys 0.52.0",
+]
+
+[[package]]
+name = "speedate"
+version = "0.14.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "08a20480dbd4c693f0b0f3210f2cee5bfa21a176c1fa4df0e65cc0474e7fa557"
+dependencies = [
+ "strum",
+ "strum_macros",
 ]
 
 [[package]]

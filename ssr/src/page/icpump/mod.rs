@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use leptos::*;
 
 use crate::component::spinner::FullScreenSpinner;
@@ -7,21 +9,6 @@ use crate::utils::token::icpump::TokenListItem;
 
 #[component]
 pub fn TokenListing(details: TokenListItem) -> impl IntoView {
-    let created_at_str = details.created_at.clone();
-    let datetime = chrono::DateTime::parse_from_rfc3339(&created_at_str).unwrap();
-    let elapsed = chrono::Utc::now()
-        .signed_duration_since(datetime)
-        .num_seconds();
-    let elapsed_str = if elapsed < 60 {
-        format!("{}s ago", elapsed)
-    } else if elapsed < 3600 {
-        format!("{}m ago", elapsed / 60)
-    } else if elapsed < 86400 {
-        format!("{}h ago", elapsed / 3600)
-    } else {
-        format!("{}d ago", elapsed / 86400)
-    };
-
     view! {
         <div class="max-h-[300px] overflow-hidden h-fit p-2 flex border hover:border-white gap-2 w-full  border-transparent">
             <div class="min-w-32 relative self-start">
@@ -31,7 +18,7 @@ pub fn TokenListing(details: TokenListItem) -> impl IntoView {
                 <span class="text-sm text-gray-500 font-bold">"$" {details.token_symbol}</span>
                 <span class="text-sm text-gray-500">"Name: " {details.token_name}</span>
                 <span class="text-sm text-gray-500">{details.description}</span>
-                <span class="text-xs text-gray-500">{elapsed_str}</span>
+                <span class="text-xs text-gray-500">{details.formatted_created_at}</span>
                 <span class="text-xs text-gray-500">"Created by: " {details.user_id}</span>
             </div>
         </div>
@@ -43,9 +30,15 @@ pub fn ICPumpListing() -> impl IntoView {
     let page = create_rw_signal(1);
     let token_list: RwSignal<Vec<TokenListItem>> = create_rw_signal(vec![]);
     let end_of_list = create_rw_signal(false);
+    let cache = create_rw_signal(HashMap::<u64, Vec<TokenListItem>>::new());
 
     let act = create_resource(page, move |_| async move {
-        get_paginated_token_list(page.get_untracked())
+        let cache = cache.get_untracked();
+        if let Some(cached) = cache.get(&page.get_untracked()) {
+            return cached.clone();
+        }
+
+        get_paginated_token_list(page.get_untracked() as u32)
             .await
             .unwrap()
     });
@@ -59,9 +52,11 @@ pub fn ICPumpListing() -> impl IntoView {
                             if res.len() < ICPUMP_LISTING_PAGE_SIZE {
                                 end_of_list.set(true);
                             }
-                            update!(move |token_list| {
+                            update!(move |token_list, cache| {
                                 *token_list = res.clone();
+                                cache.insert(page.get_untracked(), res.clone());
                             });
+
                     });
 
                     view!{
@@ -97,7 +92,6 @@ pub fn ICPumpListing() -> impl IntoView {
                     }
                 }}
             </Suspense>
-
         </div>
     }
 }

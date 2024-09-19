@@ -108,7 +108,7 @@ rust_decimal = "1.36"
 firestore = { version = "0.43.1", default-features = false, features = [
     "tls-webpki-roots",
 ], optional = true }
-chrono = "0.4.38"
+speedate = { version = "0.14.4", optional = true }
 urlencoding = "2.1.3"
 
 [build-dependencies]
@@ -159,7 +159,6 @@ ssr = [
     "tonic/tls-webpki-roots",
     "tonic/transport",
     "tonic-build/transport",
-
 ]
 # Fetch mock referral history instead of history via canister
 mock-referral-history = ["dep:rand_chacha", "k256/arithmetic"]
@@ -174,7 +173,7 @@ cloudflare = ["dep:gob-cloudflare"]
 backend-admin = []
 ga4 = []
 mock-wallet-history = ["dep:rand_chacha"]
-firestore = ["dep:firestore"]
+firestore = ["dep:firestore", "speedate"]
 release-bin = [
     "ssr",
     "cloudflare",
