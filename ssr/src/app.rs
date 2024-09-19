@@ -13,7 +13,7 @@ use crate::{
         privacy::PrivacyPolicy,
         profile::{profile_post::ProfilePost, ProfilePostsContext, ProfileView},
         refer_earn::ReferEarn,
-        root::{RootPage, YralRootPage},
+        root::RootPage,
         settings::Settings,
         terms::TermsOfService,
         token::{
@@ -140,7 +140,6 @@ pub fn App() -> impl IntoView {
                     <Route path="" view=BaseRoute>
                         <Route path="/" view=RootPage/>
                         <Route path="/hot-or-not/:canister_id/:post_id" view=PostView/>
-                        <Route path="/hot-or-not" view=YralRootPage/>
                         <Route path="/post/:canister_id/:post_id" view=SinglePost/>
                         <Route path="/profile/:canister_id/:post_id" view=ProfilePost/>
                         <Route path="/your-profile/:canister_id/:post_id" view=ProfilePost/>
