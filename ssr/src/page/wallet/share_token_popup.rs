@@ -1,7 +1,7 @@
 use leptos::*;
 use leptos_icons::*;
 
-use crate::{component::overlay::*, utils::web::check_share_support};
+use crate::component::overlay::*;
 
 #[component]
 fn ShareProfileContent(
@@ -9,7 +9,7 @@ fn ShareProfileContent(
     message: String,
     close_popup: RwSignal<bool>,
 ) -> impl IntoView {
-    let has_share_support = check_share_support();
+    // let has_share_support = check_share_support();
 
     let share_link_social = share_link.clone();
 
@@ -24,9 +24,7 @@ fn ShareProfileContent(
             Share this app
         </span>
     </div>
-            <Show when=move ||has_share_support.is_some()>
             <SocialShare message=message.clone() share_link=share_link_social.clone() />
-            </Show>
           <div class="flex overflow-x-auto justify-center items-center px-10 mx-1 space-x-2 w-full rounded-xl border-2 border-neutral-700 h-[2.5rem] md:h-[5rem]">
         <span class="text-lg text-black md:text-xl truncate">
                 {&share_link.clone()}
@@ -52,9 +50,8 @@ fn SocialShare(share_link: String, message: String) -> impl IntoView {
 
     // Facebook share URL using Dialog API
     let fb_url = format!(
-        "http://www.facebook.com/share.php?u={}&title={}",
-        share_link,
-        urlencoding::encode("Check out this profile")
+        "http://www.facebook.com/share.php?u={}&p[title]={}",
+        share_link, encoded_message
     );
 
     // WhatsApp share URL
@@ -63,10 +60,12 @@ fn SocialShare(share_link: String, message: String) -> impl IntoView {
     // Twitter share URL
     let twitter_url = format!("https://twitter.com/intent/tweet?text={}", encoded_message);
 
+    let telegram_url = format!("https://telegram.me/share/url?url={}", &share_link);
+
     // LinkedIn share URL
     let linkedin_url = format!(
-        "https://www.linkedin.com/shareArticle?mini=true&url={}&title={}",
-        share_link, encoded_message
+        "https://linkedin.com/sharing/share-offsite/?url={}&title={}",
+        &share_link, encoded_message
     );
 
     // Functions to handle the share actions for each platform
@@ -119,6 +118,12 @@ fn SocialShare(share_link: String, message: String) -> impl IntoView {
                         icon=icondata::TbBrandLinkedin
                     />
                 </a>
+                <a href=telegram_url target="_blank">
+                <Icon
+                    class="text-3xl md:text-4xl text-primary-600"
+                    icon=icondata::TbBrandTelegram
+                />
+            </a>
             </div>
     }
 }
