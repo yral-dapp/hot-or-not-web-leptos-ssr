@@ -203,7 +203,7 @@ fn HNButtonOverlay(
         </AuthCansProvider>
         <div class="flex justify-center w-full touch-manipulation">
             <button
-                class="my-2"
+                class="my-1"
                 disabled=move || is_max() || running()
                 on:click=move |_| coin.update(|c| *c = c.wrapping_next())
             >
@@ -213,7 +213,7 @@ fn HNButtonOverlay(
         <div class="flex flex-row gap-6 justify-center items-center w-full touch-manipulation">
             <HNButton disabled=running bet_direction kind=BetKind::Hot />
             <button
-                class="my-2"
+
                 disabled=running
                 on:click=move |_| coin.update(|c| *c = c.wrapping_next())
             >
@@ -227,12 +227,12 @@ fn HNButtonOverlay(
         </div>
         // Bottom row: Hot <down arrow> Not
         // most of the CSS is for alignment with above icons
-        <div class="flex gap-6 justify-center items-center pt-1 w-full text-base font-medium text-center md:text-lg lg:text-xl touch-manipulation">
+        <div class="flex gap-6 justify-center items-center w-full text-base font-medium text-center md:text-lg lg:text-xl touch-manipulation">
             <p class="w-14 md:w-16 lg:w-18">Hot</p>
             <div class="flex justify-center w-12 md:w-14 lg:w-16">
                 <button
                     disabled=move || is_min() || running()
-                    class="my-2"
+                    class="my-1"
                     on:click=move |_| coin.update(|c| *c = c.wrapping_prev())
                 >
                     <Icon class="text-2xl text-white" icon=current_down_icon />
