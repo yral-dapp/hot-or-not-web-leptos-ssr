@@ -6,8 +6,8 @@ use leptos_use::use_window;
 
 use crate::{
     component::{back_btn::BackButton, spinner::FullScreenSpinner, title::Title},
-    component::{bullet_loader::BulletLoader, canisters_prov::AuthCansProvider},
-    page::{token::TokenInfoParams, wallet::share_token_popup::ShareProfilePopup},
+    component::{bullet_loader::BulletLoader, canisters_prov::AuthCansProvider, share_popup::*},
+    page::token::TokenInfoParams,
     state::canisters::unauth_canisters,
     utils::{
         token::{token_metadata_by_root, TokenMetadata},
@@ -113,7 +113,7 @@ fn TokenInfoInner(
                             <Icon icon=icondata::AiShareAltOutlined/>
 
                             </button>
-                            <ShareProfilePopup
+                            <SharePopup
                                 sharing_action=share_action
                                 share_link=share_link.clone()
                                 message

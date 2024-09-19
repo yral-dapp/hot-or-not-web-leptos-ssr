@@ -1,12 +1,11 @@
-pub mod share_token_popup;
 pub mod tokens;
 pub mod transactions;
 mod txn;
+use crate::component::share_popup::SharePopup;
 use candid::Principal;
 use leptos::*;
 use leptos_icons::*;
 use leptos_use::use_window;
-use share_token_popup::ShareProfilePopup;
 use tokens::{TokenRootList, TokenView};
 
 use crate::{
@@ -88,7 +87,7 @@ fn ProfileGreeter(details: ProfileDetails) -> impl IntoView {
 
         </button>
             </div>
-            <ShareProfilePopup
+            <SharePopup
                         sharing_action=share_action
                         share_link
                         message

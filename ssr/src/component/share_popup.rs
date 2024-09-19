@@ -132,7 +132,7 @@ fn SocialShare(share_link: String, message: String) -> impl IntoView {
 }
 
 #[component]
-pub fn ShareProfilePopup(
+pub fn SharePopup(
     sharing_action: Action<(), Result<(), String>>,
     share_link: String,
     message: String,

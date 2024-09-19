@@ -2,7 +2,7 @@ use candid::Principal;
 use ic_agent::AgentError;
 use leptos_use::use_window;
 
-use crate::page::wallet::ShareProfilePopup;
+use crate::page::wallet::SharePopup;
 use crate::utils::web::{check_share_support, share_url};
 use crate::{
     canister::individual_user_template::Result14,
@@ -159,7 +159,7 @@ pub fn TokenView(
                                     <Icon icon=icondata::AiShareAltOutlined/>
 
                                 </button>
-                                <ShareProfilePopup
+                                <SharePopup
                                 sharing_action=share_action
                                 share_link
                                 message
