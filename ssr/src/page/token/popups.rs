@@ -97,15 +97,46 @@ fn ErrorPopup<HeadIV: IntoView, Head: Fn() -> HeadIV>(
 }
 
 #[component]
+fn CreateTokenErrorPopupInner<HeadIV: IntoView, Head: Fn() -> HeadIV>(
+    error: String,
+    header: Head,
+    close_popup: WriteSignal<bool>,
+) -> impl IntoView {
+    view! {
+        <div class="flex flex-col items-center w-full h-full gap-6">
+            <div class="flex flex-row items-center justify-center bg-amber-100 text-orange-400 rounded-full p-3 text-2xl md:text-3xl">
+                <Icon icon=icondata::BsExclamationTriangle/>
+            </div>
+            <span class="text-2xl md:text-3xl font-bold text-center">{header()}</span>
+            <textarea
+                prop:value=error
+                disabled
+                rows=3
+                class="bg-black/10 text-xs md:text-sm text-red-500 w-full md:w-2/3 resize-none p-2"
+            ></textarea>
+            <button
+                on:click=move |_| close_popup.set(true)
+                class="py-3 text-lg md:text-xl w-full rounded-full bg-primary-600 text-white text-center"
+            >
+                Retry
+            </button>
+        </div>
+    }
+}
+
+#[component]
 fn CreateTokenErrorPopup(
     error: String,
     token_name: MaybeSignal<String>,
     close_popup: WriteSignal<bool>,
 ) -> impl IntoView {
-    let profile_url = String::from("/your-profile?tab=tokens");
-
+    let error = if error.to_lowercase().contains(&"CanisterError".to_lowercase()) {
+        "Oops! There is some error from ICP's end. Please try again".into()
+    } else {
+        error
+    };
     view! {
-        <ErrorPopup
+        <CreateTokenErrorPopupInner
             error
             header=move || {
                 let token_name = token_name.clone();
@@ -117,9 +148,6 @@ fn CreateTokenErrorPopup(
                     creation failed!
                 }
             }
-
-            previous_link=profile_url
-            previous_text="Back to profile"
             close_popup
         />
     }
