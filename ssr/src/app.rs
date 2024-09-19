@@ -110,7 +110,7 @@ pub fn App() -> impl IntoView {
 
         // sets the document title
         <Title text="Yral"/>
-       <Meta property="og:url" content="https://test.com/"/>
+       <Meta property="og:url" content="https://yraltest.com/"/>
     <Meta property="og:type" content="website"/>
     <Meta property="og:title" content="Your Website Title"/>
     <Meta property="og:description" content="Your description"/>
