@@ -1,5 +1,6 @@
 use crate::component::canisters_prov::AuthCansProvider;
 use crate::page::profile::YourProfileView;
+use crate::utils::profile::ProfileDetails;
 
 use crate::{
     component::{base_route::BaseRoute, nav::NavBar},
@@ -71,7 +72,6 @@ fn GoogleAuthRedirectorRoute() -> impl IntoView {
         view! { <Route path view=NotFound/> }
     }
 }
-
 #[component]
 pub fn App() -> impl IntoView {
     // Provides context that manages stylesheets, titles, meta tags, etc.
@@ -106,82 +106,77 @@ pub fn App() -> impl IntoView {
 
         provide_context(EventHistory::default());
     }
-
     view! {
-            <Stylesheet id="leptos" href="/pkg/hot-or-not-leptos-ssr.css"/>
+        <Stylesheet id="leptos" href="/pkg/hot-or-not-leptos-ssr.css"/>
 
-            // sets the document title
-            <Title text="Yral"/>
-           <AuthCansProvider  let:canisters>
+        // sets the document title
+        <Title text="Yral"/>
+     <Meta property="og:url" content="https://yral.com/profile"/>
 
+    <Meta property="og:type" content="website"/>
+    <Meta property="og:title" content="Your Website Title"/>
+    <Meta property="og:description" content="Hey! Check out my YRAL profile.I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter. "/>
+    <Meta property="og:image" content="http://www.your-domain.com/path/image.jpg"/>
+        <Link rel="manifest" href="/app.webmanifest"/>
 
-           <Meta property="og:url" content=format!("https://yral.com/profile/{}?tab=tokens",
-        canisters.profile_details().username_or_principal())/>
-    </AuthCansProvider>
-        <Meta property="og:type" content="website"/>
-        <Meta property="og:title" content="Your Website Title"/>
-        <Meta property="og:description" content="Hey! Check out my YRAL profile.I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter. "/>
-        <Meta property="og:image" content="http://www.your-domain.com/path/image.jpg"/>
-            <Link rel="manifest" href="/app.webmanifest"/>
-
-            // GA4 Global Site Tag (gtag.js) - Google Analytics
-            // G-6W5Q2MRX0E to test locally | G-PLNNETMSLM
-            <Show when=enable_ga4_script>
-                <Script
-                    async_="true"
-                    src=concat!("https://www.googletagmanager.com/gtag/js?id=", "G-PLNNETMSLM")
-                />
-                <Script>
-                    {r#"
+        // GA4 Global Site Tag (gtag.js) - Google Analytics
+        // G-6W5Q2MRX0E to test locally | G-PLNNETMSLM
+        <Show when=enable_ga4_script>
+            <Script
+                async_="true"
+                src=concat!("https://www.googletagmanager.com/gtag/js?id=", "G-PLNNETMSLM")
+            />
+            <Script>
+                {r#"
                 window.dataLayer = window.dataLayer || [];
                 function gtag(){dataLayer.push(arguments);}
                 gtag('js', new Date());
                 gtag('config', 'G-PLNNETMSLM');
                 "#}
-                </Script>
-            </Show>
+            </Script>
+        </Show>
 
-            // content for this welcome page
-            <Router fallback=|| view! { <NotFound/> }.into_view()>
-                <main>
-                    <Routes>
-                        // auth redirect routes exist outside main context
-                        <GoogleAuthRedirectHandlerRoute/>
-                        <GoogleAuthRedirectorRoute/>
-                        <Route path="" view=BaseRoute>
-                            <Route path="/" view=RootPage/>
-                            <Route path="/hot-or-not/:canister_id/:post_id" view=PostView/>
-                            <Route path="/hot-or-not" view=YralRootPage/>
-                            <Route path="/post/:canister_id/:post_id" view=SinglePost/>
-                            <Route path="/profile/:canister_id/:post_id" view=ProfilePost/>
-                            <Route path="/your-profile/:canister_id/:post_id" view=ProfilePost/>
-                            <Route path="/profile/:id" view=ProfileView/>
-                            <Route path="/upload" view=UploadPostPage/>
-                            <Route path="/error" view=ServerErrorPage/>
-                            <Route path="/menu" view=Menu/>
-                            <Route path="/settings" view=Settings/>
-                            <Route path="/refer-earn" view=ReferEarn/>
-                            <Route path="/your-profile" view=YourProfileView/>
-                            <Route path="/terms-of-service" view=TermsOfService/>
-                            <Route path="/privacy-policy" view=PrivacyPolicy/>
-                            <Route path="/wallet" view=Wallet/>
-                            <Route path="/transactions" view=Transactions/>
-                            <Route path="/leaderboard" view=Leaderboard/>
-                            <Route path="/account-transfer" view=AccountTransfer/>
-                            <Route path="/logout" view=Logout/>
-                            <Route path="/token/create" view=CreateToken/>
-                            <Route path="/token/create/settings" view=CreateTokenSettings/>
-                            <Route path="/token/create/faq" view=CreateTokenFAQ/>
-                            <Route path="/token/info/:token_root/:user_principal" view=TokenInfo/>
-                            <Route path="/token/transfer/:token_root" view=TokenTransfer/>
-                            <Route path="/tokens" view=Tokens/>
-                        </Route>
-                    </Routes>
+        // content for this welcome page
+        <Router fallback=|| view! { <NotFound/> }.into_view()>
+            <main>
+                <Routes>
+                    // auth redirect routes exist outside main context
+                    <GoogleAuthRedirectHandlerRoute/>
+                    <GoogleAuthRedirectorRoute/>
+                    <Route path="" view=BaseRoute>
+                        <Route path="/" view=RootPage/>
+                        <Route path="/hot-or-not/:canister_id/:post_id" view=PostView/>
+                        <Route path="/hot-or-not" view=YralRootPage/>
+                        <Route path="/post/:canister_id/:post_id" view=SinglePost/>
+                        <Route path="/profile/:canister_id/:post_id" view=ProfilePost/>
+                        <Route path="/your-profile/:canister_id/:post_id" view=ProfilePost/>
+                        <Route path="/profile/:id" view=ProfileView/>
+                        <Route path="/upload" view=UploadPostPage/>
+                        <Route path="/error" view=ServerErrorPage/>
+                        <Route path="/menu" view=Menu/>
+                        <Route path="/settings" view=Settings/>
+                        <Route path="/refer-earn" view=ReferEarn/>
+                        <Route path="/your-profile" view=YourProfileView/>
+                        <Route path="/terms-of-service" view=TermsOfService/>
+                        <Route path="/privacy-policy" view=PrivacyPolicy/>
+                        <Route path="/wallet" view=Wallet/>
+                        <Route path="/transactions" view=Transactions/>
+                        <Route path="/leaderboard" view=Leaderboard/>
+                        <Route path="/account-transfer" view=AccountTransfer/>
+                        <Route path="/logout" view=Logout/>
+                        <Route path="/token/create" view=CreateToken/>
+                        <Route path="/token/create/settings" view=CreateTokenSettings/>
+                        <Route path="/token/create/faq" view=CreateTokenFAQ/>
+                        <Route path="/token/info/:token_root/:user_principal" view=TokenInfo/>
+                        <Route path="/token/transfer/:token_root" view=TokenTransfer/>
+                        <Route path="/tokens" view=Tokens/>
+                    </Route>
+                </Routes>
 
-                </main>
-                <nav>
-                    <NavBar/>
-                </nav>
-            </Router>
-        }
+            </main>
+            <nav>
+                <NavBar/>
+            </nav>
+        </Router>
+    }
 }
