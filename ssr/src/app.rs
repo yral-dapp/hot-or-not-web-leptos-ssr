@@ -106,75 +106,75 @@ pub fn App() -> impl IntoView {
     }
 
     view! {
-            <Stylesheet id="leptos" href="/pkg/hot-or-not-leptos-ssr.css"/>
+        <Stylesheet id="leptos" href="/pkg/hot-or-not-leptos-ssr.css"/>
 
-            // sets the document title
-            <Title text="Yral"/>
-    <meta property="og:url"           content="https://yral.com/" />
-    <meta property="og:type"          content="website" />
-    <meta property="og:title"         content="Your Website Title" />
-    <meta property="og:description"   content="Your description" />
-    <meta property="og:image"         content="http://www.your-domain.com/path/image.jpg" />
-            <Link rel="manifest" href="/app.webmanifest"/>
+        // sets the document title
+        <Title text="Yral"/>
+       <Meta property="og:url" content="https://test.com/"/>
+    <Meta property="og:type" content="website"/>
+    <Meta property="og:title" content="Your Website Title"/>
+    <Meta property="og:description" content="Your description"/>
+    <Meta property="og:image" content="http://www.your-domain.com/path/image.jpg"/>
+        <Link rel="manifest" href="/app.webmanifest"/>
 
-            // GA4 Global Site Tag (gtag.js) - Google Analytics
-            // G-6W5Q2MRX0E to test locally | G-PLNNETMSLM
-            <Show when=enable_ga4_script>
-                <Script
-                    async_="true"
-                    src=concat!("https://www.googletagmanager.com/gtag/js?id=", "G-PLNNETMSLM")
-                />
-                <Script>
-                    {r#"
+        // GA4 Global Site Tag (gtag.js) - Google Analytics
+        // G-6W5Q2MRX0E to test locally | G-PLNNETMSLM
+        <Show when=enable_ga4_script>
+            <Script
+                async_="true"
+                src=concat!("https://www.googletagmanager.com/gtag/js?id=", "G-PLNNETMSLM")
+            />
+            <Script>
+                {r#"
                 window.dataLayer = window.dataLayer || [];
                 function gtag(){dataLayer.push(arguments);}
                 gtag('js', new Date());
                 gtag('config', 'G-PLNNETMSLM');
                 "#}
-                </Script>
-            </Show>
+            </Script>
+        </Show>
 
-            // content for this welcome page
-            <Router fallback=|| view! { <NotFound/> }.into_view()>
-                <main>
-                    <Routes>
-                        // auth redirect routes exist outside main context
-                        <GoogleAuthRedirectHandlerRoute/>
-                        <GoogleAuthRedirectorRoute/>
-                        <Route path="" view=BaseRoute>
-                            <Route path="/" view=RootPage/>
-                            <Route path="/hot-or-not/:canister_id/:post_id" view=PostView/>
-                            <Route path="/hot-or-not" view=YralRootPage/>
-                            <Route path="/post/:canister_id/:post_id" view=SinglePost/>
-                            <Route path="/profile/:canister_id/:post_id" view=ProfilePost/>
-                            <Route path="/your-profile/:canister_id/:post_id" view=ProfilePost/>
-                            <Route path="/profile/:id" view=ProfileView/>
-                            <Route path="/upload" view=UploadPostPage/>
-                            <Route path="/error" view=ServerErrorPage/>
-                            <Route path="/menu" view=Menu/>
-                            <Route path="/settings" view=Settings/>
-                            <Route path="/refer-earn" view=ReferEarn/>
-                            <Route path="/your-profile" view=YourProfileView/>
-                            <Route path="/terms-of-service" view=TermsOfService/>
-                            <Route path="/privacy-policy" view=PrivacyPolicy/>
-                            <Route path="/wallet" view=Wallet/>
-                            <Route path="/transactions" view=Transactions/>
-                            <Route path="/leaderboard" view=Leaderboard/>
-                            <Route path="/account-transfer" view=AccountTransfer/>
-                            <Route path="/logout" view=Logout/>
-                            <Route path="/token/create" view=CreateToken/>
-                            <Route path="/token/create/settings" view=CreateTokenSettings/>
-                            <Route path="/token/create/faq" view=CreateTokenFAQ/>
-                            <Route path="/token/info/:token_root/:user_principal" view=TokenInfo/>
-                            <Route path="/token/transfer/:token_root" view=TokenTransfer/>
-                            <Route path="/tokens" view=Tokens/>
-                        </Route>
-                    </Routes>
+        // content for this welcome page
+        <Router fallback=|| view! { <NotFound/> }.into_view()>
+            <main>
+                <Routes>
+                    // auth redirect routes exist outside main context
+                    <GoogleAuthRedirectHandlerRoute/>
+                    <GoogleAuthRedirectorRoute/>
+                    <Route path="" view=BaseRoute>
+                        <Route path="/" view=RootPage/>
+                        <Route path="/hot-or-not/:canister_id/:post_id" view=PostView/>
+                        <Route path="/hot-or-not" view=YralRootPage/>
+                        <Route path="/post/:canister_id/:post_id" view=SinglePost/>
+                        <Route path="/profile/:canister_id/:post_id" view=ProfilePost/>
+                        <Route path="/your-profile/:canister_id/:post_id" view=ProfilePost/>
+                        <Route path="/profile/:id" view=ProfileView/>
+                        <Route path="/upload" view=UploadPostPage/>
+                        <Route path="/error" view=ServerErrorPage/>
+                        <Route path="/menu" view=Menu/>
+                        <Route path="/settings" view=Settings/>
+                        <Route path="/refer-earn" view=ReferEarn/>
+                        <Route path="/your-profile" view=YourProfileView/>
+                        <Route path="/terms-of-service" view=TermsOfService/>
+                        <Route path="/privacy-policy" view=PrivacyPolicy/>
+                        <Route path="/wallet" view=Wallet/>
+                        <Route path="/transactions" view=Transactions/>
+                        <Route path="/leaderboard" view=Leaderboard/>
+                        <Route path="/account-transfer" view=AccountTransfer/>
+                        <Route path="/logout" view=Logout/>
+                        <Route path="/token/create" view=CreateToken/>
+                        <Route path="/token/create/settings" view=CreateTokenSettings/>
+                        <Route path="/token/create/faq" view=CreateTokenFAQ/>
+                        <Route path="/token/info/:token_root/:user_principal" view=TokenInfo/>
+                        <Route path="/token/transfer/:token_root" view=TokenTransfer/>
+                        <Route path="/tokens" view=Tokens/>
+                    </Route>
+                </Routes>
 
-                </main>
-                <nav>
-                    <NavBar/>
-                </nav>
-            </Router>
-        }
+            </main>
+            <nav>
+                <NavBar/>
+            </nav>
+        </Router>
+    }
 }
