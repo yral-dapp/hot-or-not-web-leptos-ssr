@@ -33,8 +33,7 @@ pub fn ICPumpListing() -> impl IntoView {
     let cache = create_rw_signal(HashMap::<u64, Vec<TokenListItem>>::new());
 
     let act = create_resource(page, move |page| async move {
-        let cache = cache.get_untracked();
-        if let Some(cached) = cache.get(&page) {
+        if let Some(cached) = cache.with_untracked(|c| c.get(&page).cloned()) {
             return cached.clone();
         }
 
