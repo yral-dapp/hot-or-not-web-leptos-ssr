@@ -452,7 +452,7 @@ fn ShareProfileContent(
                  <div class="flex overflow-x-auto justify-center items-center px-10 mx-1 space-x-2 w-full rounded-xl border-2 border-neutral-700 h-[2.5rem] md:h-[5rem]">
                <a
               href={&profile_link}
-            class="text-lg text-black md:text-xl truncate">
+            class="text-lg text-blue-600 transition-colors duration-300 ease-in-out md:text-xl hover:text-blue-800 truncate">
                        {&profile_link}
                    </a>
                                      <button on:click= move |_| copy_to_clipboard() >
