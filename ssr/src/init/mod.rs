@@ -3,7 +3,7 @@ pub mod containers;
 
 use std::{
     env,
-    fs::{File, OpenOptions},
+    fs::OpenOptions,
     io::{BufWriter, Write},
 };
 
@@ -122,7 +122,7 @@ async fn init_firestoredb() -> firestore::FirestoreDb {
     f.flush().expect("flush file");
 
     // read file
-    let mut contents =
+    let contents =
         std::fs::read_to_string("hon_google_service_account.json").expect("Unable to read file");
 
     // print start and end of service account key
