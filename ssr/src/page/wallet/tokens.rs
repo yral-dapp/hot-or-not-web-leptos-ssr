@@ -21,7 +21,6 @@ use crate::{
         token::{token_metadata_by_root, TokenBalance, TokenMetadata},
     },
 };
-use leptos::*;
 use leptos_icons::*;
 
 #[derive(Clone)]
