@@ -101,7 +101,10 @@ async fn get_top_post_id_mlcache() -> Result<Option<(Principal, u64)>, ServerFnE
 #[component]
 pub fn CreatorDaoRootPage() -> impl IntoView {
     view! {
-        <Redirect path="/board"/>
+        {move || {
+            let redirect_url = "/board".to_string();
+            view! { <Redirect path=redirect_url/> }
+        }}
     }
 }
 
@@ -132,12 +135,8 @@ pub fn YralRootPage() -> impl IntoView {
 #[component]
 pub fn RootPage() -> impl IntoView {
     if show_cdao_page() {
-        view! {
-            <CreatorDaoRootPage/>
-        }
+        view! { <CreatorDaoRootPage/> }
     } else {
-        view! {
-            <YralRootPage/>
-        }
+        view! { <YralRootPage/> }
     }
 }

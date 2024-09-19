@@ -4,7 +4,12 @@ mod server_impl;
 use crate::{
     component::{back_btn::BackButton, title::Title, token_logo_sanitize::TokenLogoSanitize},
     state::canisters::{auth_canisters_store, authenticated_canisters, CanistersAuthWire},
-    utils::web::FileWithUrl,
+    utils::{
+        event_streaming::events::{
+            TokenCreationCompleted, TokenCreationFailed, TokenCreationStarted,
+        },
+        web::FileWithUrl,
+    },
 };
 use leptos::*;
 use std::env;
@@ -252,13 +257,7 @@ fn parse_token_e8s(s: &str) -> Result<Tokens, String> {
 #[component]
 pub fn CreateToken() -> impl IntoView {
     let auth_cans = auth_canisters_store();
-    let fallback_url = Signal::derive(move || {
-        let Some(cans) = auth_cans() else {
-            return "/menu".to_string();
-        };
-        let id = cans.profile_details().username_or_principal();
-        format!("/your-profile/{id}?tab=tokens")
-    });
+    let fallback_url = String::from("/your-profile?tab=tokens");
 
     let ctx: CreateTokenCtx = expect_context();
 
@@ -307,9 +306,18 @@ pub fn CreateToken() -> impl IntoView {
                 return Err("Server is not available".to_string());
             }
 
-            deploy_cdao_canisters(cans_wire, create_sns)
+            TokenCreationStarted.send_event(create_sns.clone(), auth_cans);
+
+            let deployed_cans_response = deploy_cdao_canisters(cans_wire, create_sns.clone())
                 .await
-                .map_err(|e| e.to_string())
+                .map_err(|e| e.to_string());
+
+            match deployed_cans_response.clone() {
+                Ok(_) => TokenCreationCompleted.send_event(create_sns, auth_cans),
+                Err(e) => TokenCreationFailed.send_event(e, create_sns, auth_cans),
+            }
+
+            deployed_cans_response
         }
     });
     let creating = create_action.pending();
@@ -608,12 +616,12 @@ pub fn CreateTokenSettings() -> impl IntoView {
                     validator=validate_tokens
                     initial_value=format_tokens(&max_participants_icp.get_untracked())
                 />
-                // <InputBox
-                // heading="Restricted Country"
-                // placeholder="Antarctica"
-                // updater=set_restricted_country
-                // validator=non_empty_string_validator
-                // />
+            // <InputBox
+            // heading="Restricted Country"
+            // placeholder="Antarctica"
+            // updater=set_restricted_country
+            // validator=non_empty_string_validator
+            // />
             </form>
             <button
                 on:click=reset_settings
