@@ -159,7 +159,7 @@ ssr = [
     "tonic/tls-webpki-roots",
     "tonic/transport",
     "tonic-build/transport",
-    "dep:firestore",
+
 ]
 # Fetch mock referral history instead of history via canister
 mock-referral-history = ["dep:rand_chacha", "k256/arithmetic"]
@@ -174,7 +174,7 @@ cloudflare = ["dep:gob-cloudflare"]
 backend-admin = []
 ga4 = []
 mock-wallet-history = ["dep:rand_chacha"]
-firestore = []
+firestore = ["dep:firestore"]
 release-bin = [
     "ssr",
     "cloudflare",
@@ -192,7 +192,6 @@ release-lib = [
     "backend-admin",
     "oauth-hydrate",
     "ga4",
-    "firestore",
 ]
 local-bin = [
     "ssr",
