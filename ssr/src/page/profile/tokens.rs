@@ -69,9 +69,7 @@ fn TokenView(user_principal: Principal, token: TokenCans) -> impl IntoView {
 }
 
 #[component]
-fn CreateYourToken(
-    header_text: &'static str,
-) -> impl IntoView {
+fn CreateYourToken(header_text: &'static str) -> impl IntoView {
     view! {
         <div class="w-full flex flex-col items-center gap-4">
             <span class="text-2xl text-primary-600 text-center">
@@ -83,10 +81,7 @@ fn CreateYourToken(
 }
 
 #[component]
-pub fn ProfileTokens(
-    user_canister: Principal,
-    user_principal: Principal,
-) -> impl IntoView {
+pub fn ProfileTokens(user_canister: Principal, user_principal: Principal) -> impl IntoView {
     let token_list = create_resource(
         || (),
         move |_| async move {
@@ -130,13 +125,13 @@ pub fn ProfileTokens(
                                     .map(|token| view! { <TokenView user_principal token /> })
                                     .collect_view()}
                                 <Show when=move || { empty }>
-                                    <CreateYourToken header_text=(||{
+                                    <CreateYourToken header_text={
                                         if is_native_profile {
                                             "Create your own"
                                         } else {
                                             "They have not created any"
                                         }
-                                    })()
+                                    }
                                     />
                                 </Show>
                                 <Show when=move || is_native_profile>
