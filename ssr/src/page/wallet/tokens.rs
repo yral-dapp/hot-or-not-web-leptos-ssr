@@ -139,22 +139,27 @@ pub fn TokenView(
 
 
                     view! {
-                        <a
+                        <div
+                            class="flex  w-full  p-4  w-full items-center h-20 rounded-xl border-2 border-neutral-700 bg-white/15 gap-1"
+                        >
+                            <a
                             href=format!("/token/info/{token_root}/{user_principal}")
                             _ref=_ref
-                            class="grid grid-cols-2 grid-rows-1 w-full items-center p-4 rounded-xl border-2 border-neutral-700 bg-white/15"
-                        >
-                            <div class="flex flex-row gap-2 items-center justify-self-start">
+                            class="flex flex-1 gap-1"
+                            >
+                                <div class="flex flex-1 items-center space-x-4">
                                 <img class="w-12 h-12 rounded-full" src=info.logo_b64.clone()/>
-                                <span class="text-white truncate">{info.name.clone()}</span>
-                            </div>
-                            <div class="flex flex-row gap-2 items-center justify-self-end text-base text-white">
-                                <span class="truncate">
+                                <span class="flex flex-col text-white truncate">{info.name.clone()}</span>
+                                </div>
+                                <span
+                                class="flex flex-1  items-center justify-end space-x-4 text-white truncate">
                                     {format!("{} {}", info.balance.humanize(), info.symbol)}
                                 </span>
-                                <button
+                                </a>
+
+                            <button
                                     on:click=move |_| share_profile_url()
-                                    class="text-white text-center p-1 text-lg md:text-xl bg-primary-600 rounded-full"
+                                    class="text-white text-center p-1 text-lg md:text-xl bg-primary-600 rounded-full h-7 w-7"
                                     >
                                     <Icon icon=icondata::AiShareAltOutlined/>
 
@@ -164,8 +169,42 @@ pub fn TokenView(
                                 share_link
                                 message
                                 />
-                            </div>
-                        </a>
+                        </div>
+
+                    //     <div
+                    //     class="grid grid-cols-2 grid-rows-1 w-full items-center p-4 rounded-xl border-2 border-neutral-700 bg-white/15"
+                    // >
+
+                    //     <a
+                    //     href=format!("/token/info/{token_root}/{user_principal}")
+                    //     _ref=_ref
+                    //     class="flex flex-row gap-2 items-center justify-self-start">
+                    //         <img class="w-12 h-12 rounded-full" src=info.logo_b64.clone()/>
+                    //         <span class="text-white truncate">{info.name.clone()}</span>
+                    //     </a>
+                    //     <div class="flex flex-row gap-2 items-center justify-self-end text-base text-white">
+                    //         <a
+                    //         href=format!("/token/info/{token_root}/{user_principal}")
+                    //         _ref=_ref
+                    //         class="truncate">
+                    //             {format!("{} {}", info.balance.humanize(), info.symbol)}
+                    //         </a>
+                    //     <div>
+                    //     <button
+                    //             on:click=move |_| share_profile_url()
+                    //             class="text-white text-center p-1 text-lg md:text-xl bg-primary-600 rounded-full"
+                    //             >
+                    //             <Icon icon=icondata::AiShareAltOutlined/>
+
+                    //         </button>
+                    //         <SharePopup
+                    //         sharing_action=share_action
+                    //         share_link
+                    //         message
+                    //         />
+                    //     </div>
+                    //     </div>
+                    // </div>
                     }
                 })
             }}
