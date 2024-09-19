@@ -32,15 +32,13 @@ pub fn ICPumpListing() -> impl IntoView {
     let end_of_list = create_rw_signal(false);
     let cache = create_rw_signal(HashMap::<u64, Vec<TokenListItem>>::new());
 
-    let act = create_resource(page, move |_| async move {
+    let act = create_resource(page, move |page| async move {
         let cache = cache.get_untracked();
-        if let Some(cached) = cache.get(&page.get_untracked()) {
+        if let Some(cached) = cache.get(&page) {
             return cached.clone();
         }
 
-        get_paginated_token_list(page.get_untracked() as u32)
-            .await
-            .unwrap()
+        get_paginated_token_list(page as u32).await.unwrap()
     });
 
     view! {
