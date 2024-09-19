@@ -1,7 +1,7 @@
 use leptos::*;
 use leptos_icons::*;
 
-use crate::component::overlay::*;
+use crate::{component::overlay::*, utils::web::copy_to_clipboard};
 
 #[component]
 fn ShareProfileContent(
@@ -14,7 +14,10 @@ fn ShareProfileContent(
     let share_link_social = share_link.clone();
 
     // Encode the message for URLs
-
+    let copy = share_link.clone();
+    let copy_clipboard = move |_| {
+        copy_to_clipboard(&copy);
+    };
     view! {
         <div class="flex flex-col gap-6 items-center p-6 w-full h-full bg-white rounded-lg shadow-lg">
             <div class="flex flex-col gap-2 items-center">
@@ -29,7 +32,7 @@ fn ShareProfileContent(
         <span class="text-lg text-black md:text-xl truncate">
                 {&share_link.clone()}
             </span>
-            <button >
+            <button on:click=copy_clipboard >
                 <Icon class="w-6 h-6 text-black cursor-pointer" icon=icondata::BiCopyRegular />
             </button>
         </div>
@@ -50,7 +53,7 @@ fn SocialShare(share_link: String, message: String) -> impl IntoView {
 
     // Facebook share URL using Dialog API
     let fb_url = format!(
-        "http://www.facebook.com/share.php?u={}&p[title]={}",
+        "http://www.facebook.com/share.php?u={}&quote={}",
         share_link, encoded_message
     );
 
