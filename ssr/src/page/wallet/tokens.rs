@@ -99,45 +99,35 @@ pub fn TokenView(
     );
 
     view! {
-        <ClaimTokensOrRedirectError token_root/>
+        <ClaimTokensOrRedirectError token_root />
         <Suspense fallback=FallbackToken>
             {move || {
-                info.map( |info|
-                    {
-
-                        let base_url = || {
-                            use_window()
-                                .as_ref()
-                                .and_then(|w| w.location().origin().ok())
-                        };
-                        let username_or_principal =  user_principal.to_text().clone();
-                        let principal = user_principal.to_text().clone();
-
-                        let share_link =  base_url()
+                info.map(|info| {
+                    let base_url = || {
+                        use_window().as_ref().and_then(|w| w.location().origin().ok())
+                    };
+                    let username_or_principal = user_principal.to_text().clone();
+                    let principal = user_principal.to_text().clone();
+                    let share_link = base_url()
                         .map(|b| format!("{b}/profile/{}?tab=tokens", &username_or_principal))
                         .unwrap_or_default();
-
-                        let message = format!(
-                            "Hey! Check out my YRAL profile 👇 {}. I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter",
-                            share_link.clone()
-                        );
-
-                       let share_action = create_action(move |&()| async move { Ok(()) } );
-
-
-                         let link  = share_link.clone();
-
-                         let share_profile_url = move || {
-
-                         let has_share_support = check_share_support();
-
-                         match has_share_support {
-                            Some(_) => {share_url(&link);},
-                            None => {share_action.dispatch(());},
+                    let message = format!(
+                        "Hey! Check out my YRAL profile 👇 {}. I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter",
+                        share_link.clone(),
+                    );
+                    let share_action = create_action(move |&()| async move { Ok(()) });
+                    let link = share_link.clone();
+                    let share_profile_url = move || {
+                        let has_share_support = check_share_support();
+                        match has_share_support {
+                            Some(_) => {
+                                share_url(&link);
+                            }
+                            None => {
+                                share_action.dispatch(());
+                            }
                         };
-                         };
-
-
+                    };
                     view! {
                         <a
                             href=format!("/token/info/{token_root}/{principal}")
@@ -145,7 +135,7 @@ pub fn TokenView(
                             class="grid grid-cols-2 grid-rows-1 items-center p-4 w-full rounded-xl border-2 border-neutral-700 bg-white/15"
                         >
                             <div class="flex flex-row gap-2 justify-self-start items-center">
-                                <img class="w-12 h-12 rounded-full" src=info.logo_b64.clone()/>
+                                <img class="w-12 h-12 rounded-full" src=info.logo_b64.clone() />
                                 <span class="text-white truncate">{info.name.clone()}</span>
                             </div>
                             <div class="flex flex-row gap-2 justify-self-end items-center text-base text-white">
@@ -153,17 +143,17 @@ pub fn TokenView(
                                     {format!("{} {}", info.balance.humanize(), info.symbol)}
                                 </span>
                                 <button
-                                    on:click=move |_| share_profile_url()
+                                    on:click=move |event| {
+                                        event.prevent_default();
+                                        event.stop_propagation();
+                                        share_profile_url();
+                                    }
                                     class="p-1 text-lg text-center text-white rounded-full md:text-xl bg-primary-600"
-                                    >
-                                    <Icon icon=icondata::AiShareAltOutlined/>
+                                >
+                                    <Icon icon=icondata::AiShareAltOutlined />
 
                                 </button>
-                                <ShareProfilePopup
-                                sharing_action=share_action
-                                share_link
-                                message
-                                />
+                                <ShareProfilePopup sharing_action=share_action share_link message />
                             </div>
                         </a>
                     }
@@ -186,7 +176,7 @@ fn TokenList(canisters: Canisters<true>) -> impl IntoView {
                 provider
                 fetch_count=10
                 children=move |token_root, _ref| {
-                    view! { <TokenView user_principal token_root _ref=_ref.unwrap_or_default()/> }
+                    view! { <TokenView user_principal token_root _ref=_ref.unwrap_or_default() /> }
                 }
             />
 
@@ -200,13 +190,13 @@ pub fn Tokens() -> impl IntoView {
         <div class="flex-col gap-6 items-center px-4 pt-4 pb-12 bg-black felx w-dvw min-h-dvh">
             <Title justify_center=false>
                 <div class="flex flex-row justify-between">
-                    <BackButton fallback="/wallet".to_string()/>
+                    <BackButton fallback="/wallet".to_string() />
                     <span class="text-xl font-bold text-white">Tokens</span>
                     <div></div>
                 </div>
             </Title>
             <AuthCansProvider fallback=BulletLoader let:canisters>
-                <TokenList canisters/>
+                <TokenList canisters />
             </AuthCansProvider>
         </div>
     }
