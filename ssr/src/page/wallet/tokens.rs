@@ -111,7 +111,7 @@ pub fn TokenView(
                                 .and_then(|w| w.location().origin().ok())
                         };
                         let username_or_principal =  user_principal.to_text().clone();
-                        let principal = user_principal.to_text().clone();
+                        // let principal = user_principal.to_text().clone();
 
                         let share_link =  base_url()
                         .map(|b| format!("{b}/profile/{}?tab=tokens", &username_or_principal))

@@ -168,8 +168,8 @@ pub fn TokenInfo() -> impl IntoView {
         let Ok(params) = params else {
             return Ok::<_, ServerFnError>(None);
         };
-        let principal = params.user_principal.to_text().clone();
-        let root = params.token_root.to_text().clone();
+        // let principal = params.user_principal.to_text().clone();
+        // let root = params.token_root.to_text().clone();
 
         let cans = unauth_canisters();
         let meta = token_metadata_by_root(&cans, params.user_principal, params.token_root).await?;
