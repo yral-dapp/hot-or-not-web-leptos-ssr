@@ -7,22 +7,33 @@ use crate::utils::token::icpump::TokenListItem;
 
 #[component]
 pub fn TokenListing(details: TokenListItem) -> impl IntoView {
+    let created_at_str = details.created_at.clone();
+    let datetime = chrono::DateTime::parse_from_rfc3339(&created_at_str).unwrap();
+    let elapsed = chrono::Utc::now()
+        .signed_duration_since(datetime)
+        .num_seconds();
+    let elapsed_str = if elapsed < 60 {
+        format!("{}s ago", elapsed)
+    } else if elapsed < 3600 {
+        format!("{}m ago", elapsed / 60)
+    } else if elapsed < 86400 {
+        format!("{}h ago", elapsed / 3600)
+    } else {
+        format!("{}d ago", elapsed / 86400)
+    };
+
     view! {
         <div class="max-h-[300px] overflow-hidden h-fit p-2 flex border hover:border-white gap-2 w-full  border-transparent">
-            // <div class="relative rounded-md m-2">
-                // <div class="flex flex-row justify-center">
-                    <div class="min-w-32 relative self-start">
-                    <img class="mr-4 w-32 h-auto" src={details.logo} alt={details.token_name.clone()}/>
-                    </div>
-                    <div class="gap-1 grid h-fit">
-                        <span class="text-xs text-gray-500">"Created by: " {details.user_id}</span>
-                        <span class="text-sm text-gray-500">"Name: " {details.token_name}</span>
-                        <span class="text-sm text-gray-500 font-bold">"$ " {details.token_symbol}</span>
-                        <span class="text-sm text-gray-500">{details.description}</span>
-                        <span class="text-xs text-gray-500">{details.created_at}</span>
-                    </div>
-                // </div>
-            // </div>
+            <div class="min-w-32 relative self-start">
+            <img class="mr-4 w-32 h-auto" src={details.logo} alt={details.token_name.clone()}/>
+            </div>
+            <div class="gap-1 grid h-fit">
+                <span class="text-sm text-gray-500 font-bold">"$" {details.token_symbol}</span>
+                <span class="text-sm text-gray-500">"Name: " {details.token_name}</span>
+                <span class="text-sm text-gray-500">{details.description}</span>
+                <span class="text-xs text-gray-500">{elapsed_str}</span>
+                <span class="text-xs text-gray-500">"Created by: " {details.user_id}</span>
+            </div>
         </div>
     }
 }

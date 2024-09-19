@@ -1,4 +1,4 @@
-pub mod ic;
+mod ic;
 pub mod overlay;
 mod posts;
 mod profile_iter;

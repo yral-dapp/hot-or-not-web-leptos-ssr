@@ -2854,6 +2854,7 @@ dependencies = [
  "bb8-redis",
  "candid",
  "candid_parser",
+ "chrono",
  "circular-buffer",
  "codee",
  "console_error_panic_hook",

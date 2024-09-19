@@ -106,7 +106,6 @@ fn init_google_oauth() -> crate::auth::core_clients::CoreClients {
 #[cfg(feature = "firestore")]
 async fn init_firestoredb() -> firestore::FirestoreDb {
     use firestore::{FirestoreDb, FirestoreDbOptions};
-    // let options = FirestoreDbOptions::new("icpump".to_string());
 
     // firestore-rs needs the service account key to be in a file
     let sa_key_file = env::var("HON_GOOGLE_SERVICE_ACCOUNT").expect("HON_GOOGLE_SERVICE_ACCOUNT");
@@ -120,18 +119,6 @@ async fn init_firestoredb() -> firestore::FirestoreDb {
     let mut f = BufWriter::new(file);
     f.write_all(sa_key_file.as_bytes()).expect("write file");
     f.flush().expect("flush file");
-
-    // read file
-    let contents =
-        std::fs::read_to_string("hon_google_service_account.json").expect("Unable to read file");
-
-    // print start and end of service account key
-    println!(
-        "service account key: {} {} {}",
-        contents.len(),
-        &contents[..10],
-        &contents[contents.len() - 10..]
-    );
 
     env::set_var(
         "GOOGLE_APPLICATION_CREDENTIALS",

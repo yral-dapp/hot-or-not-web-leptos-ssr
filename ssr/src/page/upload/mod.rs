@@ -163,7 +163,7 @@ fn PreUploadView(trigger_upload: WriteSignal<Option<UploadParams>>) -> impl Into
 #[component]
 pub fn CreatorDaoCreatePage() -> impl IntoView {
     view! {
-        <Redirect path="/your-profile?tab=tokens"/>
+        <Redirect path="/token/create"/>
     }
 }
 
