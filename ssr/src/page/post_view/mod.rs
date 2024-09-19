@@ -10,11 +10,9 @@ use std::cmp::Reverse;
 use crate::{
     component::{scrolling_post_view::ScrollingPostView, spinner::FullScreenSpinner},
     consts::NSFW_TOGGLE_STORE,
-    page::root::CreatorDaoRootPage,
     state::canisters::{authenticated_canisters, unauth_canisters, Canisters},
     try_or_redirect,
     utils::{
-        host::show_cdao_page,
         posts::{get_post_uid, FetchCursor, PostDetails},
         route::failure_redirect,
     },
