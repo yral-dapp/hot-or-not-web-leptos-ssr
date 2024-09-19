@@ -1,7 +1,9 @@
 name: nightwatch tests
 on:
-    pull_request:
-        branches: main
+  workflow_run:
+    workflows: ["deploy preview"]  # Name of the first workflow
+    types:
+      - completed
 jobs:
   tests: 
     name: 'nightwatch tests'
