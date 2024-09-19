@@ -97,6 +97,9 @@ pub fn TokenView(
     );
 
     let share_action = create_action(move |&()| async move { Ok(()) });
+    // let share_twitter = move |_| {
+    //     share_url(&twitter_url);
+    // };
     // let creating = create_action.pending();
     //
     // let create_disabled = create_memo(move |_| {
