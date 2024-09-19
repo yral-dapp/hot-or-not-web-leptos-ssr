@@ -1,6 +1,6 @@
 use crate::component::canisters_prov::AuthCansProvider;
 use crate::utils::profile::ProfileDetails;
-use crate::utils::web::share_url;
+// use crate::utils::web::share_url;
 use crate::{
     component::{overlay::PopupOverlay, token_confetti_symbol::TokenConfettiSymbol},
     page::token::create::CreateTokenCtx,
@@ -291,11 +291,11 @@ fn ShareProfileContent(
         "https://www.linkedin.com/shareArticle?mini=true&url={}&title={}",
         profile_link, encoded_message
     );
-    let linkedin_app_url = format!(
-        "linkedin://shareArticle?mini=true&url={}&title={}",
-        urlencoding::encode(&profile_link),
-        encoded_message
-    );
+    // let linkedin_app_url = format!(
+    //     "linkedin://shareArticle?mini=true&url={}&title={}",
+    //     urlencoding::encode(&profile_link),
+    //     encoded_message
+    // );
 
     // let open_linkedin = move || {
     //     // Create a temporary iframe to test if the app is installed
@@ -325,41 +325,46 @@ fn ShareProfileContent(
     //
 
     // Functions to handle the share actions for each platform
-    let share_fb = move |_| {
-        share_url(&fb_url);
-    };
-
-    let share_twitter = move |_| {
-        share_url(&twitter_url);
-    };
-
-    let share_whatsapp = move |_| {
-        share_url(&whatsapp_url);
-    };
-    let window = use_window();
-    let linkedin_cloned_url = linkedin_url.clone();
-    let linkedin_app_cloned_url = linkedin_app_url.clone();
-
-    let share_linkedin = move || {
-        if let Some(win) = window.as_ref() {
-            // Try opening the LinkedIn app URL
-            match win.location().set_href(&linkedin_app_cloned_url) {
-                Ok(_) => {
-                    log::info!("Opened LinkedIn app successfully.");
-                }
-                Err(e) => {
-                    log::error!("Failed to open LinkedIn app: {:?}", e);
-
-                    // Fallback: If the app link fails, open the web URL
-                    if let Err(web_err) = win.location().set_href(&linkedin_cloned_url) {
-                        log::error!("Failed to redirect to LinkedIn web URL: {:?}", web_err);
-                    } else {
-                        log::info!("Redirected to LinkedIn web URL.");
-                    }
-                }
-            }
-        }
-    };
+    // let share_fb = move |_| {
+    //     share_url(&fb_url);
+    // };
+    //
+    // let share_twitter = move |_| {
+    //     share_url(&twitter_url);
+    // };
+    //
+    // let share_whatsapp = move |_| {
+    //     share_url(&whatsapp_url);
+    // };
+    // let window = use_window();
+    // let linkedin_cloned_url = linkedin_url.clone();
+    // let linkedin_app_cloned_url = linkedin_app_url.clone();
+    //
+    // let share_linkedin = move || {
+    //     if let Some(win) = window.as_ref() {
+    //         // Try opening the LinkedIn app URL
+    //         match win.location().set_href(&linkedin_app_cloned_url) {
+    //             Ok(_) => {
+    //                 log::info!("Opened LinkedIn app successfully.");
+    //             }
+    //             Err(app_err) => {
+    //                 log::error!("Failed to open LinkedIn app: {:?}", app_err);
+    //
+    //                 // Fallback: Try to open the web URL if the app link fails
+    //                 match win.location().set_href(&linkedin_cloned_url) {
+    //                     Ok(_) => {
+    //                         log::info!("Redirected to LinkedIn web URL successfully.");
+    //                     }
+    //                     Err(web_err) => {
+    //                         log::error!("Failed to redirect to LinkedIn web URL: {:?}", web_err);
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     } else {
+    //         log::error!("Window object is not available.");
+    //     }
+    // };
 
     // let share_linkedin = move || {
     //     log::info!("linkedin url: {}", linkedin_cloned_url);
@@ -413,39 +418,36 @@ fn ShareProfileContent(
            </div>
                    <div class="flex gap-4">
                        // Facebook button
-                       <button on:click=share_fb>
+                      <a href=fb_url target="_blank">
                            <Icon
                                class="text-3xl md:text-4xl text-primary-600"
                                icon=icondata::BsFacebook
                            />
-                       </button>
+                       </a>
 
                        // Twitter button
-                       <button on:click=share_twitter>
-                           <Icon
+                     <a href=twitter_url target="_blank">                           <Icon
                                class="text-3xl md:text-4xl text-primary-600"
                                icon=icondata::BsTwitterX
                            />
-                       </button>
+                       </a>
 
                        // WhatsApp button
-                       <button on:click=share_whatsapp>
-                           <Icon
+                      <a href=whatsapp_url target="_blank">                           <Icon
                                class="text-3xl md:text-4xl text-primary-600"
                                icon=icondata::FaSquareWhatsappBrands
                            />
-                       </button>
+                       </a>
 
                        // LinkedIn button
-                    <button on:click=move |_| share_linkedin()>
-
+                    <a href={linkedin_url} target="_blank">
                        // <button on:click= move |_| share_linkedin()>
                            <Icon
                                class="text-3xl md:text-4xl text-primary-600"
                                icon=icondata::TbBrandLinkedin
                            />
                        // </button>
-                </button>
+                </a>
                    </div>
                  <div class="flex overflow-x-auto justify-center items-center px-10 mx-1 space-x-2 w-full rounded-xl border-2 border-neutral-700 h-[2.5rem] md:h-[5rem]">
                <a
@@ -453,7 +455,7 @@ fn ShareProfileContent(
             class="text-lg text-black md:text-xl truncate">
                        {&profile_link}
                    </a>
-                   <button on:click= move |_| copy_to_clipboard() >
+                                     <button on:click= move |_| copy_to_clipboard() >
                        <Icon class="w-6 h-6 text-black cursor-pointer" icon=copyicon />
                    </button>
                </div>
