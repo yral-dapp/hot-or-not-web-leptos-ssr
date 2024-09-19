@@ -33,5 +33,7 @@ pub mod server {
         pub google_oauth_clients: crate::auth::core_clients::CoreClients,
         #[cfg(feature = "ga4")]
         pub grpc_offchain_channel: tonic::transport::Channel,
+        #[cfg(feature = "firestore")]
+        pub firestore_db: firestore::FirestoreDb,
     }
 }
