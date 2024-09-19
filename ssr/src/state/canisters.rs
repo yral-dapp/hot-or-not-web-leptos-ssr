@@ -214,19 +214,17 @@ impl<const A: bool> Canisters<A> {
         }
         #[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
         {
-            let temp_user_idx = Principal::from_text("znhy2-2qaaa-aaaag-acofq-cai").unwrap();
-            return Ok(vec![temp_user_idx]);
-            // use std::collections::HashSet;
-            // // TODO: this is temporary
-            // let blacklisted =
-            //     HashSet::from([Principal::from_text("rimrc-piaaa-aaaao-aaljq-cai").unwrap()]);
-            // let orchestrator = self.orchestrator().await;
-            // Ok(orchestrator
-            //     .get_all_available_subnet_orchestrators()
-            //     .await?
-            //     .into_iter()
-            //     .filter(|subnet| !blacklisted.contains(subnet))
-            //     .collect())
+            use std::collections::HashSet;
+            // TODO: this is temporary
+            let blacklisted =
+                HashSet::from([Principal::from_text("rimrc-piaaa-aaaao-aaljq-cai").unwrap()]);
+            let orchestrator = self.orchestrator().await;
+            Ok(orchestrator
+                .get_all_available_subnet_orchestrators()
+                .await?
+                .into_iter()
+                .filter(|subnet| !blacklisted.contains(subnet))
+                .collect())
         }
     }
 }
