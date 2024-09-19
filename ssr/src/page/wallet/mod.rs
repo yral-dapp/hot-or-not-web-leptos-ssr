@@ -1,3 +1,4 @@
+pub mod share_token_popup;
 pub mod tokens;
 pub mod transactions;
 mod txn;
@@ -5,6 +6,7 @@ use candid::Principal;
 use leptos::*;
 use leptos_icons::*;
 use leptos_use::use_window;
+use share_token_popup::ShareProfilePopup;
 use tokens::{TokenRootList, TokenView};
 
 use crate::{
@@ -29,13 +31,26 @@ fn ProfileGreeter(details: ProfileDetails) -> impl IntoView {
             .as_ref()
             .and_then(|w| w.location().origin().ok())
     };
+    let share_action = create_action(move |&()| async move { Ok(()) });
 
     let username_or_principal = details.username_or_principal().clone();
+
+    let share_link = base_url()
+        .map(|b| format!("{b}/profile/{}?tab=tokens", username_or_principal))
+        .unwrap_or_default()
+        .clone();
+
+    let message = format!(
+        "Hey! Check out my YRAL profile 👇 {}. I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter",
+        share_link.clone()
+    );
     let share_profile_url = move || {
-        let url = base_url()
-            .map(|b| format!("{b}/profile/{}?tab=tokens", username_or_principal))
-            .unwrap_or_default();
-        share_url(&url);
+        // let url = base_url()
+        //     .map(|b| format!("{b}/profile/{}?tab=tokens", username_or_principal))
+        //     .unwrap_or_default();
+        // share_url(&url);
+
+        share_action.dispatch(());
     };
 
     view! {
@@ -56,6 +71,12 @@ fn ProfileGreeter(details: ProfileDetails) -> impl IntoView {
 
         </button>
             </div>
+            <ShareProfilePopup
+                        sharing_action=share_action
+                        share_link
+                        message
+
+                    />
 
 
 

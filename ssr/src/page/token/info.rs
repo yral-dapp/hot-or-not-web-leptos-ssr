@@ -5,12 +5,9 @@ use leptos_use::use_window;
 
 use crate::{
     component::{back_btn::BackButton, spinner::FullScreenSpinner, title::Title},
-    page::token::TokenInfoParams,
+    page::{token::TokenInfoParams, wallet::share_token_popup::ShareProfilePopup},
     state::canisters::unauth_canisters,
-    utils::{
-        token::{token_metadata_by_root, TokenMetadata},
-        web::share_url,
-    },
+    utils::token::{token_metadata_by_root, TokenMetadata},
 };
 
 #[component]
@@ -53,11 +50,30 @@ fn TokenInfoInner(meta: TokenMetadata, principal: String, root: String) -> impl 
             .and_then(|w| w.location().origin().ok())
     };
 
+    let share_link = base_url()
+        .map(|b| format!("{b}/token/info/{root}/{principal}"))
+        .unwrap_or_default();
+
+    let share_action = create_action(|()| async { Ok(()) });
+
+    // let share_profile_url = move || {
+    //     // let url = base_url()
+    //     //     .map(|b| format!("{b}/token/info/{root}/{principal}"))
+    //     //     .unwrap_or_default();
+    //     // share_url(&url);
+    // };
+
+    let message = format!(
+        "Hey! Check out the token: {} I created on YRAL 👇 {}. I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter",
+        meta.symbol,  share_link.clone()
+    );
     let share_profile_url = move || {
-        let url = base_url()
-            .map(|b| format!("{b}/token/info/{root}/{principal}"))
-            .unwrap_or_default();
-        share_url(&url);
+        // let url = base_url()
+        //     .map(|b| format!("{b}/profile/{}?tab=tokens", username_or_principal))
+        //     .unwrap_or_default();
+        // share_url(&url);
+
+        share_action.dispatch(());
     };
 
     view! {
@@ -88,6 +104,12 @@ fn TokenInfoInner(meta: TokenMetadata, principal: String, root: String) -> impl 
                             <Icon icon=icondata::AiShareAltOutlined/>
 
                             </button>
+                            <ShareProfilePopup
+                                sharing_action=share_action
+                                share_link
+                                message
+
+                            />
                         </div>
                         <div class="flex flex-row justify-between border-b p-1 border-white items-center">
                             <span class="text-xs md:text-sm text-green-500">Balance</span>
@@ -98,7 +120,7 @@ fn TokenInfoInner(meta: TokenMetadata, principal: String, root: String) -> impl 
                                 {meta.symbol}
                             </span>
                         </div>
-                        <button
+                    <button
                             on:click=move |_| detail_toggle.update(|t| *t = !*t)
                             class="w-full bg-transparent p-1 flex flex-row justify-center items-center gap-2 text-white"
                         >

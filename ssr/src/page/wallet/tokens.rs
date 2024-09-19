@@ -2,6 +2,7 @@ use candid::Principal;
 use ic_agent::AgentError;
 use leptos_use::use_window;
 
+use crate::page::wallet::ShareProfilePopup;
 use crate::{
     canister::individual_user_template::Result14,
     component::{
@@ -16,7 +17,6 @@ use crate::{
     utils::{
         profile::propic_from_principal,
         token::{token_metadata_by_root, TokenBalance, TokenMetadata},
-        web::share_url,
     },
 };
 use leptos::*;
@@ -112,12 +112,25 @@ pub fn TokenView(
                         let username_or_principal =  user_principal.to_text();
                         let principal = user_principal.to_text();
 
+                        let share_link =  base_url()
+                        .map(|b| format!("{b}/profile/{}?tab=tokens", &username_or_principal))
+                        .unwrap_or_default();
+
+                        let message = format!(
+                            "Hey! Check out my YRAL profile 👇 {}. I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter",
+                            share_link.clone()
+                        );
+
+                       let share_action = create_action(|()| async {Ok(())} );
+
+
 
                         let share_profile_url = move || {
-                            let url =  base_url()
-                                 .map(|b| format!("{b}/profile/{}?tab=tokens", &username_or_principal))
-                                 .unwrap_or_default();
-                             share_url(&url);
+                            // let url =  base_url()
+                            //      .map(|b| format!("{b}/profile/{}?tab=tokens", &username_or_principal))
+                            //      .unwrap_or_default();
+                            //  share_url(&url);
+                            share_action.dispatch(());
                          };
                     view! {
                         <a
@@ -140,6 +153,11 @@ pub fn TokenView(
                                     <Icon icon=icondata::AiShareAltOutlined/>
 
                                 </button>
+                                <ShareProfilePopup
+                                sharing_action=share_action
+                                share_link
+                                message
+                                />
                             </div>
                         </a>
                     }

@@ -40,6 +40,25 @@ pub fn share_url(url: &str) -> Option<()> {
     }
 }
 
+pub fn check_share_support() -> Option<()> {
+    #[cfg(not(feature = "hydrate"))]
+    {
+        None
+    }
+    #[cfg(feature = "hydrate")]
+    {
+        use leptos::window;
+        use wasm_bindgen::JsValue;
+        use web_sys::js_sys::Reflect;
+        let window = window();
+        let nav = window.navigator();
+        if !Reflect::has(&nav, &JsValue::from_str("share")).unwrap_or_default() {
+            return None;
+        }
+        Some(())
+    }
+}
+
 /// Copy text to clipboard
 /// returns None if the API is not available
 pub fn copy_to_clipboard(text: &str) -> Option<()> {
