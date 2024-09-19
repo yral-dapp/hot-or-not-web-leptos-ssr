@@ -265,8 +265,12 @@ fn ShareProfileContent(
     );
 
     let message = format!(
-        "Hey! Check out my YRAL profile 👇 {}. I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter",
-        profile_link
+        r#"
+        Hey! Check out my YRAL profile 👇:
+        <a href="{profile_link}" style="color: #1d4ed8; text-decoration: none;" target="_blank">{profile_link}</a>.
+        I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter
+        "#,
+        profile_link = profile_link
     );
 
     // Encode the message for URLs
@@ -413,7 +417,7 @@ fn ShareProfileContent(
                <img class="w-16 h-16 md:w-20 md:h-20" src="/img/yral-logo-1024.png" alt="YRAL Logo" />
 
                <span class="text-xl font-semibold text-center md:text-2xl">
-                    {message}
+                       <p inner_html={message} />
                </span>
            </div>
                    <div class="flex gap-4">
