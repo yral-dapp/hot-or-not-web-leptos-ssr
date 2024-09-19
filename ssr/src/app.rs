@@ -111,12 +111,8 @@ pub fn App() -> impl IntoView {
 
         // sets the document title
         <Title text="Yral"/>
-          <AuthCansProvider  let:canisters>
+          <Meta property="og:url" content="https://yral.com/profile"/>
 
-
-           <Meta property="og:url" content=format!("https://yral.com/profile/{}?tab=tokens",
-        canisters.profile_details().username_or_principal())/>
-    </AuthCansProvider>
         <Meta property="og:type" content="website"/>
         <Meta property="og:title" content="Your Website Title"/>
         <Meta property="og:description" content="Hey! Check out my YRAL profile.I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter. "/>
