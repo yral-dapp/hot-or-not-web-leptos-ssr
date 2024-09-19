@@ -4,11 +4,7 @@ use leptos_icons::*;
 use crate::{component::overlay::*, utils::web::copy_to_clipboard};
 
 #[component]
-fn ShareProfileContent(
-    share_link: String,
-    message: String,
-    close_popup: RwSignal<bool>,
-) -> impl IntoView {
+fn ShareContent(share_link: String, message: String, close_popup: RwSignal<bool>) -> impl IntoView {
     // let has_share_support = check_share_support();
 
     let share_link_social = share_link.clone();
@@ -71,23 +67,6 @@ fn SocialShare(share_link: String, message: String) -> impl IntoView {
         &share_link, encoded_message
     );
 
-    // Functions to handle the share actions for each platform
-    // let share_fb = move |_| {
-    //     share_url(&fb_url);
-    // };
-
-    // let share_twitter = move |_| {
-    //     share_url(&twitter_url);
-    // };
-
-    // let share_whatsapp = move |_| {
-    //     share_url(&whatsapp_url);
-    // };
-
-    // let share_linkedin = move |_| {
-    //     share_url(&linkedin_url);
-    // };
-
     view! {
         <div class="flex gap-4">
                 // Facebook button
@@ -146,7 +125,7 @@ pub fn SharePopup(
      action=sharing_action
              modal=move |_| {
                  view! {
-                    <ShareProfileContent
+                    <ShareContent
                     share_link=share_link.clone()
                     message=message.clone()
                     close_popup
@@ -157,15 +136,4 @@ pub fn SharePopup(
 
          />
      }
-}
-
-#[component]
-fn ProfileLoading() -> impl IntoView {
-    view! {
-        <div class="rounded-full animate-pulse basis-4/12 aspect-square overflow-clip bg-white/20"></div>
-        <div class="flex flex-col gap-2 animate-pulse basis-8/12">
-            <div class="w-full h-4 rounded-full bg-white/20"></div>
-            <div class="w-full h-4 rounded-full bg-white/20"></div>
-        </div>
-    }
 }
