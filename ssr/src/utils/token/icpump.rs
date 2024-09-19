@@ -36,7 +36,7 @@ pub async fn get_paginated_token_list(page: u32) -> Result<Vec<TokenListItem>, S
             FirestoreQueryDirection::Descending,
         )])
         .offset((page - 1) * ICPUMP_LISTING_PAGE_SIZE as u32)
-        .limit(10)
+        .limit(ICPUMP_LISTING_PAGE_SIZE as u32)
         .obj()
         .stream_query()
         .await

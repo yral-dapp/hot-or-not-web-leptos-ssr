@@ -8,19 +8,21 @@ use crate::utils::token::icpump::TokenListItem;
 #[component]
 pub fn TokenListing(details: TokenListItem) -> impl IntoView {
     view! {
-        <div class="relative w-full md:basis-1/3 xl:basis-1/3">
-            <div class="relative rounded-md m-2">
-                <div class="flex flex-row justify-center">
-                    <img class="w-16 h-16" src={details.logo} alt={details.token_name.clone()}/>
-                    <div class="flex flex-col gap-1">
+        <div class="max-h-[300px] overflow-hidden h-fit p-2 flex border hover:border-white gap-2 w-full  border-transparent">
+            // <div class="relative rounded-md m-2">
+                // <div class="flex flex-row justify-center">
+                    <div class="min-w-32 relative self-start">
+                    <img class="mr-4 w-32 h-auto" src={details.logo} alt={details.token_name.clone()}/>
+                    </div>
+                    <div class="gap-1 grid h-fit">
                         <span class="text-xs text-gray-500">"Created by: " {details.user_id}</span>
                         <span class="text-sm text-gray-500">"Name: " {details.token_name}</span>
                         <span class="text-sm text-gray-500 font-bold">"$ " {details.token_symbol}</span>
                         <span class="text-sm text-gray-500">{details.description}</span>
                         <span class="text-xs text-gray-500">{details.created_at}</span>
                     </div>
-                </div>
-            </div>
+                // </div>
+            // </div>
         </div>
     }
 }
@@ -52,7 +54,7 @@ pub fn ICPumpListing() -> impl IntoView {
                     });
 
                     view!{
-                            <div class="flex flex-row gap-y-3 flex-wrap justify-center w-full">
+                            <div class="grid grid-col-1 md:grid-cols-2 lg:grid-cols-3 text-gray-400 gap-4">
                                 <For
                                     each=move || token_list.get()
                                     key=|t| t.token_symbol.clone()

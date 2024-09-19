@@ -40,7 +40,7 @@ pub static FALLBACK_USER_INDEX: Lazy<Principal> =
 
 pub const ICP_LEDGER_CANISTER_ID: &str = "ryjl3-tyaaa-aaaaa-aaaba-cai";
 
-pub const ICPUMP_LISTING_PAGE_SIZE: usize = 10;
+pub const ICPUMP_LISTING_PAGE_SIZE: usize = 12;
 
 pub mod social {
     pub const TELEGRAM: &str = "https://t.me/+c-LTX0Cp-ENmMzI1";
