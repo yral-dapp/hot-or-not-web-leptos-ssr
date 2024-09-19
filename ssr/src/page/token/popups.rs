@@ -76,7 +76,7 @@ fn ErrorPopup<HeadIV: IntoView, Head: Fn() -> HeadIV>(
     view! {
         <div class="flex flex-col gap-6 items-center w-full h-full">
             <div class="flex flex-row justify-center items-center p-3 text-2xl text-orange-400 bg-amber-100 rounded-full md:text-3xl">
-                <Icon icon=icondata::BsExclamationTriangle/>
+                <Icon icon=icondata::BsExclamationTriangle />
             </div>
             <span class="text-2xl font-bold text-center md:text-3xl">{header()}</span>
             <textarea
@@ -174,7 +174,7 @@ fn TokenTransferSuccessPopup(
     let amount_str = amount.humanize();
     view! {
         <SuccessPopup
-            img=|| view! { <TokenConfettiSymbol class="w-8/12"/> }
+            img=|| view! { <TokenConfettiSymbol class="w-8/12" /> }
             text=move || { format!("{amount_str} {token_name} Successfully sent") }
 
             previous_link="/wallet"
@@ -330,65 +330,67 @@ fn ShareProfileContent(
         );
     };
     view! {
-               <div class="flex flex-col gap-6 items-center p-6 w-full h-full bg-white rounded-lg shadow-lg">
-                   <div class="flex flex-col gap-2 items-center">
-               <img class="w-16 h-16 md:w-20 md:h-20" src="/img/yral-logo-1024.png" alt="YRAL Logo" />
+        <div class="flex flex-col gap-6 items-center p-6 w-full h-full bg-white rounded-lg shadow-lg">
+            <div class="flex flex-col gap-2 items-center">
+                <img
+                    class="w-16 h-16 md:w-20 md:h-20"
+                    src="/img/yral-logo-1024.png"
+                    alt="YRAL Logo"
+                />
 
-               <span class="text-xl font-semibold text-center md:text-2xl">
-                    {message}
-               </span>
-           </div>
-                   <div class="flex gap-4">
-                       // Facebook button
-                      <a href=fb_url target="_blank">
-                           <Icon
-                               class="text-3xl md:text-4xl text-primary-600"
-                               icon=icondata::BsFacebook
-                           />
-                       </a>
-
-                       // Twitter button
-                     <a href=twitter_url target="_blank">                           <Icon
-                               class="text-3xl md:text-4xl text-primary-600"
-                               icon=icondata::BsTwitterX
-                           />
-                       </a>
-
-                       // WhatsApp button
-                      <a href=whatsapp_url target="_blank">                           <Icon
-                               class="text-3xl md:text-4xl text-primary-600"
-                               icon=icondata::FaSquareWhatsappBrands
-                           />
-                       </a>
-
-                       // LinkedIn button
-                    <a href={linkedin_url} target="_blank">
-                       // <button on:click= move |_| share_linkedin()>
-                           <Icon
-                               class="text-3xl md:text-4xl text-primary-600"
-                               icon=icondata::TbBrandLinkedin
-                           />
-                       // </button>
+                <span class="text-xl font-semibold text-center md:text-2xl">{message}</span>
+            </div>
+            <div class="flex gap-4">
+                // Facebook button
+                <a href=fb_url target="_blank">
+                    <Icon class="text-3xl md:text-4xl text-primary-600" icon=icondata::BsFacebook />
                 </a>
-                   </div>
-                 <div class="flex overflow-x-auto justify-center items-center px-10 mx-1 space-x-2 w-full rounded-xl border-2 border-neutral-700 h-[2.5rem] md:h-[5rem]">
-               <a
-              href={&profile_link}
-            class="text-lg text-blue-600 transition-colors duration-300 ease-in-out md:text-xl hover:text-blue-800 truncate">
-                       {&profile_link}
-                   </a>
-                                     <button on:click= move |_| copy_to_clipboard() >
-                       <Icon class="w-6 h-6 text-black cursor-pointer" icon=copyicon />
-                   </button>
-               </div>
-       <button on:click= move |_| handle_click()  class="py-4 w-3/4 text-lg text-center text-white rounded-full bg-primary-600"
-    >
 
-                       {previous_text}
+                // Twitter button
+                <a href=twitter_url target="_blank">
+                    <Icon class="text-3xl md:text-4xl text-primary-600" icon=icondata::BsTwitterX />
+                </a>
 
-               </button>
-               </div>
-           }
+                // WhatsApp button
+                <a href=whatsapp_url target="_blank">
+                    <Icon
+                        class="text-3xl md:text-4xl text-primary-600"
+                        icon=icondata::FaSquareWhatsappBrands
+                    />
+                </a>
+
+                // LinkedIn button
+                <a href=linkedin_url target="_blank">
+                    // <button on:click= move |_| share_linkedin()>
+                    <Icon
+                        class="text-3xl md:text-4xl text-primary-600"
+                        icon=icondata::TbBrandLinkedin
+                    />
+                // </button>
+                </a>
+            </div>
+            <div class="flex overflow-x-auto justify-center items-center px-10 mx-1 space-x-2 w-full rounded-xl border-2 border-neutral-700 h-[2.5rem] md:h-[5rem]">
+                <a
+                    href=&profile_link
+                    class="text-lg text-blue-600 transition-colors duration-300 ease-in-out md:text-xl hover:text-blue-800 truncate"
+                >
+                    {&profile_link}
+                </a>
+
+                <button on:click=move |_| copy_to_clipboard()>
+                    <Icon class="w-6 h-6 text-black cursor-pointer" icon=copyicon />
+                </button>
+            </div>
+            <button
+                on:click=move |_| handle_click()
+                class="py-4 w-3/4 text-lg text-center text-white rounded-full bg-primary-600"
+            >
+
+                {previous_text}
+
+            </button>
+        </div>
+    }
 }
 #[component]
 pub fn ShareProfilePopup(sharing_action: Action<(), Result<(), String>>) -> impl IntoView {
@@ -403,25 +405,24 @@ pub fn ShareProfilePopup(sharing_action: Action<(), Result<(), String>>) -> impl
     // });
 
     view! {
-         <PopupOverlay
-                     loading_message=""
+        <PopupOverlay
+            loading_message=""
 
-     action=sharing_action
-             modal=move |_| {
-                 view! {
-                     <AuthCansProvider fallback=ProfileLoading let:canisters>
+            action=sharing_action
+            modal=move |_| {
+                view! {
+                    <AuthCansProvider fallback=ProfileLoading let:canisters>
 
-                     <ShareProfileContent
-                     user_details=canisters.profile_details()
+                        <ShareProfileContent
+                            user_details=canisters.profile_details()
 
-            previous_text="Back to wallet"
+                            previous_text="Back to wallet"
+                        />
 
-                     />
-                     </AuthCansProvider>
-                 }
-             }
-    close=close_popup
-
-         />
-     }
+                    </AuthCansProvider>
+                }
+            }
+            close=close_popup
+        />
+    }
 }
