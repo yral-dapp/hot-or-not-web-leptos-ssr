@@ -1,3 +1,4 @@
+use crate::component::canisters_prov::AuthCansProvider;
 use crate::page::profile::YourProfileView;
 use crate::{
     component::{base_route::BaseRoute, nav::NavBar},
@@ -110,7 +111,16 @@ pub fn App() -> impl IntoView {
 
         // sets the document title
         <Title text="Yral"/>
+          <AuthCansProvider  let:canisters>
 
+
+           <Meta property="og:url" content=format!("https://yral.com/profile/{}?tab=tokens",
+        canisters.profile_details().username_or_principal())/>
+    </AuthCansProvider>
+        <Meta property="og:type" content="website"/>
+        <Meta property="og:title" content="Your Website Title"/>
+        <Meta property="og:description" content="Hey! Check out my YRAL profile.I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter. "/>
+        <Meta property="og:image" content="http://www.your-domain.com/path/image.jpg"/>
         <Link rel="manifest" href="/app.webmanifest"/>
 
         // GA4 Global Site Tag (gtag.js) - Google Analytics
