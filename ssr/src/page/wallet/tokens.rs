@@ -102,7 +102,7 @@ pub fn TokenView(
                 info.map(|info| {
                     view! {
                         <a
-                            href=format!("/token/info/{token_root}")
+                            href=format!("/token/info/{token_root}/{user_principal}")
                             _ref=_ref
                             class="grid grid-cols-2 grid-rows-1 w-full items-center p-4 rounded-xl border-2 border-neutral-700 bg-white/15"
                         >
