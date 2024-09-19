@@ -70,8 +70,12 @@ fn TokenInfoInner(meta: TokenMetadata, principal: String, root: String) -> impl 
         let has_share_support = check_share_support();
 
         match has_share_support {
-            Some(_) => {share_url(&link);},
-            None => {share_action.dispatch(());},
+            Some(_) => {
+                share_url(&link);
+            }
+            None => {
+                share_action.dispatch(());
+            }
         };
     };
 
