@@ -252,10 +252,11 @@ async fn create_individual_canister(
     let idx = canisters.user_index_with(subnet_idx).await;
     let user_canister = match idx
         .get_requester_principals_canister_id_create_if_not_exists()
-        .await? {
-            Result1::Ok(val) => Ok(val),
-            Result1::Err(e) => Err(ServerFnError::new(e))
-        }?;
+        .await?
+    {
+        Result1::Ok(val) => Ok(val),
+        Result1::Err(e) => Err(ServerFnError::new(e)),
+    }?;
 
     canisters
         .metadata_client
