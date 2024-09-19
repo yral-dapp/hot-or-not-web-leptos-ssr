@@ -278,11 +278,7 @@ fn ShareProfileContent(
     // let encoded_link = urlencoding::encode(&profile_link);
 
     // Facebook share URL using Dialog API
-    let fb_url = format!(
-        "http://www.facebook.com/share.php?u={}&title={}",
-        profile_link,
-        urlencoding::encode("Check out this profile")
-    );
+    let fb_url = format!("http://www.facebook.com/sharer/sharer.php?url&type");
 
     // WhatsApp share URL
     let whatsapp_url = format!("https://wa.me/?text={}", encoded_message);
