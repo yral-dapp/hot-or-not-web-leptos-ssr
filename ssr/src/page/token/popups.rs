@@ -8,6 +8,8 @@ use crate::{
 };
 use leptos::*;
 use leptos_icons::*;
+use leptos_use::use_window;
+use std::time::Duration;
 use urlencoding;
 
 #[component]
@@ -254,7 +256,7 @@ fn ProfileLoading() -> impl IntoView {
 #[component]
 fn ShareProfileContent(
     user_details: ProfileDetails,
-    #[prop(into)] previous_link: MaybeSignal<String>,
+
     #[prop(into)] previous_text: String,
 ) -> impl IntoView {
     let profile_link = format!(
@@ -289,6 +291,38 @@ fn ShareProfileContent(
         "https://www.linkedin.com/shareArticle?mini=true&url={}&title={}",
         profile_link, encoded_message
     );
+    let linkedin_app_url = format!(
+        "linkedin://shareArticle?mini=true&url={}&title={}",
+        urlencoding::encode(&profile_link),
+        encoded_message
+    );
+
+    // let open_linkedin = move || {
+    //     // Create a temporary iframe to test if the app is installed
+    //     let document = web_sys::window().unwrap().document().unwrap();
+    //     let iframe = document.create_element("iframe").unwrap();
+    //     iframe.set_attribute("style", "display: none;").unwrap();
+    //     iframe.set_attribute("src", &linkedin_app_url).unwrap();
+    //     document.body().unwrap().append_child(&iframe).unwrap();
+    //
+    //     // Redirect to LinkedIn website if the app is not installed
+    //     let timeout = web_sys::window()
+    //         .unwrap()
+    //         .set_timeout_with_callback_and_timeout(
+    //             &Closure::wrap(Box::new(move || {
+    //                 web_sys::window()
+    //                     .unwrap()
+    //                     .location()
+    //                     .set_href(&linkedin_url)
+    //                     .unwrap();
+    //             }) as Box<dyn Fn()>)
+    //             .as_ref()
+    //             .unchecked_ref(),
+    //             1000,
+    //         )
+    //         .unwrap();
+    // };
+    //
 
     // Functions to handle the share actions for each platform
     let share_fb = move |_| {
@@ -302,70 +336,152 @@ fn ShareProfileContent(
     let share_whatsapp = move |_| {
         share_url(&whatsapp_url);
     };
+    // let (linkedin_url, set_linkedin_url) = create_signal(String::new());
+    // let (linkedin_app_url, set_linkedin_app_url) = create_signal(String::new());
+    let (error_occurred, set_error_occurred) = create_signal(false);
+    let window = use_window();
+    let linkedin_cloned_url = linkedin_url.clone();
+    let linkedin_app_cloned_url = linkedin_app_url.clone();
+    let error_occurred_cloned = error_occurred.clone();
 
-    let share_linkedin = move |_| {
-        share_url(&linkedin_url);
+    let share_linkedin = move || {
+        if let Some(win) = window.as_ref() {
+            // Attempt to open the app URL
+            let result = win.location().set_href(&linkedin_app_cloned_url);
+            if result.is_err() {
+                // Log error and set signal
+                log::error!("Failed to set app URL: {:?}", result.err());
+                set_error_occurred(true);
+
+                // Redirect to the web URL after a short delay if app URL fails
+                leptos::set_timeout(
+                    move || {
+                        if let Err(e) = win.location().set_href(&linkedin_cloned_url) {
+                            log::error!("Failed to set web URL: {:?}", e);
+                        }
+                    },
+                    Duration::from_millis(1000), // Delay of 1 second
+                );
+            } else {
+                // URL set successfully
+                set_error_occurred(false);
+            }
+        }
     };
 
+    // Log any changes to the error state
+    create_effect(move |_| {
+        if error_occurred() {
+            log::info!("An error occurred while trying to open the LinkedIn app.");
+        } else {
+            log::info!("Successfully set the LinkedIn URL.");
+        }
+    });
+
+    // let share_linkedin = move || {
+    //     log::info!("linkedin url: {}", linkedin_cloned_url);
+    //     if let Some(win) = window.as_ref() {
+    //         // Use window.open() to open the URL
+    //         win.open(&linkedin_cloned_url);
+    //     }
+    // };
+    let window1 = use_window();
+
+    // Capture the current URL (or some other dynamic URL based on your logic)
+    let current_url = window1
+        .as_ref()
+        .and_then(|w| w.location().href().ok()) // Get the current URL
+        .unwrap_or_default(); // Fallback if window is unavailable
+
+    let handle_click = move || {
+        let cloned_url = current_url.clone(); // Clone the URL to use inside the closure
+        log::info!("Current URL: {}", cloned_url);
+
+        // Perform redirection
+        if let Some(w) = window1.as_ref() {
+            if let Err(e) = w.location().set_href(&cloned_url) {
+                log::error!("Failed to redirect: {:?}", e);
+            }
+        }
+    };
+    let (copyicon, set_copyicon) = create_signal(icondata::BsCopy);
+    let profile_link_clone = profile_link.clone();
+    let copy_to_clipboard = move || {
+        let _ = leptos::window()
+            .navigator()
+            .clipboard()
+            .write_text(&profile_link_clone);
+        set_copyicon(icondata::BsCheckSquare);
+        leptos::set_timeout(
+            move || {
+                set_copyicon(icondata::BsCopy);
+            },
+            Duration::from_millis(2000),
+        );
+    };
     view! {
-        <div class="flex flex-col gap-6 items-center p-6 w-full h-full bg-white rounded-lg shadow-lg">
-            <div class="flex flex-col gap-2 items-center">
-        <img class="w-16 h-16 md:w-20 md:h-20" src="/img/android-chrome-384x384.png" alt="YRAL Logo" />
+               <div class="flex flex-col gap-6 items-center p-6 w-full h-full bg-white rounded-lg shadow-lg">
+                   <div class="flex flex-col gap-2 items-center">
+               <img class="w-16 h-16 md:w-20 md:h-20" src="/img/yral-logo-1024.png" alt="YRAL Logo" />
 
-        <span class="text-xl font-semibold text-center md:text-2xl">
-            Share this app
-        </span>
-    </div>
-            <div class="flex gap-4">
-                // Facebook button
-                <button on:click=share_fb>
-                    <Icon
-                        class="text-3xl md:text-4xl text-primary-600"
-                        icon=icondata::BsFacebook
-                    />
+               <span class="text-xl font-semibold text-center md:text-2xl">
+                    {message}
+               </span>
+           </div>
+                   <div class="flex gap-4">
+                       // Facebook button
+                       <button on:click=share_fb>
+                           <Icon
+                               class="text-3xl md:text-4xl text-primary-600"
+                               icon=icondata::BsFacebook
+                           />
+                       </button>
+
+                       // Twitter button
+                       <button on:click=share_twitter>
+                           <Icon
+                               class="text-3xl md:text-4xl text-primary-600"
+                               icon=icondata::BsTwitterX
+                           />
+                       </button>
+
+                       // WhatsApp button
+                       <button on:click=share_whatsapp>
+                           <Icon
+                               class="text-3xl md:text-4xl text-primary-600"
+                               icon=icondata::FaSquareWhatsappBrands
+                           />
+                       </button>
+
+                       // LinkedIn button
+                    <button on:click=move |_| share_linkedin()>
+
+                       // <button on:click= move |_| share_linkedin()>
+                           <Icon
+                               class="text-3xl md:text-4xl text-primary-600"
+                               icon=icondata::TbBrandLinkedin
+                           />
+                       // </button>
                 </button>
+                   </div>
+                 <div class="flex overflow-x-auto justify-center items-center px-10 mx-1 space-x-2 w-full rounded-xl border-2 border-neutral-700 h-[2.5rem] md:h-[5rem]">
+               <a
+              href={&profile_link}
+            class="text-lg text-black md:text-xl truncate">
+                       {&profile_link}
+                   </a>
+                   <button on:click= move |_| copy_to_clipboard() >
+                       <Icon class="w-6 h-6 text-black cursor-pointer" icon=copyicon />
+                   </button>
+               </div>
+       <button on:click= move |_| handle_click()  class="py-4 w-3/4 text-lg text-center text-white rounded-full bg-primary-600"
+    >
 
-                // Twitter button
-                <button on:click=share_twitter>
-                    <Icon
-                        class="text-3xl md:text-4xl text-primary-600"
-                        icon=icondata::BsTwitterX
-                    />
-                </button>
+                       {previous_text}
 
-                // WhatsApp button
-                <button on:click=share_whatsapp>
-                    <Icon
-                        class="text-3xl md:text-4xl text-primary-600"
-                        icon=icondata::FaSquareWhatsappBrands
-                    />
-                </button>
-
-                // LinkedIn button
-                <button on:click=share_linkedin>
-                    <Icon
-                        class="text-3xl md:text-4xl text-primary-600"
-                        icon=icondata::TbBrandLinkedin
-                    />
-                </button>
-            </div>
-          <div class="flex overflow-x-auto justify-center items-center px-10 mx-1 space-x-2 w-full rounded-xl border-2 border-neutral-700 h-[2.5rem] md:h-[5rem]">
-        <span class="text-lg text-black md:text-xl truncate">
-                {&profile_link}
-            </span>
-            <button >
-                <Icon class="w-6 h-6 text-black cursor-pointer" icon=icondata::BiCopyRegular />
-            </button>
-        </div>
-
-           <a
-                href=previous_link
-                class="py-4 w-3/4 text-lg text-center text-white rounded-full bg-primary-600"
-            >
-                {previous_text}
-            </a>
-        </div>
-    }
+               </button>
+               </div>
+           }
 }
 #[component]
 pub fn ShareProfilePopup(sharing_action: Action<(), Result<(), String>>) -> impl IntoView {
@@ -378,6 +494,7 @@ pub fn ShareProfilePopup(sharing_action: Action<(), Result<(), String>>) -> impl
     //     let profile_id = cans.user_principal();
     //     format!("/your-profile/{profile_id}?tab=tokens")
     // });
+
     view! {
          <PopupOverlay
                      loading_message=""
@@ -389,7 +506,7 @@ pub fn ShareProfilePopup(sharing_action: Action<(), Result<(), String>>) -> impl
 
                      <ShareProfileContent
                      user_details=canisters.profile_details()
-                        previous_link="/wallet"
+
             previous_text="Back to wallet"
 
                      />

@@ -16,7 +16,6 @@ use crate::{
 use candid::Principal;
 use leptos::*;
 use leptos_icons::*;
-// use std::time::Duration;
 use tokens::{TokenRootList, TokenView};
 use txn::{provider::get_history_provider, TxnView};
 
@@ -154,7 +153,7 @@ pub fn Wallet() -> impl IntoView {
 
     view! {
         <div>
-            <div class="flex flex-col w-dvw min-h-dvh bg-black gap-4 px-4 pt-4 pb-12">
+            <div class="flex flex-col gap-4 px-4 pt-4 pb-12 bg-black w-dvw min-h-dvh">
                 <div class="grid grid-cols-2 grid-rows-1 items-center w-full">
                     <AuthCansProvider fallback=FallbackGreeter let:cans>
                         <ProfileGreeter details=cans.profile_details()/>
