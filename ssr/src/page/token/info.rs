@@ -1,3 +1,4 @@
+use candid::Principal;
 use leptos::*;
 use leptos_icons::*;
 use leptos_router::*;
@@ -5,7 +6,8 @@ use leptos_use::use_window;
 
 use crate::{
     component::{back_btn::BackButton, spinner::FullScreenSpinner, title::Title},
-    page::{token::TokenInfoParams, wallet::share_token_popup::ShareProfilePopup},
+    component::{bullet_loader::BulletLoader, canisters_prov::AuthCansProvider, share_popup::*},
+    page::token::TokenInfoParams,
     state::canisters::unauth_canisters,
     utils::{
         token::{token_metadata_by_root, TokenMetadata},
@@ -36,7 +38,11 @@ fn TokenDetails(meta: TokenMetadata) -> impl IntoView {
 }
 
 #[component]
-fn TokenInfoInner(meta: TokenMetadata, principal: String, root: String) -> impl IntoView {
+fn TokenInfoInner(
+    root: Principal,
+    user_principal: Principal,
+    meta: TokenMetadata,
+) -> impl IntoView {
     let meta_c = meta.clone();
     let detail_toggle = create_rw_signal(false);
     let view_detail_icon = Signal::derive(move || {
@@ -54,7 +60,7 @@ fn TokenInfoInner(meta: TokenMetadata, principal: String, root: String) -> impl 
     };
 
     let share_link = base_url()
-        .map(|b| format!("{b}/token/info/{root}/{principal}"))
+        .map(|b| format!("{b}/token/info/{root}/{user_principal}"))
         .unwrap_or_default();
 
     let share_action = create_action(move |&()| async move { Ok(()) });
@@ -107,7 +113,7 @@ fn TokenInfoInner(meta: TokenMetadata, principal: String, root: String) -> impl 
                             <Icon icon=icondata::AiShareAltOutlined/>
 
                             </button>
-                            <ShareProfilePopup
+                            <SharePopup
                                 sharing_action=share_action
                                 share_link=share_link.clone()
                                 message
@@ -137,6 +143,18 @@ fn TokenInfoInner(meta: TokenMetadata, principal: String, root: String) -> impl 
                         <TokenDetails meta=meta_c.clone() />
                     </Show>
                 </div>
+                <AuthCansProvider fallback=BulletLoader let:canisters>
+                    <Show when=move || {
+                        user_principal == canisters.profile_details().principal
+                    }>
+                        <a
+                            href=format!("/token/transfer/{root}")
+                            class="flex flex-row justify-self-center justify-center text-white md:text-lg w-full md:w-1/2 rounded-full p-3 bg-primary-600"
+                        >
+                            Send
+                        </a>
+                    </Show>
+                </AuthCansProvider>
             </div>
         </div>
     }
@@ -150,12 +168,12 @@ pub fn TokenInfo() -> impl IntoView {
         let Ok(params) = params else {
             return Ok::<_, ServerFnError>(None);
         };
-        let principal = params.user_principal.to_text().clone();
-        let root = params.token_root.to_text().clone();
+        // let principal = params.user_principal.to_text().clone();
+        // let root = params.token_root.to_text().clone();
 
         let cans = unauth_canisters();
         let meta = token_metadata_by_root(&cans, params.user_principal, params.token_root).await?;
-        Ok(Some((meta, principal, root)))
+        Ok(meta.map(|m| (m, (params.token_root, params.user_principal))))
     });
 
     view! {
@@ -165,8 +183,8 @@ pub fn TokenInfo() -> impl IntoView {
                     .and_then(|info| info.ok())
                     .map(|info| {
                         match info {
-                            Some((Some(metadata), principal, root)) => view! { <TokenInfoInner meta=metadata principal=principal root=root /> },
-                            _ => view! { <Redirect path="/" /> },
+                            Some((metadata,(root,user_principal))) => view! { <TokenInfoInner root user_principal meta=metadata /> },
+                            None => view! { <Redirect path="/" /> },
                         }
                     })
             }}

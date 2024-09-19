@@ -1,3 +1,4 @@
+use crate::page::icpump::ICPumpLanding;
 use crate::page::profile::YourProfileView;
 use crate::{
     component::{base_route::BaseRoute, nav::NavBar},
@@ -12,7 +13,7 @@ use crate::{
         privacy::PrivacyPolicy,
         profile::{profile_post::ProfilePost, ProfilePostsContext, ProfileView},
         refer_earn::ReferEarn,
-        root::{RootPage, YralRootPage},
+        root::RootPage,
         settings::Settings,
         terms::TermsOfService,
         token::{
@@ -101,7 +102,6 @@ pub fn App() -> impl IntoView {
     #[cfg(feature = "ga4")]
     {
         enable_ga4_script.set(true);
-
         provide_context(EventHistory::default());
     }
 
@@ -140,7 +140,6 @@ pub fn App() -> impl IntoView {
                     <Route path="" view=BaseRoute>
                         <Route path="/" view=RootPage/>
                         <Route path="/hot-or-not/:canister_id/:post_id" view=PostView/>
-                        <Route path="/hot-or-not" view=YralRootPage/>
                         <Route path="/post/:canister_id/:post_id" view=SinglePost/>
                         <Route path="/profile/:canister_id/:post_id" view=ProfilePost/>
                         <Route path="/your-profile/:canister_id/:post_id" view=ProfilePost/>
@@ -164,6 +163,7 @@ pub fn App() -> impl IntoView {
                         <Route path="/token/info/:token_root/:user_principal" view=TokenInfo/>
                         <Route path="/token/transfer/:token_root" view=TokenTransfer/>
                         <Route path="/tokens" view=Tokens/>
+                        <Route path="/board" view=ICPumpLanding/>
                     </Route>
                 </Routes>
 

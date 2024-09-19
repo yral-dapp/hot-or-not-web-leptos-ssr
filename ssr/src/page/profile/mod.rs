@@ -13,8 +13,7 @@ use leptos_router::*;
 
 use crate::{
     component::{
-        back_btn::BackButton, canisters_prov::AuthCansProvider, connect::ConnectLogin,
-        spinner::FullScreenSpinner,
+        canisters_prov::AuthCansProvider, connect::ConnectLogin, spinner::FullScreenSpinner,
     },
     state::{auth::account_connected_reader, canisters::unauth_canisters},
     utils::{posts::PostDetails, profile::ProfileDetails},
@@ -105,9 +104,6 @@ fn ProfileViewInner(user: ProfileDetails, user_canister: Principal) -> impl Into
 
     view! {
         <div class="min-h-screen bg-black text-white overflow-y-scroll pt-10 pb-12">
-            <div class="flex ml-4">
-                <BackButton fallback="/".to_string()/>
-            </div>
             <div class="grid grid-cols-1 gap-5 justify-normal justify-items-center w-full">
                 <div class="flex flex-row w-11/12 sm:w-7/12 justify-center">
                     <div class="flex flex-col justify-center items-center">

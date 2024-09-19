@@ -2,7 +2,7 @@ use candid::Principal;
 use ic_agent::AgentError;
 use leptos_use::use_window;
 
-use crate::page::wallet::ShareProfilePopup;
+use crate::page::wallet::SharePopup;
 use crate::utils::web::{check_share_support, share_url};
 use crate::{
     canister::individual_user_template::Result14,
@@ -102,6 +102,7 @@ pub fn TokenView(
         <ClaimTokensOrRedirectError token_root />
         <Suspense fallback=FallbackToken>
             {move || {
+
                 info.map(|info| {
                     let base_url = || {
                         use_window().as_ref().and_then(|w| w.location().origin().ok())

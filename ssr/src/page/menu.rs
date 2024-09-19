@@ -1,4 +1,3 @@
-use crate::component::back_btn::BackButton;
 use crate::component::canisters_prov::with_cans;
 use crate::component::canisters_prov::{AuthCansProvider, WithAuthCans};
 use crate::component::content_upload::YoutubeUpload;
@@ -103,7 +102,7 @@ fn ProfileLoaded(user_details: ProfileDetails) -> impl IntoView {
             </span>
             <a
                 class="text-primary-600 text-md"
-                href=format!("/your-profile/{}", user_details.username_or_principal())
+                href="/your-profile"
             >
                 View Profile
             </a>
@@ -223,10 +222,8 @@ pub fn Menu() -> impl IntoView {
         <div class="min-h-screen w-full flex flex-col text-white pt-2 pb-12 bg-black items-center divide-y divide-white/10">
             <div class="flex flex-col items-center w-full gap-20 pb-16">
                 <Title justify_center=false>
-                    <div class="flex flex-row justify-between">
-                        <BackButton fallback="/".to_string()/>
+                    <div class="flex flex-row justify-center">
                         <span class="font-bold text-2xl">Menu</span>
-                        <div></div>
                     </div>
                 </Title>
                 <div class="flex flex-col items-center w-full gap-4">

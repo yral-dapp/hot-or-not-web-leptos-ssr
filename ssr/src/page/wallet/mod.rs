@@ -1,17 +1,15 @@
-pub mod share_token_popup;
 pub mod tokens;
 pub mod transactions;
 mod txn;
+use crate::component::share_popup::SharePopup;
 use candid::Principal;
 use leptos::*;
 use leptos_icons::*;
 use leptos_use::use_window;
-use share_token_popup::ShareProfilePopup;
 use tokens::{TokenRootList, TokenView};
 
 use crate::{
     component::{
-        back_btn::BackButton,
         bullet_loader::BulletLoader,
         canisters_prov::AuthCansProvider,
         connect::ConnectLogin,
@@ -89,7 +87,7 @@ fn ProfileGreeter(details: ProfileDetails) -> impl IntoView {
 
         </button>
             </div>
-            <ShareProfilePopup
+            <SharePopup
                         sharing_action=share_action
                         share_link
                         message
@@ -191,11 +189,6 @@ pub fn Wallet() -> impl IntoView {
 
     view! {
         <div>
-            <div class="top-0 bg-black text-white w-full items-center z-50 pt-4 pl-4">
-                <div class="flex flex-row justify-start">
-                    <BackButton fallback="/".to_string()/>
-                </div>
-            </div>
             <div class="flex flex-col w-dvw min-h-dvh bg-black gap-4 px-4 pt-4 pb-12">
                 <div class="grid grid-cols-2 grid-rows-1 items-center w-full">
                     <AuthCansProvider fallback=FallbackGreeter let:cans>
