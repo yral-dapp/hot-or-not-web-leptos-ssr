@@ -19,7 +19,7 @@ use crate::{
         sns_governance::SnsGovernance,
         sns_ledger::SnsLedger,
         sns_root::SnsRoot,
-        user_index::UserIndex,
+        user_index::{Result1, UserIndex},
         PLATFORM_ORCHESTRATOR_ID, POST_CACHE_ID,
     },
     consts::{FALLBACK_USER_INDEX, METADATA_API_BASE},
@@ -250,9 +250,12 @@ async fn create_individual_canister(
     let discrim = u128::from_be_bytes(by);
     let subnet_idx = subnet_idxs[(discrim % subnet_idxs.len() as u128) as usize];
     let idx = canisters.user_index_with(subnet_idx).await;
-    let user_canister = idx
-        .get_requester_principals_canister_id_create_if_not_exists_and_optionally_allow_referrer()
-        .await?;
+    let user_canister = match idx
+        .get_requester_principals_canister_id_create_if_not_exists()
+        .await? {
+            Result1::Ok(val) => Ok(val),
+            Result1::Err(e) => Err(ServerFnError::new(e))
+        }?;
 
     canisters
         .metadata_client
