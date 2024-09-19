@@ -1,6 +1,7 @@
 use candid::Principal;
+use codee::string::JsonSerdeCodec;
 use leptos::{Signal, WriteSignal};
-use leptos_use::{storage::use_local_storage, utils::JsonCodec};
+use leptos_use::storage::use_local_storage;
 
 use crate::consts::REFERRER_STORE;
 
@@ -9,5 +10,5 @@ pub fn use_referrer_store() -> (
     WriteSignal<Option<Principal>>,
     impl Fn() + Clone,
 ) {
-    use_local_storage::<Option<Principal>, JsonCodec>(REFERRER_STORE)
+    use_local_storage::<Option<Principal>, JsonSerdeCodec>(REFERRER_STORE)
 }

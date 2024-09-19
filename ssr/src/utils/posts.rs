@@ -1,11 +1,12 @@
 use candid::Principal;
 use serde::{Deserialize, Serialize};
+use web_time::Duration;
 
 use crate::{
     canister::individual_user_template::PostDetailsForFrontend, state::canisters::Canisters,
 };
 
-use super::profile::propic_from_principal;
+use super::{profile::propic_from_principal, types::PostStatus};
 
 use ic_agent::AgentError;
 use thiserror::Error;
@@ -18,6 +19,8 @@ pub enum PostViewError {
     Canister(String),
     #[error("http fetch error {0}")]
     HttpFetch(#[from] reqwest::Error),
+    #[error("ml feed error {0}")]
+    MLFeedError(String),
 }
 
 #[derive(Clone, Copy, PartialEq, Debug)]
@@ -40,9 +43,18 @@ impl FetchCursor {
         self.start += self.limit;
         self.limit = 25;
     }
+
+    pub fn set_limit(&mut self, limit: u64) {
+        self.limit = limit;
+    }
+
+    pub fn advance_and_set_limit(&mut self, limit: u64) {
+        self.start += self.limit;
+        self.limit = limit;
+    }
 }
 
-#[derive(Clone, PartialEq, Debug, Hash, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Ord, PartialOrd, Debug, Hash, Eq, Serialize, Deserialize)]
 pub struct PostDetails {
     pub canister_id: Principal, // canister id of the publishing canister.
     pub post_id: u64,
@@ -59,6 +71,7 @@ pub struct PostDetails {
     pub hastags: Vec<String>,
     pub is_nsfw: bool,
     pub hot_or_not_feed_ranking_score: Option<u64>,
+    pub created_at: Duration,
 }
 
 impl PostDetails {
@@ -86,7 +99,15 @@ impl PostDetails {
             hastags: details.hashtags,
             is_nsfw: details.is_nsfw,
             hot_or_not_feed_ranking_score: details.hot_or_not_feed_ranking_score,
+            created_at: Duration::new(
+                details.created_at.secs_since_epoch,
+                details.created_at.nanos_since_epoch,
+            ),
         }
+    }
+
+    pub fn is_hot_or_not(&self) -> bool {
+        self.hot_or_not_feed_ranking_score.is_some()
     }
 }
 
@@ -95,17 +116,27 @@ pub async fn get_post_uid<const AUTH: bool>(
     user_canister: Principal,
     post_id: u64,
 ) -> Result<Option<PostDetails>, PostViewError> {
-    let post_creator_can = canisters.individual_user(user_canister).await?;
+    let post_creator_can = canisters.individual_user(user_canister).await;
     let post_details = match post_creator_can
         .get_individual_post_details_by_id(post_id)
         .await
     {
         Ok(p) => p,
         Err(e) => {
-            log::warn!("failed to get post details: {}, skipping", e);
+            log::warn!(
+                "failed to get post details for {} {}: {}, skipping",
+                user_canister.to_string(),
+                post_id,
+                e
+            );
             return Ok(None);
         }
     };
+
+    // TODO: temporary patch in frontend to not show banned videos, to be removed later after NSFW tagging
+    if PostStatus::from(&post_details.status) == PostStatus::BannedDueToUserReporting {
+        return Ok(None);
+    }
 
     let post_uuid = &post_details.video_uid;
     let req_url = format!(
@@ -123,3 +154,20 @@ pub async fn get_post_uid<const AUTH: bool>(
         post_details,
     )))
 }
+
+// pub fn get_feed_component_identifier() -> impl Fn() -> Option<&'static str> {
+//     move || {
+//         let loc = get_host();
+
+//         if loc == "yral.com"
+//             || loc == "localhost:3000"
+//             || loc == "hotornot.wtf"
+//             || loc.contains("go-bazzinga-hot-or-not-web-leptos-ssr.fly.dev")
+//         // || loc == "hot-or-not-web-leptos-ssr-staging.fly.dev"
+//         {
+//             Some("PostViewWithUpdatesMLFeed")
+//         } else {
+//             Some("PostViewWithUpdates")
+//         }
+//     }
+// }

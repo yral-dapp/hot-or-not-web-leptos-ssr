@@ -2,7 +2,6 @@ use super::nav_icons::*;
 use leptos::*;
 use leptos_icons::*;
 use leptos_router::*;
-
 #[component]
 fn NavIcon(
     idx: usize,
@@ -12,68 +11,66 @@ fn NavIcon(
     cur_selected: Memo<usize>,
 ) -> impl IntoView {
     view! {
-        <a href=href class="flex items-center justify-center">
+        <a href=href class="flex justify-center items-center">
             <Show
                 when=move || cur_selected() == idx
                 fallback=move || {
                     view! {
-                        <div class="py-3">
-                            <Icon icon=icon class="text-white h-6 w-6"/>
+                        <div class="py-5">
+                            <Icon icon=icon class="text-2xl text-white md:text-3xl"/>
                         </div>
                     }
                 }
             >
 
-                <div class="py-3 border-t-2 border-t-pink-500">
+                <div class="py-5 border-t-2 border-t-pink-500">
                     <Icon
                         icon=filled_icon.unwrap_or(icon)
-                        class="text-white aspect-square h-6 w-6"
+                        class="text-2xl text-white md:text-3xl aspect-square"
                     />
                 </div>
-            // <div class="absolute bottom-0 bg-primary-600 py-1 w-6 blur-md"></div>
             </Show>
         </a>
     }
 }
 
-#[component]
-fn TrophyIcon(idx: usize, cur_selected: Memo<usize>) -> impl IntoView {
-    view! {
-        <a href="/leaderboard" class="flex items-center justify-center">
-            <Show
-                when=move || cur_selected() == idx
-                fallback=move || {
-                    view! {
-                        <div class="py-3">
-                            <Icon icon=TrophySymbol class="text-white fill-none h-6 w-6"/>
-                        </div>
-                    }
-                }
-            >
-
-                <div class="py-3 border-t-2 border-t-pink-500">
-                    <Icon
-                        icon=TrophySymbolFilled
-                        class="text-white fill-none aspect-square h-6 w-6"
-                    />
-                </div>
-            // <div class="absolute bottom-0 bg-primary-600 py-1 w-6 blur-md"></div>
-            </Show>
-        </a>
-    }
-}
+// #[component]
+// fn TrophyIcon(idx: usize, cur_selected: Memo<usize>) -> impl IntoView {
+//     view! {
+//         <a href="/leaderboard" class="flex justify-center items-center">
+//             <Show
+//                 when=move || cur_selected() == idx
+//                 fallback=move || {
+//                     view! {
+//                         <div class="py-5">
+//                             <Icon icon=TrophySymbol class="text-2xl text-white md:text-3xl fill-none"/>
+//                         </div>
+//                     }
+//                 }
+//             >
+//
+//                 <div class="py-5 border-t-2 border-t-pink-500">
+//                     <Icon
+//                         icon=TrophySymbolFilled
+//                         class="text-2xl text-white md:text-3xl fill-none aspect-square"
+//                     />
+//                 </div>
+//             </Show>
+//         </a>
+//     }
+// }
 
 #[component]
 fn UploadIcon(idx: usize, cur_selected: Memo<usize>) -> impl IntoView {
     view! {
-        <a href="/upload" class="flex items-center justify-center rounded-fullt text-white">
+        <a href="/upload" class="flex justify-center items-center text-white rounded-full">
             <Show
                 when=move || cur_selected() == idx
                 fallback=move || {
                     view! {
                         <Icon
                             icon=icondata::AiPlusOutlined
-                            class="rounded-full bg-transparent h-10 w-10 border-2 p-2"
+                            class="p-2 w-10 h-10 bg-transparent rounded-full border-2"
                         />
                     }
                 }
@@ -82,9 +79,9 @@ fn UploadIcon(idx: usize, cur_selected: Memo<usize>) -> impl IntoView {
                 <div class="border-t-2 border-transparent">
                     <Icon
                         icon=icondata::AiPlusOutlined
-                        class="bg-primary-600 rounded-full aspect-square h-10 w-10 p-2"
+                        class="p-2 w-10 h-10 rounded-full bg-primary-600 aspect-square"
                     />
-                    <div class="absolute bottom-0 bg-primary-600 w-10 blur-md"></div>
+                    <div class="absolute bottom-0 w-10 bg-primary-600 blur-md"></div>
                 </div>
             </Show>
         </a>
@@ -94,45 +91,29 @@ fn UploadIcon(idx: usize, cur_selected: Memo<usize>) -> impl IntoView {
 #[component]
 pub fn NavBar() -> impl IntoView {
     let cur_location = use_location();
-    let home_path = create_rw_signal("/".to_string());
+    let home_path = create_rw_signal("/hot-or-not".to_string());
     let cur_selected = create_memo(move |_| {
         let path = cur_location.pathname.get();
         match path.as_str() {
             "/" => 0,
-            "/leaderboard" => 1,
+            // "/leaderboard" => 1,
             "/upload" => 2,
             "/wallet" | "/transactions" => 3,
-            "/menu" => 4,
-            s if s.starts_with("/your-profile") => 4,
+            "/menu" | "/leaderboard" => 4,
             s if s.starts_with("/hot-or-not") => {
                 home_path.set(path);
                 0
             }
             s if s.starts_with("/profile") => 0,
+            s if s.starts_with("/token/info") => 3,
+            s if s.starts_with("/token/create") => 5,
+            s if s.starts_with("/your-profile") => 5,
             _ => 4,
         }
     });
-    let bg_color = move || {
-        if cur_selected() == 0
-            || cur_location
-                .pathname
-                .get()
-                .as_str()
-                .starts_with("/your-profile")
-        {
-            "bg-transparent"
-        } else {
-            "bg-black"
-        }
-    };
 
     view! {
-        <div class=move || {
-            format!(
-                "flex flex-row justify-between px-6 py-2 w-full {} fixed left-0 bottom-0 z-50",
-                bg_color(),
-            )
-        }>
+        <div class="flex fixed bottom-0 left-0 z-50 flex-row justify-between items-center px-6 w-full bg-black/80">
             <NavIcon
                 idx=0
                 href=home_path
@@ -140,13 +121,19 @@ pub fn NavBar() -> impl IntoView {
                 filled_icon=HomeSymbolFilled
                 cur_selected=cur_selected
             />
-            <TrophyIcon idx=1 cur_selected/>
-            <UploadIcon idx=2 cur_selected/>
             <NavIcon
                 idx=3
                 href="/wallet"
                 icon=WalletSymbol
                 filled_icon=WalletSymbolFilled
+                cur_selected=cur_selected
+            />
+            <UploadIcon idx=2 cur_selected/>
+            <NavIcon
+                idx=5
+                href="/your-profile"
+                icon=ProfileIcon
+                filled_icon=ProfileIconFilled
                 cur_selected=cur_selected
             />
             <NavIcon idx=4 href="/menu" icon=MenuSymbol cur_selected=cur_selected/>

@@ -1,5 +1,6 @@
 use leptos::*;
 
+/// Spinner with constant size
 #[component]
 pub fn Spinner() -> impl IntoView {
     view! {
@@ -7,6 +8,15 @@ pub fn Spinner() -> impl IntoView {
     }
 }
 
+/// Spinner that fits container
+#[component]
+pub fn SpinnerFit() -> impl IntoView {
+    view! {
+        <div class="animate-spin border-solid rounded-full border-t-transparent border-primary-600 border-8 w-full h-full"></div>
+    }
+}
+
+/// Spinner that takes up the whole screen with black background
 #[component]
 pub fn FullScreenSpinner() -> impl IntoView {
     view! {

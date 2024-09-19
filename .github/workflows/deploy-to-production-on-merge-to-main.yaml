@@ -31,6 +31,8 @@ jobs:
           flyctl secrets set REDIS_URL="$REDIS_URL" --app "hot-or-not-web-leptos-ssr" --stage
           flyctl secrets set GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET --app "hot-or-not-web-leptos-ssr" --stage
           flyctl secrets set GRPC_AUTH_TOKEN="$GRPC_AUTH_TOKEN" --app "hot-or-not-web-leptos-ssr" --stage
+          flyctl secrets set HOTORNOT_GOOGLE_CLIENT_SECRET="$HOTORNOT_GOOGLE_CLIENT_SECRET" --app "hot-or-not-web-leptos-ssr" --stage
+          flyctl secrets set ICPUMPFUN_GOOGLE_CLIENT_SECRET="$ICPUMPFUN_GOOGLE_CLIENT_SECRET" --app "hot-or-not-web-leptos-ssr" --stage
         env:
           CF_TOKEN: ${{ secrets.CLOUDFLARE_STREAM_IMAGES_ANALYTICS_READ_WRITE_SECRET }}
           BACKEND_ADMIN_IDENTITY: ${{ secrets.YRAL_WHITELISTED_BACKEND_GLOBAL_ADMIN_SECRET_KEY }}
@@ -39,12 +41,14 @@ jobs:
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_SIGNING_OAUTH_CLIENT_CREDENTIAL_CLIENT_SECRET }}
           FLY_API_TOKEN: ${{ secrets.HOT_OR_NOT_WEB_LEPTOS_SSR_FLY_IO_GITHUB_ACTION }}
           GRPC_AUTH_TOKEN: ${{ secrets.OFF_CHAIN_AGENT_GRPC_AUTH_TOKEN }}
+          HOTORNOT_GOOGLE_CLIENT_SECRET: ${{ secrets.HOT_OR_NOT_WTF_DOMAIN_GOOGLE_LOGIN_AUTH_CLIENT_SECRET }}
+          ICPUMPFUN_GOOGLE_CLIENT_SECRET: ${{secrets.IC_PUMP_FUN_GOOGLE_AUTH_CLIENT_SECRET}}
       - name: Deploy a docker container to Fly.io
         run: flyctl deploy --remote-only -c fly-prod.toml
         env:
           FLY_API_TOKEN: ${{ secrets.HOT_OR_NOT_WEB_LEPTOS_SSR_FLY_IO_GITHUB_ACTION }}
-  
-# post_deploy:   
+
+      # post_deploy:
       # trigger automation test in another repo as post deploy action
       - name: Trigger automation testing workflow in 'hot-or-not-web-leptos-ssr-e2e-test' repo
         run: |

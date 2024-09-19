@@ -26,3 +26,5 @@ redb-kv.db
 
 # misc
 **/.DS_Store
+
+hash.txt

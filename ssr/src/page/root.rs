@@ -2,14 +2,14 @@ use candid::Principal;
 use leptos::*;
 use leptos_router::*;
 
-use crate::component::spinner::FullScreenSpinner;
 #[cfg(feature = "ssr")]
 use crate::{canister::post_cache, state::canisters::unauth_canisters};
+use crate::{component::spinner::FullScreenSpinner, utils::host::get_host};
 
 #[server]
 async fn get_top_post_id() -> Result<Option<(Principal, u64)>, ServerFnError> {
     let canisters = unauth_canisters();
-    let post_cache = canisters.post_cache().await?;
+    let post_cache = canisters.post_cache().await;
 
     let top_items = match post_cache
         .get_top_posts_aggregated_from_canisters_on_this_network_for_home_feed_cursor(
@@ -35,10 +35,82 @@ async fn get_top_post_id() -> Result<Option<(Principal, u64)>, ServerFnError> {
     Ok(Some((top_item.publisher_canister_id, top_item.post_id)))
 }
 
-#[component]
-pub fn RootPage() -> impl IntoView {
-    let target_post = create_resource(|| (), |_| get_top_post_id());
+#[server]
+async fn get_top_post_id_mlcache() -> Result<Option<(Principal, u64)>, ServerFnError> {
+    use crate::auth::server_impl::extract_principal_from_cookie;
+    use axum_extra::extract::{cookie::Key, SignedCookieJar};
+    use leptos_axum::extract_with_state;
 
+    let key: Key = expect_context();
+    let jar: SignedCookieJar = extract_with_state(&key).await?;
+    let principal = extract_principal_from_cookie(&jar)?;
+    if principal.is_none() {
+        return get_top_post_id().await;
+    }
+
+    let canisters = unauth_canisters();
+    let user_canister_id = canisters
+        .get_individual_canister_by_user_principal(principal.unwrap())
+        .await?;
+    if user_canister_id.is_none() {
+        return get_top_post_id().await;
+    }
+
+    let user_canister = canisters.individual_user(user_canister_id.unwrap()).await;
+
+    let top_items = user_canister
+        .get_ml_feed_cache_paginated(0, 1)
+        .await
+        .unwrap();
+    if top_items.is_empty() {
+        return get_top_post_id().await;
+    }
+
+    let Some(top_item) = top_items.first() else {
+        return Ok(None);
+    };
+
+    Ok(Some((top_item.canister_id, top_item.post_id)))
+}
+
+// TODO: Use this when we shift to the new ml feed for first post
+// #[server]
+// async fn get_top_post_id_mlfeed() -> Result<Option<(Principal, u64)>, ServerFnError> {
+//     use crate::utils::ml_feed::ml_feed_grpc::get_start_feed;
+
+//     let canisters = unauth_canisters();
+//     let user_canister_principal = canisters.user_canister();
+//     let top_posts_fut = get_start_feed(&user_canister_principal, 1, vec![]);
+
+//     let top_items = match top_posts_fut.await {
+//         Ok(top_posts) => top_posts,
+//         Err(e) => {
+//             log::error!("failed to fetch top post ml feed: {:?}", e);
+//             return Err(ServerFnError::ServerError(
+//                 "failed to fetch top post ml feed".to_string(),
+//             ));
+//         }
+//     };
+//     let Some(top_item) = top_items.first() else {
+//         return Ok(None);
+//     };
+
+//     Ok(Some((top_item.0, top_item.1)))
+// }
+
+#[component]
+pub fn CreatorDaoRootPage() -> impl IntoView {
+    view! {
+        {move || {
+            let redirect_url = "/your-profile?tab=tokens".to_string();
+            view! { <Redirect path=redirect_url/> }
+        }}
+    }
+}
+
+#[component]
+pub fn YralRootPage() -> impl IntoView {
+    let target_post = create_resource(|| (), |_| get_top_post_id());
     view! {
         <Suspense fallback=FullScreenSpinner>
             {move || {
@@ -58,4 +130,18 @@ pub fn RootPage() -> impl IntoView {
 
         </Suspense>
     }
+}
+
+#[component]
+pub fn RootPage() -> impl IntoView {
+    if show_cdao_page() {
+        view! { <CreatorDaoRootPage/> }
+    } else {
+        view! { <YralRootPage/> }
+    }
+}
+
+pub fn show_cdao_page() -> bool {
+    let host = get_host();
+    host == ("icpump.fun") || host.contains("go-bazzinga-hot-or-not-web-leptos-ssr.fly.dev")
 }

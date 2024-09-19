@@ -61,11 +61,11 @@ impl TxnTag {
     fn to_text(self) -> &'static str {
         use TxnTag::*;
         match self {
-            BetPlaced => "Bet Placement",
+            BetPlaced => "Vote Placement",
             SignupBonus => "Joining Bonus",
             Referral => "Referral Reward",
-            Winnings => "Bet Winnings",
-            Commission => "Bet Commission",
+            Winnings => "Vote Winnings",
+            Commission => "Vote Commission",
             Transfer => "Transfer",
             HotorNotAccountTransfer => "HotorNot Account Transfer",
         }
@@ -153,7 +153,7 @@ pub mod provider {
     mod canister {
         use super::{Canisters, CursoredDataProvider, TxnInfo, TxnTag};
         use crate::canister::individual_user_template::{
-            HotOrNotOutcomePayoutEvent, MintEvent, Result7, TokenEvent,
+            HotOrNotOutcomePayoutEvent, MintEvent, Result15, TokenEvent,
         };
         use crate::component::infinite_scroller::PageEntry;
         use ic_agent::AgentError;
@@ -205,7 +205,7 @@ pub mod provider {
                 start: usize,
                 end: usize,
             ) -> Result<PageEntry<TxnInfo>, AgentError> {
-                let user = self.0.authenticated_user().await?;
+                let user = self.0.authenticated_user().await;
                 let history = user
                     .get_user_utility_token_transaction_history_with_pagination(
                         start as u64,
@@ -213,8 +213,8 @@ pub mod provider {
                     )
                     .await?;
                 let history = match history {
-                    Result7::Ok(v) => v,
-                    Result7::Err(_) => vec![],
+                    Result15::Ok(v) => v,
+                    Result15::Err(_) => vec![],
                 };
                 let list_end = history.len() < (end - start);
                 Ok(PageEntry {
@@ -234,7 +234,7 @@ pub mod provider {
             ChaCha8Rng,
         };
 
-        use crate::{component::infinite_scroller::PageEntry, utils::current_epoch};
+        use crate::{component::infinite_scroller::PageEntry, utils::time::current_epoch};
 
         use super::*;
 

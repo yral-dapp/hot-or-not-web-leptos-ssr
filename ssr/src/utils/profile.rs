@@ -1,3 +1,5 @@
+use web_time::Duration;
+
 use candid::Principal;
 use ic_agent::AgentError;
 use leptos::{RwSignal, SignalUpdateUntracked};
@@ -5,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     canister::individual_user_template::{
-        BetDirection, BetOutcomeForBetMaker, PlacedBetDetail, Result5,
+        BetDirection, BetOutcomeForBetMaker, PlacedBetDetail, Result11,
         UserProfileDetailsForFrontend,
     },
     component::infinite_scroller::{CursoredDataProvider, KeyedData, PageEntry},
@@ -13,9 +15,9 @@ use crate::{
     state::canisters::Canisters,
 };
 
-use super::posts::PostDetails;
+use super::{posts::PostDetails, time::current_epoch};
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ProfileDetails {
     pub username: Option<String>,
     pub lifetime_earnings: u64,
@@ -77,7 +79,7 @@ pub fn propic_from_principal(principal: Principal) -> String {
     format!("{GOBGOB_PROPIC_URL}{}/public", index)
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Serialize, Deserialize)]
 pub enum BetOutcome {
     Won(u64),
     Draw(u64),
@@ -85,19 +87,55 @@ pub enum BetOutcome {
     AwaitingResult,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Serialize, Deserialize, PartialEq)]
 pub enum BetKind {
     Hot,
     Not,
 }
 
-#[derive(Clone)]
+impl From<BetKind> for BetDirection {
+    fn from(kind: BetKind) -> Self {
+        match kind {
+            BetKind::Hot => BetDirection::Hot,
+            BetKind::Not => BetDirection::Not,
+        }
+    }
+}
+
+#[derive(Clone, Serialize, Deserialize)]
 pub struct BetDetails {
     pub outcome: BetOutcome,
     pub post_id: u64,
     pub canister_id: Principal,
     pub bet_kind: BetKind,
     pub bet_amount: u64,
+    placed_at: Duration,
+    slot_id: u8,
+}
+
+impl BetDetails {
+    pub fn reward(&self) -> Option<u64> {
+        match self.outcome {
+            BetOutcome::Won(w) => Some(w),
+            BetOutcome::Draw(w) => Some(w),
+            BetOutcome::Lost => None,
+            BetOutcome::AwaitingResult => None,
+        }
+    }
+
+    pub fn bet_duration(&self) -> Duration {
+        // Bet duration + 5 minute overhead
+        Duration::from_secs(((self.slot_id as u64) * 60 * 60) + 5 * 60)
+    }
+
+    pub fn end_time(&self, post_creation_time: Duration) -> Duration {
+        post_creation_time + self.bet_duration()
+    }
+
+    pub fn time_remaining(&self, post_creation_time: Duration) -> Duration {
+        let end_time = self.end_time(post_creation_time);
+        end_time.saturating_sub(current_epoch())
+    }
 }
 
 impl From<PlacedBetDetail> for BetDetails {
@@ -118,6 +156,11 @@ impl From<PlacedBetDetail> for BetDetails {
             canister_id: bet.canister_id,
             bet_kind,
             bet_amount: bet.amount_bet,
+            placed_at: Duration::new(
+                bet.bet_placed_at.secs_since_epoch,
+                bet.bet_placed_at.nanos_since_epoch,
+            ),
+            slot_id: bet.slot_id,
         }
     }
 }
@@ -173,14 +216,14 @@ impl CursoredDataProvider for PostsProvider {
         start: usize,
         end: usize,
     ) -> Result<PageEntry<PostDetails>, AgentError> {
-        let user = self.canisters.individual_user(self.user).await?;
+        let user = self.canisters.individual_user(self.user).await;
         let limit = end - start;
         let posts = user
             .get_posts_of_this_user_profile_with_pagination_cursor(start as u64, limit as u64)
             .await?;
         let posts = match posts {
-            Result5::Ok(v) => v,
-            Result5::Err(_) => {
+            Result11::Ok(v) => v,
+            Result11::Err(_) => {
                 log::warn!("failed to get posts");
                 return Ok(PageEntry {
                     data: vec![],
@@ -225,7 +268,7 @@ impl CursoredDataProvider for BetsProvider {
         start: usize,
         end: usize,
     ) -> Result<PageEntry<BetDetails>, AgentError> {
-        let user = self.canisters.individual_user(self.user).await?;
+        let user = self.canisters.individual_user(self.user).await;
         assert_eq!(end - start, 10);
         let bets = user
             .get_hot_or_not_bets_placed_by_this_profile_with_pagination(start as u64)

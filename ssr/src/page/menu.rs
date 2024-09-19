@@ -1,5 +1,5 @@
-use crate::component::back_btn::BackButton;
-use crate::component::canisters_prov::AuthCansProvider;
+use crate::component::canisters_prov::with_cans;
+use crate::component::canisters_prov::{AuthCansProvider, WithAuthCans};
 use crate::component::content_upload::YoutubeUpload;
 use crate::component::modal::Modal;
 use crate::component::spinner::Spinner;
@@ -7,19 +7,21 @@ use crate::component::title::Title;
 use crate::component::{connect::ConnectLogin, social::*, toggle::Toggle};
 use crate::consts::{social, NSFW_TOGGLE_STORE};
 use crate::state::auth::account_connected_reader;
-use crate::state::canisters::authenticated_canisters;
+use crate::state::canisters::Canisters;
 use crate::state::content_seed_client::ContentSeedClient;
+use crate::utils::notifications::get_token_for_principal;
 use crate::utils::profile::ProfileDetails;
 use candid::Principal;
+use codee::string::FromToStringCodec;
 use leptos::html::Input;
 use leptos::*;
 use leptos_icons::*;
 use leptos_router::use_query_map;
+use leptos_use::storage::use_local_storage;
 use leptos_use::use_event_listener;
-use leptos_use::{storage::use_local_storage, utils::FromToStringCodec};
 
-#[derive(Clone, Default)]
-pub struct AuthorizedUserToSeedContent(RwSignal<Option<(Principal, bool)>>);
+#[derive(Default, Clone, Copy)]
+pub struct AuthorizedUserToSeedContent(pub RwSignal<Option<(bool, Principal)>>);
 
 #[component]
 fn MenuItem(
@@ -100,7 +102,7 @@ fn ProfileLoaded(user_details: ProfileDetails) -> impl IntoView {
             </span>
             <a
                 class="text-primary-600 text-md"
-                href=format!("/your-profile/{}", user_details.username_or_principal())
+                href="/your-profile"
             >
                 View Profile
             </a>
@@ -146,40 +148,37 @@ fn NsfwToggle() -> impl IntoView {
 }
 
 #[component]
+fn EnableNotifications(user_details: ProfileDetails) -> impl IntoView {
+    let (_, _) = account_connected_reader();
+
+    let on_token_click = create_action(move |()| async move {
+        get_token_for_principal(user_details.principal.to_string()).await;
+    });
+
+    view! {
+        <div class="grid grid-cols-2 items-center w-full">
+            <div class="flex flex-row gap-4 items-center">
+                <Icon class="text-2xl" icon=icondata::BiCommentDotsRegular/>
+                <span>Enable Notifications</span>
+            </div>
+            <div class="justify-self-end">
+                <button
+                    class="p-2 bg-black rounded-md text-white"
+                    on:click=move |_| on_token_click.dispatch(())
+                >
+                    Enable
+                </button>
+            </div>
+        </div>
+    }
+}
+
+#[component]
 pub fn Menu() -> impl IntoView {
     let (is_connected, _) = account_connected_reader();
     let query_map = use_query_map();
     let show_content_modal = create_rw_signal(false);
     let is_authorized_to_seed_content: AuthorizedUserToSeedContent = expect_context();
-
-    let can_res = authenticated_canisters();
-    let check_authorized_action = create_action(move |user_principal: &Principal| {
-        let user_principal = *user_principal;
-        async move {
-            let content_seed_client: ContentSeedClient = expect_context();
-            let res = content_seed_client
-                .check_if_authorized(user_principal)
-                .await
-                .ok()?;
-            is_authorized_to_seed_content
-                .0
-                .set(Some((user_principal, res)));
-            Some(())
-        }
-    });
-
-    create_effect(move |_| {
-        let canisters = can_res.get()?.ok()?;
-        let authorized_user_to_seed_content = is_authorized_to_seed_content.0.get_untracked();
-        match authorized_user_to_seed_content {
-            Some((user_principal, _)) if user_principal != canisters.user_principal() => {
-                check_authorized_action.dispatch(canisters.user_principal())
-            }
-            None => check_authorized_action.dispatch(canisters.user_principal()),
-            _ => {}
-        }
-        Some(())
-    });
 
     create_effect(move |_| {
         //check whether query param is right if right set the show_modal_content as true.
@@ -191,37 +190,40 @@ pub fn Menu() -> impl IntoView {
         Some(())
     });
 
-    view! {
-        <Modal show=show_content_modal>
-            <Suspense fallback=|| {
-                view! { <Spinner/> }
-            }>
-                {move || {
-                    let authenticated_canister = can_res.get()?.ok()?;
-                    let authorized = is_authorized_to_seed_content.0.get()?.1;
-                    if !authorized {
-                        show_content_modal.set(false);
-                        return None;
-                    }
-                    Some(
-                        view! {
-                            <YoutubeUpload
-                                canisters=authenticated_canister.clone()
-                                url=query_map.get().0.get("text").cloned().unwrap_or_default()
-                            />
-                        },
-                    )
-                }}
+    let authorized_fetch = with_cans(move |cans: Canisters<true>| async move {
+        let user_principal = cans.user_principal();
+        match is_authorized_to_seed_content.0.get_untracked() {
+            Some((auth, principal)) if principal == user_principal => return auth,
+            _ => (),
+        }
 
-            </Suspense>
+        let content_seed_client: ContentSeedClient = expect_context();
+
+        content_seed_client
+            .check_if_authorized(user_principal)
+            .await
+            .unwrap_or_default()
+    });
+
+    view! {
+        <WithAuthCans with=authorized_fetch let:authorized>
+            {is_authorized_to_seed_content
+                .0
+                .set(Some((authorized.1, authorized.0.user_principal())))}
+        </WithAuthCans>
+        <Modal show=show_content_modal>
+            <AuthCansProvider fallback=Spinner let:canisters>
+                <YoutubeUpload
+                    canisters
+                    url=query_map.get().0.get("text").cloned().unwrap_or_default()
+                />
+            </AuthCansProvider>
         </Modal>
         <div class="min-h-screen w-full flex flex-col text-white pt-2 pb-12 bg-black items-center divide-y divide-white/10">
             <div class="flex flex-col items-center w-full gap-20 pb-16">
                 <Title justify_center=false>
-                    <div class="flex flex-row justify-between">
-                        <BackButton fallback="/".to_string()/>
+                    <div class="flex flex-row justify-center">
                         <span class="font-bold text-2xl">Menu</span>
-                        <div></div>
                     </div>
                 </Title>
                 <div class="flex flex-col items-center w-full gap-4">
@@ -237,8 +239,8 @@ pub fn Menu() -> impl IntoView {
                         </div>
                     </Show>
                     <Show when=move || {
-                        is_authorized_to_seed_content.0.get().map(|auth| auth.1).unwrap_or(false)
-                            && is_connected.get()
+                        is_authorized_to_seed_content.0.get().map(|(a, _)| a).unwrap_or_default()
+                            && is_connected()
                     }>
                         <div class="w-full px-8 md:w-4/12 xl:w-2/12">
                             <button
@@ -260,6 +262,7 @@ pub fn Menu() -> impl IntoView {
                     icon=icondata::FaMoneyBillTransferSolid
                 />
                 <MenuItem href="/refer-earn" text="Refer & Earn" icon=icondata::AiGiftFilled/>
+                <MenuItem href="/leaderboard" text="Leaderboard" icon=icondata::ChTrophy/>
                 <MenuItem
                     href=social::TELEGRAM
                     text="Talk to the team"
@@ -268,6 +271,7 @@ pub fn Menu() -> impl IntoView {
                 />
                 <MenuItem href="/terms-of-service" text="Terms of Service" icon=icondata::TbBook2/>
                 <MenuItem href="/privacy-policy" text="Privacy Policy" icon=icondata::TbLock/>
+                <MenuItem href="/settings" text="Settings" icon=icondata::BiCogRegular/>
                 <Show when=is_connected>
                     <MenuItem href="/logout" text="Logout" icon=icondata::FiLogOut/>
                 </Show>

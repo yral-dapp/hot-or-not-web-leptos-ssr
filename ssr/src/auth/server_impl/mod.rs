@@ -9,47 +9,20 @@ use axum_extra::extract::{
 };
 use candid::Principal;
 use http::header;
-use ic_agent::{
-    identity::{Delegation, Secp256k1Identity, SignedDelegation},
-    Identity,
-};
+use ic_agent::{identity::Secp256k1Identity, Identity};
+use k256::elliptic_curve::JwkEcKey;
 use leptos::{expect_context, ServerFnError};
 use leptos_axum::{extract_with_state, ResponseOptions};
 use rand_chacha::rand_core::OsRng;
 
 use crate::{
-    consts::auth::{DELEGATION_MAX_AGE, REFRESH_MAX_AGE, REFRESH_TOKEN_COOKIE},
-    utils::current_epoch,
+    consts::auth::{REFRESH_MAX_AGE, REFRESH_TOKEN_COOKIE},
+    utils::time::current_epoch,
 };
 
 use self::store::{KVStore, KVStoreImpl};
 
 use super::{DelegatedIdentityWire, RefreshToken};
-
-impl DelegatedIdentityWire {
-    pub fn delegate(from: &impl Identity) -> Self {
-        let to_secret = k256::SecretKey::random(&mut OsRng);
-        let to_identity = Secp256k1Identity::from_private_key(to_secret.clone());
-        let expiry = current_epoch() + DELEGATION_MAX_AGE;
-        let expiry_ns = expiry.as_nanos() as u64;
-        let delegation = Delegation {
-            pubkey: to_identity.public_key().unwrap(),
-            expiration: expiry_ns,
-            targets: None,
-        };
-        let sig = from.sign_delegation(&delegation).unwrap();
-        let signed_delegation = SignedDelegation {
-            delegation,
-            signature: sig.signature.unwrap(),
-        };
-
-        Self {
-            from_key: sig.public_key.unwrap(),
-            to_secret: to_secret.to_jwk(),
-            delegation_chain: vec![signed_delegation],
-        }
-    }
-}
 
 fn set_cookies(resp: &ResponseOptions, jar: impl IntoResponse) {
     let resp_jar = jar.into_response();
@@ -63,7 +36,7 @@ fn set_cookies(resp: &ResponseOptions, jar: impl IntoResponse) {
     }
 }
 
-async fn extract_principal_from_cookie(
+pub fn extract_principal_from_cookie(
     jar: &SignedCookieJar,
 ) -> Result<Option<Principal>, ServerFnError> {
     let Some(cookie) = jar.get(REFRESH_TOKEN_COOKIE) else {
@@ -91,7 +64,7 @@ pub async fn try_extract_identity(
     jar: &SignedCookieJar,
     kv: &KVStoreImpl,
 ) -> Result<Option<k256::SecretKey>, ServerFnError> {
-    let Some(principal) = extract_principal_from_cookie(jar).await? else {
+    let Some(principal) = extract_principal_from_cookie(jar)? else {
         return Ok(None);
     };
     fetch_identity_from_kv(kv, principal).await
@@ -107,11 +80,27 @@ async fn generate_and_save_identity(kv: &KVStoreImpl) -> Result<Secp256k1Identit
     Ok(base_identity)
 }
 
-pub async fn update_user_identity(
+async fn save_identity(kv: &KVStoreImpl, id: JwkEcKey) -> Result<Secp256k1Identity, ServerFnError> {
+    let base_identity = identity_from_jwk(&id)?;
+    let principal = base_identity.sender().unwrap();
+
+    let base_jwk = id.to_string();
+    kv.write(principal.to_text(), base_jwk).await?;
+    Ok(base_identity)
+}
+
+fn identity_from_jwk(id: &JwkEcKey) -> Result<Secp256k1Identity, ServerFnError> {
+    let base_identity_key = k256::SecretKey::from_jwk(id)?;
+    let base_identity: Secp256k1Identity =
+        Secp256k1Identity::from_private_key(base_identity_key.clone());
+    Ok(base_identity)
+}
+
+fn update_user_identity(
     response_opts: &ResponseOptions,
     mut jar: SignedCookieJar,
-    identity: impl Identity,
-) -> Result<DelegatedIdentityWire, ServerFnError> {
+    identity: &impl Identity,
+) -> Result<(), ServerFnError> {
     let refresh_max_age = REFRESH_MAX_AGE;
     let refresh_token = RefreshToken {
         principal: identity.sender().unwrap(),
@@ -129,11 +118,19 @@ pub async fn update_user_identity(
 
     jar = jar.add(refresh_cookie);
     set_cookies(response_opts, jar);
+    Ok(())
+}
 
+pub fn update_user_identity_and_delegate(
+    response_opts: &ResponseOptions,
+    jar: SignedCookieJar,
+    identity: impl Identity,
+) -> Result<DelegatedIdentityWire, ServerFnError> {
+    update_user_identity(response_opts, jar, &identity)?;
     Ok(DelegatedIdentityWire::delegate(&identity))
 }
 
-pub async fn extract_or_generate_identity_impl() -> Result<DelegatedIdentityWire, ServerFnError> {
+pub async fn extract_identity_impl() -> Result<Option<DelegatedIdentityWire>, ServerFnError> {
     let key: Key = expect_context();
     let jar: SignedCookieJar = extract_with_state(&key).await?;
     let kv: KVStoreImpl = expect_context();
@@ -141,13 +138,10 @@ pub async fn extract_or_generate_identity_impl() -> Result<DelegatedIdentityWire
     let base_identity = if let Some(identity) = try_extract_identity(&jar, &kv).await? {
         Secp256k1Identity::from_private_key(identity)
     } else {
-        generate_and_save_identity(&kv).await?
+        return Ok(None);
     };
 
-    let resp: ResponseOptions = expect_context();
-    let delegated = update_user_identity(&resp, jar, base_identity).await?;
-
-    Ok(delegated)
+    Ok(Some(DelegatedIdentityWire::delegate(&base_identity)))
 }
 
 pub async fn logout_identity_impl() -> Result<DelegatedIdentityWire, ServerFnError> {
@@ -157,6 +151,33 @@ pub async fn logout_identity_impl() -> Result<DelegatedIdentityWire, ServerFnErr
     let base_identity = generate_and_save_identity(&kv).await?;
 
     let resp: ResponseOptions = expect_context();
-    let delegated = update_user_identity(&resp, jar, base_identity).await?;
+    let delegated = update_user_identity_and_delegate(&resp, jar, base_identity)?;
     Ok(delegated)
+}
+
+pub async fn generate_anonymous_identity_if_required_impl(
+) -> Result<Option<JwkEcKey>, ServerFnError> {
+    let key: Key = expect_context();
+    let jar: SignedCookieJar = extract_with_state(&key).await?;
+    if extract_principal_from_cookie(&jar)?.is_some() {
+        return Ok(None);
+    }
+
+    let key = k256::SecretKey::random(&mut OsRng);
+    Ok(Some(key.to_jwk()))
+}
+
+pub async fn set_anonymous_identity_cookie_impl(
+    anonymous_identity: JwkEcKey,
+) -> Result<(), ServerFnError> {
+    let key: Key = expect_context();
+    let jar: SignedCookieJar = extract_with_state(&key).await?;
+
+    let kv: KVStoreImpl = expect_context();
+    let base_identity = save_identity(&kv, anonymous_identity).await?;
+
+    let resp: ResponseOptions = expect_context();
+    update_user_identity(&resp, jar, &base_identity)?;
+
+    Ok(())
 }
