@@ -130,7 +130,10 @@ fn CreateTokenErrorPopup(
     token_name: MaybeSignal<String>,
     close_popup: WriteSignal<bool>,
 ) -> impl IntoView {
-    let error = if error.to_lowercase().contains(&"CanisterError".to_lowercase()) {
+    let error = if error
+        .to_lowercase()
+        .contains(&"CanisterError".to_lowercase())
+    {
         "Oops! There is some error from ICP's end. Please try again".into()
     } else {
         error
