@@ -7,7 +7,10 @@ use crate::{
     component::{back_btn::BackButton, spinner::FullScreenSpinner, title::Title},
     page::{token::TokenInfoParams, wallet::share_token_popup::ShareProfilePopup},
     state::canisters::unauth_canisters,
-    utils::token::{token_metadata_by_root, TokenMetadata},
+    utils::{
+        token::{token_metadata_by_root, TokenMetadata},
+        web::{check_share_support, share_url},
+    },
 };
 
 #[component]
@@ -56,24 +59,20 @@ fn TokenInfoInner(meta: TokenMetadata, principal: String, root: String) -> impl 
 
     let share_action = create_action(move |&()| async move { Ok(()) });
 
-    // let share_profile_url = move || {
-    //     // let url = base_url()
-    //     //     .map(|b| format!("{b}/token/info/{root}/{principal}"))
-    //     //     .unwrap_or_default();
-    //     // share_url(&url);
-    // };
-
     let message = format!(
         "Hey! Check out the token: {} I created on YRAL 👇 {}. I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter",
         meta.symbol,  share_link.clone()
     );
-    let share_profile_url = move || {
-        // let url = base_url()
-        //     .map(|b| format!("{b}/profile/{}?tab=tokens", username_or_principal))
-        //     .unwrap_or_default();
-        // share_url(&url);
 
-        share_action.dispatch(());
+    let link = share_link.clone();
+
+    let share_profile_url = move || {
+        let has_share_support = check_share_support();
+
+        match has_share_support {
+            Some(_) => share_url(&link),
+            None => Some(share_action.dispatch(())),
+        };
     };
 
     view! {
@@ -106,7 +105,7 @@ fn TokenInfoInner(meta: TokenMetadata, principal: String, root: String) -> impl 
                             </button>
                             <ShareProfilePopup
                                 sharing_action=share_action
-                                share_link
+                                share_link=share_link.clone()
                                 message
 
                             />

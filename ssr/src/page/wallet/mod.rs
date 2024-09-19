@@ -19,7 +19,10 @@ use crate::{
     },
     state::{auth::account_connected_reader, canisters::authenticated_canisters},
     try_or_redirect_opt,
-    utils::profile::ProfileDetails,
+    utils::{
+        profile::ProfileDetails,
+        web::{check_share_support, share_url},
+    },
 };
 use txn::{provider::get_history_provider, TxnView};
 
@@ -44,14 +47,25 @@ fn ProfileGreeter(details: ProfileDetails) -> impl IntoView {
         "Hey! Check out my YRAL profile 👇 {}. I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter",
         share_link.clone()
     );
-    let share_profile_url = move || {
-        // let url = base_url()
-        //     .map(|b| format!("{b}/profile/{}?tab=tokens", username_or_principal))
-        //     .unwrap_or_default();
-        // share_url(&url);
 
-        share_action.dispatch(());
+    let link = share_link.clone();
+
+    let share_profile_url = move || {
+        let has_share_support = check_share_support();
+
+        match has_share_support {
+            Some(_) => share_url(&link),
+            None => Some(share_action.dispatch(())),
+        };
     };
+    // let share_profile_url = move || {
+    //     // let url = base_url()
+    //     //     .map(|b| format!("{b}/profile/{}?tab=tokens", username_or_principal))
+    //     //     .unwrap_or_default();
+    //     // share_url(&url);
+
+    //     share_action.dispatch(());
+    // };
 
     view! {
         <div class="flex flex-col">
