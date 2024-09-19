@@ -4,10 +4,7 @@ use leptos_router::*;
 
 #[cfg(feature = "ssr")]
 use crate::{canister::post_cache, state::canisters::unauth_canisters};
-use crate::{
-    component::{canisters_prov::AuthCansProvider, spinner::FullScreenSpinner},
-    utils::host::get_host,
-};
+use crate::{component::spinner::FullScreenSpinner, utils::host::show_cdao_page};
 
 #[server]
 async fn get_top_post_id() -> Result<Option<(Principal, u64)>, ServerFnError> {
@@ -143,11 +140,4 @@ pub fn RootPage() -> impl IntoView {
             <YralRootPage/>
         }
     }
-}
-
-pub fn show_cdao_page() -> bool {
-    let host = get_host();
-    host == "icpump.fun"
-        || host == "localhost:3000"
-        || host.contains("go-bazzinga-hot-or-not-web-leptos-ssr.fly.dev")
 }

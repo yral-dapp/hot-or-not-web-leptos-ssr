@@ -10,9 +10,11 @@ use std::cmp::Reverse;
 use crate::{
     component::{scrolling_post_view::ScrollingPostView, spinner::FullScreenSpinner},
     consts::NSFW_TOGGLE_STORE,
+    page::root::CreatorDaoRootPage,
     state::canisters::{authenticated_canisters, unauth_canisters, Canisters},
     try_or_redirect,
     utils::{
+        host::show_cdao_page,
         posts::{get_post_uid, FetchCursor, PostDetails},
         route::failure_redirect,
     },
@@ -279,7 +281,7 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
 }
 
 #[component]
-pub fn PostView() -> impl IntoView {
+pub fn YralPostView() -> impl IntoView {
     let params = use_params::<PostParams>();
     let initial_canister_and_post = create_rw_signal(params.get_untracked().ok());
 
@@ -338,5 +340,18 @@ pub fn PostView() -> impl IntoView {
             }}
 
         </Suspense>
+    }
+}
+
+#[component]
+pub fn PostView() -> impl IntoView {
+    if show_cdao_page() {
+        view! {
+            <CreatorDaoRootPage/>
+        }
+    } else {
+        view! {
+            <YralPostView/>
+        }
     }
 }

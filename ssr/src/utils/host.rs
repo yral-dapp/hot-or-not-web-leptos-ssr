@@ -15,3 +15,10 @@ pub fn get_host() -> String {
         headers.get("Host").unwrap().to_str().unwrap().to_string()
     }
 }
+
+pub fn show_cdao_page() -> bool {
+    let host = get_host();
+    host == "icpump.fun"
+        || host == "localhost:3000"
+        || host.contains("go-bazzinga-hot-or-not-web-leptos-ssr.fly.dev")
+}

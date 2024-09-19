@@ -1,7 +1,11 @@
 #[cfg(feature = "local-bin")]
 pub mod containers;
 
-use std::env;
+use std::{
+    env,
+    fs::OpenOptions,
+    io::{BufWriter, Write},
+};
 
 use axum_extra::extract::cookie::Key;
 use leptos::LeptosOptions;
@@ -104,7 +108,24 @@ async fn init_firestoredb() -> firestore::FirestoreDb {
     use firestore::{FirestoreDb, FirestoreDbOptions};
     // let options = FirestoreDbOptions::new("icpump".to_string());
 
-    // TODO: add this for prod
+    // firestore-rs needs the service account key to be in a file
+    let sa_key_file = env::var("HON_GOOGLE_SERVICE_ACCOUNT").expect("HON_GOOGLE_SERVICE_ACCOUNT");
+    let file = OpenOptions::new()
+        .write(true)
+        .create(true)
+        .truncate(true)
+        .open("hon_google_service_account.json")
+        .expect("create file");
+
+    let mut f = BufWriter::new(file);
+    f.write_all(sa_key_file.as_bytes()).expect("write file");
+    f.flush().expect("flush file");
+
+    env::set_var(
+        "GOOGLE_APPLICATION_CREDENTIALS",
+        "hon_google_service_account.json",
+    );
+
     let options = FirestoreDbOptions::new("hot-or-not-feed-intelligence".to_string())
         .with_database_id("ic-pump-fun".to_string());
 
