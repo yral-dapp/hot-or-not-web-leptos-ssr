@@ -100,6 +100,7 @@ pub fn NavBar() -> impl IntoView {
             "/upload" => 2,
             "/wallet" | "/transactions" => 3,
             "/menu" | "/leaderboard" => 4,
+            "/board" => 0,
             s if s.starts_with("/hot-or-not") => {
                 home_path.set(path);
                 0
