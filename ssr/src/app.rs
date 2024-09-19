@@ -1,4 +1,3 @@
-use crate::component::canisters_prov::AuthCansProvider;
 use crate::page::profile::YourProfileView;
 use crate::{
     component::{base_route::BaseRoute, nav::NavBar},
