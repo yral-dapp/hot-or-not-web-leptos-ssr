@@ -2,7 +2,8 @@ use candid::Principal;
 use ic_agent::AgentError;
 use leptos_use::use_window;
 
-use crate::page::wallet::ShareProfilePopup;
+// use crate::page::wallet::ShareProfilePopup;
+use crate::utils::web::share_url;
 use crate::{
     canister::individual_user_template::Result14,
     component::{
@@ -109,28 +110,28 @@ pub fn TokenView(
                                 .as_ref()
                                 .and_then(|w| w.location().origin().ok())
                         };
-                        let username_or_principal =  user_principal.to_text();
-                        let principal = user_principal.to_text();
+                        let username_or_principal =  user_principal.to_text().clone();
+                        let principal = user_principal.to_text().clone();
 
-                        let share_link =  base_url()
-                        .map(|b| format!("{b}/profile/{}?tab=tokens", &username_or_principal))
-                        .unwrap_or_default();
+                        // let share_link =  base_url()
+                        // .map(|b| format!("{b}/profile/{}?tab=tokens", &username_or_principal))
+                        // .unwrap_or_default();
 
-                        let message = format!(
-                            "Hey! Check out my YRAL profile 👇 {}. I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter",
-                            share_link.clone()
-                        );
+                        // let message = format!(
+                        //     "Hey! Check out my YRAL profile 👇 {}. I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter",
+                        //     share_link.clone()
+                        // );
 
-                       let share_action = create_action(|()| async {Ok(())} );
+                    //    let share_action = create_action(move |&()| async move { Ok(()) } );
 
 
 
                         let share_profile_url = move || {
-                            // let url =  base_url()
-                            //      .map(|b| format!("{b}/profile/{}?tab=tokens", &username_or_principal))
-                            //      .unwrap_or_default();
-                            //  share_url(&url);
-                            share_action.dispatch(());
+                            let url =  base_url()
+                                 .map(|b| format!("{b}/profile/{}?tab=tokens", &username_or_principal))
+                                 .unwrap_or_default();
+                             share_url(&url);
+                            // share_action.dispatch(());
                          };
                     view! {
                         <a
@@ -147,17 +148,17 @@ pub fn TokenView(
                                     {format!("{} {}", info.balance.humanize(), info.symbol)}
                                 </span>
                                 <button
-                                    on:click=move|_| share_profile_url()
+                                    on:click=move |_| share_profile_url()
                                     class="text-white text-center p-1 text-lg md:text-xl bg-primary-600 rounded-full"
                                     >
                                     <Icon icon=icondata::AiShareAltOutlined/>
 
                                 </button>
-                                <ShareProfilePopup
-                                sharing_action=share_action
-                                share_link
-                                message
-                                />
+                                // <ShareProfilePopup
+                                // sharing_action=share_action
+                                // share_link
+                                // message
+                                // />
                             </div>
                         </a>
                     }

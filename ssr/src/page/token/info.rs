@@ -54,7 +54,7 @@ fn TokenInfoInner(meta: TokenMetadata, principal: String, root: String) -> impl 
         .map(|b| format!("{b}/token/info/{root}/{principal}"))
         .unwrap_or_default();
 
-    let share_action = create_action(|()| async { Ok(()) });
+    let share_action = create_action(move |&()| async move { Ok(()) });
 
     // let share_profile_url = move || {
     //     // let url = base_url()
