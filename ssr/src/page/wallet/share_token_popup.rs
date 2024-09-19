@@ -1,10 +1,7 @@
 use leptos::*;
 use leptos_icons::*;
 
-use crate::{
-    component::overlay::*,
-    utils::web::{check_share_support, share_url},
-};
+use crate::{component::overlay::*, utils::web::check_share_support};
 
 #[component]
 fn ShareProfileContent(
@@ -73,55 +70,55 @@ fn SocialShare(share_link: String, message: String) -> impl IntoView {
     );
 
     // Functions to handle the share actions for each platform
-    let share_fb = move |_| {
-        share_url(&fb_url);
-    };
+    // let share_fb = move |_| {
+    //     share_url(&fb_url);
+    // };
 
-    let share_twitter = move |_| {
-        share_url(&twitter_url);
-    };
+    // let share_twitter = move |_| {
+    //     share_url(&twitter_url);
+    // };
 
-    let share_whatsapp = move |_| {
-        share_url(&whatsapp_url);
-    };
+    // let share_whatsapp = move |_| {
+    //     share_url(&whatsapp_url);
+    // };
 
-    let share_linkedin = move |_| {
-        share_url(&linkedin_url);
-    };
+    // let share_linkedin = move |_| {
+    //     share_url(&linkedin_url);
+    // };
 
     view! {
         <div class="flex gap-4">
                 // Facebook button
-                <button on:click=share_fb>
+                <a href=fb_url target="_blank">
                     <Icon
                         class="text-3xl md:text-4xl text-primary-600"
                         icon=icondata::BsFacebook
                     />
-                </button>
+                </a>
 
                 // Twitter button
-                <button on:click=share_twitter>
+                <a href=twitter_url target="_blank">
                     <Icon
                         class="text-3xl md:text-4xl text-primary-600"
                         icon=icondata::BsTwitterX
                     />
-                </button>
+                </a>
 
                 // WhatsApp button
-                <button on:click=share_whatsapp>
+                <a href=whatsapp_url target="_blank">
                     <Icon
                         class="text-3xl md:text-4xl text-primary-600"
                         icon=icondata::FaSquareWhatsappBrands
                     />
-                </button>
+                </a>
 
                 // LinkedIn button
-                <button on:click=share_linkedin>
+                <a href=linkedin_url target="_blank">
                     <Icon
                         class="text-3xl md:text-4xl text-primary-600"
                         icon=icondata::TbBrandLinkedin
                     />
-                </button>
+                </a>
             </div>
     }
 }
