@@ -111,7 +111,7 @@ pub fn ICPumpLanding() -> impl IntoView {
         
         @keyframes blink-colors {
             0% {color: red;}
-            25% {color: green;}
+            25% {color: lime;}
             50% {color: yellow;}
             75% {color: fuchsia;}
             100% {color: blue;}
@@ -126,7 +126,7 @@ pub fn ICPumpLanding() -> impl IntoView {
                 <div class="text-gray-100 hover:text-pink-200 hover:underline active:text-pink-500 active:italic"> <a href="https://t.me/+c-LTX0Cp-ENmMzI1" target="_blank"> [telegram] </a> </div>
             </div>
             <div class="flex justify-center items-center">
-                <div class="font-bold text-3xl hover:font-extrabold hover:underline hover:invert active:italic active:invert-0 animate-blink-color"> <a href="/token/create"> [ create a new coin ] </a> </div>
+                <div class="font-bold text-3xl hover:font-extrabold hover:underline active:italic animate-blink-color"> <a href="/token/create"> [ create a new coin ] </a> </div>
             </div>
             <div class="px-4">
                 <ICPumpListing />
