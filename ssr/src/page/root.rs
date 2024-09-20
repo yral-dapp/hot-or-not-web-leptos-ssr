@@ -110,7 +110,13 @@ pub fn CreatorDaoRootPage() -> impl IntoView {
 
 #[component]
 pub fn YralRootPage() -> impl IntoView {
-    let target_post = create_resource(|| (), |_| get_top_post_id());
+    let target_post = create_resource(|| (), |_| get_top_post_id_mlcache());
+
+    #[cfg(any(feature = "local-bin", feature = "local-lib"))]
+    {
+        let target_post = create_resource(|| (), |_| get_top_post_id());
+    }
+
     view! {
         <Suspense fallback=FullScreenSpinner>
             {move || {

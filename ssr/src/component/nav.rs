@@ -107,7 +107,7 @@ pub fn NavBar() -> impl IntoView {
             }
             s if s.starts_with("/profile") => 0,
             s if s.starts_with("/token/info") => 3,
-            s if s.starts_with("/token/create") => 5,
+            s if s.starts_with("/token/create") => 2,
             s if s.starts_with("/your-profile") => 5,
             _ => 4,
         }
