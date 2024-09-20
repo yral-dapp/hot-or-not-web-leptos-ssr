@@ -77,7 +77,7 @@ async fn token_metadata_or_fallback(
 }
 
 #[component]
-fn FallbackToken() -> impl IntoView {
+pub fn TokenViewFallback() -> impl IntoView {
     view! {
         <div class="w-full items-center h-16 rounded-xl border-2 border-neutral-700 bg-white/15 animate-pulse"></div>
     }
@@ -98,7 +98,7 @@ pub fn TokenView(
 
     view! {
         <ClaimTokensOrRedirectError token_root/>
-        <Suspense fallback=FallbackToken>
+        <Suspense fallback=TokenViewFallback>
             {move || {
                 info.map(|info| {
                     view! {
@@ -140,7 +140,7 @@ pub fn TokenTile(
             >
                 <div class="flex flex-2 items-center space-x-2 px-2">
                 <img class="w-12 h-12 rounded-full" src=info.logo_b64.clone()/>
-                <span class="flex flex-col text-white text-xs truncate">{info.name.clone()}</span>
+                <span class="text-white text-xs truncate">{info.name.clone()}</span>
                 </div>
                 <div class="flex flex-1 flex-col">
                     <span

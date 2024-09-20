@@ -6,17 +6,17 @@ use crate::{
         bullet_loader::BulletLoader, canisters_prov::AuthCansProvider,
         claim_tokens::ClaimTokensOrRedirectError, token_confetti_symbol::TokenConfettiSymbol,
     },
-    page::wallet::tokens::TokenTile,
+    page::wallet::tokens::{TokenTile, TokenViewFallback},
     state::canisters::unauth_canisters,
     utils::token::{get_token_metadata, TokenCans},
 };
 
-#[component]
-fn TokenViewFallback() -> impl IntoView {
-    view! {
-        <div class="w-full h-20 rounded-xl border-2 border-neutral-700 bg-white/15 animate-pulse"></div>
-    }
-}
+// #[component]
+// fn TokenViewFallback() -> impl IntoView {
+//     view! {
+//         <div class="w-full h-20 rounded-xl border-2 border-neutral-700 bg-white/15 animate-pulse"></div>
+//     }
+// }
 
 #[component]
 fn TokenView(user_principal: Principal, token: TokenCans) -> impl IntoView {
