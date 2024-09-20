@@ -10,16 +10,18 @@ use crate::utils::token::icpump::TokenListItem;
 #[component]
 pub fn TokenListing(details: TokenListItem) -> impl IntoView {
     view! {
-        <div class="max-h-[300px] overflow-hidden h-fit p-2 flex border hover:border-white gap-2 w-full  border-transparent">
-            <div class="min-w-32 relative self-start">
-            <img class="mr-4 w-32 h-auto" src={details.logo} alt={details.token_name.clone()}/>
+        <div class="relative flex h-fit max-h-[300px] w-full gap-2 overflow-hidden border border-transparent p-2 transition-colors hover:border-gray-700 active:border-gray-200">
+            <div class="min-w-32 relative self-start p-1">
+            <img class="mr-4 w-32 h-auto select-none" src={details.logo} alt={details.token_name.clone()}/>
             </div>
-            <div class="gap-1 grid h-fit">
-                <span class="text-sm text-gray-500 font-bold">"$" {details.token_symbol}</span>
-                <span class="text-sm text-gray-500">"Name: " {details.token_name}</span>
-                <span class="text-sm text-gray-500">{details.description}</span>
-                <span class="text-xs text-gray-500">{details.formatted_created_at}</span>
-                <span class="text-xs text-gray-500">"Created by: " {details.user_id}</span>
+            <div class="gap-1 flex-col flex h-fit">
+                <div class="flex items-center justify-between gap-4 text-gray-200">
+                    <span class="line-clamp-1 w-full overflow-hidden">{details.token_name}</span>
+                    <span class="shrink-0 font-bold underline"><span class="text-gray-400 italic select-none">"$"</span>{details.token_symbol}</span>
+                </div>
+                <div title={details.description.clone()} class="text-sm line-clamp-3 text-gray-400">{details.description}</div>
+                <div class="text-xs text-gray-500">"Created by: "<span class="select-all">{details.user_id}</span></div>
+                <span class="absolute bottom-3 right-2 shrink-0 text-xs text-gray-500 underline">{details.formatted_created_at}</span>
             </div>
         </div>
     }
@@ -57,7 +59,7 @@ pub fn ICPumpListing() -> impl IntoView {
                     });
 
                     view!{
-                            <div class="grid grid-col-1 md:grid-cols-2 lg:grid-cols-3 text-gray-400 gap-4">
+                            <div class="grid grid-col-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 <For
                                     each=move || token_list.get()
                                     key=|t| t.token_symbol.clone()
@@ -70,7 +72,7 @@ pub fn ICPumpListing() -> impl IntoView {
                             </div>
 
                             <div class="flex flex-row justify-center mt-5">
-                                <button on:click={
+                                <button class="text-gray-100 active:italic hover:enabled:text-pink-200 hover:enabled:underline active:enabled:text-pink-500 disabled:cursor-not-allowed disabled:text-gray-500" on:click={
                                     move |_| {
                                         page.update(|page| *page -= 1);
                                         end_of_list.set(false);
@@ -78,7 +80,7 @@ pub fn ICPumpListing() -> impl IntoView {
                                 }
                                 disabled=move || page.get()==1> {"[ << ]"} </button>
                                 <span class="mx-2"> {page} </span>
-                                <button on:click={
+                                <button class="text-gray-100 active:italic hover:enabled:text-pink-200 hover:enabled:underline active:enabled:text-pink-500 disabled:cursor-not-allowed disabled:text-gray-500" on:click={
                                     move |_| {
                                         page.update(|page| *page += 1);
                                     }
@@ -98,14 +100,16 @@ pub fn ICPumpLanding() -> impl IntoView {
     view! {
         <div class="min-h-screen bg-black text-white overflow-y-scroll pt-5 pb-12">
             <div class="flex ml-4 space-x-2">
-                <div class="text-white"> <a href="https://twitter.com/Yral_app" target="_blank"> [twitter] </a> </div>
-                <div class="text-white"> <a href="https://www.instagram.com/yral_app/" target="_blank"> [instagram] </a> </div>
-                <div class="text-white"> <a href="https://t.me/+c-LTX0Cp-ENmMzI1" target="_blank"> [telegram] </a> </div>
+                <div class="text-gray-100 hover:text-pink-200 hover:underline active:text-pink-500 active:italic"> <a href="https://twitter.com/Yral_app" target="_blank"> [twitter] </a> </div>
+                <div class="text-gray-100 hover:text-pink-200 hover:underline active:text-pink-500 active:italic"> <a href="https://www.instagram.com/yral_app/" target="_blank"> [instagram] </a> </div>
+                <div class="text-gray-100 hover:text-pink-200 hover:underline active:text-pink-500 active:italic"> <a href="https://t.me/+c-LTX0Cp-ENmMzI1" target="_blank"> [telegram] </a> </div>
             </div>
             <div class="flex justify-center items-center">
-                <div class="font-bold text-3xl hover:font-extrabold"> <a href="/token/create"> [start a new coin] </a> </div>
+                <div class="font-bold text-3xl hover:font-extrabold hover:underline active:italic animate-blink-colors"> <a href="/token/create"> [ create a new coin ] </a> </div>
             </div>
-            <ICPumpListing />
+            <div class="px-4">
+                <ICPumpListing />
+            </div>
         </div>
     }
 }
