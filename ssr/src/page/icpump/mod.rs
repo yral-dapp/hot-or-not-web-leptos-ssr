@@ -2,7 +2,6 @@ use std::collections::HashMap;
 
 use leptos::*;
 
-
 use crate::component::spinner::FullScreenSpinner;
 use crate::consts::ICPUMP_LISTING_PAGE_SIZE;
 use crate::utils::token::icpump::get_paginated_token_list;
@@ -98,7 +97,6 @@ pub fn ICPumpListing() -> impl IntoView {
 
 #[component]
 pub fn ICPumpLanding() -> impl IntoView {
-
     view! {
         <div class="min-h-screen bg-black text-white overflow-y-scroll pt-5 pb-12">
             <div class="flex ml-4 space-x-2">
