@@ -72,7 +72,7 @@ pub fn ICPumpListing() -> impl IntoView {
                             </div>
 
                             <div class="flex flex-row justify-center mt-5">
-                                <button on:click={
+                                <button class="text-gray-100 hover:text-pink-200 hover:underline active:text-pink-500 disabled:pointer-events-none disabled:cursor-not-allowed" on:click={
                                     move |_| {
                                         page.update(|page| *page -= 1);
                                         end_of_list.set(false);
@@ -80,7 +80,7 @@ pub fn ICPumpListing() -> impl IntoView {
                                 }
                                 disabled=move || page.get()==1> {"[ << ]"} </button>
                                 <span class="mx-2"> {page} </span>
-                                <button on:click={
+                                <button class="text-gray-100 hover:text-pink-200 hover:underline active:text-pink-500 disabled:pointer-events-none disabled:cursor-not-allowed" on:click={
                                     move |_| {
                                         page.update(|page| *page += 1);
                                     }
@@ -97,15 +97,33 @@ pub fn ICPumpListing() -> impl IntoView {
 
 #[component]
 pub fn ICPumpLanding() -> impl IntoView {
-    view! {
+
+    let styler_class = style! { "ICPumpLanding",
+        .animate-blink-color {
+            animation-duration: 5s;
+            animation-iteration-count: infinite;
+            animation-name: blink-colors;
+            animation-timing-function: step-end;
+        }
+        
+        @keyframes blink-colors {
+            0% {color: red;}
+            25% {color: green;}
+            50% {color: yellow;}
+            75% {color: fuchsia;}
+            100% {color: blue;}
+        }
+    };
+
+    view! { class = styler_class,
         <div class="min-h-screen bg-black text-white overflow-y-scroll pt-5 pb-12">
             <div class="flex ml-4 space-x-2">
-                <div class="text-white"> <a href="https://twitter.com/Yral_app" target="_blank"> [twitter] </a> </div>
-                <div class="text-white"> <a href="https://www.instagram.com/yral_app/" target="_blank"> [instagram] </a> </div>
-                <div class="text-white"> <a href="https://t.me/+c-LTX0Cp-ENmMzI1" target="_blank"> [telegram] </a> </div>
+                <div class="text-gray-100 hover:text-pink-200 hover:underline active:text-pink-500"> <a href="https://twitter.com/Yral_app" target="_blank"> [twitter] </a> </div>
+                <div class="text-gray-100 hover:text-pink-200 hover:underline active:text-pink-500"> <a href="https://www.instagram.com/yral_app/" target="_blank"> [instagram] </a> </div>
+                <div class="text-gray-100 hover:text-pink-200 hover:underline active:text-pink-500"> <a href="https://t.me/+c-LTX0Cp-ENmMzI1" target="_blank"> [telegram] </a> </div>
             </div>
             <div class="flex justify-center items-center">
-                <div class="font-bold text-3xl hover:font-extrabold"> <a href="/token/create"> [start a new coin] </a> </div>
+                <div class="font-bold text-3xl hover:font-extrabold hover:underline hover:invert active:italic active:invert-0 animate-blink-color"> <a href="/token/create"> [ create a new coin ] </a> </div>
             </div>
             <ICPumpListing />
         </div>
