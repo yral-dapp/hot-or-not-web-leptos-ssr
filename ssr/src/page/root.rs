@@ -110,11 +110,14 @@ pub fn CreatorDaoRootPage() -> impl IntoView {
 
 #[component]
 pub fn YralRootPage() -> impl IntoView {
-    let target_post = create_resource(|| (), |_| get_top_post_id_mlcache());
-
+    let target_post;
     #[cfg(any(feature = "local-bin", feature = "local-lib"))]
     {
-        let target_post = create_resource(|| (), |_| get_top_post_id());
+        target_post = create_resource(|| (), |_| get_top_post_id());
+    }
+    #[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
+    {
+        target_post = create_resource(|| (), |_| get_top_post_id_mlcache());
     }
 
     view! {

@@ -257,7 +257,6 @@ fn parse_token_e8s(s: &str) -> Result<Tokens, String> {
 #[component]
 pub fn CreateToken() -> impl IntoView {
     let auth_cans = auth_canisters_store();
-    let fallback_url = String::from("/your-profile?tab=tokens");
 
     let ctx: CreateTokenCtx = expect_context();
 
