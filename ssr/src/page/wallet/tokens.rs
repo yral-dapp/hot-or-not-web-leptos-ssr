@@ -19,8 +19,6 @@ use crate::{
         token::{token_metadata_by_root, TokenBalance, TokenMetadata},
     },
 };
-use candid::Principal;
-use ic_agent::AgentError;
 use leptos::*;
 
 #[derive(Clone)]
