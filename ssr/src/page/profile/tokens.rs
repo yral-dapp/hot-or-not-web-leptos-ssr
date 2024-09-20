@@ -4,8 +4,8 @@ use leptos_icons::*;
 
 use crate::{
     component::{
-        bullet_loader::BulletLoader, claim_tokens::ClaimTokensOrRedirectError,
-        token_confetti_symbol::TokenConfettiSymbol,
+        bullet_loader::BulletLoader, canisters_prov::AuthCansProvider,
+        claim_tokens::ClaimTokensOrRedirectError, token_confetti_symbol::TokenConfettiSymbol,
     },
     state::canisters::unauth_canisters,
     utils::token::{get_token_metadata, TokenCans},
@@ -69,11 +69,11 @@ fn TokenView(user_principal: Principal, token: TokenCans) -> impl IntoView {
 }
 
 #[component]
-fn CreateYourToken() -> impl IntoView {
+fn CreateYourToken(header_text: &'static str) -> impl IntoView {
     view! {
         <div class="w-full flex flex-col items-center gap-4">
             <span class="text-2xl text-primary-600 text-center">
-                Create your own <br/> <span class="text-white">Meme Coin</span>
+                {header_text} <br/> <span class="text-white">Meme Coin</span>
             </span>
             <TokenConfettiSymbol class="w-2/3 md:w-1/2 lg:w-1/3 mx-8"/>
         </div>
@@ -120,20 +120,38 @@ pub fn ProfileTokens(user_canister: Principal, user_principal: Principal) -> imp
                                     .into_iter()
                                     .map(|token| view! { <TokenView user_principal token/> })
                                     .collect_view()}
-                                <Show when=move || empty>
-                                    <CreateYourToken/>
-                                </Show>
+
+                                <AuthCansProvider fallback=BulletLoader let:canisters>
+
+                                    {
+                                        let is_native_profile = canisters.user_principal()
+                                            == user_principal;
+                                        view! {
+                                            <Show when=move || { empty }>
+                                                <CreateYourToken header_text=if is_native_profile {
+                                                    "Create your own"
+                                                } else {
+                                                    "They have not created any"
+                                                }/>
+
+                                            </Show>
+                                            <Show when=move || { is_native_profile }>
+                                                <a
+                                                    href="/token/create"
+                                                    class="text-xl bg-primary-600 py-4 w-2/3 md:w-1/2 lg:w-1/3 rounded-full text-center text-white"
+                                                >
+                                                    Create
+                                                </a>
+                                            </Show>
+                                        }
+                                    }
+
+                                </AuthCansProvider>
                             }
                         })
                 }}
 
             </Suspense>
-            <a
-                href="/token/create"
-                class="text-xl bg-primary-600 py-4 w-2/3 md:w-1/2 lg:w-1/3 rounded-full text-center text-white"
-            >
-                Create
-            </a>
         </div>
     }
 }

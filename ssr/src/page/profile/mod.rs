@@ -68,27 +68,27 @@ fn ListSwitcher(user_canister: Principal, user_principal: Principal) -> impl Int
     view! {
         <div class="relative flex flex-row w-11/12 md:w-9/12 text-center text-xl md:text-2xl">
             <button class=move || tab_class(0) on:click=move |_| set_cur_tab(Some("posts".into()))>
-                <Icon icon=icondata::FiGrid/>
+                <Icon icon=icondata::FiGrid />
             </button>
             <button
                 class=move || tab_class(1)
                 on:click=move |_| set_cur_tab(Some("speculations".into()))
             >
-                <Icon icon=icondata::BsTrophy/>
+                <Icon icon=icondata::BsTrophy />
             </button>
             <button class=move || tab_class(2) on:click=move |_| set_cur_tab(Some("tokens".into()))>
-                <Icon icon=icondata::AiDollarCircleOutlined/>
+                <Icon icon=icondata::AiDollarCircleOutlined />
             </button>
         </div>
         <div class="flex flex-col gap-y-12 justify-center pb-12 w-11/12 sm:w-7/12">
             <Show when=move || current_tab() == 0>
-                <ProfilePosts user_canister/>
+                <ProfilePosts user_canister />
             </Show>
             <Show when=move || current_tab() == 1>
-                <ProfileSpeculations user_canister/>
+                <ProfileSpeculations user_canister />
             </Show>
             <Show when=move || current_tab() == 2>
-                <ProfileTokens user_canister user_principal/>
+                <ProfileTokens user_canister user_principal />
             </Show>
         </div>
     }
@@ -124,11 +124,11 @@ fn ProfileViewInner(user: ProfileDetails, user_canister: Principal) -> impl Into
                             <div class="text-sm flex flex-row">
                                 // TODO: Add username when it's available
                                 // <p class="text-white">@ {username_or_principal}</p>
-                                <p class="text-primary-500">{earnings} Earnings</p>
+                                <p class="text-primary-500">{earnings}Earnings</p>
                             </div>
                             <Show when=move || !is_connected()>
                                 <div class="md:w-4/12 w-6/12 pt-5">
-                                    <ConnectLogin cta_location="profile"/>
+                                    <ConnectLogin cta_location="profile" />
                                 </div>
                             </Show>
                         </div>
@@ -137,10 +137,10 @@ fn ProfileViewInner(user: ProfileDetails, user_canister: Principal) -> impl Into
                 <div class="flex justify-around text-center rounded-full divide-x-2 divide-white/20 bg-white/10 p-4 my-4 w-11/12 sm:w-7/12">
                     // <Stat stat=user.followers_cnt info="Lovers"/>
                     // <Stat stat=user.following_cnt info="Loving"/>
-                    <Stat stat=user.hots info="Hots"/>
-                    <Stat stat=user.nots info="Nots"/>
+                    <Stat stat=user.hots info="Hots" />
+                    <Stat stat=user.nots info="Nots" />
                 </div>
-                <ListSwitcher user_canister user_principal=user.principal/>
+                <ListSwitcher user_canister user_principal=user.principal />
             </div>
         </div>
     }
@@ -179,7 +179,7 @@ pub fn ProfileView() -> impl IntoView {
                 user_details
                     .get()
                     .map(|user_details| {
-                        view! { <ProfileComponent user_details/> }
+                        view! { <ProfileComponent user_details /> }
                     })
             }}
 
@@ -194,7 +194,7 @@ pub fn YourProfileView() -> impl IntoView {
             <ProfileComponent user_details=Some((
                 canister.profile_details(),
                 canister.user_canister(),
-            ))/>
+            )) />
         </AuthCansProvider>
     }
 }
@@ -217,9 +217,9 @@ pub fn ProfileComponent(user_details: Option<(ProfileDetails, Principal)>) -> im
     view! {
         {move || {
             if let Some((user, user_canister)) = user_details.clone() {
-                view! { <ProfileViewInner user user_canister/> }
+                view! { <ProfileViewInner user user_canister /> }
             } else {
-                view! { <Redirect path="/"/> }
+                view! { <Redirect path="/" /> }
             }
         }}
     }
