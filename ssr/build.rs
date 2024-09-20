@@ -69,10 +69,11 @@ mod build_common {
     }
 
     fn build_did_intf() -> Result<()> {
-        println!("cargo:rerun-if-changed=../did/*");
+        println!("cargo:rerun-if-changed=./did/*");
 
         let mut candid_config = candid_parser::bindings::rust::Config::new();
         candid_config.set_target(candid_parser::bindings::rust::Target::Agent);
+        candid_config.set_type_attributes("#[derive(CandidType, Deserialize, Debug)]".into());
         let mut did_mod_contents = String::new();
 
         // create $OUT_DIR/did

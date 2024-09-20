@@ -1,9 +1,11 @@
 use candid::Principal;
-use ic_agent::{AgentError, Identity};
+use ic_agent::Identity;
 use leptos::expect_context;
 
 use crate::{
-    canister::{individual_user_template::IndividualUserTemplate, user_index::UserIndex},
+    canister::{
+        individual_user_template::IndividualUserTemplate, sns_swap::SnsSwap, user_index::UserIndex,
+    },
     utils::ic::AgentWrapper,
 };
 
@@ -19,20 +21,30 @@ impl AdminCanisters {
         }
     }
 
-    pub async fn user_index_with(
-        &self,
-        idx_principal: Principal,
-    ) -> Result<UserIndex<'_>, AgentError> {
-        let agent = self.agent.get_agent().await?;
-        Ok(UserIndex(idx_principal, agent))
+    pub fn principal(&self) -> Principal {
+        self.agent.principal().unwrap()
+    }
+
+    pub async fn get_agent(&self) -> &ic_agent::Agent {
+        self.agent.get_agent().await
+    }
+
+    pub async fn user_index_with(&self, idx_principal: Principal) -> UserIndex<'_> {
+        let agent = self.agent.get_agent().await;
+        UserIndex(idx_principal, agent)
     }
 
     pub async fn individual_user_for(
         &self,
         user_canister: Principal,
-    ) -> Result<IndividualUserTemplate<'_>, AgentError> {
-        let agent = self.agent.get_agent().await?;
-        Ok(IndividualUserTemplate(user_canister, agent))
+    ) -> IndividualUserTemplate<'_> {
+        let agent = self.agent.get_agent().await;
+        IndividualUserTemplate(user_canister, agent)
+    }
+
+    pub async fn sns_swap(&self, swap_canister: Principal) -> SnsSwap<'_> {
+        let agent = self.agent.get_agent().await;
+        SnsSwap(swap_canister, agent)
     }
 }
 

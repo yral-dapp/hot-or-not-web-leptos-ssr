@@ -1,5 +1,5 @@
 use crate::{
-    canister::individual_user_template::{BettingStatus, PlaceBetArg, Result2},
+    canister::individual_user_template::{BettingStatus, PlaceBetArg, Result3},
     component::{
         bullet_loader::BulletLoader, canisters_prov::AuthCansProvider, hn_icons::*,
         spinner::SpinnerFit,
@@ -10,7 +10,7 @@ use crate::{
     utils::{
         posts::PostDetails,
         profile::{BetDetails, BetKind, BetOutcome},
-        timestamp::to_hh_mm_ss,
+        time::to_hh_mm_ss,
         MockPartialEq,
     },
 };
@@ -62,7 +62,7 @@ async fn bet_on_post(
     post_id: u64,
     post_canister_id: Principal,
 ) -> Result<BettingStatus, ServerFnError> {
-    let user = canisters.authenticated_user().await?;
+    let user = canisters.authenticated_user().await;
 
     let place_bet_arg = PlaceBetArg {
         bet_amount,
@@ -74,8 +74,8 @@ async fn bet_on_post(
     let res = user.bet_on_currently_viewing_post(place_bet_arg).await?;
 
     let betting_status = match res {
-        Result2::Ok(p) => p,
-        Result2::Err(_e) => {
+        Result3::Ok(p) => p,
+        Result3::Err(_e) => {
             // todo send event that betting failed
             return Err(ServerFnError::new(
                 "bet on bet_on_currently_viewing_post error".to_string(),
@@ -100,7 +100,7 @@ fn CoinStateView(
 
     view! {
         <div class:grayscale=disabled>
-            <Icon class=class icon />
+            <Icon class=class icon/>
         </div>
     }
 }
@@ -177,6 +177,7 @@ fn HNButtonOverlay(
     let tracked_coin = move || coin.with_untracked(|v| u64::from(*v));
     view! {
         <AuthCansProvider let:canisters>
+
             {
                 create_effect(move |_| {
                     let Some(bet_direction) = bet_direction() else {
@@ -186,6 +187,7 @@ fn HNButtonOverlay(
                     place_bet_action.dispatch((canisters.clone(), bet_direction, bet_amount));
                 });
             }
+
         </AuthCansProvider>
         <div class="flex justify-center w-full touch-manipulation">
             <button disabled=running on:click=move |_| coin.update(|c| *c = c.wrapping_next())>
@@ -194,6 +196,7 @@ fn HNButtonOverlay(
         </div>
         <div class="flex flex-row gap-6 justify-center items-center w-full touch-manipulation">
             <HNButton disabled=running bet_direction kind=BetKind::Hot />
+
             <button disabled=running on:click=move |_| coin.update(|c| *c = c.wrapping_next())>
                 <CoinStateView
                     disabled=running
@@ -201,7 +204,7 @@ fn HNButtonOverlay(
                     coin
                 />
             </button>
-            <HNButton disabled=running bet_direction kind=BetKind::Not />
+            <HNButton disabled=running bet_direction kind=BetKind::Not/>
         </div>
         // Bottom row: Hot <down arrow> Not
         // most of the CSS is for alignment with above icons
@@ -209,7 +212,7 @@ fn HNButtonOverlay(
             <p class="w-14 md:w-16 lg:w-18">Hot</p>
             <div class="flex justify-center w-12 md:w-14 lg:w-16">
                 <button disabled=running on:click=move |_| coin.update(|c| *c = c.wrapping_prev())>
-                    <Icon class="text-2xl text-white" icon=icondata::AiDownOutlined />
+                    <Icon class="text-2xl text-white" icon=icondata::AiDownOutlined/>
                 </button>
             </div>
             <p class="w-14 md:w-16 lg:w-18">Not</p>
@@ -240,7 +243,7 @@ fn WinBadge() -> impl IntoView {
         <button class="py-2 px-4 w-full text-sm font-bold text-white rounded-sm bg-primary-600">
             <div class="flex justify-center items-center">
                 <span class="">
-                    <Icon class="fill-white" style="" icon=icondata::RiTrophyFinanceFill />
+                    <Icon class="fill-white" style="" icon=icondata::RiTrophyFinanceFill/>
                 </span>
                 <span class="ml-2">"You Won"</span>
             </div>
@@ -253,6 +256,7 @@ fn LostBadge() -> impl IntoView {
     view! {
         <button class="py-2 px-4 w-full text-sm font-bold text-black bg-white rounded-sm">
             <Icon class="fill-white" style="" icon=icondata::RiTrophyFinanceFill />
+
             "You Lost"
         </button>
     }
@@ -279,6 +283,7 @@ fn HNWonLost(participation: BetDetails) -> impl IntoView {
             <div class="relative flex-shrink-0 drop-shadow-lg">
                 <CoinStateView class="w-14 h-14 md:w-16 md:h-16" coin />
                 <Icon class="absolute -bottom-0.5 -right-3 w-7 h-7 md:w-9 md:h-9" icon=hn_icon />
+
             </div>
 
             // <!-- Text and Badge Column -->
@@ -286,19 +291,22 @@ fn HNWonLost(participation: BetDetails) -> impl IntoView {
                 // <!-- Result Text -->
                 <div class="p-1 text-sm leading-snug text-white rounded-full">
                     <p>You staked {bet_amount}tokens on {if is_hot { "Hot" } else { "Not" }}.</p>
+
                     <p>
                         {if let Some(reward) = participation.reward() {
                             format!("You received {reward} tokens.")
                         } else {
                             format!("You lost {bet_amount} tokens.")
                         }}
+
                     </p>
                 </div>
                 {if won {
-                    view! { <WinBadge /> }
+                    view! { <WinBadge/> }
                 } else {
-                    view! { <LostBadge /> }
+                    view! { <LostBadge/> }
                 }}
+
             </div>
 
         </div>
@@ -334,7 +342,7 @@ fn BetTimer(post: PostDetails, participation: BetDetails, refetch_bet: Trigger) 
             class="flex flex-row gap-1 justify-end items-center py-px w-full text-base text-white rounded-full md:text-lg pe-4"
             style=gradient
         >
-            <Icon icon=icondata::AiClockCircleFilled />
+            <Icon icon=icondata::AiClockCircleFilled/>
             <span>{move || to_hh_mm_ss(time_remaining())}</span>
         </div>
     }
@@ -365,7 +373,7 @@ fn HNAwaitingResults(
         <div class="flex flex-col gap-1 items-center p-4 w-full shadow-sm">
             <div class="flex flex-row gap-4 justify-center items-end w-full">
                 <div class="relative flex-shrink-0 drop-shadow-lg">
-                    <Icon class="w-12 h-12 md:w-14 md:h-14 lg:w-16 lg:h-16" icon=hn_icon />
+                    <Icon class="w-12 h-12 md:w-14 md:h-14 lg:w-16 lg:h-16" icon=hn_icon/>
                     <CoinStateView
                         class="absolute bottom-0 -right-3 w-7 h-7 md:w-9 md:h-9 lg:w-11 lg:h-11"
                         coin
@@ -373,11 +381,12 @@ fn HNAwaitingResults(
                 </div>
 
                 <div class="w-1/2 md:w-1/3 lg:w-1/4">
-                    <BetTimer post refetch_bet participation />
+                    <BetTimer post refetch_bet participation/>
                 </div>
             </div>
             <p class="p-1 text-center text-white rounded-full bg-black/15 ps-2">
                 You staked {bet_amount}tokens on {bet_direction_text}Result is still pending
+
             </p>
         </div>
     }
@@ -415,18 +424,18 @@ pub fn HNUserParticipation(
     view! {
         {match participation.outcome {
             BetOutcome::AwaitingResult => {
-                view! { <HNAwaitingResults post refetch_bet participation /> }
+                view! { <HNAwaitingResults post refetch_bet participation/> }
             }
             BetOutcome::Won(_) => {
-                view! { <HNWonLost participation /> }
+                view! { <HNWonLost participation/> }
             }
             BetOutcome::Draw(_) => view! { "Draw" }.into_view(),
             BetOutcome::Lost => {
-                view! { <HNWonLost participation /> }
+                view! { <HNWonLost participation/> }
             }
         }
             .into_view()}
-        <ShadowBg />
+        <ShadowBg/>
     }
 }
 
@@ -444,7 +453,7 @@ fn MaybeHNButtons(
             let post = post.get_value();
             async move {
                 let canisters = unauth_canisters();
-                let user = canisters.individual_user(post.canister_id).await.ok()?;
+                let user = canisters.individual_user(post.canister_id).await;
                 let res = user
                     .get_hot_or_not_bet_details_for_this_post(post.post_id)
                     .await
@@ -476,6 +485,7 @@ fn MaybeHNButtons(
                         )
                     })
             }}
+
         </Suspense>
     }
 }
@@ -483,8 +493,8 @@ fn MaybeHNButtons(
 #[component]
 fn LoaderWithShadowBg() -> impl IntoView {
     view! {
-        <BulletLoader />
-        <ShadowBg />
+        <BulletLoader/>
+        <ShadowBg/>
     }
 }
 
@@ -494,7 +504,7 @@ fn ShadowBg() -> impl IntoView {
         <div
             class="absolute bottom-0 left-0 h-2/5 w-dvw -z-[1]"
             style="background: linear-gradient(to bottom, #00000000 0%, #00000099 45%, #000000a8 100%, #000000cc 100%, #000000a8 100%);"
-        />
+        ></div>
     }
 }
 
@@ -519,7 +529,7 @@ pub fn HNGameOverlay(post: PostDetails) -> impl IntoView {
                 let cans = canisters.clone();
                 async move {
                     let post = post.get_value();
-                    let user = cans.authenticated_user().await?;
+                    let user = cans.authenticated_user().await;
                     let bet_participation = user
                         .get_individual_hot_or_not_bet_placed_by_this_profile(
                             post.canister_id,
@@ -534,6 +544,7 @@ pub fn HNGameOverlay(post: PostDetails) -> impl IntoView {
 
     view! {
         <AuthCansProvider fallback=LoaderWithShadowBg let:canisters>
+
             {
                 let bet_participation_outcome = create_bet_participation_outcome(canisters);
                 view! {
@@ -545,19 +556,20 @@ pub fn HNGameOverlay(post: PostDetails) -> impl IntoView {
                                 Some(
                                     if let Some(participation) = participation {
                                         view! {
-                                            <HNUserParticipation post refetch_bet participation />
+                                            <HNUserParticipation post refetch_bet participation/>
                                         }
                                     } else {
                                         view! {
-                                            <MaybeHNButtons post bet_direction coin refetch_bet />
+                                            <MaybeHNButtons post bet_direction coin refetch_bet/>
                                         }
                                     },
                                 )
                             })
-                            .unwrap_or_else(|| view! { <LoaderWithShadowBg /> })
+                            .unwrap_or_else(|| view! { <LoaderWithShadowBg/> })
                     }}
                 }
             }
+
         </AuthCansProvider>
     }
 }

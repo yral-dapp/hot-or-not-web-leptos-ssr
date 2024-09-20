@@ -1,3 +1,5 @@
+use crate::page::icpump::ICPumpLanding;
+use crate::page::profile::YourProfileView;
 use crate::{
     component::{base_route::BaseRoute, nav::NavBar},
     error_template::{AppError, ErrorTemplate},
@@ -14,8 +16,14 @@ use crate::{
         root::RootPage,
         settings::Settings,
         terms::TermsOfService,
+        token::{
+            create::{CreateToken, CreateTokenCtx, CreateTokenSettings},
+            create_token_faq::CreateTokenFAQ,
+            info::TokenInfo,
+            transfer::TokenTransfer,
+        },
         upload::UploadPostPage,
-        wallet::{transactions::Transactions, Wallet},
+        wallet::{tokens::Tokens, transactions::Transactions, Wallet},
     },
     state::{
         audio_state::AudioState, canisters::Canisters, content_seed_client::ContentSeedClient,
@@ -23,6 +31,7 @@ use crate::{
     },
     utils::event_streaming::EventHistory,
 };
+
 use leptos::*;
 use leptos_meta::*;
 use leptos_router::*;
@@ -31,7 +40,7 @@ use leptos_router::*;
 fn NotFound() -> impl IntoView {
     let mut outside_errors = Errors::default();
     outside_errors.insert_with_default_key(AppError::NotFound);
-    view! { <ErrorTemplate outside_errors /> }
+    view! { <ErrorTemplate outside_errors/> }
 }
 
 #[component(transparent)]
@@ -40,11 +49,11 @@ fn GoogleAuthRedirectHandlerRoute() -> impl IntoView {
     #[cfg(any(feature = "oauth-ssr", feature = "oauth-hydrate"))]
     {
         use crate::page::google_redirect::GoogleRedirectHandler;
-        view! { <Route path view=GoogleRedirectHandler /> }
+        view! { <Route path view=GoogleRedirectHandler/> }
     }
     #[cfg(not(any(feature = "oauth-ssr", feature = "oauth-hydrate")))]
     {
-        view! { <Route path view=NotFound /> }
+        view! { <Route path view=NotFound/> }
     }
 }
 
@@ -54,11 +63,11 @@ fn GoogleAuthRedirectorRoute() -> impl IntoView {
     #[cfg(any(feature = "oauth-ssr", feature = "oauth-hydrate"))]
     {
         use crate::page::google_redirect::GoogleRedirector;
-        view! { <Route path view=GoogleRedirector /> }
+        view! { <Route path view=GoogleRedirector/> }
     }
     #[cfg(not(any(feature = "oauth-ssr", feature = "oauth-hydrate")))]
     {
-        view! { <Route path view=NotFound /> }
+        view! { <Route path view=NotFound/> }
     }
 }
 
@@ -72,6 +81,7 @@ pub fn App() -> impl IntoView {
     provide_context(ProfilePostsContext::default());
     provide_context(AuthorizedUserToSeedContent::default());
     provide_context(AudioState::default());
+    provide_context(CreateTokenCtx::default());
 
     #[cfg(feature = "hydrate")]
     {
@@ -92,17 +102,16 @@ pub fn App() -> impl IntoView {
     #[cfg(feature = "ga4")]
     {
         enable_ga4_script.set(true);
-
         provide_context(EventHistory::default());
     }
 
     view! {
-        <Stylesheet id="leptos" href="/pkg/hot-or-not-leptos-ssr.css" />
+        <Stylesheet id="leptos" href="/pkg/hot-or-not-leptos-ssr.css"/>
 
         // sets the document title
-        <Title text="Yral" />
+        <Title text="Yral"/>
 
-        <Link rel="manifest" href="/app.webmanifest" />
+        <Link rel="manifest" href="/app.webmanifest"/>
 
         // GA4 Global Site Tag (gtag.js) - Google Analytics
         // G-6W5Q2MRX0E to test locally | G-PLNNETMSLM
@@ -128,19 +137,19 @@ pub fn App() -> impl IntoView {
                     // auth redirect routes exist outside main context
                     <GoogleAuthRedirectHandlerRoute/>
                     <GoogleAuthRedirectorRoute/>
-                    <Route path="/" view=RootPage/>
                     <Route path="" view=BaseRoute>
+                        <Route path="/" view=RootPage/>
                         <Route path="/hot-or-not/:canister_id/:post_id" view=PostView/>
                         <Route path="/post/:canister_id/:post_id" view=SinglePost/>
                         <Route path="/profile/:canister_id/:post_id" view=ProfilePost/>
                         <Route path="/your-profile/:canister_id/:post_id" view=ProfilePost/>
                         <Route path="/profile/:id" view=ProfileView/>
-                        <Route path="/your-profile/:id" view=ProfileView/>
                         <Route path="/upload" view=UploadPostPage/>
                         <Route path="/error" view=ServerErrorPage/>
                         <Route path="/menu" view=Menu/>
                         <Route path="/settings" view=Settings/>
                         <Route path="/refer-earn" view=ReferEarn/>
+                        <Route path="/your-profile" view=YourProfileView/>
                         <Route path="/terms-of-service" view=TermsOfService/>
                         <Route path="/privacy-policy" view=PrivacyPolicy/>
                         <Route path="/wallet" view=Wallet/>
@@ -148,6 +157,13 @@ pub fn App() -> impl IntoView {
                         <Route path="/leaderboard" view=Leaderboard/>
                         <Route path="/account-transfer" view=AccountTransfer/>
                         <Route path="/logout" view=Logout/>
+                        <Route path="/token/create" view=CreateToken/>
+                        <Route path="/token/create/settings" view=CreateTokenSettings/>
+                        <Route path="/token/create/faq" view=CreateTokenFAQ/>
+                        <Route path="/token/info/:token_root/:user_principal" view=TokenInfo/>
+                        <Route path="/token/transfer/:token_root" view=TokenTransfer/>
+                        <Route path="/tokens" view=Tokens/>
+                        <Route path="/board" view=ICPumpLanding/>
                     </Route>
                 </Routes>
 

@@ -12,7 +12,7 @@ use rand_chacha::rand_core::OsRng;
 use serde::{Deserialize, Serialize};
 use web_time::Duration;
 
-use crate::{consts::auth::DELEGATION_MAX_AGE, utils::current_epoch};
+use crate::{consts::auth::DELEGATION_MAX_AGE, utils::time::current_epoch};
 
 /// Delegated identity that can be serialized over the wire
 #[derive(Serialize, Deserialize, Clone)]
@@ -122,12 +122,15 @@ pub mod core_clients {
     pub struct CoreClients {
         pub google_oauth: openidconnect::core::CoreClient,
         pub hotornot_google_oauth: openidconnect::core::CoreClient,
+        pub icpump_google_oauth: openidconnect::core::CoreClient,
     }
 
     impl CoreClients {
         pub fn get_oauth_client(&self, host: &str) -> openidconnect::core::CoreClient {
             if host == "hotornot.wtf" {
                 self.hotornot_google_oauth.clone()
+            } else if host == "icpump.fun" {
+                self.icpump_google_oauth.clone()
             } else {
                 self.google_oauth.clone()
             }

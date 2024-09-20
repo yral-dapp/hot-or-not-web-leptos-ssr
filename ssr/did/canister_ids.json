@@ -1,12 +1,4 @@
 {
-  "configuration": {
-    "ic": "efsfj-sqaaa-aaaap-qatwa-cai",
-    "local": "bnz7o-iuaaa-aaaaa-qaaaa-cai"
-  },
-  "data_backup": {
-    "ic": "jwktp-qyaaa-aaaag-abcfa-cai",
-    "local": "bkyz2-fmaaa-aaaaa-qaaaq-cai"
-  },
   "individual_user_template": {
     "ic": "dc47w-kaaaa-aaaak-qav3q-cai",
     "local": "bd3sg-teaaa-aaaaa-qaaba-cai"

@@ -5,7 +5,7 @@ use crate::component::canisters_prov::AuthCansProvider;
 use crate::component::infinite_scroller::InfiniteScroller;
 use crate::{
     state::canisters::Canisters,
-    utils::{profile::propic_from_principal, timestamp::get_day_month},
+    utils::{profile::propic_from_principal, time::get_day_month},
 };
 use history_provider::*;
 
@@ -112,9 +112,9 @@ mod history_provider {
                 from: usize,
                 end: usize,
             ) -> Result<PageEntry<HistoryDetails>, AgentError> {
-                use crate::canister::individual_user_template::{MintEvent, Result12, TokenEvent};
+                use crate::canister::individual_user_template::{MintEvent, Result15, TokenEvent};
                 use crate::utils::route::failure_redirect;
-                let individual = self.0.authenticated_user().await?;
+                let individual = self.0.authenticated_user().await;
                 let history = individual
                     .get_user_utility_token_transaction_history_with_pagination(
                         from as u64,
@@ -122,8 +122,8 @@ mod history_provider {
                     )
                     .await?;
                 let history = match history {
-                    Result12::Ok(history) => history,
-                    Result12::Err(_) => {
+                    Result15::Ok(history) => history,
+                    Result15::Err(_) => {
                         failure_redirect("failed to get posts");
                         return Ok(PageEntry {
                             data: vec![],
@@ -173,7 +173,7 @@ mod history_provider {
             ChaCha8Rng,
         };
 
-        use crate::utils::current_epoch;
+        use crate::utils::time::current_epoch;
 
         use super::*;
 

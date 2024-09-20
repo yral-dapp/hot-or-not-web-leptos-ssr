@@ -1,10 +1,10 @@
 use futures::{Future, StreamExt};
 use leptos::{create_memo, Resource, Serializable, Signal, SignalStream, SignalWith};
 use serde::{Deserialize, Serialize};
-use web_time::{Duration, SystemTime};
 
 pub mod ab_testing;
 pub mod event_streaming;
+pub mod host;
 pub mod ic;
 pub mod icon;
 pub mod ml_feed;
@@ -13,16 +13,11 @@ pub mod posts;
 pub mod profile;
 pub mod report;
 pub mod route;
-pub mod timestamp;
+pub mod time;
+pub mod token;
 pub mod types;
 pub mod user;
 pub mod web;
-
-pub fn current_epoch() -> Duration {
-    web_time::SystemTime::now()
-        .duration_since(SystemTime::UNIX_EPOCH)
-        .unwrap()
-}
 
 /// Wrapper for PartialEq that always returns false
 /// this is currently only used for resources

@@ -100,10 +100,11 @@ fn CtxProvider(temp_identity: Option<JwkEcKey>, children: ChildrenFn) -> impl In
                     .map(|res| {
                         let cans_wire = try_or_redirect!(res);
                         let cans = try_or_redirect!(cans_wire.canisters());
-
-                        let (_, set_user_canister_id, _) =  use_local_storage::<Option<Principal>, JsonSerdeCodec>(USER_CANISTER_ID_STORE);
+                        let (_, set_user_canister_id, _) = use_local_storage::<
+                            Option<Principal>,
+                            JsonSerdeCodec,
+                        >(USER_CANISTER_ID_STORE);
                         set_user_canister_id(Some(cans.user_canister()));
-
                         canisters_store.set(Some(cans));
                     })
             }}

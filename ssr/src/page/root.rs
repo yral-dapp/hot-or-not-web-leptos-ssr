@@ -2,14 +2,14 @@ use candid::Principal;
 use leptos::*;
 use leptos_router::*;
 
-use crate::component::spinner::FullScreenSpinner;
 #[cfg(feature = "ssr")]
 use crate::{canister::post_cache, state::canisters::unauth_canisters};
+use crate::{component::spinner::FullScreenSpinner, utils::host::show_cdao_page};
 
 #[server]
 async fn get_top_post_id() -> Result<Option<(Principal, u64)>, ServerFnError> {
     let canisters = unauth_canisters();
-    let post_cache = canisters.post_cache().await?;
+    let post_cache = canisters.post_cache().await;
 
     let top_items = match post_cache
         .get_top_posts_aggregated_from_canisters_on_this_network_for_home_feed_cursor(
@@ -56,7 +56,7 @@ async fn get_top_post_id_mlcache() -> Result<Option<(Principal, u64)>, ServerFnE
         return get_top_post_id().await;
     }
 
-    let user_canister = canisters.individual_user(user_canister_id.unwrap()).await?;
+    let user_canister = canisters.individual_user(user_canister_id.unwrap()).await;
 
     let top_items = user_canister
         .get_ml_feed_cache_paginated(0, 1)
@@ -99,8 +99,26 @@ async fn get_top_post_id_mlcache() -> Result<Option<(Principal, u64)>, ServerFnE
 // }
 
 #[component]
-pub fn RootPage() -> impl IntoView {
-    let target_post = create_resource(|| (), |_| get_top_post_id_mlcache());
+pub fn CreatorDaoRootPage() -> impl IntoView {
+    view! {
+        {move || {
+            let redirect_url = "/board".to_string();
+            view! { <Redirect path=redirect_url/> }
+        }}
+    }
+}
+
+#[component]
+pub fn YralRootPage() -> impl IntoView {
+    let target_post;
+    #[cfg(any(feature = "local-bin", feature = "local-lib"))]
+    {
+        target_post = create_resource(|| (), |_| get_top_post_id());
+    }
+    #[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
+    {
+        target_post = create_resource(|| (), |_| get_top_post_id_mlcache());
+    }
 
     view! {
         <Suspense fallback=FullScreenSpinner>
@@ -115,10 +133,19 @@ pub fn RootPage() -> impl IntoView {
                             Ok(None) => "/error?err=No Posts Found".to_string(),
                             Err(e) => format!("/error?err={e}"),
                         };
-                        view! { <Redirect path=url /> }
+                        view! { <Redirect path=url/> }
                     })
             }}
 
         </Suspense>
+    }
+}
+
+#[component]
+pub fn RootPage() -> impl IntoView {
+    if show_cdao_page() {
+        view! { <CreatorDaoRootPage/> }
+    } else {
+        view! { <YralRootPage/> }
     }
 }

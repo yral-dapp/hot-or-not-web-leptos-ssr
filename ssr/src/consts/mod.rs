@@ -38,6 +38,10 @@ pub const ML_FEED_GRPC_URL: &str = "https://yral-ml-feed-server.fly.dev:443";
 pub static FALLBACK_USER_INDEX: Lazy<Principal> =
     Lazy::new(|| Principal::from_text("rimrc-piaaa-aaaao-aaljq-cai").unwrap());
 
+pub const ICP_LEDGER_CANISTER_ID: &str = "ryjl3-tyaaa-aaaaa-aaaba-cai";
+
+pub const ICPUMP_LISTING_PAGE_SIZE: usize = 12;
+
 pub mod social {
     pub const TELEGRAM: &str = "https://t.me/+c-LTX0Cp-ENmMzI1";
     pub const DISCORD: &str = "https://discord.gg/GZ9QemnZuj";
