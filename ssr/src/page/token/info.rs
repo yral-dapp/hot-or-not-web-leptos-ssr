@@ -10,10 +10,7 @@ use crate::{
     },
     page::token::TokenInfoParams,
     state::canisters::unauth_canisters,
-    utils::{
-        host::get_host,
-        token::{token_metadata_by_root, TokenMetadata},
-    },
+    utils::token::{token_metadata_by_root, TokenMetadata},
 };
 
 #[component]
@@ -54,10 +51,7 @@ fn TokenInfoInner(
         }
     });
 
-    let share_link = {
-        let base_url = get_host();
-        format!("{base_url}/token/info/{root}/{user_principal}?airdrop-amt=100")
-    };
+    let share_link = { format!("/token/info/{root}/{user_principal}?airdrop_amt=100") };
     let message = format!(
         "Hey! Check out the token: {} I created on YRAL 👇 {}. I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter",
         meta.symbol,  share_link.clone()

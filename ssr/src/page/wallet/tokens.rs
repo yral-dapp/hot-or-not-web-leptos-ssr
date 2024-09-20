@@ -2,7 +2,6 @@ use candid::Principal;
 use ic_agent::AgentError;
 
 use crate::page::wallet::ShareButtonWithFallbackPopup;
-use crate::utils::host::get_host;
 use crate::{
     canister::individual_user_template::Result14,
     component::{
@@ -117,10 +116,7 @@ pub fn TokenTile(
     user_principal: String,
     token_meta_data: TokenMetadata,
 ) -> impl IntoView {
-    let share_link = {
-        let base_url = get_host();
-        format!("{base_url}/token/info/{token_root}/{user_principal}?airdrop-amt=100")
-    };
+    let share_link = { format!("/token/info/{token_root}/{user_principal}?airdrop_amt=100") };
     let share_link_s = store_value(share_link);
     let share_message = format!(
         "Hey! Check out the token: {} I created on YRAL 👇 {}. I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter",
@@ -134,7 +130,7 @@ pub fn TokenTile(
             class="flex  w-full   w-full items-center h-16 rounded-xl border-2 border-neutral-700 bg-white/15 gap-1"
         >
             <a
-            href=format!("/token/info/{token_root}/{user_principal}?airdrop-amt=100")
+            href=format!("/token/info/{token_root}/{user_principal}?airdrop_amt=100")
             // _ref=_ref
             class="flex flex-1  p-y-4"
             >

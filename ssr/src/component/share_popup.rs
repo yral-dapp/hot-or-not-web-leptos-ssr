@@ -3,7 +3,10 @@ use leptos_icons::*;
 
 use crate::{
     component::overlay::*,
-    utils::web::{copy_to_clipboard, share_url},
+    utils::{
+        host::get_host,
+        web::{copy_to_clipboard, share_url},
+    },
 };
 
 #[component]
@@ -112,6 +115,7 @@ pub fn ShareButtonWithFallbackPopup(
     message: String,
     style: Option<String>,
 ) -> impl IntoView {
+    let base_url = get_host();
     let show_fallback = create_rw_signal(false);
     let share_link_c = share_link.clone();
     let on_share_click = move |ev: ev::MouseEvent| {
@@ -138,7 +142,7 @@ pub fn ShareButtonWithFallbackPopup(
         </button>
         <PopupOverlay show=show_fallback>
             <ShareContent
-                share_link=share_link.clone()
+                share_link=format!("{base_url}{share_link}")
                 message=message.clone()
                 show_popup=show_fallback
             />
