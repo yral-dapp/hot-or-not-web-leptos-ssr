@@ -149,9 +149,8 @@ fn HNButtonOverlay(
             let bet_direction = *bet_direction;
             async move {
                 match bet_on_post(cans, bet_amount, bet_direction, post_id, post_can_id).await {
-                    Ok(_) => Some(()),
                     Ok(_) => {
-                        refetch_bet.notify(); // Move notify here
+                        refetch_bet.notify();
                         Some(())
                     }
                     Err(e) => {
