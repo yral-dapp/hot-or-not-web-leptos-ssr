@@ -1,6 +1,8 @@
 use crate::{
     component::{
-        canisters_prov::WithAuthCans, hn_icons::HomeFeedShareIcon, modal::Modal,
+        canisters_prov::{with_cans, WithAuthCans},
+        hn_icons::HomeFeedShareIcon,
+        modal::Modal,
         option::SelectOption,
     },
     state::canisters::{auth_canisters_store, Canisters},
@@ -58,9 +60,7 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
                     LikeVideo.send_event(post_details, likes, canister_store);
                 }
             });
-            let Ok(individual) = canisters.individual_user(post_canister).await else {
-                return;
-            };
+            let individual = canisters.individual_user(post_canister).await;
             match individual
                 .update_post_toggle_like_status_by_caller(post_id)
                 .await
@@ -74,7 +74,7 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
         }
     });
 
-    let liked_fetch = move |cans: Canisters<true>| async move {
+    let liked_fetch = with_cans(move |cans: Canisters<true>| async move {
         if let Some(liked) = initial_liked.0 {
             return (liked, initial_liked.1);
         }
@@ -86,7 +86,7 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
                 (false, likes.try_get_untracked().unwrap_or_default())
             }
         }
-    };
+    });
 
     let liking = like_toggle.pending();
 
@@ -107,7 +107,6 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
 
             </WithAuthCans>
         </div>
-
     }
 }
 
@@ -209,6 +208,7 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
                         </div>
                         <ExpandableText description=post.description/>
                     </div>
+
                 </div>
 
            <div class="relative w-full">

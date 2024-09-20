@@ -23,13 +23,11 @@ where
         Some((children.get_value())(cans).into_view())
     };
 
-    view! {
-        <Suspense fallback=fallback>{loader}</Suspense>
-    }
+    view! { <Suspense fallback=fallback>{loader}</Suspense> }
 }
 
 #[component]
-fn DataLoader<N, EF, D, DFut, DF>(
+fn DataLoader<N, EF, D, St, DF>(
     cans: Canisters<true>,
     fallback: ViewFn,
     with: DF,
@@ -38,19 +36,12 @@ fn DataLoader<N, EF, D, DFut, DF>(
 where
     N: IntoView + 'static,
     EF: Fn((Canisters<true>, D)) -> N + 'static + Clone,
-    DFut: Future<Output = D>,
     D: Serializable + Clone + 'static,
-    DF: Fn(Canisters<true>) -> DFut + 'static + Clone,
+    St: 'static + Clone,
+    DF: FnOnce(Canisters<true>) -> Resource<St, D> + 'static + Clone,
 {
     let can_c = cans.clone();
-    let with_res = create_resource(
-        || (),
-        move |_| {
-            let cans = can_c.clone();
-            let with = with.clone();
-            async move { (with)(cans).await }
-        },
-    );
+    let with_res = (with)(can_c);
 
     let cans = store_value(cans.clone());
     let children = store_value(children);
@@ -58,16 +49,21 @@ where
     view! {
         <Suspense fallback=fallback>
             {move || {
-                with_res()
-                    .map(move |d| (children.get_value())((cans.get_value(), d)).into_view())
+                with_res().map(move |d| (children.get_value())((cans.get_value(), d)).into_view())
             }}
 
         </Suspense>
     }
 }
 
+pub fn with_cans<D: Serializable + Clone + 'static, DFut: Future<Output = D> + 'static>(
+    with: impl Fn(Canisters<true>) -> DFut + 'static + Clone,
+) -> impl FnOnce(Canisters<true>) -> Resource<(), D> + Clone {
+    move |cans: Canisters<true>| create_resource(|| (), move |_| (with.clone())(cans.clone()))
+}
+
 #[component]
-pub fn WithAuthCans<N, EF, D, DFut, DF>(
+pub fn WithAuthCans<N, EF, D, St, DF>(
     #[prop(into, optional)] fallback: ViewFn,
     with: DF,
     children: EF,
@@ -75,9 +71,9 @@ pub fn WithAuthCans<N, EF, D, DFut, DF>(
 where
     N: IntoView + 'static,
     EF: Fn((Canisters<true>, D)) -> N + 'static + Clone,
-    DFut: Future<Output = D>,
+    St: 'static + Clone,
     D: Serializable + Clone + 'static,
-    DF: Fn(Canisters<true>) -> DFut + 'static + Clone,
+    DF: FnOnce(Canisters<true>) -> Resource<St, D> + 'static + Clone,
 {
     view! {
         <AuthCansProvider fallback=fallback.clone() let:cans>

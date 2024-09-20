@@ -25,6 +25,7 @@ pub const NOTIFICATIONS_ENABLED_STORE: &str = "yral-notifications-enabled";
 pub const NSFW_TOGGLE_STORE: &str = "nsfw-enabled";
 pub const REFERRER_STORE: &str = "referrer";
 pub const USER_CANISTER_ID_STORE: &str = "user-canister-id";
+pub const USER_ONBOARDING_STORE: &str = "user-onboarding";
 
 pub static OFF_CHAIN_AGENT_GRPC_URL: Lazy<Url> =
     Lazy::new(|| Url::parse("https://icp-off-chain-agent.fly.dev:443").unwrap());
@@ -36,6 +37,10 @@ pub const ML_FEED_GRPC_URL: &str = "https://yral-ml-feed-server.fly.dev:443";
 
 pub static FALLBACK_USER_INDEX: Lazy<Principal> =
     Lazy::new(|| Principal::from_text("rimrc-piaaa-aaaao-aaljq-cai").unwrap());
+
+pub const ICP_LEDGER_CANISTER_ID: &str = "ryjl3-tyaaa-aaaaa-aaaba-cai";
+
+pub const ICPUMP_LISTING_PAGE_SIZE: usize = 12;
 
 pub mod social {
     pub const TELEGRAM: &str = "https://t.me/+c-LTX0Cp-ENmMzI1";

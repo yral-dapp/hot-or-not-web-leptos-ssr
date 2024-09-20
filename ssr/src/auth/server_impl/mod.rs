@@ -17,7 +17,7 @@ use rand_chacha::rand_core::OsRng;
 
 use crate::{
     consts::auth::{REFRESH_MAX_AGE, REFRESH_TOKEN_COOKIE},
-    utils::current_epoch,
+    utils::time::current_epoch,
 };
 
 use self::store::{KVStore, KVStoreImpl};
@@ -36,7 +36,7 @@ fn set_cookies(resp: &ResponseOptions, jar: impl IntoResponse) {
     }
 }
 
-fn extract_principal_from_cookie(
+pub fn extract_principal_from_cookie(
     jar: &SignedCookieJar,
 ) -> Result<Option<Principal>, ServerFnError> {
     let Some(cookie) = jar.get(REFRESH_TOKEN_COOKIE) else {

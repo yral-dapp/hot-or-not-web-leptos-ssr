@@ -1,5 +1,11 @@
 use uts2ts::uts2ts;
-use web_time::Duration;
+use web_time::{Duration, SystemTime};
+
+pub fn current_epoch() -> Duration {
+    web_time::SystemTime::now()
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .unwrap()
+}
 
 /// Get day & month -> DD MMM format
 /// where DD -> 2 digits
@@ -31,4 +37,17 @@ pub fn to_hh_mm_ss(duration: Duration) -> String {
     let ss = (secs - hh * 3600) - mm * 60;
 
     format!("{hh:02}:{mm:02}:{ss:02}")
+}
+
+pub async fn sleep(duration: Duration) {
+    #[cfg(feature = "ssr")]
+    {
+        use tokio::time;
+        time::sleep(duration).await;
+    }
+    #[cfg(feature = "hydrate")]
+    {
+        use gloo::timers::future::sleep;
+        sleep(duration).await;
+    }
 }

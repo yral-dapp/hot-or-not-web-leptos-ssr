@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     canister::individual_user_template::{
-        BetDirection, BetOutcomeForBetMaker, PlacedBetDetail, Result5,
+        BetDirection, BetOutcomeForBetMaker, PlacedBetDetail, Result11,
         UserProfileDetailsForFrontend,
     },
     component::infinite_scroller::{CursoredDataProvider, KeyedData, PageEntry},
@@ -15,9 +15,9 @@ use crate::{
     state::canisters::Canisters,
 };
 
-use super::{current_epoch, posts::PostDetails};
+use super::{posts::PostDetails, time::current_epoch};
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ProfileDetails {
     pub username: Option<String>,
     pub lifetime_earnings: u64,
@@ -216,14 +216,14 @@ impl CursoredDataProvider for PostsProvider {
         start: usize,
         end: usize,
     ) -> Result<PageEntry<PostDetails>, AgentError> {
-        let user = self.canisters.individual_user(self.user).await?;
+        let user = self.canisters.individual_user(self.user).await;
         let limit = end - start;
         let posts = user
             .get_posts_of_this_user_profile_with_pagination_cursor(start as u64, limit as u64)
             .await?;
         let posts = match posts {
-            Result5::Ok(v) => v,
-            Result5::Err(_) => {
+            Result11::Ok(v) => v,
+            Result11::Err(_) => {
                 log::warn!("failed to get posts");
                 return Ok(PageEntry {
                     data: vec![],
@@ -268,7 +268,7 @@ impl CursoredDataProvider for BetsProvider {
         start: usize,
         end: usize,
     ) -> Result<PageEntry<BetDetails>, AgentError> {
-        let user = self.canisters.individual_user(self.user).await?;
+        let user = self.canisters.individual_user(self.user).await;
         assert_eq!(end - start, 10);
         let bets = user
             .get_hot_or_not_bets_placed_by_this_profile_with_pagination(start as u64)
