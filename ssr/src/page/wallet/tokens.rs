@@ -124,7 +124,7 @@ pub fn TokenTile(
     let share_link_s = store_value(share_link);
     let share_message = format!(
         "Hey! Check out the token: {} I created on YRAL 👇 {}. I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter",
-        token_meta_data.symbol, 
+        token_meta_data.symbol,
         share_link_s(),
     );
     let share_message_s = store_value(share_message);
