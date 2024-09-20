@@ -2,8 +2,6 @@ use std::collections::HashMap;
 
 use leptos::*;
 
-use stylers::style;
-
 
 use crate::component::spinner::FullScreenSpinner;
 use crate::consts::ICPUMP_LISTING_PAGE_SIZE;
@@ -20,7 +18,7 @@ pub fn TokenListing(details: TokenListItem) -> impl IntoView {
             <div class="gap-1 flex-col flex h-fit">
                 <div class="flex items-center justify-between gap-4 text-gray-200">
                     <span class="line-clamp-1 w-full overflow-hidden">{details.token_name}</span>
-                    <span class="shrink-0 font-bold underline"><span class="text-gray-400 italic">"$"</span>{details.token_symbol}</span>
+                    <span class="shrink-0 font-bold underline"><span class="text-gray-400 italic select-none">"$"</span>{details.token_symbol}</span>
                 </div>
                 <div title={details.description.clone()} class="text-sm line-clamp-3 text-gray-400">{details.description}</div>
                 <div class="text-xs text-gray-500">"Created by: "<span class="select-all">{details.user_id}</span></div>
@@ -101,24 +99,7 @@ pub fn ICPumpListing() -> impl IntoView {
 #[component]
 pub fn ICPumpLanding() -> impl IntoView {
 
-    let styler_class = style! { "ICPumpLanding",
-        .animate-blink-color {
-            animation-duration: 5s;
-            animation-iteration-count: infinite;
-            animation-name: blink-colors;
-            animation-timing-function: step-end;
-        }
-        
-        @keyframes blink-colors {
-            0% {color: red;}
-            25% {color: lime;}
-            50% {color: yellow;}
-            75% {color: fuchsia;}
-            100% {color: blue;}
-        }
-    };
-
-    view! { class = styler_class,
+    view! {
         <div class="min-h-screen bg-black text-white overflow-y-scroll pt-5 pb-12">
             <div class="flex ml-4 space-x-2">
                 <div class="text-gray-100 hover:text-pink-200 hover:underline active:text-pink-500 active:italic"> <a href="https://twitter.com/Yral_app" target="_blank"> [twitter] </a> </div>
@@ -126,7 +107,7 @@ pub fn ICPumpLanding() -> impl IntoView {
                 <div class="text-gray-100 hover:text-pink-200 hover:underline active:text-pink-500 active:italic"> <a href="https://t.me/+c-LTX0Cp-ENmMzI1" target="_blank"> [telegram] </a> </div>
             </div>
             <div class="flex justify-center items-center">
-                <div class="font-bold text-3xl hover:font-extrabold hover:underline active:italic animate-blink-color"> <a href="/token/create"> [ create a new coin ] </a> </div>
+                <div class="font-bold text-3xl hover:font-extrabold hover:underline active:italic animate-blink-colors"> <a href="/token/create"> [ create a new coin ] </a> </div>
             </div>
             <div class="px-4">
                 <ICPumpListing />
