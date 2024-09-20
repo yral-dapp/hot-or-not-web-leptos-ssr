@@ -103,7 +103,7 @@ pub fn ICPumpLanding() -> impl IntoView {
                 <div class="text-white"> <a href="https://t.me/+c-LTX0Cp-ENmMzI1" target="_blank"> [telegram] </a> </div>
             </div>
             <div class="flex justify-center items-center">
-                <div class="font-bold text-3xl hover:font-extrabold"> <a href="/your-profile?tab=tokens"> [start a new coin] </a> </div>
+                <div class="font-bold text-3xl hover:font-extrabold"> <a href="/token/create"> [start a new coin] </a> </div>
             </div>
             <ICPumpListing />
         </div>
