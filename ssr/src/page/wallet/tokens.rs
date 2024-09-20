@@ -79,7 +79,7 @@ async fn token_metadata_or_fallback(
 #[component]
 fn FallbackToken() -> impl IntoView {
     view! {
-        <div class="items-center w-full h-20 rounded-xl border-2 animate-pulse border-neutral-700 bg-white/15"></div>
+        <div class="w-full items-center h-20 rounded-xl border-2 border-neutral-700 bg-white/15 animate-pulse"></div>
     }
 }
 
@@ -95,16 +95,6 @@ pub fn TokenView(
         || (),
         move |_| token_metadata_or_fallback(cans.clone(), user_principal, token_root),
     );
-    let share_link = {
-        let base_url = get_host();
-        format!("{base_url}/profile/{}?tab=tokens", user_principal.to_text())
-    };
-    let share_link_s = store_value(share_link);
-    let share_message = format!(
-        "Hey! Check out my YRAL profile 👇 {}. I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter",
-        share_link_s(),
-    );
-    let share_message_s = store_value(share_message);
 
     let share_link = {
         let base_url = get_host();
@@ -118,7 +108,7 @@ pub fn TokenView(
     let share_message_s = store_value(share_message);
 
     view! {
-        <ClaimTokensOrRedirectError token_root />
+        <ClaimTokensOrRedirectError token_root/>
         <Suspense fallback=FallbackToken>
             {move || {
                 info.map(|info| {
@@ -126,13 +116,13 @@ pub fn TokenView(
                         <a
                             href=format!("/token/info/{token_root}/{user_principal}")
                             _ref=_ref
-                            class="grid grid-cols-2 grid-rows-1 items-center p-4 w-full rounded-xl border-2 border-neutral-700 bg-white/15"
+                            class="grid grid-cols-2 grid-rows-1 w-full items-center p-4 rounded-xl border-2 border-neutral-700 bg-white/15"
                         >
-                            <div class="flex flex-row gap-2 justify-self-start items-center">
-                                <img class="w-12 h-12 rounded-full" src=info.logo_b64.clone() />
+                            <div class="flex flex-row gap-2 items-center justify-self-start">
+                                <img class="w-12 h-12 rounded-full" src=info.logo_b64.clone()/>
                                 <span class="text-white truncate">{info.name.clone()}</span>
                             </div>
-                            <div class="flex flex-row gap-2 justify-self-end items-center text-base text-white">
+                            <div class="flex flex-row gap-2 items-center justify-self-end text-base text-white">
                                 <span class="truncate">
                                     {format!("{} {}", info.balance.humanize(), info.symbol)}
                                 </span>
@@ -157,12 +147,12 @@ fn TokenList(canisters: Canisters<true>) -> impl IntoView {
     let provider: TokenRootList = TokenRootList(canisters);
 
     view! {
-        <div class="flex flex-col gap-2 items-center w-full">
+        <div class="flex flex-col w-full gap-2 items-center">
             <InfiniteScroller
                 provider
                 fetch_count=10
                 children=move |token_root, _ref| {
-                    view! { <TokenView user_principal token_root _ref=_ref.unwrap_or_default() /> }
+                    view! { <TokenView user_principal token_root _ref=_ref.unwrap_or_default()/> }
                 }
             />
 
@@ -173,16 +163,16 @@ fn TokenList(canisters: Canisters<true>) -> impl IntoView {
 #[component]
 pub fn Tokens() -> impl IntoView {
     view! {
-        <div class="flex-col gap-6 items-center px-4 pt-4 pb-12 bg-black felx w-dvw min-h-dvh">
+        <div class="felx items-center flex-col w-dvw min-h-dvh gap-6 bg-black pt-4 px-4 pb-12">
             <Title justify_center=false>
                 <div class="flex flex-row justify-between">
-                    <BackButton fallback="/wallet".to_string() />
-                    <span class="text-xl font-bold text-white">Tokens</span>
+                    <BackButton fallback="/wallet".to_string()/>
+                    <span class="text-xl text-white font-bold">Tokens</span>
                     <div></div>
                 </div>
             </Title>
             <AuthCansProvider fallback=BulletLoader let:canisters>
-                <TokenList canisters />
+                <TokenList canisters/>
             </AuthCansProvider>
         </div>
     }
