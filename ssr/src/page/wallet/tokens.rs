@@ -1,9 +1,8 @@
 use candid::Principal;
 use ic_agent::AgentError;
-use leptos_use::use_window;
 
-use crate::page::wallet::SharePopup;
-use crate::utils::web::{check_share_support, share_url};
+use crate::page::wallet::ShareButtonWithFallbackPopup;
+use crate::utils::host::get_host;
 use crate::{
     canister::individual_user_template::Result14,
     component::{
@@ -21,7 +20,6 @@ use crate::{
     },
 };
 use leptos::*;
-use leptos_icons::*;
 
 #[derive(Clone)]
 pub struct TokenRootList(pub Canisters<true>);
@@ -98,46 +96,22 @@ pub fn TokenView(
         move |_| token_metadata_or_fallback(cans.clone(), user_principal, token_root),
     );
 
+    let share_link = {
+        let base_url = get_host();
+        format!("{base_url}/profile/{}?tab=tokens", user_principal.to_text())
+    };
+    let share_link_s = store_value(share_link);
+    let share_message = format!(
+        "Hey! Check out my YRAL profile 👇 {}. I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter",
+        share_link_s(),
+    );
+    let share_message_s = store_value(share_message);
+
     view! {
         <ClaimTokensOrRedirectError token_root/>
         <Suspense fallback=FallbackToken>
             {move || {
-                info.map( |info|
-                    {
-
-                        let base_url = || {
-                            use_window()
-                                .as_ref()
-                                .and_then(|w| w.location().origin().ok())
-                        };
-                        let username_or_principal =  user_principal.to_text().clone();
-                        // let principal = user_principal.to_text().clone();
-
-                        let share_link =  base_url()
-                        .map(|b| format!("{b}/profile/{}?tab=tokens", &username_or_principal))
-                        .unwrap_or_default();
-
-                        let message = format!(
-                            "Hey! Check out my YRAL profile 👇 {}. I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter",
-                            share_link.clone()
-                        );
-
-                       let share_action = create_action(move |&()| async move { Ok(()) } );
-
-
-                         let link  = share_link.clone();
-
-                         let share_profile_url = move || {
-
-                         let has_share_support = check_share_support();
-
-                         match has_share_support {
-                            Some(_) => {share_url(&link);},
-                            None => {share_action.dispatch(());},
-                        };
-                         };
-
-
+                info.map(|info| {
                     view! {
                         <a
                             href=format!("/token/info/{token_root}/{user_principal}")
@@ -152,17 +126,9 @@ pub fn TokenView(
                                 <span class="truncate">
                                     {format!("{} {}", info.balance.humanize(), info.symbol)}
                                 </span>
-                                <button
-                                    on:click=move |_| share_profile_url()
-                                    class="text-white text-center p-1 text-lg md:text-xl bg-primary-600 rounded-full"
-                                    >
-                                    <Icon icon=icondata::AiShareAltOutlined/>
-
-                                </button>
-                                <SharePopup
-                                sharing_action=share_action
-                                share_link
-                                message
+                                <ShareButtonWithFallbackPopup
+                                    share_link=share_link_s()
+                                    message=share_message_s()
                                 />
                             </div>
                         </a>
