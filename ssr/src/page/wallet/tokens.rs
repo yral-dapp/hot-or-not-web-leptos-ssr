@@ -1,3 +1,6 @@
+use candid::Principal;
+use ic_agent::AgentError;
+
 use crate::page::wallet::ShareButtonWithFallbackPopup;
 use crate::utils::host::get_host;
 use crate::{
@@ -19,7 +22,6 @@ use crate::{
 use candid::Principal;
 use ic_agent::AgentError;
 use leptos::*;
-// use leptos_icons::*;
 
 #[derive(Clone)]
 pub struct TokenRootList(pub Canisters<true>);
@@ -95,6 +97,17 @@ pub fn TokenView(
         || (),
         move |_| token_metadata_or_fallback(cans.clone(), user_principal, token_root),
     );
+    let share_link = {
+        let base_url = get_host();
+        format!("{base_url}/profile/{}?tab=tokens", user_principal.to_text())
+    };
+    let share_link_s = store_value(share_link);
+    let share_message = format!(
+        "Hey! Check out my YRAL profile 👇 {}. I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter",
+        share_link_s(),
+    );
+    let share_message_s = store_value(share_message);
+
     let share_link = {
         let base_url = get_host();
         format!("{base_url}/profile/{}?tab=tokens", user_principal.to_text())
