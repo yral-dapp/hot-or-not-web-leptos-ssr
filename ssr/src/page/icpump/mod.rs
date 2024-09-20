@@ -75,7 +75,7 @@ pub fn ICPumpListing() -> impl IntoView {
                             </div>
 
                             <div class="flex flex-row justify-center mt-5">
-                                <button class="text-gray-100 hover:text-pink-200 hover:underline active:text-pink-500 active:italic disabled:pointer-events-none disabled:cursor-not-allowed" on:click={
+                                <button class="text-gray-100 active:italic hover:enabled:text-pink-200 hover:enabled:underline active:enabled:text-pink-500 disabled:cursor-not-allowed disabled:text-gray-500" on:click={
                                     move |_| {
                                         page.update(|page| *page -= 1);
                                         end_of_list.set(false);
@@ -83,7 +83,7 @@ pub fn ICPumpListing() -> impl IntoView {
                                 }
                                 disabled=move || page.get()==1> {"[ << ]"} </button>
                                 <span class="mx-2"> {page} </span>
-                                <button class="text-gray-100 hover:text-pink-200 hover:underline active:text-pink-500 active:italic disabled:pointer-events-none disabled:cursor-not-allowed" on:click={
+                                <button class="text-gray-100 active:italic hover:enabled:text-pink-200 hover:enabled:underline active:enabled:text-pink-500 disabled:cursor-not-allowed disabled:text-gray-500" on:click={
                                     move |_| {
                                         page.update(|page| *page += 1);
                                     }
@@ -128,7 +128,9 @@ pub fn ICPumpLanding() -> impl IntoView {
             <div class="flex justify-center items-center">
                 <div class="font-bold text-3xl hover:font-extrabold hover:underline hover:invert active:italic active:invert-0 animate-blink-color"> <a href="/token/create"> [ create a new coin ] </a> </div>
             </div>
-            <ICPumpListing />
+            <div class="px-4">
+                <ICPumpListing />
+            </div>
         </div>
     }
 }
