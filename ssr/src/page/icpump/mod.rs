@@ -2,6 +2,9 @@ use std::collections::HashMap;
 
 use leptos::*;
 
+use stylers::style;
+
+
 use crate::component::spinner::FullScreenSpinner;
 use crate::consts::ICPUMP_LISTING_PAGE_SIZE;
 use crate::utils::token::icpump::get_paginated_token_list;
@@ -19,7 +22,7 @@ pub fn TokenListing(details: TokenListItem) -> impl IntoView {
                     <span class="line-clamp-1 w-full overflow-hidden">{details.token_name}</span>
                     <span class="shrink-0 font-bold underline">"$" {details.token_symbol}</span>
                 </div>
-                <span title={details.description} class="text-sm line-clamp-3 text-gray-400">{details.description}</span>
+                <div title={details.description} class="text-sm line-clamp-3 text-gray-400">{details.description.clone()}</div>
                 <div class="text-xs text-gray-500">"Created by: "<span class="select-all">{details.user_id}</span></div>
                 <span class="absolute bottom-3 right-2 shrink-0 text-xs text-gray-500 underline">{details.formatted_created_at}</span>
             </div>
@@ -72,7 +75,7 @@ pub fn ICPumpListing() -> impl IntoView {
                             </div>
 
                             <div class="flex flex-row justify-center mt-5">
-                                <button class="text-gray-100 hover:text-pink-200 hover:underline active:text-pink-500 disabled:pointer-events-none disabled:cursor-not-allowed" on:click={
+                                <button class="text-gray-100 hover:text-pink-200 hover:underline active:text-pink-500 active:italic disabled:pointer-events-none disabled:cursor-not-allowed" on:click={
                                     move |_| {
                                         page.update(|page| *page -= 1);
                                         end_of_list.set(false);
@@ -80,7 +83,7 @@ pub fn ICPumpListing() -> impl IntoView {
                                 }
                                 disabled=move || page.get()==1> {"[ << ]"} </button>
                                 <span class="mx-2"> {page} </span>
-                                <button class="text-gray-100 hover:text-pink-200 hover:underline active:text-pink-500 disabled:pointer-events-none disabled:cursor-not-allowed" on:click={
+                                <button class="text-gray-100 hover:text-pink-200 hover:underline active:text-pink-500 active:italic disabled:pointer-events-none disabled:cursor-not-allowed" on:click={
                                     move |_| {
                                         page.update(|page| *page += 1);
                                     }
@@ -98,7 +101,7 @@ pub fn ICPumpListing() -> impl IntoView {
 #[component]
 pub fn ICPumpLanding() -> impl IntoView {
 
-    let styler_class = style! { "ICPumpLanding",
+    let styler_class = style! {
         .animate-blink-color {
             animation-duration: 5s;
             animation-iteration-count: infinite;
@@ -118,9 +121,9 @@ pub fn ICPumpLanding() -> impl IntoView {
     view! { class = styler_class,
         <div class="min-h-screen bg-black text-white overflow-y-scroll pt-5 pb-12">
             <div class="flex ml-4 space-x-2">
-                <div class="text-gray-100 hover:text-pink-200 hover:underline active:text-pink-500"> <a href="https://twitter.com/Yral_app" target="_blank"> [twitter] </a> </div>
-                <div class="text-gray-100 hover:text-pink-200 hover:underline active:text-pink-500"> <a href="https://www.instagram.com/yral_app/" target="_blank"> [instagram] </a> </div>
-                <div class="text-gray-100 hover:text-pink-200 hover:underline active:text-pink-500"> <a href="https://t.me/+c-LTX0Cp-ENmMzI1" target="_blank"> [telegram] </a> </div>
+                <div class="text-gray-100 hover:text-pink-200 hover:underline active:text-pink-500 active:italic"> <a href="https://twitter.com/Yral_app" target="_blank"> [twitter] </a> </div>
+                <div class="text-gray-100 hover:text-pink-200 hover:underline active:text-pink-500 active:italic"> <a href="https://www.instagram.com/yral_app/" target="_blank"> [instagram] </a> </div>
+                <div class="text-gray-100 hover:text-pink-200 hover:underline active:text-pink-500 active:italic"> <a href="https://t.me/+c-LTX0Cp-ENmMzI1" target="_blank"> [telegram] </a> </div>
             </div>
             <div class="flex justify-center items-center">
                 <div class="font-bold text-3xl hover:font-extrabold hover:underline hover:invert active:italic active:invert-0 animate-blink-color"> <a href="/token/create"> [ create a new coin ] </a> </div>
