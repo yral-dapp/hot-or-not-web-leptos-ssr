@@ -20,7 +20,7 @@ pub fn TokenListing(details: TokenListItem) -> impl IntoView {
             <div class="gap-1 flex-col flex h-fit">
                 <div class="flex items-center justify-between gap-4 text-gray-200">
                     <span class="line-clamp-1 w-full overflow-hidden">{details.token_name}</span>
-                    <span class="shrink-0 font-bold underline">"$" {details.token_symbol}</span>
+                    <span class="shrink-0 font-bold underline"><span class="text-gray-400 italic">"$"</span>{details.token_symbol}</span>
                 </div>
                 <div title={details.description.clone()} class="text-sm line-clamp-3 text-gray-400">{details.description}</div>
                 <div class="text-xs text-gray-500">"Created by: "<span class="select-all">{details.user_id}</span></div>
