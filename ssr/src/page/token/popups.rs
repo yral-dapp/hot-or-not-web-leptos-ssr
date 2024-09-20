@@ -2,7 +2,7 @@ use leptos::*;
 use leptos_icons::*;
 
 use crate::{
-    component::{overlay::PopupOverlay, token_confetti_symbol::TokenConfettiSymbol},
+    component::{overlay::ActionTrackerPopup, token_confetti_symbol::TokenConfettiSymbol},
     page::token::create::CreateTokenCtx,
     utils::token::TokenBalance,
 };
@@ -133,7 +133,7 @@ pub fn TokenCreationPopup(
 ) -> impl IntoView {
     let close_popup = create_rw_signal(false);
     view! {
-        <PopupOverlay
+        <ActionTrackerPopup
             action=creation_action
             loading_message="Token creation in progress"
             modal=move |res| match res {
@@ -210,7 +210,7 @@ pub fn TokenTransferPopup(
     let close_popup = create_rw_signal(false);
 
     view! {
-        <PopupOverlay
+        <ActionTrackerPopup
             action=transfer_action
             loading_message="Token transfer in progress"
             modal=move |res| match res {

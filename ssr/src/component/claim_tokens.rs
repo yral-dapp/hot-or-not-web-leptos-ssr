@@ -34,14 +34,18 @@ pub fn ClaimTokensOrRedirectError(token_root: Principal) -> impl IntoView {
 
     view! {
         <Suspense>
-        {move || claim_res().map(|res| {
-            match res {
-                Ok(_) => (),
-                Err(e) => {
-                    failure_redirect(e);
-                }
-            }
-        })}
+            {move || {
+                claim_res()
+                    .map(|res| {
+                        match res {
+                            Ok(_) => {}
+                            Err(e) => {
+                                failure_redirect(e);
+                            }
+                        }
+                    })
+            }}
+
         </Suspense>
     }
 }

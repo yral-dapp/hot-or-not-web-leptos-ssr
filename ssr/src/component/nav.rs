@@ -91,7 +91,7 @@ fn UploadIcon(idx: usize, cur_selected: Memo<usize>) -> impl IntoView {
 #[component]
 pub fn NavBar() -> impl IntoView {
     let cur_location = use_location();
-    let home_path = create_rw_signal("/hot-or-not".to_string());
+    let home_path = create_rw_signal("/".to_string());
     let cur_selected = create_memo(move |_| {
         let path = cur_location.pathname.get();
         match path.as_str() {
@@ -100,13 +100,14 @@ pub fn NavBar() -> impl IntoView {
             "/upload" => 2,
             "/wallet" | "/transactions" => 3,
             "/menu" | "/leaderboard" => 4,
+            "/board" => 0,
             s if s.starts_with("/hot-or-not") => {
                 home_path.set(path);
                 0
             }
             s if s.starts_with("/profile") => 0,
             s if s.starts_with("/token/info") => 3,
-            s if s.starts_with("/token/create") => 5,
+            s if s.starts_with("/token/create") => 2,
             s if s.starts_with("/your-profile") => 5,
             _ => 4,
         }

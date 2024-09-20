@@ -4,7 +4,7 @@ use leptos_router::*;
 
 #[cfg(feature = "ssr")]
 use crate::{canister::post_cache, state::canisters::unauth_canisters};
-use crate::{component::spinner::FullScreenSpinner, utils::host::get_host};
+use crate::{component::spinner::FullScreenSpinner, utils::host::show_cdao_page};
 
 #[server]
 async fn get_top_post_id() -> Result<Option<(Principal, u64)>, ServerFnError> {
@@ -102,7 +102,7 @@ async fn get_top_post_id_mlcache() -> Result<Option<(Principal, u64)>, ServerFnE
 pub fn CreatorDaoRootPage() -> impl IntoView {
     view! {
         {move || {
-            let redirect_url = "/your-profile?tab=tokens".to_string();
+            let redirect_url = "/board".to_string();
             view! { <Redirect path=redirect_url/> }
         }}
     }
@@ -110,7 +110,16 @@ pub fn CreatorDaoRootPage() -> impl IntoView {
 
 #[component]
 pub fn YralRootPage() -> impl IntoView {
-    let target_post = create_resource(|| (), |_| get_top_post_id());
+    let target_post;
+    #[cfg(any(feature = "local-bin", feature = "local-lib"))]
+    {
+        target_post = create_resource(|| (), |_| get_top_post_id());
+    }
+    #[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
+    {
+        target_post = create_resource(|| (), |_| get_top_post_id_mlcache());
+    }
+
     view! {
         <Suspense fallback=FullScreenSpinner>
             {move || {
@@ -139,9 +148,4 @@ pub fn RootPage() -> impl IntoView {
     } else {
         view! { <YralRootPage/> }
     }
-}
-
-pub fn show_cdao_page() -> bool {
-    let host = get_host();
-    host == ("icpump.fun") || host.contains("go-bazzinga-hot-or-not-web-leptos-ssr.fly.dev")
 }

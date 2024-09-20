@@ -333,13 +333,9 @@ pub fn PostView() -> impl IntoView {
                         .and_then(|initial_post| {
                             let initial_post = initial_post.ok()?;
                             #[cfg(any(feature = "local-bin", feature = "local-lib"))]
-                            {
-                                Some(view! { <PostViewWithUpdates initial_post/> })
-                            }
+                            { Some(view! { <PostViewWithUpdates initial_post/> }) }
                             #[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
-                            {
-                                Some(view! { <PostViewWithUpdatesMLFeed initial_post/> })
-                            }
+                            { Some(view! { <PostViewWithUpdatesMLFeed initial_post/> }) }
                         })
                 }
             }}
@@ -347,3 +343,16 @@ pub fn PostView() -> impl IntoView {
         </Suspense>
     }
 }
+
+// #[component]
+// pub fn PostView() -> impl IntoView {
+//     if show_cdao_page() {
+//         view! {
+//             <CreatorDaoRootPage/>
+//         }
+//     } else {
+//         view! {
+//             <YralPostView/>
+//         }
+//     }
+// }

@@ -1,11 +1,9 @@
 pub mod tokens;
 pub mod transactions;
 mod txn;
-use crate::component::share_popup::SharePopup;
+use crate::{component::share_popup::ShareButtonWithFallbackPopup, utils::host::get_host};
 use candid::Principal;
 use leptos::*;
-use leptos_icons::*;
-use leptos_use::use_window;
 use tokens::{TokenRootList, TokenView};
 
 use crate::{
@@ -17,85 +15,35 @@ use crate::{
     },
     state::{auth::account_connected_reader, canisters::authenticated_canisters},
     try_or_redirect_opt,
-    utils::{
-        profile::ProfileDetails,
-        web::{check_share_support, share_url},
-    },
+    utils::profile::ProfileDetails,
 };
 use txn::{provider::get_history_provider, TxnView};
 
 #[component]
 fn ProfileGreeter(details: ProfileDetails) -> impl IntoView {
     // let (is_connected, _) = account_connected_reader();
-    let base_url = || {
-        use_window()
-            .as_ref()
-            .and_then(|w| w.location().origin().ok())
+    let share_link = {
+        let base_url = get_host();
+        let username_or_principal = details.username_or_principal();
+        format!("{base_url}/profile/{}?tab=tokens", username_or_principal)
     };
-    let share_action = create_action(move |&()| async move { Ok(()) });
-
-    let username_or_principal = details.username_or_principal().clone();
-
-    let share_link = base_url()
-        .map(|b| format!("{b}/profile/{}?tab=tokens", username_or_principal))
-        .unwrap_or_default()
-        .clone();
-
     let message = format!(
         "Hey! Check out my YRAL profile 👇 {}. I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter",
-        share_link.clone()
+        share_link
     );
-
-    let link = share_link.clone();
-
-    let share_profile_url = move || {
-        let has_share_support = check_share_support();
-
-        match has_share_support {
-            Some(_) => {
-                share_url(&link);
-            }
-            None => {
-                share_action.dispatch(());
-            }
-        };
-    };
-    // let share_profile_url = move || {
-    //     // let url = base_url()
-    //     //     .map(|b| format!("{b}/profile/{}?tab=tokens", username_or_principal))
-    //     //     .unwrap_or_default();
-    //     // share_url(&url);
-
-    //     share_action.dispatch(());
-    // };
 
     view! {
         <div class="flex flex-col">
             <span class="text-white/50 text-md">Welcome!</span>
-            <div class ="flex flex-row gap-2" >
-            <span class="text-white text-lg md:text-xl truncate">
-            // TEMP: Workaround for hydration bug until leptos 0.7
-            // class=("md:w-5/12", move || !is_connected())
-            {details.display_name_or_fallback()}
+            <div class="flex flex-row gap-2">
+                <span class="text-white text-lg md:text-xl truncate">
+                    // TEMP: Workaround for hydration bug until leptos 0.7
+                    // class=("md:w-5/12", move || !is_connected())
+                    {details.display_name_or_fallback()}
 
-            </span>
-         <button
-        on:click= move|_| share_profile_url()
-            class="text-white text-center p-1 text-lg md:text-xl bg-primary-600 rounded-full"
-        >
-        <Icon icon=icondata::AiShareAltOutlined/>
-
-        </button>
+                </span>
+                <ShareButtonWithFallbackPopup share_link message style=None/>
             </div>
-            <SharePopup
-                        sharing_action=share_action
-                        share_link
-                        message
-
-                    />
-
-
-
         </div>
         <div class="w-16 aspect-square overflow-clip justify-self-end rounded-full">
             <img class="h-full w-full object-cover" src=details.profile_pic_or_random()/>
@@ -142,21 +90,18 @@ fn TokensFetch() -> impl IntoView {
                 tokens_fetch()
                     .map(|tokens_res| {
                         let tokens = tokens_res.as_ref().map(|t| t.1.clone()).unwrap_or_default();
-                        let user_principal = tokens_res.as_ref().map(|t| t.0).unwrap_or(Principal::anonymous());
+                        let user_principal = tokens_res
+                            .as_ref()
+                            .map(|t| t.0)
+                            .unwrap_or(Principal::anonymous());
                         view! {
-                            <For
-                                each=move || tokens.clone()
-                                key=|inf| inf.key()
-                                let:token_root
-                            >
-                                <TokenView
-                                    user_principal
-                                    token_root
-                                />
+                            <For each=move || tokens.clone() key=|inf| inf.key() let:token_root>
+                                <TokenView user_principal token_root/>
                             </For>
                         }
                     })
             }}
+
         </Suspense>
     }
 }

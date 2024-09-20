@@ -257,7 +257,6 @@ fn parse_token_e8s(s: &str) -> Result<Tokens, String> {
 #[component]
 pub fn CreateToken() -> impl IntoView {
     let auth_cans = auth_canisters_store();
-    let fallback_url = String::from("/your-profile?tab=tokens");
 
     let ctx: CreateTokenCtx = expect_context();
 
@@ -338,7 +337,7 @@ pub fn CreateToken() -> impl IntoView {
         <div class="w-dvw min-h-dvh bg-black pt-4 flex flex-col gap-4" style="padding-bottom:6rem">
             <Title justify_center=false>
                 <div class="flex justify-between w-full">
-                    <BackButton fallback=fallback_url/>
+                    <div></div>
                     <span class="font-bold justify-self-center">Create Meme Token</span>
                     <a href="/token/create/faq">
                         <img src="/img/info.svg"/>
