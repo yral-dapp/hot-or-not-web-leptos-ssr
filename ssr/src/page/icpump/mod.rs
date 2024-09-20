@@ -22,7 +22,7 @@ pub fn TokenListing(details: TokenListItem) -> impl IntoView {
                     <span class="line-clamp-1 w-full overflow-hidden">{details.token_name}</span>
                     <span class="shrink-0 font-bold underline">"$" {details.token_symbol}</span>
                 </div>
-                <div title={details.description} class="text-sm line-clamp-3 text-gray-400">{details.description.clone()}</div>
+                <div title={details.description.clone()} class="text-sm line-clamp-3 text-gray-400">{details.description}</div>
                 <div class="text-xs text-gray-500">"Created by: "<span class="select-all">{details.user_id}</span></div>
                 <span class="absolute bottom-3 right-2 shrink-0 text-xs text-gray-500 underline">{details.formatted_created_at}</span>
             </div>
@@ -101,7 +101,7 @@ pub fn ICPumpListing() -> impl IntoView {
 #[component]
 pub fn ICPumpLanding() -> impl IntoView {
 
-    let styler_class = style! {
+    let styler_class = style! { "ICPumpLanding",
         .animate-blink-color {
             animation-duration: 5s;
             animation-iteration-count: infinite;
