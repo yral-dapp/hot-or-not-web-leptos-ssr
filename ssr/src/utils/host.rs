@@ -21,5 +21,5 @@ pub fn show_cdao_page() -> bool {
     host == "icpump.fun"
         || host == "localhost:3000"
         // || host == "hot-or-not-web-leptos-ssr-staging.fly.dev"
-        || host.contains("go-bazzinga-hot-or-not-web-leptos-ssr.fly.dev") // Use this when testing icpump changes
+     //   || host.contains("go-bazzinga-hot-or-not-web-leptos-ssr.fly.dev") // Use this when testing icpump changes
 }
