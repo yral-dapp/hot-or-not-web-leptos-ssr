@@ -150,6 +150,10 @@ fn HNButtonOverlay(
             async move {
                 match bet_on_post(cans, bet_amount, bet_direction, post_id, post_can_id).await {
                     Ok(_) => Some(()),
+                    Ok(_) => {
+                        refetch_bet.notify(); // Move notify here
+                        Some(())
+                    }
                     Err(e) => {
                         log::error!("{e}");
                         None
@@ -158,12 +162,7 @@ fn HNButtonOverlay(
             }
         },
     );
-    let place_bet_res = place_bet_action.value();
-    create_effect(move |_| {
-        if place_bet_res().flatten().is_some() {
-            refetch_bet.notify();
-        }
-    });
+
     let running = place_bet_action.pending();
 
     let BetEligiblePostCtx { can_place_bet } = expect_context();
@@ -175,75 +174,65 @@ fn HNButtonOverlay(
             can_place_bet.set(false)
         }
     });
-    let log_coin = { move || logging::log!("coin get: {:?}", coin.get()) };
-    log_coin(); // This ensures you're tracking `coin.get()` inside a reactive closure.
 
-    let tracked_coin1 =
-        { move || logging::log!("coin tracked: {:?}", coin.with_untracked(|v| *v)) };
-    tracked_coin1();
     let tracked_coin = move || coin.with_untracked(|v| u64::from(*v));
     view! {
-                    <AuthCansProvider let:canisters>
-                        {
-                            create_effect(move |_| {
-                                let Some(bet_direction) = bet_direction() else {
-                                    return;
-                                };
-                                let bet_amount = coin.get_untracked().into();
-                                place_bet_action.dispatch((canisters.clone(), bet_direction, bet_amount));
-                            });
-                        }
-                    </AuthCansProvider>
-                    <div class="flex justify-center w-full touch-manipulation">
-                        <button disabled=running on:click=move |_| coin.update(|c| *c = c.wrapping_next())>
-                            <Icon class="justify-self-end text-2xl text-white" icon=icondata::AiUpOutlined />
-                        </button>
-                    </div>
-                    <div class="flex flex-row gap-6 justify-center items-center w-full touch-manipulation">
-                        <HNButton disabled=running bet_direction kind=BetKind::Hot />
-                        <button disabled=running on:click=move |_| coin.update(|c| *c = c.wrapping_next())>
-                            <CoinStateView
-                                disabled=running
-                                class="w-12 h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 drop-shadow-lg"
-                                coin
-                            />
-                        </button>
-                        <HNButton disabled=running bet_direction kind=BetKind::Not />
-                    </div>
-                    // Bottom row: Hot <down arrow> Not
-                    // most of the CSS is for alignment with above icons
-                    <div class="flex gap-6 justify-center items-center pt-2 w-full text-base font-medium text-center md:text-lg lg:text-xl touch-manipulation">
-                        <p class="w-14 md:w-16 lg:w-18">Hot</p>
-                        <div class="flex justify-center w-12 md:w-14 lg:w-16">
-                            <button disabled=running on:click=move |_| coin.update(|c| *c = c.wrapping_prev())>
-                                <Icon class="text-2xl text-white" icon=icondata::AiDownOutlined />
-                            </button>
-                        </div>
-                        <p class="w-14 md:w-16 lg:w-18">Not</p>
-                    </div>
-                    <ShadowBg />
-                       <Show when=move || running.get() >
-        <div class="flex fixed bottom-8 left-1/2 justify-center items-center mb-8 w-full transform -translate-x-1/2">
-            <div class="flex flex-col gap-1 justify-center items-center p-4 w-1/4 h-1/4 text-white rounded-md bg-black/50">
-                <div class="flex flex-col gap-1 justify-center items-center p-1 w-full shadow-sm">
-                    <p class="text-center text-white rounded-full bg-black/15 ps-2">
-                        You staked {tracked_coin()} tokens on
-                        {if let Some(bet_kind) = bet_direction() {
-                            if bet_kind == BetKind::Hot {
-                                "Hot"
+        <AuthCansProvider let:canisters>
+            {
+                create_effect(move |_| {
+                    let Some(bet_direction) = bet_direction() else {
+                        return;
+                    };
+                    let bet_amount = coin.get_untracked().into();
+                    place_bet_action.dispatch((canisters.clone(), bet_direction, bet_amount));
+                });
+            }
+        </AuthCansProvider>
+        <div class="flex justify-center w-full touch-manipulation">
+            <button disabled=running on:click=move |_| coin.update(|c| *c = c.wrapping_next())>
+                <Icon class="justify-self-end text-2xl text-white" icon=icondata::AiUpOutlined />
+            </button>
+        </div>
+        <div class="flex flex-row gap-6 justify-center items-center w-full touch-manipulation">
+            <HNButton disabled=running bet_direction kind=BetKind::Hot />
+            <button disabled=running on:click=move |_| coin.update(|c| *c = c.wrapping_next())>
+                <CoinStateView
+                    disabled=running
+                    class="w-12 h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 drop-shadow-lg"
+                    coin
+                />
+            </button>
+            <HNButton disabled=running bet_direction kind=BetKind::Not />
+        </div>
+        // Bottom row: Hot <down arrow> Not
+        // most of the CSS is for alignment with above icons
+        <div class="flex gap-6 justify-center items-center pt-2 w-full text-base font-medium text-center md:text-lg lg:text-xl touch-manipulation">
+            <p class="w-14 md:w-16 lg:w-18">Hot</p>
+            <div class="flex justify-center w-12 md:w-14 lg:w-16">
+                <button disabled=running on:click=move |_| coin.update(|c| *c = c.wrapping_prev())>
+                    <Icon class="text-2xl text-white" icon=icondata::AiDownOutlined />
+                </button>
+            </div>
+            <p class="w-14 md:w-16 lg:w-18">Not</p>
+        </div>
+        <ShadowBg />
+        <Show when=move || running.get()>
+            <div class="flex fixed bottom-8 left-1/2 justify-center items-center mb-8 w-full transform -translate-x-1/2">
+                <div class="flex flex-col gap-1 justify-center items-center p-4 w-1/4 h-1/4 text-white rounded-md bg-black/50">
+                    <div class="flex flex-col gap-1 justify-center items-center p-1 w-full shadow-sm">
+                        <p class="text-center text-white rounded-full bg-black/15 ps-2">
+                            You staked {tracked_coin()}tokens on
+                            {if let Some(bet_kind) = bet_direction() {
+                                if bet_kind == BetKind::Hot { "Hot" } else { "Not" }
                             } else {
-                                "Not"
-                            }
-                        } else {
-                            "?"
-                        }}. Result is still pending
-                    </p>
+                                "?"
+                            }}. Result is still pending
+                        </p>
+                    </div>
                 </div>
             </div>
-        </div>
-    </Show>
-
-        }
+        </Show>
+    }
 }
 
 #[component]
@@ -389,7 +378,7 @@ fn HNAwaitingResults(
                 </div>
             </div>
             <p class="p-1 text-center text-white rounded-full bg-black/15 ps-2">
-                You staked {bet_amount} tokens on {bet_direction_text} Result is still pending
+                You staked {bet_amount}tokens on {bet_direction_text}Result is still pending
             </p>
         </div>
     }
@@ -425,7 +414,6 @@ pub fn HNUserParticipation(
         }
     });
     view! {
-
         {match participation.outcome {
             BetOutcome::AwaitingResult => {
                 view! { <HNAwaitingResults post refetch_bet participation /> }
@@ -437,8 +425,6 @@ pub fn HNUserParticipation(
             BetOutcome::Lost => {
                 view! { <HNWonLost participation /> }
             }
-
-
         }
             .into_view()}
         <ShadowBg />
