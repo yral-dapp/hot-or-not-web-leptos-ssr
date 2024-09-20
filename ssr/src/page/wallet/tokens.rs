@@ -206,7 +206,7 @@ pub fn Tokens() -> impl IntoView {
                 </div>
             </Title>
             <AuthCansProvider fallback=BulletLoader let:canisters>
-                <TokenList canisters/>
+                <TokenList canisters />
             </AuthCansProvider>
         </div>
     }
