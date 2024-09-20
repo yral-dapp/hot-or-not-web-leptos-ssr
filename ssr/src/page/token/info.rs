@@ -2,15 +2,17 @@ use candid::Principal;
 use leptos::*;
 use leptos_icons::*;
 use leptos_router::*;
+use leptos_use::use_window;
 
 use crate::{
-    component::{
-        back_btn::BackButton, bullet_loader::BulletLoader, canisters_prov::AuthCansProvider,
-        spinner::FullScreenSpinner, title::Title,
-    },
+    component::{back_btn::BackButton, spinner::FullScreenSpinner, title::Title},
+    component::{bullet_loader::BulletLoader, canisters_prov::AuthCansProvider, share_popup::*},
     page::token::TokenInfoParams,
     state::canisters::unauth_canisters,
-    utils::token::{token_metadata_by_root, TokenMetadata},
+    utils::{
+        token::{token_metadata_by_root, TokenMetadata},
+        web::{check_share_support, share_url},
+    },
 };
 
 #[component]
@@ -51,6 +53,38 @@ fn TokenInfoInner(
         }
     });
 
+    let base_url = || {
+        use_window()
+            .as_ref()
+            .and_then(|w| w.location().origin().ok())
+    };
+
+    let share_link = base_url()
+        .map(|b| format!("{b}/token/info/{root}/{user_principal}"))
+        .unwrap_or_default();
+
+    let share_action = create_action(move |&()| async move { Ok(()) });
+
+    let message = format!(
+        "Hey! Check out the token: {} I created on YRAL 👇 {}. I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter",
+        meta.symbol,  share_link.clone()
+    );
+
+    let link = share_link.clone();
+
+    let share_profile_url = move || {
+        let has_share_support = check_share_support();
+
+        match has_share_support {
+            Some(_) => {
+                share_url(&link);
+            }
+            None => {
+                share_action.dispatch(());
+            }
+        };
+    };
+
     view! {
         <div class="w-dvw min-h-dvh bg-neutral-800 flex flex-col gap-4">
             <Title justify_center=false>
@@ -72,12 +106,19 @@ fn TokenInfoInner(
                                     {meta.name}
                                 </span>
                             </div>
-                            <div class="p-1 bg-white/15 rounded-full">
-                                <Icon
-                                    class="text-sm md:text-base text-white"
-                                    icon=icondata::BsArrowUpRight
-                                />
-                            </div>
+                            <button
+                                on:click= move|_| share_profile_url()
+                                class="text-white text-center p-1 text-lg md:text-xl bg-primary-600 rounded-full"
+                            >
+                            <Icon icon=icondata::AiShareAltOutlined/>
+
+                            </button>
+                            <SharePopup
+                                sharing_action=share_action
+                                share_link=share_link.clone()
+                                message
+
+                            />
                         </div>
                         <div class="flex flex-row justify-between border-b p-1 border-white items-center">
                             <span class="text-xs md:text-sm text-green-500">Balance</span>
@@ -88,7 +129,7 @@ fn TokenInfoInner(
                                 {meta.symbol}
                             </span>
                         </div>
-                        <button
+                    <button
                             on:click=move |_| detail_toggle.update(|t| *t = !*t)
                             class="w-full bg-transparent p-1 flex flex-row justify-center items-center gap-2 text-white"
                         >
@@ -127,6 +168,9 @@ pub fn TokenInfo() -> impl IntoView {
         let Ok(params) = params else {
             return Ok::<_, ServerFnError>(None);
         };
+        // let principal = params.user_principal.to_text().clone();
+        // let root = params.token_root.to_text().clone();
+
         let cans = unauth_canisters();
         let meta = token_metadata_by_root(&cans, params.user_principal, params.token_root).await?;
         Ok(meta.map(|m| (m, (params.token_root, params.user_principal))))

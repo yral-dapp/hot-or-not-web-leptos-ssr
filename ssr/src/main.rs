@@ -32,6 +32,9 @@ pub async fn server_fn_handler(
 
             #[cfg(feature = "ga4")]
             provide_context(app_state.grpc_offchain_channel.clone());
+
+            #[cfg(feature = "firestore")]
+            provide_context(app_state.firestore_db.clone());
         },
         request,
     )
@@ -58,6 +61,9 @@ pub async fn leptos_routes_handler(
 
             #[cfg(feature = "ga4")]
             provide_context(app_state.grpc_offchain_channel.clone());
+
+            #[cfg(feature = "firestore")]
+            provide_context(app_state.firestore_db.clone());
         },
         App,
     );

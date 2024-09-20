@@ -30,7 +30,7 @@ fn TokenView(user_principal: Principal, token: TokenCans) -> impl IntoView {
             Ok::<_, ServerFnError>(metadata)
         },
     );
-    let token_link = move || format!("/token/info/{}/{}", token.root, user_principal);
+    let token_link = move || format!("/token/info/{}/{}", token.root, user_principal.to_text());
 
     view! {
         <ClaimTokensOrRedirectError token_root=token.root/>
