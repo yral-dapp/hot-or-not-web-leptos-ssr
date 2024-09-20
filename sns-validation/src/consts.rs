@@ -1,0 +1,4 @@
+pub const E8S_PER_TOKEN: u64 = 100_000_000;
+pub const ONE_DAY_SECONDS: u64 = 24 * 60 * 60;
+pub const ONE_YEAR_SECONDS: u64 = (4 * 365 + 1) * ONE_DAY_SECONDS / 4;
+pub const ONE_MONTH_SECONDS: u64 = ONE_YEAR_SECONDS / 12;

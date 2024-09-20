@@ -45,6 +45,7 @@ pub fn Logout() -> impl IntoView {
                             view! { <Redirect path="/menu"/> }
                         })
                 }}
+
             </Suspense>
         </Loading>
     }

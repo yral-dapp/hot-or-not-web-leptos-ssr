@@ -2,7 +2,7 @@ use candid::Principal;
 use futures::stream::{FuturesOrdered, StreamExt, TryStreamExt};
 
 use crate::{
-    canister::individual_user_template::{GetPostsOfUserProfileError, Result5},
+    canister::individual_user_template::{GetPostsOfUserProfileError, Result11},
     state::canisters::Canisters,
     utils::posts::{get_post_uid, PostDetails, PostViewError},
 };
@@ -41,7 +41,7 @@ impl ProfVideoStream<10> for ProfileVideoBetsStream {
         canisters: &Canisters<AUTH>,
         user_canister: Principal,
     ) -> Result<PostsRes, PostViewError> {
-        let user = canisters.individual_user(user_canister).await?;
+        let user = canisters.individual_user(user_canister).await;
         let bets = user
             .get_hot_or_not_bets_placed_by_this_profile_with_pagination(cursor.start)
             .await?;
@@ -65,12 +65,12 @@ impl<const LIMIT: u64> ProfVideoStream<LIMIT> for ProfileVideoStream<LIMIT> {
         canisters: &Canisters<AUTH>,
         user_canister: Principal,
     ) -> Result<PostsRes, PostViewError> {
-        let user = canisters.individual_user(user_canister).await?;
+        let user = canisters.individual_user(user_canister).await;
         let posts = user
             .get_posts_of_this_user_profile_with_pagination_cursor(cursor.start, cursor.limit)
             .await?;
         match posts {
-            Result5::Ok(v) => {
+            Result11::Ok(v) => {
                 let end = v.len() < LIMIT as usize;
                 let posts = v
                     .into_iter()
@@ -78,7 +78,7 @@ impl<const LIMIT: u64> ProfVideoStream<LIMIT> for ProfileVideoStream<LIMIT> {
                     .collect::<Vec<_>>();
                 Ok(PostsRes { posts, end })
             }
-            Result5::Err(GetPostsOfUserProfileError::ReachedEndOfItemsList) => Ok(PostsRes {
+            Result11::Err(GetPostsOfUserProfileError::ReachedEndOfItemsList) => Ok(PostsRes {
                 posts: vec![],
                 end: true,
             }),

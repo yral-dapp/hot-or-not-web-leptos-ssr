@@ -19,6 +19,7 @@ simple_logger = "4.0"
 tokio = { version = "1", optional = true, features = [
     "rt-multi-thread",
     "signal",
+    "time",
 ] }
 tower = { version = "0.4", optional = true }
 tower-http = { version = "0.5", features = ["fs"], optional = true }
@@ -26,12 +27,14 @@ wasm-bindgen = "=0.2.93"
 thiserror = "1.0"
 tracing = { version = "0.1.37", optional = true }
 http = "1.1.0"
-serde = { version = "1.0", features = ["derive"] }
-candid = "0.10.3"
+serde.workspace = true
+candid.workspace = true
 ic-agent = { version = "0.36.0", default-features = false, features = [
     "pem",
     "reqwest",
 ] }
+ic-base-types = { git = "https://github.com/dfinity/ic", rev = "tags/release-2024-05-29_23-02-base" }
+icp-ledger = { git = "https://github.com/dfinity/ic", rev = "tags/release-2024-05-29_23-02-base" }
 serde-wasm-bindgen = "0.6.5"
 futures = "0.3.30"
 leptos-use = "0.12.0"
@@ -40,13 +43,13 @@ reqwest = { version = "0.12", default-features = false, features = [
     "json",
     "http2",
 ] }
-serde_bytes = "0.11.14"
+serde_bytes.workspace = true
 hex = "0.4.3"
 leptos_icons = "0.3.0"
 icondata = "0.3.0"
 gloo = { version = "0.11.0", features = ["futures", "net", "net"] }
 once_cell = "1.19.0"
-web-time = "1.0.0"
+web-time.workspace = true
 k256 = { version = "0.13.3", default-features = false, features = [
     "std",
     "jwk",
@@ -63,6 +66,7 @@ web-sys = { version = "0.3", features = [
     "Window",
     "Document",
     "Worker",
+    "CanvasRenderingContext2d",
 ], optional = true }
 circular-buffer = "0.1.7"
 redb = { version = "2.0.0", optional = true }
@@ -91,17 +95,30 @@ hmac = { version = "0.12.1", optional = true }
 wasm-bindgen-futures = { version = "0.4.42" }
 testcontainers = { version = "0.20.0", optional = true }
 yral-testcontainers = { git = "https://github.com/go-bazzinga/yral-testcontainers", rev = "f9d2c01c498d58fca0595a48bdc3f9400e57ec2f", optional = true }
+sns-validation.workspace = true
 js-sys = "0.3.69"
 tonic-web-wasm-client = { version = "0.6" }
-tonic = { version = "0.12.0", default-features = false, features = ["prost", "codegen"] }
+tonic = { version = "0.12.0", default-features = false, features = [
+    "prost",
+    "codegen",
+] }
 prost = "0.13.0"
+priority-queue = "2.1.0"
+rust_decimal = "1.36"
+firestore = { version = "0.43.1", default-features = false, features = [
+    "tls-webpki-roots",
+], optional = true }
+speedate = { version = "0.14.4", optional = true }
+urlencoding = "2.1.3"
 
 [build-dependencies]
 serde = { version = "1.0", features = ["derive"] }
 candid_parser = "0.1.1"
 serde_json = "1.0.110"
 convert_case = "0.6.0"
-tonic-build = { version = "0.12.0", default-features = false, features = ["prost"] }
+tonic-build = { version = "0.12.0", default-features = false, features = [
+    "prost",
+] }
 anyhow = "1.0.86"
 
 [features]
@@ -141,7 +158,7 @@ ssr = [
     "tonic/tls",
     "tonic/tls-webpki-roots",
     "tonic/transport",
-    "tonic-build/transport"
+    "tonic-build/transport",
 ]
 # Fetch mock referral history instead of history via canister
 mock-referral-history = ["dep:rand_chacha", "k256/arithmetic"]
@@ -156,6 +173,7 @@ cloudflare = ["dep:gob-cloudflare"]
 backend-admin = []
 ga4 = []
 mock-wallet-history = ["dep:rand_chacha"]
+firestore = ["dep:firestore", "speedate"]
 release-bin = [
     "ssr",
     "cloudflare",
@@ -164,6 +182,7 @@ release-bin = [
     "backend-admin",
     "oauth-ssr",
     "ga4",
+    "firestore",
 ]
 release-lib = [
     "hydrate",

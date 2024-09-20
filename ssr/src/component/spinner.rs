@@ -12,7 +12,7 @@ pub fn Spinner() -> impl IntoView {
 #[component]
 pub fn SpinnerFit() -> impl IntoView {
     view! {
-        <div class="animate-spin border-solid rounded-full border-t-transparent border-primary-600 border-8 w-full h-full"/>
+        <div class="animate-spin border-solid rounded-full border-t-transparent border-primary-600 border-8 w-full h-full"></div>
     }
 }
 

@@ -46,13 +46,9 @@ fn SinglePostViewInner(post: PostDetails) -> impl IntoView {
                     class="absolute top-0 left-0 bg-cover bg-center w-full h-full z-[1] blur-lg"
                     style:background-color="rgb(0, 0, 0)"
                     style:background-image=format!("url({bg_url})")
-                />
+                ></div>
                 <VideoDetailsOverlay post=post.clone()/>
-                <VideoView
-                    post=Some(post)
-                    muted
-                    autoplay_at_render=true
-                />
+                <VideoView post=Some(post) muted autoplay_at_render=true/>
             </div>
             <MuteIconOverlay show_mute_icon/>
         </div>
@@ -63,10 +59,11 @@ fn SinglePostViewInner(post: PostDetails) -> impl IntoView {
 fn UnavailablePost() -> impl IntoView {
     view! {
         <div class="flex flex-col items-center gap-2 justify-center h-dvh w-dvw bg-black">
-            <span class="text-white text-lg md:text-xl lg:text-2xl">
-                Post is unavailable
-            </span>
-            <button on:click=|_| go_back_or_fallback("/") class="px-4 py-2 bg-primary-600 text-center text-white rounded-full">
+            <span class="text-white text-lg md:text-xl lg:text-2xl">Post is unavailable</span>
+            <button
+                on:click=|_| go_back_or_fallback("/")
+                class="px-4 py-2 bg-primary-600 text-center text-white rounded-full"
+            >
                 Go back
             </button>
         </div>
@@ -92,20 +89,18 @@ pub fn SinglePost() -> impl IntoView {
 
     view! {
         <Suspense fallback=FullScreenSpinner>
-        {move || fetch_post().map(|post| match post {
-            Ok(post) => view! {
-                <SinglePostViewInner post/>
-            },
-            Err(PostFetchError::Invalid) => view! {
-                <Redirect path="/" />
-            },
-            Err(PostFetchError::Unavailable) => view! {
-                <UnavailablePost/>
-            },
-            Err(PostFetchError::GetUid(e)) => view! {
-                <Redirect path=format!("/error?err={e}")/>
-            }
-        })}
+            {move || {
+                fetch_post()
+                    .map(|post| match post {
+                        Ok(post) => view! { <SinglePostViewInner post/> },
+                        Err(PostFetchError::Invalid) => view! { <Redirect path="/"/> },
+                        Err(PostFetchError::Unavailable) => view! { <UnavailablePost/> },
+                        Err(PostFetchError::GetUid(e)) => {
+                            view! { <Redirect path=format!("/error?err={e}")/> }
+                        }
+                    })
+            }}
+
         </Suspense>
     }
 }
