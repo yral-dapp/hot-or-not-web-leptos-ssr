@@ -1,22 +1,15 @@
 use candid::Principal;
 use leptos::*;
-use leptos_icons::*;
 
 use crate::{
     component::{
-        bullet_loader::BulletLoader, claim_tokens::ClaimTokensOrRedirectError,
-        token_confetti_symbol::TokenConfettiSymbol,
+        bullet_loader::BulletLoader, canisters_prov::AuthCansProvider,
+        claim_tokens::ClaimTokensOrRedirectError, token_confetti_symbol::TokenConfettiSymbol,
     },
+    page::wallet::tokens::{TokenTile, TokenViewFallback},
     state::canisters::unauth_canisters,
     utils::token::{get_token_metadata, TokenCans},
 };
-
-#[component]
-fn TokenViewFallback() -> impl IntoView {
-    view! {
-        <div class="w-full h-20 rounded-xl border-2 border-neutral-700 bg-white/15 animate-pulse"></div>
-    }
-}
 
 #[component]
 fn TokenView(user_principal: Principal, token: TokenCans) -> impl IntoView {
@@ -30,7 +23,6 @@ fn TokenView(user_principal: Principal, token: TokenCans) -> impl IntoView {
             Ok::<_, ServerFnError>(metadata)
         },
     );
-    let token_link = move || format!("/token/info/{}/{}", token.root, user_principal.to_text());
 
     view! {
         <ClaimTokensOrRedirectError token_root=token.root/>
@@ -40,26 +32,7 @@ fn TokenView(user_principal: Principal, token: TokenCans) -> impl IntoView {
                     .and_then(|info| info.ok())
                     .map(|info| {
                         view! {
-                            <a
-                                href=token_link()
-                                class="w-full grid grid-cols-2 p-4 rounded-xl border-2 items-center border-neutral-700 bg-white/15"
-                            >
-                                <div class="flex flex-row gap-2 items-center justify-self-start">
-                                    <img class="w-12 h-12 rounded-full" src=info.logo_b64/>
-                                    <span class="text-white truncate">{info.name}</span>
-                                </div>
-                                <div class="flex flex-col gap-2 justify-self-end text-sm">
-                                    <span class="text-white truncate">
-                                        {format!("{} {}", info.balance.humanize(), info.symbol)}
-                                    </span>
-                                    <div class="flex flex-row gap-1 items-center">
-                                        <span class="text-white">Details</span>
-                                        <div class="flex items-center justify-center w-4 h-4 bg-white/15 rounded-full">
-                                            <Icon class="text-white" icon=icondata::AiRightOutlined/>
-                                        </div>
-                                    </div>
-                                </div>
-                            </a>
+                            <TokenTile token_root=token.root.to_text() user_principal=user_principal.to_text() token_meta_data=info.clone() />
                         }
                     })
             }}
@@ -69,11 +42,11 @@ fn TokenView(user_principal: Principal, token: TokenCans) -> impl IntoView {
 }
 
 #[component]
-fn CreateYourToken() -> impl IntoView {
+fn CreateYourToken(header_text: &'static str) -> impl IntoView {
     view! {
         <div class="w-full flex flex-col items-center gap-4">
             <span class="text-2xl text-primary-600 text-center">
-                Create your own <br/> <span class="text-white">Meme Coin</span>
+                {header_text} <br/> <span class="text-white">Meme Coin</span>
             </span>
             <TokenConfettiSymbol class="w-2/3 md:w-1/2 lg:w-1/3 mx-8"/>
         </div>
@@ -120,20 +93,38 @@ pub fn ProfileTokens(user_canister: Principal, user_principal: Principal) -> imp
                                     .into_iter()
                                     .map(|token| view! { <TokenView user_principal token/> })
                                     .collect_view()}
-                                <Show when=move || empty>
-                                    <CreateYourToken/>
-                                </Show>
+
+                                <AuthCansProvider fallback=BulletLoader let:canisters>
+
+                                    {
+                                        let is_native_profile = canisters.user_principal()
+                                            == user_principal;
+                                        view! {
+                                            <Show when=move || { empty }>
+                                                <CreateYourToken header_text=if is_native_profile {
+                                                    "Create your own"
+                                                } else {
+                                                    "They have not created any"
+                                                }/>
+
+                                            </Show>
+                                            <Show when=move || { is_native_profile }>
+                                                <a
+                                                    href="/token/create"
+                                                    class="text-xl bg-primary-600 py-4 w-2/3 md:w-1/2 lg:w-1/3 rounded-full text-center text-white"
+                                                >
+                                                    Create
+                                                </a>
+                                            </Show>
+                                        }
+                                    }
+
+                                </AuthCansProvider>
                             }
                         })
                 }}
 
             </Suspense>
-            <a
-                href="/token/create"
-                class="text-xl bg-primary-600 py-4 w-2/3 md:w-1/2 lg:w-1/3 rounded-full text-center text-white"
-            >
-                Create
-            </a>
         </div>
     }
 }
