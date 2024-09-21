@@ -223,7 +223,7 @@ fn HNButtonOverlay(
                 <div class="flex flex-col gap-1 justify-center items-center p-4 w-1/4 h-1/4 text-white rounded-md bg-black/50">
                     <div class="flex flex-col gap-1 justify-center items-center p-1 w-full shadow-sm">
                         <p class="text-center text-white rounded-full bg-black/15 ps-2">
-                            You staked {tracked_coin()}tokens on
+                            You staked {tracked_coin()} tokens on
                             {if let Some(bet_kind) = bet_direction() {
                                 if bet_kind == BetKind::Hot { "Hot" } else { "Not" }
                             } else {
