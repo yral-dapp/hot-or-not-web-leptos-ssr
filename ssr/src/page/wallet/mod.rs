@@ -1,7 +1,7 @@
 pub mod tokens;
 pub mod transactions;
 mod txn;
-use crate::{component::share_popup::ShareButtonWithFallbackPopup, utils::host::get_host};
+use crate::component::share_popup::ShareButtonWithFallbackPopup;
 use candid::Principal;
 use leptos::*;
 use tokens::{TokenRootList, TokenView};
@@ -23,9 +23,8 @@ use txn::{provider::get_history_provider, TxnView};
 fn ProfileGreeter(details: ProfileDetails) -> impl IntoView {
     // let (is_connected, _) = account_connected_reader();
     let share_link = {
-        let base_url = get_host();
         let username_or_principal = details.username_or_principal();
-        format!("{base_url}/profile/{}?tab=tokens", username_or_principal)
+        format!("/profile/{}?tab=tokens", username_or_principal)
     };
     let message = format!(
         "Hey! Check out my YRAL profile 👇 {}. I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter",
@@ -42,7 +41,7 @@ fn ProfileGreeter(details: ProfileDetails) -> impl IntoView {
                     {details.display_name_or_fallback()}
 
                 </span>
-                <ShareButtonWithFallbackPopup share_link message/>
+                <ShareButtonWithFallbackPopup share_link message />
             </div>
         </div>
         <div class="w-16 aspect-square overflow-clip justify-self-end rounded-full">

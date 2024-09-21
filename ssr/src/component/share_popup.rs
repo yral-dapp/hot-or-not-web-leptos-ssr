@@ -3,7 +3,10 @@ use leptos_icons::*;
 
 use crate::{
     component::overlay::*,
-    utils::web::{copy_to_clipboard, share_url},
+    utils::{
+        host::get_host,
+        web::{copy_to_clipboard, share_url},
+    },
 };
 
 #[component]
@@ -107,7 +110,12 @@ fn SocialShare(share_link: String, message: String) -> impl IntoView {
 }
 
 #[component]
-pub fn ShareButtonWithFallbackPopup(share_link: String, message: String) -> impl IntoView {
+pub fn ShareButtonWithFallbackPopup(
+    share_link: String,
+    message: String,
+    #[prop(optional)] style: String,
+) -> impl IntoView {
+    let base_url = get_host();
     let show_fallback = create_rw_signal(false);
     let share_link_c = share_link.clone();
     let on_share_click = move |ev: ev::MouseEvent| {
@@ -117,17 +125,23 @@ pub fn ShareButtonWithFallbackPopup(share_link: String, message: String) -> impl
         }
     };
 
+    let class = format!(
+        "text-white text-center text-lg md:text-xl flex items-center justify-center {style}",
+    );
+
     view! {
         <button
             on:click=on_share_click
-            class="text-white text-center p-1 text-lg md:text-xl bg-primary-600 rounded-full flex items-center justify-center"
+            class=class
         >
-            <Icon icon=icondata::AiShareAltOutlined/>
+            <div class = "border-2 rounded-full p-1">
+                <Icon icon=icondata::AiShareAltOutlined/>
+            </div>
 
         </button>
         <PopupOverlay show=show_fallback>
             <ShareContent
-                share_link=share_link.clone()
+                share_link=format!("{base_url}{share_link}")
                 message=message.clone()
                 show_popup=show_fallback
             />
