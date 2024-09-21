@@ -78,7 +78,7 @@ fn TokenInfoInner(
                                     {meta.name}
                                 </span>
                             </div>
-                            <ShareButtonWithFallbackPopup share_link message style=Some("w-14 h-14".into())/>
+                            <ShareButtonWithFallbackPopup share_link message style="w-12 h-12".into()/>
                         </div>
                         <div class="flex flex-row justify-between border-b p-1 border-white items-center">
                             <span class="text-xs md:text-sm text-green-500">Balance</span>

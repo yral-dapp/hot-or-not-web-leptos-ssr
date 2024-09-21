@@ -11,13 +11,6 @@ use crate::{
     utils::token::{get_token_metadata, TokenCans},
 };
 
-// #[component]
-// fn TokenViewFallback() -> impl IntoView {
-//     view! {
-//         <div class="w-full h-20 rounded-xl border-2 border-neutral-700 bg-white/15 animate-pulse"></div>
-//     }
-// }
-
 #[component]
 fn TokenView(user_principal: Principal, token: TokenCans) -> impl IntoView {
     let token_info = create_resource(

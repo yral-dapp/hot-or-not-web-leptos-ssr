@@ -113,7 +113,7 @@ fn SocialShare(share_link: String, message: String) -> impl IntoView {
 pub fn ShareButtonWithFallbackPopup(
     share_link: String,
     message: String,
-    style: Option<String>,
+    #[prop(optional)] style: String,
 ) -> impl IntoView {
     let base_url = get_host();
     let show_fallback = create_rw_signal(false);
@@ -126,8 +126,7 @@ pub fn ShareButtonWithFallbackPopup(
     };
 
     let class = format!(
-        "text-white text-center text-lg md:text-xl flex items-center justify-center {}",
-        style.unwrap_or_default()
+        "text-white text-center text-lg md:text-xl flex items-center justify-center {style}",
     );
 
     view! {

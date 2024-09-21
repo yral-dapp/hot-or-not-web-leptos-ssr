@@ -41,7 +41,7 @@ fn ProfileGreeter(details: ProfileDetails) -> impl IntoView {
                     {details.display_name_or_fallback()}
 
                 </span>
-                <ShareButtonWithFallbackPopup share_link message style=None/>
+                <ShareButtonWithFallbackPopup share_link message />
             </div>
         </div>
         <div class="w-16 aspect-square overflow-clip justify-self-end rounded-full">

@@ -154,7 +154,7 @@ pub fn TokenTile(
                 <ShareButtonWithFallbackPopup
                     share_link=share_link_s()
                     message=share_message_s()
-                    style=Some("w-12 h-12".into())
+                    style="w-12 h-12".into()
                 />
             </div>
 
