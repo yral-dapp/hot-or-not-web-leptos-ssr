@@ -122,7 +122,7 @@ fn HNButton(
 
     view! {
         <button
-            class="mx-4 w-14 h-14 md:w-16 md:h-16 md:w-18 lg:h-18"
+            class=" w-14 h-14 md:w-16 md:h-16 md:w-18 lg:h-18"
             class=("grayscale", grayscale)
             disabled=disabled
             on:click=move |_| bet_direction.set(Some(kind))
@@ -191,7 +191,7 @@ fn HNButtonOverlay(
             }
 
         </AuthCansProvider>
-        <div class="flex relative top-4 justify-center w-full touch-manipulation" style="top: 25px;" >
+        <div class="flex relative justify-center w-full touch-manipulation"  >
             <button
                 disabled=running
                 on:click=move |_| coin.update(|c| *c =  c.wrapping_next())
@@ -204,8 +204,8 @@ fn HNButtonOverlay(
         </div>
         <div class="flex flex-row gap-6 justify-center items-center w-full touch-manipulation">
             <HNButton disabled=running bet_direction kind=BetKind::Hot  />
-            <button class="mt-6"  disabled=running on:click=move |_| coin.update(|c| *c = c.wrapping_next())>
-                <CoinStateView disabled=running class="mt-1 w-12 h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 drop-shadow-lg" coin />
+            <button disabled=running on:click=move |_| coin.update(|c| *c = c.wrapping_next())>
+                <CoinStateView disabled=running class="w-12 h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 drop-shadow-lg" coin />
 
             </button>
             <HNButton disabled=running bet_direction kind=BetKind::Not/>
@@ -213,7 +213,7 @@ fn HNButtonOverlay(
         // Bottom row: Hot <down arrow> Not
         // most of the CSS is for alignment with above icons
         <div class="flex gap-6 justify-center items-center pt-2 mb-2 w-full text-base font-medium text-center md:text-lg lg:text-xl touch-manipulation">
-            <p class="pb-4 mx-4 w-14 md:w-16 lg:w-18">Hot</p>
+            <p class="pb-4 w-14 md:w-16 lg:w-18">Hot</p>
             <div class="flex relative bottom-4 justify-center w-12 md:w-14 lg:w-16" style="bottom: 4px;"  >
                 <button
                     disabled=running
@@ -226,7 +226,7 @@ fn HNButtonOverlay(
 
                 </button>
             </div>
-            <p class="pb-4 mx-4 w-14 md:w-16 lg:w-18">Not</p>
+            <p class="pb-4 w-14 md:w-16 lg:w-18">Not</p>
         </div>
         <ShadowBg/>
     }
