@@ -1,6 +1,7 @@
 pub mod create;
 pub mod create_token_faq;
 pub mod info;
+pub mod non_yral_tokens;
 mod popups;
 mod sns_form;
 pub mod transfer;
