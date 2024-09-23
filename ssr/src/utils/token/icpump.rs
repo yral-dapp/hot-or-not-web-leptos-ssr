@@ -14,6 +14,8 @@ pub struct TokenListItemFS {
     pub logo: String,
     pub description: String,
     pub created_at: String,
+    #[serde(default)]
+    pub link: String,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -26,6 +28,7 @@ pub struct TokenListItem {
     pub description: String,
     pub created_at: String,
     pub formatted_created_at: String,
+    pub link: String,
 }
 
 #[server]
@@ -85,6 +88,7 @@ pub async fn get_paginated_token_list(page: u32) -> Result<Vec<TokenListItem>, S
                     description: item.description.clone(),
                     created_at: item.created_at.clone(),
                     formatted_created_at: elapsed_str,
+                    link: item.link.clone(),
                 }
             })
             .collect();

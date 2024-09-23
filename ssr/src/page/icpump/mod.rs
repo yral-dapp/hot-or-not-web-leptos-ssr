@@ -10,20 +10,22 @@ use crate::utils::token::icpump::TokenListItem;
 #[component]
 pub fn TokenListing(details: TokenListItem) -> impl IntoView {
     view! {
-        <div class="relative flex h-fit max-h-[300px] w-full gap-2 overflow-hidden border border-transparent p-2 transition-colors hover:border-gray-700 active:border-gray-200">
-            <div class="min-w-32 relative self-start p-1">
-            <img class="mr-4 w-32 h-auto select-none" src={details.logo} alt={details.token_name.clone()}/>
-            </div>
-            <div class="gap-1 flex-col flex h-fit">
-                <div class="flex items-center justify-between gap-4 text-gray-200">
-                    <span class="line-clamp-1 w-full overflow-hidden">{details.token_name}</span>
-                    <span class="shrink-0 font-bold underline"><span class="text-gray-400 italic select-none">"$"</span>{details.token_symbol}</span>
+        <a href={details.link}>
+            <div class="relative flex h-fit max-h-[300px] w-full gap-2 overflow-hidden border border-transparent p-2 transition-colors hover:border-gray-700 active:border-gray-200">
+                <div class="min-w-32 relative self-start p-1">
+                <img class="mr-4 w-32 h-auto select-none" src={details.logo} alt={details.token_name.clone()}/>
                 </div>
-                <div title={details.description.clone()} class="text-sm line-clamp-3 text-gray-400">{details.description}</div>
-                <div class="text-xs text-gray-500">"Created by: "<span class="select-all">{details.user_id}</span></div>
-                <span class="absolute bottom-3 right-2 shrink-0 text-xs text-gray-500 underline">{details.formatted_created_at}</span>
+                <div class="gap-1 flex-col flex h-fit">
+                    <div class="flex items-center justify-between gap-4 text-gray-200">
+                        <span class="line-clamp-1 w-full overflow-hidden">{details.token_name}</span>
+                        <span class="shrink-0 font-bold underline"><span class="text-gray-400 italic select-none">"$"</span>{details.token_symbol}</span>
+                    </div>
+                    <div title={details.description.clone()} class="text-sm line-clamp-3 text-gray-400">{details.description}</div>
+                    <div class="text-xs text-gray-500">"Created by: "<span class="select-all">{details.user_id}</span></div>
+                    <span class="absolute bottom-3 right-2 shrink-0 text-xs text-gray-500 underline">{details.formatted_created_at}</span>
+                </div>
             </div>
-        </div>
+        </a>
     }
 }
 
