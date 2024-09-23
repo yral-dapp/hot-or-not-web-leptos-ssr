@@ -1,4 +1,5 @@
-use crate::page::view_profile_redirect::ProfileInfo;
+use crate::page::icpump::ICPumpLanding;
+use crate::page::profile::YourProfileView;
 use crate::{
     component::{base_route::BaseRoute, nav::NavBar},
     error_template::{AppError, ErrorTemplate},
@@ -12,7 +13,7 @@ use crate::{
         privacy::PrivacyPolicy,
         profile::{profile_post::ProfilePost, ProfilePostsContext, ProfileView},
         refer_earn::ReferEarn,
-        root::{RootPage, YralRootPage},
+        root::RootPage,
         settings::Settings,
         terms::TermsOfService,
         token::{
@@ -101,7 +102,6 @@ pub fn App() -> impl IntoView {
     #[cfg(feature = "ga4")]
     {
         enable_ga4_script.set(true);
-
         provide_context(EventHistory::default());
     }
 
@@ -140,17 +140,16 @@ pub fn App() -> impl IntoView {
                     <Route path="" view=BaseRoute>
                         <Route path="/" view=RootPage/>
                         <Route path="/hot-or-not/:canister_id/:post_id" view=PostView/>
-                        <Route path="/hot-or-not" view=YralRootPage />
                         <Route path="/post/:canister_id/:post_id" view=SinglePost/>
                         <Route path="/profile/:canister_id/:post_id" view=ProfilePost/>
                         <Route path="/your-profile/:canister_id/:post_id" view=ProfilePost/>
                         <Route path="/profile/:id" view=ProfileView/>
-                        <Route path="/your-profile/:id" view=ProfileView/>
                         <Route path="/upload" view=UploadPostPage/>
                         <Route path="/error" view=ServerErrorPage/>
                         <Route path="/menu" view=Menu/>
                         <Route path="/settings" view=Settings/>
                         <Route path="/refer-earn" view=ReferEarn/>
+                        <Route path="/your-profile" view=YourProfileView/>
                         <Route path="/terms-of-service" view=TermsOfService/>
                         <Route path="/privacy-policy" view=PrivacyPolicy/>
                         <Route path="/wallet" view=Wallet/>
@@ -161,10 +160,10 @@ pub fn App() -> impl IntoView {
                         <Route path="/token/create" view=CreateToken/>
                         <Route path="/token/create/settings" view=CreateTokenSettings/>
                         <Route path="/token/create/faq" view=CreateTokenFAQ/>
-                        <Route path="/token/info/:token_root" view=TokenInfo/>
+                        <Route path="/token/info/:token_root/:user_principal" view=TokenInfo/>
                         <Route path="/token/transfer/:token_root" view=TokenTransfer/>
                         <Route path="/tokens" view=Tokens/>
-                        <Route path="/your-profile" view=ProfileInfo/>
+                        <Route path="/board" view=ICPumpLanding/>
                     </Route>
                 </Routes>
 

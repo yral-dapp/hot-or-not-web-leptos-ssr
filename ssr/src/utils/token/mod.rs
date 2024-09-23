@@ -1,8 +1,9 @@
+pub mod icpump;
 #[cfg(feature = "ssr")]
 mod server_impl;
 
 use std::{
-    cmp::{Ordering, PartialEq, PartialOrd},
+    cmp::Ordering,
     ops::{Add, AddAssign, Sub, SubAssign},
     str::FromStr,
 };
@@ -25,7 +26,7 @@ use leptos::{server, server_fn::codec::Cbor};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct TokenBalance {
-    e8s: Nat,
+    pub e8s: Nat,
     decimals: u8,
 }
 

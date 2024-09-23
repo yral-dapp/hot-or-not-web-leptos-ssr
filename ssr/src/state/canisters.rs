@@ -19,10 +19,10 @@ use crate::{
         sns_governance::SnsGovernance,
         sns_ledger::SnsLedger,
         sns_root::SnsRoot,
-        user_index::UserIndex,
+        user_index::{Result1, UserIndex},
         PLATFORM_ORCHESTRATOR_ID, POST_CACHE_ID,
     },
-    consts::{FALLBACK_USER_INDEX, METADATA_API_BASE},
+    consts::METADATA_API_BASE,
     utils::{ic::AgentWrapper, profile::ProfileDetails, MockPartialEq, ParentResource},
 };
 
@@ -175,24 +175,21 @@ impl<const A: bool> Canisters<A> {
         if let Some(meta) = meta {
             return Ok(Some(meta.user_canister_id));
         }
-        // Fallback to oldest user index
-        let user_idx = self.user_index_with(*FALLBACK_USER_INDEX).await;
-        let can = user_idx
-            .get_user_canister_id_from_user_principal_id(user_principal)
-            .await?;
-        Ok(can)
+        #[cfg(any(feature = "local-bin", feature = "local-lib"))]
+        {
+            Ok(None)
+        }
+        #[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
+        {
+            use crate::consts::FALLBACK_USER_INDEX;
+            // Fallback to oldest user index
+            let user_idx = self.user_index_with(*FALLBACK_USER_INDEX).await;
+            let can = user_idx
+                .get_user_canister_id_from_user_principal_id(user_principal)
+                .await?;
+            Ok(can)
+        }
     }
-
-    // pub async fn get_individual_canister_by_user_principal(
-    //     &self,
-    //     user_principal: Principal,
-    // ) -> Result<Option<Principal>, ServerFnError> {
-    //     let meta = self
-    //         .metadata_client
-    //         .get_user_metadata(user_principal)
-    //         .await?;
-    //     Ok(meta.map(|m| m.user_canister_id))
-    // }
 
     pub async fn sns_governance(&self, canister_id: Principal) -> SnsGovernance<'_> {
         let agent = self.agent.get_agent().await;
@@ -250,9 +247,13 @@ async fn create_individual_canister(
     let discrim = u128::from_be_bytes(by);
     let subnet_idx = subnet_idxs[(discrim % subnet_idxs.len() as u128) as usize];
     let idx = canisters.user_index_with(subnet_idx).await;
-    let user_canister = idx
-        .get_requester_principals_canister_id_create_if_not_exists_and_optionally_allow_referrer()
-        .await?;
+    let user_canister = match idx
+        .get_requester_principals_canister_id_create_if_not_exists()
+        .await?
+    {
+        Result1::Ok(val) => Ok(val),
+        Result1::Err(e) => Err(ServerFnError::new(e)),
+    }?;
 
     canisters
         .metadata_client
