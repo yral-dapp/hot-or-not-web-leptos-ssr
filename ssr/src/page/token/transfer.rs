@@ -88,12 +88,11 @@ async fn transfer_token_to_user_principal(
 
     let destination_canister_principal = cans
         .get_individual_canister_by_user_principal(destination_principal)
-        .await
-        .unwrap();
+        .await?;
 
     if let Some(destination_canister_principal) = destination_canister_principal {
         let destination_canister = cans.individual_user(destination_canister_principal).await;
-        let res = destination_canister.add_token(root_canister).await.unwrap();
+        let res = destination_canister.add_token(root_canister).await?;
         println!("add_token res: {:?}", res);
     }
 
