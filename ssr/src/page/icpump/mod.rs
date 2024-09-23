@@ -7,6 +7,8 @@ use crate::consts::ICPUMP_LISTING_PAGE_SIZE;
 use crate::utils::token::icpump::get_paginated_token_list;
 use crate::utils::token::icpump::TokenListItem;
 
+pub mod search;
+
 #[component]
 pub fn TokenListing(details: TokenListItem) -> impl IntoView {
     view! {
