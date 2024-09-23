@@ -1,7 +1,10 @@
 pub mod tokens;
 pub mod transactions;
 mod txn;
-use crate::component::share_popup::ShareButtonWithFallbackPopup;
+use crate::{
+    component::share_popup::ShareButtonWithFallbackPopup,
+    page::token::non_yral_tokens::eligible_non_yral_supported_tokens,
+};
 use candid::Principal;
 use leptos::*;
 use tokens::{TokenRootList, TokenView};
@@ -77,9 +80,13 @@ fn TokensFetch() -> impl IntoView {
             let cans = cans_wire?.canisters()?;
             let user_principal = cans.user_principal();
 
-            let tokens_prov = TokenRootList(cans);
-            let tokens = tokens_prov.get_by_cursor(0, 5).await?;
-            Ok::<_, ServerFnError>((user_principal, tokens.data))
+            let tokens_prov = TokenRootList(cans.clone());
+            let yral_tokens = tokens_prov.get_by_cursor(0, 5).await?;
+
+            let eligible_non_yral_tokens =
+                eligible_non_yral_supported_tokens(cans, user_principal).await?;
+
+            Ok::<_, ServerFnError>((user_principal, yral_tokens.data, eligible_non_yral_tokens))
         },
     );
 
@@ -88,19 +95,23 @@ fn TokensFetch() -> impl IntoView {
             {move || {
                 tokens_fetch()
                     .map(|tokens_res| {
-                        let tokens = tokens_res.as_ref().map(|t| t.1.clone()).unwrap_or_default();
+                        let yral_tokens = tokens_res.as_ref().map(|t| t.1.clone()).unwrap_or_default();
+                        let non_yral_tokens = tokens_res.as_ref().map(|t| t.2.clone()).unwrap_or_default();
                         let user_principal = tokens_res
                             .as_ref()
                             .map(|t| t.0)
                             .unwrap_or(Principal::anonymous());
+
                         view! {
-                            <For each=move || tokens.clone() key=|inf| inf.key() let:token_root>
+                            <For each=move || non_yral_tokens.clone() key=|inf| inf.key() let:token_root>
+                                <TokenView user_principal token_root/>
+                            </For>
+                            <For each=move || yral_tokens.clone() key=|inf| inf.key() let:token_root>
                                 <TokenView user_principal token_root/>
                             </For>
                         }
                     })
             }}
-
         </Suspense>
     }
 }
