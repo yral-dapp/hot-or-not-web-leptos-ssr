@@ -14,6 +14,7 @@ pub struct TokenListItemFS {
     pub logo: String,
     pub description: String,
     pub created_at: String,
+    #[serde(default)]
     pub link: String,
 }
 
