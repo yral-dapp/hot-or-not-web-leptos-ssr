@@ -3,7 +3,7 @@ pub mod transactions;
 mod txn;
 use crate::{
     component::share_popup::ShareButtonWithFallbackPopup,
-    page::token::non_yral_tokens::register_non_yral_token_to_user_canister,
+    page::token::non_yral_tokens::eligible_non_yral_supported_tokens,
 };
 use candid::Principal;
 use leptos::*;
@@ -21,8 +21,6 @@ use crate::{
     utils::profile::ProfileDetails,
 };
 use txn::{provider::get_history_provider, TxnView};
-
-use super::token::non_yral_tokens::NonYralTokensRoot;
 
 #[component]
 fn ProfileGreeter(details: ProfileDetails) -> impl IntoView {
@@ -88,43 +86,27 @@ fn TokensFetch() -> impl IntoView {
         },
     );
 
-    let add_non_yral_native_tokens_action =
-        create_action(move |unregistered_non_yral_token_root: &Vec<Principal>| {
-            let unregistered_non_yral_token_root = unregistered_non_yral_token_root.clone();
-            let auth_cans = auth_cans.clone();
-
-            async move {
-                let cans_wire = auth_cans.wait_untracked().await.unwrap();
-                let cans = cans_wire.clone().canisters().unwrap();
-                let user_principal = cans.user_principal();
-
-                let finalised_non_yral_token_root = register_non_yral_token_to_user_canister(
-                    cans_wire,
-                    user_principal,
-                    unregistered_non_yral_token_root.clone(),
-                )
-                .await?;
-
-                Ok::<_, ServerFnError>((user_principal, finalised_non_yral_token_root))
-            }
-        });
-    let non_yral_tokens = add_non_yral_native_tokens_action.value();
+    let non_yral_tokens_fetch = auth_cans.derive(
+        || (),
+        |cans_wire, _| async move {
+            let cans = cans_wire.clone()?.canisters()?;
+            let user_principal = cans.user_principal();
+            let eligible_non_yral_tokens =
+                eligible_non_yral_supported_tokens(cans_wire?, user_principal).await?;
+            Ok::<_, ServerFnError>((user_principal, eligible_non_yral_tokens))
+        },
+    );
 
     view! {
         <Suspense fallback=BulletLoader>
             {move || {
-                tokens_fetch()
+                non_yral_tokens_fetch()
                     .map(|tokens_res| {
                         let tokens = tokens_res.as_ref().map(|t| t.1.clone()).unwrap_or_default();
                         let user_principal = tokens_res
                             .as_ref()
                             .map(|t| t.0)
                             .unwrap_or(Principal::anonymous());
-
-                        let unregistered_non_yral_token_root = NonYralTokensRoot::default().filter_unregistered_non_yral_tokens(tokens.clone());
-                        if !unregistered_non_yral_token_root.is_empty() {
-                            add_non_yral_native_tokens_action.dispatch(unregistered_non_yral_token_root);
-                        }
 
                         view! {
                             <For each=move || tokens.clone() key=|inf| inf.key() let:token_root>
@@ -135,21 +117,25 @@ fn TokensFetch() -> impl IntoView {
             }}
 
         </Suspense>
-        <Show when=move || {
-            let add_non_yral_native_tokens_action_res = non_yral_tokens.get();
-            add_non_yral_native_tokens_action_res.is_some() && add_non_yral_native_tokens_action_res.unwrap().is_ok()
-        }>
-            <For
-                each=move || non_yral_tokens.get().unwrap().unwrap().1
-                key=|inf| inf.key()
-                let:token_root
-            >
-                <TokenView
-                    user_principal=non_yral_tokens.get().unwrap().unwrap().0
-                    token_root
-                />
-            </For>
-        </Show>
+        <Suspense fallback=BulletLoader>
+            {move || {
+                tokens_fetch()
+                    .map(|tokens_res| {
+                        let tokens = tokens_res.as_ref().map(|t| t.1.clone()).unwrap_or_default();
+                        let user_principal = tokens_res
+                            .as_ref()
+                            .map(|t| t.0)
+                            .unwrap_or(Principal::anonymous());
+
+                        view! {
+                            <For each=move || tokens.clone() key=|inf| inf.key() let:token_root>
+                                <TokenView user_principal token_root/>
+                            </For>
+                        }
+                    })
+            }}
+
+        </Suspense>
     }
 }
 
