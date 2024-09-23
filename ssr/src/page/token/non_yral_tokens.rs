@@ -1,24 +1,20 @@
 use candid::Principal;
 use futures::future::join_all;
 use leptos::*;
-use server_fn::codec::Cbor;
 
-use crate::state::canisters::CanistersAuthWire;
+use crate::state::canisters::Canisters;
 use crate::utils::token::token_metadata_by_root;
 
 const SUPPORTED_NON_YRAL_TOKENS_ROOT: &[&str] = &["67bll-riaaa-aaaaq-aaauq-cai"];
 
-#[server(input = Cbor)]
 pub async fn eligible_non_yral_supported_tokens(
-    cans_wire: CanistersAuthWire,
+    cans: Canisters<true>,
     user_principal: Principal,
 ) -> Result<Vec<Principal>, ServerFnError> {
-    let canisters = cans_wire.canisters().unwrap();
-
     let tasks: Vec<_> = SUPPORTED_NON_YRAL_TOKENS_ROOT
         .iter()
         .map(|&token_root| {
-            let cans = canisters.clone();
+            let cans = cans.clone();
 
             async move {
                 let token_root = Principal::from_text(token_root).ok()?;
