@@ -28,7 +28,6 @@ use super::{popups::TokenTransferPopup, TokenParams};
 )]
 async fn transfer_token_to_user_principal(
     cans_wire: CanistersAuthWire,
-    destination_canister_principal: Option<Principal>,
     destination_principal: Principal,
     ledger_canister: Principal,
     root_canister: Principal,
@@ -86,6 +85,11 @@ async fn transfer_token_to_user_principal(
     //     .unwrap();
     // let transfer_result: types::TransferResult = Decode!(&res, types::TransferResult).unwrap();
     // println!("transfer_result: {:?}", transfer_result);
+
+    let destination_canister_principal = cans
+        .get_individual_canister_by_user_principal(destination_principal)
+        .await
+        .unwrap();
 
     if let Some(destination_canister_principal) = destination_canister_principal {
         let destination_canister = cans.individual_user(destination_canister_principal).await;
@@ -200,10 +204,7 @@ fn TokenTransferInner(
         let auth_cans_wire = auth_cans_wire.clone();
         async move {
             let destination = destination_res.get_untracked().unwrap().unwrap();
-            let destination_canister = cans
-                .get_individual_canister_by_user_principal(destination)
-                .await
-                .unwrap();
+
             // let amt = amt_res.get_untracked().unwrap().unwrap();
 
             // let user = cans.authenticated_user().await;
@@ -228,7 +229,6 @@ fn TokenTransferInner(
 
             transfer_token_to_user_principal(
                 auth_cans_wire.wait_untracked().await.unwrap(),
-                destination_canister,
                 destination,
                 ledger_canister,
                 root,
