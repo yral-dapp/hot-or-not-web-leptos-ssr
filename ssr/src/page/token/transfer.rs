@@ -14,7 +14,7 @@ use crate::{
         web::{copy_to_clipboard, paste_from_clipboard},
     },
 };
-use candid::{Nat, Principal};
+use candid::Principal;
 use leptos::*;
 use leptos_icons::*;
 use leptos_router::*;
@@ -28,7 +28,7 @@ use super::{popups::TokenTransferPopup, TokenParams};
 )]
 async fn transfer_token_to_user_principal(
     cans_wire: CanistersAuthWire,
-    destination_canister: Principal,
+    destination_canister_principal: Option<Principal>,
     destination_principal: Principal,
     ledger_canister: Principal,
     root_canister: Principal,
@@ -49,21 +49,6 @@ async fn transfer_token_to_user_principal(
             from_subaccount: None,
             to: Account {
                 owner: destination_principal,
-                subaccount: None,
-            },
-            created_at_time: None,
-        })
-        .await
-        .unwrap();
-    log::debug!("transfer res: {:?}", res);
-    let res = sns_ledger
-        .icrc_1_transfer(TransferArg {
-            memo: Some(serde_bytes::ByteBuf::from(vec![1])),
-            amount: Nat::from(1_u64),
-            fee: None,
-            from_subaccount: None,
-            to: Account {
-                owner: destination_canister,
                 subaccount: None,
             },
             created_at_time: None,
@@ -102,9 +87,11 @@ async fn transfer_token_to_user_principal(
     // let transfer_result: types::TransferResult = Decode!(&res, types::TransferResult).unwrap();
     // println!("transfer_result: {:?}", transfer_result);
 
-    let destination_canister = cans.individual_user(destination_canister).await;
-    let res = destination_canister.add_token(root_canister).await.unwrap();
-    println!("add_token res: {:?}", res);
+    if let Some(destination_canister_principal) = destination_canister_principal {
+        let destination_canister = cans.individual_user(destination_canister_principal).await;
+        let res = destination_canister.add_token(root_canister).await.unwrap();
+        println!("add_token res: {:?}", res);
+    }
 
     // let res = agent
     //     .update(
@@ -216,7 +203,6 @@ fn TokenTransferInner(
             let destination_canister = cans
                 .get_individual_canister_by_user_principal(destination)
                 .await
-                .unwrap()
                 .unwrap();
             // let amt = amt_res.get_untracked().unwrap().unwrap();
 
