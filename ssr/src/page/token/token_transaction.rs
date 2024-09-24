@@ -142,9 +142,8 @@ fn TxnHistoryItem(detail: TokenTxn, #[prop(into)] _ref: NodeRef<html::Div>) -> i
                     </span>
                     <Show when=move||detail.transfer.amount.is_some()>
                     <span class="text-white/50 text-sm md:text-md">
-                        {detail.transfer.amount }
+                         Received:{ detail.transfer.is_received }
                     </span>
-                    
                     </Show>
                 </div>
             </div>
