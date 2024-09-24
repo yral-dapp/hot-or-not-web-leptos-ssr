@@ -191,6 +191,8 @@ fn TokenTransferInner(
             amt_res.set(Err(
                 "Sorry, there are not enough funds in this account".to_string()
             ));
+        } else if amt.e8s == 0_u64 {
+            amt_res.set(Err("Cannot send 0 tokens".to_string()));
         } else {
             amt_res.set(Ok(Some(amt)));
         }
