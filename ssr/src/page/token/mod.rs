@@ -3,7 +3,9 @@ pub mod create_token_faq;
 pub mod info;
 mod popups;
 mod sns_form;
+pub mod token_transaction;
 pub mod transfer;
+pub(super) mod txn;
 pub mod types;
 
 use candid::Principal;

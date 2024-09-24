@@ -8,7 +8,7 @@ use crate::{
         back_btn::BackButton, bullet_loader::BulletLoader, canisters_prov::AuthCansProvider,
         share_popup::*, spinner::FullScreenSpinner, title::Title,
     },
-    page::token::TokenInfoParams,
+    page::token::{token_transaction::TokenTransactions, TokenInfoParams},
     state::canisters::unauth_canisters,
     utils::token::{token_metadata_by_root, TokenMetadata},
 };
@@ -112,7 +112,12 @@ fn TokenInfoInner(
                             Send
                         </a>
                     </Show>
+
                 </AuthCansProvider>
+                <AuthCansProvider  let:canisters>
+                    <TokenTransactions cans=canisters  root=root.clone() user_principal/>
+                </AuthCansProvider>
+
             </div>
         </div>
     }
