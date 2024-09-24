@@ -10,6 +10,7 @@ mod real_impl {
     use crate::canister::individual_user_template::Result7;
     use crate::canister::sns_swap::{NewSaleTicketRequest, RefreshBuyerTokensRequest};
     use crate::consts::ICP_LEDGER_CANISTER_ID;
+    use crate::utils::token::DeployedCdaoCanisters;
     use candid::{Decode, Encode, Nat, Principal};
     use ic_base_types::PrincipalId;
     use icp_ledger::{AccountIdentifier, Subaccount};
@@ -113,7 +114,7 @@ mod real_impl {
     pub async fn deploy_cdao_canisters(
         cans_wire: CanistersAuthWire,
         create_sns: SnsInitPayload,
-    ) -> Result<(), ServerFnError> {
+    ) -> Result<DeployedCdaoCanisters, ServerFnError> {
         let cans = cans_wire.canisters().unwrap();
         log::debug!("deploying canisters {:?}", cans.user_canister().to_string());
         let res = cans
@@ -124,7 +125,8 @@ mod real_impl {
         match res {
             Result7::Ok(c) => {
                 log::debug!("deployed canister {}", c.governance);
-                participate_in_swap(c.swap).await
+                participate_in_swap(c.swap).await?;
+                Ok(c.into())
             }
             Result7::Err(e) => Err(ServerFnError::new(format!("{e:?}"))),
         }
@@ -134,6 +136,7 @@ mod real_impl {
 #[cfg(not(feature = "backend-admin"))]
 mod no_op_impl {
     use crate::state::canisters::CanistersAuthWire;
+    use crate::utils::token::DeployedCdaoCanisters;
     use candid::Principal;
     use ic_base_types::PrincipalId;
     use icp_ledger::AccountIdentifier;
@@ -150,7 +153,13 @@ mod no_op_impl {
     pub async fn deploy_cdao_canisters(
         _cans_wire: CanistersAuthWire,
         _create_sns: SnsInitPayload,
-    ) -> Result<(), ServerFnError> {
-        Ok(())
+    ) -> Result<DeployedCdaoCanisters, ServerFnError> {
+        Ok(DeployedCdaoCanisters {
+            governance: Principal::anonymous(),
+            swap: Principal::anonymous(),
+            root: Principal::anonymous(),
+            ledger: Principal::anonymous(),
+            index: Principal::anonymous(),
+        })
     }
 }

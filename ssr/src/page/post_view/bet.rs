@@ -260,7 +260,7 @@ fn HNButtonOverlay(
 fn WinBadge() -> impl IntoView {
     view! {
         <button class="py-2 px-4 w-full text-sm font-bold text-white rounded-sm bg-primary-600">
-            <div class="flex justify-center items-center">
+           <div class="flex justify-center items-center">
                 <span class="">
                     <Icon class="fill-white" style="" icon=icondata::RiTrophyFinanceFill />
                 </span>
@@ -299,7 +299,7 @@ fn HNWonLost(participation: BetDetails) -> impl IntoView {
     view! {
         <div class="flex gap-6 justify-center items-center p-4 w-full bg-transparent rounded-xl shadow-sm">
             <div class="relative flex-shrink-0 drop-shadow-lg">
-                <CoinStateView class="w-14 h-14 md:w-16 md:h-16" coin />
+                <CoinStateView class="w-14 h-14 md:w-16 md:h-16" coin/>
                 <Icon class="absolute -bottom-0.5 -right-3 w-7 h-7 md:w-9 md:h-9" icon=hn_icon />
             </div>
 
@@ -307,14 +307,12 @@ fn HNWonLost(participation: BetDetails) -> impl IntoView {
             <div class="flex flex-col gap-2 w-full md:w-1/2 lg:w-1/3">
                 // <!-- Result Text -->
                 <div class="p-1 text-sm leading-snug text-white rounded-full">
-                    <p>You staked {bet_amount}tokens on {if is_hot { "Hot" } else { "Not" }}.</p>
-                    <p>
-                        {if let Some(reward) = participation.reward() {
-                            format!("You received {reward} tokens.")
-                        } else {
-                            format!("You lost {bet_amount} tokens.")
-                        }}
-                    </p>
+                    <p>You staked {bet_amount} tokens on {if is_hot { "Hot" } else { "Not" }}.</p>
+                    <p>{if let Some(reward) = participation.reward() {
+                        format!("You received {reward} tokens.")
+                    } else {
+                        format!("You lost {bet_amount} tokens.")
+                    }}</p>
                 </div>
                 {if won {
                     view! { <WinBadge /> }
@@ -353,11 +351,8 @@ fn BetTimer(post: PostDetails, participation: BetDetails, refetch_bet: Trigger) 
     };
 
     view! {
-        <div
-            class="flex flex-row gap-1 justify-end items-center py-px w-full text-base text-white rounded-full md:text-lg pe-4"
-            style=gradient
-        >
-            <Icon icon=icondata::AiClockCircleFilled />
+        <div class="flex flex-row gap-1 justify-end items-center py-px w-full text-base text-white rounded-full md:text-lg pe-4" style=gradient>
+           <Icon icon=icondata::AiClockCircleFilled/>
             <span>{move || to_hh_mm_ss(time_remaining())}</span>
         </div>
     }
@@ -398,8 +393,10 @@ fn HNAwaitingResults(
                     <BetTimer post refetch_bet participation />
                 </div>
             </div>
-            <p class="text-center text-white bg-black/15 rounded-full p-1 ps-2">
-                You staked {bet_amount} tokens on {bet_direction_text} Result is still pending
+            <p class="p-1 text-center text-white rounded-full bg-black/15 ps-2">
+                You staked {bet_amount} tokens on {bet_direction_text}.
+                Result is still pending.
+
             </p>
         </div>
     }

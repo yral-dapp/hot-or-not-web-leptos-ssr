@@ -150,6 +150,29 @@ impl PartialOrd for TokenBalance {
     }
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct DeployedCdaoCanisters {
+    pub root: Principal,
+    pub swap: Principal,
+    pub ledger: Principal,
+    pub index: Principal,
+    pub governance: Principal,
+}
+
+impl From<crate::canister::individual_user_template::DeployedCdaoCanisters>
+    for DeployedCdaoCanisters
+{
+    fn from(value: crate::canister::individual_user_template::DeployedCdaoCanisters) -> Self {
+        Self {
+            root: value.root,
+            swap: value.swap,
+            ledger: value.ledger,
+            index: value.index,
+            governance: value.governance,
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone)]
 pub struct TokenMetadata {
     pub logo_b64: String,
