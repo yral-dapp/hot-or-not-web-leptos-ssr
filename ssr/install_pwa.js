@@ -64,6 +64,6 @@ export function triggerPwaInstall() {
     });
   } else {
     console.error("Install prompt not available.");
-    return Promise.reject("Install prompt not available.");
+    // return Promise.reject("Install prompt not available.");
   }
 }
