@@ -8,6 +8,7 @@ use crate::{
         event_streaming::events::{
             TokenCreationCompleted, TokenCreationFailed, TokenCreationStarted,
         },
+        token::DeployedCdaoCanisters,
         web::FileWithUrl,
     },
 };
@@ -38,7 +39,7 @@ async fn is_server_available() -> Result<(bool, AccountIdentifier), ServerFnErro
 async fn deploy_cdao_canisters(
     cans_wire: CanistersAuthWire,
     create_sns: SnsInitPayload,
-) -> Result<(), ServerFnError> {
+) -> Result<DeployedCdaoCanisters, ServerFnError> {
     server_impl::deploy_cdao_canisters(cans_wire, create_sns).await
 }
 
@@ -312,11 +313,15 @@ pub fn CreateToken() -> impl IntoView {
                 .map_err(|e| e.to_string());
 
             match deployed_cans_response.clone() {
-                Ok(_) => TokenCreationCompleted.send_event(create_sns, auth_cans),
-                Err(e) => TokenCreationFailed.send_event(e, create_sns, auth_cans),
+                Ok(c) => {
+                    TokenCreationCompleted.send_event(create_sns, c.root, auth_cans);
+                    Ok(())
+                }
+                Err(e) => {
+                    TokenCreationFailed.send_event(e.clone(), create_sns, auth_cans);
+                    Err(e)
+                }
             }
-
-            deployed_cans_response
         }
     });
     let creating = create_action.pending();

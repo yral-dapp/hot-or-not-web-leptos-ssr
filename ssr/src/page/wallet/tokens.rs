@@ -2,7 +2,6 @@ use candid::Principal;
 use ic_agent::AgentError;
 
 use crate::page::wallet::ShareButtonWithFallbackPopup;
-use crate::utils::host::get_host;
 use crate::{
     canister::individual_user_template::Result14,
     component::{
@@ -77,9 +76,9 @@ async fn token_metadata_or_fallback(
 }
 
 #[component]
-fn FallbackToken() -> impl IntoView {
+pub fn TokenViewFallback() -> impl IntoView {
     view! {
-        <div class="w-full items-center h-20 rounded-xl border-2 border-neutral-700 bg-white/15 animate-pulse"></div>
+        <div class="w-full items-center h-16 rounded-xl border-2 border-neutral-700 bg-white/15 animate-pulse"></div>
     }
 }
 
@@ -96,47 +95,70 @@ pub fn TokenView(
         move |_| token_metadata_or_fallback(cans.clone(), user_principal, token_root),
     );
 
-    let share_link = {
-        let base_url = get_host();
-        format!("{base_url}/profile/{}?tab=tokens", user_principal.to_text())
-    };
-    let share_link_s = store_value(share_link);
-    let share_message = format!(
-        "Hey! Check out my YRAL profile 👇 {}. I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter",
-        share_link_s(),
-    );
-    let share_message_s = store_value(share_message);
-
     view! {
         <ClaimTokensOrRedirectError token_root/>
-        <Suspense fallback=FallbackToken>
+        <Suspense fallback=TokenViewFallback>
             {move || {
                 info.map(|info| {
                     view! {
-                        <a
-                            href=format!("/token/info/{token_root}/{user_principal}")
-                            _ref=_ref
-                            class="grid grid-cols-2 grid-rows-1 w-full items-center p-4 rounded-xl border-2 border-neutral-700 bg-white/15"
-                        >
-                            <div class="flex flex-row gap-2 items-center justify-self-start">
-                                <img class="w-12 h-12 rounded-full" src=info.logo_b64.clone()/>
-                                <span class="text-white truncate">{info.name.clone()}</span>
-                            </div>
-                            <div class="flex flex-row gap-2 items-center justify-self-end text-base text-white">
-                                <span class="truncate">
-                                    {format!("{} {}", info.balance.humanize(), info.symbol)}
-                                </span>
-                                <ShareButtonWithFallbackPopup
-                                    share_link=share_link_s()
-                                    message=share_message_s()
-                                />
-                            </div>
-                        </a>
+                        <TokenTile token_root=token_root.to_text() user_principal=user_principal.to_text() token_meta_data=info.clone() />
                     }
                 })
             }}
 
         </Suspense>
+    }
+}
+
+#[component]
+pub fn TokenTile(
+    token_root: String,
+    user_principal: String,
+    token_meta_data: TokenMetadata,
+) -> impl IntoView {
+    let share_link = { format!("/token/info/{token_root}/{user_principal}?airdrop_amt=100") };
+    let share_link_s = store_value(share_link);
+    let share_message = format!(
+        "Hey! Check out the token: {} I created on YRAL 👇 {}. I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter",
+        token_meta_data.symbol,
+        share_link_s(),
+    );
+    let share_message_s = store_value(share_message);
+    let info = token_meta_data;
+    view! {
+        <div
+            class="flex  w-full   w-full items-center h-16 rounded-xl border-2 border-neutral-700 bg-white/15 gap-1"
+        >
+            <a
+            href=format!("/token/info/{token_root}/{user_principal}?airdrop_amt=100")
+            // _ref=_ref
+            class="flex flex-1  p-y-4"
+            >
+                <div class="flex flex-2 items-center space-x-2 px-2">
+                <img class="w-12 h-12 rounded-full" src=info.logo_b64.clone()/>
+                <span class="text-white text-xs truncate">{info.name.clone()}</span>
+                </div>
+                <div class="flex flex-1 flex-col">
+                    <span
+                    class="flex flex-1  items-center justify-end text-xs text-white">
+                    {info.balance.humanize()}
+                    </span>
+                    <span
+                    class="flex flex-1  items-center justify-end text-xs text-white truncate">
+                    {info.symbol.clone()}
+                    </span>
+                </div>
+
+            </a>
+            <div>
+                <ShareButtonWithFallbackPopup
+                    share_link=share_link_s()
+                    message=share_message_s()
+                    style="w-12 h-12".into()
+                />
+            </div>
+
+        </div>
     }
 }
 

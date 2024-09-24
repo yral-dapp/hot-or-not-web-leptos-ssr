@@ -241,7 +241,7 @@ fn HNButtonOverlay(
 fn WinBadge() -> impl IntoView {
     view! {
         <button class="py-2 px-4 w-full text-sm font-bold text-white rounded-sm bg-primary-600">
-            <div class="flex justify-center items-center">
+          <div class="flex justify-center items-center">
                 <span class="">
                     <Icon class="fill-white" style="" icon=icondata::RiTrophyFinanceFill/>
                 </span>
@@ -385,9 +385,9 @@ fn HNAwaitingResults(
                 </div>
             </div>
             <p class="p-1 text-center text-white rounded-full bg-black/15 ps-2">
-                You staked {bet_amount}tokens on {bet_direction_text}Result is still pending
-
-            </p>
+                You staked {bet_amount} tokens on {bet_direction_text}.
+                Result is still pending.
+           </p>
         </div>
     }
 }
