@@ -45,18 +45,26 @@ fn Stat(stat: u64, #[prop(into)] info: String) -> impl IntoView {
         </div>
     }
 }
-
 #[component]
-fn ListSwitcher(user_canister: Principal, user_principal: Principal) -> impl IntoView {
-    let (cur_tab, set_cur_tab) = create_query_signal::<String>("tab");
-    let current_tab = create_memo(move |_| {
-        with!(|cur_tab| match cur_tab.as_deref() {
-            Some("posts") => 0,
-            Some("speculations") => 1,
-            Some("tokens") => 2,
-            _ => 0,
-        })
+fn ListSwitcher1() -> impl IntoView{
+    let loc = use_location();
+    let navigate = use_navigate();
+    let current_tab = create_memo(move |_|{
+        let pathname = loc.pathname.get();
+        if pathname.ends_with("posts"){
+           return 0
+        }
+        else if pathname.ends_with("stakes"){
+            return 1
+        }
+        else if pathname.ends_with("tokens"){
+            return 2
+        }
+        else{
+            return    0
+        }
     });
+
     let tab_class = move |tab_id: usize| {
         if tab_id == current_tab() {
             "text-primary-500 border-b-4 border-primary-500 flex justify-center w-full py-2"
@@ -65,32 +73,188 @@ fn ListSwitcher(user_canister: Principal, user_principal: Principal) -> impl Int
         }
     };
 
-    view! {
+    view!{
         <div class="relative flex flex-row w-11/12 md:w-9/12 text-center text-xl md:text-2xl">
-            <button class=move || tab_class(0) on:click=move |_| set_cur_tab(Some("posts".into()))>
-                <Icon icon=icondata::FiGrid />
-            </button>
-            <button
-                class=move || tab_class(1)
-                on:click=move |_| set_cur_tab(Some("speculations".into()))
-            >
-                <Icon icon=icondata::BsTrophy />
-            </button>
-            <button class=move || tab_class(2) on:click=move |_| set_cur_tab(Some("tokens".into()))>
-                <Icon icon=icondata::AiDollarCircleOutlined />
-            </button>
-        </div>
-        <div class="flex flex-col gap-y-12 justify-center pb-12 w-11/12 sm:w-7/12">
-            <Show when=move || current_tab() == 0>
-                <ProfilePosts user_canister />
-            </Show>
-            <Show when=move || current_tab() == 1>
-                <ProfileSpeculations user_canister />
-            </Show>
-            <Show when=move || current_tab() == 2>
-                <ProfileTokens user_canister user_principal />
-            </Show>
-        </div>
+        <button
+            class=move || tab_class(0)
+            on:click={
+                let navigate = navigate.clone();
+                let loc = loc.clone();
+                move |_| {
+                    let p = loc.pathname.get();
+                    if let Some(last_slash_index) = p.rfind('/') {
+                        // Replace everything after the last '/' with the replacement string, excluding the '/'
+                        navigate(&format!("{}{}", &p.as_str()[..last_slash_index + 1], "posts"), Default::default())
+                    } else {
+                        // If no slash is found, return the original string
+                        navigate(p.as_str(), Default::default())
+                    }
+                }
+            }
+        >
+            <Icon icon=icondata::FiGrid />
+        </button>
+        <button
+            class=move || tab_class(1)
+            on:click={
+                let navigate = navigate.clone();
+                let loc = loc.clone();
+                move |_| {
+                    if let Some(last_slash_index) = loc.pathname.get().rfind('/') {
+                        // Replace everything after the last '/' with the replacement string, excluding the '/'
+                        navigate(&format!("{}{}", &loc.pathname.get().as_str()[..last_slash_index + 1], "stakes"), Default::default())
+                    } else {
+                        // If no slash is found, return the original string
+                        navigate(loc.pathname.get().as_str(), Default::default())
+                    }
+                }
+            }
+        >
+            <Icon icon=icondata::BsTrophy />
+        </button>
+        <button
+            class=move || tab_class(2)
+            on:click={
+                let navigate = navigate.clone();
+                let loc = loc.clone();
+                move |_| {
+                    if let Some(last_slash_index) = loc.pathname.get().rfind('/') {
+                        // Replace everything after the last '/' with the replacement string, excluding the '/'
+                        navigate(&format!("{}{}", &loc.pathname.get().as_str()[..last_slash_index + 1], "tokens"), Default::default())
+                    } else {
+                        // If no slash is found, return the original string
+                        navigate(loc.pathname.get().as_str(), Default::default())
+                    }
+                }
+            }
+        >
+            <Icon icon=icondata::AiDollarCircleOutlined />
+        </button>
+    </div>
+
+    <div class="flex flex-col gap-y-12 justify-center pb-12 w-11/12 sm:w-7/12">
+    <Show when=move || current_tab() == 0>
+        <ProfilePostsRoute />
+    </Show>
+    <Show when=move || current_tab() == 1>
+        <ProfileStakesRoute />
+    </Show>
+    <Show when=move || current_tab() == 2>
+        <ProfileTokenRoute />
+    </Show>
+</div>
+    }
+
+}
+#[component]
+pub fn ProfilePostsRoute() -> impl IntoView{
+    let params = use_params::<ProfileParams>();
+    let param_principal = create_memo(move |_| {
+        params.with(|p| {
+            let ProfileParams { id } = p.as_ref().ok()?;
+            Principal::from_text(id).ok()
+        })
+    });
+    
+    view! {
+        <AuthCansProvider fallback=FullScreenSpinner let:canister>
+        {
+            if let Some(param_principal) = param_principal.get() {
+                view! {
+                    <Suspense>
+                    {move || {
+                        view! { <ProfilePosts user_canister=param_principal /> }
+                    }}
+                </Suspense>
+                }
+            } else {
+                let user_canister_principal = canister.user_canister();
+                view! {
+                    <ProfilePosts user_canister=user_canister_principal />
+                }
+            }
+        }
+        </AuthCansProvider>
+    }
+}
+
+#[component]
+pub fn ProfileStakesRoute() -> impl IntoView{
+    let params = use_params::<ProfileParams>();
+    let param_principal = create_memo(move |_| {
+        params.with(|p| {
+            let ProfileParams { id } = p.as_ref().ok()?;
+            Principal::from_text(id).ok()
+        })
+    });
+    
+    view! {
+        <AuthCansProvider fallback=FullScreenSpinner let:canister>
+        {
+            if let Some(param_principal) = param_principal.get() {
+                view! {
+                    <Suspense>
+                    {move || {
+                        view! { <ProfileSpeculations user_canister=param_principal /> }
+                    }}
+                </Suspense>
+                }
+            } else {
+                let user_canister_principal = canister.user_canister();
+                view! {
+                    <ProfileSpeculations user_canister=user_canister_principal />
+                }
+            }
+        }
+        </AuthCansProvider>
+    }
+}
+#[component]
+pub fn ProfileTokenRoute() -> impl IntoView {
+    let params = use_params::<ProfileParams>();
+    let param_principal = create_memo(move |_| {
+        params.with(|p| {
+            let ProfileParams { id } = p.as_ref().ok()?;
+            Principal::from_text(id).ok()
+        })
+    });
+
+    view! {
+        <AuthCansProvider fallback=FullScreenSpinner let:canister>
+        {
+            if let Some(param_principal) = param_principal.get() {
+                let user_details = create_resource(
+                    move || Some(param_principal),
+                    move |param_principal| async move {
+                        let param_principal = param_principal?;
+                        let canisters = unauth_canisters();
+
+                        let user_canister = canisters
+                            .get_individual_canister_by_user_principal(param_principal)
+                            .await
+                            .ok()??;
+                        Some((user_canister, param_principal))
+                    },
+                );
+
+                view! {
+                    <Suspense>
+                        {move || {
+                            user_details.get().map(|maybe| {
+                                view! { <ProfileTokens user_canister=maybe.clone().unwrap().0 user_principal=maybe.clone().unwrap().1 /> }
+                            })
+                        }}
+                    </Suspense>
+                }
+            } else {
+                let user_canister_principal = canister.user_canister();
+                let user_principal = canister.user_principal();
+                view! {
+                    <ProfileTokens user_canister=user_canister_principal user_principal=user_principal />
+                }
+            }
+        }
+        </AuthCansProvider>
     }
 }
 
@@ -140,53 +304,66 @@ fn ProfileViewInner(user: ProfileDetails, user_canister: Principal) -> impl Into
                     <Stat stat=user.hots info="Hots" />
                     <Stat stat=user.nots info="Nots" />
                 </div>
-                <ListSwitcher user_canister user_principal=user.principal />
+                <ListSwitcher1/>
             </div>
         </div>
     }
 }
 
+
 #[component]
 pub fn ProfileView() -> impl IntoView {
     let params = use_params::<ProfileParams>();
-    let principal = move || {
+    let param_principal = create_memo(move |_| {
         params.with(|p| {
             let ProfileParams { id } = p.as_ref().ok()?;
-
             Principal::from_text(id).ok()
         })
-    };
-
-    let user_details = create_resource(
-        || {},
-        move |_| async move {
-            let canisters = unauth_canisters();
-
-            let user_canister = canisters
-                .get_individual_canister_by_user_principal(principal()?)
-                .await
-                .ok()??;
-            let user = canisters.individual_user(user_canister).await;
-            let user_details = user.get_profile_details().await.ok()?;
-            Some((user_details.into(), user_canister))
-        },
-    );
+    });
 
     view! {
-        <Suspense>
+        <AuthCansProvider fallback=FullScreenSpinner let:canister>
+            {
+                if let Some(param_principal) = param_principal.get() {
+                    let user_canister_principal = canister.user_canister();
+                    if param_principal == user_canister_principal {
+                        view! { <YourProfileView /> }
+                    } else {
+                        let user_details = create_resource(
+                            move || Some(param_principal),
+                            move |param_principal| async move {
+                                let param_principal = param_principal?;
+                                let canisters = unauth_canisters();
 
-            {move || {
-                user_details
-                    .get()
-                    .map(|user_details| {
-                        view! { <ProfileComponent user_details /> }
-                    })
-            }}
+                                let user_canister = canisters
+                                    .get_individual_canister_by_user_principal(param_principal)
+                                    .await
+                                    .ok()??;
+                                let user = canisters.individual_user(user_canister).await;
+                                let user_details = user.get_profile_details().await.ok()?;
+                                Some((user_details.into(), user_canister))
+                            },
+                        );
 
-        </Suspense>
+                        view! {
+                            <Suspense>
+                                {move || {
+                                    user_details.get().map(|user_details| {
+                                        view! { <ProfileComponent user_details /> }
+                                    })
+                                }}
+                            </Suspense>
+                        }
+                    }
+                } else {
+                    view! {
+                        <YourProfileView />
+                    }
+                }
+            }
+        </AuthCansProvider>
     }
 }
-
 #[component]
 pub fn YourProfileView() -> impl IntoView {
     view! {
