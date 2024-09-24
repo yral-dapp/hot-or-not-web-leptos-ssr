@@ -51,19 +51,25 @@ window.addEventListener("load", () => {
   }
 });
 export function triggerPwaInstall() {
-  if (installPrompt) {
-    console.log("Prompt available, triggering...");
-    installPrompt.prompt();
-    installPrompt.userChoice.then((choice) => {
-      if (choice.outcome === "accepted") {
-        console.log("User accepted the install prompt");
-      } else {
-        console.log("User dismissed the install prompt");
-      }
-      installPrompt = null; // Reset the prompt
-    });
-  } else {
-    console.error("Install prompt not available.");
-    // return Promise.reject("Install prompt not available.");
-  }
+  return new Promise((resolve, reject) => {
+    if (installPrompt) {
+      console.log("Prompt available, triggering...");
+      installPrompt.prompt();
+      installPrompt.userChoice
+        .then((choice) => {
+          if (choice.outcome === "accepted") {
+            console.log("User accepted the install prompt");
+            resolve("accepted");
+          } else {
+            console.log("User dismissed the install prompt");
+            resolve("dismissed");
+          }
+          installPrompt = null; // Reset the prompt
+        })
+        .catch(reject);
+    } else {
+      console.error("Install prompt not available.");
+      reject("Install prompt not available.");
+    }
+  });
 }
