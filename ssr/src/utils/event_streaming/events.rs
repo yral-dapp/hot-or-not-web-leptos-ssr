@@ -773,6 +773,7 @@ impl TokenCreationCompleted {
     pub fn send_event(
         &self,
         sns_init_payload: SnsInitPayload,
+        token_root: Principal,
         cans_store: RwSignal<Option<Canisters<true>>>,
     ) {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
@@ -782,6 +783,8 @@ impl TokenCreationCompleted {
 
             let user_id = details.principal;
             let canister_id = user.canister_id;
+
+            let link = format!("/token/info/{}/{}", token_root, user_id);
 
             // token_creation_completed - analytics
             send_event(
@@ -793,7 +796,8 @@ impl TokenCreationCompleted {
                     "token_symbol": sns_init_payload.token_symbol,
                     "name": sns_init_payload.name,
                     "description": sns_init_payload.description,
-                    "logo": sns_init_payload.logo
+                    "logo": sns_init_payload.logo,
+                    "link": link,
                 }),
             );
         }

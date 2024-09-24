@@ -1,22 +1,15 @@
 use candid::Principal;
 use leptos::*;
-use leptos_icons::*;
 
 use crate::{
     component::{
         bullet_loader::BulletLoader, canisters_prov::AuthCansProvider,
         claim_tokens::ClaimTokensOrRedirectError, token_confetti_symbol::TokenConfettiSymbol,
     },
+    page::wallet::tokens::{TokenTile, TokenViewFallback},
     state::canisters::unauth_canisters,
     utils::token::{get_token_metadata, TokenCans},
 };
-
-#[component]
-fn TokenViewFallback() -> impl IntoView {
-    view! {
-        <div class="w-full h-20 rounded-xl border-2 border-neutral-700 bg-white/15 animate-pulse"></div>
-    }
-}
 
 #[component]
 fn TokenView(user_principal: Principal, token: TokenCans) -> impl IntoView {
@@ -30,7 +23,6 @@ fn TokenView(user_principal: Principal, token: TokenCans) -> impl IntoView {
             Ok::<_, ServerFnError>(metadata)
         },
     );
-    let token_link = move || format!("/token/info/{}/{}", token.root, user_principal.to_text());
 
     view! {
         <ClaimTokensOrRedirectError token_root=token.root/>
@@ -40,26 +32,7 @@ fn TokenView(user_principal: Principal, token: TokenCans) -> impl IntoView {
                     .and_then(|info| info.ok())
                     .map(|info| {
                         view! {
-                            <a
-                                href=token_link()
-                                class="w-full grid grid-cols-2 p-4 rounded-xl border-2 items-center border-neutral-700 bg-white/15"
-                            >
-                                <div class="flex flex-row gap-2 items-center justify-self-start">
-                                    <img class="w-12 h-12 rounded-full" src=info.logo_b64/>
-                                    <span class="text-white truncate">{info.name}</span>
-                                </div>
-                                <div class="flex flex-col gap-2 justify-self-end text-sm">
-                                    <span class="text-white truncate">
-                                        {format!("{} {}", info.balance.humanize(), info.symbol)}
-                                    </span>
-                                    <div class="flex flex-row gap-1 items-center">
-                                        <span class="text-white">Details</span>
-                                        <div class="flex items-center justify-center w-4 h-4 bg-white/15 rounded-full">
-                                            <Icon class="text-white" icon=icondata::AiRightOutlined/>
-                                        </div>
-                                    </div>
-                                </div>
-                            </a>
+                            <TokenTile token_root=token.root.to_text() user_principal=user_principal.to_text() token_meta_data=info.clone() />
                         }
                     })
             }}

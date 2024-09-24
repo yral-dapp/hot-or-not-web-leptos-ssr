@@ -122,7 +122,7 @@ fn HNButton(
 
     view! {
         <button
-            class=" w-14 h-14 md:w-16 md:h-16 md:w-18 lg:h-18"
+           class="w-14 h-14 md:w-16 md:h-16 md:w-18 lg:h-18"
             class=("grayscale", grayscale)
             disabled=disabled
             on:click=move |_| bet_direction.set(Some(kind))
@@ -223,7 +223,6 @@ fn HNButtonOverlay(
                         class="mb-5 text-2xl text-white"
                         icon=icondata::AiDownOutlined
                     />
-
                 </button>
             </div>
             <p class="pb-4 w-14 md:w-16 lg:w-18">Not</p>
@@ -278,7 +277,7 @@ fn HNWonLost(participation: BetDetails) -> impl IntoView {
             <div class="relative flex-shrink-0 drop-shadow-lg">
                 <CoinStateView class="w-14 h-14 md:w-16 md:h-16" coin/>
                 <Icon class="absolute -bottom-0.5 -right-3 w-7 h-7 md:w-9 md:h-9" icon=hn_icon />
-            </div>
+         </div>
 
             // <!-- Text and Badge Column -->
             <div class="flex flex-col gap-2 w-full md:w-1/2 lg:w-1/3">
@@ -290,7 +289,7 @@ fn HNWonLost(participation: BetDetails) -> impl IntoView {
                     } else {
                         format!("You lost {bet_amount} tokens.")
                     }}</p>
-                </div>
+            </div>
                 {if won {
                     view! { <WinBadge/> }
                 } else {
@@ -328,8 +327,8 @@ fn BetTimer(post: PostDetails, participation: BetDetails, refetch_bet: Trigger) 
     };
 
     view! {
-        <div class="flex flex-row gap-1 justify-end items-center py-px w-full text-base text-white bg-white rounded-full md:text-lg pe-4" style=gradient>
-            <Icon icon=icondata::AiClockCircleFilled/>
+        <div class="flex flex-row gap-1 justify-end items-center py-px w-full text-base text-white rounded-full md:text-lg pe-4" style=gradient>
+       <Icon icon=icondata::AiClockCircleFilled/>
             <span>{move || to_hh_mm_ss(time_remaining())}</span>
         </div>
     }
@@ -362,8 +361,8 @@ fn HNAwaitingResults(
                 <div class="relative flex-shrink-0 drop-shadow-lg">
                     <Icon class="w-12 h-12 md:w-14 md:h-14 lg:w-16 lg:h-16" icon=hn_icon/>
                     <CoinStateView class="absolute bottom-0 -right-3 w-7 h-7 md:w-9 md:h-9 lg:w-11 lg:h-11" coin/>
+                </div>
 
-             </div>
                 <div class="w-1/2 md:w-1/3 lg:w-1/4">
                     <BetTimer post refetch_bet participation/>
                 </div>
@@ -371,6 +370,8 @@ fn HNAwaitingResults(
             <p class="p-1 text-center text-white rounded-full bg-black/15 ps-2">
                 You staked {bet_amount} tokens on {bet_direction_text}
                 Result is still pending
+                You staked {bet_amount} tokens on {bet_direction_text}.
+                Result is still pending.
             </p>
         </div>
     }
