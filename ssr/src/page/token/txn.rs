@@ -1,3 +1,5 @@
+use candid::Principal;
+
 use crate::component::infinite_scroller::KeyedData;
 
 #[derive(Clone)]
@@ -11,7 +13,7 @@ pub struct TokenTxn {
 #[derive(Clone)]
 pub struct TrasferDetails {
     // pub to_principal: Option<Principal>,
-    // pub from_principal: Option<Principal>,
+    pub from_principal: Option<Principal>,
     pub amount: Option<u128>,
     pub is_received: bool,
 }
@@ -51,7 +53,7 @@ pub(super) mod provider {
             let id: u128 = txn.id.0.try_into().unwrap();
             let txn = txn.transaction;
             let to_principal = txn.transfer.as_ref().map(|f| f.to.owner.clone());
-            // let from_principal: Option<Principal> = txn.transfer.as_ref().map(|f| f.from.owner.clone());
+            let from_principal: Option<Principal> = txn.transfer.as_ref().map(|f| f.from.owner.clone());
             let amount: Option<_> = txn.transfer.map(|f| f.amount.clone().0.try_into().unwrap());
 
             Self {
@@ -60,7 +62,7 @@ pub(super) mod provider {
                 created_at_time: txn.timestamp,
                 transfer: super::TrasferDetails {
                     // to_principal,
-                    // from_principal,
+                    from_principal,
                     amount,
                     is_received: to_principal.unwrap() == user_prinicipal
                 },

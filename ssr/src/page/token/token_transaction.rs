@@ -96,7 +96,7 @@ pub fn TokenTransactionListInner(
         super::txn::provider::get_history_provider(cans, user_principal, index_principal);
 
     view! {
-            <div class="flex flex-col w-full items-center">
+            <div class="gap-4 w-full bg-white/5 p-4 drop-shadow-lg rounded-xl">
             <InfiniteScroller
                 provider
                 fetch_count=150
@@ -107,7 +107,7 @@ pub fn TokenTransactionListInner(
                 }
                 empty_content=move||{
                 view! {
-                    <span>You do not have any transactions for this token</span>
+                    <span class="text-white">You do not have any transactions for this token</span>
                     }
                 }
             />
@@ -122,7 +122,7 @@ pub fn TokenTransactions(
     user_principal: Principal,
 ) -> impl IntoView {
     view! {
-        <div class="w-dvw min-h-dvh bg-neutral-800 flex flex-col gap-4">
+        <div class="px-4 w-dvw min-h-dvh text-white bg-neutral-800 flex flex-col gap-4">
             <span>Recent Transactions</span>
             <TokenTransactionList  cans root user_principal/>
         </div>
@@ -132,21 +132,35 @@ pub fn TokenTransactions(
 #[component]
 fn TxnHistoryItem(detail: TokenTxn, #[prop(into)] _ref: NodeRef<html::Div>) -> impl IntoView {
     view! {
-        <div _ref=_ref class="px-2 grid grid-cols-4 grid-rows-1 items-center gap-2 w-full">
-            <div class="flex flex-row col-span-3 items-center gap-4 justify-items-start">
-
-                <div class="grid grid-cols-1 grid-rows-2">
-                    <span class="text-white text-lg truncate">{detail.kind}</span>
-                    <span class="text-white/50 text-sm md:text-md">
-                        {get_day_month(detail.created_at_time)}
-                    </span>
-                    <Show when=move||detail.transfer.amount.is_some()>
-                    <span class="text-white/50 text-sm md:text-md">
-                         Received:{ detail.transfer.is_received }
+        <div _ref=_ref class="px-2 py-2 items-center gap-2 w-full border-b p-1 border-white">
+                <div class="flex flex-row items-center gap-4 justify-items-start">
+                    <div class="flex flex-1">
+                        <div class="flex flex-row items-center gap-2">
+                            <img src="/img/arrow_up.svg" class="h-10 w-10" alt="up"/>
+                            // <span class=" text-white text-sm">{detail.kind.to_uppercase()}</span>
+                            <span class=" text-white text-xs truncate">{detail.transfer.from_principal.map_or("".into(), |f| f.to_text())}</span>
+                        </div>
+                    </div>
+                    // <span class="flex flex-1 text-white/50 text-sm md:text-md">
+                    //     {get_day_month(detail.created_at_time)}
+                    // </span>
+                    <div class="flex flex-2">
+                    <Show when=move||detail.transfer.amount.is_some() && detail.transfer.is_received 
+                        fallback=move||{
+                            view! {
+                            <span class="flex flex-1 text-red justify-end text-sm md:text-md" style="color:red">
+                                 - { detail.transfer.amount.unwrap() }
+                            </span>
+                            }
+                        }
+                    >
+                    <span class="flex flex-1 text-green justify-end text-sm md:text-md" style="color:green">
+                          + { detail.transfer.amount.unwrap() }
                     </span>
                     </Show>
+                    </div>
+
                 </div>
-            </div>
         </div>
     }
 }
