@@ -141,7 +141,7 @@ pub fn TokenTile(
                 <div class="flex flex-1 flex-col">
                     <span
                     class="flex flex-1  items-center justify-end text-xs text-white">
-                    {info.balance.humanize()}
+                    {info.balance.humanize_float()}
                     </span>
                     <span
                     class="flex flex-1  items-center justify-end text-xs text-white truncate">
