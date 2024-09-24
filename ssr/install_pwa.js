@@ -3,16 +3,16 @@ let installPrompt;
 // Function to trigger PWA installation
 
 // Function to check if the PWA is already installed
-export async function isPwaInstalled() {
-  try {
-    const relatedApps = await navigator.getInstalledRelatedApps();
-    const isInstalled = relatedApps.some((app) => app.id === "your-app-id");
-    return isInstalled;
-  } catch (error) {
-    console.error("Error checking if PWA is installed:", error);
-    return false;
-  }
-}
+// export async function isPwaInstalled() {
+//   try {
+//     const relatedApps = await navigator.getInstalledRelatedApps();
+//     const isInstalled = relatedApps.some((app) => app.id === "your-app-id");
+//     return isInstalled;
+//   } catch (error) {
+//     console.error("Error checking if PWA is installed:", error);
+//     return false;
+//   }
+// }
 
 const installButton = document.querySelector("#installApp");
 
