@@ -8,7 +8,7 @@ use web_time::Duration;
 use super::ic::ProfileStream;
 use crate::{
     canister::utils::bg_url,
-    component::profile_placeholders::NoMoreBetsGraphic,
+    component::{canisters_prov::AuthCansProvider, profile_placeholders::NoMoreBetsGraphic},
     state::canisters::unauth_canisters,
     utils::{
         posts::PostDetails,
@@ -221,26 +221,32 @@ pub fn Speculation(details: BetDetails, _ref: NodeRef<html::Div>) -> impl IntoVi
 
 #[component]
 pub fn ProfileSpeculations(user_canister: Principal) -> impl IntoView {
-    let provider = BetsProvider::new(unauth_canisters(), user_canister);
-    let location = use_location();
-    let empty_text = if location
-        .pathname
-        .get_untracked()
-        .starts_with("/your-profile")
-    {
-        "You haven't placed any votes yet!"
-    } else {
-        "Not played any games yet!"
-    };
-
     view! {
-        <ProfileStream
-            provider
-            empty_graphic=NoMoreBetsGraphic
-            empty_text
-            children=move |details, _ref| {
-                view! { <Speculation details _ref=_ref.unwrap_or_default()/> }
+        <AuthCansProvider let:canister>
+            {
+                let provider = BetsProvider::new(unauth_canisters(), user_canister);
+                let location = use_location();
+                let empty_text = if location
+                    .pathname
+                    .get_untracked()
+                    .starts_with(&format!("/profile/{}", canister.user_principal()))
+                {
+                    "You haven't placed any votes yet!"
+                } else {
+                    "Not played any games yet!"
+                };
+            
+                view! {
+                    <ProfileStream
+                        provider
+                        empty_graphic=NoMoreBetsGraphic
+                        empty_text
+                        children=move |details, _ref| {
+                            view! { <Speculation details _ref=_ref.unwrap_or_default()/> }
+                        }
+                    />
+                }
             }
-        />
+        </AuthCansProvider >
     }
 }

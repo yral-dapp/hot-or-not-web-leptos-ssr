@@ -153,20 +153,20 @@ pub fn ProfilePostsRoute() -> impl IntoView {
     });
 
     view! {
-        <AuthCansProvider fallback=FullScreenSpinner let:canister>
+        <AuthCansProvider let:canister>
         {
             if let Some(param_principal) = param_principal.get() {
                 view! {
-                    <Suspense>
+                    <Suspense fallback=FullScreenSpinner>
                     {move || {
                         view! { <ProfilePosts user_canister=param_principal /> }
                     }}
                 </Suspense>
                 }
             } else {
-                let user_canister_principal = canister.user_canister();
+                let user_principal = canister.user_principal();
                 view! {
-                    <ProfilePosts user_canister=user_canister_principal />
+                    <Redirect path=format!("/profile/{}/posts", user_principal) />
                 }
             }
         }
@@ -196,9 +196,9 @@ pub fn ProfileStakesRoute() -> impl IntoView {
                 </Suspense>
                 }
             } else {
-                let user_canister_principal = canister.user_canister();
+                let user_principal = canister.user_principal();
                 view! {
-                    <ProfileSpeculations user_canister=user_canister_principal />
+                    <Redirect path=format!("/profile/{}/stakes", user_principal) />
                 }
             }
         }
@@ -247,10 +247,9 @@ pub fn ProfileTokenRoute() -> impl IntoView {
                     </Suspense>
                 }
             } else {
-                let user_canister_principal = canister.user_canister();
                 let user_principal = canister.user_principal();
                 view! {
-                    <ProfileTokens user_canister=user_canister_principal user_principal=user_principal />
+                    <Redirect path=format!("/profile/{}/tokens", user_principal) />
                 }
             }
         }
@@ -328,30 +327,34 @@ pub fn ProfileView() -> impl IntoView {
                     if param_principal == user_canister_principal {
                         view! { <YourProfileView /> }
                     } else {
-                        let user_details = create_resource(
-                            move || Some(param_principal),
-                            move |param_principal| async move {
-                                let param_principal = param_principal?;
-                                let canisters = unauth_canisters();
-
-                                let user_canister = canisters
-                                    .get_individual_canister_by_user_principal(param_principal)
-                                    .await
-                                    .ok()??;
-                                let user = canisters.individual_user(user_canister).await;
-                                let user_details = user.get_profile_details().await.ok()?;
-                                Some(user_details.into())
-                            },
-                        );
-
                         view! {
-                            <Suspense>
-                                {move || {
-                                    user_details.get().map(|user_details| {
-                                        view! { <ProfileComponent user_details /> }
-                                    })
-                                }}
-                            </Suspense>
+                            {
+                                let user_details = create_resource(
+                                    move || Some(param_principal),
+                                    move |param_principal| async move {
+                                        let param_principal = param_principal?;
+                                        let canisters = unauth_canisters();
+                            
+                                        let user_canister = canisters
+                                            .get_individual_canister_by_user_principal(param_principal)
+                                            .await
+                                            .ok()??;
+                                        let user = canisters.individual_user(user_canister).await;
+                                        let user_details = user.get_profile_details().await.ok()?;
+                                        Some(user_details.into())
+                                    },
+                                );
+                            
+                                view! {
+                                    <Suspense>
+                                        {move || {
+                                            user_details.get().map(|user_details| {
+                                                view! { <ProfileComponent user_details /> }
+                                            })
+                                        }}
+                                    </Suspense>
+                                }
+                            }
                         }
                     }
                 } else {
@@ -361,6 +364,36 @@ pub fn ProfileView() -> impl IntoView {
                 }
             }
         </AuthCansProvider>
+    }
+}
+
+#[component]
+pub fn OtherProfileView(param_principal: Principal) -> impl IntoView{
+
+    let user_details = create_resource(
+        move || Some(param_principal),
+        move |param_principal| async move {
+            let param_principal = param_principal?;
+            let canisters = unauth_canisters();
+
+            let user_canister = canisters
+                .get_individual_canister_by_user_principal(param_principal)
+                .await
+                .ok()??;
+            let user = canisters.individual_user(user_canister).await;
+            let user_details = user.get_profile_details().await.ok()?;
+            Some(user_details.into())
+        },
+    );
+
+    view! {
+        <Suspense>
+            {move || {
+                user_details.get().map(|user_details| {
+                    view! { <ProfileComponent user_details /> }
+                })
+            }}
+        </Suspense>
     }
 }
 #[component]

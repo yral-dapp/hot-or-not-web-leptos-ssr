@@ -100,7 +100,7 @@ fn ProfileLoaded(user_details: ProfileDetails) -> impl IntoView {
             <span class="text-white text-ellipsis line-clamp-1 text-xl">
                 {user_details.display_name_or_fallback()}
             </span>
-            <a class="text-primary-600 text-md" href="/your-profile">
+            <a class="text-primary-600 text-md" href="/profile/posts">
                 View Profile
             </a>
         </div>
