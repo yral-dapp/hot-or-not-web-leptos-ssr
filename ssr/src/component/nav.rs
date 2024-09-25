@@ -94,7 +94,7 @@ pub fn NavBar() -> impl IntoView {
     let home_path = create_rw_signal("/".to_string());
     let cur_selected = create_memo(move |_| {
         let path = cur_location.pathname.get();
-    
+
         match path.as_str() {
             "/" => 0,
             // "/leaderboard" => 1,

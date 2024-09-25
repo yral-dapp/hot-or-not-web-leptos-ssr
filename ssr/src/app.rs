@@ -156,6 +156,7 @@ pub fn App() -> impl IntoView {
                         <Route path="/terms-of-service" view=TermsOfService/>
                         <Route path="/privacy-policy" view=PrivacyPolicy/>
                         <Route path="/wallet" view=Wallet/>
+                        <Route path="/wallet/:id" view=Wallet/>
                         <Route path="/transactions" view=Transactions/>
                         <Route path="/leaderboard" view=Leaderboard/>
                         <Route path="/account-transfer" view=AccountTransfer/>
