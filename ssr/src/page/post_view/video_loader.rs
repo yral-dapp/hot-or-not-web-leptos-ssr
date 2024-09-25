@@ -8,11 +8,9 @@ use leptos_use::use_event_listener;
 use crate::consts::USER_ONBOARDING_STORE;
 use crate::page::post_view::BetEligiblePostCtx;
 use crate::utils::event_streaming::events::VideoWatched;
+use yral_canisters_client::individual_user_template::PostViewDetailsFromFrontend;
+
 use crate::{
-    canister::{
-        individual_user_template::PostViewDetailsFromFrontend,
-        utils::{bg_url, mp4_url},
-    },
     component::{
         feed_popup::FeedPopUp, onboarding_flow::OnboardingPopUp, video_player::VideoPlayer,
     },
@@ -20,6 +18,7 @@ use crate::{
         auth::account_connected_reader, canisters::unauth_canisters,
         local_storage::use_referrer_store,
     },
+    utils::{bg_url, mp4_url},
 };
 
 use super::{overlay::VideoDetailsOverlay, PostDetails};

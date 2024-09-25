@@ -35,5 +35,7 @@ pub mod server {
         pub grpc_offchain_channel: tonic::transport::Channel,
         #[cfg(feature = "firestore")]
         pub firestore_db: firestore::FirestoreDb,
+        #[cfg(feature = "qstash")]
+        pub qstash: crate::utils::qstash::QStashClient,
     }
 }

@@ -152,11 +152,11 @@ pub mod provider {
     #[cfg(not(feature = "mock-wallet-history"))]
     mod canister {
         use super::{Canisters, CursoredDataProvider, TxnInfo, TxnTag};
-        use crate::canister::individual_user_template::{
-            HotOrNotOutcomePayoutEvent, MintEvent, Result15, TokenEvent,
-        };
         use crate::component::infinite_scroller::PageEntry;
         use ic_agent::AgentError;
+        use yral_canisters_client::individual_user_template::{
+            HotOrNotOutcomePayoutEvent, MintEvent, Result15, TokenEvent,
+        };
 
         fn event_to_txn(event: (u64, TokenEvent)) -> Option<TxnInfo> {
             let (amount, tag) = match event.1 {

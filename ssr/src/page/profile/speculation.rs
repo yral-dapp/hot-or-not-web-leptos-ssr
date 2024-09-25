@@ -7,10 +7,10 @@ use web_time::Duration;
 
 use super::ic::ProfileStream;
 use crate::{
-    canister::utils::bg_url,
     component::profile_placeholders::NoMoreBetsGraphic,
     state::canisters::unauth_canisters,
     utils::{
+        bg_url,
         posts::PostDetails,
         profile::{BetDetails, BetOutcome, BetsProvider, ProfileDetails},
         time::to_hh_mm_ss,
