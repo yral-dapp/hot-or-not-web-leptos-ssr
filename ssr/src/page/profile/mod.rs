@@ -52,13 +52,13 @@ fn ListSwitcher1() -> impl IntoView {
     let current_tab = create_memo(move |_| {
         let pathname = loc.pathname.get();
         if pathname.ends_with("posts") {
-            return 0;
+            0
         } else if pathname.ends_with("stakes") {
-            return 1;
+            1
         } else if pathname.ends_with("tokens") {
-            return 2;
+            2
         } else {
-            return 0;
+            0
         }
     });
 
@@ -236,8 +236,12 @@ pub fn ProfileTokenRoute() -> impl IntoView {
                 view! {
                     <Suspense>
                         {move || {
-                            user_details.get().map(|maybe| {
-                                view! { <ProfileTokens user_canister=maybe.clone().unwrap().0 user_principal=maybe.clone().unwrap().1 /> }
+                            user_details.get().map(|details| {
+                                if let Some((user_canister, user_principal)) = details{
+                                    view! { <ProfileTokens user_canister=user_canister user_principal=user_principal /> }
+                                }else{
+                                    view! {<Redirect path="/"/>}
+                                }
                             })
                         }}
                     </Suspense>
@@ -255,7 +259,7 @@ pub fn ProfileTokenRoute() -> impl IntoView {
 }
 
 #[component]
-fn ProfileViewInner(user: ProfileDetails, user_canister: Principal) -> impl IntoView {
+fn ProfileViewInner(user: ProfileDetails) -> impl IntoView {
     let username_or_principal = user.username_or_principal();
     let profile_pic = user.profile_pic_or_random();
     let display_name = user.display_name_or_fallback();
@@ -336,7 +340,7 @@ pub fn ProfileView() -> impl IntoView {
                                     .ok()??;
                                 let user = canisters.individual_user(user_canister).await;
                                 let user_details = user.get_profile_details().await.ok()?;
-                                Some((user_details.into(), user_canister))
+                                Some(user_details.into())
                             },
                         );
 
@@ -363,16 +367,15 @@ pub fn ProfileView() -> impl IntoView {
 pub fn YourProfileView() -> impl IntoView {
     view! {
         <AuthCansProvider fallback=FullScreenSpinner let:canister>
-            <ProfileComponent user_details=Some((
-                canister.profile_details(),
-                canister.user_canister(),
-            )) />
+            <ProfileComponent user_details=Some(
+                canister.profile_details()
+            ) />
         </AuthCansProvider>
     }
 }
 
 #[component]
-pub fn ProfileComponent(user_details: Option<(ProfileDetails, Principal)>) -> impl IntoView {
+pub fn ProfileComponent(user_details: Option<ProfileDetails>) -> impl IntoView {
     let ProfilePostsContext {
         video_queue,
         start_index,
@@ -388,8 +391,8 @@ pub fn ProfileComponent(user_details: Option<(ProfileDetails, Principal)>) -> im
 
     view! {
         {move || {
-            if let Some((user, user_canister)) = user_details.clone() {
-                view! { <ProfileViewInner user user_canister /> }
+            if let Some(user) = user_details.clone() {
+                view! { <ProfileViewInner user/> }
             } else {
                 view! { <Redirect path="/" /> }
             }
