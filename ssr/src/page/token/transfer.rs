@@ -7,6 +7,7 @@ use crate::{
         back_btn::BackButton, canisters_prov::WithAuthCans, spinner::FullScreenSpinner,
         title::Title,
     },
+    page::token::non_yral_tokens::SUPPORTED_NON_YRAL_TOKENS_ROOT,
     state::canisters::{authenticated_canisters, Canisters, CanistersAuthWire},
     utils::{
         event_streaming::events::TokensTransferred,
@@ -90,8 +91,14 @@ async fn transfer_token_to_user_principal(
         .get_individual_canister_by_user_principal(destination_principal)
         .await?;
 
-    if let Some(destination_canister_principal) = destination_canister_principal {
-        let destination_canister = cans.individual_user(destination_canister_principal).await;
+    let is_non_yral_token = SUPPORTED_NON_YRAL_TOKENS_ROOT
+        .iter()
+        .any(|&token_root| token_root == root_canister.to_text());
+
+    if destination_canister_principal.is_some() && !is_non_yral_token {
+        let destination_canister = cans
+            .individual_user(destination_canister_principal.unwrap())
+            .await;
         let res = destination_canister.add_token(root_canister).await?;
         println!("add_token res: {:?}", res);
     }

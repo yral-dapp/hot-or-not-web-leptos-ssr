@@ -5,7 +5,7 @@ use leptos::*;
 use crate::state::canisters::Canisters;
 use crate::utils::token::token_metadata_by_root;
 
-const SUPPORTED_NON_YRAL_TOKENS_ROOT: &[&str] = &["67bll-riaaa-aaaaq-aaauq-cai"];
+pub const SUPPORTED_NON_YRAL_TOKENS_ROOT: &[&str] = &["67bll-riaaa-aaaaq-aaauq-cai"];
 
 pub async fn eligible_non_yral_supported_tokens(
     cans: Canisters<true>,
