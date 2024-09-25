@@ -93,7 +93,7 @@ gloo-utils = { version = "0.2.0", features = ["serde"] }
 hmac = { version = "0.12.1", optional = true }
 wasm-bindgen-futures = { version = "0.4.42" }
 testcontainers = { version = "0.20.0", optional = true }
-yral-testcontainers = { git = "https://github.com/yral-dapp/yral-testcontainers", rev = "f9d2c01c498d58fca0595a48bdc3f9400e57ec2f", optional = true }
+yral-testcontainers = { git = "https://github.com/yral-dapp/yral-testcontainers", rev = "7438ba7cb281e7f195cf81f2a8532f63ce005771", optional = true }
 sns-validation.workspace = true
 js-sys = "0.3.69"
 tonic-web-wasm-client = { version = "0.6" }
