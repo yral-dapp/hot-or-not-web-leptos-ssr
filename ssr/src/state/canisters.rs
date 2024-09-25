@@ -9,7 +9,6 @@ use yral_metadata_client::MetadataClient;
 use yral_metadata_types::UserMetadata;
 
 use crate::{
-    auth::DelegatedIdentityWire,
     canister::{
         individual_user_template::{
             IndividualUserTemplate, Result23, Result7, UserCanisterDetails,
@@ -25,6 +24,7 @@ use crate::{
     consts::METADATA_API_BASE,
     utils::{ic::AgentWrapper, profile::ProfileDetails, MockPartialEq, ParentResource},
 };
+use yral_types::delegated_identity::DelegatedIdentityWire;
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct CanistersAuthWire {

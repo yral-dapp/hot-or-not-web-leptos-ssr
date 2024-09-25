@@ -8,9 +8,9 @@ use codee::string::FromToStringCodec;
 use ic_agent::Identity;
 use leptos::*;
 use leptos_use::storage::use_local_storage;
+use yral_types::delegated_identity::DelegatedIdentityWire;
 
 use crate::{
-    auth::DelegatedIdentityWire,
     consts::ACCOUNT_CONNECTED_STORE,
     state::{
         auth::auth_state,

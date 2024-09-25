@@ -2,7 +2,8 @@ use leptos::*;
 use leptos_router::*;
 use serde::{Deserialize, Serialize};
 
-use crate::{auth::DelegatedIdentityWire, component::loading::Loading, utils::route::go_to_root};
+use crate::{component::loading::Loading, utils::route::go_to_root};
+use yral_types::delegated_identity::DelegatedIdentityWire;
 
 pub type GoogleAuthMessage = Result<DelegatedIdentityWire, String>;
 
