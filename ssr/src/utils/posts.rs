@@ -2,9 +2,9 @@ use candid::Principal;
 use serde::{Deserialize, Serialize};
 use web_time::Duration;
 
-use crate::{
-    canister::individual_user_template::PostDetailsForFrontend, state::canisters::Canisters,
-};
+use yral_canisters_client::individual_user_template::PostDetailsForFrontend;
+
+use crate::state::canisters::Canisters;
 
 use super::{profile::propic_from_principal, types::PostStatus};
 

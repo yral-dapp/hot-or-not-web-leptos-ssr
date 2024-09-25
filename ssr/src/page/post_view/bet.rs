@@ -3,9 +3,9 @@ use leptos::*;
 use leptos_icons::*;
 use leptos_use::use_interval_fn;
 use web_time::Duration;
+use yral_canisters_client::individual_user_template::{BettingStatus, PlaceBetArg, Result3};
 
 use crate::{
-    canister::individual_user_template::{BettingStatus, PlaceBetArg, Result3},
     component::{
         bullet_loader::BulletLoader, canisters_prov::AuthCansProvider, hn_icons::*,
         spinner::SpinnerFit,

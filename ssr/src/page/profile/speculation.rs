@@ -11,6 +11,7 @@ use crate::{
     component::{canisters_prov::AuthCansProvider, profile_placeholders::NoMoreBetsGraphic},
     state::canisters::unauth_canisters,
     utils::{
+        bg_url,
         posts::PostDetails,
         profile::{BetDetails, BetOutcome, BetsProvider, ProfileDetails},
         time::to_hh_mm_ss,

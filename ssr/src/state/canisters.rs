@@ -8,28 +8,27 @@ use sns_validation::pbs::sns_pb::SnsInitPayload;
 use yral_metadata_client::MetadataClient;
 use yral_metadata_types::UserMetadata;
 
+use yral_canisters_client::{
+    individual_user_template::{IndividualUserTemplate, Result23, Result7, UserCanisterDetails},
+    platform_orchestrator::PlatformOrchestrator,
+    post_cache::PostCache,
+    sns_governance::SnsGovernance,
+    sns_ledger::SnsLedger,
+    sns_root::SnsRoot,
+    user_index::{Result1, UserIndex},
+};
+
 use crate::{
-    auth::DelegatedIdentityWire,
-    canister::{
-        individual_user_template::{
-            IndividualUserTemplate, Result23, Result7, UserCanisterDetails,
-        },
-        platform_orchestrator::PlatformOrchestrator,
-        post_cache::PostCache,
-        sns_governance::SnsGovernance,
-        sns_ledger::SnsLedger,
-        sns_root::SnsRoot,
-        user_index::{Result1, UserIndex},
-        PLATFORM_ORCHESTRATOR_ID, POST_CACHE_ID,
-    },
-    consts::METADATA_API_BASE,
+    canister_ids::{PLATFORM_ORCHESTRATOR_ID, POST_CACHE_ID},
+    consts::{CDAO_SWAP_TIME_SECS, METADATA_API_BASE},
     utils::{ic::AgentWrapper, profile::ProfileDetails, MockPartialEq, ParentResource},
 };
+use yral_types::delegated_identity::DelegatedIdentityWire;
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct CanistersAuthWire {
-    id: DelegatedIdentityWire,
-    user_canister: Principal,
+    pub id: DelegatedIdentityWire,
+    pub user_canister: Principal,
     expiry: u64,
     profile_details: ProfileDetails,
 }
@@ -121,7 +120,7 @@ impl Canisters<true> {
         init_payload: SnsInitPayload,
     ) -> Result<Result7, AgentError> {
         let agent = self.agent.get_agent().await;
-        let args = candid::encode_args((init_payload, 90_u64)).unwrap();
+        let args = candid::encode_args((init_payload, CDAO_SWAP_TIME_SECS)).unwrap();
         let bytes = agent
             .update(&self.user_canister, "deploy_cdao_sns")
             .with_arg(args)
@@ -209,7 +208,7 @@ impl<const A: bool> Canisters<A> {
     async fn subnet_indexes(&self) -> Result<Vec<Principal>, AgentError> {
         #[cfg(any(feature = "local-bin", feature = "local-lib"))]
         {
-            use crate::canister::USER_INDEX_ID;
+            use crate::canister_ids::USER_INDEX_ID;
             Ok(vec![USER_INDEX_ID])
         }
         #[cfg(not(any(feature = "local-bin", feature = "local-lib")))]

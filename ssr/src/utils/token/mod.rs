@@ -1,6 +1,4 @@
 pub mod icpump;
-#[cfg(feature = "ssr")]
-mod server_impl;
 
 use std::{
     cmp::Ordering,
@@ -8,21 +6,19 @@ use std::{
     str::FromStr,
 };
 
-use candid::{Encode, Nat, Principal};
+use candid::{Nat, Principal};
 use ic_agent::AgentError;
 use leptos::ServerFnError;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    canister::{
-        sns_governance::{DissolveState, GetMetadataArg, ListNeurons, Neuron, SnsGovernance},
-        sns_ledger::Account as LedgerAccount,
-        sns_root::ListSnsCanistersArg,
-    },
-    state::canisters::{Canisters, CanistersAuthWire},
+use yral_canisters_client::{
+    sns_governance::{DissolveState, GetMetadataArg, ListNeurons},
+    sns_ledger::Account as LedgerAccount,
+    sns_root::ListSnsCanistersArg,
 };
-use leptos::{server, server_fn::codec::Cbor};
+
+use crate::state::canisters::Canisters;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct TokenBalance {
@@ -75,10 +71,13 @@ impl From<TokenBalance> for Nat {
     }
 }
 
-impl Add<Nat> for TokenBalance {
+impl<T> Add<T> for TokenBalance
+where
+    Nat: Add<T, Output = Nat>,
+{
     type Output = Self;
 
-    fn add(self, other: Nat) -> Self {
+    fn add(self, other: T) -> Self {
         Self {
             e8s: self.e8s + other,
             decimals: self.decimals,
@@ -86,28 +85,40 @@ impl Add<Nat> for TokenBalance {
     }
 }
 
-impl AddAssign<Nat> for TokenBalance {
-    fn add_assign(&mut self, rhs: Nat) {
+impl<T> AddAssign<T> for TokenBalance
+where
+    Nat: AddAssign<T>,
+{
+    fn add_assign(&mut self, rhs: T) {
         self.e8s += rhs;
     }
 }
 
-impl PartialEq<Nat> for TokenBalance {
-    fn eq(&self, other: &Nat) -> bool {
+impl<T> PartialEq<T> for TokenBalance
+where
+    Nat: PartialEq<T>,
+{
+    fn eq(&self, other: &T) -> bool {
         self.e8s.eq(other)
     }
 }
 
-impl PartialOrd<Nat> for TokenBalance {
-    fn partial_cmp(&self, other: &Nat) -> Option<Ordering> {
+impl<T> PartialOrd<T> for TokenBalance
+where
+    Nat: PartialOrd<T>,
+{
+    fn partial_cmp(&self, other: &T) -> Option<Ordering> {
         self.e8s.partial_cmp(other)
     }
 }
 
-impl Sub<Nat> for TokenBalance {
+impl<T> Sub<T> for TokenBalance
+where
+    Nat: Sub<T, Output = Nat>,
+{
     type Output = Self;
 
-    fn sub(self, rhs: Nat) -> Self {
+    fn sub(self, rhs: T) -> Self {
         Self {
             e8s: self.e8s - rhs,
             decimals: self.decimals,
@@ -115,8 +126,11 @@ impl Sub<Nat> for TokenBalance {
     }
 }
 
-impl SubAssign<Nat> for TokenBalance {
-    fn sub_assign(&mut self, rhs: Nat) {
+impl<T> SubAssign<T> for TokenBalance
+where
+    Nat: SubAssign<T>,
+{
+    fn sub_assign(&mut self, rhs: T) {
         self.e8s -= rhs;
     }
 }
@@ -150,6 +164,43 @@ impl PartialOrd for TokenBalance {
     }
 }
 
+#[derive(Deserialize, Serialize, Clone, Debug)]
+pub struct TokenBalanceOrClaiming(Option<TokenBalance>);
+
+impl TokenBalanceOrClaiming {
+    pub fn new(balance: TokenBalance) -> Self {
+        Self(Some(balance))
+    }
+
+    pub fn claiming() -> Self {
+        Self(None)
+    }
+
+    pub fn is_claiming(&self) -> bool {
+        self.0.is_none()
+    }
+
+    pub fn humanize(&self) -> String {
+        self.0
+            .as_ref()
+            .map(|b| b.humanize())
+            .unwrap_or_else(|| "Processing".to_string())
+    }
+
+    pub fn humanize_float(&self) -> String {
+        self.map_balance_ref(|b| b.humanize_float())
+            .unwrap_or_else(|| "Processing".to_string())
+    }
+
+    pub fn map_balance<T>(self, f: impl FnOnce(TokenBalance) -> T) -> Option<T> {
+        self.0.map(f)
+    }
+
+    pub fn map_balance_ref<T>(&self, f: impl FnOnce(&TokenBalance) -> T) -> Option<T> {
+        self.0.as_ref().map(f)
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct DeployedCdaoCanisters {
     pub root: Principal,
@@ -159,10 +210,10 @@ pub struct DeployedCdaoCanisters {
     pub governance: Principal,
 }
 
-impl From<crate::canister::individual_user_template::DeployedCdaoCanisters>
+impl From<yral_canisters_client::individual_user_template::DeployedCdaoCanisters>
     for DeployedCdaoCanisters
 {
-    fn from(value: crate::canister::individual_user_template::DeployedCdaoCanisters) -> Self {
+    fn from(value: yral_canisters_client::individual_user_template::DeployedCdaoCanisters) -> Self {
         Self {
             root: value.root,
             swap: value.swap,
@@ -179,8 +230,9 @@ pub struct TokenMetadata {
     pub name: String,
     pub description: String,
     pub symbol: String,
-    pub balance: TokenBalance,
+    pub balance: TokenBalanceOrClaiming,
     pub fees: TokenBalance,
+    pub root: Principal,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -204,7 +256,7 @@ pub async fn token_metadata_by_root<const A: bool>(
     let Some(ledger) = sns_cans.ledger else {
         return Ok(None);
     };
-    let metadata = get_token_metadata(cans, user_principal, governance, ledger).await?;
+    let metadata = get_token_metadata(cans, user_principal, token_root, governance, ledger).await?;
 
     Ok(Some(metadata))
 }
@@ -212,21 +264,18 @@ pub async fn token_metadata_by_root<const A: bool>(
 pub async fn get_token_metadata<const A: bool>(
     cans: &Canisters<A>,
     user_principal: Principal,
+    root: Principal,
     governance: Principal,
     ledger: Principal,
 ) -> Result<TokenMetadata, AgentError> {
-    let governance = cans.sns_governance(governance).await;
-    let metadata = governance.get_metadata(GetMetadataArg {}).await?;
+    let governance_can = cans.sns_governance(governance).await;
+    let metadata = governance_can.get_metadata(GetMetadataArg {}).await?;
 
-    let ledger = cans.sns_ledger(ledger).await;
-    let symbol = ledger.icrc_1_symbol().await?;
+    let ledger_can = cans.sns_ledger(ledger).await;
+    let symbol = ledger_can.icrc_1_symbol().await?;
 
-    let acc = LedgerAccount {
-        owner: user_principal,
-        subaccount: None,
-    };
-    let balance_e8s = ledger.icrc_1_balance_of(acc).await?;
-    let fees = ledger.icrc_1_fee().await?;
+    let balance = get_token_balance(cans, user_principal, governance, ledger).await?;
+    let fees = ledger_can.icrc_1_fee().await?;
 
     Ok(TokenMetadata {
         logo_b64: metadata.logo.unwrap_or_default(),
@@ -234,77 +283,56 @@ pub async fn get_token_metadata<const A: bool>(
         description: metadata.description.unwrap_or_default(),
         symbol,
         fees: TokenBalance::new_cdao(fees),
-        balance: TokenBalance::new_cdao(balance_e8s),
+        balance,
+        root,
     })
 }
 
-#[server(input = Cbor)]
-pub async fn claim_tokens_from_first_neuron(
-    cans_wire: CanistersAuthWire,
-    governance_principal: Principal,
-    ledger_principal: Principal,
-    raw_neuron: Vec<u8>,
-) -> Result<(), ServerFnError> {
-    server_impl::claim_tokens_from_first_neuron(
-        cans_wire,
-        governance_principal,
-        ledger_principal,
-        raw_neuron,
-    )
-    .await
-}
-
-async fn get_neurons(
-    governance: &SnsGovernance<'_>,
+/// Fetches the token balance for an SNS token
+/// returns TokenBalanceOrClaiming::Claiming if the token creation is in progress
+async fn get_token_balance<const A: bool>(
+    cans: &Canisters<A>,
     user_principal: Principal,
-) -> Result<Vec<Neuron>, ServerFnError> {
+    governance: Principal,
+    ledger: Principal,
+) -> Result<TokenBalanceOrClaiming, AgentError> {
+    let ledger = cans.sns_ledger(ledger).await;
+    let acc = LedgerAccount {
+        owner: user_principal,
+        subaccount: None,
+    };
+    // Balance > 0 -> Token is already claimed
+    let balance_e8s = ledger.icrc_1_balance_of(acc).await?;
+    let ready_balance = |e8s| Ok(TokenBalanceOrClaiming::new(TokenBalance::new_cdao(e8s)));
+    if balance_e8s > 0u8 {
+        return ready_balance(balance_e8s);
+    }
+
+    // if balance is 0 we may not have completed claiming
+    let governance = cans.sns_governance(governance).await;
     let neurons = governance
         .list_neurons(ListNeurons {
             of_principal: Some(user_principal),
             limit: 10,
             start_page_at: None,
         })
-        .await?;
+        .await?
+        .neurons;
 
-    Ok(neurons.neurons)
-}
-
-pub async fn claim_tokens_from_first_neuron_if_required(
-    cans_wire: CanistersAuthWire,
-    token_root: Principal,
-) -> Result<(), ServerFnError> {
-    let cans = cans_wire.clone().canisters()?;
-    let root_canister = cans.sns_root(token_root).await;
-    let token_cans = root_canister
-        .list_sns_canisters(ListSnsCanistersArg {})
-        .await?;
-    let Some(governance) = token_cans.governance else {
-        log::warn!("No governance canister found for token. Ignoring...");
-        return Ok(());
-    };
-    let Some(ledger) = token_cans.ledger else {
-        log::warn!("No ledger canister found for token. Ignoring...");
-        return Ok(());
-    };
-
-    let governance_can = cans.sns_governance(governance).await;
-
-    let neurons = get_neurons(&governance_can, cans.user_principal()).await?;
     if neurons.len() < 2 || neurons[1].cached_neuron_stake_e8s == 0 {
-        return Ok(());
+        return ready_balance(balance_e8s);
     }
-    let ix = if matches!(
+
+    if matches!(
         neurons[1].dissolve_state.as_ref(),
         Some(DissolveState::DissolveDelaySeconds(0))
     ) {
-        1
-    } else {
-        0
-    };
-    if neurons[ix].cached_neuron_stake_e8s == 0 {
-        return Ok(());
+        return Ok(TokenBalanceOrClaiming::claiming());
     }
 
-    let raw_neurons = Encode!(&neurons[ix]).unwrap();
-    claim_tokens_from_first_neuron(cans_wire, governance, ledger, raw_neurons).await
+    if neurons[0].cached_neuron_stake_e8s == 0 {
+        return ready_balance(balance_e8s);
+    }
+
+    Ok(TokenBalanceOrClaiming::claiming())
 }

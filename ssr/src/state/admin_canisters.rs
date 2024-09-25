@@ -1,13 +1,11 @@
 use candid::Principal;
 use ic_agent::Identity;
 use leptos::expect_context;
-
-use crate::{
-    canister::{
-        individual_user_template::IndividualUserTemplate, sns_swap::SnsSwap, user_index::UserIndex,
-    },
-    utils::ic::AgentWrapper,
+use yral_canisters_client::{
+    individual_user_template::IndividualUserTemplate, sns_swap::SnsSwap, user_index::UserIndex,
 };
+
+use crate::utils::ic::AgentWrapper;
 
 #[derive(Clone)]
 pub struct AdminCanisters {
