@@ -2869,6 +2869,7 @@ dependencies = [
  "web-time",
  "yral-metadata-client",
  "yral-metadata-types",
+ "yral-qstash-types",
  "yral-testcontainers",
  "yral-types",
 ]
@@ -7743,6 +7744,16 @@ dependencies = [
  "serde",
  "thiserror",
  "yral-identity",
+]
+
+[[package]]
+name = "yral-qstash-types"
+version = "0.1.0"
+source = "git+https://github.com/yral-dapp/yral-common.git?rev=be0420fe2b3cdabe0f65bdb03e8859b7946bd50#be0420fe2b3cdabe0f65bdb03e8859b7946bd509"
+dependencies = [
+ "candid",
+ "serde",
+ "yral-types",
 ]
 
 [[package]]

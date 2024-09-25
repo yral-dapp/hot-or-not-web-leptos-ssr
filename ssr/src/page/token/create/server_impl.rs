@@ -3,10 +3,34 @@ pub use no_op_impl::{deploy_cdao_canisters, is_server_available};
 #[cfg(feature = "backend-admin")]
 pub use real_impl::{deploy_cdao_canisters, is_server_available};
 
+#[cfg(all(feature = "backend-admin", feature = "qstash"))]
+mod qstash_claim {
+    use leptos::{expect_context, ServerFnError};
+    use yral_qstash_types::ClaimTokensRequest;
+
+    pub async fn enqueue_claim_token(req: ClaimTokensRequest) -> Result<(), ServerFnError> {
+        use crate::utils::qstash::QStashClient;
+        let client: QStashClient = expect_context();
+        client.enqueue_claim_token(req).await?;
+
+        Ok(())
+    }
+}
+
+#[cfg(all(feature = "backend-admin", not(feature = "qstash")))]
+mod no_op_claim {
+    use yral_qstash_types::ClaimTokensRequest;
+
+    pub async fn enqueue_claim_token(_req: ClaimTokensRequest) -> Result<(), ServerFnError> {
+        Ok(())
+    }
+}
+
 #[cfg(feature = "backend-admin")]
 mod real_impl {
     use std::str::FromStr;
 
+    use crate::auth::delegate_short_lived_identity;
     use crate::canister::individual_user_template::Result7;
     use crate::canister::sns_swap::{NewSaleTicketRequest, RefreshBuyerTokensRequest};
     use crate::consts::ICP_LEDGER_CANISTER_ID;
@@ -16,10 +40,16 @@ mod real_impl {
     use icp_ledger::{AccountIdentifier, Subaccount};
     use leptos::ServerFnError;
     use sns_validation::pbs::sns_pb::SnsInitPayload;
+    use yral_qstash_types::ClaimTokensRequest;
 
     use crate::page::token::types::{Icrc1BalanceOfArg, Recipient, Transaction, TransferResult};
     use crate::state::admin_canisters::admin_canisters;
     use crate::state::canisters::CanistersAuthWire;
+
+    #[cfg(all(feature = "backend-admin", not(feature = "qstash")))]
+    use super::no_op_claim::enqueue_claim_token;
+    #[cfg(all(feature = "backend-admin", feature = "qstash"))]
+    use super::qstash_claim::enqueue_claim_token;
 
     const ICP_TX_FEE: u64 = 10000;
 
@@ -122,14 +152,25 @@ mod real_impl {
             .await
             .map_err(|e| ServerFnError::new(format!("{e:?}")))?;
 
-        match res {
+        let deployed_cans = match res {
             Result7::Ok(c) => {
                 log::debug!("deployed canister {}", c.governance);
-                participate_in_swap(c.swap).await?;
-                Ok(c.into())
+                c
             }
-            Result7::Err(e) => Err(ServerFnError::new(format!("{e:?}"))),
-        }
+            Result7::Err(e) => return Err(ServerFnError::new(format!("{e:?}"))),
+        };
+
+        participate_in_swap(deployed_cans.swap).await?;
+
+        let temp_id = delegate_short_lived_identity(cans.identity());
+        let claim_req = ClaimTokensRequest {
+            identity: temp_id,
+            user_canister: cans.user_canister(),
+            token_root: deployed_cans.root,
+        };
+        enqueue_claim_token(claim_req).await?;
+
+        Ok(deployed_cans.into())
     }
 }
 

@@ -4,7 +4,7 @@ use leptos::*;
 use crate::{
     component::{
         bullet_loader::BulletLoader, canisters_prov::AuthCansProvider,
-        claim_tokens::ClaimTokensOrRedirectError, token_confetti_symbol::TokenConfettiSymbol,
+        token_confetti_symbol::TokenConfettiSymbol,
     },
     page::wallet::tokens::{TokenTile, TokenViewFallback},
     state::canisters::unauth_canisters,
@@ -25,7 +25,6 @@ fn TokenView(user_principal: Principal, token: TokenCans) -> impl IntoView {
     );
 
     view! {
-        <ClaimTokensOrRedirectError token_root=token.root/>
         <Suspense fallback=TokenViewFallback>
             {move || {
                 token_info()

@@ -11,6 +11,8 @@ pub mod ml_feed;
 pub mod notifications;
 pub mod posts;
 pub mod profile;
+#[cfg(feature = "qstash")]
+pub mod qstash;
 pub mod report;
 pub mod route;
 pub mod time;

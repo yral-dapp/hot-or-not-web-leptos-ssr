@@ -1,6 +1,4 @@
 pub mod icpump;
-#[cfg(feature = "ssr")]
-mod server_impl;
 
 use std::{
     cmp::Ordering,
@@ -8,7 +6,7 @@ use std::{
     str::FromStr,
 };
 
-use candid::{Encode, Nat, Principal};
+use candid::{Nat, Principal};
 use ic_agent::AgentError;
 use leptos::ServerFnError;
 use rust_decimal::Decimal;
@@ -16,13 +14,11 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     canister::{
-        sns_governance::{DissolveState, GetMetadataArg, ListNeurons, Neuron, SnsGovernance},
-        sns_ledger::Account as LedgerAccount,
+        sns_governance::GetMetadataArg, sns_ledger::Account as LedgerAccount,
         sns_root::ListSnsCanistersArg,
     },
-    state::canisters::{Canisters, CanistersAuthWire},
+    state::canisters::Canisters,
 };
-use leptos::{server, server_fn::codec::Cbor};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct TokenBalance {
@@ -238,73 +234,57 @@ pub async fn get_token_metadata<const A: bool>(
     })
 }
 
-#[server(input = Cbor)]
-pub async fn claim_tokens_from_first_neuron(
-    cans_wire: CanistersAuthWire,
-    governance_principal: Principal,
-    ledger_principal: Principal,
-    raw_neuron: Vec<u8>,
-) -> Result<(), ServerFnError> {
-    server_impl::claim_tokens_from_first_neuron(
-        cans_wire,
-        governance_principal,
-        ledger_principal,
-        raw_neuron,
-    )
-    .await
-}
+// async fn get_neurons(
+//     governance: &SnsGovernance<'_>,
+//     user_principal: Principal,
+// ) -> Result<Vec<Neuron>, ServerFnError> {
+//     let neurons = governance
+//         .list_neurons(ListNeurons {
+//             of_principal: Some(user_principal),
+//             limit: 10,
+//             start_page_at: None,
+//         })
+//         .await?;
 
-async fn get_neurons(
-    governance: &SnsGovernance<'_>,
-    user_principal: Principal,
-) -> Result<Vec<Neuron>, ServerFnError> {
-    let neurons = governance
-        .list_neurons(ListNeurons {
-            of_principal: Some(user_principal),
-            limit: 10,
-            start_page_at: None,
-        })
-        .await?;
+//     Ok(neurons.neurons)
+// }
 
-    Ok(neurons.neurons)
-}
+// pub async fn claim_tokens_from_first_neuron_if_required(
+//     cans_wire: CanistersAuthWire,
+//     token_root: Principal,
+// ) -> Result<(), ServerFnError> {
+//     let cans = cans_wire.clone().canisters()?;
+//     let root_canister = cans.sns_root(token_root).await;
+//     let token_cans = root_canister
+//         .list_sns_canisters(ListSnsCanistersArg {})
+//         .await?;
+//     let Some(governance) = token_cans.governance else {
+//         log::warn!("No governance canister found for token. Ignoring...");
+//         return Ok(());
+//     };
+//     let Some(ledger) = token_cans.ledger else {
+//         log::warn!("No ledger canister found for token. Ignoring...");
+//         return Ok(());
+//     };
 
-pub async fn claim_tokens_from_first_neuron_if_required(
-    cans_wire: CanistersAuthWire,
-    token_root: Principal,
-) -> Result<(), ServerFnError> {
-    let cans = cans_wire.clone().canisters()?;
-    let root_canister = cans.sns_root(token_root).await;
-    let token_cans = root_canister
-        .list_sns_canisters(ListSnsCanistersArg {})
-        .await?;
-    let Some(governance) = token_cans.governance else {
-        log::warn!("No governance canister found for token. Ignoring...");
-        return Ok(());
-    };
-    let Some(ledger) = token_cans.ledger else {
-        log::warn!("No ledger canister found for token. Ignoring...");
-        return Ok(());
-    };
+//     let governance_can = cans.sns_governance(governance).await;
 
-    let governance_can = cans.sns_governance(governance).await;
+//     let neurons = get_neurons(&governance_can, cans.user_principal()).await?;
+//     if neurons.len() < 2 || neurons[1].cached_neuron_stake_e8s == 0 {
+//         return Ok(());
+//     }
+//     let ix = if matches!(
+//         neurons[1].dissolve_state.as_ref(),
+//         Some(DissolveState::DissolveDelaySeconds(0))
+//     ) {
+//         1
+//     } else {
+//         0
+//     };
+//     if neurons[ix].cached_neuron_stake_e8s == 0 {
+//         return Ok(());
+//     }
 
-    let neurons = get_neurons(&governance_can, cans.user_principal()).await?;
-    if neurons.len() < 2 || neurons[1].cached_neuron_stake_e8s == 0 {
-        return Ok(());
-    }
-    let ix = if matches!(
-        neurons[1].dissolve_state.as_ref(),
-        Some(DissolveState::DissolveDelaySeconds(0))
-    ) {
-        1
-    } else {
-        0
-    };
-    if neurons[ix].cached_neuron_stake_e8s == 0 {
-        return Ok(());
-    }
-
-    let raw_neurons = Encode!(&neurons[ix]).unwrap();
-    claim_tokens_from_first_neuron(cans_wire, governance, ledger, raw_neurons).await
-}
+//     let raw_neurons = Encode!(&neurons[ix]).unwrap();
+//     claim_tokens_from_first_neuron(cans_wire, governance, ledger, raw_neurons).await
+// }

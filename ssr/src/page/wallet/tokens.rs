@@ -8,7 +8,6 @@ use crate::{
         back_btn::BackButton,
         bullet_loader::BulletLoader,
         canisters_prov::AuthCansProvider,
-        claim_tokens::ClaimTokensOrRedirectError,
         infinite_scroller::{CursoredDataProvider, InfiniteScroller, KeyedData, PageEntry},
         title::Title,
     },
@@ -96,7 +95,6 @@ pub fn TokenView(
     );
 
     view! {
-        <ClaimTokensOrRedirectError token_root/>
         <Suspense fallback=TokenViewFallback>
             {move || {
                 info.map(|info| {

@@ -21,15 +21,15 @@ use crate::{
         user_index::{Result1, UserIndex},
         PLATFORM_ORCHESTRATOR_ID, POST_CACHE_ID,
     },
-    consts::METADATA_API_BASE,
+    consts::{CDAO_SWAP_TIME_SECS, METADATA_API_BASE},
     utils::{ic::AgentWrapper, profile::ProfileDetails, MockPartialEq, ParentResource},
 };
 use yral_types::delegated_identity::DelegatedIdentityWire;
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct CanistersAuthWire {
-    id: DelegatedIdentityWire,
-    user_canister: Principal,
+    pub id: DelegatedIdentityWire,
+    pub user_canister: Principal,
     expiry: u64,
     profile_details: ProfileDetails,
 }
@@ -121,7 +121,7 @@ impl Canisters<true> {
         init_payload: SnsInitPayload,
     ) -> Result<Result7, AgentError> {
         let agent = self.agent.get_agent().await;
-        let args = candid::encode_args((init_payload, 90_u64)).unwrap();
+        let args = candid::encode_args((init_payload, CDAO_SWAP_TIME_SECS)).unwrap();
         let bytes = agent
             .update(&self.user_canister, "deploy_cdao_sns")
             .with_arg(args)

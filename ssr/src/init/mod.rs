@@ -187,6 +187,15 @@ fn init_admin_canisters() -> crate::state::admin_canisters::AdminCanisters {
     }
 }
 
+#[cfg(feature = "qstash")]
+fn init_qstash_client() -> crate::utils::qstash::QStashClient {
+    use crate::utils::qstash::QStashClient;
+
+    let auth_token = env::var("QSTASH_TOKEN").expect("`QSTASH_TOKEN` is required!");
+
+    QStashClient::new(&auth_token)
+}
+
 pub struct AppStateRes {
     pub app_state: AppState,
     #[cfg(feature = "local-bin")]
@@ -258,6 +267,8 @@ impl AppStateBuilder {
             grpc_offchain_channel: init_grpc_offchain_channel().await,
             #[cfg(feature = "firestore")]
             firestore_db: init_firestoredb().await,
+            #[cfg(feature = "qstash")]
+            qstash: init_qstash_client(),
         };
 
         AppStateRes {
