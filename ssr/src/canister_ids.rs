@@ -1,4 +1,4 @@
-#[cfg(not(feature = "local-bin"))]
+#[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
 pub use yral_canisters_client::ic::*;
-#[cfg(feature = "local-bin")]
+#[cfg(any(feature = "local-bin", feature = "local-lib"))]
 pub use yral_canisters_client::local::*;
