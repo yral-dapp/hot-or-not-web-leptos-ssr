@@ -2,12 +2,13 @@ use candid::Principal;
 use leptos::*;
 use leptos_router::*;
 
-#[cfg(feature = "ssr")]
-use crate::{canister::post_cache, state::canisters::unauth_canisters};
 use crate::{component::spinner::FullScreenSpinner, utils::host::show_cdao_page};
 
 #[server]
 async fn get_top_post_id() -> Result<Option<(Principal, u64)>, ServerFnError> {
+    use crate::state::canisters::unauth_canisters;
+    use yral_canisters_client::post_cache;
+
     let canisters = unauth_canisters();
     let post_cache = canisters.post_cache().await;
 
@@ -38,6 +39,7 @@ async fn get_top_post_id() -> Result<Option<(Principal, u64)>, ServerFnError> {
 #[server]
 async fn get_top_post_id_mlcache() -> Result<Option<(Principal, u64)>, ServerFnError> {
     use crate::auth::server_impl::extract_principal_from_cookie;
+    use crate::state::canisters::unauth_canisters;
     use axum_extra::extract::{cookie::Key, SignedCookieJar};
     use leptos_axum::extract_with_state;
 

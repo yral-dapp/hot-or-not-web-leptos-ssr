@@ -8,19 +8,18 @@ use sns_validation::pbs::sns_pb::SnsInitPayload;
 use yral_metadata_client::MetadataClient;
 use yral_metadata_types::UserMetadata;
 
+use yral_canisters_client::{
+    individual_user_template::{IndividualUserTemplate, Result23, Result7, UserCanisterDetails},
+    platform_orchestrator::PlatformOrchestrator,
+    post_cache::PostCache,
+    sns_governance::SnsGovernance,
+    sns_ledger::SnsLedger,
+    sns_root::SnsRoot,
+    user_index::{Result1, UserIndex},
+};
+
 use crate::{
-    canister::{
-        individual_user_template::{
-            IndividualUserTemplate, Result23, Result7, UserCanisterDetails,
-        },
-        platform_orchestrator::PlatformOrchestrator,
-        post_cache::PostCache,
-        sns_governance::SnsGovernance,
-        sns_ledger::SnsLedger,
-        sns_root::SnsRoot,
-        user_index::{Result1, UserIndex},
-        PLATFORM_ORCHESTRATOR_ID, POST_CACHE_ID,
-    },
+    canister_ids::{PLATFORM_ORCHESTRATOR_ID, POST_CACHE_ID},
     consts::{CDAO_SWAP_TIME_SECS, METADATA_API_BASE},
     utils::{ic::AgentWrapper, profile::ProfileDetails, MockPartialEq, ParentResource},
 };
@@ -209,7 +208,7 @@ impl<const A: bool> Canisters<A> {
     async fn subnet_indexes(&self) -> Result<Vec<Principal>, AgentError> {
         #[cfg(any(feature = "local-bin", feature = "local-lib"))]
         {
-            use crate::canister::USER_INDEX_ID;
+            use crate::canister_ids::USER_INDEX_ID;
             Ok(vec![USER_INDEX_ID])
         }
         #[cfg(not(any(feature = "local-bin", feature = "local-lib")))]

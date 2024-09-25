@@ -37,9 +37,7 @@ impl QStashClient {
     }
 
     pub async fn enqueue_claim_token(&self, req: ClaimTokensRequest) -> Result<(), reqwest::Error> {
-        let off_chain_ep = OFF_CHAIN_AGENT_URL
-            .join("qstash/claim_tokens")
-            .unwrap();
+        let off_chain_ep = OFF_CHAIN_AGENT_URL.join("qstash/claim_tokens").unwrap();
 
         let path = format!("publish/{off_chain_ep}");
         let ep = self.base_url.join(&path).unwrap();

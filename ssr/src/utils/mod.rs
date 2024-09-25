@@ -96,6 +96,22 @@ impl<S: 'static + Clone, T: 'static + Clone> ParentResource<S, T> {
     }
 }
 
+use std::fmt::Display;
+
+use crate::consts::CF_STREAM_BASE;
+
+pub fn bg_url(uid: impl Display) -> String {
+    format!("{CF_STREAM_BASE}/{uid}/thumbnails/thumbnail.jpg")
+}
+
+pub fn stream_url(uid: impl Display) -> String {
+    format!("{CF_STREAM_BASE}/{uid}/manifest/video.m3u8")
+}
+
+pub fn mp4_url(uid: impl Display) -> String {
+    format!("{CF_STREAM_BASE}/{uid}/downloads/default.mp4")
+}
+
 #[cfg(all(feature = "ga4", feature = "ssr"))]
 pub mod off_chain {
     tonic::include_proto!("off_chain");

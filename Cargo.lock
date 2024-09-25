@@ -2805,12 +2805,10 @@ dependencies = [
  "bb8",
  "bb8-redis",
  "candid",
- "candid_parser",
  "circular-buffer",
  "codee",
  "console_error_panic_hook",
  "console_log",
- "convert_case 0.6.0",
  "crc32fast",
  "dotenv",
  "enum_dispatch",
@@ -2867,6 +2865,7 @@ dependencies = [
  "wasm-bindgen-futures",
  "web-sys",
  "web-time",
+ "yral-canisters-client",
  "yral-metadata-client",
  "yral-metadata-types",
  "yral-qstash-types",
@@ -7710,6 +7709,21 @@ name = "yansi"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cfe53a6657fd280eaa890a3bc59152892ffa3e30101319d168b781ed6529b049"
+
+[[package]]
+name = "yral-canisters-client"
+version = "0.1.0"
+source = "git+https://github.com/yral-dapp/yral-common.git?rev=be0420fe2b3cdabe0f65bdb03e8859b7946bd509#be0420fe2b3cdabe0f65bdb03e8859b7946bd509"
+dependencies = [
+ "anyhow",
+ "candid",
+ "candid_parser",
+ "convert_case 0.6.0",
+ "ic-agent",
+ "serde",
+ "serde_bytes",
+ "serde_json",
+]
 
 [[package]]
 name = "yral-identity"

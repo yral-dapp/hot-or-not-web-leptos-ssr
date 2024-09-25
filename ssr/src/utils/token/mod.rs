@@ -12,13 +12,12 @@ use leptos::ServerFnError;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    canister::{
-        sns_governance::GetMetadataArg, sns_ledger::Account as LedgerAccount,
-        sns_root::ListSnsCanistersArg,
-    },
-    state::canisters::Canisters,
+use yral_canisters_client::{
+    sns_governance::GetMetadataArg, sns_ledger::Account as LedgerAccount,
+    sns_root::ListSnsCanistersArg,
 };
+
+use crate::state::canisters::Canisters;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct TokenBalance {
@@ -155,10 +154,10 @@ pub struct DeployedCdaoCanisters {
     pub governance: Principal,
 }
 
-impl From<crate::canister::individual_user_template::DeployedCdaoCanisters>
+impl From<yral_canisters_client::individual_user_template::DeployedCdaoCanisters>
     for DeployedCdaoCanisters
 {
-    fn from(value: crate::canister::individual_user_template::DeployedCdaoCanisters) -> Self {
+    fn from(value: yral_canisters_client::individual_user_template::DeployedCdaoCanisters) -> Self {
         Self {
             root: value.root,
             swap: value.swap,

@@ -4,11 +4,11 @@ use leptos_icons::*;
 use candid::Principal;
 
 use crate::{
-    canister::utils::bg_url,
     component::profile_placeholders::NoMorePostsGraphic,
     state::canisters::{auth_canisters_store, unauth_canisters},
     utils::{
-        event_streaming::events::ProfileViewVideo, posts::PostDetails, profile::PostsProvider,
+        bg_url, event_streaming::events::ProfileViewVideo, posts::PostDetails,
+        profile::PostsProvider,
     },
 };
 

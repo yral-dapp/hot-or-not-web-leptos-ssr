@@ -1,8 +1,4 @@
 use crate::{
-    canister::{
-        sns_ledger::{Account, TransferArg},
-        sns_root::ListSnsCanistersArg,
-    },
     component::{
         back_btn::BackButton, canisters_prov::WithAuthCans, spinner::FullScreenSpinner,
         title::Title,
@@ -20,6 +16,10 @@ use leptos_icons::*;
 use leptos_router::*;
 use leptos_use::use_event_listener;
 use server_fn::codec::Cbor;
+use yral_canisters_client::{
+    sns_ledger::{Account, TransferArg},
+    sns_root::ListSnsCanistersArg,
+};
 
 use super::{popups::TokenTransferPopup, TokenParams};
 

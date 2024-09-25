@@ -3,7 +3,6 @@ use ic_agent::AgentError;
 
 use crate::page::wallet::ShareButtonWithFallbackPopup;
 use crate::{
-    canister::individual_user_template::Result14,
     component::{
         back_btn::BackButton,
         bullet_loader::BulletLoader,
@@ -18,6 +17,7 @@ use crate::{
     },
 };
 use leptos::*;
+use yral_canisters_client::individual_user_template::Result14;
 
 #[derive(Clone)]
 pub struct TokenRootList(pub Canisters<true>);

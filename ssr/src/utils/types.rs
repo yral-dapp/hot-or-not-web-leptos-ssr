@@ -1,5 +1,5 @@
-use crate::canister::individual_user_template::PostStatus as PostStatusCandid;
 use candid::Principal;
+use yral_canisters_client::individual_user_template::PostStatus as PostStatusCandid;
 
 pub type PostId = (Principal, u64);
 

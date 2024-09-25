@@ -31,8 +31,11 @@ mod real_impl {
     use std::str::FromStr;
 
     use crate::auth::delegate_short_lived_identity;
-    use crate::canister::individual_user_template::Result7;
-    use crate::canister::sns_swap::{NewSaleTicketRequest, RefreshBuyerTokensRequest};
+    use yral_canisters_client::individual_user_template::Result7;
+    use yral_canisters_client::sns_swap::{
+        NewSaleTicketRequest, RefreshBuyerTokensRequest, Result2,
+    };
+
     use crate::consts::ICP_LEDGER_CANISTER_ID;
     use crate::utils::token::DeployedCdaoCanisters;
     use candid::{Decode, Encode, Nat, Principal};
@@ -83,8 +86,6 @@ mod real_impl {
     }
 
     async fn participate_in_swap(swap_canister: Principal) -> Result<(), ServerFnError> {
-        use crate::canister::sns_swap::Result2;
-
         let admin_cans = admin_canisters();
         let admin_principal = admin_cans.principal();
         let agent = admin_cans.get_agent().await;

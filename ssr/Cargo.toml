@@ -111,12 +111,9 @@ speedate = { version = "0.14.4", optional = true }
 urlencoding = "2.1.3"
 yral-types = { git = "https://github.com/yral-dapp/yral-common.git", rev = "be0420fe2b3cdabe0f65bdb03e8859b7946bd50" }
 yral-qstash-types = { git = "https://github.com/yral-dapp/yral-common.git", rev = "be0420fe2b3cdabe0f65bdb03e8859b7946bd50" }
+yral-canisters-client = { git = "https://github.com/yral-dapp/yral-common.git", rev = "be0420fe2b3cdabe0f65bdb03e8859b7946bd509", features = ["full"] }
 
 [build-dependencies]
-serde = { version = "1.0", features = ["derive"] }
-candid_parser = "0.1.1"
-serde_json = "1.0.110"
-convert_case = "0.6.0"
 tonic-build = { version = "0.12.0", default-features = false, features = [
     "prost",
 ] }
