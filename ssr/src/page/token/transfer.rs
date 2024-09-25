@@ -168,7 +168,7 @@ fn TokenTransferInner(
     let max_amt_c = max_amt.clone();
     let set_max_amt = move || {
         let input = amount_ref()?;
-        input.set_value(&max_amt.to_tokens());
+        input.set_value(&max_amt.humanize_float());
         #[cfg(feature = "hydrate")]
         {
             use web_sys::InputEvent;
