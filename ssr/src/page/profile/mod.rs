@@ -46,22 +46,19 @@ fn Stat(stat: u64, #[prop(into)] info: String) -> impl IntoView {
     }
 }
 #[component]
-fn ListSwitcher1() -> impl IntoView{
+fn ListSwitcher1() -> impl IntoView {
     let loc = use_location();
     let navigate = use_navigate();
-    let current_tab = create_memo(move |_|{
+    let current_tab = create_memo(move |_| {
         let pathname = loc.pathname.get();
-        if pathname.ends_with("posts"){
-           return 0
-        }
-        else if pathname.ends_with("stakes"){
-            return 1
-        }
-        else if pathname.ends_with("tokens"){
-            return 2
-        }
-        else{
-            return    0
+        if pathname.ends_with("posts") {
+            return 0;
+        } else if pathname.ends_with("stakes") {
+            return 1;
+        } else if pathname.ends_with("tokens") {
+            return 2;
+        } else {
+            return 0;
         }
     });
 
@@ -73,81 +70,80 @@ fn ListSwitcher1() -> impl IntoView{
         }
     };
 
-    view!{
-        <div class="relative flex flex-row w-11/12 md:w-9/12 text-center text-xl md:text-2xl">
-        <button
-            class=move || tab_class(0)
-            on:click={
-                let navigate = navigate.clone();
-                let loc = loc.clone();
-                move |_| {
-                    let p = loc.pathname.get();
-                    if let Some(last_slash_index) = p.rfind('/') {
-                        // Replace everything after the last '/' with the replacement string, excluding the '/'
-                        navigate(&format!("{}{}", &p.as_str()[..last_slash_index + 1], "posts"), Default::default())
-                    } else {
-                        // If no slash is found, return the original string
-                        navigate(p.as_str(), Default::default())
+    view! {
+            <div class="relative flex flex-row w-11/12 md:w-9/12 text-center text-xl md:text-2xl">
+            <button
+                class=move || tab_class(0)
+                on:click={
+                    let navigate = navigate.clone();
+                    let loc = loc.clone();
+                    move |_| {
+                        let p = loc.pathname.get();
+                        if let Some(last_slash_index) = p.rfind('/') {
+                            // Replace everything after the last '/' with the replacement string, excluding the '/'
+                            navigate(&format!("{}{}", &p.as_str()[..last_slash_index + 1], "posts"), Default::default())
+                        } else {
+                            // If no slash is found, return the original string
+                            navigate(p.as_str(), Default::default())
+                        }
                     }
                 }
-            }
-        >
-            <Icon icon=icondata::FiGrid />
-        </button>
-        <button
-            class=move || tab_class(1)
-            on:click={
-                let navigate = navigate.clone();
-                let loc = loc.clone();
-                move |_| {
-                    if let Some(last_slash_index) = loc.pathname.get().rfind('/') {
-                        // Replace everything after the last '/' with the replacement string, excluding the '/'
-                        navigate(&format!("{}{}", &loc.pathname.get().as_str()[..last_slash_index + 1], "stakes"), Default::default())
-                    } else {
-                        // If no slash is found, return the original string
-                        navigate(loc.pathname.get().as_str(), Default::default())
+            >
+                <Icon icon=icondata::FiGrid />
+            </button>
+            <button
+                class=move || tab_class(1)
+                on:click={
+                    let navigate = navigate.clone();
+                    let loc = loc.clone();
+                    move |_| {
+                        if let Some(last_slash_index) = loc.pathname.get().rfind('/') {
+                            // Replace everything after the last '/' with the replacement string, excluding the '/'
+                            navigate(&format!("{}{}", &loc.pathname.get().as_str()[..last_slash_index + 1], "stakes"), Default::default())
+                        } else {
+                            // If no slash is found, return the original string
+                            navigate(loc.pathname.get().as_str(), Default::default())
+                        }
                     }
                 }
-            }
-        >
-            <Icon icon=icondata::BsTrophy />
-        </button>
-        <button
-            class=move || tab_class(2)
-            on:click={
-                let navigate = navigate.clone();
-                let loc = loc.clone();
-                move |_| {
-                    if let Some(last_slash_index) = loc.pathname.get().rfind('/') {
-                        // Replace everything after the last '/' with the replacement string, excluding the '/'
-                        navigate(&format!("{}{}", &loc.pathname.get().as_str()[..last_slash_index + 1], "tokens"), Default::default())
-                    } else {
-                        // If no slash is found, return the original string
-                        navigate(loc.pathname.get().as_str(), Default::default())
+            >
+                <Icon icon=icondata::BsTrophy />
+            </button>
+            <button
+                class=move || tab_class(2)
+                on:click={
+                    let navigate = navigate.clone();
+                    let loc = loc.clone();
+                    move |_| {
+                        if let Some(last_slash_index) = loc.pathname.get().rfind('/') {
+                            // Replace everything after the last '/' with the replacement string, excluding the '/'
+                            navigate(&format!("{}{}", &loc.pathname.get().as_str()[..last_slash_index + 1], "tokens"), Default::default())
+                        } else {
+                            // If no slash is found, return the original string
+                            navigate(loc.pathname.get().as_str(), Default::default())
+                        }
                     }
                 }
-            }
-        >
-            <Icon icon=icondata::AiDollarCircleOutlined />
-        </button>
+            >
+                <Icon icon=icondata::AiDollarCircleOutlined />
+            </button>
+        </div>
+
+        <div class="flex flex-col gap-y-12 justify-center pb-12 w-11/12 sm:w-7/12">
+        <Show when=move || current_tab() == 0>
+            <ProfilePostsRoute />
+        </Show>
+        <Show when=move || current_tab() == 1>
+            <ProfileStakesRoute />
+        </Show>
+        <Show when=move || current_tab() == 2>
+            <ProfileTokenRoute />
+        </Show>
     </div>
-
-    <div class="flex flex-col gap-y-12 justify-center pb-12 w-11/12 sm:w-7/12">
-    <Show when=move || current_tab() == 0>
-        <ProfilePostsRoute />
-    </Show>
-    <Show when=move || current_tab() == 1>
-        <ProfileStakesRoute />
-    </Show>
-    <Show when=move || current_tab() == 2>
-        <ProfileTokenRoute />
-    </Show>
-</div>
-    }
-
+        }
 }
 #[component]
-pub fn ProfilePostsRoute() -> impl IntoView{
+pub fn ProfilePostsRoute() -> impl IntoView {
     let params = use_params::<ProfileParams>();
     let param_principal = create_memo(move |_| {
         params.with(|p| {
@@ -155,7 +151,7 @@ pub fn ProfilePostsRoute() -> impl IntoView{
             Principal::from_text(id).ok()
         })
     });
-    
+
     view! {
         <AuthCansProvider fallback=FullScreenSpinner let:canister>
         {
@@ -179,7 +175,7 @@ pub fn ProfilePostsRoute() -> impl IntoView{
 }
 
 #[component]
-pub fn ProfileStakesRoute() -> impl IntoView{
+pub fn ProfileStakesRoute() -> impl IntoView {
     let params = use_params::<ProfileParams>();
     let param_principal = create_memo(move |_| {
         params.with(|p| {
@@ -187,7 +183,7 @@ pub fn ProfileStakesRoute() -> impl IntoView{
             Principal::from_text(id).ok()
         })
     });
-    
+
     view! {
         <AuthCansProvider fallback=FullScreenSpinner let:canister>
         {
@@ -309,7 +305,6 @@ fn ProfileViewInner(user: ProfileDetails, user_canister: Principal) -> impl Into
         </div>
     }
 }
-
 
 #[component]
 pub fn ProfileView() -> impl IntoView {
