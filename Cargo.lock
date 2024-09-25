@@ -2622,7 +2622,7 @@ dependencies = [
 [[package]]
 name = "gob-cloudflare"
 version = "0.1.0"
-source = "git+https://github.com/go-bazzinga/gob-cloudflare?rev=c847ba87ecc73a33520b24bd62503420d7e23e3e#c847ba87ecc73a33520b24bd62503420d7e23e3e"
+source = "git+https://github.com/yral-dapp/gob-cloudflare?rev=c847ba87ecc73a33520b24bd62503420d7e23e3e#c847ba87ecc73a33520b24bd62503420d7e23e3e"
 dependencies = [
  "bytes",
  "reqwest 0.12.7",
@@ -7742,7 +7742,7 @@ dependencies = [
 [[package]]
 name = "yral-metadata-client"
 version = "0.1.0"
-source = "git+https://github.com/go-bazzinga/yral-metadata?rev=c394bf9af3f32d81c1ac50b966c25dafafa2545b#c394bf9af3f32d81c1ac50b966c25dafafa2545b"
+source = "git+https://github.com/yral-dapp/yral-metadata?rev=c394bf9af3f32d81c1ac50b966c25dafafa2545b#c394bf9af3f32d81c1ac50b966c25dafafa2545b"
 dependencies = [
  "ic-agent",
  "reqwest 0.12.7",
@@ -7754,7 +7754,7 @@ dependencies = [
 [[package]]
 name = "yral-metadata-types"
 version = "0.1.0"
-source = "git+https://github.com/go-bazzinga/yral-metadata?rev=c394bf9af3f32d81c1ac50b966c25dafafa2545b#c394bf9af3f32d81c1ac50b966c25dafafa2545b"
+source = "git+https://github.com/yral-dapp/yral-metadata?rev=c394bf9af3f32d81c1ac50b966c25dafafa2545b#c394bf9af3f32d81c1ac50b966c25dafafa2545b"
 dependencies = [
  "candid",
  "serde",
@@ -7765,7 +7765,7 @@ dependencies = [
 [[package]]
 name = "yral-testcontainers"
 version = "0.1.0"
-source = "git+https://github.com/go-bazzinga/yral-testcontainers?rev=f9d2c01c498d58fca0595a48bdc3f9400e57ec2f#f9d2c01c498d58fca0595a48bdc3f9400e57ec2f"
+source = "git+https://github.com/yral-dapp/yral-testcontainers?rev=f9d2c01c498d58fca0595a48bdc3f9400e57ec2f#f9d2c01c498d58fca0595a48bdc3f9400e57ec2f"
 dependencies = [
  "anyhow",
  "gix",
