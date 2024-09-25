@@ -160,10 +160,16 @@ fn TokenTransferInner(
     });
 
     let amount_ref = create_node_ref::<html::Input>();
-    let max_amt = if info.balance < info.fees {
-        TokenBalance::new_cdao(0u32.into())
+    let max_amt = if info
+        .balance
+        .map_balance_ref(|b| b > &info.fees)
+        .unwrap_or_default()
+    {
+        info.balance
+            .map_balance_ref(|b| b.clone() - info.fees.clone())
+            .unwrap()
     } else {
-        info.balance.clone() - info.fees.clone()
+        TokenBalance::new_cdao(0u32.into())
     };
     let max_amt_c = max_amt.clone();
     let set_max_amt = move || {

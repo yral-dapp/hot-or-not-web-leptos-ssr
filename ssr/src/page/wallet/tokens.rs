@@ -2,6 +2,7 @@ use candid::Principal;
 use ic_agent::AgentError;
 
 use crate::page::wallet::ShareButtonWithFallbackPopup;
+use crate::utils::token::TokenBalanceOrClaiming;
 use crate::{
     component::{
         back_btn::BackButton,
@@ -69,7 +70,7 @@ async fn token_metadata_or_fallback(
         name: "<ERROR>".to_string(),
         description: "Unknown".to_string(),
         symbol: "??".to_string(),
-        balance: TokenBalance::new_cdao(0u32.into()),
+        balance: TokenBalanceOrClaiming::claiming(),
         fees: TokenBalance::new_cdao(0u32.into()),
         root: Principal::anonymous(),
     })

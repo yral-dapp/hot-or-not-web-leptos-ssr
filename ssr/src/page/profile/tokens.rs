@@ -31,14 +31,7 @@ async fn token_metadata(
     let governance = deployed_cans.governance;
     let ledger = deployed_cans.ledger;
 
-    get_token_metadata(
-        cans,
-        user_principal,
-        deployed_cans.root,
-        governance,
-        ledger,
-    )
-    .await
+    get_token_metadata(cans, user_principal, deployed_cans.root, governance, ledger).await
 }
 
 #[component]
