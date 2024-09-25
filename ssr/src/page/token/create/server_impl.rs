@@ -19,6 +19,7 @@ mod qstash_claim {
 
 #[cfg(all(feature = "backend-admin", not(feature = "qstash")))]
 mod no_op_claim {
+    use leptos::ServerFnError;
     use yral_qstash_types::ClaimTokensRequest;
 
     pub async fn enqueue_claim_token(_req: ClaimTokensRequest) -> Result<(), ServerFnError> {
