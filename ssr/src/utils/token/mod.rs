@@ -176,6 +176,7 @@ pub struct TokenMetadata {
     pub symbol: String,
     pub balance: TokenBalance,
     pub fees: TokenBalance,
+    pub root: Principal,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -199,7 +200,7 @@ pub async fn token_metadata_by_root<const A: bool>(
     let Some(ledger) = sns_cans.ledger else {
         return Ok(None);
     };
-    let metadata = get_token_metadata(cans, user_principal, governance, ledger).await?;
+    let metadata = get_token_metadata(cans, user_principal, token_root, governance, ledger).await?;
 
     Ok(Some(metadata))
 }
@@ -207,6 +208,7 @@ pub async fn token_metadata_by_root<const A: bool>(
 pub async fn get_token_metadata<const A: bool>(
     cans: &Canisters<A>,
     user_principal: Principal,
+    root: Principal,
     governance: Principal,
     ledger: Principal,
 ) -> Result<TokenMetadata, AgentError> {
@@ -230,6 +232,7 @@ pub async fn get_token_metadata<const A: bool>(
         symbol,
         fees: TokenBalance::new_cdao(fees),
         balance: TokenBalance::new_cdao(balance_e8s),
+        root,
     })
 }
 
