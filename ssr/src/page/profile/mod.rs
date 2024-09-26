@@ -80,10 +80,8 @@ fn ListSwitcher1() -> impl IntoView {
                     move |_| {
                         let p = loc.pathname.get();
                         if let Some(last_slash_index) = p.rfind('/') {
-                            // Replace everything after the last '/' with the replacement string, excluding the '/'
                             navigate(&format!("{}{}", &p.as_str()[..last_slash_index + 1], "posts"), Default::default())
                         } else {
-                            // If no slash is found, return the original string
                             navigate(p.as_str(), Default::default())
                         }
                     }
@@ -98,10 +96,8 @@ fn ListSwitcher1() -> impl IntoView {
                     let loc = loc.clone();
                     move |_| {
                         if let Some(last_slash_index) = loc.pathname.get().rfind('/') {
-                            // Replace everything after the last '/' with the replacement string, excluding the '/'
                             navigate(&format!("{}{}", &loc.pathname.get().as_str()[..last_slash_index + 1], "stakes"), Default::default())
                         } else {
-                            // If no slash is found, return the original string
                             navigate(loc.pathname.get().as_str(), Default::default())
                         }
                     }
@@ -116,10 +112,8 @@ fn ListSwitcher1() -> impl IntoView {
                     let loc = loc.clone();
                     move |_| {
                         if let Some(last_slash_index) = loc.pathname.get().rfind('/') {
-                            // Replace everything after the last '/' with the replacement string, excluding the '/'
                             navigate(&format!("{}{}", &loc.pathname.get().as_str()[..last_slash_index + 1], "tokens"), Default::default())
                         } else {
-                            // If no slash is found, return the original string
                             navigate(loc.pathname.get().as_str(), Default::default())
                         }
                     }
@@ -143,7 +137,7 @@ fn ListSwitcher1() -> impl IntoView {
         }
 }
 #[component]
-pub fn ProfilePostsRoute() -> impl IntoView {
+fn ProfilePostsRoute() -> impl IntoView {
     let params = use_params::<ProfileParams>();
     let param_principal = create_memo(move |_| {
         params.with(|p| {
@@ -175,7 +169,7 @@ pub fn ProfilePostsRoute() -> impl IntoView {
 }
 
 #[component]
-pub fn ProfileStakesRoute() -> impl IntoView {
+fn ProfileStakesRoute() -> impl IntoView {
     let params = use_params::<ProfileParams>();
     let param_principal = create_memo(move |_| {
         params.with(|p| {
@@ -206,7 +200,7 @@ pub fn ProfileStakesRoute() -> impl IntoView {
     }
 }
 #[component]
-pub fn ProfileTokenRoute() -> impl IntoView {
+fn ProfileTokenRoute() -> impl IntoView {
     let params = use_params::<ProfileParams>();
     let param_principal = create_memo(move |_| {
         params.with(|p| {
@@ -327,35 +321,7 @@ pub fn ProfileView() -> impl IntoView {
                     if param_principal == user_canister_principal {
                         view! { <YourProfileView /> }
                     } else {
-                        view! {
-                            {
-                                let user_details = create_resource(
-                                    move || Some(param_principal),
-                                    move |param_principal| async move {
-                                        let param_principal = param_principal?;
-                                        let canisters = unauth_canisters();
-                            
-                                        let user_canister = canisters
-                                            .get_individual_canister_by_user_principal(param_principal)
-                                            .await
-                                            .ok()??;
-                                        let user = canisters.individual_user(user_canister).await;
-                                        let user_details = user.get_profile_details().await.ok()?;
-                                        Some(user_details.into())
-                                    },
-                                );
-                            
-                                view! {
-                                    <Suspense>
-                                        {move || {
-                                            user_details.get().map(|user_details| {
-                                                view! { <ProfileComponent user_details /> }
-                                            })
-                                        }}
-                                    </Suspense>
-                                }
-                            }
-                        }
+                       view! {<OtherProfileView param_principal/>}
                     }
                 } else {
                     view! {
@@ -368,7 +334,7 @@ pub fn ProfileView() -> impl IntoView {
 }
 
 #[component]
-pub fn OtherProfileView(param_principal: Principal) -> impl IntoView{
+fn OtherProfileView(param_principal: Principal) -> impl IntoView{
 
     let user_details = create_resource(
         move || Some(param_principal),
@@ -397,7 +363,7 @@ pub fn OtherProfileView(param_principal: Principal) -> impl IntoView{
     }
 }
 #[component]
-pub fn YourProfileView() -> impl IntoView {
+fn YourProfileView() -> impl IntoView {
     view! {
         <AuthCansProvider fallback=FullScreenSpinner let:canister>
             <ProfileComponent user_details=Some(
@@ -408,7 +374,7 @@ pub fn YourProfileView() -> impl IntoView {
 }
 
 #[component]
-pub fn ProfileComponent(user_details: Option<ProfileDetails>) -> impl IntoView {
+fn ProfileComponent(user_details: Option<ProfileDetails>) -> impl IntoView {
     let ProfilePostsContext {
         video_queue,
         start_index,
