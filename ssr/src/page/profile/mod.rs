@@ -48,7 +48,6 @@ fn Stat(stat: u64, #[prop(into)] info: String) -> impl IntoView {
 #[component]
 fn ListSwitcher1() -> impl IntoView {
     let loc = use_location();
-    let navigate = use_navigate();
     let current_tab = create_memo(move |_| {
         let pathname = loc.pathname.get();
         if pathname.ends_with("posts") {
@@ -70,57 +69,35 @@ fn ListSwitcher1() -> impl IntoView {
         }
     };
 
+    let route = move |route: String| if let Some(last_slash_index) = loc.pathname.get().rfind('/') {
+        format!("{}{}", &loc.pathname.get().as_str()[..last_slash_index + 1], route)
+    } else {
+        loc.pathname.get().as_str().to_string()
+    };
     view! {
             <div class="relative flex flex-row w-11/12 md:w-9/12 text-center text-xl md:text-2xl">
-            <button
+            <A
                 class=move || tab_class(0)
-                on:click={
-                    let navigate = navigate.clone();
-                    let loc = loc.clone();
-                    move |_| {
-                        let p = loc.pathname.get();
-                        if let Some(last_slash_index) = p.rfind('/') {
-                            navigate(&format!("{}{}", &p.as_str()[..last_slash_index + 1], "posts"), Default::default())
-                        } else {
-                            navigate(p.as_str(), Default::default())
-                        }
-                    }
-                }
+                href={route("posts".to_string())}
             >
                 <Icon icon=icondata::FiGrid />
-            </button>
-            <button
+            </A>
+            <A
                 class=move || tab_class(1)
-                on:click={
-                    let navigate = navigate.clone();
-                    let loc = loc.clone();
-                    move |_| {
-                        if let Some(last_slash_index) = loc.pathname.get().rfind('/') {
-                            navigate(&format!("{}{}", &loc.pathname.get().as_str()[..last_slash_index + 1], "stakes"), Default::default())
-                        } else {
-                            navigate(loc.pathname.get().as_str(), Default::default())
-                        }
-                    }
+                href={
+                    route("stakes".to_string())
                 }
             >
                 <Icon icon=icondata::BsTrophy />
-            </button>
-            <button
+            </A>
+            <A
                 class=move || tab_class(2)
-                on:click={
-                    let navigate = navigate.clone();
-                    let loc = loc.clone();
-                    move |_| {
-                        if let Some(last_slash_index) = loc.pathname.get().rfind('/') {
-                            navigate(&format!("{}{}", &loc.pathname.get().as_str()[..last_slash_index + 1], "tokens"), Default::default())
-                        } else {
-                            navigate(loc.pathname.get().as_str(), Default::default())
-                        }
-                    }
+                href={
+                    route("tokens".to_string())
                 }
             >
                 <Icon icon=icondata::AiDollarCircleOutlined />
-            </button>
+            </A>
         </div>
 
         <div class="flex flex-col gap-y-12 justify-center pb-12 w-11/12 sm:w-7/12">
