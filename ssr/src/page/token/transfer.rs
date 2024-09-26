@@ -179,16 +179,16 @@ fn TokenTransferInner(
         TokenBalance::new_cdao(0u32.into())
     };
     let max_amt_c = max_amt.clone();
-    let set_max_amt = move || {
-        let input = amount_ref()?;
-        input.set_value(&max_amt.humanize_float());
-        #[cfg(feature = "hydrate")]
-        {
-            use web_sys::InputEvent;
-            _ = input.dispatch_event(&InputEvent::new("input").unwrap());
-        }
-        Some(())
-    };
+    // let set_max_amt = move || {
+    //     let input = amount_ref()?;
+    //     input.set_value(&max_amt.humanize_float());
+    //     #[cfg(feature = "hydrate")]
+    //     {
+    //         use web_sys::InputEvent;
+    //         _ = input.dispatch_event(&InputEvent::new("input").unwrap());
+    //     }
+    //     Some(())
+    // };
 
     let amt_res = create_rw_signal(Ok::<_, String>(None::<TokenBalance>));
     _ = use_event_listener(amount_ref, ev::input, move |_| {
@@ -310,13 +310,13 @@ fn TokenTransferInner(
                 <div class="flex flex-col w-full gap-1">
                     <div class="flex flex-row justify-between w-full text-sm md:text-base text-white">
                         <span>Amount</span>
-                        <button
-                            class="flex flex-row gap-1 items-center"
-                            on:click=move |_| _ = set_max_amt()
-                        >
-                            <Icon icon=icondata::AiEnterOutlined/>
-                            " Max"
-                        </button>
+                        // <button
+                        //     class="flex flex-row gap-1 items-center"
+                        //     on:click=move |_| _ = set_max_amt()
+                        // >
+                        //     <Icon icon=icondata::AiEnterOutlined/>
+                        //     " Max"
+                        // </button>
                     </div>
                     <input
                         _ref=amount_ref
