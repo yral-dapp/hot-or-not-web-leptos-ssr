@@ -77,9 +77,10 @@ fn ListSwitcher1() -> impl IntoView {
             "text-white flex justify-center w-full py-2"
         }
     };
-    let pathname = move || loc.pathname.get();
     let route = move |route: String| {
-        if let Some(last_slash_index) = pathname().rfind('/') {
+        let pathname = move || loc.pathname.get();
+
+        if let Some(last_slash_index) = pathname().rfind("/") {
             format!("{}{}", &pathname()[..last_slash_index + 1], route)
         } else {
             pathname().to_string()
@@ -89,23 +90,19 @@ fn ListSwitcher1() -> impl IntoView {
             <div class="relative flex flex-row w-11/12 md:w-9/12 text-center text-xl md:text-2xl">
             <A
                 class=move || tab_class(0)
-                href={route("posts".to_string())}
+                href=move || route("posts".to_string())
             >
                 <Icon icon=icondata::FiGrid />
             </A>
             <A
                 class=move || tab_class(1)
-                href={
-                    route("stakes".to_string())
-                }
+                href= move || route("stakes".to_string())
             >
                 <Icon icon=icondata::BsTrophy />
             </A>
             <A
                 class=move || tab_class(2)
-                href={
-                    route("tokens".to_string())
-                }
+                href= move || route("tokens".to_string())
             >
                 <Icon icon=icondata::AiDollarCircleOutlined />
             </A>
@@ -295,7 +292,7 @@ fn ProfileViewInner(user: ProfileDetails) -> impl IntoView {
 #[component]
 pub fn ProfileView() -> impl IntoView {
     let params = use_params::<ProfileParams>();
-    let param_principal = create_memo(move |_| {
+    let param_principal: Memo<Option<Principal>> = create_memo(move |_| {
         params.with(|p| {
             let ProfileParams { id, .. } = p.as_ref().ok()?;
             Principal::from_text(id).ok()
@@ -310,7 +307,7 @@ pub fn ProfileView() -> impl IntoView {
                     if param_principal == user_canister_principal {
                         view! { <YourProfileView /> }
                     } else {
-                       view! {<OtherProfileView param_principal/>}
+                       view! {<OtherProfileView/>}
                     }
                 } else {
                     view! {
@@ -323,9 +320,16 @@ pub fn ProfileView() -> impl IntoView {
 }
 
 #[component]
-fn OtherProfileView(param_principal: Principal) -> impl IntoView {
+fn OtherProfileView() -> impl IntoView {
+    let params = use_params::<ProfileParams>();
+    let param_principal: Memo<Option<Principal>> = create_memo(move |_| {
+        params.with(|p| {
+            let ProfileParams { id, .. } = p.as_ref().ok()?;
+            Principal::from_text(id).ok()
+        })
+    });
     let user_details = create_resource(
-        move || Some(param_principal),
+        move || param_principal.get(),
         move |param_principal| async move {
             let param_principal = param_principal?;
             let canisters = unauth_canisters();

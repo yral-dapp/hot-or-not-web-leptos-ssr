@@ -134,7 +134,7 @@ pub fn NavBar() -> impl IntoView {
             <UploadIcon idx=2 cur_selected/>
             <NavIcon
                 idx=5
-                href="/profile/posts"
+                href="/profile/tokens"
                 icon=ProfileIcon
                 filled_icon=ProfileIconFilled
                 cur_selected=cur_selected
