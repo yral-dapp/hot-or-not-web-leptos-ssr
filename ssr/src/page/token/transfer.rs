@@ -181,7 +181,7 @@ fn TokenTransferInner(
     let max_amt_c = max_amt.clone();
     let set_max_amt = move || {
         let input = amount_ref()?;
-        input.set_value(&max_amt.to_tokens());
+        input.set_value(&max_amt.humanize_float());
         #[cfg(feature = "hydrate")]
         {
             use web_sys::InputEvent;
@@ -204,6 +204,8 @@ fn TokenTransferInner(
             amt_res.set(Err(
                 "Sorry, there are not enough funds in this account".to_string()
             ));
+        } else if amt.e8s == 0_u64 {
+            amt_res.set(Err("Cannot send 0 tokens".to_string()));
         } else {
             amt_res.set(Ok(Some(amt)));
         }
@@ -273,7 +275,7 @@ fn TokenTransferInner(
                 <div class="flex flex-col w-full gap-2 items-center">
                     <div class="flex flex-row justify-between w-full text-sm md:text-base text-white">
                         <span>Source:</span>
-                        <span>{format!("{} {}", info.balance.humanize(), info.symbol)}</span>
+                        <span>{format!("{} {}", info.balance.humanize_float(), info.symbol)}</span>
                     </div>
                     <div class="flex flex-row gap-2 w-full items-center">
                         <p class="text-sm md:text-md text-white/80">{source_addr.to_string()}</p>
