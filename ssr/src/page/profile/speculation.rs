@@ -235,7 +235,7 @@ pub fn ProfileSpeculations(user_canister: Principal) -> impl IntoView {
                 } else {
                     "Not played any games yet!"
                 };
-            
+
                 view! {
                     <ProfileStream
                         provider

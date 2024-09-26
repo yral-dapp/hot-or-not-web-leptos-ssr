@@ -44,31 +44,30 @@ fn Stat(stat: u64, #[prop(into)] info: String) -> impl IntoView {
             <span class="text-md">{info}</span>
         </div>
     }
-}#[derive(Params, Clone, PartialEq)]
-struct TabsParam{
-    tab: String
+}
+#[derive(Params, Clone, PartialEq)]
+struct TabsParam {
+    tab: String,
 }
 #[component]
 fn ListSwitcher1() -> impl IntoView {
     let param = use_params::<TabsParam>();
 
-
     let loc = use_location();
     let current_tab = create_memo(move |_| {
         let pathname = param.with(|p| p.clone());
-        match pathname{
+        match pathname {
             Ok(p) => {
                 log::debug!("transfer res: {:?}", p.tab);
-                return match p.tab.as_str(){
+                return match p.tab.as_str() {
                     "posts" => 0,
                     "stakes" => 1,
                     "tokens" => 2,
-                    _ => 0
-                }
-            },
-            Err(_) => 0
+                    _ => 0,
+                };
+            }
+            Err(_) => 0,
         }
-
     });
 
     let tab_class = move |tab_id: usize| {
@@ -78,7 +77,7 @@ fn ListSwitcher1() -> impl IntoView {
             "text-white flex justify-center w-full py-2"
         }
     };
-    let pathname = move || loc.pathname.get(); 
+    let pathname = move || loc.pathname.get();
     let route = move |route: String| {
         if let Some(last_slash_index) = pathname().rfind('/') {
             format!("{}{}", &pathname()[..last_slash_index + 1], route)
@@ -298,7 +297,7 @@ pub fn ProfileView() -> impl IntoView {
     let params = use_params::<ProfileParams>();
     let param_principal = create_memo(move |_| {
         params.with(|p| {
-            let ProfileParams { id ,..} = p.as_ref().ok()?;
+            let ProfileParams { id, .. } = p.as_ref().ok()?;
             Principal::from_text(id).ok()
         })
     });
@@ -324,8 +323,7 @@ pub fn ProfileView() -> impl IntoView {
 }
 
 #[component]
-fn OtherProfileView(param_principal: Principal) -> impl IntoView{
-
+fn OtherProfileView(param_principal: Principal) -> impl IntoView {
     let user_details = create_resource(
         move || Some(param_principal),
         move |param_principal| async move {
