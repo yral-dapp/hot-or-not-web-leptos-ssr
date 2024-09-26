@@ -141,18 +141,14 @@ pub fn App() -> impl IntoView {
                         <Route path="/" view=RootPage/>
                         <Route path="/hot-or-not/:canister_id/:post_id" view=PostView/>
                         <Route path="/post/:canister_id/:post_id" view=SinglePost/>
-                        <Route path="/profile/:canister_id/:post_id" view=ProfilePost/>
+                        <Route path="/profile/:canister_id/post/:post_id" view=ProfilePost/>
                         <Route path="/upload" view=UploadPostPage/>
                         <Route path="/error" view=ServerErrorPage/>
                         <Route path="/menu" view=Menu/>
                         <Route path="/settings" view=Settings/>
                         <Route path="/refer-earn" view=ReferEarn/>
-                        <Route path="/profile/:id/posts" view=ProfileView/>
-                        <Route path="/profile/posts" view=ProfileView/>
-                        <Route path="/profile/:id/stakes" view=ProfileView />
-                        <Route path="/profile/stakes" view=ProfileView />
-                        <Route path="/profile/:id/tokens" view=ProfileView />
-                        <Route path="/profile/tokens" view=ProfileView />
+                        <Route path="/profile/:id/:tab" view=ProfileView/>
+                        <Route path="/profile/:tab" view=ProfileView/>
                         <Route path="/terms-of-service" view=TermsOfService/>
                         <Route path="/privacy-policy" view=PrivacyPolicy/>
                         <Route path="/wallet" view=Wallet/>

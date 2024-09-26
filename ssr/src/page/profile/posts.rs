@@ -30,7 +30,7 @@ fn Post(details: PostDetails, user_canister: Principal, _ref: NodeRef<html::Div>
             format!("/your-profile/{}/{}", canister_id, details.post_id)
         }
         _ => {
-            format!("/profile/{}/{}", user_canister, details.post_id)
+            format!("/profile/{}/post/{}", user_canister, details.post_id)
         }
     };
 
