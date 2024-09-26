@@ -9,7 +9,7 @@ use std::{
 use candid::{Nat, Principal};
 use ic_agent::AgentError;
 use leptos::ServerFnError;
-use rust_decimal::Decimal;
+use rust_decimal::{Decimal, RoundingStrategy};
 use serde::{Deserialize, Serialize};
 
 use yral_canisters_client::{
@@ -56,6 +56,15 @@ impl TokenBalance {
         let tokens = Decimal::from_str(&self.e8s.0.to_str_radix(10)).unwrap()
             / Decimal::new(10i64.pow(self.decimals as u32), 0);
         tokens.to_string()
+    }
+
+    // Humanize the amount, but as a truncated float to specified decimal points (dp)
+    pub fn humanize_float_truncate_to_dp(&self, dp: u32) -> String {
+        let tokens = Decimal::from_str(&self.e8s.0.to_str_radix(10)).unwrap()
+            / Decimal::new(10i64.pow(self.decimals as u32), 0);
+        tokens
+            .round_dp_with_strategy(dp, RoundingStrategy::ToZero)
+            .to_string()
     }
 
     // Returns number of tokens(not e8s)
@@ -189,6 +198,11 @@ impl TokenBalanceOrClaiming {
 
     pub fn humanize_float(&self) -> String {
         self.map_balance_ref(|b| b.humanize_float())
+            .unwrap_or_else(|| "Processing".to_string())
+    }
+
+    pub fn humanize_float_truncate_to_dp(&self, dp: u32) -> String {
+        self.map_balance_ref(|b| b.humanize_float_truncate_to_dp(dp))
             .unwrap_or_else(|| "Processing".to_string())
     }
 
