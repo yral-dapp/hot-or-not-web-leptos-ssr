@@ -4,12 +4,12 @@ use k256::elliptic_curve::JwkEcKey;
 use leptos::*;
 use leptos_router::*;
 
+use crate::auth::delegate_identity;
 use crate::consts::USER_CANISTER_ID_STORE;
 use crate::utils::ParentResource;
 use crate::{
     auth::{
         extract_identity, generate_anonymous_identity_if_required, set_anonymous_identity_cookie,
-        DelegatedIdentityWire,
     },
     component::spinner::FullScreenSpinner,
     state::{
@@ -84,7 +84,7 @@ fn CtxProvider(temp_identity: Option<JwkEcKey>, children: ChildrenFn) -> impl In
 
                 let key = k256::SecretKey::from_jwk(&jwk_key)?;
                 let id = Secp256k1Identity::from_private_key(key);
-                let id_wire = DelegatedIdentityWire::delegate(&id);
+                let id_wire = delegate_identity(&id);
 
                 do_canister_auth(id_wire, ref_principal).await
             }

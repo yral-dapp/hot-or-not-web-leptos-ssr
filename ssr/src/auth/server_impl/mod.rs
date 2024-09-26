@@ -21,8 +21,9 @@ use crate::{
 };
 
 use self::store::{KVStore, KVStoreImpl};
+use yral_types::delegated_identity::DelegatedIdentityWire;
 
-use super::{DelegatedIdentityWire, RefreshToken};
+use super::{delegate_identity, RefreshToken};
 
 fn set_cookies(resp: &ResponseOptions, jar: impl IntoResponse) {
     let resp_jar = jar.into_response();
@@ -127,7 +128,7 @@ pub fn update_user_identity_and_delegate(
     identity: impl Identity,
 ) -> Result<DelegatedIdentityWire, ServerFnError> {
     update_user_identity(response_opts, jar, &identity)?;
-    Ok(DelegatedIdentityWire::delegate(&identity))
+    Ok(delegate_identity(&identity))
 }
 
 pub async fn extract_identity_impl() -> Result<Option<DelegatedIdentityWire>, ServerFnError> {
@@ -141,7 +142,7 @@ pub async fn extract_identity_impl() -> Result<Option<DelegatedIdentityWire>, Se
         return Ok(None);
     };
 
-    Ok(Some(DelegatedIdentityWire::delegate(&base_identity)))
+    Ok(Some(delegate_identity(&base_identity)))
 }
 
 pub async fn logout_identity_impl() -> Result<DelegatedIdentityWire, ServerFnError> {

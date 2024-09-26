@@ -1,7 +1,7 @@
 #![allow(clippy::empty_docs)]
 pub mod app;
 pub mod auth;
-pub mod canister;
+pub mod canister_ids;
 pub mod component;
 pub mod consts;
 pub mod error_template;

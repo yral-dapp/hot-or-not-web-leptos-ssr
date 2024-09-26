@@ -5,7 +5,6 @@ use serde::{Deserialize, Serialize};
 
 use super::{overlay::VideoDetailsOverlay, video_loader::VideoView};
 use crate::{
-    canister::utils::bg_url,
     component::{
         back_btn::go_back_or_fallback, scrolling_post_view::MuteIconOverlay,
         spinner::FullScreenSpinner,
@@ -14,7 +13,10 @@ use crate::{
         audio_state::AudioState,
         canisters::{auth_canisters_store, unauth_canisters},
     },
-    utils::posts::{get_post_uid, PostDetails},
+    utils::{
+        bg_url,
+        posts::{get_post_uid, PostDetails},
+    },
 };
 
 #[derive(Params, PartialEq, Clone, Copy)]

@@ -112,8 +112,10 @@ mod history_provider {
                 from: usize,
                 end: usize,
             ) -> Result<PageEntry<HistoryDetails>, AgentError> {
-                use crate::canister::individual_user_template::{MintEvent, Result15, TokenEvent};
                 use crate::utils::route::failure_redirect;
+                use yral_canisters_client::individual_user_template::{
+                    MintEvent, Result15, TokenEvent,
+                };
                 let individual = self.0.authenticated_user().await;
                 let history = individual
                     .get_user_utility_token_transaction_history_with_pagination(
