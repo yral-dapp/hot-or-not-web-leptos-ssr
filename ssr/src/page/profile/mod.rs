@@ -54,18 +54,16 @@ fn ListSwitcher1(user_canister: Principal, user_principal: Principal) -> impl In
     let param = use_params::<TabsParam>();
 
     let current_tab = create_memo(move |_| {
-        param.with(|p| {
-            match p {
-                Ok(p) => {
-                    return match p.tab.as_str() {
-                        "posts" => 0,
-                        "stakes" => 1,
-                        "tokens" => 2,
-                        _ => 0,
-                    };
-                }
-                Err(_) => 0,
+        param.with(|p| match p {
+            Ok(p) => {
+                return match p.tab.as_str() {
+                    "posts" => 0,
+                    "stakes" => 1,
+                    "tokens" => 2,
+                    _ => 0,
+                };
             }
+            Err(_) => 0,
         })
     });
 
@@ -111,7 +109,6 @@ fn ListSwitcher1(user_canister: Principal, user_principal: Principal) -> impl In
     </div>
         }
 }
-
 
 #[component]
 fn ProfileViewInner(user: ProfileDetails, user_canister: Principal) -> impl IntoView {
@@ -169,7 +166,7 @@ fn ProfileViewInner(user: ProfileDetails, user_canister: Principal) -> impl Into
 pub fn ProfileView() -> impl IntoView {
     let params = use_params::<ProfileParams>();
     let tab_params = use_params::<TabsParam>();
-    
+
     let param_principal = move || {
         params.with(|p| {
             let ProfileParams { id, .. } = p.as_ref().ok()?;
@@ -177,7 +174,6 @@ pub fn ProfileView() -> impl IntoView {
         })
     };
 
-    
     view! {
         <AuthCansProvider fallback=FullScreenSpinner let:canister>
             {
@@ -223,7 +219,6 @@ fn OtherProfileView(principal: Principal) -> impl IntoView {
         },
     );
 
-
     view! {
         <Suspense>
             {move || {
@@ -253,7 +248,7 @@ pub fn ProfileComponent(user_details: Option<(ProfileDetails, Principal)>) -> im
         start_index,
         ..
     } = expect_context();
-    
+
     video_queue.update_untracked(|v| {
         v.drain(..);
     });
