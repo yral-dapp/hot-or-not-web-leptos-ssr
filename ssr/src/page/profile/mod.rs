@@ -50,24 +50,23 @@ struct TabsParam {
     tab: String,
 }
 #[component]
-fn ListSwitcher1() -> impl IntoView {
+fn ListSwitcher1(user_canister: Principal, user_principal: Principal) -> impl IntoView {
     let param = use_params::<TabsParam>();
 
-    let loc = use_location();
     let current_tab = create_memo(move |_| {
-        let pathname = param.with(|p| p.clone());
-        match pathname {
-            Ok(p) => {
-                log::debug!("transfer res: {:?}", p.tab);
-                return match p.tab.as_str() {
-                    "posts" => 0,
-                    "stakes" => 1,
-                    "tokens" => 2,
-                    _ => 0,
-                };
+        param.with(|p| {
+            match p {
+                Ok(p) => {
+                    return match p.tab.as_str() {
+                        "posts" => 0,
+                        "stakes" => 1,
+                        "tokens" => 2,
+                        _ => 0,
+                    };
+                }
+                Err(_) => 0,
             }
-            Err(_) => 0,
-        }
+        })
     });
 
     let tab_class = move |tab_id: usize| {
@@ -77,32 +76,23 @@ fn ListSwitcher1() -> impl IntoView {
             "text-white flex justify-center w-full py-2"
         }
     };
-    let route = move |route: String| {
-        let pathname = move || loc.pathname.get();
-
-        if let Some(last_slash_index) = pathname().rfind("/") {
-            format!("{}{}", &pathname()[..last_slash_index + 1], route)
-        } else {
-            pathname().to_string()
-        }
-    };
     view! {
             <div class="relative flex flex-row w-11/12 md:w-9/12 text-center text-xl md:text-2xl">
             <A
                 class=move || tab_class(0)
-                href=move || route("posts".to_string())
+                href=move || format!("/profile/{}/posts", user_principal)
             >
                 <Icon icon=icondata::FiGrid />
             </A>
             <A
                 class=move || tab_class(1)
-                href= move || route("stakes".to_string())
+                href= move || format!("/profile/{}/stakes", user_principal)
             >
                 <Icon icon=icondata::BsTrophy />
             </A>
             <A
                 class=move || tab_class(2)
-                href= move || route("tokens".to_string())
+                href= move || format!("/profile/{}/tokens", user_principal)
             >
                 <Icon icon=icondata::AiDollarCircleOutlined />
             </A>
@@ -110,135 +100,21 @@ fn ListSwitcher1() -> impl IntoView {
 
         <div class="flex flex-col gap-y-12 justify-center pb-12 w-11/12 sm:w-7/12">
         <Show when=move || current_tab() == 0>
-            <ProfilePostsRoute />
+            <ProfilePosts user_canister />
         </Show>
         <Show when=move || current_tab() == 1>
-            <ProfileStakesRoute />
+            <ProfileSpeculations user_canister />
         </Show>
         <Show when=move || current_tab() == 2>
-            <ProfileTokenRoute />
+            <ProfileTokens user_canister user_principal />
         </Show>
     </div>
         }
 }
 
-#[component]
-fn ProfilePostsRoute() -> impl IntoView {
-    let params = use_params::<ProfileParams>();
-    let param_principal = create_memo(move |_| {
-        params.with(|p| {
-            let ProfileParams { id, .. } = p.as_ref().ok()?;
-            Principal::from_text(id).ok()
-        })
-    });
-
-    view! {
-        <AuthCansProvider let:canister>
-        {
-            if let Some(param_principal) = param_principal.get() {
-                view! {
-                    <Suspense fallback=FullScreenSpinner>
-                    {move || {
-                        view! { <ProfilePosts user_canister=param_principal /> }
-                    }}
-                </Suspense>
-                }
-            } else {
-                let user_principal = canister.user_principal();
-                view! {
-                    <Redirect path=format!("/profile/{}/posts", user_principal) />
-                }
-            }
-        }
-        </AuthCansProvider>
-    }
-}
 
 #[component]
-fn ProfileStakesRoute() -> impl IntoView {
-    let params = use_params::<ProfileParams>();
-    let param_principal = create_memo(move |_| {
-        params.with(|p| {
-            let ProfileParams { id, .. } = p.as_ref().ok()?;
-            Principal::from_text(id).ok()
-        })
-    });
-
-    view! {
-        <AuthCansProvider fallback=FullScreenSpinner let:canister>
-        {
-            if let Some(param_principal) = param_principal.get() {
-                view! {
-                    <Suspense>
-                    {move || {
-                        view! { <ProfileSpeculations user_canister=param_principal /> }
-                    }}
-                </Suspense>
-                }
-            } else {
-                let user_principal = canister.user_principal();
-                view! {
-                    <Redirect path=format!("/profile/{}/stakes", user_principal) />
-                }
-            }
-        }
-        </AuthCansProvider>
-    }
-}
-#[component]
-fn ProfileTokenRoute() -> impl IntoView {
-    let params = use_params::<ProfileParams>();
-    let param_principal = create_memo(move |_| {
-        params.with(|p| {
-            let ProfileParams { id } = p.as_ref().ok()?;
-            Principal::from_text(id).ok()
-        })
-    });
-
-    view! {
-        <AuthCansProvider fallback=FullScreenSpinner let:canister>
-        {
-            if let Some(param_principal) = param_principal.get() {
-                let user_details = create_resource(
-                    move || Some(param_principal),
-                    move |param_principal| async move {
-                        let param_principal = param_principal?;
-                        let canisters = unauth_canisters();
-
-                        let user_canister = canisters
-                            .get_individual_canister_by_user_principal(param_principal)
-                            .await
-                            .ok()??;
-                        Some((user_canister, param_principal))
-                    },
-                );
-
-                view! {
-                    <Suspense>
-                        {move || {
-                            user_details.get().map(|details| {
-                                if let Some((user_canister, user_principal)) = details{
-                                    view! { <ProfileTokens user_canister=user_canister user_principal=user_principal /> }
-                                }else{
-                                    view! {<Redirect path="/"/>}
-                                }
-                            })
-                        }}
-                    </Suspense>
-                }
-            } else {
-                let user_principal = canister.user_principal();
-                view! {
-                    <Redirect path=format!("/profile/{}/tokens", user_principal) />
-                }
-            }
-        }
-        </AuthCansProvider>
-    }
-}
-
-#[component]
-fn ProfileViewInner(user: ProfileDetails) -> impl IntoView {
+fn ProfileViewInner(user: ProfileDetails, user_canister: Principal) -> impl IntoView {
     let username_or_principal = user.username_or_principal();
     let profile_pic = user.profile_pic_or_random();
     let display_name = user.display_name_or_fallback();
@@ -283,7 +159,7 @@ fn ProfileViewInner(user: ProfileDetails) -> impl IntoView {
                     <Stat stat=user.hots info="Hots" />
                     <Stat stat=user.nots info="Nots" />
                 </div>
-                <ListSwitcher1/>
+                <ListSwitcher1 user_canister user_principal=user.principal/>
             </div>
         </div>
     }
@@ -292,57 +168,61 @@ fn ProfileViewInner(user: ProfileDetails) -> impl IntoView {
 #[component]
 pub fn ProfileView() -> impl IntoView {
     let params = use_params::<ProfileParams>();
-    let param_principal: Memo<Option<Principal>> = create_memo(move |_| {
+    let tab_params = use_params::<TabsParam>();
+    
+    let param_principal = move || {
         params.with(|p| {
             let ProfileParams { id, .. } = p.as_ref().ok()?;
             Principal::from_text(id).ok()
         })
-    });
+    };
 
+    
     view! {
         <AuthCansProvider fallback=FullScreenSpinner let:canister>
             {
-                if let Some(param_principal) = param_principal.get() {
+                if let Some(param_principal) = param_principal() {
                     let user_canister_principal = canister.user_canister();
                     if param_principal == user_canister_principal {
                         view! { <YourProfileView /> }
                     } else {
-                       view! {<OtherProfileView/>}
+                       view! {
+                        <OtherProfileView principal=param_principal/>
+                    }
                     }
                 } else {
-                    view! {
-                        <YourProfileView />
+                    if let Ok(TabsParam{tab}) = tab_params(){
+                        let user_principal = canister.user_principal();
+                        view! {
+                            <Redirect path=format!("/profile/{}/{}", user_principal, tab) />
+                        }
+                    }else{
+                        view! {<Redirect path="/"/>}
                     }
                 }
+
             }
         </AuthCansProvider>
     }
 }
 
 #[component]
-fn OtherProfileView() -> impl IntoView {
-    let params = use_params::<ProfileParams>();
-    let param_principal: Memo<Option<Principal>> = create_memo(move |_| {
-        params.with(|p| {
-            let ProfileParams { id, .. } = p.as_ref().ok()?;
-            Principal::from_text(id).ok()
-        })
-    });
+fn OtherProfileView(principal: Principal) -> impl IntoView {
     let user_details = create_resource(
-        move || param_principal.get(),
-        move |param_principal| async move {
-            let param_principal = param_principal?;
+        || {},
+        move |_| async move {
             let canisters = unauth_canisters();
 
             let user_canister = canisters
-                .get_individual_canister_by_user_principal(param_principal)
+                .get_individual_canister_by_user_principal(principal)
                 .await
                 .ok()??;
             let user = canisters.individual_user(user_canister).await;
             let user_details = user.get_profile_details().await.ok()?;
-            Some(user_details.into())
+            Some((user_details.into(), user_canister))
         },
     );
+
 
     view! {
         <Suspense>
@@ -355,24 +235,25 @@ fn OtherProfileView() -> impl IntoView {
     }
 }
 #[component]
-fn YourProfileView() -> impl IntoView {
+pub fn YourProfileView() -> impl IntoView {
     view! {
         <AuthCansProvider fallback=FullScreenSpinner let:canister>
-            <ProfileComponent user_details=Some(
-                canister.profile_details()
-            ) />
+            <ProfileComponent user_details=Some((
+                canister.profile_details(),
+                canister.user_canister(),
+            )) />
         </AuthCansProvider>
     }
 }
 
 #[component]
-fn ProfileComponent(user_details: Option<ProfileDetails>) -> impl IntoView {
+pub fn ProfileComponent(user_details: Option<(ProfileDetails, Principal)>) -> impl IntoView {
     let ProfilePostsContext {
         video_queue,
         start_index,
         ..
     } = expect_context();
-
+    
     video_queue.update_untracked(|v| {
         v.drain(..);
     });
@@ -382,8 +263,8 @@ fn ProfileComponent(user_details: Option<ProfileDetails>) -> impl IntoView {
 
     view! {
         {move || {
-            if let Some(user) = user_details.clone() {
-                view! { <ProfileViewInner user/> }
+            if let Some((user, user_canister)) = user_details.clone() {
+                view! { <ProfileViewInner user user_canister /> }
             } else {
                 view! { <Redirect path="/" /> }
             }
