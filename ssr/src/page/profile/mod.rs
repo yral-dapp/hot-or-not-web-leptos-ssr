@@ -12,9 +12,7 @@ use leptos_icons::*;
 use leptos_router::*;
 
 use crate::{
-    component::{
-        canisters_prov::AuthCansProvider, connect::ConnectLogin, spinner::FullScreenSpinner,
-    },
+    component::connect::ConnectLogin,
     state::{
         auth::account_connected_reader,
         canisters::{authenticated_canisters, unauth_canisters},
