@@ -173,6 +173,20 @@ pub fn ProfileView() -> impl IntoView {
             Principal::from_text(id).ok()
         })
     };
+    let user_details = create_resource(
+        || {},
+        move |_| async move {
+            let canisters = unauth_canisters();
+
+            let user_canister = canisters
+                .get_individual_canister_by_user_principal(param_principal()?)
+                .await
+                .ok()??;
+            let user = canisters.individual_user(user_canister).await;
+            let user_details = user.get_profile_details().await.ok()?;
+            Some((user_details.into(), user_canister))
+        },
+    );
 
     view! {
         <AuthCansProvider fallback=FullScreenSpinner let:canister>
@@ -182,9 +196,12 @@ pub fn ProfileView() -> impl IntoView {
                     if param_principal == user_canister_principal {
                         view! { <YourProfileView /> }
                     } else {
-                       view! {
-                        <OtherProfileView principal=param_principal/>
-                    }
+                        
+                            user_details
+                            .get()
+                            .map(|user_details| {
+                                view! { <ProfileComponent user_details /> }
+                            }).unwrap()
                     }
                 } else {
                     if let Ok(TabsParam{tab}) = tab_params(){
@@ -202,33 +219,6 @@ pub fn ProfileView() -> impl IntoView {
     }
 }
 
-#[component]
-fn OtherProfileView(principal: Principal) -> impl IntoView {
-    let user_details = create_resource(
-        || {},
-        move |_| async move {
-            let canisters = unauth_canisters();
-
-            let user_canister = canisters
-                .get_individual_canister_by_user_principal(principal)
-                .await
-                .ok()??;
-            let user = canisters.individual_user(user_canister).await;
-            let user_details = user.get_profile_details().await.ok()?;
-            Some((user_details.into(), user_canister))
-        },
-    );
-
-    view! {
-        <Suspense>
-            {move || {
-                user_details.get().map(|user_details| {
-                    view! { <ProfileComponent user_details /> }
-                })
-            }}
-        </Suspense>
-    }
-}
 #[component]
 pub fn YourProfileView() -> impl IntoView {
     view! {
