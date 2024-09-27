@@ -1,7 +1,12 @@
+use crate::consts::USER_PRINCIPAL_STORE;
+
 use super::nav_icons::*;
+use candid::Principal;
+use codee::string::FromToStringCodec;
 use leptos::*;
 use leptos_icons::*;
 use leptos_router::*;
+use leptos_use::use_cookie;
 #[component]
 fn NavIcon(
     idx: usize,
@@ -92,6 +97,7 @@ fn UploadIcon(idx: usize, cur_selected: Memo<usize>) -> impl IntoView {
 pub fn NavBar() -> impl IntoView {
     let cur_location = use_location();
     let home_path = create_rw_signal("/".to_string());
+    let (user_principal, _) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE);
     let cur_selected = create_memo(move |_| {
         let path = cur_location.pathname.get();
 
@@ -106,7 +112,16 @@ pub fn NavBar() -> impl IntoView {
                 home_path.set(path);
                 0
             }
-            s if s.starts_with("/profile/") && s.matches('/').count() > 2 => 0,
+            s if s.starts_with("/profile/") => match user_principal.get() {
+                Some(user_principal) => {
+                    if s.starts_with(&format!("/profile/{}", user_principal)) {
+                        5
+                    } else {
+                        0
+                    }
+                }
+                None => 5,
+            },
             s if s == "/profile/stakes" || s == "/profile/posts" || s == "/profile/tokens" => 5,
             s if s.starts_with("/profile") => 5,
             s if s.starts_with("/token/info") => 3,

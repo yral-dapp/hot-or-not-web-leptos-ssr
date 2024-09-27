@@ -15,7 +15,10 @@ use crate::{
     component::{
         canisters_prov::AuthCansProvider, connect::ConnectLogin, spinner::FullScreenSpinner,
     },
-    state::{auth::account_connected_reader, canisters::{authenticated_canisters, unauth_canisters}},
+    state::{
+        auth::account_connected_reader,
+        canisters::{authenticated_canisters, unauth_canisters},
+    },
     utils::{posts::PostDetails, profile::ProfileDetails},
 };
 
@@ -176,29 +179,36 @@ pub fn ProfileView() -> impl IntoView {
 
     let auth_cans = authenticated_canisters();
 
-    let profile_info_res = auth_cans.derive(move || param_principal, move |cans_wire, principal| async move{
-        let cans_wire = cans_wire?;
-        let canisters = cans_wire.clone().canisters()?;
-        let user_principal = canisters.user_principal();
+    let profile_info_res = auth_cans.derive(
+        move || param_principal,
+        move |cans_wire, principal| async move {
+            let cans_wire = cans_wire?;
+            let canisters = cans_wire.clone().canisters()?;
+            let user_principal = canisters.user_principal();
 
-        let Some(principal) = principal() else{
-            return Ok::<_, ServerFnError>((None::<(ProfileDetails, Principal)>, Some(user_principal)));
-        };
-        if user_principal == principal{
-            let details = cans_wire.profile_details.clone();
-            let user_canister = canisters.user_canister();
-            return Ok((Some((details, user_canister)), None))
-        }
-        let canisters = unauth_canisters();
-        let user_canister = canisters
-        .get_individual_canister_by_user_principal(principal)
-        .await?.unwrap();
-        let user = canisters.individual_user(user_canister).await;
-        let user_details = user.get_profile_details().await?;
-        Ok((Some((user_details.into(), user_canister)), None))
-    });
+            let Some(principal) = principal() else {
+                return Ok::<_, ServerFnError>((
+                    None::<(ProfileDetails, Principal)>,
+                    Some(user_principal),
+                ));
+            };
+            if user_principal == principal {
+                let details = cans_wire.profile_details.clone();
+                let user_canister = canisters.user_canister();
+                return Ok((Some((details, user_canister)), None));
+            }
+            let canisters = unauth_canisters();
+            let user_canister = canisters
+                .get_individual_canister_by_user_principal(principal)
+                .await?
+                .unwrap();
+            let user = canisters.individual_user(user_canister).await;
+            let user_details = user.get_profile_details().await?;
+            Ok((Some((user_details.into(), user_canister)), None))
+        },
+    );
 
-    view!{
+    view! {
         <Suspense>
             {
                 move ||{
