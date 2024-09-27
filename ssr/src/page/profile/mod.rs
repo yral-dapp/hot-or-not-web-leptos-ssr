@@ -241,7 +241,6 @@ pub fn ProfileView() -> impl IntoView {
     }
 }
 
-
 #[component]
 pub fn ProfileComponent(user_details: Option<(ProfileDetails, Principal)>) -> impl IntoView {
     let ProfilePostsContext {
