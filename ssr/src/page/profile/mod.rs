@@ -241,17 +241,6 @@ pub fn ProfileView() -> impl IntoView {
     }
 }
 
-#[component]
-pub fn YourProfileView() -> impl IntoView {
-    view! {
-        <AuthCansProvider fallback=FullScreenSpinner let:canister>
-            <ProfileComponent user_details=Some((
-                canister.profile_details(),
-                canister.user_canister(),
-            )) />
-        </AuthCansProvider>
-    }
-}
 
 #[component]
 pub fn ProfileComponent(user_details: Option<(ProfileDetails, Principal)>) -> impl IntoView {

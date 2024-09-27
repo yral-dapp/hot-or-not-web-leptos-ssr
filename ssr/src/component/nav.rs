@@ -120,9 +120,8 @@ pub fn NavBar() -> impl IntoView {
                         0
                     }
                 }
-                None => 5,
+                None => 0,
             },
-            s if s == "/profile/stakes" || s == "/profile/posts" || s == "/profile/tokens" => 5,
             s if s.starts_with("/profile") => 5,
             s if s.starts_with("/token/info") => 3,
             s if s.starts_with("/token/create") => 2,
