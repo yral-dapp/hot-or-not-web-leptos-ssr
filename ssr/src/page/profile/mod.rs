@@ -15,7 +15,7 @@ use crate::{
     component::{
         canisters_prov::AuthCansProvider, connect::ConnectLogin, spinner::FullScreenSpinner,
     },
-    state::{auth::account_connected_reader, canisters::unauth_canisters},
+    state::{auth::account_connected_reader, canisters::{authenticated_canisters, unauth_canisters}},
     utils::{posts::PostDetails, profile::ProfileDetails},
 };
 
@@ -173,49 +173,61 @@ pub fn ProfileView() -> impl IntoView {
             Principal::from_text(id).ok()
         })
     };
-    let user_details = create_resource(
-        || {},
-        move |_| async move {
-            let canisters = unauth_canisters();
 
-            let user_canister = canisters
-                .get_individual_canister_by_user_principal(param_principal()?)
-                .await
-                .ok()??;
-            let user = canisters.individual_user(user_canister).await;
-            let user_details = user.get_profile_details().await.ok()?;
-            Some((user_details.into(), user_canister))
-        },
-    );
+    let auth_cans = authenticated_canisters();
 
-    view! {
-        <AuthCansProvider fallback=FullScreenSpinner let:canister>
+    let profile_info_res = auth_cans.derive(move || param_principal, move |cans_wire, principal| async move{
+        let cans_wire = cans_wire?;
+        let canisters = cans_wire.clone().canisters()?;
+        let user_principal = canisters.user_principal();
+
+        let Some(principal) = principal() else{
+            return Ok::<_, ServerFnError>((None::<(ProfileDetails, Principal)>, Some(user_principal)));
+        };
+        if user_principal == principal{
+            let details = cans_wire.profile_details.clone();
+            let user_canister = canisters.user_canister();
+            return Ok((Some((details, user_canister)), None))
+        }
+        let canisters = unauth_canisters();
+        let user_canister = canisters
+        .get_individual_canister_by_user_principal(principal)
+        .await?.unwrap();
+        let user = canisters.individual_user(user_canister).await;
+        let user_details = user.get_profile_details().await?;
+        Ok((Some((user_details.into(), user_canister)), None))
+    });
+
+    view!{
+        <Suspense>
             {
-                if let Some(param_principal) = param_principal() {
-                    let user_canister_principal = canister.user_canister();
-                    if param_principal == user_canister_principal {
-                        view! { <YourProfileView /> }
-                    } else {
-                        
-                            user_details
-                            .get()
-                            .map(|user_details| {
-                                view! { <ProfileComponent user_details /> }
-                            }).unwrap()
-                    }
-                } else {
-                    if let Ok(TabsParam{tab}) = tab_params(){
-                        let user_principal = canister.user_principal();
-                        view! {
-                            <Redirect path=format!("/profile/{}/{}", user_principal, tab) />
+                move ||{
+                    profile_info_res().map(|res|{
+                        match res{
+                            Ok((None, Some(user_principal))) => {
+                                if let Ok(TabsParam{tab}) = tab_params(){
+                                    view! {
+                                        <Redirect path=format!("/profile/{}/{}", user_principal, tab) />
+                                    }
+                                }else{
+                                    view! {<Redirect path="/"/>}
+                                }
+                            },
+                            Err(_) => view! {<Redirect path="/"/>},
+                            Ok((Some((user_details, user_canister)), None)) => {
+                                view! {
+                                    <ProfileComponent user_details=Some((
+                                        user_details,
+                                        user_canister,
+                                    )) />
+                                }
+                            },
+                            _ => view! {<Redirect path="/"/>}
                         }
-                    }else{
-                        view! {<Redirect path="/"/>}
-                    }
+                    })
                 }
-
             }
-        </AuthCansProvider>
+        </Suspense>
     }
 }
 
