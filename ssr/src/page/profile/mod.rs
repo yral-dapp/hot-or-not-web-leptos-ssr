@@ -176,9 +176,8 @@ pub fn ProfileView() -> impl IntoView {
 
     let auth_cans = authenticated_canisters();
 
-    let profile_info_res = auth_cans.derive(
-        param_principal,
-        move |cans_wire, principal| async move {
+    let profile_info_res =
+        auth_cans.derive(param_principal, move |cans_wire, principal| async move {
             let cans_wire = cans_wire?;
             let canisters = cans_wire.clone().canisters()?;
             let user_principal = canisters.user_principal();
@@ -202,8 +201,7 @@ pub fn ProfileView() -> impl IntoView {
             let user = canisters.individual_user(user_canister).await;
             let user_details = user.get_profile_details().await?;
             Ok((Some((user_details.into(), user_canister)), None))
-        },
-    );
+        });
 
     view! {
         <Suspense>
