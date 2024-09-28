@@ -162,7 +162,7 @@ fn ProfileViewInner(user: ProfileDetails, user_canister: Principal) -> impl Into
         </div>
     }
 }
-
+#[allow(clippy::redundant_closure)]
 #[component]
 pub fn ProfileView() -> impl IntoView {
     let params = use_params::<ProfileParams>();
