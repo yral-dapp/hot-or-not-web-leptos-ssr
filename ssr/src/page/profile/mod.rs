@@ -178,13 +178,13 @@ pub fn ProfileView() -> impl IntoView {
     let auth_cans = authenticated_canisters();
 
     let profile_info_res = auth_cans.derive(
-        move || param_principal,
+        move || param_principal(),
         move |cans_wire, principal| async move {
             let cans_wire = cans_wire?;
             let canisters = cans_wire.clone().canisters()?;
             let user_principal = canisters.user_principal();
 
-            let Some(principal) = principal() else {
+            let Some(principal) = principal else {
                 return Ok::<_, ServerFnError>((
                     None::<(ProfileDetails, Principal)>,
                     Some(user_principal),
