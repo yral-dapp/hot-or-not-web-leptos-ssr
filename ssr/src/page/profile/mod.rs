@@ -194,10 +194,12 @@ pub fn ProfileView() -> impl IntoView {
                 return Ok((Some((details, user_canister)), None));
             }
             let canisters = unauth_canisters();
-            let user_canister = canisters
+            let Some(user_canister) = canisters
                 .get_individual_canister_by_user_principal(principal)
                 .await?
-                .unwrap();
+            else {
+                return Err(ServerFnError::new("Failed to get user canister"));
+            };
             let user = canisters.individual_user(user_canister).await;
             let user_details = user.get_profile_details().await?;
             Ok((Some((user_details.into(), user_canister)), None))
