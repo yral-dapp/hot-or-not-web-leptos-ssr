@@ -16,13 +16,15 @@ pub trait KeyedData {
     fn key(&self) -> Self::Key;
 }
 
-pub(crate) trait KeyedCursoredDataProvider<T>: crate::component::infinite_scroller::CursoredDataProvider{
+pub(crate) trait KeyedCursoredDataProvider<T>:
+    crate::component::infinite_scroller::CursoredDataProvider
+{
     async fn get_by_cursor_by_key(
         &self,
         start: usize,
         end: usize,
-        _user: T
-    ) -> Result<PageEntry<Self::Data>, Self::Error>{
+        _user: T,
+    ) -> Result<PageEntry<Self::Data>, Self::Error> {
         <Self as CursoredDataProvider>::get_by_cursor(self, start, end).await
     }
 }
@@ -35,7 +37,6 @@ pub(crate) trait CursoredDataProvider {
         start: usize,
         end: usize,
     ) -> Result<PageEntry<Self::Data>, Self::Error>;
-
 }
 
 pub(crate) type InferData<T> = <T as CursoredDataProvider>::Data;

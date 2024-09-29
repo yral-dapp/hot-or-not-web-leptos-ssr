@@ -133,7 +133,10 @@ pub fn TxnView(info: TxnInfo, #[prop(optional)] _ref: NodeRef<html::Div>) -> imp
 pub mod provider {
     use yral_canisters_client::individual_user_template::IndividualUserTemplate;
 
-    use crate::{component::infinite_scroller::{CursoredDataProvider, KeyedCursoredDataProvider}, state::canisters::Canisters};
+    use crate::{
+        component::infinite_scroller::{CursoredDataProvider, KeyedCursoredDataProvider},
+        state::canisters::Canisters,
+    };
 
     use super::*;
 
@@ -157,7 +160,7 @@ pub mod provider {
         use crate::component::infinite_scroller::{KeyedCursoredDataProvider, PageEntry};
         use ic_agent::AgentError;
         use yral_canisters_client::individual_user_template::{
-            HotOrNotOutcomePayoutEvent, IndividualUserTemplate, MintEvent, Result15, TokenEvent
+            HotOrNotOutcomePayoutEvent, IndividualUserTemplate, MintEvent, Result15, TokenEvent,
         };
 
         fn event_to_txn(event: (u64, TokenEvent)) -> Option<TxnInfo> {
@@ -197,28 +200,28 @@ pub mod provider {
 
         #[derive(Clone)]
         pub struct TxnHistory(pub Canisters<true>);
-        impl <'a> KeyedCursoredDataProvider<IndividualUserTemplate<'a>> for TxnHistory{
+        impl<'a> KeyedCursoredDataProvider<IndividualUserTemplate<'a>> for TxnHistory {
             async fn get_by_cursor_by_key(
-                    &self,
-                    start: usize,
-                    end: usize,
-                    user: IndividualUserTemplate<'a>
-                ) -> Result<PageEntry<Self::Data>, Self::Error> {
-                    let history = user
-                        .get_user_utility_token_transaction_history_with_pagination(
-                            start as u64,
-                            end as u64,
-                        )
-                        .await?;
-                    let history = match history {
-                        Result15::Ok(v) => v,
-                        Result15::Err(_) => vec![],
-                    };
-                    let list_end = history.len() < (end - start);
-                    Ok(PageEntry {
-                        data: history.into_iter().filter_map(event_to_txn).collect(),
-                        end: list_end,
-                    })
+                &self,
+                start: usize,
+                end: usize,
+                user: IndividualUserTemplate<'a>,
+            ) -> Result<PageEntry<Self::Data>, Self::Error> {
+                let history = user
+                    .get_user_utility_token_transaction_history_with_pagination(
+                        start as u64,
+                        end as u64,
+                    )
+                    .await?;
+                let history = match history {
+                    Result15::Ok(v) => v,
+                    Result15::Err(_) => vec![],
+                };
+                let list_end = history.len() < (end - start);
+                Ok(PageEntry {
+                    data: history.into_iter().filter_map(event_to_txn).collect(),
+                    end: list_end,
+                })
             }
         }
         impl CursoredDataProvider for TxnHistory {
@@ -260,7 +263,10 @@ pub mod provider {
         };
         use yral_canisters_client::individual_user_template::IndividualUserTemplate;
 
-        use crate::{component::infinite_scroller::{KeyedCursoredDataProvider, PageEntry}, utils::time::current_epoch};
+        use crate::{
+            component::infinite_scroller::{KeyedCursoredDataProvider, PageEntry},
+            utils::time::current_epoch,
+        };
 
         use super::*;
 
@@ -277,22 +283,22 @@ pub mod provider {
                 _ => unreachable!(),
             }
         }
-        impl <'a> KeyedCursoredDataProvider<IndividualUserTemplate<'a>> for MockHistoryProvider{
+        impl<'a> KeyedCursoredDataProvider<IndividualUserTemplate<'a>> for MockHistoryProvider {
             async fn get_by_cursor_by_key(
-                    &self,
-                    start: usize,
-                    end: usize,
-                    user: IndividualUserTemplate<'a>
-                ) -> Result<PageEntry<Self::Data>, Self::Error> {
-                    let mut rand_gen = ChaCha8Rng::seed_from_u64(current_epoch().as_nanos() as u64);
-                    let data = (start..end)
-                        .map(|_| TxnInfo {
-                            amount: rand_gen.next_u64() % 3001,
-                            tag: tag_from_u32(rand_gen.next_u32()),
-                            id: rand_gen.next_u64(),
-                        })
-                        .collect();
-                    Ok(PageEntry { data, end: false })
+                &self,
+                start: usize,
+                end: usize,
+                user: IndividualUserTemplate<'a>,
+            ) -> Result<PageEntry<Self::Data>, Self::Error> {
+                let mut rand_gen = ChaCha8Rng::seed_from_u64(current_epoch().as_nanos() as u64);
+                let data = (start..end)
+                    .map(|_| TxnInfo {
+                        amount: rand_gen.next_u64() % 3001,
+                        tag: tag_from_u32(rand_gen.next_u32()),
+                        id: rand_gen.next_u64(),
+                    })
+                    .collect();
+                Ok(PageEntry { data, end: false })
             }
         }
         impl CursoredDataProvider for MockHistoryProvider {

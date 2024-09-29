@@ -2,15 +2,18 @@ pub mod tokens;
 pub mod transactions;
 mod txn;
 use crate::{
-    component::{infinite_scroller::KeyedCursoredDataProvider, share_popup::ShareButtonWithFallbackPopup},
-    page::token::non_yral_tokens::eligible_non_yral_supported_tokens, state::canisters::unauth_canisters,
+    component::{
+        infinite_scroller::KeyedCursoredDataProvider, share_popup::ShareButtonWithFallbackPopup,
+    },
+    page::token::non_yral_tokens::eligible_non_yral_supported_tokens,
+    state::canisters::unauth_canisters,
 };
 use candid::Principal;
 use leptos::*;
+use leptos_router::Params;
 use leptos_router::{use_params, Redirect};
 use serde::{Deserialize, Serialize};
 use tokens::{TokenRootList, TokenView};
-use leptos_router::Params;
 
 use crate::{
     component::{
@@ -120,8 +123,8 @@ fn TokensFetch(principal: Principal) -> impl IntoView {
     }
 }
 #[derive(Params, PartialEq)]
-struct WalletParams{
-    id: String
+struct WalletParams {
+    id: String,
 }
 
 #[component]
@@ -134,8 +137,8 @@ pub fn Wallet() -> impl IntoView {
             Principal::from_text(id).ok()
         })
     };
-    
-    if let None = param_principal(){
+
+    if let None = param_principal() {
         return view! {
             <div>
             <AuthCansProvider let: cans>
@@ -144,59 +147,70 @@ pub fn Wallet() -> impl IntoView {
                 }}
             </AuthCansProvider>
             </div>
-        }
+        };
     }
+
     let auth_cans = authenticated_canisters();
-    let balance_fetch = auth_cans.derive(
-        param_principal,
-        |cans_wire, principal| async move {
-            let canisters = cans_wire?.clone().canisters()?;
-            let principal= principal.unwrap();
-            let Some(user_canister) = canisters
-                .get_individual_canister_by_user_principal(principal)
-                .await? else{return Err(ServerFnError::new("Failed to get user canister"))};
-            let user = canisters.individual_user(user_canister).await;
-
-            let bal = user.get_utility_token_balance().await?;
-            Ok::<_, ServerFnError>(bal.to_string())
-        },
-    );
-    let history_fetch = auth_cans.derive(
-        param_principal,
-        |cans_wire, principal| async move {
-            let cans = cans_wire?.canisters()?;
-            let principal= principal.unwrap();
-            let Some(user_canister) = cans.clone()
+    let balance_fetch = auth_cans.derive(param_principal, |cans_wire, principal| async move {
+        let canisters = cans_wire?.clone().canisters()?;
+        let principal = principal.unwrap();
+        let Some(user_canister) = canisters
             .get_individual_canister_by_user_principal(principal)
-            .await? else{return Err(ServerFnError::new("Failed to get user canister"))};
-            let user = cans.individual_user(user_canister).await;
-            let history_prov = get_history_provider(cans.clone());
-            let page = history_prov.get_by_cursor_by_key(0, RECENT_TXN_CNT, user).await?;
+            .await?
+        else {
+            return Err(ServerFnError::new("Failed to get user canister"));
+        };
+        let user = canisters.individual_user(user_canister).await;
 
-            Ok::<_, ServerFnError>(page.data)
-        },
-    );
+        let bal = user.get_utility_token_balance().await?;
+        Ok::<_, ServerFnError>(bal.to_string())
+    });
+    let history_fetch = auth_cans.derive(param_principal, |cans_wire, principal| async move {
+        let cans = cans_wire?.canisters()?;
+        let principal = principal.unwrap();
+        let Some(user_canister) = cans
+            .clone()
+            .get_individual_canister_by_user_principal(principal)
+            .await?
+        else {
+            return Err(ServerFnError::new("Failed to get user canister"));
+        };
+        let user = cans.individual_user(user_canister).await;
+        let history_prov = get_history_provider(cans.clone());
+        let page = history_prov
+            .get_by_cursor_by_key(0, RECENT_TXN_CNT, user)
+            .await?;
+
+        Ok::<_, ServerFnError>(page.data)
+    });
 
     let profile_info_res =
         auth_cans.derive(param_principal, move |cans_wire, principal| async move {
             let cans_wire = cans_wire?;
             let canisters = cans_wire.clone().canisters()?;
 
-            let principal= principal.unwrap();
+            let principal = principal.unwrap();
             let Some(user_canister) = canisters
                 .get_individual_canister_by_user_principal(principal)
-                .await? else{return Err(ServerFnError::new("Failed to get user canister"))};
+                .await?
+            else {
+                return Err(ServerFnError::new("Failed to get user canister"));
+            };
             let user = canisters.individual_user(user_canister).await;
             let user_details = user.get_profile_details().await?;
             Ok::<ProfileDetails, ServerFnError>(user_details.into())
         });
-    
-    let is_own_account = auth_cans.derive(param_principal, move |cans_wire, principal| async move{
-        let cans_wire = cans_wire?;
-        let canisters = cans_wire.clone().canisters()?;
-        let Some(principal)= principal else {return Err(ServerFnError::new("failed to get principal param"))};
-        Ok::<_, ServerFnError>(canisters.user_principal() == principal)
-    });
+
+    let is_own_account =
+        auth_cans.derive(param_principal, move |cans_wire, principal| async move {
+            let cans_wire = cans_wire?;
+            let canisters = cans_wire.clone().canisters()?;
+            let Some(principal) = principal else {
+                return Err(ServerFnError::new("failed to get principal param"));
+            };
+            Ok::<_, ServerFnError>(canisters.user_principal() == principal)
+        });
+
     view! {
         <div>
             <div class="flex flex-col gap-4 px-4 pt-4 pb-12 bg-black min-h-dvh">
@@ -242,18 +256,28 @@ pub fn Wallet() -> impl IntoView {
                         }
                 </Suspense>
                 <div class="flex flex-col gap-2 w-full">
-                    <div class="flex flex-row justify-between items-end w-full">
-                        <span class="text-sm text-white md:text-md">My Tokens</span>
-                        <a href="/tokens" class="md:text-lg text-white/50 text-md">
-                            See All
-                        </a>
-                    </div>
+                <Suspense>
+                    {
+                        move || {
+                            let is_own_account = try_or_redirect_opt!(is_own_account()?);
+                            Some(
+                                view! {
+                                    <div class="flex flex-row justify-between items-end w-full">
+                                        <span class="text-sm text-white md:text-md">{if is_own_account{"My Tokens"} else {"Their Tokens"}}</span>
+                                        <a href="/tokens" class="md:text-lg text-white/50 text-md">
+                                            See All
+                                        </a>
+                                    </div>
+                                }
+                            )
+                        }
+                    }
+                    </Suspense>
                     <div class="flex flex-col gap-2 items-center">
                         {
                             move || {
-                                let param_principal = try_or_redirect_opt!(param_principal() ?);
                                 Some(view! {
-                                    <TokensFetch principal=param_principal/>
+                                    <TokensFetch principal=param_principal()?/>
                                 })
                             }
                         }
