@@ -1,4 +1,5 @@
 use super::bullet_loader::BulletLoader;
+use candid::Principal;
 use leptos::{html::ElementDescriptor, *};
 use leptos_use::{use_intersection_observer_with_options, UseIntersectionObserverOptions};
 use std::{error::Error, hash::Hash, marker::PhantomData};
@@ -15,6 +16,16 @@ pub trait KeyedData {
     fn key(&self) -> Self::Key;
 }
 
+pub(crate) trait KeyedCursoredDataProvider<T>: crate::component::infinite_scroller::CursoredDataProvider{
+    async fn get_by_cursor_by_key(
+        &self,
+        start: usize,
+        end: usize,
+        _user: T
+    ) -> Result<PageEntry<Self::Data>, Self::Error>{
+        <Self as CursoredDataProvider>::get_by_cursor(self, start, end).await
+    }
+}
 pub(crate) trait CursoredDataProvider {
     type Data: KeyedData + Clone + 'static;
     type Error: Error;
@@ -24,6 +35,7 @@ pub(crate) trait CursoredDataProvider {
         start: usize,
         end: usize,
     ) -> Result<PageEntry<Self::Data>, Self::Error>;
+
 }
 
 pub(crate) type InferData<T> = <T as CursoredDataProvider>::Data;
