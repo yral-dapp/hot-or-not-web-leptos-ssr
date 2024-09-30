@@ -46,25 +46,25 @@ fn Stat(stat: u64, #[prop(into)] info: String) -> impl IntoView {
         </div>
     }
 }
+
 #[derive(Params, Clone, PartialEq)]
 struct TabsParam {
     tab: String,
 }
+
 #[component]
 fn ListSwitcher1(user_canister: Principal, user_principal: Principal) -> impl IntoView {
     let param = use_params::<TabsParam>();
 
     let current_tab = create_memo(move |_| {
-        param.with(|p| match p {
-            Ok(p) => {
-                return match p.tab.as_str() {
-                    "posts" => 0,
-                    "stakes" => 1,
-                    "tokens" => 2,
-                    _ => 0,
-                };
+        param.with(|p| {
+            let tab = p.as_ref().map(|p| p.tab.as_str()).unwrap_or_default();
+            match tab {
+                "posts" => 0,
+                "stakes" => 1,
+                "tokens" => 2,
+                _ => 0,
             }
-            Err(_) => 0,
         })
     });
 
