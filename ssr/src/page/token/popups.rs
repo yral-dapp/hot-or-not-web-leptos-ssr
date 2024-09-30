@@ -33,7 +33,7 @@ fn CreateTokenSuccessPopup(
     #[prop(into)] img_url: String,
 ) -> impl IntoView {
     CreateTokenCtx::reset();
-    let profile_url = "/your-profile?tab=tokens";
+    let profile_url = "/profile/tokens";
     view! {
         <SuccessPopup
             img=move || {
@@ -102,7 +102,7 @@ fn CreateTokenErrorPopup(
     token_name: MaybeSignal<String>,
     close_popup: WriteSignal<bool>,
 ) -> impl IntoView {
-    let profile_url = String::from("/your-profile?tab=tokens");
+    let profile_url = String::from("/profile/tokens");
 
     view! {
         <ErrorPopup

@@ -12,10 +12,11 @@ use leptos_icons::*;
 use leptos_router::*;
 
 use crate::{
-    component::{
-        canisters_prov::AuthCansProvider, connect::ConnectLogin, spinner::FullScreenSpinner,
+    component::connect::ConnectLogin,
+    state::{
+        auth::account_connected_reader,
+        canisters::{authenticated_canisters, unauth_canisters},
     },
-    state::{auth::account_connected_reader, canisters::unauth_canisters},
     utils::{posts::PostDetails, profile::ProfileDetails},
 };
 
@@ -46,17 +47,27 @@ fn Stat(stat: u64, #[prop(into)] info: String) -> impl IntoView {
     }
 }
 
+#[derive(Params, Clone, PartialEq)]
+struct TabsParam {
+    tab: String,
+}
+
 #[component]
-fn ListSwitcher(user_canister: Principal, user_principal: Principal) -> impl IntoView {
-    let (cur_tab, set_cur_tab) = create_query_signal::<String>("tab");
+fn ListSwitcher1(user_canister: Principal, user_principal: Principal) -> impl IntoView {
+    let param = use_params::<TabsParam>();
+
     let current_tab = create_memo(move |_| {
-        with!(|cur_tab| match cur_tab.as_deref() {
-            Some("posts") => 0,
-            Some("speculations") => 1,
-            Some("tokens") => 2,
-            _ => 0,
+        param.with(|p| {
+            let tab = p.as_ref().map(|p| p.tab.as_str()).unwrap_or("tokens");
+            match tab {
+                "posts" => 0,
+                "stakes" => 1,
+                "tokens" => 2,
+                _ => 0,
+            }
         })
     });
+
     let tab_class = move |tab_id: usize| {
         if tab_id == current_tab() {
             "text-primary-500 border-b-4 border-primary-500 flex justify-center w-full py-2"
@@ -64,34 +75,40 @@ fn ListSwitcher(user_canister: Principal, user_principal: Principal) -> impl Int
             "text-white flex justify-center w-full py-2"
         }
     };
-
     view! {
-        <div class="relative flex flex-row w-11/12 md:w-9/12 text-center text-xl md:text-2xl">
-            <button class=move || tab_class(0) on:click=move |_| set_cur_tab(Some("posts".into()))>
+            <div class="relative flex flex-row w-11/12 md:w-9/12 text-center text-xl md:text-2xl">
+            <A
+                class=move || tab_class(0)
+                href=move || format!("/profile/{}/posts", user_principal)
+            >
                 <Icon icon=icondata::FiGrid />
-            </button>
-            <button
+            </A>
+            <A
                 class=move || tab_class(1)
-                on:click=move |_| set_cur_tab(Some("speculations".into()))
+                href= move || format!("/profile/{}/stakes", user_principal)
             >
                 <Icon icon=icondata::BsTrophy />
-            </button>
-            <button class=move || tab_class(2) on:click=move |_| set_cur_tab(Some("tokens".into()))>
+            </A>
+            <A
+                class=move || tab_class(2)
+                href= move || format!("/profile/{}/tokens", user_principal)
+            >
                 <Icon icon=icondata::AiDollarCircleOutlined />
-            </button>
+            </A>
         </div>
+
         <div class="flex flex-col gap-y-12 justify-center pb-12 w-11/12 sm:w-7/12">
-            <Show when=move || current_tab() == 0>
-                <ProfilePosts user_canister />
-            </Show>
-            <Show when=move || current_tab() == 1>
-                <ProfileSpeculations user_canister />
-            </Show>
-            <Show when=move || current_tab() == 2>
-                <ProfileTokens user_canister user_principal />
-            </Show>
-        </div>
-    }
+        <Show when=move || current_tab() == 0>
+            <ProfilePosts user_canister />
+        </Show>
+        <Show when=move || current_tab() == 1>
+            <ProfileSpeculations user_canister />
+        </Show>
+        <Show when=move || current_tab() == 2>
+            <ProfileTokens user_canister user_principal />
+        </Show>
+    </div>
+        }
 }
 
 #[component]
@@ -140,62 +157,84 @@ fn ProfileViewInner(user: ProfileDetails, user_canister: Principal) -> impl Into
                     <Stat stat=user.hots info="Hots" />
                     <Stat stat=user.nots info="Nots" />
                 </div>
-                <ListSwitcher user_canister user_principal=user.principal />
+                <ListSwitcher1 user_canister user_principal=user.principal/>
             </div>
         </div>
     }
 }
-
 #[component]
 pub fn ProfileView() -> impl IntoView {
     let params = use_params::<ProfileParams>();
-    let principal = move || {
-        params.with(|p| {
-            let ProfileParams { id } = p.as_ref().ok()?;
+    let tab_params = use_params::<TabsParam>();
 
+    let param_principal = move || {
+        params.with(|p| {
+            let ProfileParams { id, .. } = p.as_ref().ok()?;
             Principal::from_text(id).ok()
         })
     };
 
-    let user_details = create_resource(
-        || {},
-        move |_| async move {
-            let canisters = unauth_canisters();
+    let auth_cans = authenticated_canisters();
 
-            let user_canister = canisters
-                .get_individual_canister_by_user_principal(principal()?)
-                .await
-                .ok()??;
+    let profile_info_res =
+        auth_cans.derive(param_principal, move |cans_wire, principal| async move {
+            let cans_wire = cans_wire?;
+            let canisters = cans_wire.clone().canisters()?;
+            let user_principal = canisters.user_principal();
+
+            let Some(principal) = principal else {
+                return Ok::<_, ServerFnError>((
+                    None::<(ProfileDetails, Principal)>,
+                    Some(user_principal),
+                ));
+            };
+            if user_principal == principal {
+                let details = cans_wire.profile_details.clone();
+                let user_canister = canisters.user_canister();
+                return Ok((Some((details, user_canister)), None));
+            }
+            let canisters = unauth_canisters();
+            let Some(user_canister) = canisters
+                .get_individual_canister_by_user_principal(principal)
+                .await?
+            else {
+                return Err(ServerFnError::new("Failed to get user canister"));
+            };
             let user = canisters.individual_user(user_canister).await;
-            let user_details = user.get_profile_details().await.ok()?;
-            Some((user_details.into(), user_canister))
-        },
-    );
+            let user_details = user.get_profile_details().await?;
+            Ok((Some((user_details.into(), user_canister)), None))
+        });
 
     view! {
         <Suspense>
-
-            {move || {
-                user_details
-                    .get()
-                    .map(|user_details| {
-                        view! { <ProfileComponent user_details /> }
+            {
+                move ||{
+                    profile_info_res().map(|res|{
+                        match res{
+                            Ok((None, Some(user_principal))) => {
+                                if let Ok(TabsParam{tab}) = tab_params(){
+                                    view! {
+                                        <Redirect path=format!("/profile/{}/{}", user_principal, tab) />
+                                    }
+                                }else{
+                                    view! {<Redirect path="/"/>}
+                                }
+                            },
+                            Err(_) => view! {<Redirect path="/"/>},
+                            Ok((Some((user_details, user_canister)), None)) => {
+                                view! {
+                                    <ProfileComponent user_details=Some((
+                                        user_details,
+                                        user_canister,
+                                    )) />
+                                }
+                            },
+                            _ => view! {<Redirect path="/"/>}
+                        }
                     })
-            }}
-
+                }
+            }
         </Suspense>
-    }
-}
-
-#[component]
-pub fn YourProfileView() -> impl IntoView {
-    view! {
-        <AuthCansProvider fallback=FullScreenSpinner let:canister>
-            <ProfileComponent user_details=Some((
-                canister.profile_details(),
-                canister.user_canister(),
-            )) />
-        </AuthCansProvider>
     }
 }
 

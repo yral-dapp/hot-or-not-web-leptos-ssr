@@ -27,7 +27,7 @@ fn ProfileGreeter(details: ProfileDetails) -> impl IntoView {
     // let (is_connected, _) = account_connected_reader();
     let share_link = {
         let username_or_principal = details.username_or_principal();
-        format!("/profile/{}?tab=tokens", username_or_principal)
+        format!("/profile/{}/posts", username_or_principal)
     };
     let message = format!(
         "Hey! Check out my YRAL profile 👇 {}. I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter",

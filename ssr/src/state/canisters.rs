@@ -30,7 +30,7 @@ pub struct CanistersAuthWire {
     pub id: DelegatedIdentityWire,
     pub user_canister: Principal,
     expiry: u64,
-    profile_details: ProfileDetails,
+    pub profile_details: ProfileDetails,
 }
 
 impl CanistersAuthWire {
