@@ -166,7 +166,7 @@ fn TokenTransferSuccessPopup(
     #[prop(into)] token_name: String,
     amount: TokenBalance,
 ) -> impl IntoView {
-    let amount_str = amount.humanize();
+    let amount_str = amount.humanize_float();
     view! {
         <SuccessPopup
             img=|| view! { <TokenConfettiSymbol class="w-8/12"/> }
