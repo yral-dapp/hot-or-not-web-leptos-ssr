@@ -105,10 +105,10 @@ fn CtxProvider(temp_identity: Option<JwkEcKey>, children: ChildrenFn) -> impl In
                             Option<Principal>,
                             JsonSerdeCodec,
                         >(USER_CANISTER_ID_STORE);
-                        let cans_effect = cans.clone();
+                        let user_principal = cans.user_principal();
                         create_effect(move |_|{
                             let (_, set_user_principal) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE);
-                            set_user_principal.set(Some(cans_effect.user_principal()));
+                            set_user_principal.set(Some(user_principal));
                         });
                         set_user_canister_id(Some(cans.user_canister()));
                         canisters_store.set(Some(cans));
