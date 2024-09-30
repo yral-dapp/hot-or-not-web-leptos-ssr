@@ -6,13 +6,11 @@ use crate::{
         infinite_scroller::KeyedCursoredDataProvider, share_popup::ShareButtonWithFallbackPopup,
     },
     page::token::non_yral_tokens::eligible_non_yral_supported_tokens,
-    state::canisters::unauth_canisters,
 };
 use candid::Principal;
 use leptos::*;
 use leptos_router::Params;
 use leptos_router::{use_params, Redirect};
-use serde::{Deserialize, Serialize};
 use tokens::{TokenRootList, TokenView};
 
 use crate::{
@@ -32,8 +30,8 @@ use txn::{provider::get_history_provider, TxnView};
 fn ProfileGreeter(details: ProfileDetails) -> impl IntoView {
     // let (is_connected, _) = account_connected_reader();
     let share_link = {
-        let username_or_principal = details.username_or_principal();
-        format!("/profile/{}?tab=tokens", username_or_principal)
+        let principal = details.principal();
+        format!("/wallet/{}", principal)
     };
     let message = format!(
         "Hey! Check out my YRAL profile 👇 {}. I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter",
@@ -137,8 +135,7 @@ pub fn Wallet() -> impl IntoView {
             Principal::from_text(id).ok()
         })
     };
-
-    if let None = param_principal() {
+    if param_principal().is_none() {
         return view! {
             <div>
             <AuthCansProvider let: cans>
@@ -152,8 +149,8 @@ pub fn Wallet() -> impl IntoView {
 
     let auth_cans = authenticated_canisters();
     let balance_fetch = auth_cans.derive(param_principal, |cans_wire, principal| async move {
-        let canisters = cans_wire?.clone().canisters()?;
         let principal = principal.unwrap();
+        let canisters = cans_wire?.clone().canisters()?;
         let Some(user_canister) = canisters
             .get_individual_canister_by_user_principal(principal)
             .await?
@@ -225,7 +222,16 @@ pub fn Wallet() -> impl IntoView {
                     </Suspense>
                 </div>
                 <div class="flex flex-col items-center mt-6 w-full text-white">
-                    <span class="uppercase lg:text-lg text-md">Your Coyns Balance</span>
+                    <Suspense>
+                    {
+                        move ||{
+                            let is_own_account = try_or_redirect_opt!(is_own_account() ?);
+                            Some(view! {
+                                <span class="uppercase lg:text-lg text-md">{if is_own_account{"Your Coyns Balance"} else {"Their Coyns Balance"}}</span>
+                            })
+                        }
+                    }
+                    </Suspense>
                     <Suspense fallback=BalanceFallback>
                         {move || {
                             let balance = try_or_redirect_opt!(balance_fetch() ?);

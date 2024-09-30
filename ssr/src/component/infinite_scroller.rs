@@ -1,5 +1,4 @@
 use super::bullet_loader::BulletLoader;
-use candid::Principal;
 use leptos::{html::ElementDescriptor, *};
 use leptos_use::{use_intersection_observer_with_options, UseIntersectionObserverOptions};
 use std::{error::Error, hash::Hash, marker::PhantomData};

@@ -283,24 +283,7 @@ pub mod provider {
                 _ => unreachable!(),
             }
         }
-        impl<'a> KeyedCursoredDataProvider<IndividualUserTemplate<'a>> for MockHistoryProvider {
-            async fn get_by_cursor_by_key(
-                &self,
-                start: usize,
-                end: usize,
-                user: IndividualUserTemplate<'a>,
-            ) -> Result<PageEntry<Self::Data>, Self::Error> {
-                let mut rand_gen = ChaCha8Rng::seed_from_u64(current_epoch().as_nanos() as u64);
-                let data = (start..end)
-                    .map(|_| TxnInfo {
-                        amount: rand_gen.next_u64() % 3001,
-                        tag: tag_from_u32(rand_gen.next_u32()),
-                        id: rand_gen.next_u64(),
-                    })
-                    .collect();
-                Ok(PageEntry { data, end: false })
-            }
-        }
+        impl<'a> KeyedCursoredDataProvider<IndividualUserTemplate<'a>> for MockHistoryProvider {}
         impl CursoredDataProvider for MockHistoryProvider {
             type Data = TxnInfo;
             type Error = Infallible;
