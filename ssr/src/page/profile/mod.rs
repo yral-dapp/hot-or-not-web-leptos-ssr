@@ -58,7 +58,7 @@ fn ListSwitcher1(user_canister: Principal, user_principal: Principal) -> impl In
 
     let current_tab = create_memo(move |_| {
         param.with(|p| {
-            let tab = p.as_ref().map(|p| p.tab.as_str()).unwrap_or_default();
+            let tab = p.as_ref().map(|p| p.tab.as_str()).unwrap_or("tokens");
             match tab {
                 "posts" => 0,
                 "stakes" => 1,
