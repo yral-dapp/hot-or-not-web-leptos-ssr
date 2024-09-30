@@ -117,7 +117,7 @@ pub fn NavBar() -> impl IntoView {
                     if s.starts_with(&format!("/profile/{}", user_principal)) {
                         5
                     } else {
-                        0
+                        6 // having a number out of range to not highlight anything
                     }
                 }
                 None => 0,
