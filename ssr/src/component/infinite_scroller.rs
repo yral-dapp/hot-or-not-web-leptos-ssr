@@ -23,9 +23,7 @@ pub(crate) trait KeyedCursoredDataProvider<T>:
         start: usize,
         end: usize,
         _user: T,
-    ) -> Result<PageEntry<Self::Data>, Self::Error> {
-        <Self as CursoredDataProvider>::get_by_cursor(self, start, end).await
-    }
+    ) -> Result<PageEntry<Self::Data>, Self::Error>;
 }
 pub(crate) trait CursoredDataProvider {
     type Data: KeyedData + Clone + 'static;

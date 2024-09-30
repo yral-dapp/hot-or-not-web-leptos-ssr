@@ -140,7 +140,7 @@ pub mod provider {
 
     use super::*;
 
-    pub fn get_history_provider<'a>(
+    pub fn get_keyed_history_provider<'a>(
         canisters: Canisters<true>,
     ) -> impl KeyedCursoredDataProvider<IndividualUserTemplate<'a>, Data = TxnInfo> + Clone {
         #[cfg(feature = "mock-wallet-history")]
@@ -153,7 +153,19 @@ pub mod provider {
             canister::TxnHistory(canisters)
         }
     }
-
+    pub fn get_history_provider(
+        canisters: Canisters<true>,
+    ) -> impl CursoredDataProvider<Data = TxnInfo> + Clone {
+        #[cfg(feature = "mock-wallet-history")]
+        {
+            _ = canisters;
+            mock::MockHistoryProvider
+        }
+        #[cfg(not(feature = "mock-wallet-history"))]
+        {
+            canister::TxnHistory(canisters)
+        }
+    }
     #[cfg(not(feature = "mock-wallet-history"))]
     mod canister {
         use super::{Canisters, CursoredDataProvider, TxnInfo, TxnTag};
@@ -283,7 +295,16 @@ pub mod provider {
                 _ => unreachable!(),
             }
         }
-        impl<'a> KeyedCursoredDataProvider<IndividualUserTemplate<'a>> for MockHistoryProvider {}
+        impl<'a> KeyedCursoredDataProvider<IndividualUserTemplate<'a>> for MockHistoryProvider {
+            async fn get_by_cursor_by_key(
+                &self,
+                start: usize,
+                end: usize,
+                _user: IndividualUserTemplate<'a>,
+            ) -> Result<PageEntry<Self::Data>, Self::Error> {
+                self.get_by_cursor(start, end).await
+            }
+        }
         impl CursoredDataProvider for MockHistoryProvider {
             type Data = TxnInfo;
             type Error = Infallible;

@@ -24,7 +24,7 @@ use crate::{
     try_or_redirect_opt,
     utils::profile::ProfileDetails,
 };
-use txn::{provider::get_history_provider, TxnView};
+use txn::{provider::get_keyed_history_provider, TxnView};
 
 #[component]
 fn ProfileGreeter(details: ProfileDetails) -> impl IntoView {
@@ -124,10 +124,8 @@ fn TokensFetch(principal: Principal) -> impl IntoView {
 struct WalletParams {
     id: String,
 }
-
 #[component]
 pub fn Wallet() -> impl IntoView {
-    let (is_connected, _) = account_connected_reader();
     let params = use_params::<WalletParams>();
     let param_principal = move || {
         params.with(|p| {
@@ -135,21 +133,31 @@ pub fn Wallet() -> impl IntoView {
             Principal::from_text(id).ok()
         })
     };
-    if param_principal().is_none() {
-        return view! {
-            <div>
-            <AuthCansProvider let: cans>
-            {move ||{
-                    view!{<Redirect path=format!("/wallet/{}", cans.user_principal())/>}
-                }}
-            </AuthCansProvider>
-            </div>
-        };
+
+    view! {
+        {
+            move || {
+                match param_principal(){
+                    Some(principal) => view! {<WalletImpl principal/>},
+                    None => view! {
+                        <AuthCansProvider let: cans>
+                        {move ||{
+                                view!{<Redirect path=format!("/wallet/{}", cans.user_principal())/>}
+                            }}
+                        </AuthCansProvider>
+                    }
+                }
+            }
+        }
     }
+}
+#[component]
+pub fn WalletImpl(principal: Principal) -> impl IntoView {
+    let (is_connected, _) = account_connected_reader();
+    let param_principal = move || principal;
 
     let auth_cans = authenticated_canisters();
     let balance_fetch = auth_cans.derive(param_principal, |cans_wire, principal| async move {
-        let principal = principal.unwrap();
         let canisters = cans_wire?.clone().canisters()?;
         let Some(user_canister) = canisters
             .get_individual_canister_by_user_principal(principal)
@@ -164,7 +172,6 @@ pub fn Wallet() -> impl IntoView {
     });
     let history_fetch = auth_cans.derive(param_principal, |cans_wire, principal| async move {
         let cans = cans_wire?.canisters()?;
-        let principal = principal.unwrap();
         let Some(user_canister) = cans
             .clone()
             .get_individual_canister_by_user_principal(principal)
@@ -173,7 +180,7 @@ pub fn Wallet() -> impl IntoView {
             return Err(ServerFnError::new("Failed to get user canister"));
         };
         let user = cans.individual_user(user_canister).await;
-        let history_prov = get_history_provider(cans.clone());
+        let history_prov = get_keyed_history_provider(cans.clone());
         let page = history_prov
             .get_by_cursor_by_key(0, RECENT_TXN_CNT, user)
             .await?;
@@ -186,7 +193,6 @@ pub fn Wallet() -> impl IntoView {
             let cans_wire = cans_wire?;
             let canisters = cans_wire.clone().canisters()?;
 
-            let principal = principal.unwrap();
             let Some(user_canister) = canisters
                 .get_individual_canister_by_user_principal(principal)
                 .await?
@@ -202,9 +208,6 @@ pub fn Wallet() -> impl IntoView {
         auth_cans.derive(param_principal, move |cans_wire, principal| async move {
             let cans_wire = cans_wire?;
             let canisters = cans_wire.clone().canisters()?;
-            let Some(principal) = principal else {
-                return Err(ServerFnError::new("failed to get principal param"));
-            };
             Ok::<_, ServerFnError>(canisters.user_principal() == principal)
         });
 
@@ -283,7 +286,7 @@ pub fn Wallet() -> impl IntoView {
                         {
                             move || {
                                 Some(view! {
-                                    <TokensFetch principal=param_principal()?/>
+                                    <TokensFetch principal=param_principal()/>
                                 })
                             }
                         }

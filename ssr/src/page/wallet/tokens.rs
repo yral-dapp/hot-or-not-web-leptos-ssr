@@ -182,7 +182,7 @@ fn TokenList(canisters: Canisters<true>) -> impl IntoView {
 #[component]
 pub fn Tokens() -> impl IntoView {
     view! {
-        <div class="felx items-center flex-col w-dvw min-h-dvh gap-6 bg-black pt-4 px-4 pb-12">
+        <div class="flex items-center flex-col w-dvw min-h-dvh gap-6 bg-black pt-4 px-4 pb-12">
             <Title justify_center=false>
                 <div class="flex flex-row justify-between">
                     <BackButton fallback="/wallet".to_string()/>
