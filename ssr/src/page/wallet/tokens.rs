@@ -1,6 +1,7 @@
 use candid::Principal;
 use ic_agent::AgentError;
 
+use crate::component::infinite_scroller::KeyedCursoredDataProvider;
 use crate::page::wallet::ShareButtonWithFallbackPopup;
 use crate::utils::token::TokenBalanceOrClaiming;
 use crate::{
@@ -18,10 +19,11 @@ use crate::{
     },
 };
 use leptos::*;
-use yral_canisters_client::individual_user_template::Result14;
+use yral_canisters_client::individual_user_template::{IndividualUserTemplate, Result14};
 
 #[derive(Clone)]
 pub struct TokenRootList(pub Canisters<true>);
+
 
 impl KeyedData for Principal {
     type Key = Principal;
@@ -30,7 +32,27 @@ impl KeyedData for Principal {
         *self
     }
 }
-
+impl<'a> KeyedCursoredDataProvider<IndividualUserTemplate<'a>> for TokenRootList{
+    async fn get_by_cursor_by_key(
+            &self,
+            start: usize,
+            end: usize,
+            user: IndividualUserTemplate<'a>,
+        ) -> Result<PageEntry<Self::Data>, Self::Error> {
+        let tokens = user
+            .get_token_roots_of_this_user_with_pagination_cursor(start as u64, end as u64)
+            .await?;
+        let tokens = match tokens {
+            Result14::Ok(v) => v,
+            Result14::Err(_) => vec![],
+        };
+        let list_end = tokens.len() < (end - start);
+        Ok(PageEntry {
+            data: tokens,
+            end: list_end,
+        })
+    }
+}
 impl CursoredDataProvider for TokenRootList {
     type Data = Principal;
     type Error = AgentError;

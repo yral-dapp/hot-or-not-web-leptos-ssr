@@ -22,7 +22,7 @@ pub(crate) trait KeyedCursoredDataProvider<T>:
         &self,
         start: usize,
         end: usize,
-        _user: T,
+        user: T,
     ) -> Result<PageEntry<Self::Data>, Self::Error>;
 }
 pub(crate) trait CursoredDataProvider {

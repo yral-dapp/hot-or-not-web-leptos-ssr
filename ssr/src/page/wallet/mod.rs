@@ -18,7 +18,7 @@ use crate::{
         bullet_loader::BulletLoader,
         canisters_prov::AuthCansProvider,
         connect::ConnectLogin,
-        infinite_scroller::{CursoredDataProvider, KeyedData},
+        infinite_scroller::KeyedData,
     },
     state::{auth::account_connected_reader, canisters::authenticated_canisters},
     try_or_redirect_opt,
@@ -83,9 +83,15 @@ fn TokensFetch(principal: Principal) -> impl IntoView {
         |cans_wire, principal| async move {
             let cans = cans_wire?.canisters()?;
             let user_principal = principal;
-
+            let Some(user_canister) = cans
+                .get_individual_canister_by_user_principal(principal)
+                .await?
+            else {
+                return Err(ServerFnError::new("Failed to get user canister"));
+            };
+            let user = cans.individual_user(user_canister).await;
             let tokens_prov = TokenRootList(cans.clone());
-            let yral_tokens = tokens_prov.get_by_cursor(0, 5).await?;
+            let yral_tokens = tokens_prov.get_by_cursor_by_key(0, 5, user).await?;
 
             let eligible_non_yral_tokens =
                 eligible_non_yral_supported_tokens(cans, user_principal).await?;
