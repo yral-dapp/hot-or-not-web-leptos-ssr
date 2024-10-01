@@ -25,7 +25,7 @@ use crate::{
 use txn::{provider::get_keyed_history_provider, TxnView};
 
 #[component]
-fn ProfileGreeter(details: ProfileDetails) -> impl IntoView {
+fn ProfileGreeter(details: ProfileDetails, is_own_account: bool) -> impl IntoView {
     // let (is_connected, _) = account_connected_reader();
     let share_link = {
         let principal = details.principal();
@@ -38,7 +38,14 @@ fn ProfileGreeter(details: ProfileDetails) -> impl IntoView {
 
     view! {
         <div class="flex flex-col">
-            <span class="text-white/50 text-md">Welcome!</span>
+            {move || {
+                if is_own_account{
+                    return Some(view! {
+                        <span class="text-white/50 text-md">Welcome!</span>
+                    })
+                }
+                None
+            }}
             <div class="flex flex-row gap-2">
                 <span class="text-lg text-white md:text-xl truncate">
                     // TEMP: Workaround for hydration bug until leptos 0.7
@@ -223,7 +230,8 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
                         {
                             move ||{
                                 let profile_details = try_or_redirect_opt!(profile_info_res()?);
-                                Some(view! {<ProfileGreeter details=profile_details />})
+                                let is_own_account = try_or_redirect_opt!(is_own_account()?);
+                                Some(view! {<ProfileGreeter details=profile_details is_own_account/>})
                             }
                         }
                     </Suspense>
