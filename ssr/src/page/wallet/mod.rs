@@ -15,9 +15,7 @@ use tokens::{TokenRootList, TokenView};
 
 use crate::{
     component::{
-        bullet_loader::BulletLoader,
-        canisters_prov::AuthCansProvider,
-        connect::ConnectLogin,
+        bullet_loader::BulletLoader, canisters_prov::AuthCansProvider, connect::ConnectLogin,
         infinite_scroller::KeyedData,
     },
     state::{auth::account_connected_reader, canisters::authenticated_canisters},

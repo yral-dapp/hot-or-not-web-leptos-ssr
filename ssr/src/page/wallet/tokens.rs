@@ -24,7 +24,6 @@ use yral_canisters_client::individual_user_template::{IndividualUserTemplate, Re
 #[derive(Clone)]
 pub struct TokenRootList(pub Canisters<true>);
 
-
 impl KeyedData for Principal {
     type Key = Principal;
 
@@ -32,13 +31,13 @@ impl KeyedData for Principal {
         *self
     }
 }
-impl<'a> KeyedCursoredDataProvider<IndividualUserTemplate<'a>> for TokenRootList{
+impl<'a> KeyedCursoredDataProvider<IndividualUserTemplate<'a>> for TokenRootList {
     async fn get_by_cursor_by_key(
-            &self,
-            start: usize,
-            end: usize,
-            user: IndividualUserTemplate<'a>,
-        ) -> Result<PageEntry<Self::Data>, Self::Error> {
+        &self,
+        start: usize,
+        end: usize,
+        user: IndividualUserTemplate<'a>,
+    ) -> Result<PageEntry<Self::Data>, Self::Error> {
         let tokens = user
             .get_token_roots_of_this_user_with_pagination_cursor(start as u64, end as u64)
             .await?;
