@@ -285,6 +285,9 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
                                 view! {
                                     <div class="flex flex-row justify-between items-end w-full">
                                         <span class="text-sm text-white md:text-md">{if is_own_account{"My Tokens"} else {"Tokens"}}</span>
+                                        <a href="/tokens" class="md:text-lg text-white/50 text-md">
+                                            See All
+                                        </a>
                                     </div>
                                 }
                             )
@@ -304,6 +307,9 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
                 <div class="flex flex-col gap-2 w-full">
                     <div class="flex flex-row justify-between items-end w-full">
                         <span class="text-sm text-white md:text-md">Recent Transactions</span>
+                        <a href="/transactions" class="md:text-lg text-white/50 text-md">
+                            See All
+                        </a>
                     </div>
                     <div class="flex flex-col divide-y divide-white/10">
                         <Suspense fallback=BulletLoader>
