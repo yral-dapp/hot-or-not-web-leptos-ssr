@@ -9,7 +9,7 @@ pub fn Airdrop() -> impl IntoView {
                 <div class="pt-4 pb-8 text-md font-bold">Airdrop</div>
             </Title>
             <div class="max-w-80 px-16 sm:!max-h-80 pb-8">
-                <AirdropLogo/>
+                <AirdropLogo />
             </div>
             <div class="flex flex-col w-full max-w-md px-16 py-4 gap-4 items-center">
                 <div class="text-center text-2xl font-bold uppercase">
@@ -24,9 +24,9 @@ pub fn Airdrop() -> impl IntoView {
                     Login
                 </button>
                 <div class="flex flex-row gap-4 pt-4">
-                    <Telegram/>
-                    <Discord/>
-                    <Twitter/>
+                    <Telegram />
+                    <Discord />
+                    <Twitter />
                 </div>
 
             </div>

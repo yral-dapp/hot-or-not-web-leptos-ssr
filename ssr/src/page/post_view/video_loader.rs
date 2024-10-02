@@ -95,9 +95,9 @@ pub fn BgView(
                 />
             </Show>
             <Show when=move || { show_onboarding_popup.get() }>
-                <OnboardingPopUp onboard_on_click=set_onboarded/>
+                <OnboardingPopUp onboard_on_click=set_onboarded />
             </Show>
-            {move || post().map(|post| view! { <VideoDetailsOverlay post/> })}
+            {move || post().map(|post| view! { <VideoDetailsOverlay post /> })}
             {children()}
         </div>
     }
@@ -245,5 +245,5 @@ pub fn VideoViewForQueue(
 
     let post = Signal::derive(move || video_queue.with(|q| q.get(idx).cloned()));
 
-    view! { <VideoView post _ref=container_ref muted/> }
+    view! { <VideoView post _ref=container_ref muted /> }
 }

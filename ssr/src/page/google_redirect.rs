@@ -69,7 +69,7 @@ pub fn IdentitySender(identity_res: GoogleAuthMessage) -> impl IntoView {
 
     view! {
         <div class="h-dvh w-dvw bg-black flex flex-col justify-center items-center gap-10">
-            <img class="h-56 w-56 object-contain animate-pulse" src="/img/logo.webp"/>
+            <img class="h-56 w-56 object-contain animate-pulse" src="/img/logo.webp" />
             <span class="text-2xl text-white/60">Good things come to those who wait...</span>
         </div>
     }
@@ -97,7 +97,8 @@ pub fn GoogleRedirectHandler() -> impl IntoView {
         <Loading text="Logging out...".to_string()>
             <Suspense>
                 {move || {
-                    identity_resource().map(|identity_res| view! { <IdentitySender identity_res/> })
+                    identity_resource()
+                        .map(|identity_res| view! { <IdentitySender identity_res /> })
                 }}
 
             </Suspense>

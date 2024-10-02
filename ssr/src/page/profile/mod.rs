@@ -76,39 +76,36 @@ fn ListSwitcher1(user_canister: Principal, user_principal: Principal) -> impl In
         }
     };
     view! {
-            <div class="relative flex flex-row w-11/12 md:w-9/12 text-center text-xl md:text-2xl">
-            <A
-                class=move || tab_class(0)
-                href=move || format!("/profile/{}/posts", user_principal)
-            >
+        <div class="relative flex flex-row w-11/12 md:w-9/12 text-center text-xl md:text-2xl">
+            <A class=move || tab_class(0) href=move || format!("/profile/{}/posts", user_principal)>
                 <Icon icon=icondata::FiGrid />
             </A>
             <A
                 class=move || tab_class(1)
-                href= move || format!("/profile/{}/stakes", user_principal)
+                href=move || format!("/profile/{}/stakes", user_principal)
             >
                 <Icon icon=icondata::BsTrophy />
             </A>
             <A
                 class=move || tab_class(2)
-                href= move || format!("/profile/{}/tokens", user_principal)
+                href=move || format!("/profile/{}/tokens", user_principal)
             >
                 <Icon icon=icondata::AiDollarCircleOutlined />
             </A>
         </div>
 
         <div class="flex flex-col gap-y-12 justify-center pb-12 w-11/12 sm:w-7/12">
-        <Show when=move || current_tab() == 0>
-            <ProfilePosts user_canister />
-        </Show>
-        <Show when=move || current_tab() == 1>
-            <ProfileSpeculations user_canister />
-        </Show>
-        <Show when=move || current_tab() == 2>
-            <ProfileTokens user_canister user_principal />
-        </Show>
-    </div>
-        }
+            <Show when=move || current_tab() == 0>
+                <ProfilePosts user_canister />
+            </Show>
+            <Show when=move || current_tab() == 1>
+                <ProfileSpeculations user_canister />
+            </Show>
+            <Show when=move || current_tab() == 2>
+                <ProfileTokens user_canister user_principal />
+            </Show>
+        </div>
+    }
 }
 
 #[component]
@@ -157,7 +154,7 @@ fn ProfileViewInner(user: ProfileDetails, user_canister: Principal) -> impl Into
                     <Stat stat=user.hots info="Hots" />
                     <Stat stat=user.nots info="Nots" />
                 </div>
-                <ListSwitcher1 user_canister user_principal=user.principal/>
+                <ListSwitcher1 user_canister user_principal=user.principal />
             </div>
         </div>
     }
@@ -207,20 +204,24 @@ pub fn ProfileView() -> impl IntoView {
 
     view! {
         <Suspense>
-            {
-                move ||{
-                    profile_info_res().map(|res|{
-                        match res{
+            {move || {
+                profile_info_res()
+                    .map(|res| {
+                        match res {
                             Ok((None, Some(user_principal))) => {
-                                if let Ok(TabsParam{tab}) = tab_params(){
+                                if let Ok(TabsParam { tab }) = tab_params() {
                                     view! {
-                                        <Redirect path=format!("/profile/{}/{}", user_principal, tab) />
+                                        <Redirect path=format!(
+                                            "/profile/{}/{}",
+                                            user_principal,
+                                            tab,
+                                        ) />
                                     }
-                                }else{
-                                    view! {<Redirect path="/"/>}
+                                } else {
+                                    view! { <Redirect path="/" /> }
                                 }
-                            },
-                            Err(_) => view! {<Redirect path="/"/>},
+                            }
+                            Err(_) => view! { <Redirect path="/" /> },
                             Ok((Some((user_details, user_canister)), None)) => {
                                 view! {
                                     <ProfileComponent user_details=Some((
@@ -228,12 +229,11 @@ pub fn ProfileView() -> impl IntoView {
                                         user_canister,
                                     )) />
                                 }
-                            },
-                            _ => view! {<Redirect path="/"/>}
+                            }
+                            _ => view! { <Redirect path="/" /> },
                         }
                     })
-                }
-            }
+            }}
         </Suspense>
     }
 }

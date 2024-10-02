@@ -104,7 +104,7 @@ fn TokenImage() -> impl IntoView {
                         class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                     />
                     <div class="absolute bottom-0 right-0 p-1 rounded-full bg-white ">
-                        <img src="/img/upload.svg" class="bg-white"/>
+                        <img src="/img/upload.svg" class="bg-white" />
                     </div>
                     <Show
                         when=move || logo_b64.with(|u| u.is_some())
@@ -119,7 +119,7 @@ fn TokenImage() -> impl IntoView {
                                 on:click=on_edit_click
                                 class="w-4 h-4 flex items-center justify-center rounded-full bg-white"
                             >
-                                <img src="/img/edit.svg" class="bg-white w-4 h-4 rounded-full"/>
+                                <img src="/img/edit.svg" class="bg-white w-4 h-4 rounded-full" />
                             </button>
                         </div>
                     </Show>
@@ -128,7 +128,7 @@ fn TokenImage() -> impl IntoView {
 
             </div>
         </div>
-        <TokenLogoSanitize img_file=img_file output_b64=set_logo_b64/>
+        <TokenLogoSanitize img_file=img_file output_b64=set_logo_b64 />
     }
 }
 
@@ -345,13 +345,13 @@ pub fn CreateToken() -> impl IntoView {
                     <div></div>
                     <span class="font-bold justify-self-center">Create Meme Token</span>
                     <a href="/token/create/faq">
-                        <img src="/img/info.svg"/>
+                        <img src="/img/info.svg" />
                     </a>
                 </div>
             </Title>
             <div class="flex flex-col w-full px-6 md:px-8 gap-2 md:gap-8">
                 <div class="flex flex-row w-full gap-4  justify-between items-center">
-                    <TokenImage/>
+                    <TokenImage />
                     <InputBox
                         heading="Token name"
                         placeholder="Add a name to your crypto currency"
@@ -495,10 +495,10 @@ pub fn CreateTokenSettings() -> impl IntoView {
         >
             <Title justify_center=false>
                 <div class="flex justify-between w-full" style="background: black">
-                    <BackButton fallback=fallback_url/>
+                    <BackButton fallback=fallback_url />
                     <span class="font-bold justify-self-center">Settings</span>
                     <a href="/token/create/faq">
-                        <img src="/img/info.svg"/>
+                        <img src="/img/info.svg" />
                     </a>
                 </div>
             </Title>

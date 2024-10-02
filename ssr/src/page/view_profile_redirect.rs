@@ -5,7 +5,7 @@ use leptos_router::Redirect;
 pub fn ProfileInfo() -> impl IntoView {
     view! {
         <AuthCansProvider fallback=FullScreenSpinner let:canisters>
-            <Redirect path=canisters.user_principal()/>
+            <Redirect path=canisters.user_principal() />
         </AuthCansProvider>
     }
 }

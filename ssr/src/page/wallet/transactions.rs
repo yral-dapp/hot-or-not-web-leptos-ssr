@@ -20,7 +20,7 @@ pub fn TransactionList(canisters: Canisters<true>) -> impl IntoView {
                 provider
                 fetch_count=FETCH_CNT
                 children=|info, _ref| {
-                    view! { <TxnView info _ref=_ref.unwrap_or_default()/> }
+                    view! { <TxnView info _ref=_ref.unwrap_or_default() /> }
                 }
             />
 
@@ -34,7 +34,7 @@ pub fn Transactions() -> impl IntoView {
         <div class="flex items-center flex-col w-dvw min-h-dvh gap-10 bg-black pt-4 px-4 pb-12">
             <Title justify_center=false>
                 <div class="flex flex-row justify-between">
-                    <BackButton fallback="/wallet".to_string()/>
+                    <BackButton fallback="/wallet".to_string() />
                     <span class="text-xl text-white font-bold">Transactions</span>
                     <div></div>
                 </div>

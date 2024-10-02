@@ -18,8 +18,8 @@ fn FaqItem(#[prop(into)] header: String, #[prop(into)] content: String) -> impl 
             >
                 <span class="text-lg">{header}</span>
                 <div class="text-primary-600 text-lg justify-self-end">
-                    <Show when=show fallback=|| view! { <Icon icon=icondata::AiPlusOutlined/> }>
-                        <Icon icon=icondata::AiMinusOutlined/>
+                    <Show when=show fallback=|| view! { <Icon icon=icondata::AiPlusOutlined /> }>
+                        <Icon icon=icondata::AiMinusOutlined />
                     </Show>
                 </div>
             </div>
@@ -63,7 +63,7 @@ fn FaqView(
         }>
             {tab_content
                 .iter()
-                .map(|(header, content)| view! { <FaqItem header=*header content=*content/> })
+                .map(|(header, content)| view! { <FaqItem header=*header content=*content /> })
                 .collect_view()}
         </Show>
     }
@@ -88,13 +88,13 @@ fn FaqSwitcher() -> impl IntoView {
                 onclick=move || set_cur_tab(Some("general".into()))
                 init_checked=true
             />
-            <FaqType name="Tokens" onclick=move || set_cur_tab(Some("tokens".into()))/>
-            <FaqType name="NFTs" onclick=move || set_cur_tab(Some("nfts".into()))/>
+            <FaqType name="Tokens" onclick=move || set_cur_tab(Some("tokens".into())) />
+            <FaqType name="NFTs" onclick=move || set_cur_tab(Some("nfts".into())) />
         </div>
         <div class="flex flex-col gap-4 w-full">
-            <FaqView tab_idx=0 cur_tab=current_tab tab_content=&items::GENERAL_ITEMS/>
-            <FaqView tab_idx=1 cur_tab=current_tab tab_content=&items::TOKENS_ITEMS/>
-            <FaqView tab_idx=2 cur_tab=current_tab tab_content=&items::NFTS_ITEMS/>
+            <FaqView tab_idx=0 cur_tab=current_tab tab_content=&items::GENERAL_ITEMS />
+            <FaqView tab_idx=1 cur_tab=current_tab tab_content=&items::TOKENS_ITEMS />
+            <FaqView tab_idx=2 cur_tab=current_tab tab_content=&items::NFTS_ITEMS />
         </div>
     }
 }
@@ -107,7 +107,7 @@ pub fn Faq() -> impl IntoView {
                 <span class="font-bold">FAQs</span>
             </Title>
             <div class="w-full text-lg my-8">Find all your answers here</div>
-            <FaqSwitcher/>
+            <FaqSwitcher />
         </div>
     }
 }

@@ -31,7 +31,7 @@ pub fn ExternalUser(user: Option<ProfileDetails>) -> impl IntoView {
     view! {
         <div class="flex flex-row items-center gap-1 w-full h-8 px-3 pt-3 text-ellipsis z-20">
             <div class="w-5 h-5 flex-shrink-0 rounded-full border-2 border-white bg-white">
-                <img class="rounded-full object-cover object-center" src=propic/>
+                <img class="rounded-full object-cover object-center" src=propic />
             </div>
             <div class="max-w-full text-xs truncate font-semibold">{name}</div>
         </div>
@@ -47,7 +47,7 @@ pub fn ExternalPost(post: Option<PostDetails>) -> impl IntoView {
                 bg_url
                     .clone()
                     .map(|bgurl| {
-                        view! { <img class="object-cover h-full w-full" src=bgurl.clone()/> }
+                        view! { <img class="object-cover h-full w-full" src=bgurl.clone() /> }
                     })
             }}
 
@@ -94,7 +94,7 @@ fn BetTimer(post: PostDetails, details: BetDetails) -> impl IntoView {
                 class="flex flex-row justify-center items-center gap-1 w-full rounded-full py-px text-white text-xs"
                 style=gradient
             >
-                <Icon icon=icondata::AiClockCircleFilled/>
+                <Icon icon=icondata::AiClockCircleFilled />
                 <span>{move || to_hh_mm_ss(time_remaining())}</span>
             </div>
         </div>
@@ -139,7 +139,7 @@ pub fn Speculation(details: BetDetails, _ref: NodeRef<html::Div>) -> impl IntoVi
             amt,
             view! {
                 <div class="flex w-full justify-center items-center text-white bg-primary-600 h-6 gap-0.5">
-                    <Icon class="text-sm fill-white" icon=icondata::RiTrophyFinanceFill/>
+                    <Icon class="text-sm fill-white" icon=icondata::RiTrophyFinanceFill />
                     <span class="text-xs font-medium">You Won</span>
                 </div>
             }.into_view(),
@@ -169,7 +169,7 @@ pub fn Speculation(details: BetDetails, _ref: NodeRef<html::Div>) -> impl IntoVi
                 <Suspense>
                     {move || {
                         let post = post_details().flatten()?;
-                        Some(view! { <BetTimer post details=details.get_value()/> })
+                        Some(view! { <BetTimer post details=details.get_value() /> })
                     }}
 
                 </Suspense>
@@ -192,7 +192,7 @@ pub fn Speculation(details: BetDetails, _ref: NodeRef<html::Div>) -> impl IntoVi
                         post_details
                             .get()
                             .map(|post| {
-                                view! { <ExternalPost post/> }
+                                view! { <ExternalPost post /> }
                             })
                     }}
 
@@ -202,7 +202,7 @@ pub fn Speculation(details: BetDetails, _ref: NodeRef<html::Div>) -> impl IntoVi
                         profile_details
                             .get()
                             .map(|user| {
-                                view! { <ExternalUser user/> }
+                                view! { <ExternalUser user /> }
                             })
                     }}
 
@@ -210,7 +210,7 @@ pub fn Speculation(details: BetDetails, _ref: NodeRef<html::Div>) -> impl IntoVi
                 <div class="flex flex-col gap-y-5 z-20">
                     <div class="flex flex-col px-3">
                         <span class="text-xs font-medium uppercase">{bet_res}</span>
-                        <span class="text-sm font-semibold md:text-base">{amt} Tokens</span>
+                        <span class="text-sm font-semibold md:text-base">{amt}Tokens</span>
                     </div>
                     {icon}
                 </div>
@@ -235,18 +235,17 @@ pub fn ProfileSpeculations(user_canister: Principal) -> impl IntoView {
                 } else {
                     "Not played any games yet!"
                 };
-
                 view! {
                     <ProfileStream
                         provider
                         empty_graphic=NoMoreBetsGraphic
                         empty_text
                         children=move |details, _ref| {
-                            view! { <Speculation details _ref=_ref.unwrap_or_default()/> }
+                            view! { <Speculation details _ref=_ref.unwrap_or_default() /> }
                         }
                     />
                 }
             }
-        </AuthCansProvider >
+        </AuthCansProvider>
     }
 }

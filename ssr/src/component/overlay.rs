@@ -118,7 +118,7 @@ pub fn ShadowOverlay(#[prop(into)] show: ShowOverlay, children: ChildrenFn) -> i
 fn ActionRunningOverlay(message: String) -> impl IntoView {
     view! {
         <div class="w-full h-full flex flex-col gap-6 items-center justify-center text-white text-center text-xl font-semibold">
-            <Spinner/>
+            <Spinner />
             <span>{message}</span>
             <span>Please wait...</span>
         </div>
@@ -173,7 +173,9 @@ pub fn ActionTrackerPopup<
         <ShadowOverlay show=show_popup>
             <Show
                 when=move || res.with(|r| r.is_some())
-                fallback=move || view! { <ActionRunningOverlay message=loading_msg_s.get_value()/> }
+                fallback=move || {
+                    view! { <ActionRunningOverlay message=loading_msg_s.get_value() /> }
+                }
             >
                 <div class="px-4 pt-4 pb-12 mx-6 w-full lg:w-1/2 max-h-[65%] rounded-xl bg-white">
                     {move || (modal_s.get_value())(res().unwrap())}

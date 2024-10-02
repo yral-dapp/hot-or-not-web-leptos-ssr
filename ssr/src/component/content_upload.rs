@@ -86,7 +86,7 @@ pub fn YoutubeUpload(canisters: Canisters<true>, #[prop(optional)] url: String) 
     view! {
         <Show when=loaded fallback=Spinner>
             <Show when=move || authorized().map(|(a, _)| a).unwrap_or_default()>
-                <YoutubeUploadInner canisters=cans_s.get_value() url=url_s.get_value()/>
+                <YoutubeUploadInner canisters=cans_s.get_value() url=url_s.get_value() />
             </Show>
         </Show>
     }

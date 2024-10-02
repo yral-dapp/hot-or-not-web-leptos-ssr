@@ -106,8 +106,11 @@ fn CtxProvider(temp_identity: Option<JwkEcKey>, children: ChildrenFn) -> impl In
                             JsonSerdeCodec,
                         >(USER_CANISTER_ID_STORE);
                         let user_principal = cans.user_principal();
-                        create_effect(move |_|{
-                            let (_, set_user_principal) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE);
+                        create_effect(move |_| {
+                            let (_, set_user_principal) = use_cookie::<
+                                Principal,
+                                FromToStringCodec,
+                            >(USER_PRINCIPAL_STORE);
                             set_user_principal.set(Some(user_principal));
                         });
                         set_user_canister_id(Some(cans.user_canister()));
@@ -137,7 +140,7 @@ pub fn BaseRoute() -> impl IntoView {
                     .map(|temp_identity| {
                         view! {
                             <CtxProvider temp_identity>
-                                <Outlet/>
+                                <Outlet />
                             </CtxProvider>
                         }
                     })

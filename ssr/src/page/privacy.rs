@@ -11,7 +11,7 @@ pub fn PrivacyPolicy() -> impl IntoView {
             // </Title>
             <Title justify_center=false>
                 <div class="flex flex-row justify-between">
-                    <BackButton fallback="/menu".to_string()/>
+                    <BackButton fallback="/menu".to_string() />
                     <div>
                         <span class="font-bold">Privacy Policy</span>
                     </div>
@@ -199,12 +199,12 @@ pub fn PrivacyPolicy() -> impl IntoView {
                     <div class="text-xs">
                         <ul class="list-decimal pl-6">
                             <li>Visit your Google Account settings.</li>
-                            <li>Navigate to the "Security" section.</li>
+                            <li>Navigate to the "Security"section.</li>
                             <li>
                                 Look for the "Third-party apps with account access"
                                 or similar option. Here, you can view and manage the apps connected to your Google account.
                             </li>
-                            <li>Locate "Yral" in the list of connected apps.</li>
+                            <li>Locate "Yral"in the list of connected apps.</li>
                             <li>
                                 You can adjust permissions or revoke access to your Google account as needed.
                             </li>

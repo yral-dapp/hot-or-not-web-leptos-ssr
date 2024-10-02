@@ -22,7 +22,7 @@ fn NavIcon(
                 fallback=move || {
                     view! {
                         <div class="py-5">
-                            <Icon icon=icon class="text-2xl text-white md:text-3xl"/>
+                            <Icon icon=icon class="text-2xl text-white md:text-3xl" />
                         </div>
                     }
                 }
@@ -156,7 +156,7 @@ pub fn NavBar() -> impl IntoView {
                 filled_icon=WalletSymbolFilled
                 cur_selected=cur_selected
             />
-            <UploadIcon idx=2 cur_selected/>
+            <UploadIcon idx=2 cur_selected />
             <NavIcon
                 idx=5
                 href="/profile/tokens"
@@ -164,7 +164,7 @@ pub fn NavBar() -> impl IntoView {
                 filled_icon=ProfileIconFilled
                 cur_selected=cur_selected
             />
-            <NavIcon idx=4 href="/menu" icon=MenuSymbol cur_selected=cur_selected/>
+            <NavIcon idx=4 href="/menu" icon=MenuSymbol cur_selected=cur_selected />
         </div>
     }
 }

@@ -21,7 +21,7 @@ pub fn SpinnerFit() -> impl IntoView {
 pub fn FullScreenSpinner() -> impl IntoView {
     view! {
         <div class="h-screen w-screen grid grid-cols-1 bg-black justify-items-center place-content-center">
-            <Spinner/>
+            <Spinner />
         </div>
     }
 }

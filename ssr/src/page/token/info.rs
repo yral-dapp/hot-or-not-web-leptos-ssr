@@ -28,17 +28,19 @@ fn TokenField(
     };
     view! {
         <div class="flex flex-col gap-1 w-full">
-        <span class="text-white text-sm md:text-base">{label}</span>
-        <div class="bg-white/5 text-base md:text-lg text-white/50 px-2 py-4 rounded-xl w-full flex justify-between">
-            <div>{value}</div>
-            <Show when=move || copy>
-            <button on:click=copy_clipboard.clone()>
-            <Icon class="w-6 h-6 text-white/50 cursor-pointer hover:text-white/80" icon=icondata::BiCopyRegular/>
-            </button>
-            </Show>
+            <span class="text-white text-sm md:text-base">{label}</span>
+            <div class="bg-white/5 text-base md:text-lg text-white/50 px-2 py-4 rounded-xl w-full flex justify-between">
+                <div>{value}</div>
+                <Show when=move || copy>
+                    <button on:click=copy_clipboard.clone()>
+                        <Icon
+                            class="w-6 h-6 text-white/50 cursor-pointer hover:text-white/80"
+                            icon=icondata::BiCopyRegular
+                        />
+                    </button>
+                </Show>
+            </div>
         </div>
-    </div>
-
     }
 }
 
@@ -46,9 +48,9 @@ fn TokenField(
 fn TokenDetails(meta: TokenMetadata) -> impl IntoView {
     view! {
         <div class="flex flex-col w-full gap-6 p-4 rounded-xl bg-white/5">
-            <TokenField label="Ledger Id" value=meta.ledger.to_text() copy=true/>
-            <TokenField label="Description" value=meta.description/>
-            <TokenField label="Symbol" value=meta.symbol/>
+            <TokenField label="Ledger Id" value=meta.ledger.to_text() copy=true />
+            <TokenField label="Description" value=meta.description />
+            <TokenField label="Symbol" value=meta.symbol />
         </div>
     }
 }
@@ -78,7 +80,7 @@ fn TokenInfoInner(
         <div class="w-dvw min-h-dvh bg-neutral-800 flex flex-col gap-4">
             <Title justify_center=false>
                 <div class="grid grid-cols-3 justify-start w-full">
-                    <BackButton fallback="/wallet"/>
+                    <BackButton fallback="/wallet" />
                     <span class="font-bold justify-self-center">Token details</span>
                 </div>
             </Title>
@@ -95,7 +97,11 @@ fn TokenInfoInner(
                                     {meta.name}
                                 </span>
                             </div>
-                            <ShareButtonWithFallbackPopup share_link message style="w-12 h-12".into()/>
+                            <ShareButtonWithFallbackPopup
+                                share_link
+                                message
+                                style="w-12 h-12".into()
+                            />
                         </div>
                         <div class="flex flex-row justify-between border-b p-1 border-white items-center">
                             <span class="text-xs md:text-sm text-green-500">Balance</span>
@@ -112,12 +118,12 @@ fn TokenInfoInner(
                         >
                             <span class="text-xs md:text-sm">View details</span>
                             <div class="p-1 bg-white/15 rounded-full">
-                                <Icon class="text-xs md:text-sm text-white" icon=view_detail_icon/>
+                                <Icon class="text-xs md:text-sm text-white" icon=view_detail_icon />
                             </div>
                         </button>
                     </div>
                     <Show when=detail_toggle>
-                        <TokenDetails meta=meta_c.clone()/>
+                        <TokenDetails meta=meta_c.clone() />
                     </Show>
                 </div>
                 <AuthCansProvider fallback=BulletLoader let:canisters>
@@ -160,9 +166,9 @@ pub fn TokenInfo() -> impl IntoView {
                     .map(|info| {
                         match info {
                             Some((metadata, (root, user_principal))) => {
-                                view! { <TokenInfoInner root user_principal meta=metadata/> }
+                                view! { <TokenInfoInner root user_principal meta=metadata /> }
                             }
-                            None => view! { <Redirect path="/"/> },
+                            None => view! { <Redirect path="/" /> },
                         }
                     })
             }}
