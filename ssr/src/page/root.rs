@@ -105,7 +105,7 @@ pub fn CreatorDaoRootPage() -> impl IntoView {
     view! {
         {move || {
             let redirect_url = "/board".to_string();
-            view! { <Redirect path=redirect_url/> }
+            view! { <Redirect path=redirect_url /> }
         }}
     }
 }
@@ -135,7 +135,7 @@ pub fn YralRootPage() -> impl IntoView {
                             Ok(None) => "/error?err=No Posts Found".to_string(),
                             Err(e) => format!("/error?err={e}"),
                         };
-                        view! { <Redirect path=url/> }
+                        view! { <Redirect path=url /> }
                     })
             }}
 
@@ -146,8 +146,8 @@ pub fn YralRootPage() -> impl IntoView {
 #[component]
 pub fn RootPage() -> impl IntoView {
     if show_cdao_page() {
-        view! { <CreatorDaoRootPage/> }
+        view! { <CreatorDaoRootPage /> }
     } else {
-        view! { <YralRootPage/> }
+        view! { <YralRootPage /> }
     }
 }

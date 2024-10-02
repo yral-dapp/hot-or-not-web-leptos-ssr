@@ -188,7 +188,7 @@ pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
         fetch_cursor.try_update(|c| c.advance());
     });
 
-    view! { <CommonPostViewWithUpdates initial_post fetch_video_action threshold_trigger_fetch=10/> }
+    view! { <CommonPostViewWithUpdates initial_post fetch_video_action threshold_trigger_fetch=10 /> }
 }
 
 #[component]
@@ -275,7 +275,7 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
         }
     });
 
-    view! { <CommonPostViewWithUpdates initial_post fetch_video_action threshold_trigger_fetch=15/> }
+    view! { <CommonPostViewWithUpdates initial_post fetch_video_action threshold_trigger_fetch=15 /> }
 }
 
 #[component]
@@ -333,9 +333,9 @@ pub fn PostView() -> impl IntoView {
                         .and_then(|initial_post| {
                             let initial_post = initial_post.ok()?;
                             #[cfg(any(feature = "local-bin", feature = "local-lib"))]
-                            { Some(view! { <PostViewWithUpdates initial_post/> }) }
+                            { Some(view! { <PostViewWithUpdates initial_post /> }) }
                             #[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
-                            { Some(view! { <PostViewWithUpdatesMLFeed initial_post/> }) }
+                            { Some(view! { <PostViewWithUpdatesMLFeed initial_post /> }) }
                         })
                 }
             }}

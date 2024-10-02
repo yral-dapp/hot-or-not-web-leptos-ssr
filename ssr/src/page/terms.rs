@@ -11,7 +11,7 @@ pub fn TermsOfService() -> impl IntoView {
             // </Title>
             <Title justify_center=false>
                 <div class="flex flex-row justify-between">
-                    <BackButton fallback="/menu".to_string()/>
+                    <BackButton fallback="/menu".to_string() />
                     <span class="font-bold">Terms of Service</span>
                     <div></div>
                 </div>
@@ -48,7 +48,7 @@ pub fn TermsOfService() -> impl IntoView {
                         contracts under the law of their jurisdiction or those persons (such
                         as minors) that are represented by persons (such as legal guardians)
                         who can form legally binding contracts under the law of their
-                        jurisdiction, are permitted to use our Services. You agree that: <br/>
+                        jurisdiction, are permitted to use our Services. You agree that: <br />
                         <ul class="list-decimal py-2 pl-6">
                             <li>
                                 You have the right, authority and legal capacity to agree to these
@@ -255,8 +255,7 @@ pub fn TermsOfService() -> impl IntoView {
                                 and password confidential and secure;
                             </li>
                             <li>Any damage incurred as a result of the actions of another user.</li>
-                        </ul>
-                        Any dispute that may arise between you and any third party arising from
+                        </ul>Any dispute that may arise between you and any third party arising from
                         your use of the Services shall be only between you and a third party and
                         you release us and our affiliates from any such claims and damages connected
                         with such disputes.

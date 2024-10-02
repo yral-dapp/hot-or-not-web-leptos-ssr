@@ -77,7 +77,12 @@ where
 {
     view! {
         <AuthCansProvider fallback=fallback.clone() let:cans>
-            <DataLoader cans fallback=fallback.clone() with=with.clone() children=children.clone()/>
+            <DataLoader
+                cans
+                fallback=fallback.clone()
+                with=with.clone()
+                children=children.clone()
+            />
         </AuthCansProvider>
     }
 }

@@ -124,7 +124,7 @@ fn FormError<V: 'static>(#[prop(into)] res: Signal<Result<V, String>>) -> impl I
     view! {
         <Show when=move || res.with(|r| r.is_err())>
             <div class="flex flex-row items-center gap-1 w-full text-sm md:text-base">
-                <Icon class="text-red-600" icon=icondata::AiInfoCircleOutlined/>
+                <Icon class="text-red-600" icon=icondata::AiInfoCircleOutlined />
                 <span class="text-white/60">{move || err().unwrap()}</span>
             </div>
         </Show>
@@ -267,7 +267,7 @@ fn TokenTransferInner(
         <div class="w-dvw min-h-dvh bg-neutral-800 flex flex-col gap-4">
             <Title justify_center=false>
                 <div class="grid grid-cols-3 justify-start w-full">
-                    <BackButton fallback="/wallet"/>
+                    <BackButton fallback="/wallet" />
                     <span class="font-bold justify-self-center">Send {info.name}</span>
                 </div>
             </Title>
@@ -305,7 +305,7 @@ fn TokenTransferInner(
                             />
                         </button>
                     </div>
-                    <FormError res=destination_res/>
+                    <FormError res=destination_res />
                 </div>
                 <div class="flex flex-col w-full gap-1">
                     <div class="flex flex-row justify-between w-full text-sm md:text-base text-white">
@@ -314,7 +314,7 @@ fn TokenTransferInner(
                             class="flex flex-row gap-1 items-center"
                             on:click=move |_| _ = set_max_amt()
                         >
-                            <Icon icon=icondata::AiEnterOutlined/>
+                            <Icon icon=icondata::AiEnterOutlined />
                             " Max"
                         </button>
                     </div>
@@ -324,7 +324,7 @@ fn TokenTransferInner(
                         class=("border-red", move || amt_res.with(|r| r.is_err()))
                         class="w-full p-3 bg-white/5 rounded-lg border text-white placeholder-white/40 focus:outline-none text-base md:text-lg"
                     />
-                    <FormError res=amt_res/>
+                    <FormError res=amt_res />
                 </div>
                 <div class="flex flex-col text-sm md:text-base text-white/60 w-full">
                     <span>Transaction Fee (billed to source)</span>
@@ -338,7 +338,7 @@ fn TokenTransferInner(
                     Send
                 </button>
             </div>
-            <TokenTransferPopup token_name=info.symbol transfer_action=send_action/>
+            <TokenTransferPopup token_name=info.symbol transfer_action=send_action />
         </div>
     }
 }
@@ -368,9 +368,9 @@ pub fn TokenTransfer() -> impl IntoView {
             with=token_metadata_fetch
             children=|(cans, res)| {
                 match res {
-                    Err(e) => view! { <Redirect path=format!("/error?err={e}")/> },
-                    Ok(None) => view! { <Redirect path="/"/> },
-                    Ok(Some((info, root))) => view! { <TokenTransferInner cans info root/> },
+                    Err(e) => view! { <Redirect path=format!("/error?err={e}") /> },
+                    Ok(None) => view! { <Redirect path="/" /> },
+                    Ok(Some((info, root))) => view! { <TokenTransferInner cans info root /> },
                 }
             }
         />

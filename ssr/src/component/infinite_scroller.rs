@@ -14,7 +14,6 @@ pub trait KeyedData {
 
     fn key(&self) -> Self::Key;
 }
-
 pub(crate) trait CursoredDataProvider {
     type Data: KeyedData + Clone + 'static;
     type Error: Error;

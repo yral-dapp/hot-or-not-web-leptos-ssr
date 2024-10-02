@@ -110,13 +110,13 @@ pub fn TxnView(info: TxnInfo, #[prop(optional)] _ref: NodeRef<html::Div>) -> imp
         <div _ref=_ref class="grid grid-cols-2 grid-rows-1 w-full items-center py-4">
             <div class="flex flex-row gap-2">
                 <div class="grid grid-cols-1 place-items-center place-content-center p-2 rounded-full text-primary-600 text-xl lg:text-2xl">
-                    <Icon icon=info.tag.icondata()/>
+                    <Icon icon=info.tag.icondata() />
                 </div>
                 <div class="flex flex-col">
                     <span class="text-md md:text-lg font-semibold text-white">
                         {info.tag.to_text()}
                     </span>
-                    <span class="text-sm md:text-md text-white/50">{info.amount} COYNs</span>
+                    <span class="text-sm md:text-md text-white/50">{info.amount}COYNs</span>
                 </div>
             </div>
             <span class=move || {
@@ -125,34 +125,42 @@ pub fn TxnView(info: TxnInfo, #[prop(optional)] _ref: NodeRef<html::Div>) -> imp
                 } else {
                     "text-red-600 justify-self-end"
                 }
-            }>{bal_res} COYNs</span>
+            }>{bal_res}COYNs</span>
         </div>
     }
 }
 
 pub mod provider {
+
+    use candid::Principal;
+
     use crate::{component::infinite_scroller::CursoredDataProvider, state::canisters::Canisters};
 
     use super::*;
 
     pub fn get_history_provider(
         canisters: Canisters<true>,
+        user_canister: Principal,
     ) -> impl CursoredDataProvider<Data = TxnInfo> + Clone {
         #[cfg(feature = "mock-wallet-history")]
         {
             _ = canisters;
+            _ = user_canister;
             mock::MockHistoryProvider
         }
         #[cfg(not(feature = "mock-wallet-history"))]
         {
-            canister::TxnHistory(canisters)
+            canister::TxnHistory {
+                canisters,
+                user_canister,
+            }
         }
     }
-
     #[cfg(not(feature = "mock-wallet-history"))]
     mod canister {
         use super::{Canisters, CursoredDataProvider, TxnInfo, TxnTag};
         use crate::component::infinite_scroller::PageEntry;
+        use candid::Principal;
         use ic_agent::AgentError;
         use yral_canisters_client::individual_user_template::{
             HotOrNotOutcomePayoutEvent, MintEvent, Result15, TokenEvent,
@@ -194,7 +202,10 @@ pub mod provider {
         }
 
         #[derive(Clone)]
-        pub struct TxnHistory(pub Canisters<true>);
+        pub struct TxnHistory {
+            pub canisters: Canisters<true>,
+            pub user_canister: Principal,
+        }
 
         impl CursoredDataProvider for TxnHistory {
             type Data = TxnInfo;
@@ -205,7 +216,7 @@ pub mod provider {
                 start: usize,
                 end: usize,
             ) -> Result<PageEntry<TxnInfo>, AgentError> {
-                let user = self.0.authenticated_user().await;
+                let user = self.canisters.individual_user(self.user_canister).await;
                 let history = user
                     .get_user_utility_token_transaction_history_with_pagination(
                         start as u64,
@@ -251,7 +262,6 @@ pub mod provider {
                 _ => unreachable!(),
             }
         }
-
         impl CursoredDataProvider for MockHistoryProvider {
             type Data = TxnInfo;
             type Error = Infallible;
