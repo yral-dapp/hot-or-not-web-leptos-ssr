@@ -1,4 +1,7 @@
-use crate::consts::USER_PRINCIPAL_STORE;
+use crate::{
+    consts::USER_PRINCIPAL_STORE,
+    utils::host::{get_host, get_host_async, show_cdao_page_async},
+};
 
 use super::nav_icons::*;
 use candid::Principal;
@@ -7,6 +10,7 @@ use leptos::*;
 use leptos_icons::*;
 use leptos_router::*;
 use leptos_use::use_cookie;
+
 #[component]
 fn NavIcon(
     idx: usize,
@@ -129,6 +133,8 @@ pub fn NavBar() -> impl IntoView {
         }
     });
 
+    // let show_cdao_r = create_resource(|| (), move |_| show_cdao_page_async());
+
     view! {
         <div class="flex fixed bottom-0 left-0 z-50 flex-row justify-between items-center px-6 w-full bg-black/80">
             <NavIcon
@@ -146,6 +152,37 @@ pub fn NavBar() -> impl IntoView {
                 cur_selected=cur_selected
             />
             <UploadIcon idx=2 cur_selected/>
+
+            // {
+            //     move || {
+            //         // let show_cdao = show_cdao_r().and_then(|sh| sh).unwrap_or(false);
+            //         show_cdao_r().and_then(|sh| {
+            //             leptos::logging::log!("show_cdao: {:?}", sh);
+
+            //             if sh {
+            //                 Some(view! {
+            //                     <NavIcon
+            //                         idx=5
+            //                         href="/token/search"
+            //                         icon=icondata::AiSearchOutlined
+            //                         cur_selected=cur_selected
+            //                     />
+            //                 })
+            //             } else {
+            //                 Some( view! {
+            //                     <NavIcon
+            //                         idx=5
+            //                         href="/profile/tokens"
+            //                         icon=ProfileIcon
+            //                         filled_icon=ProfileIconFilled
+            //                         cur_selected=cur_selected
+            //                     />
+            //                 })
+            //             }
+            //         });
+            //     }
+            // }
+
             <NavIcon
                 idx=5
                 href="/profile/tokens"
@@ -153,6 +190,7 @@ pub fn NavBar() -> impl IntoView {
                 filled_icon=ProfileIconFilled
                 cur_selected=cur_selected
             />
+
             <NavIcon idx=4 href="/menu" icon=MenuSymbol cur_selected=cur_selected/>
         </div>
     }
