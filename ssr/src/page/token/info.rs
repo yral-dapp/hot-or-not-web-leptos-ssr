@@ -44,11 +44,10 @@ fn TokenField(
 }
 
 #[component]
-fn TokenDetails(meta: TokenMetadata, ledger: Principal) -> impl IntoView {
-    let ledger = ledger.to_text();
+fn TokenDetails(meta: TokenMetadata) -> impl IntoView {
     view! {
         <div class="flex flex-col w-full gap-6 p-4 rounded-xl bg-white/5">
-            <TokenField label="Ledger Id" value=ledger copy=true/>
+            <TokenField label="Ledger Id" value=meta.ledger.to_text() copy=true/>
             <TokenField label="Description" value=meta.description/>
             <TokenField label="Symbol" value=meta.symbol/>
         </div>
@@ -60,7 +59,6 @@ fn TokenInfoInner(
     root: Principal,
     user_principal: Principal,
     meta: TokenMetadata,
-    ledger: Principal,
 ) -> impl IntoView {
     let meta_c = meta.clone();
     let detail_toggle = create_rw_signal(false);
@@ -120,7 +118,7 @@ fn TokenInfoInner(
                         </button>
                     </div>
                     <Show when=detail_toggle>
-                        <TokenDetails meta=meta_c.clone() ledger/>
+                        <TokenDetails meta=meta_c.clone()/>
                     </Show>
                 </div>
                 <AuthCansProvider fallback=BulletLoader let:canisters>
@@ -151,12 +149,8 @@ pub fn TokenInfo() -> impl IntoView {
 
         let cans = unauth_canisters();
         let meta = token_metadata_by_root(&cans, params.user_principal, params.token_root).await?;
-        let root = cans.sns_root(params.token_root).await;
-        let sns_cans = root.list_sns_canisters(ListSnsCanistersArg {}).await?;
-        let Some(ledger) = sns_cans.ledger else {
-            return Err(ServerFnError::new("Couldn't find ledger"));
-        };
-        Ok(meta.map(|m| (m, (params.token_root, params.user_principal), ledger)))
+
+        Ok(meta.map(|m| (m, (params.token_root, params.user_principal))))
     });
 
     view! {
@@ -166,8 +160,8 @@ pub fn TokenInfo() -> impl IntoView {
                     .and_then(|info| info.ok())
                     .map(|info| {
                         match info {
-                            Some((metadata, (root, user_principal), ledger)) => {
-                                view! { <TokenInfoInner root user_principal meta=metadata ledger/> }
+                            Some((metadata, (root, user_principal))) => {
+                                view! { <TokenInfoInner root user_principal meta=metadata/> }
                             }
                             None => view! { <Redirect path="/"/> },
                         }
