@@ -14,17 +14,6 @@ pub trait KeyedData {
 
     fn key(&self) -> Self::Key;
 }
-
-pub(crate) trait KeyedCursoredDataProvider<T>:
-    crate::component::infinite_scroller::CursoredDataProvider
-{
-    async fn get_by_cursor_by_key(
-        &self,
-        start: usize,
-        end: usize,
-        user: T,
-    ) -> Result<PageEntry<Self::Data>, Self::Error>;
-}
 pub(crate) trait CursoredDataProvider {
     type Data: KeyedData + Clone + 'static;
     type Error: Error;

@@ -1,7 +1,6 @@
 use candid::Principal;
 use ic_agent::AgentError;
 
-use crate::component::infinite_scroller::KeyedCursoredDataProvider;
 use crate::page::wallet::ShareButtonWithFallbackPopup;
 use crate::utils::token::TokenBalanceOrClaiming;
 use crate::{
@@ -19,37 +18,19 @@ use crate::{
     },
 };
 use leptos::*;
-use yral_canisters_client::individual_user_template::{IndividualUserTemplate, Result14};
+use yral_canisters_client::individual_user_template::Result14;
 
 #[derive(Clone)]
-pub struct TokenRootList(pub Canisters<true>);
+pub struct TokenRootList {
+    pub canisters: Canisters<true>,
+    pub user_canister: Principal,
+}
 
 impl KeyedData for Principal {
     type Key = Principal;
 
     fn key(&self) -> Self::Key {
         *self
-    }
-}
-impl<'a> KeyedCursoredDataProvider<IndividualUserTemplate<'a>> for TokenRootList {
-    async fn get_by_cursor_by_key(
-        &self,
-        start: usize,
-        end: usize,
-        user: IndividualUserTemplate<'a>,
-    ) -> Result<PageEntry<Self::Data>, Self::Error> {
-        let tokens = user
-            .get_token_roots_of_this_user_with_pagination_cursor(start as u64, end as u64)
-            .await?;
-        let tokens = match tokens {
-            Result14::Ok(v) => v,
-            Result14::Err(_) => vec![],
-        };
-        let list_end = tokens.len() < (end - start);
-        Ok(PageEntry {
-            data: tokens,
-            end: list_end,
-        })
     }
 }
 impl CursoredDataProvider for TokenRootList {
@@ -61,7 +42,7 @@ impl CursoredDataProvider for TokenRootList {
         start: usize,
         end: usize,
     ) -> Result<PageEntry<Self::Data>, Self::Error> {
-        let user = self.0.authenticated_user().await;
+        let user = self.canisters.individual_user(self.user_canister).await;
         let tokens = user
             .get_token_roots_of_this_user_with_pagination_cursor(start as u64, end as u64)
             .await?;
@@ -183,9 +164,12 @@ pub fn TokenTile(user_principal: String, token_meta_data: TokenMetadata) -> impl
 
 #[component]
 fn TokenList(canisters: Canisters<true>) -> impl IntoView {
-    // let user_canister = canisters.user_canister();
+    let user_canister = canisters.user_canister();
     let user_principal = canisters.user_principal();
-    let provider: TokenRootList = TokenRootList(canisters);
+    let provider: TokenRootList = TokenRootList {
+        canisters,
+        user_canister,
+    };
 
     view! {
         <div class="flex flex-col w-full gap-2 items-center">

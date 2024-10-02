@@ -1,10 +1,9 @@
 pub mod tokens;
 pub mod transactions;
 mod txn;
+use crate::component::infinite_scroller::CursoredDataProvider;
 use crate::{
-    component::{
-        infinite_scroller::KeyedCursoredDataProvider, share_popup::ShareButtonWithFallbackPopup,
-    },
+    component::share_popup::ShareButtonWithFallbackPopup,
     page::token::non_yral_tokens::eligible_non_yral_supported_tokens,
     state::canisters::unauth_canisters,
 };
@@ -23,7 +22,7 @@ use crate::{
     try_or_redirect_opt,
     utils::profile::ProfileDetails,
 };
-use txn::{provider::get_keyed_history_provider, TxnView};
+use txn::{provider::get_history_provider, TxnView};
 
 #[component]
 fn ProfileGreeter(details: ProfileDetails, is_own_account: bool) -> impl IntoView {
@@ -95,9 +94,11 @@ fn TokensFetch(principal: Principal) -> impl IntoView {
             else {
                 return Err(ServerFnError::new("Failed to get user canister"));
             };
-            let user = cans.individual_user(user_canister).await;
-            let tokens_prov = TokenRootList(cans.clone());
-            let yral_tokens = tokens_prov.get_by_cursor_by_key(0, 5, user).await?;
+            let tokens_prov = TokenRootList {
+                canisters: cans.clone(),
+                user_canister,
+            };
+            let yral_tokens = tokens_prov.get_by_cursor(0, 5).await?;
 
             let eligible_non_yral_tokens =
                 eligible_non_yral_supported_tokens(cans, user_principal).await?;
@@ -195,11 +196,8 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
             else {
                 return Err(ServerFnError::new("Failed to get user canister"));
             };
-            let user = cans.individual_user(user_canister).await;
-            let history_prov = get_keyed_history_provider(cans.clone());
-            let page = history_prov
-                .get_by_cursor_by_key(0, RECENT_TXN_CNT, user)
-                .await?;
+            let history_prov = get_history_provider(cans.clone(), user_canister);
+            let page = history_prov.get_by_cursor(0, RECENT_TXN_CNT).await?;
 
             Ok::<_, ServerFnError>(page.data)
         },
@@ -251,18 +249,13 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
                     {
                         move ||{
                             let is_own_account = try_or_redirect_opt!(is_own_account() ?);
+                            let balance = try_or_redirect_opt!(balance_fetch() ?);
                             Some(view! {
                                 <span class="uppercase lg:text-lg text-md">{if is_own_account{"Your Coyns Balance"} else {"Coyns Balance"}}</span>
+                                <div class="text-xl lg:text-2xl">{balance}</div>
                             })
                         }
                     }
-                    </Suspense>
-                    <Suspense >
-                        {move || {
-                            let balance = try_or_redirect_opt!(balance_fetch() ?);
-                            Some(view! { <div class="text-xl lg:text-2xl">{balance}</div> })
-                        }}
-
                     </Suspense>
                 </div>
                 <Suspense>

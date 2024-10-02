@@ -131,48 +131,38 @@ pub fn TxnView(info: TxnInfo, #[prop(optional)] _ref: NodeRef<html::Div>) -> imp
 }
 
 pub mod provider {
-    use yral_canisters_client::individual_user_template::IndividualUserTemplate;
 
-    use crate::{
-        component::infinite_scroller::{CursoredDataProvider, KeyedCursoredDataProvider},
-        state::canisters::Canisters,
-    };
+    use candid::Principal;
+
+    use crate::{component::infinite_scroller::CursoredDataProvider, state::canisters::Canisters};
 
     use super::*;
 
-    pub fn get_keyed_history_provider<'a>(
-        canisters: Canisters<true>,
-    ) -> impl KeyedCursoredDataProvider<IndividualUserTemplate<'a>, Data = TxnInfo> + Clone {
-        #[cfg(feature = "mock-wallet-history")]
-        {
-            _ = canisters;
-            mock::MockHistoryProvider
-        }
-        #[cfg(not(feature = "mock-wallet-history"))]
-        {
-            canister::TxnHistory(canisters)
-        }
-    }
     pub fn get_history_provider(
         canisters: Canisters<true>,
+        user_canister: Principal,
     ) -> impl CursoredDataProvider<Data = TxnInfo> + Clone {
-        #[cfg(feature = "mock-wallet-history")]
+        // #[cfg(feature = "mock-wallet-history")]
+        // {
+        //     _ = canisters;
+        //     mock::MockHistoryProvider
+        // }
+        // #[cfg(not(feature = "mock-wallet-history"))]
         {
-            _ = canisters;
-            mock::MockHistoryProvider
-        }
-        #[cfg(not(feature = "mock-wallet-history"))]
-        {
-            canister::TxnHistory(canisters)
+            canister::TxnHistory {
+                canisters,
+                user_canister,
+            }
         }
     }
-    #[cfg(not(feature = "mock-wallet-history"))]
+    // #[cfg(not(feature = "mock-wallet-history"))]
     mod canister {
         use super::{Canisters, CursoredDataProvider, TxnInfo, TxnTag};
-        use crate::component::infinite_scroller::{KeyedCursoredDataProvider, PageEntry};
+        use crate::component::infinite_scroller::PageEntry;
+        use candid::Principal;
         use ic_agent::AgentError;
         use yral_canisters_client::individual_user_template::{
-            HotOrNotOutcomePayoutEvent, IndividualUserTemplate, MintEvent, Result15, TokenEvent,
+            HotOrNotOutcomePayoutEvent, MintEvent, Result15, TokenEvent,
         };
 
         fn event_to_txn(event: (u64, TokenEvent)) -> Option<TxnInfo> {
@@ -211,31 +201,11 @@ pub mod provider {
         }
 
         #[derive(Clone)]
-        pub struct TxnHistory(pub Canisters<true>);
-        impl<'a> KeyedCursoredDataProvider<IndividualUserTemplate<'a>> for TxnHistory {
-            async fn get_by_cursor_by_key(
-                &self,
-                start: usize,
-                end: usize,
-                user: IndividualUserTemplate<'a>,
-            ) -> Result<PageEntry<Self::Data>, Self::Error> {
-                let history = user
-                    .get_user_utility_token_transaction_history_with_pagination(
-                        start as u64,
-                        end as u64,
-                    )
-                    .await?;
-                let history = match history {
-                    Result15::Ok(v) => v,
-                    Result15::Err(_) => vec![],
-                };
-                let list_end = history.len() < (end - start);
-                Ok(PageEntry {
-                    data: history.into_iter().filter_map(event_to_txn).collect(),
-                    end: list_end,
-                })
-            }
+        pub struct TxnHistory {
+            pub canisters: Canisters<true>,
+            pub user_canister: Principal,
         }
+
         impl CursoredDataProvider for TxnHistory {
             type Data = TxnInfo;
             type Error = AgentError;
@@ -245,7 +215,7 @@ pub mod provider {
                 start: usize,
                 end: usize,
             ) -> Result<PageEntry<TxnInfo>, AgentError> {
-                let user = self.0.authenticated_user().await;
+                let user = self.canisters.individual_user(self.user_canister).await;
                 let history = user
                     .get_user_utility_token_transaction_history_with_pagination(
                         start as u64,
@@ -273,12 +243,8 @@ pub mod provider {
             rand_core::{RngCore, SeedableRng},
             ChaCha8Rng,
         };
-        use yral_canisters_client::individual_user_template::IndividualUserTemplate;
 
-        use crate::{
-            component::infinite_scroller::{KeyedCursoredDataProvider, PageEntry},
-            utils::time::current_epoch,
-        };
+        use crate::{component::infinite_scroller::PageEntry, utils::time::current_epoch};
 
         use super::*;
 
@@ -293,16 +259,6 @@ pub mod provider {
                 3 => TxnTag::Winnings,
                 4 => TxnTag::Commission,
                 _ => unreachable!(),
-            }
-        }
-        impl<'a> KeyedCursoredDataProvider<IndividualUserTemplate<'a>> for MockHistoryProvider {
-            async fn get_by_cursor_by_key(
-                &self,
-                start: usize,
-                end: usize,
-                _user: IndividualUserTemplate<'a>,
-            ) -> Result<PageEntry<Self::Data>, Self::Error> {
-                self.get_by_cursor(start, end).await
             }
         }
         impl CursoredDataProvider for MockHistoryProvider {

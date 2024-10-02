@@ -57,9 +57,11 @@ impl ProfileDetails {
             .clone()
             .unwrap_or_else(|| self.principal.to_text())
     }
+
     pub fn principal(&self) -> String {
         self.principal.to_text()
     }
+
     pub fn display_name_or_fallback(&self) -> String {
         self.display_name
             .clone()

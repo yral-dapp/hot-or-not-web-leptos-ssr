@@ -1,5 +1,6 @@
 use leptos::*;
 
+use super::txn::{provider::get_history_provider, TxnView};
 use crate::{
     component::{
         back_btn::BackButton, bullet_loader::BulletLoader, canisters_prov::AuthCansProvider,
@@ -8,13 +9,11 @@ use crate::{
     state::canisters::Canisters,
 };
 
-use super::txn::{provider::get_history_provider, TxnView};
-
 const FETCH_CNT: usize = 15;
 
 #[component]
 pub fn TransactionList(canisters: Canisters<true>) -> impl IntoView {
-    let provider = get_history_provider(canisters);
+    let provider = get_history_provider(canisters.clone(), canisters.user_canister());
     view! {
         <div class="flex flex-col w-full items-center">
             <InfiniteScroller
@@ -41,7 +40,7 @@ pub fn Transactions() -> impl IntoView {
                 </div>
             </Title>
             <AuthCansProvider fallback=BulletLoader let:canisters>
-                <TransactionList canisters/>
+                <TransactionList canisters />
             </AuthCansProvider>
         </div>
     }
