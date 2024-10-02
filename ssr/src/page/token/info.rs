@@ -29,16 +29,17 @@ fn TokenField(
     };
     view! {
         <div class="flex flex-col gap-1 w-full">
-            <span class="text-white text-sm md:text-base">{label}</span>
-            <p class="bg-white/5 text-base md:text-lg text-white/50 px-2 py-4 rounded-xl w-full">
-                {value}
-            </p>
-            <Show when= move || copy>
-                <button on:click=copy_clipboard.clone()>
-                    <Icon class="w-6 h-6 text-white cursor-pointer bg-black" icon=icondata::BiCopyRegular/>
-                </button>
+        <span class="text-white text-sm md:text-base">{label}</span>
+        <div class="bg-white/5 text-base md:text-lg text-white/50 px-2 py-4 rounded-xl w-full flex justify-between">
+            <div>{value}</div>
+            <Show when=move || copy>
+            <button on:click=copy_clipboard.clone()>
+            <Icon class="w-6 h-6 text-white cursor-pointer bg-black" icon=icondata::BiCopyRegular/>
+            </button>
             </Show>
         </div>
+    </div>
+
     }
 }
 
@@ -47,7 +48,7 @@ fn TokenDetails(meta: TokenMetadata, ledger: Principal) -> impl IntoView {
     let ledger = ledger.to_text();
     view! {
         <div class="flex flex-col w-full gap-6 p-4 rounded-xl bg-white/5">
-            <TokenField label="Symbol" value=ledger/>
+            <TokenField label="Ledger Id" value=ledger copy=true/>
             <TokenField label="Description" value=meta.description/>
             <TokenField label="Symbol" value=meta.symbol/>
         </div>
