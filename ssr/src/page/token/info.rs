@@ -11,17 +11,26 @@ use crate::{
     },
     page::token::TokenInfoParams,
     state::canisters::unauth_canisters,
-    utils::token::{token_metadata_by_root, TokenMetadata},
+    utils::{token::{token_metadata_by_root, TokenMetadata}, web::copy_to_clipboard},
 };
 
 #[component]
-fn TokenField(#[prop(into)] label: String, #[prop(into)] value: String) -> impl IntoView {
+fn TokenField(#[prop(into)] label: String, #[prop(into)] value: String, #[prop(optional, default=false)] copy: bool) -> impl IntoView {
+    let copy_payload = value.clone();
+    let copy_clipboard = move |_| {
+        copy_to_clipboard(&copy_payload);
+    };
     view! {
         <div class="flex flex-col gap-1 w-full">
             <span class="text-white text-sm md:text-base">{label}</span>
             <p class="bg-white/5 text-base md:text-lg text-white/50 px-2 py-4 rounded-xl w-full">
                 {value}
             </p>
+            <Show when= move || copy>
+                <button on:click=copy_clipboard.clone()>
+                    <Icon class="w-6 h-6 text-white cursor-pointer bg-black" icon=icondata::BiCopyRegular/>
+                </button>
+            </Show>
         </div>
     }
 }
