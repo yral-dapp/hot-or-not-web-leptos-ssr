@@ -142,12 +142,12 @@ pub mod provider {
         canisters: Canisters<true>,
         user_canister: Principal,
     ) -> impl CursoredDataProvider<Data = TxnInfo> + Clone {
-        // #[cfg(feature = "mock-wallet-history")]
-        // {
-        //     _ = canisters;
-        //     mock::MockHistoryProvider
-        // }
-        // #[cfg(not(feature = "mock-wallet-history"))]
+        #[cfg(feature = "mock-wallet-history")]
+        {
+            _ = canisters;
+            mock::MockHistoryProvider
+        }
+        #[cfg(not(feature = "mock-wallet-history"))]
         {
             canister::TxnHistory {
                 canisters,
@@ -155,7 +155,7 @@ pub mod provider {
             }
         }
     }
-    // #[cfg(not(feature = "mock-wallet-history"))]
+    #[cfg(not(feature = "mock-wallet-history"))]
     mod canister {
         use super::{Canisters, CursoredDataProvider, TxnInfo, TxnTag};
         use crate::component::infinite_scroller::PageEntry;
