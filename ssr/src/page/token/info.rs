@@ -34,7 +34,7 @@ fn TokenField(
             <div>{value}</div>
             <Show when=move || copy>
             <button on:click=copy_clipboard.clone()>
-            <Icon class="w-6 h-6 text-white cursor-pointer bg-black" icon=icondata::BiCopyRegular/>
+            <Icon class="w-6 h-6 text-white/50 cursor-pointer hover:text-white/80" icon=icondata::BiCopyRegular/>
             </button>
             </Show>
         </div>
