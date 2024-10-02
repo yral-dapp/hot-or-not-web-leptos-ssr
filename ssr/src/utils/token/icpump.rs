@@ -101,3 +101,69 @@ pub async fn get_paginated_token_list(page: u32) -> Result<Vec<TokenListItem>, S
         Ok(vec![])
     }
 }
+
+#[server]
+pub async fn get_token_search_results(query: String) -> Result<Vec<TokenListItem>, ServerFnError> {
+    // sleep for 3 secs
+    tokio::time::sleep(tokio::time::Duration::from_secs(3)).await;
+
+    let data = vec![
+        TokenListItem {
+            user_id: "user_id1".to_string(),
+            name: "name1".to_string(),
+            token_name: "token_name1".to_string(),
+            token_symbol: "token_symbol1".to_string(),
+            logo: "https://imagedelivery.net/pDZniJRIOhjCc6oLj0s5-g/5f36e57f-aaf8-4bcd-1446-247b5d165000/public".to_string(),
+            description: "description".to_string(),
+            created_at: "created_at".to_string(),
+            formatted_created_at: "2h ago".to_string(),
+            link: "/token/info/k53gu-qaaaa-aaaag-qkqpq-ca/ui2b7-xywqe-vp6lb-cyz3s-itiv6-y7a6o-fottf-ivyxc-abrlo-zrhf4-qqe".to_string(),
+        },
+        TokenListItem {
+            user_id: "user_id2".to_string(),
+            name: "name2".to_string(),
+            token_name: "token_name2".to_string(),
+            token_symbol: "token_symbol2".to_string(),
+            logo: "https://imagedelivery.net/pDZniJRIOhjCc6oLj0s5-g/5f36e57f-aaf8-4bcd-1446-247b5d165000/public".to_string(),
+            description: "description".to_string(),
+            created_at: "created_at".to_string(),
+            formatted_created_at: "2h ago".to_string(),
+            link: "/token/info/k53gu-qaaaa-aaaag-qkqpq-ca/ui2b7-xywqe-vp6lb-cyz3s-itiv6-y7a6o-fottf-ivyxc-abrlo-zrhf4-qqe".to_string(),
+        },
+        TokenListItem {
+            user_id: "user_id3".to_string(),
+            name: "name3".to_string(),
+            token_name: "token_name3".to_string(),
+            token_symbol: "token_symbol3".to_string(),
+            logo: "https://imagedelivery.net/pDZniJRIOhjCc6oLj0s5-g/5f36e57f-aaf8-4bcd-1446-247b5d165000/public".to_string(),
+            description: "description".to_string(),
+            created_at: "created_at".to_string(),
+            formatted_created_at: "2h ago".to_string(),
+            link: "/token/info/k53gu-qaaaa-aaaag-qkqpq-ca/ui2b7-xywqe-vp6lb-cyz3s-itiv6-y7a6o-fottf-ivyxc-abrlo-zrhf4-qqe".to_string(),
+        },
+        TokenListItem {
+            user_id: "user_id4".to_string(),
+            name: "name4".to_string(),
+            token_name: "token_name4".to_string(),
+            token_symbol: "token_symbol4".to_string(),
+            logo: "https://imagedelivery.net/pDZniJRIOhjCc6oLj0s5-g/5f36e57f-aaf8-4bcd-1446-247b5d165000/public".to_string(),
+            description: "description".to_string(),
+            created_at: "created_at".to_string(),
+            formatted_created_at: "2h ago".to_string(),
+            link: "/token/info/k53gu-qaaaa-aaaag-qkqpq-ca/ui2b7-xywqe-vp6lb-cyz3s-itiv6-y7a6o-fottf-ivyxc-abrlo-zrhf4-qqe".to_string(),
+        },
+        TokenListItem {
+            user_id: "user_id5".to_string(),
+            name: "name5".to_string(),
+            token_name: "token_name5".to_string(),
+            token_symbol: "token_symbol5".to_string(),
+            logo: "https://imagedelivery.net/pDZniJRIOhjCc6oLj0s5-g/5f36e57f-aaf8-4bcd-1446-247b5d165000/public".to_string(),
+            description: "description".to_string(),
+            created_at: "created_at".to_string(),
+            formatted_created_at: "2h ago".to_string(),
+            link: "/token/info/k53gu-qaaaa-aaaag-qkqpq-ca/ui2b7-xywqe-vp6lb-cyz3s-itiv6-y7a6o-fottf-ivyxc-abrlo-zrhf4-qqe".to_string(),
+        }
+    ];
+
+    Ok(data)
+}
