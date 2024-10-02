@@ -35,6 +35,9 @@ pub async fn server_fn_handler(
 
             #[cfg(feature = "firestore")]
             provide_context(app_state.firestore_db.clone());
+
+            #[cfg(feature = "qstash")]
+            provide_context(app_state.qstash.clone());
         },
         request,
     )
@@ -64,6 +67,9 @@ pub async fn leptos_routes_handler(
 
             #[cfg(feature = "firestore")]
             provide_context(app_state.firestore_db.clone());
+
+            #[cfg(feature = "qstash")]
+            provide_context(app_state.qstash.clone());
         },
         App,
     );

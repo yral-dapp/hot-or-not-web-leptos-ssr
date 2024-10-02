@@ -1,8 +1,8 @@
 use candid::Principal;
 use futures::stream::{FuturesOrdered, StreamExt, TryStreamExt};
+use yral_canisters_client::individual_user_template::{GetPostsOfUserProfileError, Result11};
 
 use crate::{
-    canister::individual_user_template::{GetPostsOfUserProfileError, Result11},
     state::canisters::Canisters,
     utils::posts::{get_post_uid, PostDetails, PostViewError},
 };

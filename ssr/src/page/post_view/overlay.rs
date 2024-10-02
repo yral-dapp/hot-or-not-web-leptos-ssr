@@ -142,7 +142,7 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
         ShareVideo.send_event(post_details, canisters);
     };
 
-    let profile_url = format!("/profile/{}", post.poster_principal.to_text());
+    let profile_url = format!("/profile/{}/tokens", post.poster_principal.to_text());
     let post_c = post.clone();
 
     let click_copy = move |text: String| {

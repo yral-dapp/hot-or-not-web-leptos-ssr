@@ -15,7 +15,7 @@ use yral_testcontainers::{
 };
 
 use crate::{
-    canister::USER_INDEX_ID,
+    canister_ids::USER_INDEX_ID,
     consts::{METADATA_API_BASE, YRAL_BACKEND_CONTAINER_TAG, YRAL_METADATA_CONTAINER_TAG},
     state::admin_canisters::AdminCanisters,
 };

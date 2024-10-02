@@ -5,11 +5,11 @@ use ic_agent::AgentError;
 use leptos::{RwSignal, SignalUpdateUntracked};
 use serde::{Deserialize, Serialize};
 
+use yral_canisters_client::individual_user_template::{
+    BetDirection, BetOutcomeForBetMaker, PlacedBetDetail, Result11, UserProfileDetailsForFrontend,
+};
+
 use crate::{
-    canister::individual_user_template::{
-        BetDirection, BetOutcomeForBetMaker, PlacedBetDetail, Result11,
-        UserProfileDetailsForFrontend,
-    },
     component::infinite_scroller::{CursoredDataProvider, KeyedData, PageEntry},
     consts::{GOBGOB_PROPIC_URL, GOBGOB_TOTAL_COUNT},
     state::canisters::Canisters,

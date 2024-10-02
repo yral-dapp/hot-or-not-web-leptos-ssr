@@ -45,11 +45,9 @@ pub async fn get_video_status(uid: String) -> Result<String, ServerFnError> {
 #[cfg(feature = "cloudflare")]
 mod cf_impl {
     use leptos::ServerFnError;
+    use yral_canisters_client::individual_user_template::{PostDetailsFromFrontend, Result1};
 
-    use crate::{
-        canister::individual_user_template::{PostDetailsFromFrontend, Result1},
-        state::canisters::Canisters,
-    };
+    use crate::state::canisters::Canisters;
 
     use super::UploadInfo;
 

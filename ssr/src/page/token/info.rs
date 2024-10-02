@@ -84,7 +84,7 @@ fn TokenInfoInner(
                             <span class="text-xs md:text-sm text-green-500">Balance</span>
                             <span class="text-lg md:text-xl text-white">
                                 <span class="font-bold">
-                                    {format!("{} ", meta.balance.humanize())}
+                                    {format!("{} ", meta.balance.humanize_float_truncate_to_dp(2))}
                                 </span>
                                 {meta.symbol}
                             </span>

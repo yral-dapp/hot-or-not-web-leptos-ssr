@@ -1,12 +1,9 @@
 use crate::{
-    canister::{
-        sns_ledger::{Account, TransferArg},
-        sns_root::ListSnsCanistersArg,
-    },
     component::{
         back_btn::BackButton, canisters_prov::WithAuthCans, spinner::FullScreenSpinner,
         title::Title,
     },
+    page::token::non_yral_tokens::SUPPORTED_NON_YRAL_TOKENS_ROOT,
     state::canisters::{authenticated_canisters, Canisters, CanistersAuthWire},
     utils::{
         event_streaming::events::TokensTransferred,
@@ -14,12 +11,16 @@ use crate::{
         web::{copy_to_clipboard, paste_from_clipboard},
     },
 };
-use candid::{Nat, Principal};
+use candid::Principal;
 use leptos::*;
 use leptos_icons::*;
 use leptos_router::*;
 use leptos_use::use_event_listener;
 use server_fn::codec::Cbor;
+use yral_canisters_client::{
+    sns_ledger::{Account, TransferArg},
+    sns_root::ListSnsCanistersArg,
+};
 
 use super::{popups::TokenTransferPopup, TokenParams};
 
@@ -28,7 +29,6 @@ use super::{popups::TokenTransferPopup, TokenParams};
 )]
 async fn transfer_token_to_user_principal(
     cans_wire: CanistersAuthWire,
-    destination_canister: Principal,
     destination_principal: Principal,
     ledger_canister: Principal,
     root_canister: Principal,
@@ -49,21 +49,6 @@ async fn transfer_token_to_user_principal(
             from_subaccount: None,
             to: Account {
                 owner: destination_principal,
-                subaccount: None,
-            },
-            created_at_time: None,
-        })
-        .await
-        .unwrap();
-    log::debug!("transfer res: {:?}", res);
-    let res = sns_ledger
-        .icrc_1_transfer(TransferArg {
-            memo: Some(serde_bytes::ByteBuf::from(vec![1])),
-            amount: Nat::from(1_u64),
-            fee: None,
-            from_subaccount: None,
-            to: Account {
-                owner: destination_canister,
                 subaccount: None,
             },
             created_at_time: None,
@@ -102,9 +87,21 @@ async fn transfer_token_to_user_principal(
     // let transfer_result: types::TransferResult = Decode!(&res, types::TransferResult).unwrap();
     // println!("transfer_result: {:?}", transfer_result);
 
-    let destination_canister = cans.individual_user(destination_canister).await;
-    let res = destination_canister.add_token(root_canister).await.unwrap();
-    println!("add_token res: {:?}", res);
+    let destination_canister_principal = cans
+        .get_individual_canister_by_user_principal(destination_principal)
+        .await?;
+
+    let is_non_yral_token = SUPPORTED_NON_YRAL_TOKENS_ROOT
+        .iter()
+        .any(|&token_root| token_root == root_canister.to_text());
+
+    if destination_canister_principal.is_some() && !is_non_yral_token {
+        let destination_canister = cans
+            .individual_user(destination_canister_principal.unwrap())
+            .await;
+        let res = destination_canister.add_token(root_canister).await?;
+        println!("add_token res: {:?}", res);
+    }
 
     // let res = agent
     //     .update(
@@ -170,15 +167,21 @@ fn TokenTransferInner(
     });
 
     let amount_ref = create_node_ref::<html::Input>();
-    let max_amt = if info.balance < info.fees {
-        TokenBalance::new_cdao(0u32.into())
+    let max_amt = if info
+        .balance
+        .map_balance_ref(|b| b > &info.fees)
+        .unwrap_or_default()
+    {
+        info.balance
+            .map_balance_ref(|b| b.clone() - info.fees.clone())
+            .unwrap()
     } else {
-        info.balance.clone() - info.fees.clone()
+        TokenBalance::new_cdao(0u32.into())
     };
     let max_amt_c = max_amt.clone();
     let set_max_amt = move || {
         let input = amount_ref()?;
-        input.set_value(&max_amt.to_tokens());
+        input.set_value(&max_amt.humanize_float());
         #[cfg(feature = "hydrate")]
         {
             use web_sys::InputEvent;
@@ -201,6 +204,8 @@ fn TokenTransferInner(
             amt_res.set(Err(
                 "Sorry, there are not enough funds in this account".to_string()
             ));
+        } else if amt.e8s == 0_u64 {
+            amt_res.set(Err("Cannot send 0 tokens".to_string()));
         } else {
             amt_res.set(Ok(Some(amt)));
         }
@@ -213,11 +218,7 @@ fn TokenTransferInner(
         let auth_cans_wire = auth_cans_wire.clone();
         async move {
             let destination = destination_res.get_untracked().unwrap().unwrap();
-            let destination_canister = cans
-                .get_individual_canister_by_user_principal(destination)
-                .await
-                .unwrap()
-                .unwrap();
+
             // let amt = amt_res.get_untracked().unwrap().unwrap();
 
             // let user = cans.authenticated_user().await;
@@ -242,7 +243,6 @@ fn TokenTransferInner(
 
             transfer_token_to_user_principal(
                 auth_cans_wire.wait_untracked().await.unwrap(),
-                destination_canister,
                 destination,
                 ledger_canister,
                 root,
@@ -275,7 +275,7 @@ fn TokenTransferInner(
                 <div class="flex flex-col w-full gap-2 items-center">
                     <div class="flex flex-row justify-between w-full text-sm md:text-base text-white">
                         <span>Source:</span>
-                        <span>{format!("{} {}", info.balance.humanize(), info.symbol)}</span>
+                        <span>{format!("{} {}", info.balance.humanize_float(), info.symbol)}</span>
                     </div>
                     <div class="flex flex-row gap-2 w-full items-center">
                         <p class="text-sm md:text-md text-white/80">{source_addr.to_string()}</p>

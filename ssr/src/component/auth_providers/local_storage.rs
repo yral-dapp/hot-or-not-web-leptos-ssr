@@ -4,7 +4,7 @@ use k256::elliptic_curve::JwkEcKey;
 use leptos::*;
 use leptos_use::storage::use_local_storage;
 
-use crate::auth::DelegatedIdentityWire;
+use yral_types::delegated_identity::DelegatedIdentityWire;
 
 use super::{LoginProvButton, LoginProvCtx, ProviderKind};
 

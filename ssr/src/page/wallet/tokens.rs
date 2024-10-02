@@ -2,13 +2,12 @@ use candid::Principal;
 use ic_agent::AgentError;
 
 use crate::page::wallet::ShareButtonWithFallbackPopup;
+use crate::utils::token::TokenBalanceOrClaiming;
 use crate::{
-    canister::individual_user_template::Result14,
     component::{
         back_btn::BackButton,
         bullet_loader::BulletLoader,
         canisters_prov::AuthCansProvider,
-        claim_tokens::ClaimTokensOrRedirectError,
         infinite_scroller::{CursoredDataProvider, InfiniteScroller, KeyedData, PageEntry},
         title::Title,
     },
@@ -19,6 +18,7 @@ use crate::{
     },
 };
 use leptos::*;
+use yral_canisters_client::individual_user_template::Result14;
 
 #[derive(Clone)]
 pub struct TokenRootList(pub Canisters<true>);
@@ -70,8 +70,9 @@ async fn token_metadata_or_fallback(
         name: "<ERROR>".to_string(),
         description: "Unknown".to_string(),
         symbol: "??".to_string(),
-        balance: TokenBalance::new_cdao(0u32.into()),
+        balance: TokenBalanceOrClaiming::claiming(),
         fees: TokenBalance::new_cdao(0u32.into()),
+        root: Principal::anonymous(),
     })
 }
 
@@ -96,12 +97,11 @@ pub fn TokenView(
     );
 
     view! {
-        <ClaimTokensOrRedirectError token_root/>
         <Suspense fallback=TokenViewFallback>
             {move || {
                 info.map(|info| {
                     view! {
-                        <TokenTile token_root=token_root.to_text() user_principal=user_principal.to_text() token_meta_data=info.clone() />
+                        <TokenTile user_principal=user_principal.to_text() token_meta_data=info.clone() />
                     }
                 })
             }}
@@ -111,12 +111,9 @@ pub fn TokenView(
 }
 
 #[component]
-pub fn TokenTile(
-    token_root: String,
-    user_principal: String,
-    token_meta_data: TokenMetadata,
-) -> impl IntoView {
-    let share_link = { format!("/token/info/{token_root}/{user_principal}?airdrop_amt=100") };
+pub fn TokenTile(user_principal: String, token_meta_data: TokenMetadata) -> impl IntoView {
+    let root = token_meta_data.root;
+    let share_link = format!("/token/info/{root}/{user_principal}?airdrop_amt=100");
     let share_link_s = store_value(share_link);
     let share_message = format!(
         "Hey! Check out the token: {} I created on YRAL 👇 {}. I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter",
@@ -127,10 +124,10 @@ pub fn TokenTile(
     let info = token_meta_data;
     view! {
         <div
-            class="flex  w-full   w-full items-center h-16 rounded-xl border-2 border-neutral-700 bg-white/15 gap-1"
+            class="flex  w-full items-center h-16 rounded-xl border-2 border-neutral-700 bg-white/15 gap-1"
         >
             <a
-            href=format!("/token/info/{token_root}/{user_principal}?airdrop_amt=100")
+            href=format!("/token/info/{root}/{user_principal}?airdrop_amt=100")
             // _ref=_ref
             class="flex flex-1  p-y-4"
             >
@@ -141,7 +138,7 @@ pub fn TokenTile(
                 <div class="flex flex-1 flex-col">
                     <span
                     class="flex flex-1  items-center justify-end text-xs text-white">
-                    {info.balance.humanize()}
+                    {info.balance.humanize_float_truncate_to_dp(2)}
                     </span>
                     <span
                     class="flex flex-1  items-center justify-end text-xs text-white truncate">

@@ -1,6 +1,6 @@
 use crate::page::icpump::search::ICPumpSearch;
 use crate::page::icpump::ICPumpLanding;
-use crate::page::profile::YourProfileView;
+
 use crate::{
     component::{base_route::BaseRoute, nav::NavBar},
     error_template::{AppError, ErrorTemplate},
@@ -142,18 +142,18 @@ pub fn App() -> impl IntoView {
                         <Route path="/" view=RootPage/>
                         <Route path="/hot-or-not/:canister_id/:post_id" view=PostView/>
                         <Route path="/post/:canister_id/:post_id" view=SinglePost/>
-                        <Route path="/profile/:canister_id/:post_id" view=ProfilePost/>
-                        <Route path="/your-profile/:canister_id/:post_id" view=ProfilePost/>
-                        <Route path="/profile/:id" view=ProfileView/>
+                        <Route path="/profile/:canister_id/post/:post_id" view=ProfilePost/>
                         <Route path="/upload" view=UploadPostPage/>
                         <Route path="/error" view=ServerErrorPage/>
                         <Route path="/menu" view=Menu/>
                         <Route path="/settings" view=Settings/>
                         <Route path="/refer-earn" view=ReferEarn/>
-                        <Route path="/your-profile" view=YourProfileView/>
+                        <Route path="/profile/:id/:tab" view=ProfileView/>
+                        <Route path="/profile/:tab" view=ProfileView/>
                         <Route path="/terms-of-service" view=TermsOfService/>
                         <Route path="/privacy-policy" view=PrivacyPolicy/>
                         <Route path="/wallet" view=Wallet/>
+                        <Route path="/wallet/:id" view=Wallet/>
                         <Route path="/transactions" view=Transactions/>
                         <Route path="/leaderboard" view=Leaderboard/>
                         <Route path="/account-transfer" view=AccountTransfer/>

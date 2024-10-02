@@ -4,11 +4,11 @@ use leptos_icons::*;
 use candid::Principal;
 
 use crate::{
-    canister::utils::bg_url,
     component::profile_placeholders::NoMorePostsGraphic,
     state::canisters::{auth_canisters_store, unauth_canisters},
     utils::{
-        event_streaming::events::ProfileViewVideo, posts::PostDetails, profile::PostsProvider,
+        bg_url, event_streaming::events::ProfileViewVideo, posts::PostDetails,
+        profile::PostsProvider,
     },
 };
 
@@ -30,7 +30,7 @@ fn Post(details: PostDetails, user_canister: Principal, _ref: NodeRef<html::Div>
             format!("/your-profile/{}/{}", canister_id, details.post_id)
         }
         _ => {
-            format!("/profile/{}/{}", user_canister, details.post_id)
+            format!("/profile/{}/post/{}", user_canister, details.post_id)
         }
     };
 

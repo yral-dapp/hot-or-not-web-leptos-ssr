@@ -1,6 +1,6 @@
 use super::spinner::Spinner;
 use crate::{
-    auth::DelegatedIdentityWire,
+    auth::delegate_short_lived_identity,
     page::menu::AuthorizedUserToSeedContent,
     state::{canisters::Canisters, content_seed_client::ContentSeedClient},
 };
@@ -11,7 +11,7 @@ fn YoutubeUploadInner(canisters: Canisters<true>, #[prop(optional)] url: String)
     let url_value = RwSignal::new(url);
     let create_short_lived_delegated_identity = |canisters: &Canisters<true>| {
         let id = canisters.identity();
-        DelegatedIdentityWire::delegate_short_lived_identity(id)
+        delegate_short_lived_identity(id)
     };
 
     let on_submit = create_action(move |_| {

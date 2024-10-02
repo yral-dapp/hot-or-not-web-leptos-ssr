@@ -8,9 +8,9 @@ use codee::string::FromToStringCodec;
 use ic_agent::Identity;
 use leptos::*;
 use leptos_use::storage::use_local_storage;
+use yral_types::delegated_identity::DelegatedIdentityWire;
 
 use crate::{
-    auth::DelegatedIdentityWire,
     consts::ACCOUNT_CONNECTED_STORE,
     state::{
         auth::auth_state,
@@ -193,10 +193,8 @@ mod server_fn_impl {
         use candid::Principal;
         use leptos::ServerFnError;
 
-        use crate::{
-            canister::individual_user_template::KnownPrincipalType,
-            state::canisters::unauth_canisters,
-        };
+        use crate::state::canisters::unauth_canisters;
+        use yral_canisters_client::individual_user_template::KnownPrincipalType;
 
         pub async fn issue_referral_rewards_impl(
             referee_canister: Principal,
@@ -248,7 +246,8 @@ mod server_fn_impl {
             referrer_principal_id: Principal,
             referee_principal_id: Principal,
         ) -> Result<(), ServerFnError> {
-            use crate::{canister::user_index::Result_, state::admin_canisters::admin_canisters};
+            use crate::state::admin_canisters::admin_canisters;
+            use yral_canisters_client::user_index::Result_;
 
             let admin_cans = admin_canisters();
             let user_idx = admin_cans.user_index_with(user_index).await;
@@ -270,9 +269,9 @@ mod server_fn_impl {
         pub async fn mark_user_registered_impl(
             user_canister: Principal,
         ) -> Result<bool, ServerFnError> {
-            use crate::{
-                canister::individual_user_template::{Result12, Result23, SessionType},
-                state::admin_canisters::admin_canisters,
+            use crate::state::admin_canisters::admin_canisters;
+            use yral_canisters_client::individual_user_template::{
+                Result12, Result23, SessionType,
             };
 
             let admin_cans = admin_canisters();

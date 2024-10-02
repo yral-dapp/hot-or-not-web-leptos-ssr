@@ -25,8 +25,11 @@ pub const NOTIFICATIONS_ENABLED_STORE: &str = "yral-notifications-enabled";
 pub const NSFW_TOGGLE_STORE: &str = "nsfw-enabled";
 pub const REFERRER_STORE: &str = "referrer";
 pub const USER_CANISTER_ID_STORE: &str = "user-canister-id";
+pub const USER_PRINCIPAL_STORE: &str = "user-principal";
 pub const USER_ONBOARDING_STORE: &str = "user-onboarding";
 
+pub static OFF_CHAIN_AGENT_URL: Lazy<Url> =
+    Lazy::new(|| Url::parse("https://icp-off-chain-agent.fly.dev/").unwrap());
 pub static OFF_CHAIN_AGENT_GRPC_URL: Lazy<Url> =
     Lazy::new(|| Url::parse("https://icp-off-chain-agent.fly.dev:443").unwrap());
 // G-6W5Q2MRX0E to test locally | G-PLNNETMSLM
@@ -41,6 +44,8 @@ pub static FALLBACK_USER_INDEX: Lazy<Principal> =
 pub const ICP_LEDGER_CANISTER_ID: &str = "ryjl3-tyaaa-aaaaa-aaaba-cai";
 
 pub const ICPUMP_LISTING_PAGE_SIZE: usize = 12;
+
+pub const CDAO_SWAP_TIME_SECS: u64 = 90;
 
 pub mod social {
     pub const TELEGRAM: &str = "https://t.me/+c-LTX0Cp-ENmMzI1";

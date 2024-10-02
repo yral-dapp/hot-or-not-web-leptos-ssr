@@ -6,8 +6,9 @@ use futures::{stream::FuturesOrdered, Stream, StreamExt};
 use leptos::*;
 use leptos_use::storage::use_local_storage;
 
+use yral_canisters_client::post_cache::{self, NsfwFilter};
+
 use crate::{
-    canister::post_cache::{self, NsfwFilter},
     consts::USER_CANISTER_ID_STORE,
     state::canisters::{auth_canisters_store, Canisters},
     utils::posts::{get_post_uid, FetchCursor, PostDetails, PostViewError},
