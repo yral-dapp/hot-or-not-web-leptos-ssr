@@ -94,7 +94,7 @@ async fn token_metadata_or_fallback(
         balance: TokenBalanceOrClaiming::claiming(),
         fees: TokenBalance::new_cdao(0u32.into()),
         root: Principal::anonymous(),
-        ledger: Principal::anonymous()
+        ledger: Principal::anonymous(),
     })
 }
 

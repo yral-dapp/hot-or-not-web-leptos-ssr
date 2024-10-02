@@ -2,7 +2,6 @@ use candid::Principal;
 use leptos::*;
 use leptos_icons::*;
 use leptos_router::*;
-use yral_canisters_client::sns_root::ListSnsCanistersArg;
 
 use crate::{
     component::{

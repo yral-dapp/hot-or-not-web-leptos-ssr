@@ -6,6 +6,7 @@ use crate::{
         infinite_scroller::KeyedCursoredDataProvider, share_popup::ShareButtonWithFallbackPopup,
     },
     page::token::non_yral_tokens::eligible_non_yral_supported_tokens,
+    state::canisters::unauth_canisters,
 };
 use candid::Principal;
 use leptos::*;
@@ -165,42 +166,48 @@ pub fn Wallet() -> impl IntoView {
 #[component]
 pub fn WalletImpl(principal: Principal) -> impl IntoView {
     let (is_connected, _) = account_connected_reader();
-    let param_principal = move || principal;
 
     let auth_cans = authenticated_canisters();
-    let balance_fetch = auth_cans.derive(param_principal, |cans_wire, principal| async move {
-        let canisters = cans_wire?.clone().canisters()?;
-        let Some(user_canister) = canisters
-            .get_individual_canister_by_user_principal(principal)
-            .await?
-        else {
-            return Err(ServerFnError::new("Failed to get user canister"));
-        };
-        let user = canisters.individual_user(user_canister).await;
+    let balance_fetch = create_resource(
+        move || principal,
+        move |principal| async move {
+            let canisters = unauth_canisters();
+            let Some(user_canister) = canisters
+                .get_individual_canister_by_user_principal(principal)
+                .await?
+            else {
+                return Err(ServerFnError::new("Failed to get user canister"));
+            };
+            let user = canisters.individual_user(user_canister).await;
 
-        let bal = user.get_utility_token_balance().await?;
-        Ok::<_, ServerFnError>(bal.to_string())
-    });
-    let history_fetch = auth_cans.derive(param_principal, |cans_wire, principal| async move {
-        let cans = cans_wire?.canisters()?;
-        let Some(user_canister) = cans
-            .clone()
-            .get_individual_canister_by_user_principal(principal)
-            .await?
-        else {
-            return Err(ServerFnError::new("Failed to get user canister"));
-        };
-        let user = cans.individual_user(user_canister).await;
-        let history_prov = get_keyed_history_provider(cans.clone());
-        let page = history_prov
-            .get_by_cursor_by_key(0, RECENT_TXN_CNT, user)
-            .await?;
+            let bal = user.get_utility_token_balance().await?;
+            Ok::<_, ServerFnError>(bal.to_string())
+        },
+    );
+    let history_fetch = auth_cans.derive(
+        move || principal,
+        |cans_wire, principal| async move {
+            let cans = cans_wire?.canisters()?;
+            let Some(user_canister) = cans
+                .clone()
+                .get_individual_canister_by_user_principal(principal)
+                .await?
+            else {
+                return Err(ServerFnError::new("Failed to get user canister"));
+            };
+            let user = cans.individual_user(user_canister).await;
+            let history_prov = get_keyed_history_provider(cans.clone());
+            let page = history_prov
+                .get_by_cursor_by_key(0, RECENT_TXN_CNT, user)
+                .await?;
 
-        Ok::<_, ServerFnError>(page.data)
-    });
+            Ok::<_, ServerFnError>(page.data)
+        },
+    );
 
-    let profile_info_res =
-        auth_cans.derive(param_principal, move |cans_wire, principal| async move {
+    let profile_info_res = auth_cans.derive(
+        move || principal,
+        move |cans_wire, principal| async move {
             let cans_wire = cans_wire?;
             let canisters = cans_wire.clone().canisters()?;
 
@@ -213,14 +220,17 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
             let user = canisters.individual_user(user_canister).await;
             let user_details = user.get_profile_details().await?;
             Ok::<ProfileDetails, ServerFnError>(user_details.into())
-        });
+        },
+    );
 
-    let is_own_account =
-        auth_cans.derive(param_principal, move |cans_wire, principal| async move {
+    let is_own_account = auth_cans.derive(
+        move || principal,
+        move |cans_wire, principal| async move {
             let cans_wire = cans_wire?;
             let canisters = cans_wire.clone().canisters()?;
             Ok::<_, ServerFnError>(canisters.user_principal() == principal)
-        });
+        },
+    );
 
     view! {
         <div>
@@ -247,7 +257,7 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
                         }
                     }
                     </Suspense>
-                    <Suspense fallback=BalanceFallback>
+                    <Suspense >
                         {move || {
                             let balance = try_or_redirect_opt!(balance_fetch() ?);
                             Some(view! { <div class="text-xl lg:text-2xl">{balance}</div> })
@@ -298,7 +308,7 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
                         {
                             move || {
                                 Some(view! {
-                                    <TokensFetch principal=param_principal()/>
+                                    <TokensFetch principal/>
                                 })
                             }
                         }
