@@ -11,11 +11,18 @@ use crate::{
     },
     page::token::TokenInfoParams,
     state::canisters::unauth_canisters,
-    utils::{token::{token_metadata_by_root, TokenMetadata}, web::copy_to_clipboard},
+    utils::{
+        token::{token_metadata_by_root, TokenMetadata},
+        web::copy_to_clipboard,
+    },
 };
 
 #[component]
-fn TokenField(#[prop(into)] label: String, #[prop(into)] value: String, #[prop(optional, default=false)] copy: bool) -> impl IntoView {
+fn TokenField(
+    #[prop(into)] label: String,
+    #[prop(into)] value: String,
+    #[prop(optional, default = false)] copy: bool,
+) -> impl IntoView {
     let copy_payload = value.clone();
     let copy_clipboard = move |_| {
         copy_to_clipboard(&copy_payload);
