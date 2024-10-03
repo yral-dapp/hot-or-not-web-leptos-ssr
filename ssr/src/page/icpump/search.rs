@@ -1,6 +1,5 @@
 use leptos::*;
 use leptos_icons::*;
-use stylers::style;
 
 use crate::{
     component::spinner::{FullScreenSpinner, Spinner},
@@ -8,30 +7,6 @@ use crate::{
 };
 
 const QUERY_LIST: [&str; 3] = ["coins with animals", "meme coins", "ape coins"];
-
-// #[component]
-// pub fn SearchSpinner() -> impl IntoView {
-//     let styler_class = style! { "SearchSpinner",
-//         .searching:before {
-//           content: "(→_→)";
-//           animation: searching 2s infinite 0s;
-//         }
-
-//         @keyframes searching {
-//           0% {
-//             content: "(→_→)";
-//           }
-//           50% {
-//             content: "(←_←)";
-//           }
-//         }
-//     };
-
-//     view! { class = styler_class,
-//         <div class="animate-searching h-32 w-32"></div>
-//         // <div class="animate-spin border-solid rounded-full border-t-transparent border-white border-8 h-32 w-32"></div>
-//     }
-// }
 
 #[component]
 pub fn ICPumpSearch() -> impl IntoView {
@@ -95,10 +70,10 @@ pub fn ICPumpSearch() -> impl IntoView {
                         if search_action.pending().get() {
                             return view! {
                                 <>
-                                <div class="flex items-center flex-col justify-center gap-2" >
-                                    <Spinner/>
-                                    <div>
-                                    Searching ...
+                                <div class="flex flex-col items-center justify-center">
+                                    <div class="relative inline-block text-2xl">
+                                        <span class="absolute animate-searching-a-1">"(→_→)"</span>
+                                        <span class="absolute animate-searching-a-2">"(←_←)"</span>
                                     </div>
                                 </div>
                                 </>
