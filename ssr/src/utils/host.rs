@@ -42,7 +42,9 @@ pub fn show_cdao_page() -> bool {
 
 pub async fn show_cdao_page_async() -> bool {
     let host = get_host_async().await;
-    show_cdao_condition(host)
+    let res = show_cdao_condition(host);
+    leptos::logging::log!("show_cdao_page_async: {:?}", res);
+    res
 }
 
 pub fn show_cdao_condition(host: String) -> bool {

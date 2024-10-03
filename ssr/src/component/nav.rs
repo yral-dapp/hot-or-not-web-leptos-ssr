@@ -129,13 +129,17 @@ pub fn NavBar() -> impl IntoView {
             s if s.starts_with("/profile") => 5,
             s if s.starts_with("/token/info") => 3,
             s if s.starts_with("/token/create") => 2,
+            s if s.starts_with("/token/search") => 5,
             _ => 4,
         }
     });
 
-    // let show_cdao_r = create_resource(|| (), move |_| show_cdao_page_async());
+    let show_cdao_r = create_blocking_resource(|| {}, |_| async { show_cdao_page_async().await });
+    // let show_cdao = show_cdao_r().and_then(|sh| Some(sh)).unwrap_or(false);
+    // leptos::logging::log!("show_cdao: {:?}", show_cdao);
 
     view! {
+    <Suspense>
         <div class="flex fixed bottom-0 left-0 z-50 flex-row justify-between items-center px-6 w-full bg-black/80">
             <NavIcon
                 idx=0
@@ -153,45 +157,53 @@ pub fn NavBar() -> impl IntoView {
             />
             <UploadIcon idx=2 cur_selected/>
 
-            // {
-            //     move || {
-            //         // let show_cdao = show_cdao_r().and_then(|sh| sh).unwrap_or(false);
-            //         show_cdao_r().and_then(|sh| {
-            //             leptos::logging::log!("show_cdao: {:?}", sh);
+            {
+                move || {
+                    show_cdao_r().and_then(|sh| {
+                        leptos::logging::log!("show_cdao final: {:?}", sh);
 
-            //             if sh {
-            //                 Some(view! {
-            //                     <NavIcon
-            //                         idx=5
-            //                         href="/token/search"
-            //                         icon=icondata::AiSearchOutlined
-            //                         cur_selected=cur_selected
-            //                     />
-            //                 })
-            //             } else {
-            //                 Some( view! {
-            //                     <NavIcon
-            //                         idx=5
-            //                         href="/profile/tokens"
-            //                         icon=ProfileIcon
-            //                         filled_icon=ProfileIconFilled
-            //                         cur_selected=cur_selected
-            //                     />
-            //                 })
-            //             }
-            //         });
-            //     }
-            // }
+                        if sh {
+                            Some(view! {
+                                <NavIcon
+                                    idx=5
+                                    href="/token/search"
+                                    icon=icondata::AiSearchOutlined
+                                    cur_selected=cur_selected
+                                />
+                            })
+                        } else {
+                            Some( view! {
+                                <NavIcon
+                                    idx=5
+                                    href="/profile/tokens"
+                                    icon=ProfileIcon
+                                    filled_icon=ProfileIconFilled
+                                    cur_selected=cur_selected
+                                />
+                            })
+                        }
+                    });
+                }
+            }
 
-            <NavIcon
-                idx=5
-                href="/profile/tokens"
-                icon=ProfileIcon
-                filled_icon=ProfileIconFilled
-                cur_selected=cur_selected
-            />
+            // <NavIcon
+            //     idx=5
+            //     href="/token/search"
+            //     icon=icondata::AiSearchOutlined
+            //     cur_selected=cur_selected
+            // />
+
+            // <NavIcon
+            //     idx=5
+            //     href="/profile/tokens"
+            //     icon=ProfileIcon
+            //     filled_icon=ProfileIconFilled
+            //     cur_selected=cur_selected
+            // />
 
             <NavIcon idx=4 href="/menu" icon=MenuSymbol cur_selected=cur_selected/>
         </div>
+
+    </Suspense>
     }
 }
