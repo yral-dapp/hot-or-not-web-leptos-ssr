@@ -26,7 +26,7 @@ fn HistoryItem(detail: HistoryDetails, _ref: NodeRef<html::Div>) -> impl IntoVie
                 </div>
             </div>
             <span class="text-white text-md md:text-xl text-center justify-self-end">
-                {detail.amount} Coyns
+                {detail.amount}Coyns
             </span>
         </div>
     }
@@ -41,7 +41,7 @@ fn AuthenticatedHistory(canisters: Canisters<true>) -> impl IntoView {
                 provider
                 fetch_count=10
                 children=|detail, _ref| {
-                    view! { <HistoryItem detail _ref=_ref.unwrap_or_default()/> }
+                    view! { <HistoryItem detail _ref=_ref.unwrap_or_default() /> }
                 }
             />
 
@@ -53,7 +53,7 @@ fn AuthenticatedHistory(canisters: Canisters<true>) -> impl IntoView {
 pub fn HistoryView() -> impl IntoView {
     view! {
         <AuthCansProvider fallback=BulletLoader let:canisters>
-            <AuthenticatedHistory canisters/>
+            <AuthenticatedHistory canisters />
         </AuthCansProvider>
     }
 }

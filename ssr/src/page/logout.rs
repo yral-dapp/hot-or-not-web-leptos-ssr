@@ -42,7 +42,7 @@ pub fn Logout() -> impl IntoView {
                         .flatten()
                         .map(|id| {
                             auth.set(Some(id));
-                            view! { <Redirect path="/menu"/> }
+                            view! { <Redirect path="/menu" /> }
                         })
                 }}
 

@@ -71,7 +71,7 @@ fn ErrorPopup<HeadIV: IntoView, Head: Fn() -> HeadIV>(
     view! {
         <div class="flex flex-col items-center w-full h-full gap-6">
             <div class="flex flex-row items-center justify-center bg-amber-100 text-orange-400 rounded-full p-3 text-2xl md:text-3xl">
-                <Icon icon=icondata::BsExclamationTriangle/>
+                <Icon icon=icondata::BsExclamationTriangle />
             </div>
             <span class="text-2xl md:text-3xl font-bold text-center">{header()}</span>
             <textarea
@@ -169,7 +169,7 @@ fn TokenTransferSuccessPopup(
     let amount_str = amount.humanize_float();
     view! {
         <SuccessPopup
-            img=|| view! { <TokenConfettiSymbol class="w-8/12"/> }
+            img=|| view! { <TokenConfettiSymbol class="w-8/12" /> }
             text=move || { format!("{amount_str} {token_name} Successfully sent") }
 
             previous_link="/wallet"

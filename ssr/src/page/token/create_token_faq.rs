@@ -93,14 +93,14 @@ E.g: TRAV".into()),
         <div class="w-dvw min-h-dvh bg-black" style="padding-bottom:5rem;">
             <Title justify_center=false>
                 <div class="grid grid-cols-3 justify-start w-full px-4" style="background: black">
-                    <BackButton fallback="/menu"/>
+                    <BackButton fallback="/menu" />
                     <span class="font-bold justify-self-center">Help</span>
                 </div>
             </Title>
 
             // Render two different use cases of the component
-            <CreateTokenFaqView title="Create a token".to_string() sections=sections1/>
-            <CreateTokenFaqView title="Advanced settings".to_string() sections=sections2/>
+            <CreateTokenFaqView title="Create a token".to_string() sections=sections1 />
+            <CreateTokenFaqView title="Advanced settings".to_string() sections=sections2 />
         </div>
     }
 }

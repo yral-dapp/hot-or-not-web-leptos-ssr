@@ -49,10 +49,10 @@ fn SinglePostViewInner(post: PostDetails) -> impl IntoView {
                     style:background-color="rgb(0, 0, 0)"
                     style:background-image=format!("url({bg_url})")
                 ></div>
-                <VideoDetailsOverlay post=post.clone()/>
-                <VideoView post=Some(post) muted autoplay_at_render=true/>
+                <VideoDetailsOverlay post=post.clone() />
+                <VideoView post=Some(post) muted autoplay_at_render=true />
             </div>
-            <MuteIconOverlay show_mute_icon/>
+            <MuteIconOverlay show_mute_icon />
         </div>
     }
 }
@@ -94,11 +94,11 @@ pub fn SinglePost() -> impl IntoView {
             {move || {
                 fetch_post()
                     .map(|post| match post {
-                        Ok(post) => view! { <SinglePostViewInner post/> },
-                        Err(PostFetchError::Invalid) => view! { <Redirect path="/"/> },
-                        Err(PostFetchError::Unavailable) => view! { <UnavailablePost/> },
+                        Ok(post) => view! { <SinglePostViewInner post /> },
+                        Err(PostFetchError::Invalid) => view! { <Redirect path="/" /> },
+                        Err(PostFetchError::Unavailable) => view! { <UnavailablePost /> },
                         Err(PostFetchError::GetUid(e)) => {
-                            view! { <Redirect path=format!("/error?err={e}")/> }
+                            view! { <Redirect path=format!("/error?err={e}") /> }
                         }
                     })
             }}

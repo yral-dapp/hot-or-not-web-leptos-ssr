@@ -16,9 +16,9 @@ fn CreateYourToken(header_text: &'static str) -> impl IntoView {
     view! {
         <div class="w-full flex flex-col items-center gap-4">
             <span class="text-2xl text-primary-600 text-center">
-                {header_text} <br/> <span class="text-white">Meme Coin</span>
+                {header_text} <br /> <span class="text-white">Meme Coin</span>
             </span>
-            <TokenConfettiSymbol class="w-2/3 md:w-1/2 lg:w-1/3 mx-8"/>
+            <TokenConfettiSymbol class="w-2/3 md:w-1/2 lg:w-1/3 mx-8" />
         </div>
     }
 }
@@ -61,7 +61,7 @@ pub fn ProfileTokens(user_canister: Principal, user_principal: Principal) -> imp
             <Suspense fallback=|| {
                 view! {
                     <div class="w-full flex justify-center items-center py-9">
-                        <BulletLoader/>
+                        <BulletLoader />
                     </div>
                 }
             }>
@@ -73,23 +73,36 @@ pub fn ProfileTokens(user_canister: Principal, user_principal: Principal) -> imp
                             view! {
                                 {tokens
                                     .into_iter()
-                                    .map(|token| view! { <TokenTile user_principal=user_principal.to_text() token_meta_data=token /> })
+                                    .map(|token| {
+                                        view! {
+                                            <TokenTile
+                                                user_principal=user_principal.to_text()
+                                                token_meta_data=token
+                                            />
+                                        }
+                                    })
                                     .collect_view()}
-                                {empty.then(|| view! {
-                                        <CreateYourToken header_text=if is_native_profile {
-                                            "Create your own"
-                                        } else {
-                                            "They have not created any"
-                                        }/>
-                                })}
-                                {is_native_profile.then(|| view! {
-                                    <a
-                                        href="/token/create"
-                                        class="text-xl bg-primary-600 py-4 w-2/3 md:w-1/2 lg:w-1/3 rounded-full text-center text-white"
-                                    >
-                                        Create
-                                    </a>
-                                })}
+                                {empty
+                                    .then(|| {
+                                        view! {
+                                            <CreateYourToken header_text=if is_native_profile {
+                                                "Create your own"
+                                            } else {
+                                                "They have not created any"
+                                            } />
+                                        }
+                                    })}
+                                {is_native_profile
+                                    .then(|| {
+                                        view! {
+                                            <a
+                                                href="/token/create"
+                                                class="text-xl bg-primary-600 py-4 w-2/3 md:w-1/2 lg:w-1/3 rounded-full text-center text-white"
+                                            >
+                                                Create
+                                            </a>
+                                        }
+                                    })}
                             }
                         })
                 }}

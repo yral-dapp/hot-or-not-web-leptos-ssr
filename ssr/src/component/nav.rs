@@ -26,7 +26,7 @@ fn NavIcon(
                 fallback=move || {
                     view! {
                         <div class="py-5">
-                            <Icon icon=icon class="text-2xl text-white md:text-3xl"/>
+                            <Icon icon=icon class="text-2xl text-white md:text-3xl" />
                         </div>
                     }
                 }
@@ -109,7 +109,7 @@ pub fn NavBar() -> impl IntoView {
             "/" => 0,
             // "/leaderboard" => 1,
             "/upload" => 2,
-            "/wallet" | "/transactions" => 3,
+            "/transactions" => 3,
             "/menu" | "/leaderboard" => 4,
             "/board" => 0,
             s if s.starts_with("/hot-or-not") => {
@@ -126,7 +126,18 @@ pub fn NavBar() -> impl IntoView {
                 }
                 None => 0,
             },
+            s if s.starts_with("/wallet/") => match user_principal.get() {
+                Some(user_principal) => {
+                    if s.starts_with(&format!("/wallet/{}", user_principal)) {
+                        3
+                    } else {
+                        6 // having a number out of range to not highlight anything
+                    }
+                }
+                None => 0,
+            },
             s if s.starts_with("/profile") => 5,
+            s if s.starts_with("/wallet") => 3, // highlights during redirects
             s if s.starts_with("/token/info") => 3,
             s if s.starts_with("/token/create") => 2,
             s if s.starts_with("/token/search") => 5,
@@ -155,7 +166,7 @@ pub fn NavBar() -> impl IntoView {
                 filled_icon=WalletSymbolFilled
                 cur_selected=cur_selected
             />
-            <UploadIcon idx=2 cur_selected/>
+            <UploadIcon idx=2 cur_selected />
 
             {
                 move || {
@@ -200,8 +211,7 @@ pub fn NavBar() -> impl IntoView {
             //     filled_icon=ProfileIconFilled
             //     cur_selected=cur_selected
             // />
-
-            <NavIcon idx=4 href="/menu" icon=MenuSymbol cur_selected=cur_selected/>
+            <NavIcon idx=4 href="/menu" icon=MenuSymbol cur_selected=cur_selected />
         </div>
 
     </Suspense>

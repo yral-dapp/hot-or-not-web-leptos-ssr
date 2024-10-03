@@ -247,6 +247,7 @@ pub struct TokenMetadata {
     pub balance: TokenBalanceOrClaiming,
     pub fees: TokenBalance,
     pub root: Principal,
+    pub ledger: Principal,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -299,6 +300,7 @@ pub async fn get_token_metadata<const A: bool>(
         fees: TokenBalance::new_cdao(fees),
         balance,
         root,
+        ledger,
     })
 }
 

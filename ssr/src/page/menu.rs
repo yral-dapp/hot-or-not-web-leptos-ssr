@@ -33,10 +33,10 @@ fn MenuItem(
     view! {
         <a href=href class="grid grid-cols-3 items-center w-full" target=target>
             <div class="flex flex-row gap-4 items-center col-span-2">
-                <Icon class="text-2xl" icon=icon/>
+                <Icon class="text-2xl" icon=icon />
                 <span class="text-wrap">{text}</span>
             </div>
-            <Icon class="text-2xl justify-self-end" icon=icondata::AiRightOutlined/>
+            <Icon class="text-2xl justify-self-end" icon=icondata::AiRightOutlined />
         </a>
     }
 }
@@ -47,10 +47,10 @@ fn MenuFooter() -> impl IntoView {
         <div class="flex flex-col items-center w-full gap-4 pt-10 pb-8">
             <span class="text-white/50 text-sm">Follow us on</span>
             <div class="flex flex-row gap-4">
-                <Telegram/>
-                <Discord/>
-                <Twitter/>
-                <IcWebsite/>
+                <Telegram />
+                <Discord />
+                <Twitter />
+                <IcWebsite />
             </div>
             <svg class="h-14 rounded-md outline outline-primary-600 outline-1" viewBox="0 0 228 49">
                 <path
@@ -90,7 +90,7 @@ fn ProfileLoaded(user_details: ProfileDetails) -> impl IntoView {
     let (is_connected, _) = account_connected_reader();
     view! {
         <div class="basis-4/12 aspect-square overflow-clip rounded-full">
-            <img class="h-full w-full object-cover" src=user_details.profile_pic_or_random()/>
+            <img class="h-full w-full object-cover" src=user_details.profile_pic_or_random() />
         </div>
         <div
             class="flex flex-col basis-8/12"
@@ -111,7 +111,7 @@ fn ProfileLoaded(user_details: ProfileDetails) -> impl IntoView {
 fn ProfileInfo() -> impl IntoView {
     view! {
         <AuthCansProvider fallback=ProfileLoading let:canisters>
-            <ProfileLoaded user_details=canisters.profile_details()/>
+            <ProfileLoaded user_details=canisters.profile_details() />
         </AuthCansProvider>
     }
 }
@@ -134,11 +134,11 @@ fn NsfwToggle() -> impl IntoView {
     view! {
         <div class="grid grid-cols-2 items-center w-full">
             <div class="flex flex-row gap-4 items-center">
-                <Icon class="text-2xl" icon=icondata::BiShowAltRegular/>
+                <Icon class="text-2xl" icon=icondata::BiShowAltRegular />
                 <span>Show NSFW Videos</span>
             </div>
             <div class="justify-self-end">
-                <Toggle checked=nsfw_enabled node_ref=toggle_ref/>
+                <Toggle checked=nsfw_enabled node_ref=toggle_ref />
             </div>
         </div>
     }
@@ -155,7 +155,7 @@ fn EnableNotifications(user_details: ProfileDetails) -> impl IntoView {
     view! {
         <div class="grid grid-cols-2 items-center w-full">
             <div class="flex flex-row gap-4 items-center">
-                <Icon class="text-2xl" icon=icondata::BiCommentDotsRegular/>
+                <Icon class="text-2xl" icon=icondata::BiCommentDotsRegular />
                 <span>Enable Notifications</span>
             </div>
             <div class="justify-self-end">
@@ -225,11 +225,11 @@ pub fn Menu() -> impl IntoView {
                 </Title>
                 <div class="flex flex-col items-center w-full gap-4">
                     <div class="flex flex-row w-full max-w-lg justify-center gap-4 items-center px-4">
-                        <ProfileInfo/>
+                        <ProfileInfo />
                     </div>
                     <Show when=move || !is_connected()>
                         <div class="w-full px-8 md:w-4/12 xl:w-2/12">
-                            <ConnectLogin/>
+                            <ConnectLogin />
                         </div>
                         <div class="w-full px-8 text-center text-sm font-sans">
                             {r#"Your Yral account has been setup. Login with Google to not lose progress."#}
@@ -252,29 +252,29 @@ pub fn Menu() -> impl IntoView {
                 </div>
             </div>
             <div class="flex flex-col py-12 px-8 gap-8 w-full text-lg">
-                <NsfwToggle/>
+                <NsfwToggle />
                 <MenuItem
                     href="/account-transfer"
                     text="HotorNot Account Transfer"
                     icon=icondata::FaMoneyBillTransferSolid
                 />
-                <MenuItem href="/refer-earn" text="Refer & Earn" icon=icondata::AiGiftFilled/>
-                <MenuItem href="/leaderboard" text="Leaderboard" icon=icondata::ChTrophy/>
+                <MenuItem href="/refer-earn" text="Refer & Earn" icon=icondata::AiGiftFilled />
+                <MenuItem href="/leaderboard" text="Leaderboard" icon=icondata::ChTrophy />
                 <MenuItem
                     href=social::TELEGRAM
                     text="Talk to the team"
                     icon=icondata::BiWhatsapp
                     target="_blank"
                 />
-                <MenuItem href="/terms-of-service" text="Terms of Service" icon=icondata::TbBook2/>
-                <MenuItem href="/privacy-policy" text="Privacy Policy" icon=icondata::TbLock/>
-                <MenuItem href="/settings" text="Settings" icon=icondata::BiCogRegular/>
+                <MenuItem href="/terms-of-service" text="Terms of Service" icon=icondata::TbBook2 />
+                <MenuItem href="/privacy-policy" text="Privacy Policy" icon=icondata::TbLock />
+                <MenuItem href="/settings" text="Settings" icon=icondata::BiCogRegular />
                 <Show when=is_connected>
-                    <MenuItem href="/logout" text="Logout" icon=icondata::FiLogOut/>
+                    <MenuItem href="/logout" text="Logout" icon=icondata::FiLogOut />
                 </Show>
             // <MenuItem href="/install-app" text="Install App" icon=icondata::TbDownload/>
             </div>
-            <MenuFooter/>
+            <MenuFooter />
         </div>
     }
 }

@@ -21,7 +21,10 @@ use leptos::*;
 use yral_canisters_client::individual_user_template::Result14;
 
 #[derive(Clone)]
-pub struct TokenRootList(pub Canisters<true>);
+pub struct TokenRootList {
+    pub canisters: Canisters<true>,
+    pub user_canister: Principal,
+}
 
 impl KeyedData for Principal {
     type Key = Principal;
@@ -30,7 +33,6 @@ impl KeyedData for Principal {
         *self
     }
 }
-
 impl CursoredDataProvider for TokenRootList {
     type Data = Principal;
     type Error = AgentError;
@@ -40,7 +42,7 @@ impl CursoredDataProvider for TokenRootList {
         start: usize,
         end: usize,
     ) -> Result<PageEntry<Self::Data>, Self::Error> {
-        let user = self.0.authenticated_user().await;
+        let user = self.canisters.individual_user(self.user_canister).await;
         let tokens = user
             .get_token_roots_of_this_user_with_pagination_cursor(start as u64, end as u64)
             .await?;
@@ -73,6 +75,7 @@ async fn token_metadata_or_fallback(
         balance: TokenBalanceOrClaiming::claiming(),
         fees: TokenBalance::new_cdao(0u32.into()),
         root: Principal::anonymous(),
+        ledger: Principal::anonymous(),
     })
 }
 
@@ -101,7 +104,10 @@ pub fn TokenView(
             {move || {
                 info.map(|info| {
                     view! {
-                        <TokenTile user_principal=user_principal.to_text() token_meta_data=info.clone() />
+                        <TokenTile
+                            user_principal=user_principal.to_text()
+                            token_meta_data=info.clone()
+                        />
                     }
                 })
             }}
@@ -123,26 +129,22 @@ pub fn TokenTile(user_principal: String, token_meta_data: TokenMetadata) -> impl
     let share_message_s = store_value(share_message);
     let info = token_meta_data;
     view! {
-        <div
-            class="flex  w-full items-center h-16 rounded-xl border-2 border-neutral-700 bg-white/15 gap-1"
-        >
+        <div class="flex  w-full items-center h-16 rounded-xl border-2 border-neutral-700 bg-white/15 gap-1">
             <a
-            href=format!("/token/info/{root}/{user_principal}?airdrop_amt=100")
-            // _ref=_ref
-            class="flex flex-1  p-y-4"
+                href=format!("/token/info/{root}/{user_principal}?airdrop_amt=100")
+                // _ref=_ref
+                class="flex flex-1  p-y-4"
             >
                 <div class="flex flex-2 items-center space-x-2 px-2">
-                <img class="w-12 h-12 rounded-full" src=info.logo_b64.clone()/>
-                <span class="text-white text-xs truncate">{info.name.clone()}</span>
+                    <img class="w-12 h-12 rounded-full" src=info.logo_b64.clone() />
+                    <span class="text-white text-xs truncate">{info.name.clone()}</span>
                 </div>
                 <div class="flex flex-1 flex-col">
-                    <span
-                    class="flex flex-1  items-center justify-end text-xs text-white">
-                    {info.balance.humanize_float_truncate_to_dp(2)}
+                    <span class="flex flex-1  items-center justify-end text-xs text-white">
+                        {info.balance.humanize_float_truncate_to_dp(2)}
                     </span>
-                    <span
-                    class="flex flex-1  items-center justify-end text-xs text-white truncate">
-                    {info.symbol.clone()}
+                    <span class="flex flex-1  items-center justify-end text-xs text-white truncate">
+                        {info.symbol.clone()}
                     </span>
                 </div>
 
@@ -161,9 +163,12 @@ pub fn TokenTile(user_principal: String, token_meta_data: TokenMetadata) -> impl
 
 #[component]
 fn TokenList(canisters: Canisters<true>) -> impl IntoView {
-    // let user_canister = canisters.user_canister();
+    let user_canister = canisters.user_canister();
     let user_principal = canisters.user_principal();
-    let provider: TokenRootList = TokenRootList(canisters);
+    let provider: TokenRootList = TokenRootList {
+        canisters,
+        user_canister,
+    };
 
     view! {
         <div class="flex flex-col w-full gap-2 items-center">
@@ -171,7 +176,7 @@ fn TokenList(canisters: Canisters<true>) -> impl IntoView {
                 provider
                 fetch_count=10
                 children=move |token_root, _ref| {
-                    view! { <TokenView user_principal token_root _ref=_ref.unwrap_or_default()/> }
+                    view! { <TokenView user_principal token_root _ref=_ref.unwrap_or_default() /> }
                 }
             />
 
@@ -182,16 +187,16 @@ fn TokenList(canisters: Canisters<true>) -> impl IntoView {
 #[component]
 pub fn Tokens() -> impl IntoView {
     view! {
-        <div class="felx items-center flex-col w-dvw min-h-dvh gap-6 bg-black pt-4 px-4 pb-12">
+        <div class="flex items-center flex-col w-dvw min-h-dvh gap-6 bg-black pt-4 px-4 pb-12">
             <Title justify_center=false>
                 <div class="flex flex-row justify-between">
-                    <BackButton fallback="/wallet".to_string()/>
+                    <BackButton fallback="/wallet".to_string() />
                     <span class="text-xl text-white font-bold">Tokens</span>
                     <div></div>
                 </div>
             </Title>
             <AuthCansProvider fallback=BulletLoader let:canisters>
-                <TokenList canisters/>
+                <TokenList canisters />
             </AuthCansProvider>
         </div>
     }

@@ -42,7 +42,7 @@ fn ProfilePostWithUpdates<const LIMIT: u64, VidStream: ProfVideoStream<LIMIT>>(
     let auth_canister = auth_canisters_store();
     let overlay = match auth_canister.get_untracked() {
         Some(canisters) if canisters.user_canister() == initial_post.canister_id => {
-            || view! { <YourProfileOverlay/> }.into_view()
+            || view! { <YourProfileOverlay /> }.into_view()
         }
         _ => || view! {}.into_view(),
     };
@@ -177,7 +177,7 @@ fn ProfilePostBase<IV: IntoView, C: Fn(PostDetails) -> IV + Clone + 'static>(
                         Some(
                             view! {
                                 <div class="absolute left-4 top-4 bg-transparent z-10 text-white">
-                                    <BackButton fallback="/".to_string()/>
+                                    <BackButton fallback="/".to_string() />
                                 </div>
                                 {(children_s.get_value())(pd)}
                             },
@@ -211,7 +211,10 @@ pub fn ProfilePost() -> impl IntoView {
 
     view! {
         <ProfilePostBase canister_and_post let:pd>
-            <ProfilePostWithUpdates<PROFILE_POST_LIMIT, DefProfileVidStream> user_canister=pd.canister_id initial_post=pd/>
+            <ProfilePostWithUpdates<
+            PROFILE_POST_LIMIT,
+            DefProfileVidStream,
+        > user_canister=pd.canister_id initial_post=pd />
         </ProfilePostBase>
     }
 }
