@@ -1,7 +1,4 @@
-use crate::{
-    consts::USER_PRINCIPAL_STORE,
-    utils::host::{get_host, get_host_async, show_cdao_page_async},
-};
+use crate::{consts::USER_PRINCIPAL_STORE, utils::host::show_cdao_page};
 
 use super::nav_icons::*;
 use candid::Principal;
@@ -145,9 +142,7 @@ pub fn NavBar() -> impl IntoView {
         }
     });
 
-    // let show_cdao_r = create_blocking_resource(|| {}, |_| async { show_cdao_page_async().await });
-    // let show_cdao = show_cdao_r().and_then(|sh| Some(sh)).unwrap_or(false);
-    // leptos::logging::log!("show_cdao: {:?}", show_cdao);
+    let show_cdao_icon = show_cdao_page();
 
     view! {
     <Suspense>
@@ -168,49 +163,32 @@ pub fn NavBar() -> impl IntoView {
             />
             <UploadIcon idx=2 cur_selected />
 
-            // {
-            //     move || {
-            //         show_cdao_r().and_then(|sh| {
-            //             leptos::logging::log!("show_cdao final: {:?}", sh);
+            {
+                move || {
+                    if show_cdao_icon {
+                        view! {
+                            <NavIcon
+                                idx=5
+                                href="/token/search"
+                                icon=SearchIcon
+                                filled_icon=SearchIconFilled
+                                cur_selected=cur_selected
+                            />
+                        }
+                    } else {
+                        view! {
+                            <NavIcon
+                                idx=5
+                                href="/profile/tokens"
+                                icon=ProfileIcon
+                                filled_icon=ProfileIconFilled
+                                cur_selected=cur_selected
+                            />
+                        }
+                    }
+                }
+            }
 
-            //             if sh {
-            //                 Some(view! {
-            //                     <NavIcon
-            //                         idx=5
-            //                         href="/token/search"
-            //                         icon=icondata::AiSearchOutlined
-            //                         cur_selected=cur_selected
-            //                     />
-            //                 })
-            //             } else {
-            //                 Some( view! {
-            //                     <NavIcon
-            //                         idx=5
-            //                         href="/profile/tokens"
-            //                         icon=ProfileIcon
-            //                         filled_icon=ProfileIconFilled
-            //                         cur_selected=cur_selected
-            //                     />
-            //                 })
-            //             }
-            //         });
-            //     }
-            // }
-
-            // <NavIcon
-            //     idx=5
-            //     href="/token/search"
-            //     icon=icondata::AiSearchOutlined
-            //     cur_selected=cur_selected
-            // />
-
-            <NavIcon
-                idx=5
-                href="/profile/tokens"
-                icon=ProfileIcon
-                filled_icon=ProfileIconFilled
-                cur_selected=cur_selected
-            />
             <NavIcon idx=4 href="/menu" icon=MenuSymbol cur_selected=cur_selected />
         </div>
 

@@ -1,9 +1,17 @@
+use std::env;
+
 use serde::{Deserialize, Serialize};
 
 use futures::stream::BoxStream;
 use futures::StreamExt;
 
 use leptos::*;
+
+#[cfg(feature = "ssr")]
+#[derive(Debug, Clone)]
+pub struct ICPumpSearchGrpcChannel {
+    pub channel: tonic::transport::Channel,
+}
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct TokenListItemFS {
@@ -102,68 +110,136 @@ pub async fn get_paginated_token_list(page: u32) -> Result<Vec<TokenListItem>, S
     }
 }
 
+#[cfg(feature = "ssr")]
+pub mod icpump_search {
+    tonic::include_proto!("search");
+}
+
 #[server]
 pub async fn get_token_search_results(query: String) -> Result<Vec<TokenListItem>, ServerFnError> {
-    // sleep for 3 secs
-    tokio::time::sleep(tokio::time::Duration::from_secs(3)).await;
+    use tonic::metadata::MetadataValue;
+    use tonic::transport::Channel;
+    use tonic::Request;
 
-    let data = vec![
-        TokenListItem {
-            user_id: "user_id1".to_string(),
-            name: "name1".to_string(),
-            token_name: "token_name1".to_string(),
-            token_symbol: "token_symbol1".to_string(),
-            logo: "https://imagedelivery.net/pDZniJRIOhjCc6oLj0s5-g/5f36e57f-aaf8-4bcd-1446-247b5d165000/public".to_string(),
-            description: "description".to_string(),
-            created_at: "created_at".to_string(),
-            formatted_created_at: "2h ago".to_string(),
-            link: "/token/info/k53gu-qaaaa-aaaag-qkqpq-ca/ui2b7-xywqe-vp6lb-cyz3s-itiv6-y7a6o-fottf-ivyxc-abrlo-zrhf4-qqe".to_string(),
-        },
-        TokenListItem {
-            user_id: "user_id2".to_string(),
-            name: "name2".to_string(),
-            token_name: "token_name2".to_string(),
-            token_symbol: "token_symbol2".to_string(),
-            logo: "https://imagedelivery.net/pDZniJRIOhjCc6oLj0s5-g/5f36e57f-aaf8-4bcd-1446-247b5d165000/public".to_string(),
-            description: "description".to_string(),
-            created_at: "created_at".to_string(),
-            formatted_created_at: "2h ago".to_string(),
-            link: "/token/info/k53gu-qaaaa-aaaag-qkqpq-ca/ui2b7-xywqe-vp6lb-cyz3s-itiv6-y7a6o-fottf-ivyxc-abrlo-zrhf4-qqe".to_string(),
-        },
-        TokenListItem {
-            user_id: "user_id3".to_string(),
-            name: "name3".to_string(),
-            token_name: "token_name3".to_string(),
-            token_symbol: "token_symbol3".to_string(),
-            logo: "https://imagedelivery.net/pDZniJRIOhjCc6oLj0s5-g/5f36e57f-aaf8-4bcd-1446-247b5d165000/public".to_string(),
-            description: "description".to_string(),
-            created_at: "created_at".to_string(),
-            formatted_created_at: "2h ago".to_string(),
-            link: "/token/info/k53gu-qaaaa-aaaag-qkqpq-ca/ui2b7-xywqe-vp6lb-cyz3s-itiv6-y7a6o-fottf-ivyxc-abrlo-zrhf4-qqe".to_string(),
-        },
-        TokenListItem {
-            user_id: "user_id4".to_string(),
-            name: "name4".to_string(),
-            token_name: "token_name4".to_string(),
-            token_symbol: "token_symbol4".to_string(),
-            logo: "https://imagedelivery.net/pDZniJRIOhjCc6oLj0s5-g/5f36e57f-aaf8-4bcd-1446-247b5d165000/public".to_string(),
-            description: "description".to_string(),
-            created_at: "created_at".to_string(),
-            formatted_created_at: "2h ago".to_string(),
-            link: "/token/info/k53gu-qaaaa-aaaag-qkqpq-ca/ui2b7-xywqe-vp6lb-cyz3s-itiv6-y7a6o-fottf-ivyxc-abrlo-zrhf4-qqe".to_string(),
-        },
-        TokenListItem {
-            user_id: "user_id5".to_string(),
-            name: "name5".to_string(),
-            token_name: "token_name5".to_string(),
-            token_symbol: "token_symbol5".to_string(),
-            logo: "https://imagedelivery.net/pDZniJRIOhjCc6oLj0s5-g/5f36e57f-aaf8-4bcd-1446-247b5d165000/public".to_string(),
-            description: "description".to_string(),
-            created_at: "created_at".to_string(),
-            formatted_created_at: "2h ago".to_string(),
-            link: "/token/info/k53gu-qaaaa-aaaag-qkqpq-ca/ui2b7-xywqe-vp6lb-cyz3s-itiv6-y7a6o-fottf-ivyxc-abrlo-zrhf4-qqe".to_string(),
-        }
-    ];
+    let channel: ICPumpSearchGrpcChannel = expect_context();
+    let mut grpc_auth_token =
+        env::var("ICPUMP_SEARCH_GRPC_AUTH_TOKEN").expect("ICPUMP_SEARCH_GRPC_AUTH_TOKEN");
+    let token: MetadataValue<_> = format!("Bearer {}", grpc_auth_token).parse()?;
 
-    Ok(data)
+    let mut client = icpump_search::search_service_client::SearchServiceClient::with_interceptor(
+        channel.channel,
+        move |mut req: Request<()>| {
+            req.metadata_mut().insert("authorization", token.clone());
+            Ok(req)
+        },
+    );
+
+    let request = icpump_search::SearchRequest { input_query: query };
+    let resp: tonic::Response<icpump_search::SearchResponse> = client.search(request).await?;
+
+    let items = resp.into_inner().items;
+
+    let res_vec: Vec<TokenListItem> = items.into_iter().map(|item| item.into()).collect();
+
+    Ok(res_vec)
 }
+
+#[cfg(feature = "ssr")]
+impl From<icpump_search::SearchItem> for TokenListItem {
+    fn from(item: icpump_search::SearchItem) -> Self {
+        use speedate::DateTime;
+
+        let created_at_str = item.created_at.clone();
+        let created_at = DateTime::parse_str(&created_at_str).unwrap().timestamp();
+        let now = DateTime::now(0).unwrap().timestamp();
+        let elapsed = now - created_at;
+
+        let elapsed_str = if elapsed < 60 {
+            format!("{}s ago", elapsed)
+        } else if elapsed < 3600 {
+            format!("{}m ago", elapsed / 60)
+        } else if elapsed < 86400 {
+            format!("{}h ago", elapsed / 3600)
+        } else {
+            format!("{}d ago", elapsed / 86400)
+        };
+
+        TokenListItem {
+            user_id: item.user_id,
+            name: item.token_name.clone(),
+            token_name: item.token_name,
+            token_symbol: item.token_symbol,
+            logo: item.logo,
+            description: item.description,
+            created_at: item.created_at,
+            formatted_created_at: elapsed_str,
+            link: item.link,
+        }
+    }
+}
+
+// #[server]
+// pub async fn get_token_search_results(query: String) -> Result<Vec<TokenListItem>, ServerFnError> {
+//     // sleep for 3 secs
+//     tokio::time::sleep(tokio::time::Duration::from_secs(3)).await;
+
+//     let data = vec![
+//         TokenListItem {
+//             user_id: "user_id1".to_string(),
+//             name: "name1".to_string(),
+//             token_name: "token_name1".to_string(),
+//             token_symbol: "token_symbol1".to_string(),
+//             logo: "https://imagedelivery.net/pDZniJRIOhjCc6oLj0s5-g/5f36e57f-aaf8-4bcd-1446-247b5d165000/public".to_string(),
+//             description: "description".to_string(),
+//             created_at: "created_at".to_string(),
+//             formatted_created_at: "2h ago".to_string(),
+//             link: "/token/info/k53gu-qaaaa-aaaag-qkqpq-ca/ui2b7-xywqe-vp6lb-cyz3s-itiv6-y7a6o-fottf-ivyxc-abrlo-zrhf4-qqe".to_string(),
+//         },
+//         TokenListItem {
+//             user_id: "user_id2".to_string(),
+//             name: "name2".to_string(),
+//             token_name: "token_name2".to_string(),
+//             token_symbol: "token_symbol2".to_string(),
+//             logo: "https://imagedelivery.net/pDZniJRIOhjCc6oLj0s5-g/5f36e57f-aaf8-4bcd-1446-247b5d165000/public".to_string(),
+//             description: "description".to_string(),
+//             created_at: "created_at".to_string(),
+//             formatted_created_at: "2h ago".to_string(),
+//             link: "/token/info/k53gu-qaaaa-aaaag-qkqpq-ca/ui2b7-xywqe-vp6lb-cyz3s-itiv6-y7a6o-fottf-ivyxc-abrlo-zrhf4-qqe".to_string(),
+//         },
+//         TokenListItem {
+//             user_id: "user_id3".to_string(),
+//             name: "name3".to_string(),
+//             token_name: "token_name3".to_string(),
+//             token_symbol: "token_symbol3".to_string(),
+//             logo: "https://imagedelivery.net/pDZniJRIOhjCc6oLj0s5-g/5f36e57f-aaf8-4bcd-1446-247b5d165000/public".to_string(),
+//             description: "description".to_string(),
+//             created_at: "created_at".to_string(),
+//             formatted_created_at: "2h ago".to_string(),
+//             link: "/token/info/k53gu-qaaaa-aaaag-qkqpq-ca/ui2b7-xywqe-vp6lb-cyz3s-itiv6-y7a6o-fottf-ivyxc-abrlo-zrhf4-qqe".to_string(),
+//         },
+//         TokenListItem {
+//             user_id: "user_id4".to_string(),
+//             name: "name4".to_string(),
+//             token_name: "token_name4".to_string(),
+//             token_symbol: "token_symbol4".to_string(),
+//             logo: "https://imagedelivery.net/pDZniJRIOhjCc6oLj0s5-g/5f36e57f-aaf8-4bcd-1446-247b5d165000/public".to_string(),
+//             description: "description".to_string(),
+//             created_at: "created_at".to_string(),
+//             formatted_created_at: "2h ago".to_string(),
+//             link: "/token/info/k53gu-qaaaa-aaaag-qkqpq-ca/ui2b7-xywqe-vp6lb-cyz3s-itiv6-y7a6o-fottf-ivyxc-abrlo-zrhf4-qqe".to_string(),
+//         },
+//         TokenListItem {
+//             user_id: "user_id5".to_string(),
+//             name: "name5".to_string(),
+//             token_name: "token_name5".to_string(),
+//             token_symbol: "token_symbol5".to_string(),
+//             logo: "https://imagedelivery.net/pDZniJRIOhjCc6oLj0s5-g/5f36e57f-aaf8-4bcd-1446-247b5d165000/public".to_string(),
+//             description: "description".to_string(),
+//             created_at: "created_at".to_string(),
+//             formatted_created_at: "2h ago".to_string(),
+//             link: "/token/info/k53gu-qaaaa-aaaag-qkqpq-ca/ui2b7-xywqe-vp6lb-cyz3s-itiv6-y7a6o-fottf-ivyxc-abrlo-zrhf4-qqe".to_string(),
+//         }
+//     ];
+
+//     Ok(data)
+// }
