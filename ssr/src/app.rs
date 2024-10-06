@@ -159,7 +159,7 @@ pub fn App() -> impl IntoView {
                         <Route path="/token/create" view=CreateToken />
                         <Route path="/token/create/settings" view=CreateTokenSettings />
                         <Route path="/token/create/faq" view=CreateTokenFAQ />
-                        <Route path="/token/info/:token_root/:user_principal/:key_principal" view=TokenInfo />
+                        <Route path="/token/info/:token_root/:key_principal" view=TokenInfo />
                         <Route path="/token/transfer/:token_root" view=TokenTransfer />
                         <Route path="/tokens" view=Tokens />
                         <Route path="/board" view=ICPumpLanding />
