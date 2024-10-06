@@ -2,20 +2,21 @@ use candid::Principal;
 use leptos::*;
 use leptos_icons::*;
 use leptos_router::*;
+use serde::{Deserialize, Serialize};
 
+use crate::page::token::TokenInfoParams;
 use crate::{
     component::{
         back_btn::BackButton, bullet_loader::BulletLoader, canisters_prov::AuthCansProvider,
         share_popup::*, spinner::FullScreenSpinner, title::Title,
     },
-    page::token::TokenInfoParams,
+    page::wallet::{transactions::Transactions, txn::IndexOrLedger},
     state::canisters::unauth_canisters,
     utils::{
         token::{token_metadata_by_root, TokenMetadata},
         web::copy_to_clipboard,
     },
 };
-
 #[component]
 fn TokenField(
     #[prop(into)] label: String,
@@ -58,8 +59,8 @@ fn TokenDetails(meta: TokenMetadata) -> impl IntoView {
 #[component]
 fn TokenInfoInner(
     root: Principal,
-    user_principal: Principal,
     meta: TokenMetadata,
+    key_principal: Option<Principal>,
 ) -> impl IntoView {
     let meta_c = meta.clone();
     let detail_toggle = create_rw_signal(false);
@@ -70,11 +71,12 @@ fn TokenInfoInner(
             icondata::AiDownOutlined
         }
     });
-    let share_link = { format!("/token/info/{root}/{user_principal}?airdrop_amt=100") };
-    let message = format!(
+    let share_link = key_principal
+        .map(|key_principal| format!("/token/info/{root}/{key_principal}?airdrop_amt=100"));
+    let message = share_link.clone().map(|share_link|format!(
         "Hey! Check out the token: {} I created on YRAL 👇 {}. I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter",
-        meta.symbol,  share_link.clone()
-    );
+        meta.symbol,  share_link
+    ));
 
     view! {
         <div class="w-dvw min-h-dvh bg-neutral-800 flex flex-col gap-4">
@@ -97,18 +99,30 @@ fn TokenInfoInner(
                                     {meta.name}
                                 </span>
                             </div>
-                            <ShareButtonWithFallbackPopup
-                                share_link
-                                message
-                                style="w-12 h-12".into()
-                            />
+                            {
+                                share_link.zip(message).map(|(share_link, message)|{
+                                    view! {
+                                        <ShareButtonWithFallbackPopup
+                                        share_link
+                                        message
+                                        style="w-12 h-12".into()
+                                    />
+                                    }
+                                })
+                            }
                         </div>
                         <div class="flex flex-row justify-between border-b p-1 border-white items-center">
                             <span class="text-xs md:text-sm text-green-500">Balance</span>
                             <span class="text-lg md:text-xl text-white">
-                                <span class="font-bold">
-                                    {format!("{} ", meta.balance.humanize_float_truncate_to_dp(2))}
-                                </span>
+                                {
+                                    meta.balance.map(|balance|{
+                                        view! {
+                                            <span class="font-bold">
+                                            {format!("{} ", balance.humanize_float_truncate_to_dp(2))}
+                                            </span>
+                                        }
+                                    })
+                                }
                                 {meta.symbol}
                             </span>
                         </div>
@@ -127,7 +141,7 @@ fn TokenInfoInner(
                     </Show>
                 </div>
                 <AuthCansProvider fallback=BulletLoader let:canisters>
-                    <Show when=move || { user_principal == canisters.profile_details().principal }>
+                    <Show when=move || { key_principal == Some(canisters.profile_details().principal) }>
                         <a
                             href=format!("/token/transfer/{root}")
                             class="flex flex-row justify-self-center justify-center text-white md:text-lg w-full md:w-1/2 rounded-full p-3 bg-primary-600"
@@ -136,27 +150,52 @@ fn TokenInfoInner(
                         </a>
                     </Show>
                 </AuthCansProvider>
+                {
+                    move ||{
+                        if key_principal.is_some(){
+                            view! {
+                                <Transactions source=IndexOrLedger::Index(meta.index) key_principal/>
+                            }
+                        }else{
+                            view! {
+                                <Transactions source=IndexOrLedger::Ledger(meta.ledger) key_principal=None/>
+                            }
+                        }
+                    }
+                }
             </div>
         </div>
     }
 }
-
+#[derive(Params, PartialEq, Clone, Serialize, Deserialize)]
+struct TokenKeyParam {
+    key_principal: String,
+}
 #[component]
 pub fn TokenInfo() -> impl IntoView {
     let params = use_params::<TokenInfoParams>();
+    let key_principal = use_params::<TokenKeyParam>();
+    let key_principal = move || {
+        key_principal.with(|p| {
+            let TokenKeyParam { key_principal, .. } = p.as_ref().ok()?;
+            Principal::from_text(key_principal).ok()
+        })
+    };
+    let token_metadata_fetch = create_resource(
+        move || (params(), key_principal()),
+        move |(params, key_principal)| async move {
+            let Ok(params) = params else {
+                return Ok::<_, ServerFnError>(None);
+            };
+            // let principal = params.user_principal.to_text().clone();
+            // let root = params.token_root.to_text().clone();
 
-    let token_metadata_fetch = create_resource(params, move |params| async move {
-        let Ok(params) = params else {
-            return Ok::<_, ServerFnError>(None);
-        };
-        // let principal = params.user_principal.to_text().clone();
-        // let root = params.token_root.to_text().clone();
+            let cans = unauth_canisters();
+            let meta = token_metadata_by_root(&cans, key_principal, params.token_root).await?;
 
-        let cans = unauth_canisters();
-        let meta = token_metadata_by_root(&cans, params.user_principal, params.token_root).await?;
-
-        Ok(meta.map(|m| (m, (params.token_root, params.user_principal))))
-    });
+            Ok(meta.map(|m| (m, params.token_root, key_principal)))
+        },
+    );
 
     view! {
         <Suspense fallback=FullScreenSpinner>
@@ -165,8 +204,8 @@ pub fn TokenInfo() -> impl IntoView {
                     .and_then(|info| info.ok())
                     .map(|info| {
                         match info {
-                            Some((metadata, (root, user_principal))) => {
-                                view! { <TokenInfoInner root user_principal meta=metadata /> }
+                            Some((metadata, root, key_principal)) => {
+                                view! { <TokenInfoInner root key_principal meta=metadata /> }
                             }
                             None => view! { <Redirect path="/" /> },
                         }

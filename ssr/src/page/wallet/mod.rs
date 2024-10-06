@@ -1,6 +1,6 @@
 pub mod tokens;
 pub mod transactions;
-mod txn;
+pub mod txn;
 use crate::component::infinite_scroller::CursoredDataProvider;
 use crate::{
     component::share_popup::ShareButtonWithFallbackPopup,
@@ -22,7 +22,6 @@ use crate::{
     try_or_redirect_opt,
     utils::profile::ProfileDetails,
 };
-use txn::{provider::get_history_provider, TxnView};
 
 #[component]
 fn ProfileGreeter(details: ProfileDetails, is_own_account: bool) -> impl IntoView {
@@ -68,8 +67,6 @@ fn FallbackGreeter() -> impl IntoView {
         <div class="justify-self-end w-16 rounded-full animate-pulse aspect-square overflow-clip bg-white/40"></div>
     }
 }
-
-const RECENT_TXN_CNT: usize = 10;
 
 #[component]
 fn BalanceFallback() -> impl IntoView {
@@ -196,23 +193,6 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
             Ok::<_, ServerFnError>(bal.to_string())
         },
     );
-    let history_fetch = auth_cans.derive(
-        move || principal,
-        |cans_wire, principal| async move {
-            let cans = cans_wire?.canisters()?;
-            let Some(user_canister) = cans
-                .clone()
-                .get_individual_canister_by_user_principal(principal)
-                .await?
-            else {
-                return Err(ServerFnError::new("Failed to get user canister"));
-            };
-            let history_prov = get_history_provider(cans.clone(), user_canister);
-            let page = history_prov.get_by_cursor(0, RECENT_TXN_CNT).await?;
-
-            Ok::<_, ServerFnError>(page.data)
-        },
-    );
 
     let profile_info_res = auth_cans.derive(
         move || principal,
@@ -304,9 +284,6 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
                                         <span class="text-sm text-white md:text-md">
                                             {if is_own_account { "My Tokens" } else { "Tokens" }}
                                         </span>
-                                        <a href="/tokens" class="md:text-lg text-white/50 text-md">
-                                            See All
-                                        </a>
                                     </div>
                                 },
                             )
@@ -319,28 +296,6 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
                 <div class="flex flex-col gap-2 w-full">
                     <div class="flex flex-row justify-between items-end w-full">
                         <span class="text-sm text-white md:text-md">Recent Transactions</span>
-                        <a href="/transactions" class="md:text-lg text-white/50 text-md">
-                            See All
-                        </a>
-                    </div>
-                    <div class="flex flex-col divide-y divide-white/10">
-                        <Suspense fallback=BulletLoader>
-                            {move || {
-                                history_fetch()
-                                    .map(|history| {
-                                        view! {
-                                            <For
-                                                each=move || history.clone().unwrap_or_default()
-                                                key=|inf| inf.key()
-                                                let:info
-                                            >
-                                                <TxnView info />
-                                            </For>
-                                        }
-                                    })
-                            }}
-
-                        </Suspense>
                     </div>
                 </div>
             </div>

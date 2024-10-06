@@ -1,19 +1,18 @@
 use leptos::*;
 
 use super::txn::{provider::get_history_provider, TxnView};
+use crate::page::wallet::txn::IndexOrLedger;
 use crate::{
-    component::{
-        back_btn::BackButton, bullet_loader::BulletLoader, canisters_prov::AuthCansProvider,
-        infinite_scroller::InfiniteScroller, title::Title,
-    },
-    state::canisters::Canisters,
+    component::{back_btn::BackButton, infinite_scroller::InfiniteScroller, title::Title},
+    state::canisters::unauth_canisters,
 };
+use candid::Principal;
 
 const FETCH_CNT: usize = 15;
 
 #[component]
-pub fn TransactionList(canisters: Canisters<true>) -> impl IntoView {
-    let provider = get_history_provider(canisters.clone(), canisters.user_canister());
+pub fn TransactionList(principal: Option<Principal>, source: IndexOrLedger) -> impl IntoView {
+    let provider = get_history_provider(unauth_canisters(), principal, source);
     view! {
         <div class="flex flex-col w-full items-center">
             <InfiniteScroller
@@ -29,7 +28,7 @@ pub fn TransactionList(canisters: Canisters<true>) -> impl IntoView {
 }
 
 #[component]
-pub fn Transactions() -> impl IntoView {
+pub fn Transactions(source: IndexOrLedger, key_principal: Option<Principal>) -> impl IntoView {
     view! {
         <div class="flex items-center flex-col w-dvw min-h-dvh gap-10 bg-black pt-4 px-4 pb-12">
             <Title justify_center=false>
@@ -39,9 +38,9 @@ pub fn Transactions() -> impl IntoView {
                     <div></div>
                 </div>
             </Title>
-            <AuthCansProvider fallback=BulletLoader let:canisters>
-                <TransactionList canisters />
-            </AuthCansProvider>
+            <div class="flex flex-col divide-y divide-white/10">
+                <TransactionList principal=key_principal source=source/>
+            </div>
         </div>
     }
 }

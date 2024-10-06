@@ -13,6 +13,7 @@ use yral_canisters_client::{
     platform_orchestrator::PlatformOrchestrator,
     post_cache::PostCache,
     sns_governance::SnsGovernance,
+    sns_index::SnsIndex,
     sns_ledger::SnsLedger,
     sns_root::SnsRoot,
     user_index::{Result1, UserIndex},
@@ -194,7 +195,10 @@ impl<const A: bool> Canisters<A> {
         let agent = self.agent.get_agent().await;
         SnsGovernance(canister_id, agent)
     }
-
+    pub async fn sns_index(&self, canister_id: Principal) -> SnsIndex<'_> {
+        let agent = self.agent.get_agent().await;
+        SnsIndex(canister_id, agent)
+    }
     pub async fn sns_ledger(&self, canister_id: Principal) -> SnsLedger<'_> {
         let agent = self.agent.get_agent().await;
         SnsLedger(canister_id, agent)

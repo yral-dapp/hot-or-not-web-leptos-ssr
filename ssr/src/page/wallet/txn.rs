@@ -1,5 +1,6 @@
 use std::fmt::{self, Display, Formatter};
 
+use candid::Principal;
 use leptos::*;
 use leptos_icons::Icon;
 use serde::{Deserialize, Serialize};
@@ -12,7 +13,11 @@ pub enum TxnDirection {
     Added,
     Deducted,
 }
-
+#[derive(Clone)]
+pub enum IndexOrLedger {
+    Index(Principal),
+    Ledger(Principal),
+}
 impl TxnDirection {
     fn positive(self) -> bool {
         use TxnDirection::*;
@@ -36,38 +41,46 @@ impl From<TxnDirection> for &'static icondata_core::IconData {
 }
 
 #[derive(Clone, Copy, Serialize, Deserialize)]
-pub enum TxnTag {
-    BetPlaced,
-    SignupBonus,
-    Referral,
-    Winnings,
-    Commission,
-    Transfer,
-    HotorNotAccountTransfer,
+pub enum TxnInfoType {
+    Mint { to: Principal },
+    Sent { to: Principal }, // only for keyed
+    Burn { from: Principal },
+    Received { from: Principal },                // only for keyed
+    Transfer { from: Principal, to: Principal }, // only for public transaction
+}
+#[derive(Clone, Copy, Serialize, Deserialize)]
+pub struct TxnInfoWallet {
+    tag: TxnInfoType,
+    timestamp: u64,
+    amount: u64,
+    id: u64,
 }
 
-impl From<TxnTag> for TxnDirection {
-    fn from(value: TxnTag) -> TxnDirection {
-        use TxnTag::*;
+impl KeyedData for TxnInfoWallet {
+    type Key = u64;
+
+    fn key(&self) -> Self::Key {
+        self.id
+    }
+}
+impl From<TxnInfoType> for TxnDirection {
+    fn from(value: TxnInfoType) -> TxnDirection {
         match value {
-            BetPlaced | Transfer => TxnDirection::Deducted,
-            Winnings | Commission | HotorNotAccountTransfer => TxnDirection::Added,
-            SignupBonus | Referral => TxnDirection::Bonus,
+            TxnInfoType::Burn { .. } | TxnInfoType::Sent { .. } => TxnDirection::Deducted,
+            TxnInfoType::Mint { .. } | TxnInfoType::Received { .. } => TxnDirection::Added,
+            _ => unimplemented!(),
         }
     }
 }
 
-impl TxnTag {
+impl TxnInfoType {
     fn to_text(self) -> &'static str {
-        use TxnTag::*;
         match self {
-            BetPlaced => "Vote Placement",
-            SignupBonus => "Joining Bonus",
-            Referral => "Referral Reward",
-            Winnings => "Vote Winnings",
-            Commission => "Vote Commission",
-            Transfer => "Transfer",
-            HotorNotAccountTransfer => "HotorNot Account Transfer",
+            TxnInfoType::Burn { .. } => "Burned",
+            TxnInfoType::Mint { .. } => "Minted",
+            TxnInfoType::Received { .. } => "Sent",
+            TxnInfoType::Sent { .. } => "Received",
+            TxnInfoType::Transfer { .. } => "Transfered",
         }
     }
 
@@ -76,29 +89,14 @@ impl TxnTag {
     }
 }
 
-impl Display for TxnTag {
+impl Display for TxnInfoType {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.write_str(self.to_text())
     }
 }
 
-#[derive(Clone, Copy, Serialize, Deserialize)]
-pub struct TxnInfo {
-    pub tag: TxnTag,
-    pub amount: u64,
-    pub id: u64,
-}
-
-impl KeyedData for TxnInfo {
-    type Key = u64;
-
-    fn key(&self) -> Self::Key {
-        self.id
-    }
-}
-
 #[component]
-pub fn TxnView(info: TxnInfo, #[prop(optional)] _ref: NodeRef<html::Div>) -> impl IntoView {
+pub fn TxnView(info: TxnInfoWallet, #[prop(optional)] _ref: NodeRef<html::Div>) -> impl IntoView {
     let direction = TxnDirection::from(info.tag);
     let bal_res = format!(
         "{} {}",
@@ -137,101 +135,215 @@ pub mod provider {
     use crate::{component::infinite_scroller::CursoredDataProvider, state::canisters::Canisters};
 
     use super::*;
-
+    #[allow(private_interfaces)]
     pub fn get_history_provider(
-        canisters: Canisters<true>,
-        user_canister: Principal,
-    ) -> impl CursoredDataProvider<Data = TxnInfo> + Clone {
-        #[cfg(feature = "mock-wallet-history")]
-        {
-            _ = canisters;
-            _ = user_canister;
-            mock::MockHistoryProvider
-        }
-        #[cfg(not(feature = "mock-wallet-history"))]
+        canisters: Canisters<false>,
+        user_principal: Option<Principal>,
+        source: IndexOrLedger,
+    ) -> impl CursoredDataProvider<Data = TxnInfoWallet> + Clone {
+        // #[cfg(feature = "mock-wallet-history")]
+        // {
+        //     _ = canisters;
+        //     _ = user_canister;
+        //     mock::MockHistoryProvider
+        // }
+        // #[cfg(not(feature = "mock-wallet-history"))]
         {
             canister::TxnHistory {
                 canisters,
-                user_canister,
+                user_principal,
+                source,
             }
         }
     }
-    #[cfg(not(feature = "mock-wallet-history"))]
+    // #[cfg(not(feature = "mock-wallet-history"))]
     mod canister {
-        use super::{Canisters, CursoredDataProvider, TxnInfo, TxnTag};
+        use super::{Canisters, CursoredDataProvider, IndexOrLedger, TxnInfoType, TxnInfoWallet};
         use crate::component::infinite_scroller::PageEntry;
         use candid::Principal;
         use ic_agent::AgentError;
-        use yral_canisters_client::individual_user_template::{
-            HotOrNotOutcomePayoutEvent, MintEvent, Result15, TokenEvent,
+        use leptos::ServerFnError;
+        use yral_canisters_client::{
+            sns_index::{
+                Account, GetAccountTransactionsArgs, GetTransactionsResult, Transaction,
+                TransactionWithId,
+            },
+            sns_ledger::GetTransactionsRequest,
         };
 
-        fn event_to_txn(event: (u64, TokenEvent)) -> Option<TxnInfo> {
-            let (amount, tag) = match event.1 {
-                TokenEvent::Stake { amount, .. } => (amount, TxnTag::BetPlaced),
-                TokenEvent::Burn => return None,
-                TokenEvent::Mint {
-                    amount,
-                    details: MintEvent::NewUserSignup { .. },
-                    ..
-                } => (amount, TxnTag::SignupBonus),
-                TokenEvent::Mint {
-                    amount,
-                    details: MintEvent::Referral { .. },
-                    ..
-                } => (amount, TxnTag::Referral),
-                TokenEvent::Transfer { amount, .. } => (amount, TxnTag::Transfer),
-                TokenEvent::Receive { amount, .. } => (amount, TxnTag::HotorNotAccountTransfer),
-                TokenEvent::HotOrNotOutcomePayout {
-                    amount,
-                    details: HotOrNotOutcomePayoutEvent::CommissionFromHotOrNotBet { .. },
-                    ..
-                } => (amount, TxnTag::Commission),
-                TokenEvent::HotOrNotOutcomePayout {
-                    amount,
-                    details: HotOrNotOutcomePayoutEvent::WinningsEarnedFromBet { .. },
-                    ..
-                } => (amount, TxnTag::Winnings),
-            };
+        fn parse_transactions(
+            txn: TransactionWithId,
+            user_principal: Principal,
+        ) -> Result<TxnInfoWallet, ServerFnError> {
+            let timestamp = txn.transaction.timestamp;
+            let id = txn.id.0.to_u64_digits()[0]; // some weird hack need to do this properly
 
-            Some(TxnInfo {
-                tag,
-                amount,
-                id: event.0,
-            })
+            match txn.transaction {
+                Transaction {
+                    mint: Some(mint), ..
+                } => Ok(TxnInfoWallet {
+                    tag: TxnInfoType::Mint { to: mint.to.owner },
+                    timestamp,
+                    amount: mint.amount.0.to_u64_digits()[0],
+                    id,
+                }),
+                Transaction {
+                    burn: Some(burn), ..
+                } => Ok(TxnInfoWallet {
+                    tag: TxnInfoType::Burn {
+                        from: user_principal,
+                    },
+                    timestamp,
+                    amount: burn.amount.0.to_u64_digits()[0],
+                    id,
+                }),
+                Transaction {
+                    transfer: Some(transfer),
+                    ..
+                } => {
+                    if user_principal == transfer.to.owner {
+                        Ok(TxnInfoWallet {
+                            tag: TxnInfoType::Sent {
+                                to: transfer.to.owner,
+                            },
+                            timestamp,
+                            amount: transfer.amount.0.to_u64_digits()[0],
+                            id,
+                        })
+                    } else if user_principal == transfer.from.owner {
+                        Ok(TxnInfoWallet {
+                            tag: TxnInfoType::Received {
+                                from: transfer.from.owner,
+                            },
+                            timestamp,
+                            amount: transfer.amount.0.to_u64_digits()[0],
+                            id,
+                        })
+                    } else {
+                        Err(ServerFnError::new(
+                            "Transfer details do not match the user principal",
+                        ))
+                    }
+                }
+                _ => Err(ServerFnError::new("Unable to parse transaction details")),
+            }
         }
 
+        fn parse_transactions_ledger(
+            txn: yral_canisters_client::sns_ledger::Transaction,
+            id: u64,
+        ) -> Result<TxnInfoWallet, ServerFnError> {
+            let timestamp = txn.timestamp;
+
+            match txn {
+                yral_canisters_client::sns_ledger::Transaction {
+                    mint: Some(mint), ..
+                } => Ok(TxnInfoWallet {
+                    tag: TxnInfoType::Mint { to: mint.to.owner },
+                    timestamp,
+                    amount: mint.amount.0.to_u64_digits()[0],
+                    id,
+                }),
+                yral_canisters_client::sns_ledger::Transaction {
+                    burn: Some(burn), ..
+                } => Ok(TxnInfoWallet {
+                    tag: TxnInfoType::Burn {
+                        from: burn.from.owner,
+                    },
+                    timestamp,
+                    amount: burn.amount.0.to_u64_digits()[0],
+                    id,
+                }),
+                yral_canisters_client::sns_ledger::Transaction {
+                    transfer: Some(transfer),
+                    ..
+                } => Ok(TxnInfoWallet {
+                    tag: TxnInfoType::Transfer {
+                        from: transfer.from.owner,
+                        to: transfer.to.owner,
+                    },
+                    timestamp,
+                    amount: transfer.amount.0.to_u64_digits()[0],
+                    id,
+                }),
+                _ => Err(ServerFnError::new("Unable to parse transaction details")),
+            }
+        }
         #[derive(Clone)]
         pub struct TxnHistory {
-            pub canisters: Canisters<true>,
-            pub user_canister: Principal,
+            pub canisters: Canisters<false>,
+            pub user_principal: Option<Principal>,
+            pub source: IndexOrLedger,
         }
 
         impl CursoredDataProvider for TxnHistory {
-            type Data = TxnInfo;
+            type Data = TxnInfoWallet;
             type Error = AgentError;
 
             async fn get_by_cursor(
                 &self,
                 start: usize,
                 end: usize,
-            ) -> Result<PageEntry<TxnInfo>, AgentError> {
-                let user = self.canisters.individual_user(self.user_canister).await;
-                let history = user
-                    .get_user_utility_token_transaction_history_with_pagination(
-                        start as u64,
-                        end as u64,
-                    )
-                    .await?;
-                let history = match history {
-                    Result15::Ok(v) => v,
-                    Result15::Err(_) => vec![],
-                };
-                let list_end = history.len() < (end - start);
-                Ok(PageEntry {
-                    data: history.into_iter().filter_map(event_to_txn).collect(),
-                    end: list_end,
-                })
+            ) -> Result<PageEntry<TxnInfoWallet>, AgentError> {
+                match &self.source {
+                    IndexOrLedger::Index(index) => {
+                        let index = self.canisters.sns_index(*index).await;
+                        let Some(user_principal) = self.user_principal else {
+                            return Err(AgentError::PrincipalError(
+                                ic_agent::export::PrincipalError::CheckSequenceNotMatch(),
+                            ));
+                        };
+                        let history = index
+                            .get_account_transactions(GetAccountTransactionsArgs {
+                                max_results: (end - start).into(),
+                                start: Some(start.into()),
+                                account: Account {
+                                    owner: user_principal,
+                                    subaccount: None,
+                                },
+                            })
+                            .await?;
+
+                        let history = match history {
+                            GetTransactionsResult::Ok(v) => v.transactions,
+                            GetTransactionsResult::Err(_) => vec![],
+                        };
+
+                        let list_end = history.len() < (end - start);
+                        Ok(PageEntry {
+                            data: history
+                                .into_iter()
+                                .filter_map(|txn| parse_transactions(txn, user_principal).ok())
+                                .collect(),
+                            end: list_end,
+                        })
+                    }
+                    IndexOrLedger::Ledger(ledger) => {
+                        let ledger = self.canisters.sns_ledger(*ledger).await;
+                        let history = ledger
+                            .get_transactions(GetTransactionsRequest {
+                                start: start.into(),
+                                length: (end - start).into(),
+                            })
+                            .await?;
+                        let list_end = history.log_length < (end - start);
+                        Ok(PageEntry {
+                            data: history
+                                .transactions
+                                .into_iter()
+                                .enumerate()
+                                .filter_map(|(i, txn)| {
+                                    parse_transactions_ledger(
+                                        txn,
+                                        (history.first_index.clone() + i).0.to_u64_digits()[0],
+                                    )
+                                    .ok()
+                                })
+                                .collect(),
+                            end: list_end,
+                        })
+                    }
+                }
             }
         }
     }
@@ -252,29 +364,37 @@ pub mod provider {
         #[derive(Clone, Copy)]
         pub struct MockHistoryProvider;
 
-        fn tag_from_u32(v: u32) -> TxnTag {
-            match v % 5 {
-                0 => TxnTag::BetPlaced,
-                1 => TxnTag::SignupBonus,
-                2 => TxnTag::Referral,
-                3 => TxnTag::Winnings,
-                4 => TxnTag::Commission,
+        fn tag_from_u32(v: u32) -> TxnInfoType {
+            match v % 3 {
+                0 => TxnInfoType::Mint {
+                    to: Principal::anonymous(),
+                },
+                1 => TxnInfoType::Burn {
+                    from: Principal::anonymous(),
+                },
+                2 => TxnInfoType::Received {
+                    from: Principal::anonymous(),
+                },
+                3 => TxnInfoType::Sent {
+                    to: Principal::anonymous(),
+                },
                 _ => unreachable!(),
             }
         }
         impl CursoredDataProvider for MockHistoryProvider {
-            type Data = TxnInfo;
+            type Data = TxnInfoWallet;
             type Error = Infallible;
 
             async fn get_by_cursor(
                 &self,
                 from: usize,
                 end: usize,
-            ) -> Result<PageEntry<TxnInfo>, Infallible> {
+            ) -> Result<PageEntry<TxnInfoWallet>, Infallible> {
                 let mut rand_gen = ChaCha8Rng::seed_from_u64(current_epoch().as_nanos() as u64);
                 let data = (from..end)
-                    .map(|_| TxnInfo {
+                    .map(|_| TxnInfoWallet {
                         amount: rand_gen.next_u64() % 3001,
+                        timestamp: rand_gen.next_u64(),
                         tag: tag_from_u32(rand_gen.next_u32()),
                         id: rand_gen.next_u64(),
                     })
