@@ -115,8 +115,14 @@ pub mod icpump_search {
     tonic::include_proto!("search");
 }
 
+#[derive(Clone, Serialize, Deserialize, Debug)]
+pub struct ICPumpSearchResult {
+    pub items: Vec<TokenListItem>,
+    pub text: String,
+}
+
 #[server]
-pub async fn get_token_search_results(query: String) -> Result<Vec<TokenListItem>, ServerFnError> {
+pub async fn get_token_search_results(query: String) -> Result<ICPumpSearchResult, ServerFnError> {
     use tonic::Request;
 
     let channel: ICPumpSearchGrpcChannel = expect_context();
@@ -128,11 +134,15 @@ pub async fn get_token_search_results(query: String) -> Result<Vec<TokenListItem
     let request = icpump_search::SearchRequest { input_query: query };
     let resp: tonic::Response<icpump_search::SearchResponse> = client.search(request).await?;
 
-    let items = resp.into_inner().items;
+    let res = resp.into_inner();
+    let items = res.items;
 
     let res_vec: Vec<TokenListItem> = items.into_iter().map(|item| item.into()).collect();
 
-    Ok(res_vec)
+    Ok(ICPumpSearchResult {
+        items: res_vec,
+        text: res.answer,
+    })
 }
 
 #[cfg(feature = "ssr")]
