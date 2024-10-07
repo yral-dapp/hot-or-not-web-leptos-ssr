@@ -11,7 +11,7 @@ use crate::{
 };
 
 const QUERY_LIST: [&str; 3] = [
-    "Dog",
+    "dog",
     "Show tokens, latest created first",
     "what are the top 3 tokens talking about",
 ];
@@ -32,18 +32,19 @@ pub fn ICPumpSearchSuggestions(
     view! {
         <div class="flex flex-col gap-4 p-8">
             <div class="text-gray-400">Try these search prompts:</div>
-            <ul class="flex items-center gap-2 flex-wrap">
+            <ul class="block">
                 {
                     query_list.iter().cloned()
                     .map(|q| {
                         let q_clone = q;
                         view! {
                             <li>
-                                <button class="text-sm hover:underline hover:text-white/75 active:text-white/50 active:italic whitespace-nowrap text-wrap" on:click=move |_| {
+                                <p class="text-sm inline cursor-pointer pr-2 hover:underline hover:text-white/75 active:text-white/50 active:italic" on:click=move |_| {
                                     query.set(q_clone.to_string());
                                     search_action.dispatch(());
                                 }>
-                                <span>"[ "</span>{q}<span>" ]"</span></button>
+                                    <span>"[ "</span>{q}<span>" ]"</span>
+                                </p>
                             </li>
                         }
                     })
