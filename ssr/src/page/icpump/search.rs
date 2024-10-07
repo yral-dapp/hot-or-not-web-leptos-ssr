@@ -1,6 +1,8 @@
 use leptos::*;
 use leptos_icons::*;
 use pulldown_cmark::{Options, Parser};
+use wasm_bindgen::prelude::Closure;
+use wasm_bindgen::prelude::*;
 
 use crate::{
     page::icpump::TokenListing,
@@ -13,6 +15,12 @@ const QUERY_LIST: [&str; 3] = [
     "Show tokens, latest created first",
     "what are the top 3 tokens talking about",
 ];
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(js_namespace = window)]
+    fn setTimeout(closure: &Closure<dyn FnMut()>, millis: i32) -> i32;
+}
 
 #[component]
 pub fn ICPumpSearchSuggestions(
@@ -31,7 +39,7 @@ pub fn ICPumpSearchSuggestions(
                         let q_clone = q;
                         view! {
                             <li>
-                                <button class="text-sm hover:underline hover:text-white/75 active:text-white/50 active:italic whitespace-nowrap" on:click=move |_| {
+                                <button class="text-sm hover:underline hover:text-white/75 active:text-white/50 active:italic whitespace-nowrap text-wrap" on:click=move |_| {
                                     query.set(q_clone.to_string());
                                     search_action.dispatch(());
                                 }>
@@ -69,6 +77,7 @@ pub fn ICPumpSearch() -> impl IntoView {
     let query = create_rw_signal("".to_string());
     let query_results: RwSignal<Vec<TokenListItem>> = create_rw_signal(vec![]);
     let query_result_text = create_rw_signal("".to_string());
+    let input_ref = create_node_ref::<html::Input>();
 
     let search_action = create_action(move |()| async move {
         let q = query.get();
@@ -80,6 +89,22 @@ pub fn ICPumpSearch() -> impl IntoView {
         query_result_text.set(results.text);
     });
 
+    create_effect(move |_| {
+        if let Some(input) = input_ref.get() {
+            // Focus the input
+            let _ = input.focus();
+
+            // Use setTimeout to trigger focus again after a short delay
+            let closure = Closure::wrap(Box::new(move || {
+                let _ = input.focus();
+                let _ = input.click();
+            }) as Box<dyn FnMut()>);
+
+            setTimeout(&closure, 100);
+            closure.forget(); // Prevent the closure from being dropped
+        }
+    });
+
     view! {
         <div class="h-screen w-screen block bg-black text-white font-mono pb-12 overflow-y-scroll">
             <div class="flex flex-col gap-4 p-8">
@@ -88,6 +113,7 @@ pub fn ICPumpSearch() -> impl IntoView {
                 class="hover:border-gray-600 border flex border-gray-900 relative focus-within:!border-gray-400"
                   >
                     <input class="w-screen bg-black text-white p-2 rounded-lg" type="text" placeholder="Search for a token"
+                    _ref=input_ref
                     prop:value=move || query.get()
                     on:input=move |ev| {
                         let q = event_target_value(&ev);
