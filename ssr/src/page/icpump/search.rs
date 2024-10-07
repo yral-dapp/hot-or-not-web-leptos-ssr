@@ -106,7 +106,7 @@ pub fn ICPumpSearch() -> impl IntoView {
         <div class="h-screen w-screen block bg-black text-white font-mono pb-12 overflow-y-scroll">
             <div class="flex flex-col gap-4 p-8">
                 <div class="text-gray-400">Search</div>
-                <div class="relative flex items-center w-full max-w-md">
+                <div class="relative flex items-center w-full">
                     <input
                         class="w-full bg-black text-white p-2 pr-10 rounded-lg border border-gray-900 hover:border-gray-600 focus:border-gray-400"
                         type="text"
