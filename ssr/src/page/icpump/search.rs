@@ -24,14 +24,14 @@ pub fn ICPumpSearchSuggestions(
     view! {
         <div class="flex flex-col gap-4 p-8">
             <div class="text-gray-400">Try these search prompts:</div>
-            <ul class="flex gap-2 flex-wrap">
+            <ul class="flex items-center gap-2 flex-wrap">
                 {
                     query_list.iter().cloned()
                     .map(|q| {
                         let q_clone = q;
                         view! {
                             <li>
-                                <button class="text-sm hover:underline hover:text-white/75 active:text-white/50 active:italic text-wrap" on:click=move |_| {
+                                <button class="text-sm hover:underline hover:text-white/75 active:text-white/50 active:italic whitespace-nowrap" on:click=move |_| {
                                     query.set(q_clone.to_string());
                                     search_action.dispatch(());
                                 }>
