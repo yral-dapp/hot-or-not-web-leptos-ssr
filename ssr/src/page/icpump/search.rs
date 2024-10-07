@@ -97,7 +97,7 @@ pub fn ICPumpSearch() -> impl IntoView {
             // Use setTimeout to trigger focus again after a short delay
             let closure = Closure::wrap(Box::new(move || {
                 let _ = input.focus();
-                let _ = input.click();
+                input.click();
             }) as Box<dyn FnMut()>);
 
             setTimeout(&closure, 100);
