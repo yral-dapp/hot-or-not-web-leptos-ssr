@@ -125,8 +125,9 @@ pub fn ICPumpSearch() -> impl IntoView {
                                     key=|t| t.token_symbol.clone()
                                     children=move |token: TokenListItem| {
                                     view! {
-                                        <button
-                                              class="text-xs w-full p-2 flex gap-2 border border-gray-900 bg-transparent hover:bg-white/10 active:bg-white/5"
+                                        <a
+                                            class="text-xs w-full p-2 flex gap-2 border border-gray-900 bg-transparent hover:bg-white/10 active:bg-white/5"
+                                            href=token.link
                                            >
                                             <img src={token.logo} class="w-[5.5rem] shrink-0 h-[5.5rem]" />
                                             <div class="flex flex-col gap-1 text-left">
@@ -136,7 +137,7 @@ pub fn ICPumpSearch() -> impl IntoView {
                                                 </div>
                                                 <span class="line-clamp-4 text-gray-400"> {token.description} </span>
                                             </div>
-                                        </button>
+                                        </a>
                                     }
                                     }
                                 />
