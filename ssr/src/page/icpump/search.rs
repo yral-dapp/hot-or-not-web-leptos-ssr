@@ -96,9 +96,9 @@ pub fn ICPumpSearch() -> impl IntoView {
                 </div>
 
                 <ICPumpSearchSuggestions
-                    query=query.clone()
-                    query_results=query_results.clone()
-                    search_action=search_action.clone()
+                    query=query
+                    query_results=query_results
+                    search_action=search_action
                 />
 
                 {

@@ -122,7 +122,7 @@ pub async fn get_token_search_results(query: String) -> Result<Vec<TokenListItem
     let channel: ICPumpSearchGrpcChannel = expect_context();
     let mut client = icpump_search::search_service_client::SearchServiceClient::with_interceptor(
         channel.channel,
-        move |mut req: Request<()>| Ok(req),
+        move |req: Request<()>| Ok(req),
     );
 
     let request = icpump_search::SearchRequest { input_query: query };

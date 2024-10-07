@@ -165,7 +165,7 @@ async fn init_grpc_icpump_search_channel() -> ICPumpSearchGrpcChannel {
     use tonic::transport::{Channel, ClientTlsConfig};
 
     let tls_config = ClientTlsConfig::new().with_webpki_roots();
-    let off_chain_agent_url = ICPUMP_SEARCH_GRPC_URL.as_ref();
+    let off_chain_agent_url = ICPUMP_SEARCH_GRPC_URL;
     let channel = Channel::from_static(off_chain_agent_url)
         .tls_config(tls_config)
         .expect("Couldn't update TLS config for off-chain agent")
