@@ -1,6 +1,5 @@
 use leptos::*;
 use leptos_icons::*;
-use pulldown_cmark::{Options, Parser};
 use wasm_bindgen::prelude::Closure;
 use wasm_bindgen::prelude::*;
 
@@ -10,11 +9,7 @@ use crate::{
     utils::token::icpump::{get_token_search_results, TokenListItem},
 };
 
-const QUERY_LIST: [&str; 3] = [
-    "dog",
-    "Show tokens, latest created first",
-    "what are the top 3 tokens talking about",
-];
+const QUERY_LIST: [&str; 3] = ["dog", "Show tokens, latest created first", "Animal token"];
 
 #[wasm_bindgen]
 extern "C" {
@@ -55,29 +50,30 @@ pub fn ICPumpSearchSuggestions(
     }
 }
 
-#[component]
-pub fn MarkdownRenderer(text: String) -> impl IntoView {
-    let parsed_markdown = create_memo(move |_| {
-        let mut options = Options::empty();
-        options.insert(Options::ENABLE_STRIKETHROUGH);
-        let parser = Parser::new_ext(&text, options);
-        let mut html_output = String::new();
-        pulldown_cmark::html::push_html(&mut html_output, parser);
-        html_output
-    });
+// TODO: use this when search text is to be shown
+// #[component]
+// pub fn MarkdownRenderer(text: String) -> impl IntoView {
+//     let parsed_markdown = create_memo(move |_| {
+//         let mut options = Options::empty();
+//         options.insert(Options::ENABLE_STRIKETHROUGH);
+//         let parser = Parser::new_ext(&text, options);
+//         let mut html_output = String::new();
+//         pulldown_cmark::html::push_html(&mut html_output, parser);
+//         html_output
+//     });
 
-    view! {
-        <div class="text-gray-200 pb-2 self-start">
-            <div inner_html=parsed_markdown></div>
-        </div>
-    }
-}
+//     view! {
+//         <div class="text-gray-200 pb-2 self-start">
+//             <div inner_html=parsed_markdown></div>
+//         </div>
+//     }
+// }
 
 #[component]
 pub fn ICPumpSearch() -> impl IntoView {
     let query = create_rw_signal("".to_string());
     let query_results: RwSignal<Vec<TokenListItem>> = create_rw_signal(vec![]);
-    let query_result_text = create_rw_signal("".to_string());
+    // let query_result_text = create_rw_signal("".to_string());
     let input_ref = create_node_ref::<html::Input>();
 
     let search_action = create_action(move |()| async move {
@@ -87,7 +83,7 @@ pub fn ICPumpSearch() -> impl IntoView {
         let results = try_or_redirect!(results);
 
         query_results.set(results.items);
-        query_result_text.set(results.text);
+        // query_result_text.set(results.text);
     });
 
     create_effect(move |_| {
@@ -109,29 +105,30 @@ pub fn ICPumpSearch() -> impl IntoView {
     view! {
         <div class="h-screen w-screen block bg-black text-white font-mono pb-12 overflow-y-scroll">
             <div class="flex flex-col gap-4 p-8">
-                  <div class="text-gray-400">Search</div>
-                <div
-                class="hover:border-gray-600 border flex border-gray-900 relative focus-within:!border-gray-400"
-                  >
-                    <input class="w-screen bg-black text-white p-2 rounded-lg" type="text" placeholder="Search for a token"
-                    _ref=input_ref
-                    prop:value=move || query.get()
-                    on:input=move |ev| {
-                        let q = event_target_value(&ev);
-                        query.set(q);
-                    }
-                    on:keypress=move |ev: ev::KeyboardEvent| {
-                        if ev.key() == "Enter" {
-                            search_action.dispatch(());
+                <div class="text-gray-400">Search</div>
+                <div class="relative flex items-center w-full max-w-md">
+                    <input
+                        class="w-full bg-black text-white p-2 pr-10 rounded-lg border border-gray-900 hover:border-gray-600 focus:border-gray-400"
+                        type="text"
+                        placeholder="Search for a token"
+                        _ref=input_ref
+                        prop:value=move || query.get()
+                        on:input=move |ev| {
+                            let q = event_target_value(&ev);
+                            query.set(q);
                         }
-                    }
-                    autofocus
+                        on:keypress=move |ev: ev::KeyboardEvent| {
+                            if ev.key() == "Enter" {
+                            search_action.dispatch(());
+                            }
+                        }
+                        autofocus
                     />
                     <button
-                        class="absolute right-3 active:italic inset-y-0 items-center flex gap-1 group"
+                        class="absolute right-2 inset-y-0 flex items-center active:italic group"
                         on:click=move |_| search_action.dispatch(())
-                        >
-                        <Icon class="text-xl" icon=icondata::AiSearchOutlined />
+                    >
+                        <Icon class="text-xl text-gray-400 group-hover:text-gray-200" icon=icondata::AiSearchOutlined />
                     </button>
                 </div>
 
@@ -160,7 +157,7 @@ pub fn ICPumpSearch() -> impl IntoView {
                         if !results.is_empty() {
                             return view! {
                                 <div class="text-gray-400 pb-2 self-start">Search results:</div>
-                                <MarkdownRenderer text=query_result_text.get() />
+                                // <MarkdownRenderer text=query_result_text.get() />
                                 <For
                                     each=move || results.clone()
                                     key=|t| t.token_symbol.clone()
