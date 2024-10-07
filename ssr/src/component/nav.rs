@@ -145,7 +145,6 @@ pub fn NavBar() -> impl IntoView {
     let show_cdao_icon = show_cdao_page();
 
     view! {
-    <Suspense>
         <div class="flex fixed bottom-0 left-0 z-50 flex-row justify-between items-center px-6 w-full bg-black/80">
             <NavIcon
                 idx=0
@@ -191,7 +190,5 @@ pub fn NavBar() -> impl IntoView {
 
             <NavIcon idx=4 href="/menu" icon=MenuSymbol cur_selected=cur_selected />
         </div>
-
-    </Suspense>
     }
 }
