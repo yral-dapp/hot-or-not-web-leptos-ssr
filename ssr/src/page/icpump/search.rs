@@ -80,7 +80,13 @@ pub fn ICPumpSearch() -> impl IntoView {
                     on:input=move |ev| {
                         let q = event_target_value(&ev);
                         query.set(q);
-                    } />
+                    }
+                    on:keypress=move |ev: ev::KeyboardEvent| {
+                        if ev.key() == "Enter" {
+                            search_action.dispatch(());
+                        }
+                    }
+                    />
                     <button
                         class="absolute right-3 active:italic inset-y-0 items-center flex gap-1 group"
                         on:click=move |_| search_action.dispatch(())
