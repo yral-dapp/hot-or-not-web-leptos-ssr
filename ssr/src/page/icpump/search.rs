@@ -101,16 +101,19 @@ pub fn ICPumpSearch() -> impl IntoView {
                     search_action=search_action
                 />
 
+
+
                 {
                     move || {
                         if search_action.pending().get() {
                             return view! {
                                 <>
                                 <div class="flex flex-col items-center justify-center">
-                                    <div class="relative inline-block text-2xl">
+                                    <div class="relative text-2xl">
                                         <span class="absolute animate-searching-a-1">"(→_→)"</span>
-                                        <span class="absolute animate-searching-a-2">"(←_←)"</span>
+                                        <span class="animate-searching-a-2">"(←_←)"</span>
                                     </div>
+                                    <div class="text-gray-400">Searching...</div>
                                 </div>
                                 </>
                             };
