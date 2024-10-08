@@ -784,7 +784,7 @@ impl TokenCreationCompleted {
             let user_id = details.principal;
             let canister_id = user.canister_id;
 
-            let link = format!("/token/info/{}/{}", token_root, user_id);
+            let link = format!("/token/info/{}", token_root);
 
             // token_creation_completed - analytics
             send_event(
