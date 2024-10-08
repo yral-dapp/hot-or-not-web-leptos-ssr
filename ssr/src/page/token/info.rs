@@ -146,7 +146,7 @@ fn TokenInfoInner(
                     <Show when= move || is_user_principal>
                         <a
                             href=format!("/token/transfer/{root}")
-                            class="fixed bottom-22 left-4 right-4 w-full p-3 bg-primary-600 text-white text-center md:text-lg rounded-full z-50"
+                            class="fixed bottom-20 left-4 right-4 p-3 bg-primary-600 text-white text-center md:text-lg rounded-full z-50"
                         >
                             Send
                         </a>
@@ -214,7 +214,7 @@ pub fn TokenInfo() -> impl IntoView {
                                 view! {
                                     <TokenInfoInner
                                         root
-                                        key_principal=key_principal
+                                        key_principal
                                         meta=metadata
                                         is_user_principal=is_user_principal
                                     />

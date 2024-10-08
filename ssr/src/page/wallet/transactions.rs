@@ -34,19 +34,12 @@ pub fn Transactions(
 ) -> impl IntoView {
     view! {
 
-            <span
-            class="sticky top-0 bg-transparent text-white w-full items-center z-50"
-        >
-        <div class="flex flex-row justify-between">
-        <span class="text-xl text-white font-bold">Transactions</span>
-        <div></div>
-    </div>
-        </span>
+    <span class="text-xl w-full text-white font-bold z-50">Transactions</span>
 
-            <div class="flex items-center flex-col gap- pb-12 w-full">
-                <div class="flex flex-col divide-y divide-white/10 w-full">
-                    <TransactionList principal=key_principal source=source symbol/>
-                </div>
+        <div class="flex items-center flex-col gap- pb-12 w-full">
+            <div class="flex flex-col divide-y divide-white/10 w-full">
+                <TransactionList principal=key_principal source=source symbol/>
             </div>
-        }
+        </div>
+    }
 }

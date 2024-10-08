@@ -7,7 +7,10 @@ use leptos_router::use_params;
 use serde::{Deserialize, Serialize};
 use speedate::DateTime;
 
-use crate::{component::infinite_scroller::KeyedData, page::token::info::TokenKeyParam};
+use crate::{
+    component::infinite_scroller::KeyedData, page::token::info::TokenKeyParam,
+    utils::token::TokenBalance,
+};
 
 #[derive(Clone, Copy)]
 pub enum TxnDirection {
@@ -44,7 +47,7 @@ pub enum TxnInfoType {
 pub struct TxnInfoWallet {
     pub tag: TxnInfoType,
     pub timestamp: u64,
-    pub amount: String,
+    pub amount: TokenBalance,
     pub id: u64,
 }
 
@@ -102,7 +105,7 @@ pub fn TxnView(
             TxnDirection::Deducted => "-",
             TxnDirection::Transaction => "",
         },
-        info.amount
+        info.amount.humanize_float_truncate_to_dp(2)
     );
 
     view! {
@@ -237,7 +240,10 @@ pub mod provider {
     }
     // #[cfg(not(feature = "mock-wallet-history"))]
     mod canister {
-        use super::{Canisters, CursoredDataProvider, IndexOrLedger, TxnInfoType, TxnInfoWallet};
+        use super::{
+            Canisters, CursoredDataProvider, IndexOrLedger, TokenBalance, TxnInfoType,
+            TxnInfoWallet,
+        };
         use crate::component::infinite_scroller::PageEntry;
         use candid::Principal;
         use ic_agent::AgentError;
@@ -263,7 +269,7 @@ pub mod provider {
                 } => Ok(TxnInfoWallet {
                     tag: TxnInfoType::Mint { to: mint.to.owner },
                     timestamp,
-                    amount: mint.amount.to_string(),
+                    amount: TokenBalance::new_cdao(mint.amount),
                     id,
                 }),
                 Transaction {
@@ -273,7 +279,7 @@ pub mod provider {
                         from: user_principal,
                     },
                     timestamp,
-                    amount: burn.amount.to_string(),
+                    amount: TokenBalance::new_cdao(burn.amount),
                     id,
                 }),
                 Transaction {
@@ -286,7 +292,7 @@ pub mod provider {
                                 to: transfer.to.owner,
                             },
                             timestamp,
-                            amount: transfer.amount.to_string(),
+                            amount: TokenBalance::new_cdao(transfer.amount),
                             id,
                         })
                     } else if user_principal == transfer.from.owner {
@@ -295,7 +301,7 @@ pub mod provider {
                                 from: transfer.from.owner,
                             },
                             timestamp,
-                            amount: transfer.amount.to_string(),
+                            amount: TokenBalance::new_cdao(transfer.amount),
                             id,
                         })
                     } else {
@@ -320,7 +326,7 @@ pub mod provider {
                 } => Ok(TxnInfoWallet {
                     tag: TxnInfoType::Mint { to: mint.to.owner },
                     timestamp,
-                    amount: mint.amount.to_string(),
+                    amount: TokenBalance::new_cdao(mint.amount),
                     id,
                 }),
                 yral_canisters_client::sns_ledger::Transaction {
@@ -330,7 +336,7 @@ pub mod provider {
                         from: burn.from.owner,
                     },
                     timestamp,
-                    amount: burn.amount.to_string(),
+                    amount: TokenBalance::new_cdao(burn.amount),
                     id,
                 }),
                 yral_canisters_client::sns_ledger::Transaction {
@@ -342,7 +348,7 @@ pub mod provider {
                         to: transfer.to.owner,
                     },
                     timestamp,
-                    amount: transfer.amount.to_string(),
+                    amount: TokenBalance::new_cdao(transfer.amount),
                     id,
                 }),
                 _ => Err(ServerFnError::new("Unable to parse transaction details")),
@@ -477,7 +483,7 @@ pub mod provider {
                 let mut rand_gen = ChaCha8Rng::seed_from_u64(current_epoch().as_nanos() as u64);
                 let data = (from..end)
                     .map(|_| TxnInfoWallet {
-                        amount: (rand_gen.next_u64() % 3001).to_string(),
+                        amount: TokenBalance::new_cdao((rand_gen.next_u64() % 3001).into()),
                         timestamp: rand_gen.next_u64(),
                         tag: tag_from_u32(rand_gen.next_u32()),
                         id: rand_gen.next_u64(),
