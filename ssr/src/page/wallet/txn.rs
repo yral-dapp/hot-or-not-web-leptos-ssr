@@ -451,7 +451,7 @@ pub mod provider {
         pub struct MockHistoryProvider;
 
         fn tag_from_u32(v: u32) -> TxnInfoType {
-            match v % 3 {
+            match v % 4 {
                 0 => TxnInfoType::Mint {
                     to: Principal::anonymous(),
                 },
@@ -462,6 +462,10 @@ pub mod provider {
                     from: Principal::anonymous(),
                 },
                 3 => TxnInfoType::Sent {
+                    to: Principal::anonymous(),
+                },
+                4 => TxnInfoType::Transfer {
+                    from: Principal::anonymous(),
                     to: Principal::anonymous(),
                 },
                 _ => unreachable!(),
