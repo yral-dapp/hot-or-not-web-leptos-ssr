@@ -61,6 +61,7 @@ fn TokenInfoInner(
     key_principal: Option<Principal>,
     is_user_principal: bool,
 ) -> impl IntoView {
+    let meta_c1 = meta.clone();
     let meta_c = meta.clone();
     let detail_toggle = create_rw_signal(false);
     let view_detail_icon = Signal::derive(move || {
@@ -110,20 +111,24 @@ fn TokenInfoInner(
                                     }
                                 })}
                         </div>
-                        <div class="flex flex-row justify-between border-b p-1 border-white items-center">
-                            <span class="text-xs md:text-sm text-green-500">Balance</span>
-                            <span class="text-lg md:text-xl text-white">
-                                {meta
-                                    .balance
-                                    .map(|balance| {
-                                        view! {
-                                            <span class="font-bold">
-                                                {format!("{} ", balance.humanize_float_truncate_to_dp(2))}
-                                            </span>
-                                        }
-                                    })} {meta.symbol.clone()}
-                            </span>
-                        </div>
+
+                        <Show when= move|| key_principal.clone().is_some()>
+                            <div class="flex flex-row justify-between border-b p-1 border-white items-center">
+                                <span class="text-xs md:text-sm text-green-500">Balance</span>
+                                <span class="text-lg md:text-xl text-white">
+                                    {meta
+                                        .balance.clone()
+                                        .map(|balance| {
+                                            view! {
+                                                <span class="font-bold">
+                                                    {format!("{} ", balance.humanize_float_truncate_to_dp(2))}
+                                                </span>
+                                                <span>{meta_c1.symbol.clone()}</span>
+                                    }
+                                    })}
+                                </span>
+                            </div>
+                        </Show>
                         <button
                             on:click=move |_| detail_toggle.update(|t| *t = !*t)
                             class="w-full bg-transparent p-1 flex flex-row justify-center items-center gap-2 text-white"
@@ -141,19 +146,19 @@ fn TokenInfoInner(
                     <Show when= move || is_user_principal>
                         <a
                             href=format!("/token/transfer/{root}")
-                            class="fixed bottom-22 left-4 right-4 p-4 bg-pink-600 text-white text-center md:text-lg rounded-full z-50"
+                            class="fixed bottom-22 left-4 right-4 w-full p-3 bg-primary-600 text-white text-center md:text-lg rounded-full z-50"
                         >
                             Send
                         </a>
                     </Show>
                 {if key_principal.is_some() {
-                    view! { <Transactions source=IndexOrLedger::Index(meta.index) key_principal symbol=meta.symbol/> }
+                    view! { <Transactions source=IndexOrLedger::Index(meta.index) key_principal symbol=meta.symbol.clone()/> }
                 } else {
                     view! {
                         <Transactions
                             source=IndexOrLedger::Ledger(meta.ledger)
                             key_principal=None
-                            symbol=meta.symbol
+                            symbol=meta.symbol.clone()
                         />
                     }
                 }}
