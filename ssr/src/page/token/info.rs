@@ -141,7 +141,7 @@ fn TokenInfoInner(
                     <Show when= move || is_user_principal>
                         <a
                             href=format!("/token/transfer/{root}")
-                            class="fixed bottom-10 left-4 right-4 p-4 bg-pink-600 text-white text-center md:text-lg rounded-full z-50"
+                            class="fixed bottom-22 left-4 right-4 p-4 bg-pink-600 text-white text-center md:text-lg rounded-full z-50"
                         >
                             Send
                         </a>
