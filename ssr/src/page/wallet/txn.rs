@@ -419,11 +419,12 @@ pub mod provider {
                                 .into_iter()
                                 .enumerate()
                                 .filter_map(|(i, txn)| {
-                                    parse_transactions_ledger(
-                                        txn,
-                                        (history.first_index.clone() + i).0.to_u64_digits()[0],
-                                    )
-                                    .ok()
+                                    let idx = (history.first_index.clone() + i).0.to_u64_digits();
+                                    if idx.is_empty() {
+                                        None
+                                    } else {
+                                        parse_transactions_ledger(txn, idx[0]).ok()
+                                    }
                                 })
                                 .collect(),
                             end: list_end,
