@@ -20,16 +20,6 @@ pub enum IndexOrLedger {
     Index(Principal),
     Ledger(Principal),
 }
-impl TxnDirection {
-    fn positive(self) -> bool {
-        use TxnDirection::*;
-        match self {
-            Transaction => true,
-            Added => true,
-            Deducted => false,
-        }
-    }
-}
 
 impl From<TxnDirection> for &'static icondata_core::IconData {
     fn from(val: TxnDirection) -> Self {
