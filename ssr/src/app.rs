@@ -1,3 +1,4 @@
+use crate::page::icpump::search::ICPumpSearch;
 use crate::page::icpump::ICPumpLanding;
 
 use crate::{
@@ -164,6 +165,7 @@ pub fn App() -> impl IntoView {
                         <Route path="/token/transfer/:token_root" view=TokenTransfer />
                         <Route path="/tokens" view=Tokens />
                         <Route path="/board" view=ICPumpLanding />
+                        <Route path="/token/search" view=ICPumpSearch/>
                     </Route>
                 </Routes>
 

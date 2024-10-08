@@ -47,6 +47,8 @@ pub const ICPUMP_LISTING_PAGE_SIZE: usize = 12;
 
 pub const CDAO_SWAP_TIME_SECS: u64 = 90;
 
+pub const ICPUMP_SEARCH_GRPC_URL: &str = "https://yral-icpumpsearch.fly.dev:443";
+
 pub mod social {
     pub const TELEGRAM: &str = "https://t.me/+c-LTX0Cp-ENmMzI1";
     pub const DISCORD: &str = "https://discord.gg/GZ9QemnZuj";
