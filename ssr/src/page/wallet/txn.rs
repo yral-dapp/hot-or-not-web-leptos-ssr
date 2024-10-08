@@ -464,8 +464,11 @@ pub mod provider {
                 3 => TxnInfoType::Sent {
                     to: Principal::anonymous(),
                 },
-                4 => TxnInfoType::Transfer { from: Principal::anonymous(), to: Principal::anonymous() },
-                _ => unreachable!()
+                4 => TxnInfoType::Transfer {
+                    from: Principal::anonymous(),
+                    to: Principal::anonymous(),
+                },
+                _ => unreachable!(),
             }
         }
         impl CursoredDataProvider for MockHistoryProvider {
