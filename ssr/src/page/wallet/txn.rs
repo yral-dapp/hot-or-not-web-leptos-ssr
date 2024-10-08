@@ -50,11 +50,11 @@ pub enum TxnInfoType {
     Received { from: Principal },                // only for keyed
     Transfer { from: Principal, to: Principal }, // only for public transaction
 }
-#[derive(Clone, Copy, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct TxnInfoWallet {
     pub tag: TxnInfoType,
     pub timestamp: u64,
-    pub amount: u64,
+    pub amount: String,
     pub id: u64,
 }
 
@@ -242,7 +242,7 @@ pub mod provider {
             }
         }
     }
-    #[cfg(not(feature = "mock-wallet-history"))]
+    // #[cfg(not(feature = "mock-wallet-history"))]
     mod canister {
         use super::{Canisters, CursoredDataProvider, IndexOrLedger, TxnInfoType, TxnInfoWallet};
         use crate::component::infinite_scroller::PageEntry;
@@ -270,7 +270,7 @@ pub mod provider {
                 } => Ok(TxnInfoWallet {
                     tag: TxnInfoType::Mint { to: mint.to.owner },
                     timestamp,
-                    amount: mint.amount.0.to_u64_digits()[0],
+                    amount: mint.amount.to_string(),
                     id,
                 }),
                 Transaction {
@@ -280,7 +280,7 @@ pub mod provider {
                         from: user_principal,
                     },
                     timestamp,
-                    amount: burn.amount.0.to_u64_digits()[0],
+                    amount: burn.amount.to_string(),
                     id,
                 }),
                 Transaction {
@@ -293,7 +293,7 @@ pub mod provider {
                                 to: transfer.to.owner,
                             },
                             timestamp,
-                            amount: transfer.amount.0.to_u64_digits()[0],
+                            amount: transfer.amount.to_string(),
                             id,
                         })
                     } else if user_principal == transfer.from.owner {
@@ -302,7 +302,7 @@ pub mod provider {
                                 from: transfer.from.owner,
                             },
                             timestamp,
-                            amount: transfer.amount.0.to_u64_digits()[0],
+                            amount: transfer.amount.to_string(),
                             id,
                         })
                     } else {
@@ -327,7 +327,7 @@ pub mod provider {
                 } => Ok(TxnInfoWallet {
                     tag: TxnInfoType::Mint { to: mint.to.owner },
                     timestamp,
-                    amount: mint.amount.0.to_u64_digits()[0],
+                    amount: mint.amount.to_string(),
                     id,
                 }),
                 yral_canisters_client::sns_ledger::Transaction {
@@ -337,7 +337,7 @@ pub mod provider {
                         from: burn.from.owner,
                     },
                     timestamp,
-                    amount: burn.amount.0.to_u64_digits()[0],
+                    amount: burn.amount.to_string(),
                     id,
                 }),
                 yral_canisters_client::sns_ledger::Transaction {
@@ -349,7 +349,7 @@ pub mod provider {
                         to: transfer.to.owner,
                     },
                     timestamp,
-                    amount: transfer.amount.0.to_u64_digits()[0],
+                    amount: transfer.amount.to_string(),
                     id,
                 }),
                 _ => Err(ServerFnError::new("Unable to parse transaction details")),
@@ -464,11 +464,8 @@ pub mod provider {
                 3 => TxnInfoType::Sent {
                     to: Principal::anonymous(),
                 },
-                4 => TxnInfoType::Transfer {
-                    from: Principal::anonymous(),
-                    to: Principal::anonymous(),
-                },
-                _ => unreachable!(),
+                4 => TxnInfoType::Transfer { from: Principal::anonymous(), to: Principal::anonymous() },
+                _ => unreachable!()
             }
         }
         impl CursoredDataProvider for MockHistoryProvider {
@@ -483,7 +480,7 @@ pub mod provider {
                 let mut rand_gen = ChaCha8Rng::seed_from_u64(current_epoch().as_nanos() as u64);
                 let data = (from..end)
                     .map(|_| TxnInfoWallet {
-                        amount: rand_gen.next_u64() % 3001,
+                        amount: (rand_gen.next_u64() % 3001).to_string(),
                         timestamp: rand_gen.next_u64(),
                         tag: tag_from_u32(rand_gen.next_u32()),
                         id: rand_gen.next_u64(),
