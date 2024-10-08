@@ -129,6 +129,7 @@ hydrate = [
     "reqwest/native-tls",
     "dep:rand_chacha",
     "tonic/codegen",
+    "speedate"
 ]
 ssr = [
     "dep:axum",
@@ -157,6 +158,7 @@ ssr = [
     "tonic/tls-webpki-roots",
     "tonic/transport",
     "tonic-build/transport",
+    "speedate"
 ]
 # Fetch mock referral history instead of history via canister
 mock-referral-history = ["dep:rand_chacha", "k256/arithmetic"]
@@ -199,6 +201,7 @@ local-bin = [
     "backend-admin",
     "dep:testcontainers",
     "dep:yral-testcontainers",
+
 ]
 local-lib = ["hydrate", "redis-kv", "local-auth", "backend-admin"]
 

@@ -170,7 +170,7 @@ fn TokenTransferInner(
     let Some(balance) = info.balance else {
         return view! {
             <div>
-                <Redirect path="/"/>
+                <Redirect path="/" />
             </div>
         };
     };

@@ -142,7 +142,8 @@ pub fn TokenTile(user_principal: String, token_meta_data: TokenMetadata) -> impl
                 </div>
                 <div class="flex flex-1 flex-col">
                     <span class="flex flex-1  items-center justify-end text-xs text-white">
-                        {info.balance.unwrap().humanize_float_truncate_to_dp(2)} // remove the unwrap if global token listing but its a list of token so it can safely be unwrapped
+                        // remove the unwrap if global token listing but its a list of token so it can safely be unwrapped
+                        {info.balance.unwrap().humanize_float_truncate_to_dp(2)}
                     </span>
                     <span class="flex flex-1  items-center justify-end text-xs text-white truncate">
                         {info.symbol.clone()}

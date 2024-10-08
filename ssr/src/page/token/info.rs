@@ -5,11 +5,9 @@ use leptos_router::*;
 use serde::{Deserialize, Serialize};
 
 use crate::page::token::TokenInfoParams;
+use crate::state::canisters::authenticated_canisters;
 use crate::{
-    component::{
-        back_btn::BackButton, bullet_loader::BulletLoader, canisters_prov::AuthCansProvider,
-        share_popup::*, spinner::FullScreenSpinner, title::Title,
-    },
+    component::{back_btn::BackButton, share_popup::*, spinner::FullScreenSpinner, title::Title},
     page::wallet::{transactions::Transactions, txn::IndexOrLedger},
     state::canisters::unauth_canisters,
     utils::{
@@ -61,6 +59,7 @@ fn TokenInfoInner(
     root: Principal,
     meta: TokenMetadata,
     key_principal: Option<Principal>,
+    is_user_principal: bool,
 ) -> impl IntoView {
     let meta_c = meta.clone();
     let detail_toggle = create_rw_signal(false);
@@ -79,14 +78,14 @@ fn TokenInfoInner(
     ));
 
     view! {
-        <div class="w-dvw min-h-dvh bg-neutral-800 flex flex-col gap-4">
+        <div class="w-dvw min-h-dvh bg-neutral-800  flex flex-col gap-4">
             <Title justify_center=false>
                 <div class="grid grid-cols-3 justify-start w-full">
                     <BackButton fallback="/wallet" />
                     <span class="font-bold justify-self-center">Token details</span>
                 </div>
             </Title>
-            <div class="flex flex-col w-full px-8 md:px-10 items-center gap-8">
+            <div class="flex flex-col w-full items-center px-8 md:px-10 gap-8">
                 <div class="flex flex-col justify-self-start w-full gap-6 md:gap-8 items-center">
                     <div class="flex flex-col gap-4 w-full bg-white/5 p-4 drop-shadow-lg rounded-xl">
                         <div class="flex flex-row justify-between items-center">
@@ -99,31 +98,30 @@ fn TokenInfoInner(
                                     {meta.name}
                                 </span>
                             </div>
-                            {
-                                share_link.zip(message).map(|(share_link, message)|{
+                            {share_link
+                                .zip(message)
+                                .map(|(share_link, message)| {
                                     view! {
                                         <ShareButtonWithFallbackPopup
-                                        share_link
-                                        message
-                                        style="w-12 h-12".into()
-                                    />
+                                            share_link
+                                            message
+                                            style="w-12 h-12".into()
+                                        />
                                     }
-                                })
-                            }
+                                })}
                         </div>
                         <div class="flex flex-row justify-between border-b p-1 border-white items-center">
                             <span class="text-xs md:text-sm text-green-500">Balance</span>
                             <span class="text-lg md:text-xl text-white">
-                                {
-                                    meta.balance.map(|balance|{
+                                {meta
+                                    .balance
+                                    .map(|balance| {
                                         view! {
                                             <span class="font-bold">
-                                            {format!("{} ", balance.humanize_float_truncate_to_dp(2))}
+                                                {format!("{} ", balance.humanize_float_truncate_to_dp(2))}
                                             </span>
                                         }
-                                    })
-                                }
-                                {meta.symbol}
+                                    })} {meta.symbol.clone()}
                             </span>
                         </div>
                         <button
@@ -140,8 +138,7 @@ fn TokenInfoInner(
                         <TokenDetails meta=meta_c.clone() />
                     </Show>
                 </div>
-                <AuthCansProvider fallback=BulletLoader let:canisters>
-                    <Show when=move || { key_principal == Some(canisters.profile_details().principal) }>
+                    <Show when= move || is_user_principal>
                         <a
                             href=format!("/token/transfer/{root}")
                             class="flex flex-row justify-self-center justify-center text-white md:text-lg w-full md:w-1/2 rounded-full p-3 bg-primary-600"
@@ -149,26 +146,23 @@ fn TokenInfoInner(
                             Send
                         </a>
                     </Show>
-                </AuthCansProvider>
-                {
-                    move ||{
-                        if key_principal.is_some(){
-                            view! {
-                                <Transactions source=IndexOrLedger::Index(meta.index) key_principal/>
-                            }
-                        }else{
-                            view! {
-                                <Transactions source=IndexOrLedger::Ledger(meta.ledger) key_principal=None/>
-                            }
-                        }
+                {if key_principal.is_some() {
+                    view! { <Transactions source=IndexOrLedger::Index(meta.index) key_principal symbol=meta.symbol/> }
+                } else {
+                    view! {
+                        <Transactions
+                            source=IndexOrLedger::Ledger(meta.ledger)
+                            key_principal=None
+                            symbol=meta.symbol
+                        />
                     }
-                }
+                }}
             </div>
         </div>
     }
 }
 #[derive(Params, PartialEq, Clone, Serialize, Deserialize)]
-struct TokenKeyParam {
+pub struct TokenKeyParam {
     key_principal: String,
 }
 #[component]
@@ -197,15 +191,29 @@ pub fn TokenInfo() -> impl IntoView {
         },
     );
 
+    let current_user_principal = authenticated_canisters().derive(
+        key_principal,
+        move |canswire, key_principal| async move {
+            let Ok(canswire) = canswire else { return false };
+            Some(canswire.profile_details.principal) == key_principal
+        },
+    );
     view! {
         <Suspense fallback=FullScreenSpinner>
             {move || {
                 token_metadata_fetch()
-                    .and_then(|info| info.ok())
-                    .map(|info| {
+                    .and_then(|info| info.ok()).zip(current_user_principal())
+                    .map(|(info, is_user_principal)| {
                         match info {
                             Some((metadata, root, key_principal)) => {
-                                view! { <TokenInfoInner root key_principal meta=metadata /> }
+                                view! {
+                                    <TokenInfoInner
+                                        root
+                                        key_principal=key_principal
+                                        meta=metadata
+                                        is_user_principal=is_user_principal
+                                    />
+                                }
                             }
                             None => view! { <Redirect path="/" /> },
                         }

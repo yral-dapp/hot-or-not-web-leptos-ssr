@@ -3,13 +3,15 @@ use std::fmt::{self, Display, Formatter};
 use candid::Principal;
 use leptos::*;
 use leptos_icons::Icon;
+use leptos_router::use_params;
 use serde::{Deserialize, Serialize};
+use speedate::DateTime;
 
-use crate::component::infinite_scroller::KeyedData;
+use crate::{component::infinite_scroller::KeyedData, page::token::info::TokenKeyParam};
 
 #[derive(Clone, Copy)]
 pub enum TxnDirection {
-    Bonus,
+    Transaction,
     Added,
     Deducted,
 }
@@ -22,7 +24,7 @@ impl TxnDirection {
     fn positive(self) -> bool {
         use TxnDirection::*;
         match self {
-            Bonus => true,
+            Transaction => true,
             Added => true,
             Deducted => false,
         }
@@ -33,9 +35,9 @@ impl From<TxnDirection> for &'static icondata_core::IconData {
     fn from(val: TxnDirection) -> Self {
         use TxnDirection::*;
         match val {
-            Bonus => icondata::AiPlusCircleOutlined,
-            Added => icondata::AiUpCircleOutlined,
-            Deducted => icondata::AiDownCircleOutlined,
+            Transaction => icondata::LuArrowLeftRight,
+            Added => icondata::FaArrowDownSolid,
+            Deducted => icondata::FaArrowUpSolid,
         }
     }
 }
@@ -50,10 +52,10 @@ pub enum TxnInfoType {
 }
 #[derive(Clone, Copy, Serialize, Deserialize)]
 pub struct TxnInfoWallet {
-    tag: TxnInfoType,
-    timestamp: u64,
-    amount: u64,
-    id: u64,
+    pub tag: TxnInfoType,
+    pub timestamp: u64,
+    pub amount: u64,
+    pub id: u64,
 }
 
 impl KeyedData for TxnInfoWallet {
@@ -68,7 +70,7 @@ impl From<TxnInfoType> for TxnDirection {
         match value {
             TxnInfoType::Burn { .. } | TxnInfoType::Sent { .. } => TxnDirection::Deducted,
             TxnInfoType::Mint { .. } | TxnInfoType::Received { .. } => TxnDirection::Added,
-            _ => unimplemented!(),
+            TxnInfoType::Transfer { .. } => TxnDirection::Transaction,
         }
     }
 }
@@ -78,9 +80,9 @@ impl TxnInfoType {
         match self {
             TxnInfoType::Burn { .. } => "Burned",
             TxnInfoType::Mint { .. } => "Minted",
-            TxnInfoType::Received { .. } => "Sent",
-            TxnInfoType::Sent { .. } => "Received",
-            TxnInfoType::Transfer { .. } => "Transfered",
+            TxnInfoType::Received { .. } => "Received",
+            TxnInfoType::Sent { .. } => "Sent",
+            TxnInfoType::Transfer { .. } => "Transferred",
         }
     }
 
@@ -96,34 +98,117 @@ impl Display for TxnInfoType {
 }
 
 #[component]
-pub fn TxnView(info: TxnInfoWallet, #[prop(optional)] _ref: NodeRef<html::Div>) -> impl IntoView {
+pub fn TxnView(
+    info: TxnInfoWallet,
+    #[prop(optional)] _ref: NodeRef<html::Div>,
+    symbol: String,
+) -> impl IntoView {
+    let params = use_params::<TokenKeyParam>();
     let direction = TxnDirection::from(info.tag);
     let bal_res = format!(
-        "{} {}",
+        "{}{}",
         if direction.positive() { "+" } else { "-" },
         info.amount
     );
 
     view! {
-        <div _ref=_ref class="grid grid-cols-2 grid-rows-1 w-full items-center py-4">
+        <div _ref=_ref class="grid grid-cols-2 grid-rows-1 w-full py-3 border-b-2 border-white/10 justify-between">
             <div class="flex flex-row gap-2">
-                <div class="grid grid-cols-1 place-items-center place-content-center p-2 rounded-full text-primary-600 text-xl lg:text-2xl">
-                    <Icon icon=info.tag.icondata() />
-                </div>
+                {
+                    match direction{
+                        TxnDirection::Added => {
+                            view! {
+                                <div class="flex items-center justify-center w-7 h-7 lg:w-10 lg:h-10 rounded-md text-green-600 bg-green-600/5 text-lg lg:text-xl">
+                                    <Icon icon=info.tag.icondata() />
+                                </div>
+                            }
+                        },
+                        TxnDirection::Deducted => {
+                            view! {
+                                <div class="flex items-center justify-center w-7 h-7 lg:w-10 lg:h-10 rounded-md text-red-600 bg-red-600/5 text-lg lg:text-xl">
+                                    <Icon icon=info.tag.icondata() />
+                                </div>
+                            }
+                        },
+                        TxnDirection::Transaction => {
+                            view! {
+                                <div class="flex items-center justify-center w-7 h-7 lg:w-10 lg:h-10 rounded-md text-white bg-blue-600/5 text-lg lg:text-xl">
+                                    <Icon icon=info.tag.icondata() />
+                                </div>
+                            }
+                        },
+                    }
+                }
                 <div class="flex flex-col">
                     <span class="text-md md:text-lg font-semibold text-white">
                         {info.tag.to_text()}
                     </span>
-                    <span class="text-sm md:text-md text-white/50">{info.amount}COYNs</span>
+                    {
+                        move || {
+                            match info.tag{
+                                TxnInfoType::Mint { to } => {
+                                    match params.get(){
+                                        Ok(_) => None,
+                                        Err(_) => Some(view! {<div class="text-sm md:text-md text-white/50">{format!("To: {}", to)}</div>})
+                                    }
+                                },
+                                TxnInfoType::Burn { from } => {
+                                    match params.get(){
+                                        Ok(_) => None,
+                                        Err(_) => Some(view! {<div class="text-sm md:text-md text-white/50">{format!("From: {}", from)}</div>})
+                                    }
+                                },
+                                TxnInfoType::Received { from } => Some(view! {<div class="text-sm md:text-md text-white/50">{format!("From: {}", from)}</div>}),
+                                TxnInfoType::Sent { to } => Some(view! {<div class="text-sm md:text-md text-white/50">{format!("To: {}", to)}</div>}),
+                                TxnInfoType::Transfer { from, to } => Some(view! {
+                                    <div>
+                                    <div class="text-sm md:text-md text-white/50">{format!("From: {}", from)}</div>
+                                    <div class="text-sm md:text-md text-white/50">{format!("To: {}", to)}</div>
+                                    </div>
+                                })
+                            }
+                        }
+                    }
                 </div>
             </div>
+            <div class="flex flex-col top-0 text-right">
             <span class=move || {
                 if direction.positive() {
-                    "text-green-600 justify-self-end"
+                    "text-green-600 font-semibold"
                 } else {
-                    "text-red-600 justify-self-end"
+                    "text-red-600 font-semibold"
                 }
-            }>{bal_res}COYNs</span>
+            }>{format!("{} {}", bal_res, symbol)}</span>
+            <span class="text-sm md:text-md text-white/50">
+                {
+                    DateTime::from_timestamp(info.timestamp as i64, 0).map(|dt| {
+                        format!(
+                            "{} {}, {} {}:{} {}",
+                            {match dt.date.month{
+                                1 => "January",
+                                2 => "February",
+                                3 => "March",
+                                4 => "April",
+                                5 => "May",
+                                6 => "June",
+                                7 => "July",
+                                8 => "August",
+                                9 => "September",
+                                10 => "October",
+                                11 => "November",
+                                12 => "December",
+                                _ => unimplemented!()
+                            }},
+                            dt.date.day,
+                            dt.date.year,
+                            if dt.time.hour > 12 { dt.time.hour - 12 } else { dt.time.hour },
+                            dt.time.minute,
+                            if dt.time.hour >= 12 { "PM" } else { "AM" },
+                        )
+                    }).ok()
+                }
+            </span>
+            </div>
         </div>
     }
 }
@@ -141,13 +226,14 @@ pub mod provider {
         user_principal: Option<Principal>,
         source: IndexOrLedger,
     ) -> impl CursoredDataProvider<Data = TxnInfoWallet> + Clone {
-        // #[cfg(feature = "mock-wallet-history")]
-        // {
-        //     _ = canisters;
-        //     _ = user_canister;
-        //     mock::MockHistoryProvider
-        // }
-        // #[cfg(not(feature = "mock-wallet-history"))]
+        #[cfg(feature = "mock-wallet-history")]
+        {
+            _ = canisters;
+            _ = user_principal;
+            _ = source;
+            mock::MockHistoryProvider
+        }
+        #[cfg(not(feature = "mock-wallet-history"))]
         {
             canister::TxnHistory {
                 canisters,
@@ -156,7 +242,7 @@ pub mod provider {
             }
         }
     }
-    // #[cfg(not(feature = "mock-wallet-history"))]
+    #[cfg(not(feature = "mock-wallet-history"))]
     mod canister {
         use super::{Canisters, CursoredDataProvider, IndexOrLedger, TxnInfoType, TxnInfoWallet};
         use crate::component::infinite_scroller::PageEntry;

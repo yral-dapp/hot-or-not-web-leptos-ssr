@@ -37,11 +37,10 @@ fn ProfileGreeter(details: ProfileDetails, is_own_account: bool) -> impl IntoVie
 
     view! {
         <div class="flex flex-col">
-            {
-                is_own_account.then(|| {
+            {is_own_account
+                .then(|| {
                     view! { <span class="text-white/50 text-md">Welcome!</span> }
-                })
-            } <div class="flex flex-row gap-2">
+                })} <div class="flex flex-row gap-2">
                 <span class="text-lg text-white md:text-xl truncate">
                     // TEMP: Workaround for hydration bug until leptos 0.7
                     // class=("md:w-5/12", move || !is_connected())
