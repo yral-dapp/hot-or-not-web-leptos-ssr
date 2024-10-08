@@ -8,18 +8,25 @@ pub fn get_host() -> String {
     #[cfg(not(feature = "hydrate"))]
     {
         use axum::http::request::Parts;
-        use leptos::expect_context;
+        use leptos::{expect_context, use_context};
 
-        let parts: Parts = expect_context();
-        let headers = parts.headers;
+        let parts: Option<Parts> = use_context();
+        if parts.is_none() {
+            return "".to_string();
+        }
+        let headers = parts.unwrap().headers;
         headers.get("Host").unwrap().to_str().unwrap().to_string()
     }
 }
 
 pub fn show_cdao_page() -> bool {
     let host = get_host();
+    show_cdao_condition(host)
+}
+
+pub fn show_cdao_condition(host: String) -> bool {
     host == "icpump.fun"
         || host == "localhost:3000"
         // || host == "hot-or-not-web-leptos-ssr-staging.fly.dev"
-        || host.contains("go-bazzinga-hot-or-not-web-leptos-ssr.fly.dev") // Use this when testing icpump changes
+        || host.contains("yral-dapp-hot-or-not-web-leptos-ssr.fly.dev") // Use this when testing icpump changes
 }

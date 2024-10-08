@@ -14,6 +14,7 @@ use leptos_router::RouteListing;
 use crate::{
     auth::server_impl::store::KVStoreImpl,
     state::{canisters::Canisters, server::AppState},
+    utils::token::icpump::ICPumpSearchGrpcChannel,
 };
 
 #[cfg(feature = "cloudflare")]
@@ -159,6 +160,22 @@ async fn init_grpc_offchain_channel() -> tonic::transport::Channel {
         .expect("Couldn't connect to off-chain agent")
 }
 
+async fn init_grpc_icpump_search_channel() -> ICPumpSearchGrpcChannel {
+    use crate::consts::ICPUMP_SEARCH_GRPC_URL;
+    use tonic::transport::{Channel, ClientTlsConfig};
+
+    let tls_config = ClientTlsConfig::new().with_webpki_roots();
+    let off_chain_agent_url = ICPUMP_SEARCH_GRPC_URL;
+    let channel = Channel::from_static(off_chain_agent_url)
+        .tls_config(tls_config)
+        .expect("Couldn't update TLS config for off-chain agent")
+        .connect()
+        .await
+        .expect("Couldn't connect to off-chain agent");
+
+    ICPumpSearchGrpcChannel { channel }
+}
+
 #[cfg(feature = "backend-admin")]
 fn init_admin_canisters() -> crate::state::admin_canisters::AdminCanisters {
     use crate::state::admin_canisters::AdminCanisters;
@@ -269,6 +286,7 @@ impl AppStateBuilder {
             firestore_db: init_firestoredb().await,
             #[cfg(feature = "qstash")]
             qstash: init_qstash_client(),
+            grpc_icpump_search_channel: init_grpc_icpump_search_channel().await,
         };
 
         AppStateRes {

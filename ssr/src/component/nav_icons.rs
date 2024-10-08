@@ -64,3 +64,21 @@ icon_gen!(
         <circle cx="256" cy="123.8" r="123.8" fill="currentColor" />
     </g>"###
 );
+
+icon_gen!(
+    SearchIcon,
+    view_box = "0 0 25 24",
+    r###"<g>
+        <path d="M11.8901 21C17.1368 21 21.3901 16.7467 21.3901 11.5C21.3901 6.25329 17.1368 2 11.8901 2C6.64343 2 2.39014 6.25329 2.39014 11.5C2.39014 16.7467 6.64343 21 11.8901 21Z" stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M22.3901 22L20.3901 20" stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>"###
+);
+
+icon_gen!(
+    SearchIconFilled,
+    view_box = "0 0 25 25",
+    r###"<g>
+        <path d="M11.8901 21.1791C17.1368 21.1791 21.3901 16.9258 21.3901 11.6791C21.3901 6.43237 17.1368 2.17908 11.8901 2.17908C6.64343 2.17908 2.39014 6.43237 2.39014 11.6791C2.39014 16.9258 6.64343 21.1791 11.8901 21.1791Z" fill="white" style="fill:white;fill-opacity:1;"/>
+        <path d="M21.6902 22.1791C21.5102 22.1791 21.3302 22.1091 21.2002 21.9791L19.3402 20.1191C19.0702 19.8491 19.0702 19.4091 19.3402 19.1291C19.6102 18.8591 20.0502 18.8591 20.3302 19.1291L22.1902 20.9891C22.4602 21.2591 22.4602 21.6991 22.1902 21.9791C22.0502 22.1091 21.8702 22.1791 21.6902 22.1791Z" fill="white" style="fill:white;fill-opacity:1;"/>
+    </g>"###
+);

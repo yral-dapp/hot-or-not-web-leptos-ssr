@@ -1,4 +1,4 @@
-use crate::consts::USER_PRINCIPAL_STORE;
+use crate::{consts::USER_PRINCIPAL_STORE, utils::host::show_cdao_page};
 
 use super::nav_icons::*;
 use candid::Principal;
@@ -7,6 +7,7 @@ use leptos::*;
 use leptos_icons::*;
 use leptos_router::*;
 use leptos_use::use_cookie;
+
 #[component]
 fn NavIcon(
     idx: usize,
@@ -136,11 +137,15 @@ pub fn NavBar() -> impl IntoView {
             s if s.starts_with("/wallet") => 3, // highlights during redirects
             s if s.starts_with("/token/info") => 3,
             s if s.starts_with("/token/create") => 2,
+            s if s.starts_with("/token/search") => 5,
             _ => 4,
         }
     });
 
+    let show_cdao_icon = show_cdao_page();
+
     view! {
+    <Suspense>
         <div class="flex fixed bottom-0 left-0 z-50 flex-row justify-between items-center px-6 w-full bg-black/80">
             <NavIcon
                 idx=0
@@ -157,14 +162,36 @@ pub fn NavBar() -> impl IntoView {
                 cur_selected=cur_selected
             />
             <UploadIcon idx=2 cur_selected />
-            <NavIcon
-                idx=5
-                href="/profile/tokens"
-                icon=ProfileIcon
-                filled_icon=ProfileIconFilled
-                cur_selected=cur_selected
-            />
+
+            {
+                move || {
+                    if show_cdao_icon {
+                        view! {
+                            <NavIcon
+                                idx=5
+                                href="/token/search"
+                                icon=SearchIcon
+                                filled_icon=SearchIconFilled
+                                cur_selected=cur_selected
+                            />
+                        }
+                    } else {
+                        view! {
+                            <NavIcon
+                                idx=5
+                                href="/profile/tokens"
+                                icon=ProfileIcon
+                                filled_icon=ProfileIconFilled
+                                cur_selected=cur_selected
+                            />
+                        }
+                    }
+                }
+            }
+
             <NavIcon idx=4 href="/menu" icon=MenuSymbol cur_selected=cur_selected />
         </div>
+
+    </Suspense>
     }
 }
