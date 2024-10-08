@@ -107,7 +107,11 @@ pub fn TxnView(
     let direction = TxnDirection::from(info.tag);
     let bal_res = format!(
         "{}{}",
-        if direction.positive() { "+" } else { "-" },
+        match direction {
+            TxnDirection::Added => "+",
+            TxnDirection::Deducted => "-",
+            TxnDirection::Transaction => "",
+        },
         info.amount
     );
 
@@ -161,7 +165,7 @@ pub fn TxnView(
                                 TxnInfoType::Received { from } => Some(view! {<div class="text-sm md:text-md text-white/50">{format!("From: {}", from)}</div>}),
                                 TxnInfoType::Sent { to } => Some(view! {<div class="text-sm md:text-md text-white/50">{format!("To: {}", to)}</div>}),
                                 TxnInfoType::Transfer { from, to } => Some(view! {
-                                    <div>
+                                    <div class="flex flex-col space-y-1">
                                     <div class="text-sm md:text-md text-white/50">{format!("From: {}", from)}</div>
                                     <div class="text-sm md:text-md text-white/50">{format!("To: {}", to)}</div>
                                     </div>
@@ -173,10 +177,9 @@ pub fn TxnView(
             </div>
             <div class="flex flex-col top-0 text-right">
             <span class=move || {
-                if direction.positive() {
-                    "text-green-600 font-semibold"
-                } else {
-                    "text-red-600 font-semibold"
+                match direction {
+                    TxnDirection::Added => "text-green-600 font-semibold",
+                    _ => "text-white font-semibold",
                 }
             }>{format!("{} {}", bal_res, symbol)}</span>
             <span class="text-sm md:text-md text-white/50">
