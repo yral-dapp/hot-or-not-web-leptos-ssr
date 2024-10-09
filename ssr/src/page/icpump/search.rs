@@ -1,6 +1,6 @@
 use leptos::*;
 use leptos_icons::*;
-use pulldown_cmark::{Event, Options, Parser};
+use pulldown_cmark::{Options, Parser};
 use wasm_bindgen::prelude::Closure;
 use wasm_bindgen::prelude::*;
 
@@ -58,24 +58,8 @@ pub fn MarkdownRenderer(text: String) -> impl IntoView {
         options.insert(Options::ENABLE_STRIKETHROUGH);
         let parser = Parser::new_ext(&text, options);
 
-        let modified_events = parser.flat_map(|event| match event {
-            Event::Text(text) => text
-                .split('\n')
-                .enumerate()
-                .flat_map(|(i, line)| {
-                    let mut events = vec![];
-                    if i > 0 {
-                        events.push(Event::Html("<br>".into()));
-                    }
-                    events.push(Event::Text(line.to_string().into()));
-                    events
-                })
-                .collect::<Vec<_>>(),
-            _ => vec![event],
-        });
-
         let mut html_output = String::new();
-        pulldown_cmark::html::push_html(&mut html_output, modified_events);
+        pulldown_cmark::html::push_html(&mut html_output, parser);
         html_output
     });
 
