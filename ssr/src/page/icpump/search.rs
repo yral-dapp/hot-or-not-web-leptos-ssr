@@ -99,12 +99,13 @@ pub fn ICPumpSearch() -> impl IntoView {
 
         let results = get_token_search_results(q).await;
         let results = try_or_redirect!(results);
+        let results_len = results.items.len();
 
         query_results.set(results.items);
         query_result_text.set(results.text.clone());
         show_output.set(true);
 
-        if results.text.is_empty() {
+        if results_len == 0 && results.text.is_empty() {
             query_result_text.set("No results found.".to_string());
         }
     });
