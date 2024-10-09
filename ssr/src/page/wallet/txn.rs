@@ -393,7 +393,9 @@ pub mod provider {
                         let history = match history {
                             GetTransactionsResult::Ok(v) => v.transactions,
                             GetTransactionsResult::Err(_) => {
-                                panic!()
+                                return Err(AgentError::PrincipalError(
+                                    ic_agent::export::PrincipalError::CheckSequenceNotMatch(),
+                                ));
                             }
                         };
 
@@ -402,7 +404,7 @@ pub mod provider {
                         Ok(PageEntry {
                             data: history
                                 .into_iter()
-                                .map(|txn| parse_transactions(txn, user_principal).unwrap())
+                                .filter_map(|txn| parse_transactions(txn, user_principal).ok())
                                 .collect(),
                             end: list_end,
                         })
