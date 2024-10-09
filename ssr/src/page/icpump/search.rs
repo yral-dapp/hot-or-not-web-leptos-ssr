@@ -2,6 +2,8 @@ use leptos::*;
 use leptos_icons::*;
 use wasm_bindgen::prelude::Closure;
 use wasm_bindgen::prelude::*;
+use leptos::{ev::SubmitEvent, *};
+
 
 use crate::{
     page::icpump::TokenListing,
@@ -25,27 +27,27 @@ pub fn ICPumpSearchSuggestions(
     let query_list = QUERY_LIST.to_vec();
 
     view! {
-        <div class="flex flex-col gap-4 p-8">
+        <div class="flex flex-col gap-4">
             <div class="text-gray-400">Try these search prompts:</div>
-            <ul class="block">
+            <div class="block">
                 {
                     query_list.iter().cloned()
                     .map(|q| {
                         let q_clone = q;
-                        view! {
-                            <li>
-                                <p class="text-sm inline cursor-pointer pr-2 hover:underline hover:text-white/75 active:text-white/50 active:italic" on:click=move |_| {
+                        view! {    
+                            <p class="text-sm inline cursor-pointer pr-2 hover:underline hover:text-white/75 active:text-white/50 active:italic" 
+                                on:click=move |_| {
                                     query.set(q_clone.to_string());
                                     search_action.dispatch(());
                                 }>
                                     <span>"[ "</span>{q}<span>" ]"</span>
-                                </p>
-                            </li>
+                            </p>
+                            
                         }
                     })
                     .collect::<Vec<_>>()
                 }
-            </ul>
+            </div>
         </div>
     }
 }
@@ -78,13 +80,20 @@ pub fn ICPumpSearch() -> impl IntoView {
 
     let search_action = create_action(move |()| async move {
         let q = query.get();
-
         let results = get_token_search_results(q).await;
         let results = try_or_redirect!(results);
 
         query_results.set(results.items);
         // query_result_text.set(results.text);
     });
+
+    let on_submit = move |ev: SubmitEvent| {
+        ev.prevent_default();
+        let value = input_ref().expect("<input> to exist").value();
+        query.set(value);
+        search_action.dispatch(());
+    };
+
 
     create_effect(move |_| {
         if let Some(input) = input_ref.get() {
@@ -104,33 +113,29 @@ pub fn ICPumpSearch() -> impl IntoView {
 
     view! {
         <div class="h-screen w-screen block bg-black text-white font-mono pb-12 overflow-y-scroll">
-            <div class="flex flex-col gap-4 p-8">
+            <div class="flex flex-col gap-4 p-4">
                 <div class="text-gray-400">Search</div>
-                <div class="relative flex items-center w-full">
+                <form 
+                    class="hover:border-gray-600 border flex border-gray-900 relative focus-within:!border-gray-400" 
+                    on:submit=on_submit
+                >
                     <input
-                        class="w-full bg-black text-white p-2 pr-10 rounded-lg border border-gray-900 hover:border-gray-600 focus:border-gray-400"
+                        class="bg-transparent focus:outline-none py-4 pl-4 mr-16 w-full"
                         type="text"
-                        placeholder="Search for a token"
+                        placeholder="Type here to search tokens"
                         _ref=input_ref
                         prop:value=move || query.get()
-                        on:input=move |ev| {
-                            let q = event_target_value(&ev);
-                            query.set(q);
-                        }
-                        on:keypress=move |ev: ev::KeyboardEvent| {
-                            if ev.key() == "Enter" {
-                            search_action.dispatch(());
-                            }
-                        }
                         autofocus
                     />
                     <button
-                        class="absolute right-2 inset-y-0 flex items-center active:italic group"
-                        on:click=move |_| search_action.dispatch(())
-                    >
-                        <Icon class="text-xl text-gray-400 group-hover:text-gray-200" icon=icondata::AiSearchOutlined />
+                    type="submit"
+                    class="absolute right-3 active:italic inset-y-0 items-center flex gap-1 group"
+                    on:click=move |_| search_action.dispatch(())>
+                    <span>"[ "</span>
+                    <Icon class="text-xl group-hover:underline group-hover:text-gray-200" icon=icondata::AiSearchOutlined />
+                    <span>" ]"</span>
                     </button>
-                </div>
+                </form>
 
                 <ICPumpSearchSuggestions
                     query=query
@@ -143,10 +148,7 @@ pub fn ICPumpSearch() -> impl IntoView {
                             return view! {
                                 <>
                                 <div class="flex flex-col items-center justify-center">
-                                    <div class="relative text-2xl">
-                                        <span class="absolute animate-searching-a-1">"(→_→)"</span>
-                                        <span class="animate-searching-a-2">"(←_←)"</span>
-                                    </div>
+                                    <div class="relative text-2xl animate-searching"/>
                                     <div class="text-gray-400">Searching...</div>
                                 </div>
                                 </>
@@ -158,15 +160,17 @@ pub fn ICPumpSearch() -> impl IntoView {
                             return view! {
                                 <div class="text-gray-400 pb-2 self-start">Search results:</div>
                                 // <MarkdownRenderer text=query_result_text.get() />
-                                <For
-                                    each=move || results.clone()
-                                    key=|t| t.token_symbol.clone()
-                                    children=move |token: TokenListItem| {
-                                        view! {
-                                            <TokenListing details=token />
+                                <div class="grid grid-col-1 md:grid-cols-2 gap-4">
+                                    <For
+                                        each=move || results.clone()
+                                        key=|t| t.token_symbol.clone()
+                                        children=move |token: TokenListItem| {
+                                            view! {
+                                                <TokenListing details=token />
+                                            }
                                         }
-                                    }
-                                />
+                                    />
+                                </div>
                             };
                         }
 
