@@ -378,6 +378,7 @@ pub mod provider {
                                 ic_agent::export::PrincipalError::CheckSequenceNotMatch(),
                             ));
                         };
+
                         let history = index
                             .get_account_transactions(GetAccountTransactionsArgs {
                                 max_results: (end - start).into(),
@@ -391,14 +392,17 @@ pub mod provider {
 
                         let history = match history {
                             GetTransactionsResult::Ok(v) => v.transactions,
-                            GetTransactionsResult::Err(_) => vec![],
+                            GetTransactionsResult::Err(_) => {
+                                panic!()
+                            }
                         };
 
                         let list_end = history.len() < (end - start);
+
                         Ok(PageEntry {
                             data: history
                                 .into_iter()
-                                .filter_map(|txn| parse_transactions(txn, user_principal).ok())
+                                .map(|txn| parse_transactions(txn, user_principal).unwrap())
                                 .collect(),
                             end: list_end,
                         })
