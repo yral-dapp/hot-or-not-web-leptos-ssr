@@ -1,0 +1,13 @@
+.animate-searching:before {
+  content: "(→_→)";
+  animation: searching 2s infinite 0s;
+}
+
+@keyframes animate-searching {
+  0% {
+    content: "(→_→)";
+  }
+  50% {
+    content: "(←_←)";
+  }
+}
