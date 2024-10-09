@@ -1,6 +1,6 @@
 use leptos::*;
 use leptos_icons::*;
-use pulldown_cmark::{Options, Parser};
+use pulldown_cmark::{Event, Options, Parser};
 use wasm_bindgen::prelude::Closure;
 use wasm_bindgen::prelude::*;
 
@@ -57,8 +57,25 @@ pub fn MarkdownRenderer(text: String) -> impl IntoView {
         let mut options = Options::empty();
         options.insert(Options::ENABLE_STRIKETHROUGH);
         let parser = Parser::new_ext(&text, options);
+
+        let modified_events = parser.flat_map(|event| match event {
+            Event::Text(text) => text
+                .split('\n')
+                .enumerate()
+                .flat_map(|(i, line)| {
+                    let mut events = vec![];
+                    if i > 0 {
+                        events.push(Event::Html("<br>".into()));
+                    }
+                    events.push(Event::Text(line.to_string().into()));
+                    events
+                })
+                .collect::<Vec<_>>(),
+            _ => vec![event],
+        });
+
         let mut html_output = String::new();
-        pulldown_cmark::html::push_html(&mut html_output, parser);
+        pulldown_cmark::html::push_html(&mut html_output, modified_events);
         html_output
     });
 
@@ -74,6 +91,7 @@ pub fn ICPumpSearch() -> impl IntoView {
     let query = create_rw_signal("".to_string());
     let query_results: RwSignal<Vec<TokenListItem>> = create_rw_signal(vec![]);
     let query_result_text = create_rw_signal("".to_string());
+    let show_output = create_rw_signal(false);
     let input_ref = create_node_ref::<html::Input>();
 
     let search_action = create_action(move |()| async move {
@@ -83,7 +101,12 @@ pub fn ICPumpSearch() -> impl IntoView {
         let results = try_or_redirect!(results);
 
         query_results.set(results.items);
-        query_result_text.set(results.text);
+        query_result_text.set(results.text.clone());
+        show_output.set(true);
+
+        if results.text.is_empty() {
+            query_result_text.set("No results found.".to_string());
+        }
     });
 
     create_effect(move |_| {
@@ -154,7 +177,7 @@ pub fn ICPumpSearch() -> impl IntoView {
                         }
 
                         let results = query_results.get();
-                        if !results.is_empty() {
+                        if show_output.get() {
                             return view! {
                                 <div class="text-gray-400 pb-2 self-start">Search results:</div>
                                 <MarkdownRenderer text=query_result_text.get() />
