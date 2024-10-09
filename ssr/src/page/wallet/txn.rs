@@ -35,7 +35,7 @@ impl From<TxnDirection> for &'static icondata_core::IconData {
     }
 }
 
-#[derive(Clone, Copy, Serialize, Deserialize)]
+#[derive(Clone, Copy, Serialize, Deserialize, Debug)]
 pub enum TxnInfoType {
     Mint { to: Principal },
     Sent { to: Principal }, // only for keyed
@@ -43,7 +43,7 @@ pub enum TxnInfoType {
     Received { from: Principal },                // only for keyed
     Transfer { from: Principal, to: Principal }, // only for public transaction
 }
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct TxnInfoWallet {
     pub tag: TxnInfoType,
     pub timestamp: u64,
@@ -261,7 +261,7 @@ pub mod provider {
             user_principal: Principal,
         ) -> Result<TxnInfoWallet, ServerFnError> {
             let timestamp = txn.transaction.timestamp;
-            let id = txn.id.0.to_u64_digits()[0]; // some weird hack need to do this properly
+            let id = txn.id.0.to_u64_digits()[0];
 
             match txn.transaction {
                 Transaction {
@@ -286,7 +286,8 @@ pub mod provider {
                     transfer: Some(transfer),
                     ..
                 } => {
-                    if user_principal == transfer.to.owner {
+                    if user_principal == transfer.from.owner {
+                        // User is sending funds
                         Ok(TxnInfoWallet {
                             tag: TxnInfoType::Sent {
                                 to: transfer.to.owner,
@@ -295,7 +296,8 @@ pub mod provider {
                             amount: TokenBalance::new_cdao(transfer.amount),
                             id,
                         })
-                    } else if user_principal == transfer.from.owner {
+                    } else if user_principal == transfer.to.owner {
+                        // User is receiving funds
                         Ok(TxnInfoWallet {
                             tag: TxnInfoType::Received {
                                 from: transfer.from.owner,
@@ -382,7 +384,7 @@ pub mod provider {
                         let history = index
                             .get_account_transactions(GetAccountTransactionsArgs {
                                 max_results: (end - start).into(),
-                                start: Some(start.into()),
+                                start: None,
                                 account: Account {
                                     owner: user_principal,
                                     subaccount: None,

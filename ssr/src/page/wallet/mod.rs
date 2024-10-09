@@ -301,3 +301,130 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
         </div>
     }
 }
+// fn parse_transactions(
+//     txn: TransactionWithId,
+//     user_principal: Principal,
+// ) -> Result<TxnInfoWallet, ServerFnError> {
+//     let timestamp = txn.transaction.timestamp;
+//     let id = txn.id.0.to_u64_digits()[0];
+
+//     match txn.transaction {
+//         Transaction {
+//             mint: Some(mint), ..
+//         } => Ok(TxnInfoWallet {
+//             tag: TxnInfoType::Mint { to: mint.to.owner },
+//             timestamp,
+//             amount: TokenBalance::new_cdao(mint.amount),
+//             id,
+//         }),
+//         Transaction {
+//             burn: Some(burn), ..
+//         } => Ok(TxnInfoWallet {
+//             tag: TxnInfoType::Burn {
+//                 from: user_principal,
+//             },
+//             timestamp,
+//             amount: TokenBalance::new_cdao(burn.amount),
+//             id,
+//         }),
+//         Transaction {
+//             transfer: Some(transfer),
+//             ..
+//         } => {
+//             if user_principal == transfer.from.owner {
+//                 // User is sending funds
+//                 Ok(TxnInfoWallet {
+//                     tag: TxnInfoType::Sent {
+//                         to: transfer.to.owner,
+//                     },
+//                     timestamp,
+//                     amount: TokenBalance::new_cdao(transfer.amount),
+//                     id,
+//                 })
+//             } else if user_principal == transfer.to.owner {
+//                 // User is receiving funds
+//                 Ok(TxnInfoWallet {
+//                     tag: TxnInfoType::Received {
+//                         from: transfer.from.owner,
+//                     },
+//                     timestamp,
+//                     amount: TokenBalance::new_cdao(transfer.amount),
+//                     id,
+//                 })
+//             } else {
+//                 Err(ServerFnError::new(
+//                     "Transfer details do not match the user principal",
+//                 ))
+//             }
+//         }
+//         _ => Err(ServerFnError::new("Unable to parse transaction details")),
+//     }
+// }
+
+// #[component]
+// pub fn TestIndex() -> impl IntoView {
+//     let user_principal = move || Principal::from_text("ormrx-ntne5-xfeyd-ogl7u-komnp-sagzp-6lqli-3d32i-427u2-wunav-7qe").unwrap();
+
+//     // Create a resource to fetch and parse transactions
+//     let transactions_resource = create_resource(
+//         user_principal, // You can pass any necessary parameters here
+//         move |user_principal| async move {
+//             // Fetch authenticated canisters
+//             let cans = unauth_canisters();
+//             let root = cans.sns_root(Principal::from_text("k5cjp-yyaaa-aaaah-qpt2q-cai").unwrap()).await;
+//             let sns_cans = root.list_sns_canisters(ListSnsCanistersArg {}).await?;
+
+//             let index = cans.sns_index(sns_cans.index.unwrap()).await;
+//             let result = index
+//                 .get_account_transactions(GetAccountTransactionsArgs {
+//                     max_results: 10u64.into(),
+//                     start: None,
+//                     account: Account {
+//                         owner: user_principal,
+//                         subaccount: None,
+//                     },
+//                 })
+//                 .await
+//                 .map_err(|e| ServerFnError::new(e.to_string()))?;
+
+//             // Parse transactions
+//             let transactions = match result {
+//                 GetTransactionsResult::Ok(transactions) => transactions.transactions,
+//                 GetTransactionsResult::Err(err) => return Err(ServerFnError::new(err.message)),
+//             };
+//             let len = transactions.len();
+//             assert!(len != 0);
+//             // Use parse_transactions on each transaction
+//             let parsed_transactions: Result<Vec<TxnInfoWallet>, ServerFnError> = transactions
+//                 .into_iter()
+//                 .map(|txn| parse_transactions(txn, user_principal))
+//                 .collect();
+
+//             parsed_transactions
+//         },
+//     );
+
+//     view! {
+//         <Suspense fallback=move || view! { <p>"Loading..."</p> }>
+//             {move || match transactions_resource() {
+//                 None => view! { <p>"Loading..."</p> }.into_view(),
+//                 Some(Err(e)) => view! { <p>{format!("Error: {}", e)}</p> }.into_view(),
+//                 Some(Ok(parsed_transactions)) => view! {
+//                     <ul>
+//                         {
+//                             let txn = parsed_transactions[0].clone();
+//                             view! {
+//                                 <li>
+//                                     <p>{format!("Transaction ID: {}", txn.id)}</p>
+//                                     <p>{format!("Timestamp: {}", txn.timestamp)}</p>
+//                                     <p>{format!("Amount: {}", txn.amount.humanize_float_truncate_to_dp(2))}</p>
+//                                     <p>{format!("Type: {:?}", txn.tag)}</p>
+//                                 </li>
+//                             }
+//                         }
+//                     </ul>
+//                 }.into_view(),
+//             }}
+//         </Suspense>
+//     }
+// }

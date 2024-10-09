@@ -166,6 +166,7 @@ pub fn App() -> impl IntoView {
                         <Route path="/tokens" view=Tokens />
                         <Route path="/board" view=ICPumpLanding />
                         <Route path="/token/search" view=ICPumpSearch/>
+                        // <Route path="/test" view=TestIndex/>
                     </Route>
                 </Routes>
 
