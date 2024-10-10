@@ -9,7 +9,6 @@ use crate::state::canisters::authenticated_canisters;
 use crate::{
     component::{back_btn::BackButton, share_popup::*, spinner::FullScreenSpinner, title::Title},
     page::wallet::{transactions::Transactions, txn::IndexOrLedger},
-    state::canisters::unauth_canisters,
     utils::{
         token::{token_metadata_by_root, TokenMetadata},
         web::copy_to_clipboard,
@@ -180,37 +179,34 @@ pub fn TokenInfo() -> impl IntoView {
             Principal::from_text(key_principal).ok()
         })
     };
-    let token_metadata_fetch = create_resource(
+    let token_metadata_fetch = authenticated_canisters().derive(
         move || (params(), key_principal()),
-        move |(params, key_principal)| async move {
+        move |cans_wire, (params, key_principal)| async move {
             let Ok(params) = params else {
                 return Ok::<_, ServerFnError>(None);
             };
-            // let principal = params.user_principal.to_text().clone();
-            // let root = params.token_root.to_text().clone();
-
-            let cans = unauth_canisters();
+            let cans = cans_wire?.canisters()?;
             let meta = token_metadata_by_root(&cans, key_principal, params.token_root).await?;
 
-            Ok(meta.map(|m| (m, params.token_root, key_principal)))
+            Ok(meta.map(|m| {
+                (
+                    m,
+                    params.token_root,
+                    key_principal,
+                    Some(cans.user_principal()) == key_principal,
+                )
+            }))
         },
     );
 
-    let current_user_principal = authenticated_canisters().derive(
-        key_principal,
-        move |canswire, key_principal| async move {
-            let Ok(canswire) = canswire else { return false };
-            Some(canswire.profile_details.principal) == key_principal
-        },
-    );
     view! {
         <Suspense fallback=FullScreenSpinner>
             {move || {
                 token_metadata_fetch()
-                    .and_then(|info| info.ok()).zip(current_user_principal())
-                    .map(|(info, is_user_principal)| {
+                    .and_then(|info| info.ok())
+                    .map(|info| {
                         match info {
-                            Some((metadata, root, key_principal)) => {
+                            Some((metadata, root, key_principal, is_user_principal)) => {
                                 view! {
                                     <TokenInfoInner
                                         root
