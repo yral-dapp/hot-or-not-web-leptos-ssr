@@ -167,12 +167,18 @@ fn TokenTransferInner(
     });
 
     let amount_ref = create_node_ref::<html::Input>();
-    let max_amt = if info
-        .balance
+    let Some(balance) = info.balance else {
+        return view! {
+            <div>
+                <Redirect path="/" />
+            </div>
+        };
+    };
+    let max_amt = if balance
         .map_balance_ref(|b| b > &info.fees)
         .unwrap_or_default()
     {
-        info.balance
+        balance
             .map_balance_ref(|b| b.clone() - info.fees.clone())
             .unwrap()
     } else {
@@ -275,7 +281,7 @@ fn TokenTransferInner(
                 <div class="flex flex-col w-full gap-2 items-center">
                     <div class="flex flex-row justify-between w-full text-sm md:text-base text-white">
                         <span>Source:</span>
-                        <span>{format!("{} {}", info.balance.humanize_float(), info.symbol)}</span>
+                        <span>{format!("{} {}", balance.humanize_float(), info.symbol)}</span>
                     </div>
                     <div class="flex flex-row gap-2 w-full items-center">
                         <p class="text-sm md:text-md text-white/80">{source_addr.to_string()}</p>
@@ -356,7 +362,8 @@ pub fn TokenTransfer() -> impl IntoView {
                     return Ok::<_, ServerFnError>(None);
                 };
                 // let user = cans.user_canister();
-                let meta = token_metadata_by_root(&cans, user_principal, params.token_root).await?;
+                let meta =
+                    token_metadata_by_root(&cans, Some(user_principal), params.token_root).await?;
                 Ok(meta.map(|m| (m, params.token_root)))
             }
         })

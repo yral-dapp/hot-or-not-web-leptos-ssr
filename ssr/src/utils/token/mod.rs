@@ -244,10 +244,11 @@ pub struct TokenMetadata {
     pub name: String,
     pub description: String,
     pub symbol: String,
-    pub balance: TokenBalanceOrClaiming,
+    pub balance: Option<TokenBalanceOrClaiming>,
     pub fees: TokenBalance,
     pub root: Principal,
     pub ledger: Principal,
+    pub index: Principal,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -259,7 +260,7 @@ pub struct TokenCans {
 
 pub async fn token_metadata_by_root<const A: bool>(
     cans: &Canisters<A>,
-    user_principal: Principal,
+    user_principal: Option<Principal>,
     token_root: Principal,
 ) -> Result<Option<TokenMetadata>, ServerFnError> {
     // let user_principal = cans
@@ -271,17 +272,22 @@ pub async fn token_metadata_by_root<const A: bool>(
     let Some(ledger) = sns_cans.ledger else {
         return Ok(None);
     };
-    let metadata = get_token_metadata(cans, user_principal, token_root, governance, ledger).await?;
+    let Some(index) = sns_cans.index else {
+        return Ok(None);
+    };
+    let metadata =
+        get_token_metadata(cans, user_principal, token_root, governance, ledger, index).await?;
 
     Ok(Some(metadata))
 }
 
 pub async fn get_token_metadata<const A: bool>(
     cans: &Canisters<A>,
-    user_principal: Principal,
+    user_principal: Option<Principal>,
     root: Principal,
     governance: Principal,
     ledger: Principal,
+    index: Principal,
 ) -> Result<TokenMetadata, AgentError> {
     let governance_can = cans.sns_governance(governance).await;
     let metadata = governance_can.get_metadata(GetMetadataArg {}).await?;
@@ -289,19 +295,26 @@ pub async fn get_token_metadata<const A: bool>(
     let ledger_can = cans.sns_ledger(ledger).await;
     let symbol = ledger_can.icrc_1_symbol().await?;
 
-    let balance = get_token_balance(cans, user_principal, governance, ledger).await?;
     let fees = ledger_can.icrc_1_fee().await?;
 
-    Ok(TokenMetadata {
+    let mut token_metadata = TokenMetadata {
         logo_b64: metadata.logo.unwrap_or_default(),
         name: metadata.name.unwrap_or_default(),
         description: metadata.description.unwrap_or_default(),
         symbol,
         fees: TokenBalance::new_cdao(fees),
-        balance,
+        balance: None,
         root,
         ledger,
-    })
+        index,
+    };
+
+    if let Some(user_principal) = user_principal {
+        let balance = get_token_balance(cans, user_principal, governance, ledger).await?;
+        token_metadata.balance = Some(balance);
+    }
+
+    Ok(token_metadata)
 }
 
 /// Fetches the token balance for an SNS token

@@ -19,5 +19,4 @@ struct TokenParams {
 #[derive(Params, PartialEq, Clone)]
 struct TokenInfoParams {
     token_root: Principal,
-    user_principal: Principal,
 }

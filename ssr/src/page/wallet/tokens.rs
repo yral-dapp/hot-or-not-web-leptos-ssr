@@ -63,7 +63,7 @@ async fn token_metadata_or_fallback(
     user_principal: Principal,
     token_root: Principal,
 ) -> TokenMetadata {
-    let metadata = token_metadata_by_root(&cans, user_principal, token_root)
+    let metadata = token_metadata_by_root(&cans, Some(user_principal), token_root)
         .await
         .ok()
         .flatten();
@@ -72,10 +72,11 @@ async fn token_metadata_or_fallback(
         name: "<ERROR>".to_string(),
         description: "Unknown".to_string(),
         symbol: "??".to_string(),
-        balance: TokenBalanceOrClaiming::claiming(),
+        balance: Some(TokenBalanceOrClaiming::claiming()),
         fees: TokenBalance::new_cdao(0u32.into()),
         root: Principal::anonymous(),
         ledger: Principal::anonymous(),
+        index: Principal::anonymous(),
     })
 }
 
@@ -141,7 +142,8 @@ pub fn TokenTile(user_principal: String, token_meta_data: TokenMetadata) -> impl
                 </div>
                 <div class="flex flex-1 flex-col">
                     <span class="flex flex-1  items-center justify-end text-xs text-white">
-                        {info.balance.humanize_float_truncate_to_dp(2)}
+                        // remove the unwrap if global token listing but its a list of token so it can safely be unwrapped
+                        {info.balance.unwrap().humanize_float_truncate_to_dp(2)}
                     </span>
                     <span class="flex flex-1  items-center justify-end text-xs text-white truncate">
                         {info.symbol.clone()}

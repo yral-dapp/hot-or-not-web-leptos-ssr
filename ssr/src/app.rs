@@ -1,6 +1,7 @@
 use crate::page::icpump::search::ICPumpSearch;
 use crate::page::icpump::ICPumpLanding;
 
+// use crate::page::wallet::TestIndex;
 use crate::{
     component::{base_route::BaseRoute, nav::NavBar},
     error_template::{AppError, ErrorTemplate},
@@ -24,7 +25,7 @@ use crate::{
             transfer::TokenTransfer,
         },
         upload::UploadPostPage,
-        wallet::{tokens::Tokens, transactions::Transactions, Wallet},
+        wallet::{tokens::Tokens, Wallet},
     },
     state::{
         audio_state::AudioState, canisters::Canisters, content_seed_client::ContentSeedClient,
@@ -154,18 +155,19 @@ pub fn App() -> impl IntoView {
                         <Route path="/privacy-policy" view=PrivacyPolicy />
                         <Route path="/wallet/:id" view=Wallet />
                         <Route path="/wallet" view=Wallet />
-                        <Route path="/transactions" view=Transactions />
                         <Route path="/leaderboard" view=Leaderboard />
                         <Route path="/account-transfer" view=AccountTransfer />
                         <Route path="/logout" view=Logout />
                         <Route path="/token/create" view=CreateToken />
                         <Route path="/token/create/settings" view=CreateTokenSettings />
                         <Route path="/token/create/faq" view=CreateTokenFAQ />
-                        <Route path="/token/info/:token_root/:user_principal" view=TokenInfo />
+                        <Route path="/token/info/:token_root/:key_principal" view=TokenInfo />
+                        <Route path="/token/info/:token_root" view=TokenInfo />
                         <Route path="/token/transfer/:token_root" view=TokenTransfer />
                         <Route path="/tokens" view=Tokens />
                         <Route path="/board" view=ICPumpLanding />
                         <Route path="/token/search" view=ICPumpSearch/>
+                        // <Route path="/test" view=TestIndex/>
                     </Route>
                 </Routes>
 

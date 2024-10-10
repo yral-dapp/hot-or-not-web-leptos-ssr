@@ -18,12 +18,12 @@ pub async fn eligible_non_yral_supported_tokens(
 
             async move {
                 let token_root = Principal::from_text(token_root).ok()?;
-                let metadata_res = token_metadata_by_root(&cans, user_principal, token_root)
+                let metadata_res = token_metadata_by_root(&cans, Some(user_principal), token_root)
                     .await
                     .ok()?;
                 if let Some(metadata) = metadata_res {
                     if metadata
-                        .balance
+                        .balance?
                         .map_balance_ref(|b| b.e8s > 0u64)
                         .unwrap_or_default()
                     {
