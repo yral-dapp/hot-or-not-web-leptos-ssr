@@ -200,7 +200,7 @@ impl<const A: bool> Canisters<A> {
         let agent = self.agent.get_agent().await;
         SnsIndex(canister_id, agent)
     }
-    
+
     pub async fn sns_ledger(&self, canister_id: Principal) -> SnsLedger<'_> {
         let agent = self.agent.get_agent().await;
         SnsLedger(canister_id, agent)

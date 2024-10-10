@@ -5,10 +5,10 @@ use leptos::*;
 use leptos_icons::Icon;
 use leptos_router::use_params;
 use serde::{Deserialize, Serialize};
-use speedate::DateTime;
 
 use crate::{
-    component::infinite_scroller::KeyedData, page::token::info::TokenKeyParam,
+    component::infinite_scroller::KeyedData,
+    page::token::info::TokenKeyParam,
     utils::{time::parse_ns_to_datetime, token::TokenBalance},
 };
 
@@ -190,8 +190,8 @@ pub mod provider {
     use crate::{component::infinite_scroller::CursoredDataProvider, state::canisters::Canisters};
 
     use super::*;
-    #[allow(private_interfaces)]
-    pub fn get_history_provider(
+
+    pub(crate) fn get_history_provider(
         canisters: Canisters<false>,
         user_principal: Option<Principal>,
         source: IndexOrLedger,

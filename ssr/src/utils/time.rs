@@ -53,11 +53,12 @@ pub async fn sleep(duration: Duration) {
     }
 }
 
-pub fn parse_ns_to_datetime(timestamp: u64) -> Result<String, ParseError>{
+pub fn parse_ns_to_datetime(timestamp: u64) -> Result<String, ParseError> {
     DateTime::from_timestamp(
-        (timestamp / 1_000_000_000) as i64,  // seconds
-        ((timestamp % 1_000_000_000) / 1_000) as u32 // microseconds
-    ).map(|dt| {
+        (timestamp / 1_000_000_000) as i64,           // seconds
+        ((timestamp % 1_000_000_000) / 1_000) as u32, // microseconds
+    )
+    .map(|dt| {
         format!(
             "{} {}, {} {:02}:{:02} {}",
             match dt.date.month {
@@ -73,11 +74,15 @@ pub fn parse_ns_to_datetime(timestamp: u64) -> Result<String, ParseError>{
                 10 => "October",
                 11 => "November",
                 12 => "December",
-                _ => unimplemented!()
+                _ => unimplemented!(),
             },
             dt.date.day,
             dt.date.year,
-            if dt.time.hour > 12 { dt.time.hour - 12 } else { dt.time.hour },
+            if dt.time.hour > 12 {
+                dt.time.hour - 12
+            } else {
+                dt.time.hour
+            },
             dt.time.minute,
             if dt.time.hour >= 12 { "PM" } else { "AM" },
         )
