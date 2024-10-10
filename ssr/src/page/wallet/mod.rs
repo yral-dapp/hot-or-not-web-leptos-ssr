@@ -363,7 +363,7 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
 
 // #[component]
 // pub fn TestIndex() -> impl IntoView {
-//     let user_principal = move || Principal::from_text("ormrx-ntne5-xfeyd-ogl7u-komnp-sagzp-6lqli-3d32i-427u2-wunav-7qe").unwrap();
+//     let user_principal = move || Principal::from_text("qwu6a-oakwb-mfet3-5qqyt-mco6n-a6dqa-cg65x-2eqrj-5bejf-fr7kb-mqe").unwrap();
 
 //     // Create a resource to fetch and parse transactions
 //     let transactions_resource = create_resource(
@@ -371,14 +371,14 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
 //         move |user_principal| async move {
 //             // Fetch authenticated canisters
 //             let cans = unauth_canisters();
-//             let root = cans.sns_root(Principal::from_text("k5cjp-yyaaa-aaaah-qpt2q-cai").unwrap()).await;
+//             let root = cans.sns_root(Principal::from_text("67bll-riaaa-aaaaq-aaauq-cai").unwrap()).await;
 //             let sns_cans = root.list_sns_canisters(ListSnsCanistersArg {}).await?;
 
 //             let index = cans.sns_index(sns_cans.index.unwrap()).await;
 //             let result = index
 //                 .get_account_transactions(GetAccountTransactionsArgs {
-//                     max_results: 10u64.into(),
-//                     start: Some(9u64.into()),
+//                     max_results: 20u64.into(),
+//                     start: None,
 //                     account: Account {
 //                         owner: user_principal,
 //                         subaccount: None,
@@ -393,7 +393,7 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
 //                 GetTransactionsResult::Err(err) => return Err(ServerFnError::new(err.message)),
 //             };
 //             let len = transactions.len();
-//             assert!(len != 0);
+//             print!("{:?}", transactions);
 //             // Use parse_transactions on each transaction
 //             let parsed_transactions: Result<Vec<TxnInfoWallet>, ServerFnError> = transactions
 //                 .into_iter()
@@ -416,7 +416,7 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
 //                             key=|txn: &TxnInfoWallet| txn.id.clone()
 //                             children=move |txn: TxnInfoWallet| {
 //                                 view! {
-//                                     <li>
+//                                     <li class="mb-8">
 //                                         <p>{format!("Transaction ID: {}", txn.id)}</p>
 //                                         <p>{format!("Timestamp: {}", {
 //                                             DateTime::from_timestamp((txn.timestamp /1_000_000_000) as i64, ((txn.timestamp % 1_000_000_000) / 1_000) as u32).map(|dt| {
@@ -446,7 +446,13 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
 //                                             }).unwrap()
 //                                         })}</p>
 //                                         <p>{format!("Amount: {}", txn.amount.humanize_float_truncate_to_dp(2))}</p>
-//                                         <p>{format!("Type: {:?}", txn.tag)}</p>
+//                                         <p>{format!("Type: {:?}", match txn.tag{
+//                                             TxnInfoType::Burn { from } => format!("burn {}", from.to_text()),
+//                                             TxnInfoType::Mint { to } => format!("mint {}", to.to_text()),
+//                                             TxnInfoType::Transfer { from, to } => format!("transfer {}    {}", from.to_text(), to.to_text()),
+//                                             TxnInfoType::Received { from } => format!("received {}", from.to_text()),
+//                                             TxnInfoType::Sent { to } => format!("sent {}", to.to_text())
+//                                         })}</p>
 //                                     </li>
 //                                 }
 //                             }

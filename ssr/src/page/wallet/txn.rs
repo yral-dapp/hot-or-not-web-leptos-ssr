@@ -424,16 +424,16 @@ pub mod provider {
                 match &self.source {
                     IndexOrLedger::Index(index) => {
                         let index_canister = self.canisters.sns_index(*index).await;
-        
+
                         let Some(user_principal) = self.user_principal else {
                             return Err(AgentError::PrincipalError(
                                 ic_agent::export::PrincipalError::CheckSequenceNotMatch(),
                             ));
                         };
-        
+
                         // Fetch transactions up to the 'end' index
                         let max_results = end; // Fetch enough transactions to cover 'end'
-        
+
                         let history = index_canister
                             .get_account_transactions(GetAccountTransactionsArgs {
                                 max_results: Nat::from(max_results as u32),
@@ -444,7 +444,7 @@ pub mod provider {
                                 },
                             })
                             .await?;
-        
+
                         let transactions = match history {
                             GetTransactionsResult::Ok(v) => v.transactions,
                             GetTransactionsResult::Err(_) => {
@@ -453,21 +453,16 @@ pub mod provider {
                                 ));
                             }
                         };
-        
-                        // Skip the first 'start' transactions and take the next 'end - start'
+
                         let transactions = transactions.into_iter().skip(start).take(end - start);
                         let txns_len = transactions.len();
                         let data: Vec<TxnInfoWallet> = transactions
                             .filter_map(|txn| parse_transactions(txn, user_principal).ok())
                             .collect();
-        
-                        // Determine if we've reached the end
+
                         let is_end = txns_len < (end - start);
-        
-                        Ok(PageEntry {
-                            data,
-                            end: is_end,
-                        })
+
+                        Ok(PageEntry { data, end: is_end })
                     }
                     IndexOrLedger::Ledger(ledger) => {
                         let ledger = self.canisters.sns_ledger(*ledger).await;
