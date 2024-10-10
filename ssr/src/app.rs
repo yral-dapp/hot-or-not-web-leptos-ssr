@@ -1,6 +1,7 @@
 use crate::page::icpump::search::ICPumpSearch;
 use crate::page::icpump::ICPumpLanding;
 
+// use crate::page::wallet::TestIndex;
 use crate::{
     component::{base_route::BaseRoute, nav::NavBar},
     error_template::{AppError, ErrorTemplate},

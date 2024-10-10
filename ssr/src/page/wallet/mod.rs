@@ -378,7 +378,7 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
 //             let result = index
 //                 .get_account_transactions(GetAccountTransactionsArgs {
 //                     max_results: 10u64.into(),
-//                     start: None,
+//                     start: Some(9u64.into()),
 //                     account: Account {
 //                         owner: user_principal,
 //                         subaccount: None,
@@ -411,17 +411,46 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
 //                 Some(Err(e)) => view! { <p>{format!("Error: {}", e)}</p> }.into_view(),
 //                 Some(Ok(parsed_transactions)) => view! {
 //                     <ul>
-//                         {
-//                             let txn = parsed_transactions[0].clone();
-//                             view! {
-//                                 <li>
-//                                     <p>{format!("Transaction ID: {}", txn.id)}</p>
-//                                     <p>{format!("Timestamp: {}", txn.timestamp)}</p>
-//                                     <p>{format!("Amount: {}", txn.amount.humanize_float_truncate_to_dp(2))}</p>
-//                                     <p>{format!("Type: {:?}", txn.tag)}</p>
-//                                 </li>
+//                         <For
+//                             each=move || parsed_transactions.clone()
+//                             key=|txn: &TxnInfoWallet| txn.id.clone()
+//                             children=move |txn: TxnInfoWallet| {
+//                                 view! {
+//                                     <li>
+//                                         <p>{format!("Transaction ID: {}", txn.id)}</p>
+//                                         <p>{format!("Timestamp: {}", {
+//                                             DateTime::from_timestamp((txn.timestamp /1_000_000_000) as i64, ((txn.timestamp % 1_000_000_000) / 1_000) as u32).map(|dt| {
+//                                                 format!(
+//                                                     "{} {}, {} {}:{} {}",
+//                                                     match dt.date.month {
+//                                                         1 => "January",
+//                                                         2 => "February",
+//                                                         3 => "March",
+//                                                         4 => "April",
+//                                                         5 => "May",
+//                                                         6 => "June",
+//                                                         7 => "July",
+//                                                         8 => "August",
+//                                                         9 => "September",
+//                                                         10 => "October",
+//                                                         11 => "November",
+//                                                         12 => "December",
+//                                                         _ => unimplemented!(),
+//                                                     },
+//                                                     dt.date.day,
+//                                                     dt.date.year,
+//                                                     if dt.time.hour > 12 { dt.time.hour - 12 } else { dt.time.hour },
+//                                                     dt.time.minute,
+//                                                     if dt.time.hour >= 12 { "PM" } else { "AM" },
+//                                                 )
+//                                             }).unwrap()
+//                                         })}</p>
+//                                         <p>{format!("Amount: {}", txn.amount.humanize_float_truncate_to_dp(2))}</p>
+//                                         <p>{format!("Type: {:?}", txn.tag)}</p>
+//                                     </li>
+//                                 }
 //                             }
-//                         }
+//                         />
 //                     </ul>
 //                 }.into_view(),
 //             }}
