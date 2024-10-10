@@ -9,7 +9,7 @@ use speedate::DateTime;
 
 use crate::{
     component::infinite_scroller::KeyedData, page::token::info::TokenKeyParam,
-    utils::token::TokenBalance,
+    utils::{time::parse_ns_to_datetime, token::TokenBalance},
 };
 
 #[derive(Clone, Copy)]
@@ -176,36 +176,7 @@ pub fn TxnView(
                 }
             }>{format!("{} {}", bal_res, symbol)}</span>
             <span class="text-sm md:text-md text-white/50">
-                {
-                    DateTime::from_timestamp(
-                        (info.timestamp / 1_000_000_000) as i64,  // seconds
-                        ((info.timestamp % 1_000_000_000) / 1_000) as u32 // microseconds
-                    ).map(|dt| {
-                        format!(
-                            "{} {}, {} {:02}:{:02} {}",
-                            match dt.date.month {
-                                1 => "January",
-                                2 => "February",
-                                3 => "March",
-                                4 => "April",
-                                5 => "May",
-                                6 => "June",
-                                7 => "July",
-                                8 => "August",
-                                9 => "September",
-                                10 => "October",
-                                11 => "November",
-                                12 => "December",
-                                _ => unimplemented!()
-                            },
-                            dt.date.day,
-                            dt.date.year,
-                            if dt.time.hour > 12 { dt.time.hour - 12 } else { dt.time.hour },
-                            dt.time.minute,
-                            if dt.time.hour >= 12 { "PM" } else { "AM" },
-                        )
-                    }).ok()
-                }
+                {parse_ns_to_datetime(info.timestamp).ok()}
             </span>
             </div>
         </div>
@@ -241,7 +212,7 @@ pub mod provider {
             }
         }
     }
-    // #[cfg(not(feature = "mock-wallet-history"))]
+    #[cfg(not(feature = "mock-wallet-history"))]
     mod canister {
         use super::{
             Canisters, CursoredDataProvider, IndexOrLedger, TokenBalance, TxnInfoType,
