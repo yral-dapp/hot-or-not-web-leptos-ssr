@@ -248,7 +248,7 @@ pub mod provider {
             TxnInfoWallet,
         };
         use crate::component::infinite_scroller::PageEntry;
-        use candid::Principal;
+        use candid::{Nat, Principal};
         use ic_agent::AgentError;
         use leptos::ServerFnError;
         use yral_canisters_client::{
@@ -423,25 +423,29 @@ pub mod provider {
             ) -> Result<PageEntry<TxnInfoWallet>, AgentError> {
                 match &self.source {
                     IndexOrLedger::Index(index) => {
-                        let index = self.canisters.sns_index(*index).await;
+                        let index_canister = self.canisters.sns_index(*index).await;
+        
                         let Some(user_principal) = self.user_principal else {
                             return Err(AgentError::PrincipalError(
                                 ic_agent::export::PrincipalError::CheckSequenceNotMatch(),
                             ));
                         };
-
-                        let history = index
+        
+                        // Fetch transactions up to the 'end' index
+                        let max_results = end; // Fetch enough transactions to cover 'end'
+        
+                        let history = index_canister
                             .get_account_transactions(GetAccountTransactionsArgs {
-                                max_results: (end - start).into(),
-                                start: Some(end.into()),
+                                max_results: Nat::from(max_results as u32),
+                                start: None, // No cursor, fetch the latest transactions
                                 account: Account {
                                     owner: user_principal,
                                     subaccount: None,
                                 },
                             })
                             .await?;
-
-                        let history = match history {
+        
+                        let transactions = match history {
                             GetTransactionsResult::Ok(v) => v.transactions,
                             GetTransactionsResult::Err(_) => {
                                 return Err(AgentError::PrincipalError(
@@ -449,15 +453,20 @@ pub mod provider {
                                 ));
                             }
                         };
-
-                        let list_end = history.len() < (end - start);
-
+        
+                        // Skip the first 'start' transactions and take the next 'end - start'
+                        let transactions = transactions.into_iter().skip(start).take(end - start);
+                        let txns_len = transactions.len();
+                        let data: Vec<TxnInfoWallet> = transactions
+                            .filter_map(|txn| parse_transactions(txn, user_principal).ok())
+                            .collect();
+        
+                        // Determine if we've reached the end
+                        let is_end = txns_len < (end - start);
+        
                         Ok(PageEntry {
-                            data: history
-                                .into_iter()
-                                .filter_map(|txn| parse_transactions(txn, user_principal).ok())
-                                .collect(),
-                            end: list_end,
+                            data,
+                            end: is_end,
                         })
                     }
                     IndexOrLedger::Ledger(ledger) => {
