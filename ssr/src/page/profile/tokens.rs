@@ -30,8 +30,16 @@ async fn token_metadata(
 ) -> Result<TokenMetadata, AgentError> {
     let governance = deployed_cans.governance;
     let ledger = deployed_cans.ledger;
-
-    get_token_metadata(cans, user_principal, deployed_cans.root, governance, ledger).await
+    let index = deployed_cans.index;
+    get_token_metadata(
+        cans,
+        Some(user_principal),
+        deployed_cans.root,
+        governance,
+        ledger,
+        index,
+    )
+    .await
 }
 
 #[component]
