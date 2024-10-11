@@ -212,6 +212,7 @@ pub mod provider {
             }
         }
     }
+
     #[cfg(not(feature = "mock-wallet-history"))]
     mod canister {
         use super::{
@@ -240,69 +241,49 @@ pub mod provider {
             match txn.transaction {
                 Transaction {
                     mint: Some(mint), ..
-                } => {
-                    if is_user_principal(mint.to.owner) {
-                        Ok(TxnInfoWallet {
-                            tag: TxnInfoType::Mint { to: mint.to.owner },
-                            timestamp,
-                            amount: TokenBalance::new_cdao(mint.amount),
-                            id,
-                        })
-                    } else {
-                        Err(ServerFnError::new("Mint 'to' is not a user principal"))
-                    }
-                }
+                } => Ok(TxnInfoWallet {
+                    tag: TxnInfoType::Mint { to: mint.to.owner },
+                    timestamp,
+                    amount: TokenBalance::new_cdao(mint.amount),
+                    id,
+                }),
                 Transaction {
                     burn: Some(burn), ..
-                } => {
-                    if is_user_principal(user_principal) {
-                        Ok(TxnInfoWallet {
-                            tag: TxnInfoType::Burn {
-                                from: user_principal,
-                            },
-                            timestamp,
-                            amount: TokenBalance::new_cdao(burn.amount),
-                            id,
-                        })
-                    } else {
-                        Err(ServerFnError::new("Burn 'from' is not a user principal"))
-                    }
-                }
+                } => Ok(TxnInfoWallet {
+                    tag: TxnInfoType::Burn {
+                        from: user_principal,
+                    },
+                    timestamp,
+                    amount: TokenBalance::new_cdao(burn.amount),
+                    id,
+                }),
                 Transaction {
                     transfer: Some(transfer),
                     ..
                 } => {
-                    if is_user_principal(transfer.from.owner)
-                        && is_user_principal(transfer.to.owner)
-                    {
-                        if user_principal == transfer.from.owner {
-                            // User is sending funds
-                            Ok(TxnInfoWallet {
-                                tag: TxnInfoType::Sent {
-                                    to: transfer.to.owner,
-                                },
-                                timestamp,
-                                amount: TokenBalance::new_cdao(transfer.amount),
-                                id,
-                            })
-                        } else if user_principal == transfer.to.owner {
-                            // User is receiving funds
-                            Ok(TxnInfoWallet {
-                                tag: TxnInfoType::Received {
-                                    from: transfer.from.owner,
-                                },
-                                timestamp,
-                                amount: TokenBalance::new_cdao(transfer.amount),
-                                id,
-                            })
-                        } else {
-                            Err(ServerFnError::new(
-                                "Transfer details do not match the user principal",
-                            ))
-                        }
+                    if user_principal == transfer.from.owner {
+                        // User is sending funds
+                        Ok(TxnInfoWallet {
+                            tag: TxnInfoType::Sent {
+                                to: transfer.to.owner,
+                            },
+                            timestamp,
+                            amount: TokenBalance::new_cdao(transfer.amount),
+                            id,
+                        })
+                    } else if user_principal == transfer.to.owner {
+                        // User is receiving funds
+                        Ok(TxnInfoWallet {
+                            tag: TxnInfoType::Received {
+                                from: transfer.from.owner,
+                            },
+                            timestamp,
+                            amount: TokenBalance::new_cdao(transfer.amount),
+                            id,
+                        })
                     } else {
                         Err(ServerFnError::new(
-                            "Neither 'from' nor 'to' is a user principal",
+                            "Transfer details do not match the user principal",
                         ))
                     }
                 }
@@ -319,63 +300,38 @@ pub mod provider {
             match txn {
                 yral_canisters_client::sns_ledger::Transaction {
                     mint: Some(mint), ..
-                } => {
-                    if is_user_principal(mint.to.owner) {
-                        Ok(TxnInfoWallet {
-                            tag: TxnInfoType::Mint { to: mint.to.owner },
-                            timestamp,
-                            amount: TokenBalance::new_cdao(mint.amount),
-                            id,
-                        })
-                    } else {
-                        Err(ServerFnError::new("Mint 'to' is not a user principal"))
-                    }
-                }
+                } => Ok(TxnInfoWallet {
+                    tag: TxnInfoType::Mint { to: mint.to.owner },
+                    timestamp,
+                    amount: TokenBalance::new_cdao(mint.amount),
+                    id,
+                }),
                 yral_canisters_client::sns_ledger::Transaction {
                     burn: Some(burn), ..
-                } => {
-                    if is_user_principal(burn.from.owner) {
-                        Ok(TxnInfoWallet {
-                            tag: TxnInfoType::Burn {
-                                from: burn.from.owner,
-                            },
-                            timestamp,
-                            amount: TokenBalance::new_cdao(burn.amount),
-                            id,
-                        })
-                    } else {
-                        Err(ServerFnError::new("Burn 'from' is not a user principal"))
-                    }
-                }
+                } => Ok(TxnInfoWallet {
+                    tag: TxnInfoType::Burn {
+                        from: burn.from.owner,
+                    },
+                    timestamp,
+                    amount: TokenBalance::new_cdao(burn.amount),
+                    id,
+                }),
                 yral_canisters_client::sns_ledger::Transaction {
                     transfer: Some(transfer),
                     ..
-                } => {
-                    if is_user_principal(transfer.from.owner)
-                        && is_user_principal(transfer.to.owner)
-                    {
-                        Ok(TxnInfoWallet {
-                            tag: TxnInfoType::Transfer {
-                                from: transfer.from.owner,
-                                to: transfer.to.owner,
-                            },
-                            timestamp,
-                            amount: TokenBalance::new_cdao(transfer.amount),
-                            id,
-                        })
-                    } else {
-                        Err(ServerFnError::new(
-                            "Neither 'from' nor 'to' is a user principal",
-                        ))
-                    }
-                }
+                } => Ok(TxnInfoWallet {
+                    tag: TxnInfoType::Transfer {
+                        from: transfer.from.owner,
+                        to: transfer.to.owner,
+                    },
+                    timestamp,
+                    amount: TokenBalance::new_cdao(transfer.amount),
+                    id,
+                }),
                 _ => Err(ServerFnError::new("Unable to parse transaction details")),
             }
         }
 
-        fn is_user_principal(principal: Principal) -> bool {
-            !principal.as_slice().starts_with(b"\x00\x00")
-        }
         #[derive(Clone)]
         pub struct TxnHistory {
             pub canisters: Canisters<false>,
