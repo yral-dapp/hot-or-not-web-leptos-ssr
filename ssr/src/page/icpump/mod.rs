@@ -16,14 +16,14 @@ pub fn TokenListing(details: TokenListItem) -> impl IntoView {
             href=details.link
             class="relative flex h-fit max-h-[300px] w-full gap-2 overflow-hidden border border-transparent p-2 transition-colors hover:border-gray-700 active:border-gray-200"
         >
-            <div class="min-w-32 relative self-start p-1">
+            <div class="shrink-0 relative self-start p-1">
                 <img
                     class="mr-4 w-32 h-auto select-none"
                     src=details.logo
                     alt=details.token_name.clone()
                 />
             </div>
-            <div class="gap-1 flex-col flex h-fit">
+            <div class="gap-1 flex-1 flex-col flex h-fit">
                 <div class="flex items-center justify-between gap-4 text-gray-200">
                     <span
                         class="line-clamp-1 w-full overflow-hidden"
