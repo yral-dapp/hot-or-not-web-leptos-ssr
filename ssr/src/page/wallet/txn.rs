@@ -436,7 +436,8 @@ pub mod provider {
                                     } else {
                                         parse_transactions_ledger(txn, idx[0]).ok()
                                     }
-                                }).rev()
+                                })
+                                .rev()
                                 .collect(),
                             end: true,
                         })
