@@ -363,7 +363,7 @@ pub mod provider {
 
                         let history = index_canister
                             .get_account_transactions(GetAccountTransactionsArgs {
-                                max_results: Nat::from(max_results as u32),
+                                max_results: Nat::from(max_results),
                                 start: None, // No cursor, fetch the latest transactions
                                 account: Account {
                                     owner: user_principal,
@@ -393,13 +393,37 @@ pub mod provider {
                     }
                     IndexOrLedger::Ledger(ledger) => {
                         let ledger = self.canisters.sns_ledger(*ledger).await;
+                        // let history = ledger
+                        //     .get_transactions(GetTransactionsRequest {
+                        //         start: start.into(),
+                        //         length: (end - start).into(),
+                        //     })
+                        //     .await?;
+                        // let list_end = history.log_length < (end - start);
+                        // Ok(PageEntry {
+                        //     data: history
+                        //         .transactions
+                        //         .into_iter()
+                        //         .enumerate()
+                        //         .filter_map(|(i, txn)| {
+                        //             let idx = (history.first_index.clone() + i).0.to_u64_digits();
+                        //             if idx.is_empty() {
+                        //                 None
+                        //             } else {
+                        //                 parse_transactions_ledger(txn, idx[0]).ok()
+                        //             }
+                        //         })
+                        //         .collect(),
+                        //     end: list_end,
+                        // })
+
                         let history = ledger
                             .get_transactions(GetTransactionsRequest {
-                                start: start.into(),
-                                length: (end - start).into(),
+                                start: 0u32.into(),
+                                length: 10000000u32.into(),
                             })
                             .await?;
-                        let list_end = history.log_length < (end - start);
+
                         Ok(PageEntry {
                             data: history
                                 .transactions
@@ -413,8 +437,9 @@ pub mod provider {
                                         parse_transactions_ledger(txn, idx[0]).ok()
                                     }
                                 })
+                                .rev()
                                 .collect(),
-                            end: list_end,
+                            end: true,
                         })
                     }
                 }
