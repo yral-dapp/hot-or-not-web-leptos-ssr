@@ -1,3 +1,4 @@
+pub mod firestore;
 pub mod icpump;
 
 use std::{
