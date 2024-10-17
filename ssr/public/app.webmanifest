@@ -22,6 +22,7 @@
   "share_target": {
     "action": "/menu",
     "method": "GET",
+    "enctype": "multipart/form-data",
     "params": {
       "title": "title",
       "text": "text",
@@ -61,17 +62,26 @@
     {
       "src": "/img/screenshots/0.jpg",
       "type": "image/jpeg",
+      "form_factor": "narrow",
       "sizes": "780x1688"
     },
     {
       "src": "/img/screenshots/1.jpg",
       "type": "image/jpeg",
+      "form_factor": "narrow",
       "sizes": "780x1688"
     },
     {
       "src": "/img/screenshots/2.jpg",
       "type": "image/jpeg",
+      "form_factor": "narrow",
       "sizes": "780x1688"
+    },
+    {
+      "src": "/img/screenshots/wide.jpg",
+      "type": "image/jpeg",
+      "form_factor": "wide",
+      "sizes": "1920x1385"
     }
   ]
 }
