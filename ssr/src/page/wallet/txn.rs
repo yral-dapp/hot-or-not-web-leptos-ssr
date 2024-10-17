@@ -196,14 +196,14 @@ pub mod provider {
         user_principal: Option<Principal>,
         source: IndexOrLedger,
     ) -> impl CursoredDataProvider<Data = TxnInfoWallet> + Clone {
-        // #[cfg(feature = "mock-wallet-history")]
-        // {
-        //     _ = canisters;
-        //     _ = user_principal;
-        //     _ = source;
-        //     mock::MockHistoryProvider
-        // }
-        // #[cfg(not(feature = "mock-wallet-history"))]
+        #[cfg(feature = "mock-wallet-history")]
+        {
+            _ = canisters;
+            _ = user_principal;
+            _ = source;
+            mock::MockHistoryProvider
+        }
+        #[cfg(not(feature = "mock-wallet-history"))]
         {
             canister::TxnHistory {
                 canisters,
@@ -213,7 +213,7 @@ pub mod provider {
         }
     }
 
-    // #[cfg(not(feature = "mock-wallet-history"))]
+    #[cfg(not(feature = "mock-wallet-history"))]
     mod canister {
         use super::{
             Canisters, CursoredDataProvider, IndexOrLedger, TokenBalance, TxnInfoType,
