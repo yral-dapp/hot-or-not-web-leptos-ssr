@@ -132,6 +132,9 @@ pub fn App() -> impl IntoView {
             </Script>
         </Show>
 
+        // <Script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js"></Script>
+        // <Script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js"></Script>
+
         // content for this welcome page
         <Router fallback=|| view! { <NotFound /> }.into_view()>
             <main>
