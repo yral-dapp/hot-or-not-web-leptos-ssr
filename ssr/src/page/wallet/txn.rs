@@ -231,7 +231,10 @@ pub mod provider {
             sns_ledger::{self, GetTransactionsRequest, SnsLedger},
         };
 
-        async fn recursively_fetch_transactions<'a>(ledger: SnsLedger<'a>, start: u32) -> Result<Vec<sns_ledger::Transaction>, ServerFnError> {
+        async fn recursively_fetch_transactions<'a>(
+            ledger: SnsLedger<'a>,
+            start: u32,
+        ) -> Result<Vec<sns_ledger::Transaction>, ServerFnError> {
             let mut transactions = Vec::new();
             let mut start = start;
             loop {
@@ -436,7 +439,9 @@ pub mod provider {
                         //     end: list_end,
                         // })
 
-                        let history = recursively_fetch_transactions(ledger, 0).await.map_err(|e| AgentError::MessageError(e.to_string()))?;
+                        let history = recursively_fetch_transactions(ledger, 0)
+                            .await
+                            .map_err(|e| AgentError::MessageError(e.to_string()))?;
 
                         Ok(PageEntry {
                             data: history
