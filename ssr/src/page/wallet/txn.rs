@@ -228,8 +228,27 @@ pub mod provider {
                 Account, GetAccountTransactionsArgs, GetTransactionsResult, Transaction,
                 TransactionWithId,
             },
-            sns_ledger::GetTransactionsRequest,
+            sns_ledger::{self, GetTransactionsRequest, SnsLedger},
         };
+
+        async fn recursively_fetch_transactions<'a>(ledger: SnsLedger<'a>, start: u32) -> Result<Vec<sns_ledger::Transaction>, ServerFnError> {
+            let mut transactions = Vec::new();
+            let mut start = start;
+            loop {
+                let history = ledger
+                    .get_transactions(GetTransactionsRequest {
+                        start: start.into(),
+                        length: 1000u32.into(),
+                    })
+                    .await?;
+                transactions.extend(history.transactions);
+                if history.log_length < 1000u32 {
+                    break;
+                }
+                start += 1000u32;
+            }
+            Ok(transactions)
+        }
 
         fn parse_transactions(
             txn: TransactionWithId,
@@ -417,25 +436,14 @@ pub mod provider {
                         //     end: list_end,
                         // })
 
-                        let history = ledger
-                            .get_transactions(GetTransactionsRequest {
-                                start: 0u32.into(),
-                                length: 10000000u32.into(),
-                            })
-                            .await?;
+                        let history = recursively_fetch_transactions(ledger, 0).await.map_err(|e| AgentError::MessageError(e.to_string()))?;
 
                         Ok(PageEntry {
                             data: history
-                                .transactions
                                 .into_iter()
                                 .enumerate()
                                 .filter_map(|(i, txn)| {
-                                    let idx = (history.first_index.clone() + i).0.to_u64_digits();
-                                    if idx.is_empty() {
-                                        None
-                                    } else {
-                                        parse_transactions_ledger(txn, idx[0]).ok()
-                                    }
+                                    parse_transactions_ledger(txn, i as u64).ok()
                                 })
                                 .rev()
                                 .collect(),
