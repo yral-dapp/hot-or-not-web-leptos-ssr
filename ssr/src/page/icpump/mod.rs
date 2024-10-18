@@ -1,20 +1,28 @@
 use std::collections::HashMap;
+use std::collections::VecDeque;
 
+use futures::StreamExt;
 use leptos::*;
 
 use crate::component::spinner::FullScreenSpinner;
 use crate::consts::ICPUMP_LISTING_PAGE_SIZE;
+use crate::utils::token::firestore::init_firebase;
+use crate::utils::token::firestore::listen_to_documents;
 use crate::utils::token::icpump::get_paginated_token_list;
 use crate::utils::token::icpump::TokenListItem;
 
 pub mod search;
 
 #[component]
-pub fn TokenListing(details: TokenListItem) -> impl IntoView {
+pub fn TokenListing(
+    details: TokenListItem,
+    #[prop(optional, default = false)] is_new_token: bool,
+) -> impl IntoView {
     view! {
         <a
             href=details.link
             class="relative flex h-fit max-h-[300px] w-full gap-2 overflow-hidden border border-transparent p-2 transition-colors hover:border-gray-700 active:border-gray-200"
+            class:tada=is_new_token
         >
             <div class="min-w-32 relative self-start p-1">
                 <img
@@ -61,13 +69,32 @@ pub fn ICPumpListing() -> impl IntoView {
     let token_list: RwSignal<Vec<TokenListItem>> = create_rw_signal(vec![]);
     let end_of_list = create_rw_signal(false);
     let cache = create_rw_signal(HashMap::<u64, Vec<TokenListItem>>::new());
+    let new_token_list: RwSignal<VecDeque<TokenListItem>> = create_rw_signal(VecDeque::new());
 
     let act = create_resource(page, move |page| async move {
+        // reset new_token_list
+        new_token_list.set(VecDeque::new());
+
         if let Some(cached) = cache.with_untracked(|c| c.get(&page).cloned()) {
             return cached.clone();
         }
 
         get_paginated_token_list(page as u32).await.unwrap()
+    });
+
+    create_effect(move |_| {
+        spawn_local(async move {
+            let (_app, firestore) = init_firebase();
+            let mut stream = listen_to_documents(&firestore);
+            while let Some(doc) = stream.next().await {
+                // push each item in doc to new_token_list
+                for item in doc {
+                    new_token_list.update(move |list| {
+                        list.push_front(item.clone());
+                    });
+                }
+            }
+        });
     });
 
     view! {
@@ -89,6 +116,13 @@ pub fn ICPumpListing() -> impl IntoView {
                         });
                     view! {
                         <div class="grid grid-col-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <For
+                                each=move || new_token_list.get()
+                                key=|t| t.token_symbol.clone()
+                                children=move |token: TokenListItem| {
+                                    view! { <TokenListing details=token is_new_token=true/> }
+                                }
+                            />
                             <For
                                 each=move || token_list.get()
                                 key=|t| t.token_symbol.clone()
