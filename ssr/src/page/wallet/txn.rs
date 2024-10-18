@@ -213,7 +213,7 @@ pub mod provider {
         }
     }
 
-    #[cfg(not(feature = "mock-wallet-history"))]
+    // #[cfg(not(feature = "mock-wallet-history"))]
     mod canister {
         use super::{
             Canisters, CursoredDataProvider, IndexOrLedger, TokenBalance, TxnInfoType,
@@ -222,36 +222,15 @@ pub mod provider {
         use crate::component::infinite_scroller::PageEntry;
         use candid::{Nat, Principal};
         use ic_agent::AgentError;
+        use ic_certification::{HashTree, LookupResult};
         use leptos::ServerFnError;
         use yral_canisters_client::{
             sns_index::{
                 Account, GetAccountTransactionsArgs, GetTransactionsResult, Transaction,
                 TransactionWithId,
             },
-            sns_ledger::{self, GetTransactionsRequest, SnsLedger},
+            sns_ledger::{GetTransactionsRequest, SnsLedger},
         };
-
-        async fn recursively_fetch_transactions<'a>(
-            ledger: SnsLedger<'a>,
-            start: u32,
-        ) -> Result<Vec<sns_ledger::Transaction>, ServerFnError> {
-            let mut transactions = Vec::new();
-            let mut start = start;
-            loop {
-                let history = ledger
-                    .get_transactions(GetTransactionsRequest {
-                        start: start.into(),
-                        length: 1000u32.into(),
-                    })
-                    .await?;
-                transactions.extend(history.transactions);
-                if history.log_length < 1000u32 {
-                    break;
-                }
-                start += 1000u32;
-            }
-            Ok(transactions)
-        }
 
         fn parse_transactions(
             txn: TransactionWithId,
@@ -354,6 +333,23 @@ pub mod provider {
             }
         }
 
+        async fn get_latest_ledger_transaction<'a>(
+            ledger: &SnsLedger<'a>,
+        ) -> Result<u64, ServerFnError> {
+            let tip_certificate = ledger.icrc_3_get_tip_certificate().await?;
+
+            let hash_tree: HashTree =
+                serde_cbor::from_slice(&tip_certificate.unwrap().hash_tree).unwrap();
+
+            let lookup_path = &[b"last_block_index"];
+            if let LookupResult::Found(res) = hash_tree.lookup_path(lookup_path) {
+                let last_block_index = u64::from_be_bytes(res.try_into()?);
+                return Ok(last_block_index);
+            }
+
+            Err(ServerFnError::new("Path not found in HashTree"))
+        }
+
         #[derive(Clone)]
         pub struct TxnHistory {
             pub canisters: Canisters<false>,
@@ -415,44 +411,49 @@ pub mod provider {
                     }
                     IndexOrLedger::Ledger(ledger) => {
                         let ledger = self.canisters.sns_ledger(*ledger).await;
-                        // let history = ledger
-                        //     .get_transactions(GetTransactionsRequest {
-                        //         start: start.into(),
-                        //         length: (end - start).into(),
-                        //     })
-                        //     .await?;
-                        // let list_end = history.log_length < (end - start);
-                        // Ok(PageEntry {
-                        //     data: history
-                        //         .transactions
-                        //         .into_iter()
-                        //         .enumerate()
-                        //         .filter_map(|(i, txn)| {
-                        //             let idx = (history.first_index.clone() + i).0.to_u64_digits();
-                        //             if idx.is_empty() {
-                        //                 None
-                        //             } else {
-                        //                 parse_transactions_ledger(txn, idx[0]).ok()
-                        //             }
-                        //         })
-                        //         .collect(),
-                        //     end: list_end,
-                        // })
 
-                        let history = recursively_fetch_transactions(ledger, 0)
+                        let total_transactions = get_latest_ledger_transaction(&ledger)
                             .await
                             .map_err(|e| AgentError::MessageError(e.to_string()))?;
 
+                        let start_index = if total_transactions > end as u64 {
+                            total_transactions - end as u64
+                        } else {
+                            0
+                        };
+
+                        let length = if total_transactions > start as u64 {
+                            total_transactions - start_index - start as u64
+                        } else {
+                            total_transactions - start_index
+                        };
+
+                        let history = ledger
+                            .get_transactions(GetTransactionsRequest {
+                                start: start_index.into(),
+                                length: length.into(),
+                            })
+                            .await
+                            .map_err(|e| AgentError::MessageError(e.to_string()))?;
+
+                        let list_end = start_index == 0;
+
                         Ok(PageEntry {
                             data: history
+                                .transactions
                                 .into_iter()
                                 .enumerate()
                                 .filter_map(|(i, txn)| {
-                                    parse_transactions_ledger(txn, i as u64).ok()
+                                    let idx = (history.first_index.clone() + i).0.to_u64_digits();
+                                    if idx.is_empty() {
+                                        None
+                                    } else {
+                                        parse_transactions_ledger(txn, idx[0]).ok()
+                                    }
                                 })
                                 .rev()
                                 .collect(),
-                            end: true,
+                            end: list_end,
                         })
                     }
                 }

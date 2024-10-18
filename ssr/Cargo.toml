@@ -111,6 +111,8 @@ yral-types = { git = "https://github.com/yral-dapp/yral-common.git", rev = "2e43
 yral-qstash-types = { git = "https://github.com/yral-dapp/yral-common.git", rev = "2e432882052a69d5a625e7188cd69ad8aa5bcec7" }
 yral-canisters-client = { git = "https://github.com/yral-dapp/yral-common.git", rev = "2e432882052a69d5a625e7188cd69ad8aa5bcec7", features = ["full"] }
 pulldown-cmark = "0.12.1"
+serde_cbor = "0.11.2"
+ic-certification = "2.6.0"
 
 
 [build-dependencies]
