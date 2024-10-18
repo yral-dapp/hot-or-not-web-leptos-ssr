@@ -215,6 +215,8 @@ pub mod provider {
 
     // #[cfg(not(feature = "mock-wallet-history"))]
     mod canister {
+        use std::io::Cursor;
+
         use super::{
             Canisters, CursoredDataProvider, IndexOrLedger, TokenBalance, TxnInfoType,
             TxnInfoWallet,
@@ -336,10 +338,18 @@ pub mod provider {
         async fn get_latest_ledger_transaction<'a>(
             ledger: &SnsLedger<'a>,
         ) -> Result<u64, ServerFnError> {
-            let tip_certificate = ledger.icrc_3_get_tip_certificate().await?;
+            let tip_certificate =
+                ledger
+                    .icrc_3_get_tip_certificate()
+                    .await?
+                    .ok_or(ServerFnError::new(
+                        "Failed to get tip certificate from ledger canister",
+                    ))?;
 
-            let hash_tree: HashTree =
-                serde_cbor::from_slice(&tip_certificate.unwrap().hash_tree).unwrap();
+            let cursor = Cursor::new(&tip_certificate.hash_tree);
+
+            let hash_tree: HashTree = ciborium::from_reader(cursor)
+                .map_err(|e| ServerFnError::new(format!("Failed to parse HashTree: {}", e)))?;
 
             let lookup_path = &[b"last_block_index"];
             if let LookupResult::Found(res) = hash_tree.lookup_path(lookup_path) {
