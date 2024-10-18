@@ -213,8 +213,10 @@ pub mod provider {
         }
     }
 
-    #[cfg(not(feature = "mock-wallet-history"))]
+    // #[cfg(not(feature = "mock-wallet-history"))]
     mod canister {
+        use std::io::Cursor;
+
         use super::{
             Canisters, CursoredDataProvider, IndexOrLedger, TokenBalance, TxnInfoType,
             TxnInfoWallet,
@@ -222,13 +224,14 @@ pub mod provider {
         use crate::component::infinite_scroller::PageEntry;
         use candid::{Nat, Principal};
         use ic_agent::AgentError;
+        use ic_certification::{HashTree, LookupResult};
         use leptos::ServerFnError;
         use yral_canisters_client::{
             sns_index::{
                 Account, GetAccountTransactionsArgs, GetTransactionsResult, Transaction,
                 TransactionWithId,
             },
-            sns_ledger::GetTransactionsRequest,
+            sns_ledger::{GetTransactionsRequest, SnsLedger},
         };
 
         fn parse_transactions(
@@ -332,6 +335,31 @@ pub mod provider {
             }
         }
 
+        async fn get_latest_ledger_transaction<'a>(
+            ledger: &SnsLedger<'a>,
+        ) -> Result<u64, ServerFnError> {
+            let tip_certificate =
+                ledger
+                    .icrc_3_get_tip_certificate()
+                    .await?
+                    .ok_or(ServerFnError::new(
+                        "Failed to get tip certificate from ledger canister",
+                    ))?;
+
+            let cursor = Cursor::new(&tip_certificate.hash_tree);
+
+            let hash_tree: HashTree = ciborium::from_reader(cursor)
+                .map_err(|e| ServerFnError::new(format!("Failed to parse HashTree: {}", e)))?;
+
+            let lookup_path = &[b"last_block_index"];
+            if let LookupResult::Found(res) = hash_tree.lookup_path(lookup_path) {
+                let last_block_index = u64::from_be_bytes(res.try_into()?);
+                return Ok(last_block_index);
+            }
+
+            Err(ServerFnError::new("Path not found in HashTree"))
+        }
+
         #[derive(Clone)]
         pub struct TxnHistory {
             pub canisters: Canisters<false>,
@@ -363,7 +391,7 @@ pub mod provider {
 
                         let history = index_canister
                             .get_account_transactions(GetAccountTransactionsArgs {
-                                max_results: Nat::from(max_results as u32),
+                                max_results: Nat::from(max_results),
                                 start: None, // No cursor, fetch the latest transactions
                                 account: Account {
                                     owner: user_principal,
@@ -393,13 +421,33 @@ pub mod provider {
                     }
                     IndexOrLedger::Ledger(ledger) => {
                         let ledger = self.canisters.sns_ledger(*ledger).await;
+
+                        let total_transactions = get_latest_ledger_transaction(&ledger)
+                            .await
+                            .map_err(|e| AgentError::MessageError(e.to_string()))?;
+
+                        let start_index = if total_transactions > end as u64 {
+                            total_transactions - end as u64
+                        } else {
+                            0
+                        };
+
+                        let length = if total_transactions > start as u64 {
+                            total_transactions - start_index - start as u64
+                        } else {
+                            total_transactions - start_index
+                        };
+
                         let history = ledger
                             .get_transactions(GetTransactionsRequest {
-                                start: start.into(),
-                                length: (end - start).into(),
+                                start: start_index.into(),
+                                length: length.into(),
                             })
-                            .await?;
-                        let list_end = history.log_length < (end - start);
+                            .await
+                            .map_err(|e| AgentError::MessageError(e.to_string()))?;
+
+                        let list_end = start_index == 0;
+
                         Ok(PageEntry {
                             data: history
                                 .transactions
@@ -413,6 +461,7 @@ pub mod provider {
                                         parse_transactions_ledger(txn, idx[0]).ok()
                                     }
                                 })
+                                .rev()
                                 .collect(),
                             end: list_end,
                         })
