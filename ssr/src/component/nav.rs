@@ -137,7 +137,7 @@ pub fn NavBar() -> impl IntoView {
             s if s.starts_with("/wallet") => 3, // highlights during redirects
             s if s.starts_with("/token/info") => 3,
             s if s.starts_with("/token/create") => 2,
-            s if s.starts_with("/token/search") => 5,
+            s if s.starts_with("/icpump-ai") => 5,
             _ => 4,
         }
     });
@@ -169,9 +169,8 @@ pub fn NavBar() -> impl IntoView {
                         view! {
                             <NavIcon
                                 idx=5
-                                href="/token/search"
-                                icon=SearchIcon
-                                filled_icon=SearchIconFilled
+                                href="/icpump-ai"
+                                icon=ICPumpAiIcon
                                 cur_selected=cur_selected
                             />
                         }

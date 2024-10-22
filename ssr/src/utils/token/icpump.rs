@@ -25,7 +25,7 @@ pub struct TokenListItemFS {
     pub link: String,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, Eq, PartialEq, Hash)]
 pub struct TokenListItem {
     pub user_id: String,
     pub name: String,
@@ -118,10 +118,22 @@ pub mod icpump_search {
 pub struct ICPumpSearchResult {
     pub items: Vec<TokenListItem>,
     pub text: String,
+    pub rag_data: String,
+}
+
+#[derive(Clone, Serialize, Deserialize, Debug)]
+pub struct ICPumpSearchResultContexual {
+    pub text: String,
+}
+
+#[derive(Clone, Serialize, Deserialize, Debug)]
+pub struct ICPumpChatInteraction {
+    pub query: String,
+    pub response: String,
 }
 
 #[server]
-pub async fn get_token_search_results(query: String) -> Result<ICPumpSearchResult, ServerFnError> {
+pub async fn get_pumpai_results(query: String) -> Result<ICPumpSearchResult, ServerFnError> {
     use tonic::Request;
 
     let channel: ICPumpSearchGrpcChannel = expect_context();
@@ -141,7 +153,48 @@ pub async fn get_token_search_results(query: String) -> Result<ICPumpSearchResul
     Ok(ICPumpSearchResult {
         items: res_vec,
         text: res.answer,
+        rag_data: res.rag_data,
     })
+}
+
+#[server]
+pub async fn get_pumpai_results_contextual(
+    query: String,
+    previous_interactions: Vec<ICPumpChatInteraction>,
+    rag_data: String,
+) -> Result<ICPumpSearchResultContexual, ServerFnError> {
+    use tonic::Request;
+
+    let channel: ICPumpSearchGrpcChannel = expect_context();
+    let mut client = icpump_search::search_service_client::SearchServiceClient::with_interceptor(
+        channel.channel,
+        move |req: Request<()>| Ok(req),
+    );
+
+    let request = icpump_search::ContextualSearchRequest {
+        input_query: query,
+        previous_interactions: previous_interactions
+            .into_iter()
+            .map(|item| item.into())
+            .collect::<Vec<icpump_search::QueryResponsePair>>(),
+        rag_data,
+    };
+    let resp: tonic::Response<icpump_search::ContextualSearchResponse> =
+        client.contextual_search(request).await?;
+
+    let res = resp.into_inner();
+
+    Ok(ICPumpSearchResultContexual { text: res.answer })
+}
+
+#[cfg(feature = "ssr")]
+impl From<ICPumpChatInteraction> for icpump_search::QueryResponsePair {
+    fn from(item: ICPumpChatInteraction) -> Self {
+        icpump_search::QueryResponsePair {
+            query: item.query,
+            response: item.response,
+        }
+    }
 }
 
 #[cfg(feature = "ssr")]
