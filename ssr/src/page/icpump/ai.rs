@@ -202,6 +202,26 @@ pub fn ICPumpAiPage2(
 }
 
 #[component]
+pub fn ICPumpAiToken(details: TokenListItem) -> impl IntoView {
+    view! {
+        <button
+            href=details.link
+            class="text-xs w-full p-2 flex gap-2 border border-gray-900 bg-transparent hover:bg-white/10 active:bg-white/5">
+          <img src=details.logo class="w-[5.5rem] shrink-0 h-[5.5rem]" />
+          <div class="flex flex-col gap-1 text-left">
+            <div class="flex w-full items-center justify-between gap-4">
+              <span class="shrink line-clamp-1">{details.token_name}</span>
+              <span class="shrink-0 font-bold">{details.token_symbol}</span>
+            </div>
+            <span class="line-clamp-4 text-gray-400">
+              {details.description}
+            </span>
+          </div>
+      </button>
+    }
+}
+
+#[component]
 pub fn ICPumpAiTokenListing(tokens: Vec<TokenListItem>) -> impl IntoView {
     let view_more = create_rw_signal(false);
     let tokens_stripped = tokens
@@ -214,55 +234,55 @@ pub fn ICPumpAiTokenListing(tokens: Vec<TokenListItem>) -> impl IntoView {
     let tokens_view_list = create_memo(move |_| {
         let tokens_stripped = tokens_stripped.clone();
         let tokens = tokens.clone();
+        let tokens_final;
         if view_more.get() {
-            view! {
-                <div>
-                    <For
-                        each=move || tokens.clone()
-                        key=|t| t.token_symbol.clone()
-                        children=move |token: TokenListItem| {
-                            view! {
-                                <TokenListing details=token />
-                            }
-                        }
-                    />
-                </div>
-            }
-            .into_view()
+            tokens_final = tokens.clone();
         } else {
-            view! {
-                <div>
-                    <For
-                        each=move || tokens_stripped.clone()
-                        key=|t| t.token_symbol.clone()
-                        children=move |token: TokenListItem| {
-                            view! {
-                                <TokenListing details=token />
-                            }
-                        }
-                    />
-                </div>
-            }
-            .into_view()
+            tokens_final = tokens_stripped.clone();
         }
+
+        view! {
+            <div class="flex flex-col gap-2 relative w-full items-start pr-4">
+                <For
+                    each=move || tokens_final.clone()
+                    key=|t| t.token_symbol.clone()
+                    children=move |token: TokenListItem| {
+                        view! {
+                            <ICPumpAiToken details=token />
+                        }
+                    }
+                />
+            </div>
+        }
+        .into_view()
     });
 
     let tokens_view = create_memo(move |_| {
         if tokens_len != 0 {
             view! {
                 {tokens_view_list}
-                <button
-                    class="w-full py-2 px-4 text-sm font-medium text-gray-200 bg-gray-800 hover:bg-gray-700 active:bg-gray-600 transition-colors rounded-md"
-                    on:click=move |_| view_more.update(|v| *v = !*v)
-                >
-                    {move || if view_more.get() { "View Less" } else { "View More" }}
-                </button>
-            }.into_view()
-        } else {
-            view! {
-                <></>
+                <div class="w-full flex items-center justify-center">
+                    <button
+                        class="flex items-center gap-2 rounded-xs border border-[#202125] w-fit p-2"
+                        on:click=move |_| view_more.update(|v| *v = !*v)
+                    >
+                        {move || if view_more.get() {
+                            view! {
+                                <span>View less</span>
+                                <span>"↑"</span>
+                            }
+                        } else {
+                            view! {
+                                <span>View more</span>
+                                <span>"↓"</span>
+                            }
+                        }}
+                    </button>
+                </div>
             }
             .into_view()
+        } else {
+            view! {<></>}.into_view()
         }
     });
 
@@ -321,7 +341,7 @@ pub fn ICPumpAiPage3(
                     match item {
                         ICPumpAiChatItem::UserItem{query} => {
                             view! {
-                                <div class="flex flex-col gap-2 w-full items-end pl-8">
+                                <div class="flex flex-col gap-2 relative w-full items-end pl-8">
                                     <div class="w-fit px-4 py-2 rounded-xs bg-[#202125]">
                                         {query}
                                     </div>
@@ -330,7 +350,7 @@ pub fn ICPumpAiPage3(
                         }
                         ICPumpAiChatItem::ResponseItem{response, tokens} => {
                             view! {
-                                <div class="flex flex-col gap-2 w-full items-start pr-4">
+                                <div class="flex flex-col gap-2 relative w-full items-start pr-4">
                                     <div class="w-fit px-4 py-2 rounded-xs">
                                         <MarkdownRenderer text=response />
                                     </div>
