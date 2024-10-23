@@ -7,7 +7,6 @@ use wasm_bindgen::prelude::Closure;
 use wasm_bindgen::prelude::*;
 
 use crate::{
-    page::icpump::TokenListing,
     try_or_redirect,
     utils::token::icpump::{
         get_pumpai_results, get_pumpai_results_contextual, ICPumpChatInteraction, TokenListItem,
@@ -234,12 +233,11 @@ pub fn ICPumpAiTokenListing(tokens: Vec<TokenListItem>) -> impl IntoView {
     let tokens_view_list = create_memo(move |_| {
         let tokens_stripped = tokens_stripped.clone();
         let tokens = tokens.clone();
-        let tokens_final;
-        if view_more.get() {
-            tokens_final = tokens.clone();
+        let tokens_final = if view_more.get() {
+            tokens.clone()
         } else {
-            tokens_final = tokens_stripped.clone();
-        }
+            tokens_stripped.clone()
+        };
 
         view! {
             <div class="flex flex-col gap-2 relative w-full items-start pr-4">
