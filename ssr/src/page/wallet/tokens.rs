@@ -1,17 +1,10 @@
 use candid::Principal;
 use ic_agent::AgentError;
 
-use crate::page::token;
 use crate::page::wallet::ShareButtonWithFallbackPopup;
 use crate::utils::token::{get_ck_metadata, TokenBalanceOrClaiming};
 use crate::{
-    component::{
-        back_btn::BackButton,
-        bullet_loader::BulletLoader,
-        canisters_prov::AuthCansProvider,
-        infinite_scroller::{CursoredDataProvider, InfiniteScroller, KeyedData, PageEntry},
-        title::Title,
-    },
+    component::infinite_scroller::{CursoredDataProvider, InfiniteScroller, KeyedData, PageEntry},
     state::canisters::{unauth_canisters, Canisters},
     utils::{
         profile::propic_from_principal,

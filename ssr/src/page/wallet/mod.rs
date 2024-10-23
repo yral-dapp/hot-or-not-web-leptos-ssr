@@ -1,24 +1,18 @@
 pub mod tokens;
 pub mod transactions;
 pub mod txn;
-use crate::component::infinite_scroller::CursoredDataProvider;
-use crate::state::canisters;
 use crate::{
     component::share_popup::ShareButtonWithFallbackPopup,
-    page::token::non_yral_tokens::eligible_non_yral_supported_tokens,
     state::canisters::unauth_canisters,
 };
 use candid::Principal;
 use leptos::*;
 use leptos_router::Params;
 use leptos_router::{use_params, Redirect};
-use tokens::{TokenList, TokenRootList, TokenView};
+use tokens::TokenList;
 
 use crate::{
-    component::{
-        bullet_loader::BulletLoader, canisters_prov::AuthCansProvider, connect::ConnectLogin,
-        infinite_scroller::KeyedData,
-    },
+    component::{canisters_prov::AuthCansProvider, connect::ConnectLogin},
     state::{auth::account_connected_reader, canisters::authenticated_canisters},
     try_or_redirect_opt,
     utils::profile::ProfileDetails,
