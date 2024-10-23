@@ -2,7 +2,10 @@ pub mod firestore;
 pub mod icpump;
 
 use std::{
-    cmp::Ordering, collections::HashMap, ops::{Add, AddAssign, Sub, SubAssign}, str::FromStr
+    cmp::Ordering,
+    collections::HashMap,
+    ops::{Add, AddAssign, Sub, SubAssign},
+    str::FromStr,
 };
 
 use candid::{Nat, Principal};
@@ -367,7 +370,10 @@ pub async fn get_ck_metadata<const A: bool>(
         name: name.unwrap_or_default(),
         description: "".to_string(), // Default description if missing
         symbol: symbol.unwrap_or_default(),
-        fees: TokenBalance::new(fees.unwrap(), decimals.clone().unwrap().0.to_u64_digits()[0] as u8),
+        fees: TokenBalance::new(
+            fees.unwrap(),
+            decimals.clone().unwrap().0.to_u64_digits()[0] as u8,
+        ),
         balance: None,
         root: None,
         ledger,
@@ -376,16 +382,24 @@ pub async fn get_ck_metadata<const A: bool>(
 
     // If a user principal is provided, try to get the balance
     if let Some(user_principal) = user_principal {
-        let balance = match ledger_can.icrc_1_balance_of(yral_canisters_client::sns_ledger::Account { owner: user_principal, subaccount: None }).await {
+        let balance = match ledger_can
+            .icrc_1_balance_of(yral_canisters_client::sns_ledger::Account {
+                owner: user_principal,
+                subaccount: None,
+            })
+            .await
+        {
             Ok(balance) => balance,
             Err(_) => return Ok(None), // Return None if balance fetch fails
         };
-        token_metadata.balance = Some(TokenBalanceOrClaiming::new(TokenBalance::new(balance, decimals.unwrap().0.to_u64_digits()[0] as u8)));
+        token_metadata.balance = Some(TokenBalanceOrClaiming::new(TokenBalance::new(
+            balance,
+            decimals.unwrap().0.to_u64_digits()[0] as u8,
+        )));
     }
 
     Ok(Some(token_metadata))
 }
-
 
 /// Fetches the token balance for an SNS token
 /// returns TokenBalanceOrClaiming::Claiming if the token creation is in progress

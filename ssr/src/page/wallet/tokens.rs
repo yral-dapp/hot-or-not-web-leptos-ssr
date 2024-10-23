@@ -120,7 +120,11 @@ pub fn TokenView(
 #[component]
 pub fn TokenTile(user_principal: String, token_meta_data: TokenMetadata) -> impl IntoView {
     let root = token_meta_data.root;
-    let share_link = format!("/token/info/{}/{user_principal}?airdrop_amt=100", root.map(|r| r.to_text()).unwrap_or(token_meta_data.index.to_text()));
+    let share_link = format!(
+        "/token/info/{}/{user_principal}?airdrop_amt=100",
+        root.map(|r| r.to_text())
+            .unwrap_or(token_meta_data.index.to_text())
+    );
     let share_link_s = store_value(share_link);
     let share_message = format!(
         "Hey! Check out the token: {} I created on YRAL 👇 {}. I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter",

@@ -60,7 +60,7 @@ fn TokenInfoInner(
     meta: TokenMetadata,
     key_principal: Option<Principal>,
     is_user_principal: bool,
-    param: String
+    param: String,
 ) -> impl IntoView {
     let meta_c1 = meta.clone();
     let meta_c = meta.clone();
@@ -72,8 +72,12 @@ fn TokenInfoInner(
             icondata::AiDownOutlined
         }
     });
-    let share_link = key_principal
-        .map(|key_principal| format!("/token/info/{}/{key_principal}?airdrop_amt=100", root.map(|r| r.to_text()).unwrap_or(param.clone())));
+    let share_link = key_principal.map(|key_principal| {
+        format!(
+            "/token/info/{}/{key_principal}?airdrop_amt=100",
+            root.map(|r| r.to_text()).unwrap_or(param.clone())
+        )
+    });
     let message = share_link.clone().map(|share_link|format!(
         "Hey! Check out the token: {} I created on YRAL 👇 {}. I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter",
         meta.symbol,  share_link
@@ -209,7 +213,7 @@ pub fn TokenInfo() -> impl IntoView {
                 )
                 .await
                 .map_err(|e| ServerFnError::new(e.to_string()))? // Map AgentError to ServerFnError
-            }else{
+            } else {
                 token_metadata_by_root(&cans, key_principal, token_root.unwrap()).await?
             };
 

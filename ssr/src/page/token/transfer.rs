@@ -209,7 +209,7 @@ fn TokenTransferInner(
     cans: Canisters<true>,
     root: Option<Principal>,
     info: TokenMetadata,
-    param: String
+    param: String,
 ) -> impl IntoView {
     let source_addr = cans.user_principal();
     let copy_source = move || {
@@ -292,7 +292,7 @@ fn TokenTransferInner(
     });
 
     let auth_cans_wire = authenticated_canisters();
-    
+
     let send_action = create_action(move |&()| {
         let cans = cans.clone();
         let auth_cans_wire = auth_cans_wire.clone();
@@ -315,7 +315,7 @@ fn TokenTransferInner(
 
             let amt = amt_res.get_untracked().unwrap().unwrap();
 
-            match root{
+            match root {
                 Some(root) => {
                     let root_canister = cans.sns_root(root).await;
                     println!("{}", root);
@@ -325,7 +325,7 @@ fn TokenTransferInner(
                         .unwrap();
                     let ledger_canister = sns_cans.ledger.unwrap();
                     log::debug!("ledger_canister: {:?}", ledger_canister);
-        
+
                     transfer_token_to_user_principal(
                         auth_cans_wire.wait_untracked().await.unwrap(),
                         destination,
@@ -334,10 +334,11 @@ fn TokenTransferInner(
                         amt.clone(),
                     )
                     .await?;
-                },
+                }
                 None => {
-                    if &param == "ckbtc"{
-                        let ledger_canister = Principal::from_text("mxzaz-hqaaa-aaaar-qaada-cai").unwrap();
+                    if &param == "ckbtc" {
+                        let ledger_canister =
+                            Principal::from_text("mxzaz-hqaaa-aaaar-qaada-cai").unwrap();
                         log::debug!("ledger_canister: {:?}", ledger_canister);
                         transfer_ck_token_to_user_principal(
                             auth_cans_wire.wait_untracked().await.unwrap(),
@@ -346,8 +347,9 @@ fn TokenTransferInner(
                             amt.clone(),
                         )
                         .await?;
-                    }else if &param == "ckusdc"{
-                        let ledger_canister = Principal::from_text("xevnm-gaaaa-aaaar-qafnq-cai").unwrap();
+                    } else if &param == "ckusdc" {
+                        let ledger_canister =
+                            Principal::from_text("xevnm-gaaaa-aaaar-qafnq-cai").unwrap();
                         transfer_ck_token_to_user_principal(
                             auth_cans_wire.wait_untracked().await.unwrap(),
                             destination,
@@ -484,10 +486,11 @@ pub fn TokenTransfer() -> impl IntoView {
                     )
                     .await
                     .map_err(|e| ServerFnError::new(e.to_string()))? // Map AgentError to ServerFnError
-                }else{
-                    token_metadata_by_root(&cans, Some(user_principal), token_root.clone().unwrap()).await?
+                } else {
+                    token_metadata_by_root(&cans, Some(user_principal), token_root.clone().unwrap())
+                        .await?
                 };
-                    
+
                 Ok(meta.map(|m| (m, token_root.ok(), params.token_root)))
             }
         })
