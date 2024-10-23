@@ -57,9 +57,12 @@ impl CursoredDataProvider for TokenRootList {
         let mut tokens: Vec<String> = match tokens {
             Result14::Ok(v) => v,
             Result14::Err(_) => vec![],
-        }.into_iter().map(|t| t.to_text()).collect();
+        }
+        .into_iter()
+        .map(|t| t.to_text())
+        .collect();
         let list_end = tokens.len() < (end - start);
-        if start == 0{
+        if start == 0 {
             tokens.splice(0..0, vec!["ckbtc".to_string(), "ckusdc".to_string()]);
         }
         Ok(PageEntry {
@@ -104,30 +107,37 @@ pub fn TokenView(
     token_root: String,
     #[prop(optional)] _ref: NodeRef<html::A>,
 ) -> impl IntoView {
-
     let info = create_resource(
         move || (token_root.clone(), user_principal),
         move |(token_root, user_principal)| async move {
             let cans = unauth_canisters();
-            if token_root == "ckbtc"{
+            if token_root == "ckbtc" {
                 get_ck_metadata(
                     &cans,
                     Some(user_principal),
                     Principal::from_text("mxzaz-hqaaa-aaaar-qaada-cai").unwrap(),
                     Principal::from_text("n5wcd-faaaa-aaaar-qaaea-cai").unwrap(),
                 )
-                .await.unwrap().unwrap() // Map AgentError to ServerFnError
-            }else if token_root == "ckusdc"{
+                .await
+                .unwrap()
+                .unwrap() // Map AgentError to ServerFnError
+            } else if token_root == "ckusdc" {
                 get_ck_metadata(
                     &cans,
                     Some(user_principal),
                     Principal::from_text("xevnm-gaaaa-aaaar-qafnq-cai").unwrap(),
                     Principal::from_text("xrs4b-hiaaa-aaaar-qafoa-cai").unwrap(),
                 )
-                .await.unwrap().unwrap() // Map AgentError to ServerFnError
-            }else{
-                token_metadata_or_fallback(cans.clone(), user_principal, Principal::from_text(&token_root).unwrap())
-                    .await
+                .await
+                .unwrap()
+                .unwrap() // Map AgentError to ServerFnError
+            } else {
+                token_metadata_or_fallback(
+                    cans.clone(),
+                    user_principal,
+                    Principal::from_text(&token_root).unwrap(),
+                )
+                .await
             }
         },
     );

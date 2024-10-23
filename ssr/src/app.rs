@@ -25,7 +25,7 @@ use crate::{
             transfer::TokenTransfer,
         },
         upload::UploadPostPage,
-        wallet::{Wallet},
+        wallet::Wallet,
     },
     state::{
         audio_state::AudioState, canisters::Canisters, content_seed_client::ContentSeedClient,

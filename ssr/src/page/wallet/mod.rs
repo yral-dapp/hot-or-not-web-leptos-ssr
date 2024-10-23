@@ -155,8 +155,10 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
         },
     );
 
-    let canister_id = create_resource(move || principal, move |principal| async move {
-        let canisters = unauth_canisters();
+    let canister_id = create_resource(
+        move || principal,
+        move |principal| async move {
+            let canisters = unauth_canisters();
             let Some(user_canister) = canisters
                 .get_individual_canister_by_user_principal(principal)
                 .await?
@@ -164,7 +166,8 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
                 return Err(ServerFnError::new("Failed to get user canister"));
             };
             Ok((user_canister, principal))
-    });
+        },
+    );
     view! {
         <div>
             <div class="flex flex-col gap-4 px-4 pt-4 pb-12 bg-black min-h-dvh">
