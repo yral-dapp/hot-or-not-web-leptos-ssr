@@ -203,7 +203,7 @@ pub fn ICPumpAiPage2(
 #[component]
 pub fn ICPumpAiToken(details: TokenListItem) -> impl IntoView {
     view! {
-        <button
+        <a
             href=details.link
             class="text-xs w-full p-2 flex gap-2 border border-gray-900 bg-transparent hover:bg-white/10 active:bg-white/5">
           <img src=details.logo class="w-[5.5rem] shrink-0 h-[5.5rem]" />
@@ -216,7 +216,7 @@ pub fn ICPumpAiToken(details: TokenListItem) -> impl IntoView {
               {details.description}
             </span>
           </div>
-      </button>
+      </a>
     }
 }
 
