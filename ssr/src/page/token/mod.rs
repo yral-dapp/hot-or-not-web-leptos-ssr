@@ -7,16 +7,15 @@ mod sns_form;
 pub mod transfer;
 pub mod types;
 
-use candid::Principal;
 use leptos::Params;
 use leptos_router::Params;
 
 #[derive(Params, PartialEq, Clone)]
 struct TokenParams {
-    token_root: Principal,
+    token_root: String,
 }
 
 #[derive(Params, PartialEq, Clone)]
 struct TokenInfoParams {
-    token_root: Principal,
+    token_root: String,
 }

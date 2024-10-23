@@ -74,7 +74,7 @@ async fn token_metadata_or_fallback(
         symbol: "??".to_string(),
         balance: Some(TokenBalanceOrClaiming::claiming()),
         fees: TokenBalance::new_cdao(0u32.into()),
-        root: Principal::anonymous(),
+        root: Some(Principal::anonymous()),
         ledger: Principal::anonymous(),
         index: Principal::anonymous(),
     })
@@ -120,7 +120,7 @@ pub fn TokenView(
 #[component]
 pub fn TokenTile(user_principal: String, token_meta_data: TokenMetadata) -> impl IntoView {
     let root = token_meta_data.root;
-    let share_link = format!("/token/info/{root}/{user_principal}?airdrop_amt=100");
+    let share_link = format!("/token/info/{}/{user_principal}?airdrop_amt=100", root.map(|r| r.to_text()).unwrap_or(token_meta_data.index.to_text()));
     let share_link_s = store_value(share_link);
     let share_message = format!(
         "Hey! Check out the token: {} I created on YRAL 👇 {}. I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter",
@@ -132,7 +132,7 @@ pub fn TokenTile(user_principal: String, token_meta_data: TokenMetadata) -> impl
     view! {
         <div class="flex  w-full items-center h-16 rounded-xl border-2 border-neutral-700 bg-white/15 gap-1">
             <a
-                href=format!("/token/info/{root}/{user_principal}?airdrop_amt=100")
+                href=format!("/token/info/{}/{user_principal}?airdrop_amt=100",  root.map(|r| r.to_text()).unwrap_or(info.index.to_text()))
                 // _ref=_ref
                 class="flex flex-1  p-y-4"
             >

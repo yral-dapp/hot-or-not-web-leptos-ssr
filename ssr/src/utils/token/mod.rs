@@ -2,9 +2,7 @@ pub mod firestore;
 pub mod icpump;
 
 use std::{
-    cmp::Ordering,
-    ops::{Add, AddAssign, Sub, SubAssign},
-    str::FromStr,
+    cmp::Ordering, collections::HashMap, ops::{Add, AddAssign, Sub, SubAssign}, str::FromStr
 };
 
 use candid::{Nat, Principal};
@@ -15,7 +13,7 @@ use serde::{Deserialize, Serialize};
 
 use yral_canisters_client::{
     sns_governance::{DissolveState, GetMetadataArg, ListNeurons},
-    sns_ledger::Account as LedgerAccount,
+    sns_ledger::{Account as LedgerAccount, MetadataValue},
     sns_root::ListSnsCanistersArg,
 };
 
@@ -247,7 +245,7 @@ pub struct TokenMetadata {
     pub symbol: String,
     pub balance: Option<TokenBalanceOrClaiming>,
     pub fees: TokenBalance,
-    pub root: Principal,
+    pub root: Option<Principal>,
     pub ledger: Principal,
     pub index: Principal,
 }
@@ -305,7 +303,7 @@ pub async fn get_token_metadata<const A: bool>(
         symbol,
         fees: TokenBalance::new_cdao(fees),
         balance: None,
-        root,
+        root: Some(root),
         ledger,
         index,
     };
@@ -317,6 +315,77 @@ pub async fn get_token_metadata<const A: bool>(
 
     Ok(token_metadata)
 }
+
+pub async fn get_ck_metadata<const A: bool>(
+    cans: &Canisters<A>,
+    user_principal: Option<Principal>,
+    ledger: Principal,
+    index: Principal,
+) -> Result<Option<TokenMetadata>, AgentError> {
+    let ledger_can = cans.sns_ledger(ledger).await;
+
+    // Attempt to get metadata and handle errors early
+    let metadata = match ledger_can.icrc_1_metadata().await {
+        Ok(data) => data.into_iter().collect::<HashMap<String, MetadataValue>>(),
+        Err(_) => return Ok(None), // Return None if metadata fetch fails
+    };
+
+    // Extract metadata values, return None if any are unexpected or missing
+    let logo_b64 = match metadata.get("icrc1:logo") {
+        Some(MetadataValue::Text(logo)) => Some(logo.clone()),
+        _ => None, // Handle unexpected or missing value
+    };
+
+    let name = match metadata.get("icrc1:name") {
+        Some(MetadataValue::Text(name)) => Some(name.clone()),
+        _ => None, // Handle unexpected or missing value
+    };
+
+    let decimals = match metadata.get("icrc1:decimals") {
+        Some(MetadataValue::Nat(decimals)) => Some(decimals.clone()),
+        _ => None, // Handle unexpected or missing value
+    };
+
+    let symbol = match metadata.get("icrc1:symbol") {
+        Some(MetadataValue::Text(symbol)) => Some(symbol.clone()),
+        _ => None, // Handle unexpected or missing value
+    };
+
+    let fees = match metadata.get("icrc1:fee") {
+        Some(MetadataValue::Nat(fees)) => Some(fees.clone()),
+        _ => None, // Handle unexpected or missing value
+    };
+
+    // If any required fields are missing, return None
+    if name.is_none() || decimals.is_none() || symbol.is_none() || fees.is_none() {
+        return Ok(None);
+    }
+
+    // Safe unwrap as we've already checked for None
+    let mut token_metadata = TokenMetadata {
+        logo_b64: logo_b64.unwrap_or_default(),
+        name: name.unwrap_or_default(),
+        description: "".to_string(), // Default description if missing
+        symbol: symbol.unwrap_or_default(),
+        fees: TokenBalance::new(fees.unwrap(), decimals.clone().unwrap().0.to_u64_digits()[0] as u8),
+        balance: None,
+        root: None,
+        ledger,
+        index,
+    };
+
+    // If a user principal is provided, try to get the balance
+    if let Some(user_principal) = user_principal {
+        let balance = match ledger_can.icrc_1_balance_of(yral_canisters_client::sns_ledger::Account { owner: user_principal, subaccount: None }).await {
+            Ok(balance) => balance,
+            Err(_) => return Ok(None), // Return None if balance fetch fails
+        };
+        token_metadata.balance = Some(TokenBalanceOrClaiming::new(TokenBalance::new(balance, decimals.unwrap().0.to_u64_digits()[0] as u8)));
+    }
+
+    Ok(Some(token_metadata))
+}
+
 
 /// Fetches the token balance for an SNS token
 /// returns TokenBalanceOrClaiming::Claiming if the token creation is in progress

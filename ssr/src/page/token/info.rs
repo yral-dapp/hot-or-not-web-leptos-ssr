@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::page::token::TokenInfoParams;
 use crate::state::canisters::authenticated_canisters;
+use crate::utils::token::get_ck_metadata;
 use crate::{
     component::{back_btn::BackButton, share_popup::*, spinner::FullScreenSpinner, title::Title},
     page::wallet::{transactions::Transactions, txn::IndexOrLedger},
@@ -55,10 +56,11 @@ fn TokenDetails(meta: TokenMetadata) -> impl IntoView {
 
 #[component]
 fn TokenInfoInner(
-    root: Principal,
+    root: Option<Principal>,
     meta: TokenMetadata,
     key_principal: Option<Principal>,
     is_user_principal: bool,
+    param: String
 ) -> impl IntoView {
     let meta_c1 = meta.clone();
     let meta_c = meta.clone();
@@ -71,7 +73,7 @@ fn TokenInfoInner(
         }
     });
     let share_link = key_principal
-        .map(|key_principal| format!("/token/info/{root}/{key_principal}?airdrop_amt=100"));
+        .map(|key_principal| format!("/token/info/{}/{key_principal}?airdrop_amt=100", root.map(|r| r.to_text()).unwrap_or(param.clone())));
     let message = share_link.clone().map(|share_link|format!(
         "Hey! Check out the token: {} I created on YRAL 👇 {}. I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter",
         meta.symbol,  share_link
@@ -144,7 +146,7 @@ fn TokenInfoInner(
                 </div>
                     <Show when= move || is_user_principal>
                         <a
-                            href=format!("/token/transfer/{root}")
+                            href=format!("/token/transfer/{}", root.map(|r| r.to_text()).unwrap_or(param.clone()))
                             class="fixed bottom-20 left-4 right-4 p-3 bg-primary-600 text-white text-center md:text-lg rounded-full z-50"
                         >
                             Send
@@ -186,14 +188,38 @@ pub fn TokenInfo() -> impl IntoView {
                 return Ok::<_, ServerFnError>(None);
             };
             let cans = cans_wire?.canisters()?;
-            let meta = token_metadata_by_root(&cans, key_principal, params.token_root).await?;
+            let token_root = Principal::from_text(&params.token_root).ok();
+
+            let meta = if &params.token_root == "ckbtc" {
+                // Map the AgentError to ServerFnError to ensure type compatibility
+                get_ck_metadata(
+                    &cans,
+                    key_principal,
+                    Principal::from_text("mxzaz-hqaaa-aaaar-qaada-cai").unwrap(),
+                    Principal::from_text("n5wcd-faaaa-aaaar-qaaea-cai").unwrap(),
+                )
+                .await
+                .map_err(|e| ServerFnError::new(e.to_string()))? // Map AgentError to ServerFnError
+            } else if &params.token_root == "ckusdc" {
+                get_ck_metadata(
+                    &cans,
+                    key_principal,
+                    Principal::from_text("xevnm-gaaaa-aaaar-qafnq-cai").unwrap(),
+                    Principal::from_text("xrs4b-hiaaa-aaaar-qafoa-cai").unwrap(),
+                )
+                .await
+                .map_err(|e| ServerFnError::new(e.to_string()))? // Map AgentError to ServerFnError
+            }else{
+                token_metadata_by_root(&cans, key_principal, token_root.unwrap()).await?
+            };
 
             Ok(meta.map(|m| {
                 (
                     m,
-                    params.token_root,
+                    token_root,
                     key_principal,
                     Some(cans.user_principal()) == key_principal,
+                    params.token_root.clone(),
                 )
             }))
         },
@@ -206,13 +232,14 @@ pub fn TokenInfo() -> impl IntoView {
                     .and_then(|info| info.ok())
                     .map(|info| {
                         match info {
-                            Some((metadata, root, key_principal, is_user_principal)) => {
+                            Some((metadata, root, key_principal, is_user_principal, param)) => {
                                 view! {
                                     <TokenInfoInner
                                         root
                                         key_principal
                                         meta=metadata
                                         is_user_principal=is_user_principal
+                                        param
                                     />
                                 }
                             }
