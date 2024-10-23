@@ -11,7 +11,7 @@ use crate::utils::token::firestore::listen_to_documents;
 use crate::utils::token::icpump::get_paginated_token_list;
 use crate::utils::token::icpump::TokenListItem;
 
-pub mod search;
+pub mod ai;
 
 #[component]
 pub fn TokenListing(
