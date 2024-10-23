@@ -1,8 +1,9 @@
 use candid::Principal;
 use ic_agent::AgentError;
 
+use crate::page::token;
 use crate::page::wallet::ShareButtonWithFallbackPopup;
-use crate::utils::token::TokenBalanceOrClaiming;
+use crate::utils::token::{get_ck_metadata, TokenBalanceOrClaiming};
 use crate::{
     component::{
         back_btn::BackButton,
@@ -22,7 +23,7 @@ use yral_canisters_client::individual_user_template::Result14;
 
 #[derive(Clone)]
 pub struct TokenRootList {
-    pub canisters: Canisters<true>,
+    pub canisters: Canisters<false>,
     pub user_canister: Principal,
 }
 
@@ -33,8 +34,15 @@ impl KeyedData for Principal {
         *self
     }
 }
+impl KeyedData for String {
+    type Key = String;
+
+    fn key(&self) -> Self::Key {
+        self.clone()
+    }
+}
 impl CursoredDataProvider for TokenRootList {
-    type Data = Principal;
+    type Data = String;
     type Error = AgentError;
 
     async fn get_by_cursor(
@@ -46,11 +54,14 @@ impl CursoredDataProvider for TokenRootList {
         let tokens = user
             .get_token_roots_of_this_user_with_pagination_cursor(start as u64, end as u64)
             .await?;
-        let tokens = match tokens {
+        let mut tokens: Vec<String> = match tokens {
             Result14::Ok(v) => v,
             Result14::Err(_) => vec![],
-        };
+        }.into_iter().map(|t| t.to_text()).collect();
         let list_end = tokens.len() < (end - start);
+        if start == 0{
+            tokens.splice(0..0, vec!["ckbtc".to_string(), "ckusdc".to_string()]);
+        }
         Ok(PageEntry {
             data: tokens,
             end: list_end,
@@ -90,14 +101,35 @@ pub fn TokenViewFallback() -> impl IntoView {
 #[component]
 pub fn TokenView(
     user_principal: Principal,
-    token_root: Principal,
+    token_root: String,
     #[prop(optional)] _ref: NodeRef<html::A>,
 ) -> impl IntoView {
-    let cans = unauth_canisters();
 
     let info = create_resource(
-        || (),
-        move |_| token_metadata_or_fallback(cans.clone(), user_principal, token_root),
+        move || (token_root.clone(), user_principal),
+        move |(token_root, user_principal)| async move {
+            let cans = unauth_canisters();
+            if token_root == "ckbtc"{
+                get_ck_metadata(
+                    &cans,
+                    Some(user_principal),
+                    Principal::from_text("mxzaz-hqaaa-aaaar-qaada-cai").unwrap(),
+                    Principal::from_text("n5wcd-faaaa-aaaar-qaaea-cai").unwrap(),
+                )
+                .await.unwrap().unwrap() // Map AgentError to ServerFnError
+            }else if token_root == "ckusdc"{
+                get_ck_metadata(
+                    &cans,
+                    Some(user_principal),
+                    Principal::from_text("xevnm-gaaaa-aaaar-qafnq-cai").unwrap(),
+                    Principal::from_text("xrs4b-hiaaa-aaaar-qafoa-cai").unwrap(),
+                )
+                .await.unwrap().unwrap() // Map AgentError to ServerFnError
+            }else{
+                token_metadata_or_fallback(cans.clone(), user_principal, Principal::from_text(&token_root).unwrap())
+                    .await
+            }
+        },
     );
 
     view! {
@@ -123,7 +155,7 @@ pub fn TokenTile(user_principal: String, token_meta_data: TokenMetadata) -> impl
     let share_link = format!(
         "/token/info/{}/{user_principal}?airdrop_amt=100",
         root.map(|r| r.to_text())
-            .unwrap_or(token_meta_data.index.to_text())
+            .unwrap_or(token_meta_data.name.to_lowercase())
     );
     let share_link_s = store_value(share_link);
     let share_message = format!(
@@ -136,7 +168,7 @@ pub fn TokenTile(user_principal: String, token_meta_data: TokenMetadata) -> impl
     view! {
         <div class="flex  w-full items-center h-16 rounded-xl border-2 border-neutral-700 bg-white/15 gap-1">
             <a
-                href=format!("/token/info/{}/{user_principal}?airdrop_amt=100",  root.map(|r| r.to_text()).unwrap_or(info.index.to_text()))
+                href=format!("/token/info/{}/{user_principal}?airdrop_amt=100",  root.map(|r| r.to_text()).unwrap_or(info.name.to_lowercase()))
                 // _ref=_ref
                 class="flex flex-1  p-y-4"
             >
@@ -168,9 +200,9 @@ pub fn TokenTile(user_principal: String, token_meta_data: TokenMetadata) -> impl
 }
 
 #[component]
-fn TokenList(canisters: Canisters<true>) -> impl IntoView {
-    let user_canister = canisters.user_canister();
-    let user_principal = canisters.user_principal();
+pub fn TokenList(user_principal: Principal, user_canister: Principal) -> impl IntoView {
+    let canisters = unauth_canisters();
+
     let provider: TokenRootList = TokenRootList {
         canisters,
         user_canister,
@@ -182,28 +214,10 @@ fn TokenList(canisters: Canisters<true>) -> impl IntoView {
                 provider
                 fetch_count=10
                 children=move |token_root, _ref| {
-                    view! { <TokenView user_principal token_root _ref=_ref.unwrap_or_default() /> }
+                    view! { <TokenView user_principal token_root=token_root.to_string() _ref=_ref.unwrap_or_default() /> }
                 }
             />
 
-        </div>
-    }
-}
-
-#[component]
-pub fn Tokens() -> impl IntoView {
-    view! {
-        <div class="flex items-center flex-col w-dvw min-h-dvh gap-6 bg-black pt-4 px-4 pb-12">
-            <Title justify_center=false>
-                <div class="flex flex-row justify-between">
-                    <BackButton fallback="/wallet".to_string() />
-                    <span class="text-xl text-white font-bold">Tokens</span>
-                    <div></div>
-                </div>
-            </Title>
-            <AuthCansProvider fallback=BulletLoader let:canisters>
-                <TokenList canisters />
-            </AuthCansProvider>
         </div>
     }
 }

@@ -2,6 +2,7 @@ pub mod tokens;
 pub mod transactions;
 pub mod txn;
 use crate::component::infinite_scroller::CursoredDataProvider;
+use crate::state::canisters;
 use crate::{
     component::share_popup::ShareButtonWithFallbackPopup,
     page::token::non_yral_tokens::eligible_non_yral_supported_tokens,
@@ -11,7 +12,7 @@ use candid::Principal;
 use leptos::*;
 use leptos_router::Params;
 use leptos_router::{use_params, Redirect};
-use tokens::{TokenRootList, TokenView};
+use tokens::{TokenList, TokenRootList, TokenView};
 
 use crate::{
     component::{
@@ -72,72 +73,6 @@ fn BalanceFallback() -> impl IntoView {
     view! { <div class="py-3 mt-1 w-1/4 rounded-full animate-pulse bg-white/30"></div> }
 }
 
-#[component]
-fn TokensFetch(principal: Principal) -> impl IntoView {
-    let auth_cans = authenticated_canisters();
-    let tokens_fetch = auth_cans.derive(
-        move || principal,
-        |cans_wire, principal| async move {
-            let cans = cans_wire?.canisters()?;
-            let user_principal = principal;
-            let Some(user_canister) = cans
-                .get_individual_canister_by_user_principal(principal)
-                .await?
-            else {
-                return Err(ServerFnError::new("Failed to get user canister"));
-            };
-            let tokens_prov = TokenRootList {
-                canisters: cans.clone(),
-                user_canister,
-            };
-            let yral_tokens = tokens_prov.get_by_cursor(0, 5).await?;
-
-            let eligible_non_yral_tokens =
-                eligible_non_yral_supported_tokens(cans, user_principal).await?;
-
-            Ok::<_, ServerFnError>((user_principal, yral_tokens.data, eligible_non_yral_tokens))
-        },
-    );
-
-    view! {
-        <Suspense fallback=BulletLoader>
-            {move || {
-                tokens_fetch()
-                    .map(|tokens_res| {
-                        let yral_tokens = tokens_res
-                            .as_ref()
-                            .map(|t| t.1.clone())
-                            .unwrap_or_default();
-                        let non_yral_tokens = tokens_res
-                            .as_ref()
-                            .map(|t| t.2.clone())
-                            .unwrap_or_default();
-                        let user_principal = tokens_res
-                            .as_ref()
-                            .map(|t| t.0)
-                            .unwrap_or(Principal::anonymous());
-                        view! {
-                            <For
-                                each=move || non_yral_tokens.clone()
-                                key=|inf| inf.key()
-                                let:token_root
-                            >
-                                <TokenView user_principal token_root />
-                            </For>
-                            <For
-                                each=move || yral_tokens.clone()
-                                key=|inf| inf.key()
-                                let:token_root
-                            >
-                                <TokenView user_principal token_root />
-
-                            </For>
-                        }
-                    })
-            }}
-        </Suspense>
-    }
-}
 #[derive(Params, PartialEq)]
 struct WalletParams {
     id: String,
@@ -220,6 +155,16 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
         },
     );
 
+    let canister_id = create_resource(move || principal, move |principal| async move {
+        let canisters = unauth_canisters();
+            let Some(user_canister) = canisters
+                .get_individual_canister_by_user_principal(principal)
+                .await?
+            else {
+                return Err(ServerFnError::new("Failed to get user canister"));
+            };
+            Ok((user_canister, principal))
+    });
     view! {
         <div>
             <div class="flex flex-col gap-4 px-4 pt-4 pb-12 bg-black min-h-dvh">
@@ -289,7 +234,16 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
                         }}
                     </Suspense>
                     <div class="flex flex-col gap-2 items-center">
-                        {move || { Some(view! { <TokensFetch principal /> }) }}
+                        <Suspense>
+                            {move || {
+                                let canister_id = try_or_redirect_opt!(canister_id() ?);
+                                Some(
+                                    view! {
+                                        <TokenList user_principal=canister_id.1 user_canister=canister_id.0 />
+                                    },
+                                )
+                            }}
+                        </Suspense>
                     </div>
                 </div>
             </div>
