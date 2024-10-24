@@ -4,6 +4,7 @@ use leptos_icons::*;
 use leptos_router::*;
 use serde::{Deserialize, Serialize};
 
+use crate::consts::{HardCodedIDs, HARDCODED_TOKEN_IDS};
 use crate::page::token::TokenInfoParams;
 use crate::state::canisters::authenticated_canisters;
 use crate::utils::token::get_ck_metadata;
@@ -74,7 +75,8 @@ fn TokenInfoInner(
     let share_link = key_principal.map(|key_principal| {
         format!(
             "/token/info/{}/{key_principal}?airdrop_amt=100",
-            root.map(|r| r.to_text()).unwrap_or(meta_c.name.to_lowercase()[2..].to_string())
+            root.map(|r| r.to_text())
+                .unwrap_or(meta_c.name.to_lowercase())
         )
     });
     let message = share_link.clone().map(|share_link|format!(
@@ -149,7 +151,7 @@ fn TokenInfoInner(
                 </div>
                     <Show when= move || is_user_principal>
                         <a
-                            href=format!("/token/transfer/{}", root.map(|r| r.to_text()).unwrap_or(meta_c1.name.to_lowercase()[2..].to_string()))
+                            href=format!("/token/transfer/{}", root.map(|r| r.to_text()).unwrap_or(meta_c1.name.to_lowercase()))
                             class="fixed bottom-20 left-4 right-4 p-3 bg-primary-600 text-white text-center md:text-lg rounded-full z-50"
                         >
                             Send
@@ -193,29 +195,20 @@ pub fn TokenInfo() -> impl IntoView {
             let cans = cans_wire?.canisters()?;
             let token_root = Principal::from_text(&params.token_root).ok();
 
-            let meta = if &params.token_root == "btc" {
-                // Map the AgentError to ServerFnError to ensure type compatibility
+            let meta = if let Some(HardCodedIDs { ledger, index }) =
+                HARDCODED_TOKEN_IDS.get(&params.token_root)
+            {
                 get_ck_metadata(
                     &cans,
                     key_principal,
-                    Principal::from_text("mxzaz-hqaaa-aaaar-qaada-cai").unwrap(),
-                    Principal::from_text("n5wcd-faaaa-aaaar-qaaea-cai").unwrap(),
-                )
-                .await
-                .map_err(|e| ServerFnError::new(e.to_string()))? // Map AgentError to ServerFnError
-            } else if &params.token_root == "usdc" {
-                get_ck_metadata(
-                    &cans,
-                    key_principal,
-                    Principal::from_text("xevnm-gaaaa-aaaar-qafnq-cai").unwrap(),
-                    Principal::from_text("xrs4b-hiaaa-aaaar-qafoa-cai").unwrap(),
+                    Principal::from_text(ledger).unwrap(),
+                    Principal::from_text(index).unwrap(),
                 )
                 .await
                 .map_err(|e| ServerFnError::new(e.to_string()))? // Map AgentError to ServerFnError
             } else {
                 token_metadata_by_root(&cans, key_principal, token_root.unwrap()).await?
             };
-
             Ok(meta.map(|m| {
                 (
                     m,

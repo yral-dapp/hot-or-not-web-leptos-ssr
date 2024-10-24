@@ -1,6 +1,7 @@
 use candid::Principal;
 use ic_agent::AgentError;
 
+use crate::consts::{HardCodedIDs, HARDCODED_TOKEN_IDS};
 use crate::page::wallet::ShareButtonWithFallbackPopup;
 use crate::utils::token::{get_ck_metadata, TokenBalanceOrClaiming};
 use crate::{
@@ -104,22 +105,12 @@ pub fn TokenView(
         move || (token_root.clone(), user_principal),
         move |(token_root, user_principal)| async move {
             let cans = unauth_canisters();
-            if token_root == "btc" {
+            if let Some(HardCodedIDs { ledger, index }) = HARDCODED_TOKEN_IDS.get(&token_root) {
                 get_ck_metadata(
                     &cans,
                     Some(user_principal),
-                    Principal::from_text("mxzaz-hqaaa-aaaar-qaada-cai").unwrap(),
-                    Principal::from_text("n5wcd-faaaa-aaaar-qaaea-cai").unwrap(),
-                )
-                .await
-                .unwrap()
-                .unwrap() // Map AgentError to ServerFnError
-            } else if token_root == "usdc" {
-                get_ck_metadata(
-                    &cans,
-                    Some(user_principal),
-                    Principal::from_text("xevnm-gaaaa-aaaar-qafnq-cai").unwrap(),
-                    Principal::from_text("xrs4b-hiaaa-aaaar-qafoa-cai").unwrap(),
+                    Principal::from_text(ledger).unwrap(),
+                    Principal::from_text(index).unwrap(),
                 )
                 .await
                 .unwrap()
@@ -158,7 +149,7 @@ pub fn TokenTile(user_principal: String, token_meta_data: TokenMetadata) -> impl
     let share_link = format!(
         "/token/info/{}/{user_principal}?airdrop_amt=100",
         root.map(|r| r.to_text())
-            .unwrap_or(token_meta_data.name.to_lowercase()[2..].to_string())
+            .unwrap_or(token_meta_data.name.to_lowercase())
     );
     let share_link_s = store_value(share_link);
     let share_message = format!(
@@ -171,7 +162,7 @@ pub fn TokenTile(user_principal: String, token_meta_data: TokenMetadata) -> impl
     view! {
         <div class="flex  w-full items-center h-16 rounded-xl border-2 border-neutral-700 bg-white/15 gap-1">
             <a
-                href=format!("/token/info/{}/{user_principal}?airdrop_amt=100",  root.map(|r| r.to_text()).unwrap_or(info.name.to_lowercase()[2..].to_string()))
+                href=format!("/token/info/{}/{user_principal}?airdrop_amt=100",  root.map(|r| r.to_text()).unwrap_or(info.name.to_lowercase()))
                 // _ref=_ref
                 class="flex flex-1  p-y-4"
             >

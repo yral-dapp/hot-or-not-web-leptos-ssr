@@ -340,7 +340,7 @@ pub async fn get_ck_metadata<const A: bool>(
     };
 
     let name = match metadata.get("icrc1:name") {
-        Some(MetadataValue::Text(name)) => Some(name.clone()),
+        Some(MetadataValue::Text(name)) => Some(name.clone()[2..].to_string()),
         _ => None, // Handle unexpected or missing value
     };
 
@@ -350,7 +350,7 @@ pub async fn get_ck_metadata<const A: bool>(
     };
 
     let symbol = match metadata.get("icrc1:symbol") {
-        Some(MetadataValue::Text(symbol)) => Some(symbol.clone()),
+        Some(MetadataValue::Text(symbol)) => Some(symbol.clone()[2..].to_string()),
         _ => None, // Handle unexpected or missing value
     };
 

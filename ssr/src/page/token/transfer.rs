@@ -3,6 +3,7 @@ use crate::{
         back_btn::BackButton, canisters_prov::WithAuthCans, spinner::FullScreenSpinner,
         title::Title,
     },
+    consts::{HardCodedIDs, HARDCODED_TOKEN_IDS},
     page::token::non_yral_tokens::SUPPORTED_NON_YRAL_TOKENS_ROOT,
     state::canisters::{authenticated_canisters, Canisters, CanistersAuthWire},
     utils::{
@@ -336,28 +337,17 @@ fn TokenTransferInner(
                     .await?;
                 }
                 None => {
-                    if &param == "btc" {
-                        let ledger_canister =
-                            Principal::from_text("mxzaz-hqaaa-aaaar-qaada-cai").unwrap();
-                        log::debug!("ledger_canister: {:?}", ledger_canister);
-                        transfer_ck_token_to_user_principal(
-                            auth_cans_wire.wait_untracked().await.unwrap(),
-                            destination,
-                            ledger_canister,
-                            amt.clone(),
-                        )
-                        .await?;
-                    } else if &param == "usdc" {
-                        let ledger_canister =
-                            Principal::from_text("xevnm-gaaaa-aaaar-qafnq-cai").unwrap();
-                        transfer_ck_token_to_user_principal(
-                            auth_cans_wire.wait_untracked().await.unwrap(),
-                            destination,
-                            ledger_canister,
-                            amt.clone(),
-                        )
-                        .await?;
-                    }
+                    let Some(HardCodedIDs { ledger, .. }) = HARDCODED_TOKEN_IDS.get(&param) else {
+                        return Err(ServerFnError::new("Invalid Token Root or Arg provided"));
+                    };
+
+                    transfer_ck_token_to_user_principal(
+                        auth_cans_wire.wait_untracked().await.unwrap(),
+                        destination,
+                        Principal::from_text(ledger).unwrap(),
+                        amt.clone(),
+                    )
+                    .await?;
                 }
             }
             TokensTransferred.send_event(amt.e8s.to_string(), destination, cans.clone());
