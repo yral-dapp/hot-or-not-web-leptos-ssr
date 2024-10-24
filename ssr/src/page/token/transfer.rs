@@ -457,26 +457,16 @@ pub fn TokenTransfer() -> impl IntoView {
                 };
                 // let user = cans.user_canister();
                 let token_root = Principal::from_text(params.token_root.clone());
-                let meta = if &params.token_root == "btc" {
-                    // Map the AgentError to ServerFnError to ensure type compatibility
+                let meta = if let Some(HardCodedIDs { ledger, index }) = HARDCODED_TOKEN_IDS.get(&params.token_root){
                     get_ck_metadata(
                         &cans,
                         Some(user_principal),
-                        Principal::from_text("mxzaz-hqaaa-aaaar-qaada-cai").unwrap(),
-                        Principal::from_text("n5wcd-faaaa-aaaar-qaaea-cai").unwrap(),
+                        Principal::from_text(ledger.to_string()).unwrap(),
+                        Principal::from_text(index.to_string()).unwrap(),
                     )
                     .await
-                    .map_err(|e| ServerFnError::new(e.to_string()))? // Map AgentError to ServerFnError
-                } else if &params.token_root == "usdc" {
-                    get_ck_metadata(
-                        &cans,
-                        Some(user_principal),
-                        Principal::from_text("xevnm-gaaaa-aaaar-qafnq-cai").unwrap(),
-                        Principal::from_text("xrs4b-hiaaa-aaaar-qafoa-cai").unwrap(),
-                    )
-                    .await
-                    .map_err(|e| ServerFnError::new(e.to_string()))? // Map AgentError to ServerFnError
-                } else {
+                    .unwrap()
+                }else {
                     token_metadata_by_root(&cans, Some(user_principal), token_root.clone().unwrap())
                         .await?
                 };
