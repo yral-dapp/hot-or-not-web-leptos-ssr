@@ -12,13 +12,15 @@ use crate::{
         token::{token_metadata_by_root, TokenBalance, TokenMetadata},
     },
 };
+use futures::stream::{self, StreamExt};
 use leptos::*;
 use yral_canisters_client::individual_user_template::Result14;
-
+use yral_canisters_client::sns_ledger::{Account, SnsLedger};
 #[derive(Clone)]
 pub struct TokenRootList {
     pub canisters: Canisters<false>,
     pub user_canister: Principal,
+    pub user_principal: Principal,
 }
 
 impl KeyedData for Principal {
@@ -57,7 +59,30 @@ impl CursoredDataProvider for TokenRootList {
         .collect();
         let list_end = tokens.len() < (end - start);
         if start == 0 {
-            tokens.splice(0..0, vec!["btc".to_string(), "usdc".to_string()]);
+            let rep = stream::iter(HARDCODED_TOKEN_IDS.into_iter())
+                .filter_map(|(name, HardCodedIDs { ledger, .. })| async move {
+                    let cans = unauth_canisters();
+                    let ledger: SnsLedger<'_> = cans
+                        .sns_ledger(Principal::from_text(ledger.to_string()).ok()?)
+                        .await;
+
+                    let bal = ledger
+                        .icrc_1_balance_of(Account {
+                            owner: self.user_principal,
+                            subaccount: None,
+                        })
+                        .await
+                        .ok()?;
+
+                    if bal != 0u64 {
+                        Some(name.to_string())
+                    } else {
+                        None
+                    }
+                })
+                .collect::<Vec<_>>()
+                .await;
+            tokens.splice(0..0, rep);
         }
         Ok(PageEntry {
             data: tokens,
@@ -200,6 +225,7 @@ pub fn TokenList(user_principal: Principal, user_canister: Principal) -> impl In
     let provider: TokenRootList = TokenRootList {
         canisters,
         user_canister,
+        user_principal,
     };
 
     view! {
