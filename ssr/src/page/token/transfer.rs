@@ -249,6 +249,7 @@ fn TokenTransferInner(
             </div>
         };
     };
+
     let max_amt = if balance
         .map_balance_ref(|b| b > &info.fees)
         .unwrap_or_default()
@@ -257,7 +258,7 @@ fn TokenTransferInner(
             .map_balance_ref(|b| b.clone() - info.fees.clone())
             .unwrap()
     } else {
-        TokenBalance::new_cdao(0u32.into())
+        TokenBalance::new(0u32.into(), info.decimals)
     };
     let max_amt_c = max_amt.clone();
     let set_max_amt = move || {
@@ -277,7 +278,7 @@ fn TokenTransferInner(
             return;
         };
         let amt_raw = input.value();
-        let Ok(amt) = TokenBalance::parse_cdao(&amt_raw) else {
+        let Ok(amt) = TokenBalance::parse(&amt_raw, info.decimals) else {
             amt_res.set(Err("Invalid amount".to_string()));
             return;
         };
@@ -457,7 +458,9 @@ pub fn TokenTransfer() -> impl IntoView {
                 };
                 // let user = cans.user_canister();
                 let token_root = Principal::from_text(params.token_root.clone());
-                let meta = if let Some(HardCodedIDs { ledger, index }) = HARDCODED_TOKEN_IDS.get(&params.token_root){
+                let meta = if let Some(HardCodedIDs { ledger, index }) =
+                    HARDCODED_TOKEN_IDS.get(&params.token_root)
+                {
                     get_ck_metadata(
                         &cans,
                         Some(user_principal),
@@ -466,7 +469,7 @@ pub fn TokenTransfer() -> impl IntoView {
                     )
                     .await
                     .unwrap()
-                }else {
+                } else {
                     token_metadata_by_root(&cans, Some(user_principal), token_root.clone().unwrap())
                         .await?
                 };

@@ -46,6 +46,13 @@ impl TokenBalance {
         Ok(Self::new_cdao(e8s))
     }
 
+    pub fn parse(token_str: &str, decimals: u8) -> Result<Self, rust_decimal::Error> {
+        let scale_factor = 10u64.pow(decimals.into());
+        let tokens = (Decimal::from_str(token_str)? * Decimal::new(scale_factor as i64, 0)).floor();
+        let e8s = Nat::from_str(&tokens.to_string()).unwrap();
+        Ok(Self::new(e8s, decimals))
+    }
+
     // Human friendly token amount
     pub fn humanize(&self) -> String {
         (self.e8s.clone() / 10u64.pow(self.decimals as u32))
