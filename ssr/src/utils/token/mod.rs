@@ -251,6 +251,7 @@ pub struct TokenMetadata {
     pub root: Option<Principal>,
     pub ledger: Principal,
     pub index: Principal,
+    pub decimals: u8,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -298,7 +299,7 @@ pub async fn get_token_metadata<const A: bool>(
     let symbol = ledger_can.icrc_1_symbol().await?;
 
     let fees = ledger_can.icrc_1_fee().await?;
-
+    let decimals = ledger_can.icrc_1_decimals().await?;
     let mut token_metadata = TokenMetadata {
         logo_b64: metadata.logo.unwrap_or_default(),
         name: metadata.name.unwrap_or_default(),
@@ -309,6 +310,7 @@ pub async fn get_token_metadata<const A: bool>(
         root: Some(root),
         ledger,
         index,
+        decimals,
     };
 
     if let Some(user_principal) = user_principal {
@@ -378,6 +380,7 @@ pub async fn get_ck_metadata<const A: bool>(
         root: None,
         ledger,
         index,
+        decimals: decimals.clone().unwrap().0.to_u64_digits()[0] as u8,
     };
 
     // If a user principal is provided, try to get the balance

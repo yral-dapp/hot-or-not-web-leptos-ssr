@@ -84,6 +84,7 @@ fn TokenInfoInner(
         meta.symbol,  share_link
     ));
 
+    let decimals = meta.decimals;
     view! {
         <div class="w-dvw min-h-dvh bg-neutral-800  flex flex-col gap-4">
             <Title justify_center=false>
@@ -158,13 +159,14 @@ fn TokenInfoInner(
                         </a>
                     </Show>
                 {if key_principal.is_some() {
-                    view! { <Transactions source=IndexOrLedger::Index(meta.index) key_principal symbol=meta.symbol.clone()/> }
+                    view! { <Transactions source=IndexOrLedger::Index(meta.index) key_principal symbol=meta.symbol.clone() decimals/> }
                 } else {
                     view! {
                         <Transactions
                             source=IndexOrLedger::Ledger(meta.ledger)
                             key_principal=None
                             symbol=meta.symbol.clone()
+                            decimals
                         />
                     }
                 }}

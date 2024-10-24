@@ -109,6 +109,7 @@ async fn token_metadata_or_fallback(
         root: Some(Principal::anonymous()),
         ledger: Principal::anonymous(),
         index: Principal::anonymous(),
+        decimals: 8,
     })
 }
 
