@@ -48,11 +48,15 @@ async fn deploy_cdao_canisters(
 
     match res {
         Ok(c) => {
-            TokenCreationCompleted.send_event(create_sns, c.root, profile_details, canister_id);
+            TokenCreationCompleted
+                .send_event(create_sns, c.root, profile_details, canister_id)
+                .await;
             Ok(c)
         }
         Err(e) => {
-            TokenCreationFailed.send_event(e.to_string(), create_sns, profile_details, canister_id);
+            TokenCreationFailed
+                .send_event(e.to_string(), create_sns, profile_details, canister_id)
+                .await;
             Err(e)
         }
     }

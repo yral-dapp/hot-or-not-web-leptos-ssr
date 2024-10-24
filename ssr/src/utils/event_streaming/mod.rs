@@ -80,6 +80,25 @@ pub fn send_event_warehouse(event_name: &str, params: &serde_json::Value) {
 }
 
 #[cfg(feature = "ga4")]
+pub async fn send_event_warehouse_ssr(event_name: &str, params: &serde_json::Value) {
+    use super::host::get_host;
+
+    let event_name = event_name.to_string();
+
+    let mut params = params.clone();
+    if params["host"].is_null() {
+        let host_str = get_host();
+        params["host"] = json!(host_str);
+    }
+
+    let params_str = params.to_string();
+
+    stream_to_offchain_agent(event_name, params_str)
+        .await
+        .unwrap();
+}
+
+#[cfg(feature = "ga4")]
 #[server]
 pub async fn stream_to_offchain_agent(event: String, params: String) -> Result<(), ServerFnError> {
     use tonic::metadata::MetadataValue;
