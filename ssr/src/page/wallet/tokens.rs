@@ -62,9 +62,8 @@ impl CursoredDataProvider for TokenRootList {
             let rep = stream::iter(HARDCODED_TOKEN_IDS.into_iter())
                 .filter_map(|(name, HardCodedIDs { ledger, .. })| async move {
                     let cans = unauth_canisters();
-                    let ledger: SnsLedger<'_> = cans
-                        .sns_ledger(Principal::from_text(ledger).ok()?)
-                        .await;
+                    let ledger: SnsLedger<'_> =
+                        cans.sns_ledger(Principal::from_text(ledger).ok()?).await;
 
                     let bal = ledger
                         .icrc_1_balance_of(Account {
