@@ -72,12 +72,6 @@ pub fn send_event_warehouse(event_name: &str, params: &serde_json::Value) {
 
     let params_str = params.to_string();
 
-    leptos::logging::log!(
-        "send_event_warehouse: event_name: {}, params: {}",
-        event_name,
-        params_str
-    );
-
     spawn_local(async move {
         stream_to_offchain_agent(event_name, params_str)
             .await
