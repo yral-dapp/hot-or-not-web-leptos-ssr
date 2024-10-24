@@ -464,8 +464,8 @@ pub fn TokenTransfer() -> impl IntoView {
                     get_ck_metadata(
                         &cans,
                         Some(user_principal),
-                        Principal::from_text(ledger.to_string()).unwrap(),
-                        Principal::from_text(index.to_string()).unwrap(),
+                        Principal::from_text(ledger).unwrap(),
+                        Principal::from_text(index).unwrap(),
                     )
                     .await
                     .unwrap()
