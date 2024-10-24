@@ -56,7 +56,7 @@ impl CursoredDataProvider for TokenRootList {
         .collect();
         let list_end = tokens.len() < (end - start);
         if start == 0 {
-            tokens.splice(0..0, vec!["ckbtc".to_string(), "ckusdc".to_string()]);
+            tokens.splice(0..0, vec!["btc".to_string(), "usdc".to_string()]);
         }
         Ok(PageEntry {
             data: tokens,
@@ -104,7 +104,7 @@ pub fn TokenView(
         move || (token_root.clone(), user_principal),
         move |(token_root, user_principal)| async move {
             let cans = unauth_canisters();
-            if token_root == "ckbtc" {
+            if token_root == "btc" {
                 get_ck_metadata(
                     &cans,
                     Some(user_principal),
@@ -114,7 +114,7 @@ pub fn TokenView(
                 .await
                 .unwrap()
                 .unwrap() // Map AgentError to ServerFnError
-            } else if token_root == "ckusdc" {
+            } else if token_root == "usdc" {
                 get_ck_metadata(
                     &cans,
                     Some(user_principal),
@@ -158,7 +158,7 @@ pub fn TokenTile(user_principal: String, token_meta_data: TokenMetadata) -> impl
     let share_link = format!(
         "/token/info/{}/{user_principal}?airdrop_amt=100",
         root.map(|r| r.to_text())
-            .unwrap_or(token_meta_data.name.to_lowercase())
+            .unwrap_or(token_meta_data.name.to_lowercase()[2..].to_string())
     );
     let share_link_s = store_value(share_link);
     let share_message = format!(
@@ -171,7 +171,7 @@ pub fn TokenTile(user_principal: String, token_meta_data: TokenMetadata) -> impl
     view! {
         <div class="flex  w-full items-center h-16 rounded-xl border-2 border-neutral-700 bg-white/15 gap-1">
             <a
-                href=format!("/token/info/{}/{user_principal}?airdrop_amt=100",  root.map(|r| r.to_text()).unwrap_or(info.name.to_lowercase()))
+                href=format!("/token/info/{}/{user_principal}?airdrop_amt=100",  root.map(|r| r.to_text()).unwrap_or(info.name.to_lowercase()[2..].to_string()))
                 // _ref=_ref
                 class="flex flex-1  p-y-4"
             >

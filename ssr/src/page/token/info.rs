@@ -60,7 +60,6 @@ fn TokenInfoInner(
     meta: TokenMetadata,
     key_principal: Option<Principal>,
     is_user_principal: bool,
-    param: String,
 ) -> impl IntoView {
     let meta_c1 = meta.clone();
     let meta_c = meta.clone();
@@ -75,7 +74,7 @@ fn TokenInfoInner(
     let share_link = key_principal.map(|key_principal| {
         format!(
             "/token/info/{}/{key_principal}?airdrop_amt=100",
-            root.map(|r| r.to_text()).unwrap_or(param.clone())
+            root.map(|r| r.to_text()).unwrap_or(meta_c.name.to_lowercase()[2..].to_string())
         )
     });
     let message = share_link.clone().map(|share_link|format!(
@@ -150,7 +149,7 @@ fn TokenInfoInner(
                 </div>
                     <Show when= move || is_user_principal>
                         <a
-                            href=format!("/token/transfer/{}", root.map(|r| r.to_text()).unwrap_or(param.clone()))
+                            href=format!("/token/transfer/{}", root.map(|r| r.to_text()).unwrap_or(meta_c1.name.to_lowercase()[2..].to_string()))
                             class="fixed bottom-20 left-4 right-4 p-3 bg-primary-600 text-white text-center md:text-lg rounded-full z-50"
                         >
                             Send
@@ -194,7 +193,7 @@ pub fn TokenInfo() -> impl IntoView {
             let cans = cans_wire?.canisters()?;
             let token_root = Principal::from_text(&params.token_root).ok();
 
-            let meta = if &params.token_root == "ckbtc" {
+            let meta = if &params.token_root == "btc" {
                 // Map the AgentError to ServerFnError to ensure type compatibility
                 get_ck_metadata(
                     &cans,
@@ -204,7 +203,7 @@ pub fn TokenInfo() -> impl IntoView {
                 )
                 .await
                 .map_err(|e| ServerFnError::new(e.to_string()))? // Map AgentError to ServerFnError
-            } else if &params.token_root == "ckusdc" {
+            } else if &params.token_root == "usdc" {
                 get_ck_metadata(
                     &cans,
                     key_principal,
@@ -223,7 +222,6 @@ pub fn TokenInfo() -> impl IntoView {
                     token_root,
                     key_principal,
                     Some(cans.user_principal()) == key_principal,
-                    params.token_root.clone(),
                 )
             }))
         },
@@ -236,14 +234,13 @@ pub fn TokenInfo() -> impl IntoView {
                     .and_then(|info| info.ok())
                     .map(|info| {
                         match info {
-                            Some((metadata, root, key_principal, is_user_principal, param)) => {
+                            Some((metadata, root, key_principal, is_user_principal)) => {
                                 view! {
                                     <TokenInfoInner
                                         root
                                         key_principal
                                         meta=metadata
                                         is_user_principal=is_user_principal
-                                        param
                                     />
                                 }
                             }

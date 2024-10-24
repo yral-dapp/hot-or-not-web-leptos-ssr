@@ -336,7 +336,7 @@ fn TokenTransferInner(
                     .await?;
                 }
                 None => {
-                    if &param == "ckbtc" {
+                    if &param == "btc" {
                         let ledger_canister =
                             Principal::from_text("mxzaz-hqaaa-aaaar-qaada-cai").unwrap();
                         log::debug!("ledger_canister: {:?}", ledger_canister);
@@ -347,7 +347,7 @@ fn TokenTransferInner(
                             amt.clone(),
                         )
                         .await?;
-                    } else if &param == "ckusdc" {
+                    } else if &param == "usdc" {
                         let ledger_canister =
                             Principal::from_text("xevnm-gaaaa-aaaar-qafnq-cai").unwrap();
                         transfer_ck_token_to_user_principal(
@@ -467,7 +467,7 @@ pub fn TokenTransfer() -> impl IntoView {
                 };
                 // let user = cans.user_canister();
                 let token_root = Principal::from_text(params.token_root.clone());
-                let meta = if &params.token_root == "ckbtc" {
+                let meta = if &params.token_root == "btc" {
                     // Map the AgentError to ServerFnError to ensure type compatibility
                     get_ck_metadata(
                         &cans,
@@ -477,7 +477,7 @@ pub fn TokenTransfer() -> impl IntoView {
                     )
                     .await
                     .map_err(|e| ServerFnError::new(e.to_string()))? // Map AgentError to ServerFnError
-                } else if &params.token_root == "ckusdc" {
+                } else if &params.token_root == "usdc" {
                     get_ck_metadata(
                         &cans,
                         Some(user_principal),
