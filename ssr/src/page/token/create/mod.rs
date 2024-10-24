@@ -8,10 +8,12 @@ use crate::{
         event_streaming::events::{
             TokenCreationCompleted, TokenCreationFailed, TokenCreationStarted,
         },
+        profile::ProfileDetails,
         token::DeployedCdaoCanisters,
         web::FileWithUrl,
     },
 };
+use candid::Principal;
 use leptos::*;
 use std::env;
 
@@ -39,8 +41,21 @@ async fn is_server_available() -> Result<(bool, AccountIdentifier), ServerFnErro
 async fn deploy_cdao_canisters(
     cans_wire: CanistersAuthWire,
     create_sns: SnsInitPayload,
+    profile_details: ProfileDetails,
+    canister_id: Principal,
 ) -> Result<DeployedCdaoCanisters, ServerFnError> {
-    server_impl::deploy_cdao_canisters(cans_wire, create_sns).await
+    let res = server_impl::deploy_cdao_canisters(cans_wire, create_sns.clone()).await;
+
+    match res {
+        Ok(c) => {
+            TokenCreationCompleted.send_event(create_sns, c.root, profile_details, canister_id);
+            Ok(c)
+        }
+        Err(e) => {
+            TokenCreationFailed.send_event(e.to_string(), create_sns, profile_details, canister_id);
+            Err(e)
+        }
+    }
 }
 
 #[component]
@@ -292,6 +307,9 @@ pub fn CreateToken() -> impl IntoView {
                 .canisters()
                 .map_err(|_| "Unable to authenticate".to_string())?;
 
+            let canister_id = cans.user_canister();
+            let profile_details = cans.profile_details();
+
             let sns_form = ctx.form_state.get_untracked();
             let sns_config = sns_form.try_into_config(&cans)?;
 
@@ -308,20 +326,12 @@ pub fn CreateToken() -> impl IntoView {
 
             TokenCreationStarted.send_event(create_sns.clone(), auth_cans);
 
-            let deployed_cans_response = deploy_cdao_canisters(cans_wire, create_sns.clone())
-                .await
-                .map_err(|e| e.to_string());
+            let _deployed_cans_response =
+                deploy_cdao_canisters(cans_wire, create_sns.clone(), profile_details, canister_id)
+                    .await
+                    .map_err(|e| e.to_string())?;
 
-            match deployed_cans_response.clone() {
-                Ok(c) => {
-                    TokenCreationCompleted.send_event(create_sns, c.root, auth_cans);
-                    Ok(())
-                }
-                Err(e) => {
-                    TokenCreationFailed.send_event(e.clone(), create_sns, auth_cans);
-                    Err(e)
-                }
-            }
+            Ok(())
         }
     });
     let creating = create_action.pending();
