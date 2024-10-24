@@ -1,29 +1,26 @@
 use candid::Principal;
 use ic_agent::AgentError;
 
+use crate::consts::{HardCodedIDs, HARDCODED_TOKEN_IDS};
 use crate::page::wallet::ShareButtonWithFallbackPopup;
-use crate::utils::token::TokenBalanceOrClaiming;
+use crate::utils::token::{get_ck_metadata, TokenBalanceOrClaiming};
 use crate::{
-    component::{
-        back_btn::BackButton,
-        bullet_loader::BulletLoader,
-        canisters_prov::AuthCansProvider,
-        infinite_scroller::{CursoredDataProvider, InfiniteScroller, KeyedData, PageEntry},
-        title::Title,
-    },
+    component::infinite_scroller::{CursoredDataProvider, InfiniteScroller, KeyedData, PageEntry},
     state::canisters::{unauth_canisters, Canisters},
     utils::{
         profile::propic_from_principal,
         token::{token_metadata_by_root, TokenBalance, TokenMetadata},
     },
 };
+use futures::stream::{self, StreamExt};
 use leptos::*;
 use yral_canisters_client::individual_user_template::Result14;
-
+use yral_canisters_client::sns_ledger::{Account, SnsLedger};
 #[derive(Clone)]
 pub struct TokenRootList {
-    pub canisters: Canisters<true>,
+    pub canisters: Canisters<false>,
     pub user_canister: Principal,
+    pub user_principal: Principal,
 }
 
 impl KeyedData for Principal {
@@ -33,8 +30,15 @@ impl KeyedData for Principal {
         *self
     }
 }
+impl KeyedData for String {
+    type Key = String;
+
+    fn key(&self) -> Self::Key {
+        self.clone()
+    }
+}
 impl CursoredDataProvider for TokenRootList {
-    type Data = Principal;
+    type Data = String;
     type Error = AgentError;
 
     async fn get_by_cursor(
@@ -46,11 +50,39 @@ impl CursoredDataProvider for TokenRootList {
         let tokens = user
             .get_token_roots_of_this_user_with_pagination_cursor(start as u64, end as u64)
             .await?;
-        let tokens = match tokens {
+        let mut tokens: Vec<String> = match tokens {
             Result14::Ok(v) => v,
             Result14::Err(_) => vec![],
-        };
+        }
+        .into_iter()
+        .map(|t| t.to_text())
+        .collect();
         let list_end = tokens.len() < (end - start);
+        if start == 0 {
+            let rep = stream::iter(HARDCODED_TOKEN_IDS.into_iter())
+                .filter_map(|(name, HardCodedIDs { ledger, .. })| async move {
+                    let cans = unauth_canisters();
+                    let ledger: SnsLedger<'_> =
+                        cans.sns_ledger(Principal::from_text(ledger).ok()?).await;
+
+                    let bal = ledger
+                        .icrc_1_balance_of(Account {
+                            owner: self.user_principal,
+                            subaccount: None,
+                        })
+                        .await
+                        .ok()?;
+
+                    if bal != 0u64 {
+                        Some(name.to_string())
+                    } else {
+                        None
+                    }
+                })
+                .collect::<Vec<_>>()
+                .await;
+            tokens.splice(0..0, rep);
+        }
         Ok(PageEntry {
             data: tokens,
             end: list_end,
@@ -74,9 +106,10 @@ async fn token_metadata_or_fallback(
         symbol: "??".to_string(),
         balance: Some(TokenBalanceOrClaiming::claiming()),
         fees: TokenBalance::new_cdao(0u32.into()),
-        root: Principal::anonymous(),
+        root: Some(Principal::anonymous()),
         ledger: Principal::anonymous(),
         index: Principal::anonymous(),
+        decimals: 8,
     })
 }
 
@@ -90,14 +123,32 @@ pub fn TokenViewFallback() -> impl IntoView {
 #[component]
 pub fn TokenView(
     user_principal: Principal,
-    token_root: Principal,
+    token_root: String,
     #[prop(optional)] _ref: NodeRef<html::A>,
 ) -> impl IntoView {
-    let cans = unauth_canisters();
-
     let info = create_resource(
-        || (),
-        move |_| token_metadata_or_fallback(cans.clone(), user_principal, token_root),
+        move || (token_root.clone(), user_principal),
+        move |(token_root, user_principal)| async move {
+            let cans = unauth_canisters();
+            if let Some(HardCodedIDs { ledger, index }) = HARDCODED_TOKEN_IDS.get(&token_root) {
+                get_ck_metadata(
+                    &cans,
+                    Some(user_principal),
+                    Principal::from_text(ledger).unwrap(),
+                    Principal::from_text(index).unwrap(),
+                )
+                .await
+                .unwrap()
+                .unwrap() // Map AgentError to ServerFnError
+            } else {
+                token_metadata_or_fallback(
+                    cans.clone(),
+                    user_principal,
+                    Principal::from_text(&token_root).unwrap(),
+                )
+                .await
+            }
+        },
     );
 
     view! {
@@ -120,7 +171,11 @@ pub fn TokenView(
 #[component]
 pub fn TokenTile(user_principal: String, token_meta_data: TokenMetadata) -> impl IntoView {
     let root = token_meta_data.root;
-    let share_link = format!("/token/info/{root}/{user_principal}?airdrop_amt=100");
+    let share_link = format!(
+        "/token/info/{}/{user_principal}?airdrop_amt=100",
+        root.map(|r| r.to_text())
+            .unwrap_or(token_meta_data.name.to_lowercase())
+    );
     let share_link_s = store_value(share_link);
     let share_message = format!(
         "Hey! Check out the token: {} I created on YRAL 👇 {}. I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter",
@@ -132,7 +187,7 @@ pub fn TokenTile(user_principal: String, token_meta_data: TokenMetadata) -> impl
     view! {
         <div class="flex  w-full items-center h-16 rounded-xl border-2 border-neutral-700 bg-white/15 gap-1">
             <a
-                href=format!("/token/info/{root}/{user_principal}?airdrop_amt=100")
+                href=format!("/token/info/{}/{user_principal}?airdrop_amt=100",  root.map(|r| r.to_text()).unwrap_or(info.name.to_lowercase()))
                 // _ref=_ref
                 class="flex flex-1  p-y-4"
             >
@@ -164,12 +219,13 @@ pub fn TokenTile(user_principal: String, token_meta_data: TokenMetadata) -> impl
 }
 
 #[component]
-fn TokenList(canisters: Canisters<true>) -> impl IntoView {
-    let user_canister = canisters.user_canister();
-    let user_principal = canisters.user_principal();
+pub fn TokenList(user_principal: Principal, user_canister: Principal) -> impl IntoView {
+    let canisters = unauth_canisters();
+
     let provider: TokenRootList = TokenRootList {
         canisters,
         user_canister,
+        user_principal,
     };
 
     view! {
@@ -178,28 +234,10 @@ fn TokenList(canisters: Canisters<true>) -> impl IntoView {
                 provider
                 fetch_count=10
                 children=move |token_root, _ref| {
-                    view! { <TokenView user_principal token_root _ref=_ref.unwrap_or_default() /> }
+                    view! { <TokenView user_principal token_root=token_root.to_string() _ref=_ref.unwrap_or_default() /> }
                 }
             />
 
-        </div>
-    }
-}
-
-#[component]
-pub fn Tokens() -> impl IntoView {
-    view! {
-        <div class="flex items-center flex-col w-dvw min-h-dvh gap-6 bg-black pt-4 px-4 pb-12">
-            <Title justify_center=false>
-                <div class="flex flex-row justify-between">
-                    <BackButton fallback="/wallet".to_string() />
-                    <span class="text-xl text-white font-bold">Tokens</span>
-                    <div></div>
-                </div>
-            </Title>
-            <AuthCansProvider fallback=BulletLoader let:canisters>
-                <TokenList canisters />
-            </AuthCansProvider>
         </div>
     }
 }

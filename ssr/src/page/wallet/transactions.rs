@@ -11,8 +11,9 @@ pub fn TransactionList(
     principal: Option<Principal>,
     source: IndexOrLedger,
     symbol: String,
+    decimals: u8,
 ) -> impl IntoView {
-    let provider = get_history_provider(unauth_canisters(), principal, source);
+    let provider = get_history_provider(unauth_canisters(), principal, source, decimals);
     view! {
         <div class="flex flex-col w-full justify-between items-stretch">
             <InfiniteScroller
@@ -31,6 +32,7 @@ pub fn Transactions(
     source: IndexOrLedger,
     key_principal: Option<Principal>,
     symbol: String,
+    decimals: u8,
 ) -> impl IntoView {
     view! {
 
@@ -38,7 +40,7 @@ pub fn Transactions(
 
         <div class="flex items-center flex-col gap- pb-12 w-full">
             <div class="flex flex-col divide-y divide-white/10 w-full">
-                <TransactionList principal=key_principal source=source symbol/>
+                <TransactionList principal=key_principal source=source symbol decimals/>
             </div>
         </div>
     }

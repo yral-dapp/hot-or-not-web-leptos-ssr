@@ -4,8 +4,10 @@ use leptos_icons::*;
 use leptos_router::*;
 use serde::{Deserialize, Serialize};
 
+use crate::consts::{HardCodedIDs, HARDCODED_TOKEN_IDS};
 use crate::page::token::TokenInfoParams;
 use crate::state::canisters::authenticated_canisters;
+use crate::utils::token::get_ck_metadata;
 use crate::{
     component::{back_btn::BackButton, share_popup::*, spinner::FullScreenSpinner, title::Title},
     page::wallet::{transactions::Transactions, txn::IndexOrLedger},
@@ -55,7 +57,7 @@ fn TokenDetails(meta: TokenMetadata) -> impl IntoView {
 
 #[component]
 fn TokenInfoInner(
-    root: Principal,
+    root: Option<Principal>,
     meta: TokenMetadata,
     key_principal: Option<Principal>,
     is_user_principal: bool,
@@ -70,13 +72,19 @@ fn TokenInfoInner(
             icondata::AiDownOutlined
         }
     });
-    let share_link = key_principal
-        .map(|key_principal| format!("/token/info/{root}/{key_principal}?airdrop_amt=100"));
+    let share_link = key_principal.map(|key_principal| {
+        format!(
+            "/token/info/{}/{key_principal}?airdrop_amt=100",
+            root.map(|r| r.to_text())
+                .unwrap_or(meta_c.name.to_lowercase())
+        )
+    });
     let message = share_link.clone().map(|share_link|format!(
         "Hey! Check out the token: {} I created on YRAL 👇 {}. I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter",
         meta.symbol,  share_link
     ));
 
+    let decimals = meta.decimals;
     view! {
         <div class="w-dvw min-h-dvh bg-neutral-800  flex flex-col gap-4">
             <Title justify_center=false>
@@ -144,20 +152,21 @@ fn TokenInfoInner(
                 </div>
                     <Show when= move || is_user_principal>
                         <a
-                            href=format!("/token/transfer/{root}")
+                            href=format!("/token/transfer/{}", root.map(|r| r.to_text()).unwrap_or(meta_c1.name.to_lowercase()))
                             class="fixed bottom-20 left-4 right-4 p-3 bg-primary-600 text-white text-center md:text-lg rounded-full z-50"
                         >
                             Send
                         </a>
                     </Show>
                 {if key_principal.is_some() {
-                    view! { <Transactions source=IndexOrLedger::Index(meta.index) key_principal symbol=meta.symbol.clone()/> }
+                    view! { <Transactions source=IndexOrLedger::Index(meta.index) key_principal symbol=meta.symbol.clone() decimals/> }
                 } else {
                     view! {
                         <Transactions
                             source=IndexOrLedger::Ledger(meta.ledger)
                             key_principal=None
                             symbol=meta.symbol.clone()
+                            decimals
                         />
                     }
                 }}
@@ -186,12 +195,26 @@ pub fn TokenInfo() -> impl IntoView {
                 return Ok::<_, ServerFnError>(None);
             };
             let cans = cans_wire?.canisters()?;
-            let meta = token_metadata_by_root(&cans, key_principal, params.token_root).await?;
+            let token_root = Principal::from_text(&params.token_root).ok();
 
+            let meta = if let Some(HardCodedIDs { ledger, index }) =
+                HARDCODED_TOKEN_IDS.get(&params.token_root)
+            {
+                get_ck_metadata(
+                    &cans,
+                    key_principal,
+                    Principal::from_text(ledger).unwrap(),
+                    Principal::from_text(index).unwrap(),
+                )
+                .await
+                .map_err(|e| ServerFnError::new(e.to_string()))? // Map AgentError to ServerFnError
+            } else {
+                token_metadata_by_root(&cans, key_principal, token_root.unwrap()).await?
+            };
             Ok(meta.map(|m| {
                 (
                     m,
-                    params.token_root,
+                    token_root,
                     key_principal,
                     Some(cans.user_principal()) == key_principal,
                 )

@@ -3,11 +3,12 @@ use crate::{
         back_btn::BackButton, canisters_prov::WithAuthCans, spinner::FullScreenSpinner,
         title::Title,
     },
+    consts::{HardCodedIDs, HARDCODED_TOKEN_IDS},
     page::token::non_yral_tokens::SUPPORTED_NON_YRAL_TOKENS_ROOT,
     state::canisters::{authenticated_canisters, Canisters, CanistersAuthWire},
     utils::{
         event_streaming::events::TokensTransferred,
-        token::{token_metadata_by_root, TokenBalance, TokenMetadata},
+        token::{get_ck_metadata, token_metadata_by_root, TokenBalance, TokenMetadata},
         web::{copy_to_clipboard, paste_from_clipboard},
     },
 };
@@ -117,6 +118,79 @@ async fn transfer_token_to_user_principal(
     Ok(())
 }
 
+async fn transfer_ck_token_to_user_principal(
+    cans_wire: CanistersAuthWire,
+    destination_principal: Principal,
+    ledger_canister: Principal,
+    amount: TokenBalance,
+) -> Result<(), ServerFnError> {
+    let cans = cans_wire.canisters().unwrap();
+    // let user_id = user_id.to_owned();
+    // let user_principal = user_id.sender()?;
+    // let agent = cans.agent.get_agent().await;
+    // let user_principal = agent.get_principal()?;
+    // log::debug!("user_principal: {:?}", user_principal.to_string());
+    let sns_ledger = cans.sns_ledger(ledger_canister).await;
+    let res = sns_ledger
+        .icrc_1_transfer(TransferArg {
+            memo: Some(serde_bytes::ByteBuf::from(vec![0])),
+            amount: amount.clone().into(),
+            fee: None,
+            from_subaccount: None,
+            to: Account {
+                owner: destination_principal,
+                subaccount: None,
+            },
+            created_at_time: None,
+        })
+        .await
+        .unwrap();
+    log::debug!("transfer res: {:?}", res);
+
+    // let agent = Agent::builder()
+    //     .with_url(AGENT_URL)
+    //     .with_identity(user_id)
+    //     .build()
+    //     .unwrap();
+    // agent.fetch_root_key().await.unwrap();
+
+    // let transfer_args = types::Transaction {
+    //     memo: Some(vec![0]),
+    //     amount,
+    //     fee: None,
+    //     from_subaccount: None,
+    //     to: types::Recipient {
+    //         owner: destination_principal,
+    //         subaccount: None,
+    //     },
+    //     created_at_time: None,
+    // };
+    // let res = agent
+    //     .update(
+    //         &ledger_canister,
+    //         "icrc1_transfer",
+    //     )
+    //     .with_arg(Encode!(&transfer_args).unwrap())
+    //     .call_and_wait()
+    //     .await
+    //     .unwrap();
+    // let transfer_result: types::TransferResult = Decode!(&res, types::TransferResult).unwrap();
+    // println!("transfer_result: {:?}", transfer_result);
+
+    // let res = agent
+    //     .update(
+    //         &destination_canister,
+    //         "add_token",
+    //     )
+    //     .with_arg(candid::encode_one(root_canister).unwrap())
+    //     .call_and_wait()
+    //     .await
+    //     .unwrap();
+    // println!("add_token res: {:?}", res);
+
+    Ok(())
+}
+
 #[component]
 fn FormError<V: 'static>(#[prop(into)] res: Signal<Result<V, String>>) -> impl IntoView {
     let err = Signal::derive(move || res.with(|r| r.as_ref().err().cloned()));
@@ -134,8 +208,9 @@ fn FormError<V: 'static>(#[prop(into)] res: Signal<Result<V, String>>) -> impl I
 #[component]
 fn TokenTransferInner(
     cans: Canisters<true>,
-    root: Principal,
+    root: Option<Principal>,
     info: TokenMetadata,
+    param: String,
 ) -> impl IntoView {
     let source_addr = cans.user_principal();
     let copy_source = move || {
@@ -174,6 +249,7 @@ fn TokenTransferInner(
             </div>
         };
     };
+
     let max_amt = if balance
         .map_balance_ref(|b| b > &info.fees)
         .unwrap_or_default()
@@ -182,7 +258,7 @@ fn TokenTransferInner(
             .map_balance_ref(|b| b.clone() - info.fees.clone())
             .unwrap()
     } else {
-        TokenBalance::new_cdao(0u32.into())
+        TokenBalance::new(0u32.into(), info.decimals)
     };
     let max_amt_c = max_amt.clone();
     let set_max_amt = move || {
@@ -202,7 +278,7 @@ fn TokenTransferInner(
             return;
         };
         let amt_raw = input.value();
-        let Ok(amt) = TokenBalance::parse_cdao(&amt_raw) else {
+        let Ok(amt) = TokenBalance::parse(&amt_raw, info.decimals) else {
             amt_res.set(Err("Invalid amount".to_string()));
             return;
         };
@@ -222,6 +298,7 @@ fn TokenTransferInner(
     let send_action = create_action(move |&()| {
         let cans = cans.clone();
         let auth_cans_wire = auth_cans_wire.clone();
+        let param = param.clone();
         async move {
             let destination = destination_res.get_untracked().unwrap().unwrap();
 
@@ -238,24 +315,42 @@ fn TokenTransferInner(
 
             // Ok(())
 
-            let root_canister = cans.sns_root(root).await;
-            let sns_cans = root_canister
-                .list_sns_canisters(ListSnsCanistersArg {})
-                .await
-                .unwrap();
-            let ledger_canister = sns_cans.ledger.unwrap();
-            log::debug!("ledger_canister: {:?}", ledger_canister);
             let amt = amt_res.get_untracked().unwrap().unwrap();
 
-            transfer_token_to_user_principal(
-                auth_cans_wire.wait_untracked().await.unwrap(),
-                destination,
-                ledger_canister,
-                root,
-                amt.clone(),
-            )
-            .await?;
+            match root {
+                Some(root) => {
+                    let root_canister = cans.sns_root(root).await;
+                    println!("{}", root);
+                    let sns_cans = root_canister
+                        .list_sns_canisters(ListSnsCanistersArg {})
+                        .await
+                        .unwrap();
+                    let ledger_canister = sns_cans.ledger.unwrap();
+                    log::debug!("ledger_canister: {:?}", ledger_canister);
 
+                    transfer_token_to_user_principal(
+                        auth_cans_wire.wait_untracked().await.unwrap(),
+                        destination,
+                        ledger_canister,
+                        root,
+                        amt.clone(),
+                    )
+                    .await?;
+                }
+                None => {
+                    let Some(HardCodedIDs { ledger, .. }) = HARDCODED_TOKEN_IDS.get(&param) else {
+                        return Err(ServerFnError::new("Invalid Token Root or Arg provided"));
+                    };
+
+                    transfer_ck_token_to_user_principal(
+                        auth_cans_wire.wait_untracked().await.unwrap(),
+                        destination,
+                        Principal::from_text(ledger).unwrap(),
+                        amt.clone(),
+                    )
+                    .await?;
+                }
+            }
             TokensTransferred.send_event(amt.e8s.to_string(), destination, cans.clone());
 
             Ok::<_, ServerFnError>(amt)
@@ -362,9 +457,24 @@ pub fn TokenTransfer() -> impl IntoView {
                     return Ok::<_, ServerFnError>(None);
                 };
                 // let user = cans.user_canister();
-                let meta =
-                    token_metadata_by_root(&cans, Some(user_principal), params.token_root).await?;
-                Ok(meta.map(|m| (m, params.token_root)))
+                let token_root = Principal::from_text(params.token_root.clone());
+                let meta = if let Some(HardCodedIDs { ledger, index }) =
+                    HARDCODED_TOKEN_IDS.get(&params.token_root)
+                {
+                    get_ck_metadata(
+                        &cans,
+                        Some(user_principal),
+                        Principal::from_text(ledger).unwrap(),
+                        Principal::from_text(index).unwrap(),
+                    )
+                    .await
+                    .unwrap()
+                } else {
+                    token_metadata_by_root(&cans, Some(user_principal), token_root.clone().unwrap())
+                        .await?
+                };
+
+                Ok(meta.map(|m| (m, token_root.ok(), params.token_root)))
             }
         })
     };
@@ -375,9 +485,12 @@ pub fn TokenTransfer() -> impl IntoView {
             with=token_metadata_fetch
             children=|(cans, res)| {
                 match res {
-                    Err(e) => view! { <Redirect path=format!("/error?err={e}") /> },
+                    Err(e) => {
+                        println!("Error: {:?}", e);
+                        view! { <Redirect path=format!("/error?err={e}") /> }
+                    },
                     Ok(None) => view! { <Redirect path="/" /> },
-                    Ok(Some((info, root))) => view! { <TokenTransferInner cans info root /> },
+                    Ok(Some((info, root, param))) => view! { <TokenTransferInner cans info root param/> },
                 }
             }
         />

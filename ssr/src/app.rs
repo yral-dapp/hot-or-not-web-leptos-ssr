@@ -25,7 +25,7 @@ use crate::{
             transfer::TokenTransfer,
         },
         upload::UploadPostPage,
-        wallet::{tokens::Tokens, Wallet},
+        wallet::Wallet,
     },
     state::{
         audio_state::AudioState, canisters::Canisters, content_seed_client::ContentSeedClient,
@@ -167,7 +167,6 @@ pub fn App() -> impl IntoView {
                         <Route path="/token/info/:token_root/:key_principal" view=TokenInfo />
                         <Route path="/token/info/:token_root" view=TokenInfo />
                         <Route path="/token/transfer/:token_root" view=TokenTransfer />
-                        <Route path="/tokens" view=Tokens />
                         <Route path="/board" view=ICPumpLanding />
                         <Route path="/icpump-ai" view=ICPumpAi/>
                         // <Route path="/test" view=TestIndex/>
