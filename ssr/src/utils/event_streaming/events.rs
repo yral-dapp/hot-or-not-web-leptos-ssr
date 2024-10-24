@@ -14,8 +14,11 @@ use crate::state::auth::account_connected_reader;
 use crate::state::canisters::{auth_canisters_store, Canisters};
 use crate::state::history::HistoryCtx;
 #[cfg(feature = "ga4")]
-use crate::utils::event_streaming::{send_event, send_event_warehouse, send_user_id};
+use crate::utils::event_streaming::{
+    send_event, send_event_warehouse, send_event_warehouse_ssr, send_user_id,
+};
 use crate::utils::posts::PostDetails;
+use crate::utils::profile::ProfileDetails;
 use crate::utils::user::{user_details_can_store_or_ret, user_details_or_ret};
 
 pub enum AnalyticsEvent {
@@ -770,24 +773,21 @@ impl TokenCreationStarted {
 pub struct TokenCreationCompleted;
 
 impl TokenCreationCompleted {
-    pub fn send_event(
+    pub async fn send_event(
         &self,
         sns_init_payload: SnsInitPayload,
         token_root: Principal,
-        cans_store: RwSignal<Option<Canisters<true>>>,
+        profile_details: ProfileDetails,
+        canister_id: Principal,
     ) {
-        #[cfg(all(feature = "hydrate", feature = "ga4"))]
+        #[cfg(feature = "ga4")]
         {
-            let user = user_details_can_store_or_ret!(cans_store);
-            let details = user.details;
-
-            let user_id = details.principal;
-            let canister_id = user.canister_id;
+            let user_id = profile_details.principal;
 
             let link = format!("/token/info/{token_root}");
 
             // token_creation_completed - analytics
-            send_event(
+            send_event_warehouse_ssr(
                 "token_creation_completed",
                 &json!({
                     "user_id": user_id,
@@ -799,7 +799,8 @@ impl TokenCreationCompleted {
                     "logo": sns_init_payload.logo,
                     "link": link,
                 }),
-            );
+            )
+            .await;
         }
     }
 }
@@ -808,22 +809,19 @@ impl TokenCreationCompleted {
 pub struct TokenCreationFailed;
 
 impl TokenCreationFailed {
-    pub fn send_event(
+    pub async fn send_event(
         &self,
         error_str: String,
         sns_init_payload: SnsInitPayload,
-        cans_store: RwSignal<Option<Canisters<true>>>,
+        profile_details: ProfileDetails,
+        canister_id: Principal,
     ) {
-        #[cfg(all(feature = "hydrate", feature = "ga4"))]
+        #[cfg(feature = "ga4")]
         {
-            let user = user_details_can_store_or_ret!(cans_store);
-            let details = user.details;
-
-            let user_id = details.principal;
-            let canister_id = user.canister_id;
+            let user_id = profile_details.principal;
 
             // token_creation_failed - analytics
-            send_event(
+            send_event_warehouse_ssr(
                 "token_creation_failed",
                 &json!({
                     "user_id": user_id,
@@ -834,7 +832,8 @@ impl TokenCreationFailed {
                     "description": sns_init_payload.description,
                     "error": error_str
                 }),
-            );
+            )
+            .await;
         }
     }
 }
