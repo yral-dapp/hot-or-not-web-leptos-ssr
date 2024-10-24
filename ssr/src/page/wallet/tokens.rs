@@ -63,7 +63,7 @@ impl CursoredDataProvider for TokenRootList {
                 .filter_map(|(name, HardCodedIDs { ledger, .. })| async move {
                     let cans = unauth_canisters();
                     let ledger: SnsLedger<'_> = cans
-                        .sns_ledger(Principal::from_text(ledger.to_string()).ok()?)
+                        .sns_ledger(Principal::from_text(ledger).ok()?)
                         .await;
 
                     let bal = ledger
