@@ -89,6 +89,52 @@ pub fn SearchButton(query: RwSignal<String>, search_action: Action<(), ()>) -> i
 }
 
 #[component]
+pub fn AnimatedPumpIcon() -> impl IntoView {
+    view! {
+        <div class="relative">
+            // Added inline styles to ensure animation works in production
+            <style>
+                ".animateicon {
+                    transform-origin: 80% 20%;
+                    animation: scale-rotate 10s infinite;
+                    scale: 0;
+                }
+                @keyframes scale-rotate {
+                    0% {
+                        scale: 0;
+                        transform: rotate(0deg);
+                    }
+                    7% {
+                        scale: 1;
+                        transform: rotate(0deg);
+                    }
+                    30% {
+                        scale: 1;
+                        transform: rotate(0deg);
+                    }
+                    50% {
+                        scale: 1;
+                        transform: rotate(360deg);
+                    }
+                    90% {
+                        scale: 1;
+                        transform: rotate(360deg);
+                    }
+                    100% {
+                        scale: 0;
+                        transform: rotate(0deg);
+                    }
+                }"
+            </style>
+            <Icon
+                icon=PumpAiIcon
+                class="h-16 w-16"
+            />
+        </div>
+    }
+}
+
+#[component]
 pub fn ICPumpAiPage1(
     query: RwSignal<String>,
     page_no: RwSignal<i32>,
@@ -96,8 +142,7 @@ pub fn ICPumpAiPage1(
 ) -> impl IntoView {
     view! {
         <div class="flex flex-col items-center justify-center gap-3">
-            // <img src="/img/pump-ai.svg" class="h-16 w-16"/>
-            <Icon icon=PumpAiIcon class="h-16 w-16" />
+            <AnimatedPumpIcon />
             <div class="font-kumbh font-semibold text-3xl text-center">Welcome to <br/>Pump AI</div>
             <div class="bg-[#202125] w-full rounded-sm relative">
               <input

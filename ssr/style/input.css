@@ -101,36 +101,3 @@
         background-position-x: 0%;
     }
 }
-
-.animateicon {
-    transform-origin: 80% 20%;
-    animation: scale-rotate 10s infinite;
-    scale: 0;
-}
-
-@keyframes scale-rotate {
-    0% {
-        scale: 0;
-        transform: rotate(0deg);
-    }
-    7% {
-        scale: 1;
-        transform: rotate(0deg);
-    }
-    30% {
-        scale: 1;
-        transform: rotate(0deg);
-    }
-    50% {
-        scale: 1;
-        transform: rotate(360deg);
-    }
-    90% {
-        scale: 1;
-        transform: rotate(360deg);
-    }
-    100% {
-        scale: 0;
-        transform: rotate(0deg);
-    }
-}
