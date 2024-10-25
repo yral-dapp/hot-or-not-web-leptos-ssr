@@ -65,6 +65,30 @@ pub fn MarkdownRenderer(text: String) -> impl IntoView {
 }
 
 #[component]
+pub fn SearchButton(query: RwSignal<String>, search_action: Action<(), ()>) -> impl IntoView {
+    view! {
+        <button type="submit" disabled={move || query.get().is_empty()}
+            on:click={
+                move |_| {
+                    search_action.dispatch(());
+                }
+            }
+        class="pr-2 absolute transition-opacity right-0 inset-y-0">
+            <Show
+                when=move || !query.get().is_empty()
+                fallback=move || {
+                    view! {
+                        <Icon icon=SendIcon class="w-6 h-6" />
+                    }
+                }
+            >
+                <Icon icon=SendIconFilled class="w-6 h-6" />
+            </Show>
+        </button>
+    }
+}
+
+#[component]
 pub fn ICPumpAiPage1(
     query: RwSignal<String>,
     page_no: RwSignal<i32>,
@@ -90,18 +114,7 @@ pub fn ICPumpAiPage1(
                 placeholder="Ask anything"
                 class="bg-transparent focus:outline-none pl-4 py-2 pr-12 w-full placeholder:text-[#505156]"
               />
-              <button type="submit" disabled={move || query.get().is_empty()} class="pr-2 absolute transition-opacity right-0 inset-y-0">
-                    <Show
-                        when=move || !query.get().is_empty()
-                        fallback=move || {
-                            view! {
-                                <Icon icon=SendIcon class="w-6 h-6" />
-                            }
-                        }
-                    >
-                        <Icon icon=SendIconFilled class="w-6 h-6" />
-                    </Show>
-               </button>
+              <SearchButton query={query} search_action={search_action}/>
             </div>
         </div>
         <div class="flex flex-col pt-20 gap-2">
@@ -169,24 +182,7 @@ pub fn ICPumpAiPage2(
                 }
                 prop:value=move || query.get()
                 placeholder="Ask anything" class="bg-transparent focus:outline-none pl-4 py-2 pr-12 w-full placeholder:text-[#505156]"/>
-                <button type="submit" disabled={move || query.get().is_empty()}
-                    on:click={
-                        move |_| {
-                            search_action.dispatch(());
-                        }
-                    }
-                class="pr-2 absolute transition-opacity right-0 inset-y-0">
-                    <Show
-                        when=move || !query.get().is_empty()
-                        fallback=move || {
-                            view! {
-                                <Icon icon=SendIcon class="w-6 h-6" />
-                            }
-                        }
-                    >
-                        <Icon icon=SendIconFilled class="w-6 h-6" />
-                    </Show>
-                </button>
+                <SearchButton query={query} search_action={search_action}/>
             </div>
             <For
                     each=move || QUERY_LIST
@@ -371,24 +367,7 @@ pub fn ICPumpAiPage3(
                 }
                 prop:value=move || query.get()
                 placeholder="Ask anything" class="bg-transparent focus:outline-none pl-4 py-2 pr-12 w-full placeholder:text-[#505156]"/>
-                <button type="submit" disabled={move || query.get().is_empty()}
-                on:click={
-                    move |_| {
-                        search_action.dispatch(());
-                    }
-                }
-                class="pr-2 absolute transition-opacity right-0 inset-y-0">
-                    <Show
-                        when=move || !query.get().is_empty()
-                        fallback=move || {
-                            view! {
-                                <Icon icon=SendIcon class="w-6 h-6" />
-                            }
-                        }
-                    >
-                        <Icon icon=SendIconFilled class="w-6 h-6" />
-                    </Show>
-                </button>
+                <SearchButton query={query} search_action={search_action}/>
             </div>
         </div>
     }
