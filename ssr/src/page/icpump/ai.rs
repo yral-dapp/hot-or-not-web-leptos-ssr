@@ -65,45 +65,6 @@ pub fn MarkdownRenderer(text: String) -> impl IntoView {
 }
 
 #[component]
-pub fn SearchInput(query: RwSignal<String>, search_action: Action<(), ()>) -> impl IntoView {
-    view! {
-        <div class="bg-[#202125] w-full rounded-sm relative">
-            <input
-            on:input=move |ev| {
-                let q = event_target_value(&ev);
-                query.set(q);
-            }
-            on:keypress=move |ev: ev::KeyboardEvent| {
-                if ev.key() == "Enter" {
-                    search_action.dispatch(());
-                }
-            }
-            prop:value=move || query.get()
-            placeholder="Ask anything" class="bg-transparent focus:outline-none pl-4 py-2 pr-12 w-full placeholder:text-[#505156]"/>
-            <button type="submit" disabled={move || query.get().is_empty()}
-            on:click={
-                move |_| {
-                    search_action.dispatch(());
-                }
-            }
-            class="pr-2 absolute transition-opacity right-0 inset-y-0">
-                <Show
-                    when=move || !query.get().is_empty()
-                    fallback=move || {
-                        view! {
-                            <Icon icon=SendIcon class="w-6 h-6" />
-                        }
-                    }
-                >
-                    <Icon icon=SendIconFilled class="w-6 h-6" />
-                </Show>
-
-            </button>
-        </div>
-    }
-}
-
-#[component]
 pub fn ICPumpAiPage1(
     query: RwSignal<String>,
     page_no: RwSignal<i32>,
