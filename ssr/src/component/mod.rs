@@ -21,6 +21,7 @@ pub mod onboarding_flow;
 pub mod option;
 pub mod overlay;
 pub mod profile_placeholders;
+pub mod pumpai_icons;
 pub mod scrolling_post_view;
 pub mod share_popup;
 pub mod social;

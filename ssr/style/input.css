@@ -84,56 +84,53 @@
     }
 }
 
-.thinking:before {
-    content: "[=---]";
-    font: "monospace";
-    animation: thinking 2s infinite 0s;
+.shimmer {
+    background: linear-gradient(
+        -45deg,
+        rgb(24, 24, 27) 40%,
+        rgb(20, 20, 20) 50%,
+        rgb(24, 24, 27) 60%
+    );
+    background-size: 300%;
+    background-position-x: 100%;
+    animation: shimmer 1s infinite linear;
 }
 
-@keyframes thinking {
+@keyframes shimmer {
+    to {
+        background-position-x: 0%;
+    }
+}
+
+.animate {
+    transform-origin: 80% 20%;
+    animation: scale-rotate 10s infinite;
+    scale: 0;
+}
+
+@keyframes scale-rotate {
+    0% {
+        scale: 0;
+        transform: rotate(0deg);
+    }
     7% {
-        content: "[=---]";
+        scale: 1;
+        transform: rotate(0deg);
     }
-    14% {
-        content: "[==--]";
-    }
-    21% {
-        content: "[===-]";
-    }
-    28% {
-        content: "[====]";
-    }
-    35% {
-        content: "[-===]";
-    }
-    42% {
-        content: "[--==]";
+    30% {
+        scale: 1;
+        transform: rotate(0deg);
     }
     50% {
-        content: "[---=]";
+        scale: 1;
+        transform: rotate(360deg);
     }
-    57% {
-        content: "[----]";
-    }
-    64% {
-        content: "[---=]";
-    }
-    71% {
-        content: "[--==]";
-    }
-    78% {
-        content: "[-===]";
-    }
-    85% {
-        content: "[====]";
-    }
-    92% {
-        content: "[===-]";
-    }
-    99% {
-        content: "[==--]";
+    90% {
+        scale: 1;
+        transform: rotate(360deg);
     }
     100% {
-        content: "[=---]";
+        scale: 0;
+        transform: rotate(0deg);
     }
 }

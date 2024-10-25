@@ -1,12 +1,14 @@
 use std::collections::VecDeque;
 
 use leptos::*;
+use leptos_icons::*;
 use pulldown_cmark::{Options, Parser};
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::Closure;
 use wasm_bindgen::prelude::*;
 
 use crate::{
+    component::pumpai_icons::{PumpAiIcon, SendIcon, SendIconFilled},
     try_or_redirect,
     utils::token::icpump::{
         get_pumpai_results, get_pumpai_results_contextual, ICPumpChatInteraction, TokenListItem,
@@ -63,6 +65,45 @@ pub fn MarkdownRenderer(text: String) -> impl IntoView {
 }
 
 #[component]
+pub fn SearchInput(query: RwSignal<String>, search_action: Action<(), ()>) -> impl IntoView {
+    view! {
+        <div class="bg-[#202125] w-full rounded-sm relative">
+            <input
+            on:input=move |ev| {
+                let q = event_target_value(&ev);
+                query.set(q);
+            }
+            on:keypress=move |ev: ev::KeyboardEvent| {
+                if ev.key() == "Enter" {
+                    search_action.dispatch(());
+                }
+            }
+            prop:value=move || query.get()
+            placeholder="Ask anything" class="bg-transparent focus:outline-none pl-4 py-2 pr-12 w-full placeholder:text-[#505156]"/>
+            <button type="submit" disabled={move || query.get().is_empty()}
+            on:click={
+                move |_| {
+                    search_action.dispatch(());
+                }
+            }
+            class="pr-2 absolute transition-opacity right-0 inset-y-0">
+                <Show
+                    when=move || !query.get().is_empty()
+                    fallback=move || {
+                        view! {
+                            <Icon icon=SendIcon class="w-6 h-6" />
+                        }
+                    }
+                >
+                    <Icon icon=SendIconFilled class="w-6 h-6" />
+                </Show>
+
+            </button>
+        </div>
+    }
+}
+
+#[component]
 pub fn ICPumpAiPage1(
     query: RwSignal<String>,
     page_no: RwSignal<i32>,
@@ -70,7 +111,8 @@ pub fn ICPumpAiPage1(
 ) -> impl IntoView {
     view! {
         <div class="flex flex-col items-center justify-center gap-3">
-            <img src="/img/pump-ai.svg" class="h-18 w-18"/>
+            // <img src="/img/pump-ai.svg" class="h-16 w-16"/>
+            <Icon icon=PumpAiIcon class="h-16 w-16" />
             <div class="font-kumbh font-semibold text-3xl text-center">Welcome to <br/>Pump AI</div>
             <div class="bg-[#202125] w-full rounded-sm relative">
               <input
@@ -87,11 +129,22 @@ pub fn ICPumpAiPage1(
                 placeholder="Ask anything"
                 class="bg-transparent focus:outline-none pl-4 py-2 pr-12 w-full placeholder:text-[#505156]"
               />
-              <button type="submit" disabled={move || query.get().is_empty()} class="pr-4 absolute transition-opacity right-0 inset-y-0 disabled:opacity-20">"🏹"</button>
+              <button type="submit" disabled={move || query.get().is_empty()} class="pr-2 absolute transition-opacity right-0 inset-y-0">
+                    <Show
+                        when=move || !query.get().is_empty()
+                        fallback=move || {
+                            view! {
+                                <Icon icon=SendIcon class="w-6 h-6" />
+                            }
+                        }
+                    >
+                        <Icon icon=SendIconFilled class="w-6 h-6" />
+                    </Show>
+               </button>
             </div>
         </div>
         <div class="flex flex-col pt-20 gap-2">
-          <div class="text-[#505156]">Try these:</div>
+          <div class="text-[#505156] pb-4">Try these:</div>
           <For
                 each=move || QUERY_LIST
                 key=|t| t.to_owned()
@@ -120,7 +173,6 @@ pub fn ICPumpAiPage2(
     query: RwSignal<String>,
     page_no: RwSignal<i32>,
     search_action: Action<(), ()>,
-    reset_state: Action<(), ()>,
 ) -> impl IntoView {
     let input_ref = create_node_ref::<html::Input>();
 
@@ -141,61 +193,59 @@ pub fn ICPumpAiPage2(
     });
 
     view! {
-        <div class="bg-black z-[4] absolute top-0 select-none inset-x-0 py-3 px-4 flex items-center justify-center gap-3">
-            <img src="/img/pump-ai.svg" class="h-5 w-5"/>
-            <div class="text-xl font-semibold">Pump AI</div>
-            <button class="absolute z-[5] left-0 px-4 h-full"
-                on:click={
-                    move |_| {
-                        reset_state.dispatch(());
-                        page_no.set(1);
-                    }
-                }>
-                "◁"
-            </button>
-        </div>
-        <div class="bg-[#202125] mt-20 w-full rounded-sm relative">
-          <input
-          _ref=input_ref
-          on:input=move |ev| {
-              let q = event_target_value(&ev);
-              query.set(q);
-          }
-          on:keypress=move |ev: ev::KeyboardEvent| {
-              if ev.key() == "Enter" {
-                  search_action.dispatch(());
-              }
-          }
-          prop:value=move || query.get()
-          placeholder="Ask anything" class="bg-transparent focus:outline-none pl-4 py-2 pr-12 w-full placeholder:text-[#505156]"/>
-          <button type="submit" disabled={move || query.get().is_empty()}
-            on:click={
-                move |_| {
-                    search_action.dispatch(());
+        <div class="flex flex-col pt-5 gap-2">
+            <div class="bg-[#202125] w-full rounded-sm relative mt-20">
+                <input
+                _ref=input_ref
+                on:input=move |ev| {
+                    let q = event_target_value(&ev);
+                    query.set(q);
                 }
-            }
-          class="pr-4 absolute transition-opacity right-0 inset-y-0 disabled:opacity-20">"🏹"</button>
-        </div>
-        <div class="flex flex-col pt-6 gap-2">
-          <For
-                each=move || QUERY_LIST
-                key=|t| t.to_owned()
-                children=move |token: &str| {
-                    view! {
-                        <button on:click={
-                            move |_| {
-                                query.set(token.to_string());
-                                page_no.set(2);
-                                search_action.dispatch(());
+                on:keypress=move |ev: ev::KeyboardEvent| {
+                    if ev.key() == "Enter" {
+                        search_action.dispatch(());
+                    }
+                }
+                prop:value=move || query.get()
+                placeholder="Ask anything" class="bg-transparent focus:outline-none pl-4 py-2 pr-12 w-full placeholder:text-[#505156]"/>
+                <button type="submit" disabled={move || query.get().is_empty()}
+                    on:click={
+                        move |_| {
+                            search_action.dispatch(());
+                        }
+                    }
+                class="pr-2 absolute transition-opacity right-0 inset-y-0">
+                    <Show
+                        when=move || !query.get().is_empty()
+                        fallback=move || {
+                            view! {
+                                <Icon icon=SendIcon class="w-6 h-6" />
                             }
                         }
-                        class="border-[#1B1D22] transition-colors hover:bg-zinc-800 active:bg-zinc-900 text-sm text-left font-medium py-2 px-4 border w-full">
-                            {token}
-                        </button>
+                    >
+                        <Icon icon=SendIconFilled class="w-6 h-6" />
+                    </Show>
+                </button>
+            </div>
+            <For
+                    each=move || QUERY_LIST
+                    key=|t| t.to_owned()
+                    children=move |token: &str| {
+                        view! {
+                            <button on:click={
+                                move |_| {
+                                    query.set(token.to_string());
+                                    page_no.set(2);
+                                    search_action.dispatch(());
+                                }
+                            }
+                            class="border-[#1B1D22] transition-colors hover:bg-zinc-800 active:bg-zinc-900 text-sm text-left font-medium py-2 px-4 border w-full">
+                                {token}
+                            </button>
+                        }
                     }
-                }
 
-              />
+                />
         </div>
     }
 }
@@ -205,14 +255,14 @@ pub fn ICPumpAiToken(details: TokenListItem) -> impl IntoView {
     view! {
         <a
             href=details.link
-            class="text-xs w-full p-2 flex gap-2 border border-gray-900 bg-transparent hover:bg-white/10 active:bg-white/5">
+            class="text-xs w-full p-2 flex gap-2 border border-zinc-900 bg-transparent hover:bg-white/10 active:bg-white/5">
           <img src=details.logo class="w-[5.5rem] shrink-0 h-[5.5rem]" />
           <div class="flex flex-col gap-1 text-left">
             <div class="flex w-full items-center justify-between gap-4">
               <span class="shrink line-clamp-1">{details.token_name}</span>
               <span class="shrink-0 font-bold">{details.token_symbol}</span>
             </div>
-            <span class="line-clamp-4 text-gray-400">
+            <span class="line-clamp-4 text-zinc-400">
               {details.description}
             </span>
           </div>
@@ -295,33 +345,17 @@ pub fn ICPumpAiTokenListing(tokens: Vec<TokenListItem>) -> impl IntoView {
 pub fn ICPumpAiPage3(
     query: RwSignal<String>,
     chat: RwSignal<ICPumpAiChat>,
-    page_no: RwSignal<i32>,
     search_action: Action<(), ()>,
-    reset_state: Action<(), ()>,
 ) -> impl IntoView {
     view! {
-        <div class="bg-black z-[4] absolute top-0 select-none inset-x-0 py-3 px-4 flex items-center justify-center gap-3">
-            <img src="/img/pump-ai.svg" class="h-5 w-5"/>
-            <div class="text-xl font-semibold">Pump AI</div>
-            <button class="absolute z-[5] left-0 px-4 h-full"
-                on:click={
-                    move |_| {
-                        reset_state.dispatch(());
-                        page_no.set(1);
-                    }
-                }>
-                "◁"
-            </button>
-        </div>
         <div class="grow flex gap-4 flex-col-reverse h-full mt-12 overflow-y-auto py-4">
             {
                 move || {
                     if search_action.pending().get() {
                         return view! {
                             <>
-                            <div class="font-mono flex w-full  items-center justify-start">
-                                <div class="w-fit p-4 thinking"/>
-                                <div>Thinking</div>
+                            <div class="flex w-1/2 items-center justify-start">
+                                <div class="w-full h-8 bg-transparent shimmer bg-zinc-900 rounded-full shimmer"></div>
                             </div>
                             </>
                         };
@@ -362,26 +396,39 @@ pub fn ICPumpAiPage3(
 
 
         </div>
-        <div class="bg-[#202125] mb-20 shrink-0 w-full rounded-sm relative">
-            <input
-            on:input=move |ev| {
-                let q = event_target_value(&ev);
-                query.set(q);
-            }
-            on:keypress=move |ev: ev::KeyboardEvent| {
-                if ev.key() == "Enter" {
-                    search_action.dispatch(());
+        <div class="mb-20">
+            <div class="bg-[#202125] w-full rounded-sm relative">
+                <input
+                on:input=move |ev| {
+                    let q = event_target_value(&ev);
+                    query.set(q);
                 }
-            }
-            prop:value=move || query.get()
-            placeholder="Ask anything" class="bg-transparent focus:outline-none pl-4 py-2 pr-12 w-full placeholder:text-[#505156]"/>
-            <button type="submit" disabled={move || query.get().is_empty()}
-            on:click={
-                move |_| {
-                    search_action.dispatch(());
+                on:keypress=move |ev: ev::KeyboardEvent| {
+                    if ev.key() == "Enter" {
+                        search_action.dispatch(());
+                    }
                 }
-            }
-            class="pr-4 absolute transition-opacity right-0 inset-y-0 disabled:opacity-20">"🏹"</button>
+                prop:value=move || query.get()
+                placeholder="Ask anything" class="bg-transparent focus:outline-none pl-4 py-2 pr-12 w-full placeholder:text-[#505156]"/>
+                <button type="submit" disabled={move || query.get().is_empty()}
+                on:click={
+                    move |_| {
+                        search_action.dispatch(());
+                    }
+                }
+                class="pr-2 absolute transition-opacity right-0 inset-y-0">
+                    <Show
+                        when=move || !query.get().is_empty()
+                        fallback=move || {
+                            view! {
+                                <Icon icon=SendIcon class="w-6 h-6" />
+                            }
+                        }
+                    >
+                        <Icon icon=SendIconFilled class="w-6 h-6" />
+                    </Show>
+                </button>
+            </div>
         </div>
     }
 }
@@ -458,7 +505,35 @@ pub fn ICPumpAi() -> impl IntoView {
     });
 
     view! {
-        <div class="h-screen w-screen block bg-black text-white bg-[#111212]">
+        <div class="h-screen w-screen block text-white bg-[#111212]">
+            {
+                move || {
+                    if page_no.get() == 1 {
+                        view! {
+                            <div></div>
+                        }
+                    } else {
+                        view! {
+                            <div class="bg-black z-[4] absolute top-0 w-full select-none inset-x-0">
+                                <div class="flex items-center justify-center relative gap-3 px-4 py-3 mx-auto max-w-md">
+                                    <img src="/img/pump-ai.svg" class="h-5 w-5"/>
+                                    <div class="text-xl font-semibold">Pump AI</div>
+                                    <button class="absolute z-[5] left-0 px-4 h-full"
+                                        on:click={
+                                            move |_| {
+                                                reset_state.dispatch(());
+                                                page_no.set(1);
+                                            }
+                                        }>
+                                        <Icon class="w-4 h-4" icon=icondata::FaChevronLeftSolid />
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    }
+                }
+            }
+
           <div class="max-w-md flex flex-col relative w-full mx-auto h-full"
                 class:justify-center={move|| page_no.get() != 2}
                 class:px-8={move|| page_no.get() != 3}
@@ -474,14 +549,12 @@ pub fn ICPumpAi() -> impl IntoView {
                         }
                         2 => {
                             view! {
-                                <ICPumpAiPage2 query={query} page_no={page_no}
-                                    search_action={search_action} reset_state={reset_state}/>
+                                <ICPumpAiPage2 query={query} page_no={page_no} search_action={search_action}/>
                             }.into_view()
                         }
                         3 => {
                             view! {
-                                <ICPumpAiPage3 query={query} chat={chat} page_no={page_no}
-                                    search_action={search_action} reset_state={reset_state}/>
+                                <ICPumpAiPage3 query={query} chat={chat} search_action={search_action}/>
                             }.into_view()
                         }
                         _ => {
