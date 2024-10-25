@@ -52,9 +52,10 @@ fn TokenDetails(meta: TokenMetadata) -> impl IntoView {
     }
 }
 
-fn generate_share_link(root: &RootType, key_principal: Principal) -> String {
+pub fn generate_share_link(root: &RootType, key_principal: Principal) -> String {
     format!("/token/info/{}/{key_principal}?airdrop_amt=100", root)
 }
+
 #[component]
 fn TokenInfoInner(
     root: RootType,

@@ -60,6 +60,7 @@ impl RootType {
         }
     }
 }
+
 impl FromStr for RootType {
     type Err = PrincipalError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
