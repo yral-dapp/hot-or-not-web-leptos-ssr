@@ -72,19 +72,3 @@ pub mod google {
     pub const GOOGLE_TOKEN_URL: &str = "https://oauth2.googleapis.com/token";
     pub const GOOGLE_ISSUER_URL: &str = "https://accounts.google.com";
 }
-
-#[derive(Clone)]
-pub struct HardCodedIDs {
-    pub ledger: &'static str,
-    pub index: &'static str,
-}
-pub static HARDCODED_TOKEN_IDS: phf::Map<&'static str, HardCodedIDs> = phf::phf_map! {
-    "btc" => HardCodedIDs {
-        ledger: "mxzaz-hqaaa-aaaar-qaada-cai",
-        index: "n5wcd-faaaa-aaaar-qaaea-cai",
-    },
-    "usdc" => HardCodedIDs {
-        ledger: "xevnm-gaaaa-aaaar-qafnq-cai",
-        index: "xrs4b-hiaaa-aaaar-qafoa-cai"
-    }
-};

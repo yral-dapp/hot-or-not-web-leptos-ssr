@@ -1,7 +1,9 @@
-use candid::Principal;
+use std::str::FromStr;
+
+use candid::{Nat, Principal};
 use ic_agent::AgentError;
 
-use crate::consts::{HardCodedIDs, HARDCODED_TOKEN_IDS};
+use crate::page::token::RootType;
 use crate::page::wallet::ShareButtonWithFallbackPopup;
 use crate::utils::token::{get_ck_metadata, TokenBalanceOrClaiming};
 use crate::{
@@ -37,8 +39,26 @@ impl KeyedData for String {
         self.clone()
     }
 }
+
+impl KeyedData for RootType {
+    type Key = RootType;
+
+    fn key(&self) -> Self::Key {
+        self.clone()
+    }
+}
+async fn get_balance<'a>(user_principal: Principal, ledger: &SnsLedger<'a>) -> Option<Nat> {
+    ledger
+        .icrc_1_balance_of(Account {
+            owner: user_principal,
+            subaccount: None,
+        })
+        .await
+        .ok()
+}
+
 impl CursoredDataProvider for TokenRootList {
-    type Data = String;
+    type Data = RootType;
     type Error = AgentError;
 
     async fn get_by_cursor(
@@ -50,37 +70,48 @@ impl CursoredDataProvider for TokenRootList {
         let tokens = user
             .get_token_roots_of_this_user_with_pagination_cursor(start as u64, end as u64)
             .await?;
-        let mut tokens: Vec<String> = match tokens {
-            Result14::Ok(v) => v,
+        let mut tokens: Vec<RootType> = match tokens {
+            Result14::Ok(v) => v
+                .into_iter()
+                .map(|t| RootType::from_str(&t.to_text()).unwrap())
+                .collect(),
             Result14::Err(_) => vec![],
-        }
-        .into_iter()
-        .map(|t| t.to_text())
-        .collect();
+        };
         let list_end = tokens.len() < (end - start);
         if start == 0 {
-            let rep = stream::iter(HARDCODED_TOKEN_IDS.into_iter())
-                .filter_map(|(name, HardCodedIDs { ledger, .. })| async move {
-                    let cans = unauth_canisters();
-                    let ledger: SnsLedger<'_> =
-                        cans.sns_ledger(Principal::from_text(ledger).ok()?).await;
+            let rep = stream::iter([
+                RootType::from_str("btc").unwrap(),
+                RootType::from_str("usdc").unwrap(),
+            ])
+            .filter_map(|root_type| async move {
+                let cans = unauth_canisters();
 
-                    let bal = ledger
-                        .icrc_1_balance_of(Account {
-                            owner: self.user_principal,
-                            subaccount: None,
-                        })
-                        .await
-                        .ok()?;
+                match root_type {
+                    RootType::BTC { ledger, .. } => {
+                        let ledger = cans.sns_ledger(ledger).await;
+                        let bal = get_balance(self.user_principal, &ledger).await?;
 
-                    if bal != 0u64 {
-                        Some(name.to_string())
-                    } else {
-                        None
+                        if bal != 0u64 {
+                            Some(root_type)
+                        } else {
+                            None
+                        }
                     }
-                })
-                .collect::<Vec<_>>()
-                .await;
+                    RootType::USDC { ledger, .. } => {
+                        let ledger = cans.sns_ledger(ledger).await;
+                        let bal = get_balance(self.user_principal, &ledger).await?;
+
+                        if bal != 0u64 {
+                            Some(root_type)
+                        } else {
+                            None
+                        }
+                    }
+                    _ => Some(root_type),
+                }
+            })
+            .collect::<Vec<_>>()
+            .await;
             tokens.splice(0..0, rep);
         }
         Ok(PageEntry {
@@ -123,30 +154,30 @@ pub fn TokenViewFallback() -> impl IntoView {
 #[component]
 pub fn TokenView(
     user_principal: Principal,
-    token_root: String,
+    token_root: RootType,
     #[prop(optional)] _ref: NodeRef<html::A>,
 ) -> impl IntoView {
     let info = create_resource(
         move || (token_root.clone(), user_principal),
         move |(token_root, user_principal)| async move {
             let cans = unauth_canisters();
-            if let Some(HardCodedIDs { ledger, index }) = HARDCODED_TOKEN_IDS.get(&token_root) {
-                get_ck_metadata(
-                    &cans,
-                    Some(user_principal),
-                    Principal::from_text(ledger).unwrap(),
-                    Principal::from_text(index).unwrap(),
-                )
-                .await
-                .unwrap()
-                .unwrap() // Map AgentError to ServerFnError
-            } else {
-                token_metadata_or_fallback(
-                    cans.clone(),
-                    user_principal,
-                    Principal::from_text(&token_root).unwrap(),
-                )
-                .await
+
+            match token_root {
+                RootType::BTC { ledger, index } => {
+                    get_ck_metadata(cans, Some(user_principal), ledger, index)
+                        .await
+                        .unwrap()
+                        .unwrap()
+                }
+                RootType::USDC { ledger, index } => {
+                    get_ck_metadata(cans, Some(user_principal), ledger, index)
+                        .await
+                        .unwrap()
+                        .unwrap()
+                }
+                RootType::Other(root) => {
+                    token_metadata_or_fallback(cans.clone(), user_principal, root).await
+                }
             }
         },
     );
@@ -234,7 +265,7 @@ pub fn TokenList(user_principal: Principal, user_canister: Principal) -> impl In
                 provider
                 fetch_count=10
                 children=move |token_root, _ref| {
-                    view! { <TokenView user_principal token_root=token_root.to_string() _ref=_ref.unwrap_or_default() /> }
+                    view! { <TokenView user_principal token_root=token_root _ref=_ref.unwrap_or_default() /> }
                 }
             />
 

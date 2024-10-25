@@ -329,7 +329,7 @@ pub async fn get_token_metadata<const A: bool>(
 }
 
 pub async fn get_ck_metadata<const A: bool>(
-    cans: &Canisters<A>,
+    cans: Canisters<A>,
     user_principal: Option<Principal>,
     ledger: Principal,
     index: Principal,
