@@ -102,7 +102,7 @@
     }
 }
 
-.animate {
+.animateicon {
     transform-origin: 80% 20%;
     animation: scale-rotate 10s infinite;
     scale: 0;
