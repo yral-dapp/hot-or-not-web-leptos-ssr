@@ -15,7 +15,7 @@ use crate::state::canisters::{auth_canisters_store, Canisters};
 use crate::state::history::HistoryCtx;
 #[cfg(feature = "ga4")]
 use crate::utils::event_streaming::{
-    send_event, send_event_warehouse, send_event_warehouse_ssr, send_user_id,
+    send_event, send_event_ga4, send_event_warehouse, send_event_warehouse_ssr, send_user_id,
 };
 use crate::utils::posts::PostDetails;
 use crate::utils::profile::ProfileDetails;
@@ -43,6 +43,8 @@ pub enum AnalyticsEvent {
     TokenCreationStarted(TokenCreationStarted),
     TokenCreationCompleted(TokenCreationCompleted),
     TokenCreationFailed(TokenCreationFailed),
+    TokenCreationCompletedGA4(TokenCreationCompletedGA4),
+    TokenCreationFailedGA4(TokenCreationFailedGA4),
     TokensClaimedFromNeuron(TokensClaimedFromNeuron),
     TokensTransferred(TokensTransferred),
 }
@@ -834,6 +836,73 @@ impl TokenCreationFailed {
                 }),
             )
             .await;
+        }
+    }
+}
+
+#[derive(Default)]
+pub struct TokenCreationCompletedGA4;
+
+impl TokenCreationCompletedGA4 {
+    pub fn send_event(
+        &self,
+        sns_init_payload: SnsInitPayload,
+        token_root: Principal,
+        profile_details: ProfileDetails,
+        canister_id: Principal,
+    ) {
+        #[cfg(all(feature = "hydrate", feature = "ga4"))]
+        {
+            let user_id = profile_details.principal;
+
+            let link = format!("/token/info/{token_root}");
+
+            // token_creation_completed - analytics
+            send_event_ga4(
+                "token_creation_completed",
+                &json!({
+                    "user_id": user_id,
+                    "canister_id": canister_id,
+                    "token_name": sns_init_payload.token_name,
+                    "token_symbol": sns_init_payload.token_symbol,
+                    "name": sns_init_payload.name,
+                    "description": sns_init_payload.description,
+                    "logo": sns_init_payload.logo,
+                    "link": link,
+                }),
+            );
+        }
+    }
+}
+
+#[derive(Default)]
+pub struct TokenCreationFailedGA4;
+
+impl TokenCreationFailedGA4 {
+    pub fn send_event(
+        &self,
+        error_str: String,
+        sns_init_payload: SnsInitPayload,
+        profile_details: ProfileDetails,
+        canister_id: Principal,
+    ) {
+        #[cfg(all(feature = "hydrate", feature = "ga4"))]
+        {
+            let user_id = profile_details.principal;
+
+            // token_creation_failed - analytics
+            send_event_ga4(
+                "token_creation_failed",
+                &json!({
+                    "user_id": user_id,
+                    "canister_id": canister_id,
+                    "token_name": sns_init_payload.token_name,
+                    "token_symbol": sns_init_payload.token_symbol,
+                    "name": sns_init_payload.name,
+                    "description": sns_init_payload.description,
+                    "error": error_str
+                }),
+            );
         }
     }
 }

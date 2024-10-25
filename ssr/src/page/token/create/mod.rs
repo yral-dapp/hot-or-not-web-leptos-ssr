@@ -6,7 +6,8 @@ use crate::{
     state::canisters::{auth_canisters_store, authenticated_canisters, CanistersAuthWire},
     utils::{
         event_streaming::events::{
-            TokenCreationCompleted, TokenCreationFailed, TokenCreationStarted,
+            TokenCreationCompleted, TokenCreationCompletedGA4, TokenCreationFailed,
+            TokenCreationFailedGA4, TokenCreationStarted,
         },
         profile::ProfileDetails,
         token::DeployedCdaoCanisters,
@@ -330,12 +331,35 @@ pub fn CreateToken() -> impl IntoView {
 
             TokenCreationStarted.send_event(create_sns.clone(), auth_cans);
 
-            let _deployed_cans_response =
-                deploy_cdao_canisters(cans_wire, create_sns.clone(), profile_details, canister_id)
-                    .await
-                    .map_err(|e| e.to_string())?;
+            let deployed_cans_response = deploy_cdao_canisters(
+                cans_wire,
+                create_sns.clone(),
+                profile_details.clone(),
+                canister_id,
+            )
+            .await
+            .map_err(|e| e.to_string());
 
-            Ok(())
+            match deployed_cans_response {
+                Ok(c) => {
+                    TokenCreationCompletedGA4.send_event(
+                        create_sns,
+                        c.root,
+                        profile_details,
+                        canister_id,
+                    );
+                    Ok(())
+                }
+                Err(e) => {
+                    TokenCreationFailedGA4.send_event(
+                        e.to_string(),
+                        create_sns,
+                        profile_details,
+                        canister_id,
+                    );
+                    Err(e)
+                }
+            }
         }
     });
     let creating = create_action.pending();

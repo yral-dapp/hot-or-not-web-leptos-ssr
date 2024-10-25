@@ -45,6 +45,22 @@ pub fn send_event(event_name: &str, params: &serde_json::Value) {
 }
 
 #[cfg(feature = "ga4")]
+pub fn send_event_ga4(event_name: &str, params: &serde_json::Value) {
+    use super::host::get_host;
+
+    let event_history: EventHistory = expect_context();
+
+    event_history.event_name.set(event_name.to_string());
+
+    let host_str = get_host();
+    let mut params = params.clone();
+    params["host"] = json!(host_str);
+
+    // gtag GA4
+    gtag("event", event_name, &JsValue::from_serde(&params).unwrap());
+}
+
+#[cfg(feature = "ga4")]
 pub fn send_user_id(user_id: String) {
     let gtag_measurement_id = GTAG_MEASUREMENT_ID.as_ref();
 
