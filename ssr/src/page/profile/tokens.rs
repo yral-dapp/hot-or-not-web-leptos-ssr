@@ -84,7 +84,7 @@ pub fn ProfileTokens(user_canister: Principal, user_principal: Principal) -> imp
                                     .map(|token| {
                                         view! {
                                             <TokenTile
-                                                user_principal=user_principal.to_text()
+                                                user_principal
                                                 token_meta_data=token
                                             />
                                         }

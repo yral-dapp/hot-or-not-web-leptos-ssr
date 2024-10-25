@@ -20,10 +20,12 @@ pub enum TxnDirection {
 }
 #[derive(Clone)]
 pub enum IndexOrLedger {
-    Index(Principal),
+    Index {
+        key_principal: Principal,
+        index: Principal,
+    },
     Ledger(Principal),
 }
-
 impl From<TxnDirection> for &'static icondata_core::IconData {
     fn from(val: TxnDirection) -> Self {
         use TxnDirection::*;
@@ -193,27 +195,27 @@ pub mod provider {
 
     pub(crate) fn get_history_provider(
         canisters: Canisters<false>,
-        user_principal: Option<Principal>,
         source: IndexOrLedger,
+        decimals: u8,
     ) -> impl CursoredDataProvider<Data = TxnInfoWallet> + Clone {
         #[cfg(feature = "mock-wallet-history")]
         {
             _ = canisters;
-            _ = user_principal;
             _ = source;
+            _ = decimals;
             mock::MockHistoryProvider
         }
         #[cfg(not(feature = "mock-wallet-history"))]
         {
             canister::TxnHistory {
                 canisters,
-                user_principal,
                 source,
+                decimals,
             }
         }
     }
 
-    // #[cfg(not(feature = "mock-wallet-history"))]
+    #[cfg(not(feature = "mock-wallet-history"))]
     mod canister {
         use std::io::Cursor;
 
@@ -237,6 +239,7 @@ pub mod provider {
         fn parse_transactions(
             txn: TransactionWithId,
             user_principal: Principal,
+            decimals: u8,
         ) -> Result<TxnInfoWallet, ServerFnError> {
             let timestamp = txn.transaction.timestamp;
             let id = txn.id.0.to_u64_digits()[0];
@@ -247,7 +250,7 @@ pub mod provider {
                 } => Ok(TxnInfoWallet {
                     tag: TxnInfoType::Mint { to: mint.to.owner },
                     timestamp,
-                    amount: TokenBalance::new_cdao(mint.amount),
+                    amount: TokenBalance::new(mint.amount, decimals),
                     id,
                 }),
                 Transaction {
@@ -257,7 +260,7 @@ pub mod provider {
                         from: user_principal,
                     },
                     timestamp,
-                    amount: TokenBalance::new_cdao(burn.amount),
+                    amount: TokenBalance::new(burn.amount, decimals),
                     id,
                 }),
                 Transaction {
@@ -271,7 +274,7 @@ pub mod provider {
                                 to: transfer.to.owner,
                             },
                             timestamp,
-                            amount: TokenBalance::new_cdao(transfer.amount),
+                            amount: TokenBalance::new(transfer.amount, decimals),
                             id,
                         })
                     } else if user_principal == transfer.to.owner {
@@ -281,7 +284,7 @@ pub mod provider {
                                 from: transfer.from.owner,
                             },
                             timestamp,
-                            amount: TokenBalance::new_cdao(transfer.amount),
+                            amount: TokenBalance::new(transfer.amount, decimals),
                             id,
                         })
                     } else {
@@ -297,6 +300,7 @@ pub mod provider {
         fn parse_transactions_ledger(
             txn: yral_canisters_client::sns_ledger::Transaction,
             id: u64,
+            decimals: u8,
         ) -> Result<TxnInfoWallet, ServerFnError> {
             let timestamp = txn.timestamp;
 
@@ -306,7 +310,7 @@ pub mod provider {
                 } => Ok(TxnInfoWallet {
                     tag: TxnInfoType::Mint { to: mint.to.owner },
                     timestamp,
-                    amount: TokenBalance::new_cdao(mint.amount),
+                    amount: TokenBalance::new(mint.amount, decimals),
                     id,
                 }),
                 yral_canisters_client::sns_ledger::Transaction {
@@ -316,7 +320,7 @@ pub mod provider {
                         from: burn.from.owner,
                     },
                     timestamp,
-                    amount: TokenBalance::new_cdao(burn.amount),
+                    amount: TokenBalance::new(burn.amount, decimals),
                     id,
                 }),
                 yral_canisters_client::sns_ledger::Transaction {
@@ -328,7 +332,7 @@ pub mod provider {
                         to: transfer.to.owner,
                     },
                     timestamp,
-                    amount: TokenBalance::new_cdao(transfer.amount),
+                    amount: TokenBalance::new(transfer.amount, decimals),
                     id,
                 }),
                 _ => Err(ServerFnError::new("Unable to parse transaction details")),
@@ -363,8 +367,8 @@ pub mod provider {
         #[derive(Clone)]
         pub struct TxnHistory {
             pub canisters: Canisters<false>,
-            pub user_principal: Option<Principal>,
             pub source: IndexOrLedger,
+            pub decimals: u8,
         }
 
         impl CursoredDataProvider for TxnHistory {
@@ -377,14 +381,11 @@ pub mod provider {
                 end: usize,
             ) -> Result<PageEntry<TxnInfoWallet>, AgentError> {
                 match &self.source {
-                    IndexOrLedger::Index(index) => {
+                    IndexOrLedger::Index {
+                        index,
+                        key_principal,
+                    } => {
                         let index_canister = self.canisters.sns_index(*index).await;
-
-                        let Some(user_principal) = self.user_principal else {
-                            return Err(AgentError::PrincipalError(
-                                ic_agent::export::PrincipalError::CheckSequenceNotMatch(),
-                            ));
-                        };
 
                         // Fetch transactions up to the 'end' index
                         let max_results = end; // Fetch enough transactions to cover 'end'
@@ -394,7 +395,7 @@ pub mod provider {
                                 max_results: Nat::from(max_results),
                                 start: None, // No cursor, fetch the latest transactions
                                 account: Account {
-                                    owner: user_principal,
+                                    owner: *key_principal,
                                     subaccount: None,
                                 },
                             })
@@ -412,7 +413,9 @@ pub mod provider {
                         let transactions = transactions.into_iter().skip(start).take(end - start);
                         let txns_len = transactions.len();
                         let data: Vec<TxnInfoWallet> = transactions
-                            .filter_map(|txn| parse_transactions(txn, user_principal).ok())
+                            .filter_map(|txn| {
+                                parse_transactions(txn, *key_principal, self.decimals).ok()
+                            })
                             .collect();
 
                         let is_end = txns_len < (end - start);
@@ -458,7 +461,7 @@ pub mod provider {
                                     if idx.is_empty() {
                                         None
                                     } else {
-                                        parse_transactions_ledger(txn, idx[0]).ok()
+                                        parse_transactions_ledger(txn, idx[0], self.decimals).ok()
                                     }
                                 })
                                 .rev()

@@ -1,19 +1,18 @@
+use crate::page::token::RootType;
+use crate::page::token::TokenInfoParams;
+use crate::state::canisters::authenticated_canisters;
+
+use crate::{
+    component::{back_btn::BackButton, share_popup::*, spinner::FullScreenSpinner, title::Title},
+    page::wallet::{transactions::Transactions, txn::IndexOrLedger},
+    utils::{token::TokenMetadata, web::copy_to_clipboard},
+};
 use candid::Principal;
 use leptos::*;
 use leptos_icons::*;
 use leptos_router::*;
 use serde::{Deserialize, Serialize};
 
-use crate::page::token::TokenInfoParams;
-use crate::state::canisters::authenticated_canisters;
-use crate::{
-    component::{back_btn::BackButton, share_popup::*, spinner::FullScreenSpinner, title::Title},
-    page::wallet::{transactions::Transactions, txn::IndexOrLedger},
-    utils::{
-        token::{token_metadata_by_root, TokenMetadata},
-        web::copy_to_clipboard,
-    },
-};
 #[component]
 fn TokenField(
     #[prop(into)] label: String,
@@ -53,9 +52,13 @@ fn TokenDetails(meta: TokenMetadata) -> impl IntoView {
     }
 }
 
+pub fn generate_share_link(root: &RootType, key_principal: Principal) -> String {
+    format!("/token/info/{}/{key_principal}?airdrop_amt=100", root)
+}
+
 #[component]
 fn TokenInfoInner(
-    root: Principal,
+    root: RootType,
     meta: TokenMetadata,
     key_principal: Option<Principal>,
     is_user_principal: bool,
@@ -70,13 +73,13 @@ fn TokenInfoInner(
             icondata::AiDownOutlined
         }
     });
-    let share_link = key_principal
-        .map(|key_principal| format!("/token/info/{root}/{key_principal}?airdrop_amt=100"));
+    let share_link = key_principal.map(|key_principal| generate_share_link(&root, key_principal));
     let message = share_link.clone().map(|share_link|format!(
         "Hey! Check out the token: {} I created on YRAL 👇 {}. I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter",
         meta.symbol,  share_link
     ));
 
+    let decimals = meta.decimals;
     view! {
         <div class="w-dvw min-h-dvh bg-neutral-800  flex flex-col gap-4">
             <Title justify_center=false>
@@ -144,20 +147,20 @@ fn TokenInfoInner(
                 </div>
                     <Show when= move || is_user_principal>
                         <a
-                            href=format!("/token/transfer/{root}")
+                            href=format!("/token/transfer/{}", root.to_string())
                             class="fixed bottom-20 left-4 right-4 p-3 bg-primary-600 text-white text-center md:text-lg rounded-full z-50"
                         >
                             Send
                         </a>
                     </Show>
-                {if key_principal.is_some() {
-                    view! { <Transactions source=IndexOrLedger::Index(meta.index) key_principal symbol=meta.symbol.clone()/> }
+                {if let Some(key_principal) = key_principal {
+                    view! { <Transactions source=IndexOrLedger::Index { key_principal, index: meta.index } symbol=meta.symbol.clone() decimals/> }
                 } else {
                     view! {
                         <Transactions
                             source=IndexOrLedger::Ledger(meta.ledger)
-                            key_principal=None
                             symbol=meta.symbol.clone()
+                            decimals
                         />
                     }
                 }}
@@ -167,18 +170,13 @@ fn TokenInfoInner(
 }
 #[derive(Params, PartialEq, Clone, Serialize, Deserialize)]
 pub struct TokenKeyParam {
-    key_principal: String,
+    key_principal: Principal,
 }
 #[component]
 pub fn TokenInfo() -> impl IntoView {
     let params = use_params::<TokenInfoParams>();
     let key_principal = use_params::<TokenKeyParam>();
-    let key_principal = move || {
-        key_principal.with(|p| {
-            let TokenKeyParam { key_principal, .. } = p.as_ref().ok()?;
-            Principal::from_text(key_principal).ok()
-        })
-    };
+    let key_principal = move || key_principal.with(|p| p.as_ref().map(|p| p.key_principal).ok());
     let token_metadata_fetch = authenticated_canisters().derive(
         move || (params(), key_principal()),
         move |cans_wire, (params, key_principal)| async move {
@@ -186,8 +184,11 @@ pub fn TokenInfo() -> impl IntoView {
                 return Ok::<_, ServerFnError>(None);
             };
             let cans = cans_wire?.canisters()?;
-            let meta = token_metadata_by_root(&cans, key_principal, params.token_root).await?;
 
+            let meta = params
+                .token_root
+                .get_metadata(key_principal, cans.clone())
+                .await;
             Ok(meta.map(|m| {
                 (
                     m,
