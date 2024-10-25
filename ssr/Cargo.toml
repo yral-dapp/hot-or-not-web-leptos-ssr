@@ -113,7 +113,6 @@ yral-canisters-client = { git = "https://github.com/yral-dapp/yral-common.git", 
 pulldown-cmark = "0.12.1"
 ic-certification = "2.6.0"
 ciborium = "0.2.2"
-phf = {version = "0.11.2", features = ["macros"]}
 
 
 [build-dependencies]

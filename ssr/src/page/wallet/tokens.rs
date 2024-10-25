@@ -32,13 +32,6 @@ impl KeyedData for Principal {
         *self
     }
 }
-impl KeyedData for String {
-    type Key = String;
-
-    fn key(&self) -> Self::Key {
-        self.clone()
-    }
-}
 
 impl KeyedData for RootType {
     type Key = RootType;

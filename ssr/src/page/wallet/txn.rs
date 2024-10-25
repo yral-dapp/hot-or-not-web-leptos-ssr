@@ -198,14 +198,14 @@ pub mod provider {
         source: IndexOrLedger,
         decimals: u8,
     ) -> impl CursoredDataProvider<Data = TxnInfoWallet> + Clone {
-        // #[cfg(feature = "mock-wallet-history")]
-        // {
-        //     _ = canisters;
-        //     _ = source;
-        //     _ = decimals;
-        //     mock::MockHistoryProvider
-        // }
-        // #[cfg(not(feature = "mock-wallet-history"))]
+        #[cfg(feature = "mock-wallet-history")]
+        {
+            _ = canisters;
+            _ = source;
+            _ = decimals;
+            mock::MockHistoryProvider
+        }
+        #[cfg(not(feature = "mock-wallet-history"))]
         {
             canister::TxnHistory {
                 canisters,
@@ -215,7 +215,7 @@ pub mod provider {
         }
     }
 
-    // #[cfg(not(feature = "mock-wallet-history"))]
+    #[cfg(not(feature = "mock-wallet-history"))]
     mod canister {
         use std::io::Cursor;
 
