@@ -73,7 +73,6 @@ impl CursoredDataProvider for TokenRootList {
         };
         let list_end = tokens.len() < (end - start);
         if start == 0 {
-
             let mut rep = stream::iter([
                 RootType::from_str("btc").unwrap(),
                 RootType::from_str("usdc").unwrap(),
@@ -108,11 +107,11 @@ impl CursoredDataProvider for TokenRootList {
             .collect::<Vec<_>>()
             .await;
 
-        rep.extend(
-            eligible_non_yral_supported_tokens(self.canisters.clone(), self.user_principal)
-            .await
-            .map_err(|e| AgentError::MessageError(e.to_string()))?
-        );
+            rep.extend(
+                eligible_non_yral_supported_tokens(self.canisters.clone(), self.user_principal)
+                    .await
+                    .map_err(|e| AgentError::MessageError(e.to_string()))?,
+            );
             tokens.splice(0..0, rep);
         }
         Ok(PageEntry {
