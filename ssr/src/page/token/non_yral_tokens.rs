@@ -5,12 +5,14 @@ use leptos::*;
 use crate::state::canisters::Canisters;
 use crate::utils::token::token_metadata_by_root;
 
+use super::RootType;
+
 pub const SUPPORTED_NON_YRAL_TOKENS_ROOT: &[&str] = &["67bll-riaaa-aaaaq-aaauq-cai"];
 
 pub async fn eligible_non_yral_supported_tokens(
-    cans: Canisters<true>,
+    cans: Canisters<false>,
     user_principal: Principal,
-) -> Result<Vec<Principal>, ServerFnError> {
+) -> Result<Vec<RootType>, ServerFnError> {
     let tasks: Vec<_> = SUPPORTED_NON_YRAL_TOKENS_ROOT
         .iter()
         .map(|&token_root| {
@@ -27,7 +29,7 @@ pub async fn eligible_non_yral_supported_tokens(
                         .map_balance_ref(|b| b.e8s > 0u64)
                         .unwrap_or_default()
                     {
-                        return Some(token_root);
+                        return Some(RootType::Other(token_root));
                     } else {
                         return None;
                     }
@@ -38,9 +40,9 @@ pub async fn eligible_non_yral_supported_tokens(
         })
         .collect();
 
-    let task_results: Vec<Option<Principal>> = join_all(tasks).await;
+    let task_results: Vec<Option<RootType>> = join_all(tasks).await;
 
-    let eligible_token_root: Vec<Principal> = task_results.into_iter().flatten().collect();
+    let eligible_token_root: Vec<RootType> = task_results.into_iter().flatten().collect();
 
     Ok(eligible_token_root)
 }
