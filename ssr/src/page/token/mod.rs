@@ -30,7 +30,7 @@ struct TokenInfoParams {
     token_root: RootType,
 }
 
-#[derive(Clone, PartialEq, Serialize, Deserialize, Hash, Eq)]
+#[derive(Clone, PartialEq, Serialize, Deserialize, Hash, Eq, Debug)]
 pub enum RootType {
     BTC { ledger: Principal, index: Principal },
     USDC { ledger: Principal, index: Principal },

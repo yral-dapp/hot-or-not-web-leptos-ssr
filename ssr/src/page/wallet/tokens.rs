@@ -3,6 +3,7 @@ use std::str::FromStr;
 use candid::{Nat, Principal};
 use ic_agent::AgentError;
 
+use crate::page::token::non_yral_tokens::eligible_non_yral_supported_tokens;
 use crate::page::token::RootType;
 use crate::page::wallet::ShareButtonWithFallbackPopup;
 use crate::utils::token::{get_ck_metadata, TokenBalanceOrClaiming};
@@ -72,7 +73,8 @@ impl CursoredDataProvider for TokenRootList {
         };
         let list_end = tokens.len() < (end - start);
         if start == 0 {
-            let rep = stream::iter([
+
+            let mut rep = stream::iter([
                 RootType::from_str("btc").unwrap(),
                 RootType::from_str("usdc").unwrap(),
             ])
@@ -105,6 +107,12 @@ impl CursoredDataProvider for TokenRootList {
             })
             .collect::<Vec<_>>()
             .await;
+
+        rep.extend(
+            eligible_non_yral_supported_tokens(self.canisters.clone(), self.user_principal)
+            .await
+            .map_err(|e| AgentError::MessageError(e.to_string()))?
+        );
             tokens.splice(0..0, rep);
         }
         Ok(PageEntry {

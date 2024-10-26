@@ -321,7 +321,7 @@ pub async fn get_token_metadata<const A: bool>(
     };
 
     if let Some(user_principal) = user_principal {
-        let balance = get_token_balance(cans, user_principal, governance, ledger).await?;
+        let balance = get_token_balance(cans, user_principal, governance, ledger, token_metadata.decimals).await?;
         token_metadata.balance = Some(balance);
     }
 
@@ -418,6 +418,7 @@ async fn get_token_balance<const A: bool>(
     user_principal: Principal,
     governance: Principal,
     ledger: Principal,
+    decimals: u8
 ) -> Result<TokenBalanceOrClaiming, AgentError> {
     let ledger = cans.sns_ledger(ledger).await;
     let acc = LedgerAccount {
@@ -426,7 +427,7 @@ async fn get_token_balance<const A: bool>(
     };
     // Balance > 0 -> Token is already claimed
     let balance_e8s = ledger.icrc_1_balance_of(acc).await?;
-    let ready_balance = |e8s| Ok(TokenBalanceOrClaiming::new(TokenBalance::new_cdao(e8s)));
+    let ready_balance = |e8s| Ok(TokenBalanceOrClaiming::new(TokenBalance::new(e8s, decimals)));
     if balance_e8s > 0u8 {
         return ready_balance(balance_e8s);
     }
