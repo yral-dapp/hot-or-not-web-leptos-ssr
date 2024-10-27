@@ -138,7 +138,7 @@ fn ProfileViewInner(user: ProfileDetails, user_canister: Principal) -> impl Into
                             <div class="text-sm flex flex-row">
                                 // TODO: Add username when it's available
                                 // <p class="text-white">@ {username_or_principal}</p>
-                                <p class="text-primary-500">{earnings}Earnings</p>
+                                <p class="text-primary-500">{earnings} Earnings</p>
                             </div>
                             <Show when=move || !is_connected()>
                                 <div class="md:w-4/12 w-6/12 pt-5">
