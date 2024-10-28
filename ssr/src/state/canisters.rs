@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use candid::{Decode, Nat, Principal};
+use candid::{Decode, Principal};
 use ic_agent::{identity::DelegatedIdentity, AgentError, Identity};
 use leptos::*;
 use serde::{Deserialize, Serialize};
@@ -10,7 +10,7 @@ use yral_metadata_types::UserMetadata;
 
 use yral_canisters_client::{
     individual_user_template::{
-        IndividualUserTemplate, Result21, Result25, Result7, UserCanisterDetails,
+        IndividualUserTemplate, Result25, Result7, UserCanisterDetails,
     },
     platform_orchestrator::PlatformOrchestrator,
     post_cache::PostCache,
