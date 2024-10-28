@@ -72,9 +72,10 @@ pub async fn send_event_ssr(event_name: &str, params: &serde_json::Value) {
     // GA4
     // get client_id as user_id from params
     let user_id = params["user_id"].as_str().unwrap_or("0");
-    send_event_ga4_ssr(user_id, event_name, &params)
-        .await
-        .unwrap();
+    let res = send_event_ga4_ssr(user_id, event_name, &params).await;
+    if let Err(e) = res {
+        log::error!("Error sending event to GA4: {:?}", e);
+    }
 }
 
 #[cfg(feature = "ga4")]
@@ -126,9 +127,10 @@ pub async fn send_event_warehouse_ssr(event_name: &str, params: &serde_json::Val
 
     let params_str = params.to_string();
 
-    stream_to_offchain_agent(event_name, params_str)
-        .await
-        .unwrap();
+    let res = stream_to_offchain_agent(event_name, params_str).await;
+    if let Err(e) = res {
+        log::error!("Error sending event to warehouse: {:?}", e);
+    }
 }
 
 #[cfg(feature = "ga4")]
