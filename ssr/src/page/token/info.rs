@@ -7,11 +7,14 @@ use crate::{
     page::wallet::{transactions::Transactions, txn::IndexOrLedger},
     utils::{token::TokenMetadata, web::copy_to_clipboard},
 };
+use candid::Nat;
 use candid::Principal;
 use leptos::*;
 use leptos_icons::*;
 use leptos_router::*;
 use serde::{Deserialize, Serialize};
+use yral_canisters_client::individual_user_template::AirdropError;
+use yral_canisters_client::individual_user_template::Result21;
 
 #[component]
 fn TokenField(
@@ -172,14 +175,20 @@ fn TokenInfoInner(
 pub struct TokenKeyParam {
     key_principal: Principal,
 }
+
+#[derive(Params, PartialEq, Clone, Serialize, Deserialize)]
+pub struct AirdropAmount {
+    airdrop_amt: Nat,
+}
 #[component]
 pub fn TokenInfo() -> impl IntoView {
     let params = use_params::<TokenInfoParams>();
+    let airdrop_param = use_query::<AirdropAmount>();
     let key_principal = use_params::<TokenKeyParam>();
     let key_principal = move || key_principal.with(|p| p.as_ref().map(|p| p.key_principal).ok());
     let token_metadata_fetch = authenticated_canisters().derive(
-        move || (params(), key_principal()),
-        move |cans_wire, (params, key_principal)| async move {
+        move || (params(), key_principal(), airdrop_param()),
+        move |cans_wire, (params, key_principal, airdrop_param)| async move {
             let Ok(params) = params else {
                 return Ok::<_, ServerFnError>(None);
             };
@@ -189,6 +198,25 @@ pub fn TokenInfo() -> impl IntoView {
                 .token_root
                 .get_metadata(key_principal, cans.clone())
                 .await;
+
+            if let Some(key_principal) = key_principal {
+                if let Ok(airdrop_amt) = airdrop_param {
+                    let user_canister = cans.user_canister();
+                    let user = cans.individual_user(user_canister).await;
+                    let res = user
+                        .request_airdrop(
+                            key_principal,
+                            None,
+                            airdrop_amt.airdrop_amt,
+                            user_canister,
+                        )
+                        .await?;
+
+                    if let Result21::Err(AirdropError::CanisterPrincipalDoNotMatch) = res {
+                        return Err(ServerFnError::new("Canister principal do not match"));
+                    }
+                }
+            }
             Ok(meta.map(|m| {
                 (
                     m,
