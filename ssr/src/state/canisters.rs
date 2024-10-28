@@ -9,9 +9,7 @@ use yral_metadata_client::MetadataClient;
 use yral_metadata_types::UserMetadata;
 
 use yral_canisters_client::{
-    individual_user_template::{
-        IndividualUserTemplate, Result25, Result7, UserCanisterDetails,
-    },
+    individual_user_template::{IndividualUserTemplate, Result25, Result7, UserCanisterDetails},
     platform_orchestrator::PlatformOrchestrator,
     post_cache::PostCache,
     sns_governance::SnsGovernance,
