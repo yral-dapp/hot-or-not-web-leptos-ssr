@@ -199,21 +199,14 @@ pub fn TokenInfo() -> impl IntoView {
                 .get_metadata(key_principal, cans.clone())
                 .await;
 
-            if let Some(key_principal) = key_principal {
+            if key_principal.is_some() {
                 if let Ok(airdrop_amt) = airdrop_param {
-                    let user_canister = cans.user_canister();
-                    let user = cans.individual_user(user_canister).await;
-                    let res = user
-                        .request_airdrop(
-                            key_principal,
-                            None,
-                            airdrop_amt.airdrop_amt,
-                            user_canister,
-                        )
-                        .await?;
+                    if let RootType::Other(root ) = params.token_root{
+                        let res = cans.request_airdrop(root, airdrop_amt.airdrop_amt).await?;
 
-                    if let Result21::Err(AirdropError::CanisterPrincipalDoNotMatch) = res {
-                        return Err(ServerFnError::new("Canister principal do not match"));
+                        if let Result21::Err(AirdropError::CanisterPrincipalDoNotMatch) = res {
+                            return Err(ServerFnError::new("Canister principal do not match"));
+                        }
                     }
                 }
             }

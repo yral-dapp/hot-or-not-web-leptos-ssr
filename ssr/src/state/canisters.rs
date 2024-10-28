@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use candid::{Decode, Principal};
+use candid::{Decode, Nat, Principal};
 use ic_agent::{identity::DelegatedIdentity, AgentError, Identity};
 use leptos::*;
 use serde::{Deserialize, Serialize};
@@ -9,7 +9,7 @@ use yral_metadata_client::MetadataClient;
 use yral_metadata_types::UserMetadata;
 
 use yral_canisters_client::{
-    individual_user_template::{IndividualUserTemplate, Result25, Result7, UserCanisterDetails},
+    individual_user_template::{AirdropError, IndividualUserTemplate, Result21, Result25, Result7, UserCanisterDetails},
     platform_orchestrator::PlatformOrchestrator,
     post_cache::PostCache,
     sns_governance::SnsGovernance,
@@ -128,6 +128,13 @@ impl Canisters<true> {
             .call_and_wait()
             .await?;
         Ok(Decode!(&bytes, Result7)?)
+    }
+
+    pub async fn request_airdrop(&self, token_root: Principal, amount: Nat) -> Result<Result21, AgentError>{
+        let agent = self.agent.get_agent().await;
+        let args = candid::encode_args((token_root, Option::<serde_bytes::ByteBuf>::None, amount, self.user_canister)).unwrap();
+        let bytes = agent.update(&self.user_canister, "request_airdrop").with_arg(args).call_and_wait().await?;
+        Ok(Decode!(&bytes, Result21)?)
     }
 
     pub fn profile_details(&self) -> ProfileDetails {

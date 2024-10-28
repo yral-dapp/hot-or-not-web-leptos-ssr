@@ -99,6 +99,7 @@ mod history_provider {
     mod canister {
         use super::*;
         use ic_agent::AgentError;
+        use yral_canisters_client::individual_user_template::Result16;
 
         #[derive(Clone)]
         pub struct ReferralHistory(pub Canisters<true>);
@@ -114,7 +115,7 @@ mod history_provider {
             ) -> Result<PageEntry<HistoryDetails>, AgentError> {
                 use crate::utils::route::failure_redirect;
                 use yral_canisters_client::individual_user_template::{
-                    MintEvent, Result15, TokenEvent,
+                    MintEvent, TokenEvent,
                 };
                 let individual = self.0.authenticated_user().await;
                 let history = individual
@@ -124,8 +125,8 @@ mod history_provider {
                     )
                     .await?;
                 let history = match history {
-                    Result15::Ok(history) => history,
-                    Result15::Err(_) => {
+                    Result16::Ok(history) => history,
+                    Result16::Err(_) => {
                         failure_redirect("failed to get posts");
                         return Ok(PageEntry {
                             data: vec![],
