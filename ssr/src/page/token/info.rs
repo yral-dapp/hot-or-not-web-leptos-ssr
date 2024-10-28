@@ -201,7 +201,7 @@ pub fn TokenInfo() -> impl IntoView {
 
             if key_principal.is_some() {
                 if let Ok(airdrop_amt) = airdrop_param {
-                    if let RootType::Other(root ) = params.token_root{
+                    if let RootType::Other(root) = params.token_root {
                         let res = cans.request_airdrop(root, airdrop_amt.airdrop_amt).await?;
 
                         if let Result21::Err(AirdropError::CanisterPrincipalDoNotMatch) = res {
