@@ -136,6 +136,7 @@ impl Canisters<true> {
         &self,
         token_root: Principal,
         amount: Nat,
+        token_owner: Principal
     ) -> Result<Result21, AgentError> {
         let agent = self.agent.get_agent().await;
         let args = candid::encode_args((
@@ -146,7 +147,7 @@ impl Canisters<true> {
         ))
         .unwrap();
         let bytes = agent
-            .update(&self.user_canister, "request_airdrop")
+            .update(&token_owner, "request_airdrop")
             .with_arg(args)
             .call_and_wait()
             .await?;
