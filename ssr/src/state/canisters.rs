@@ -132,28 +132,6 @@ impl Canisters<true> {
         Ok(Decode!(&bytes, Result7)?)
     }
 
-    pub async fn request_airdrop(
-        &self,
-        token_root: Principal,
-        amount: Nat,
-        token_owner: Principal
-    ) -> Result<Result21, AgentError> {
-        let agent = self.agent.get_agent().await;
-        let args = candid::encode_args((
-            token_root,
-            Option::<serde_bytes::ByteBuf>::None,
-            amount,
-            self.user_canister,
-        ))
-        .unwrap();
-        let bytes = agent
-            .update(&token_owner, "request_airdrop")
-            .with_arg(args)
-            .call_and_wait()
-            .await?;
-        Ok(Decode!(&bytes, Result21)?)
-    }
-
     pub fn profile_details(&self) -> ProfileDetails {
         self.profile_details
             .clone()
