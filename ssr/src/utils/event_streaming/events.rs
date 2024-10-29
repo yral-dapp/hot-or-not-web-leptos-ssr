@@ -15,7 +15,7 @@ use crate::state::canisters::{auth_canisters_store, Canisters};
 use crate::state::history::HistoryCtx;
 #[cfg(feature = "ga4")]
 use crate::utils::event_streaming::{
-    send_event, send_event_warehouse, send_event_warehouse_ssr, send_user_id,
+    send_event, send_event_ssr, send_event_warehouse, send_user_id,
 };
 use crate::utils::posts::PostDetails;
 use crate::utils::profile::ProfileDetails;
@@ -787,7 +787,7 @@ impl TokenCreationCompleted {
             let link = format!("/token/info/{token_root}");
 
             // token_creation_completed - analytics
-            send_event_warehouse_ssr(
+            send_event_ssr(
                 "token_creation_completed",
                 &json!({
                     "user_id": user_id,
@@ -821,7 +821,7 @@ impl TokenCreationFailed {
             let user_id = profile_details.principal;
 
             // token_creation_failed - analytics
-            send_event_warehouse_ssr(
+            send_event_ssr(
                 "token_creation_failed",
                 &json!({
                     "user_id": user_id,
