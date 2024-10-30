@@ -221,8 +221,10 @@ impl<const A: bool> Canisters<A> {
         {
             use std::collections::HashSet;
             // TODO: this is temporary
-            let blacklisted =
-                HashSet::from([Principal::from_text("rimrc-piaaa-aaaao-aaljq-cai").unwrap()]);
+            let blacklisted = HashSet::from([
+                Principal::from_text("rimrc-piaaa-aaaao-aaljq-cai").unwrap(),
+                Principal::from_text("h52eg-2qaaa-aaaak-qdfia-cai").unwrap(),
+            ]);
             let orchestrator = self.orchestrator().await;
             Ok(orchestrator
                 .get_all_available_subnet_orchestrators()
