@@ -888,3 +888,66 @@ impl TokensTransferred {
         }
     }
 }
+
+// Handles all events which has only user_id, is_loggedIn and canister_id as params
+// such as navigation_home, navigation_wallet, navigation_ICPumpAI, navigation_menu and more
+#[derive(Default)]
+pub struct BaseEvent;
+
+impl BaseEvent {
+    pub fn send_event(
+        &self,
+        event_name: String,
+        logged_in: ReadSignal<bool>,
+        cans_store: RwSignal<Option<Canisters<true>>>,
+    ) {
+        #[cfg(all(feature = "hydrate", feature = "ga4"))]
+        {
+            let user = user_details_can_store_or_ret!(cans_store);
+            let details = user.details;
+
+            let user_id = details.principal;
+            let canister_id = user.canister_id;
+
+            send_event(
+                event_name.as_str(),
+                &json!({
+                    "user_id":user_id,
+                    "is_loggedIn": logged_in.get_untracked(),
+                    "canister_id": canister_id,
+                }),
+            );
+        }
+    }
+}
+
+#[derive(Default)]
+pub struct ShowNSFWEvent;
+
+impl ShowNSFWEvent {
+    pub fn send_event(
+        &self,
+        logged_in: ReadSignal<bool>,
+        cans_store: RwSignal<Option<Canisters<true>>>,
+        toggle_state: bool,
+    ) {
+        #[cfg(all(feature = "hydrate", feature = "ga4"))]
+        {
+            let user = user_details_can_store_or_ret!(cans_store);
+            let details = user.details;
+
+            let user_id = details.principal;
+            let canister_id = user.canister_id;
+
+            send_event(
+                "menu_show_NSFW",
+                &json!({
+                    "user_id":user_id,
+                    "is_loggedIn": logged_in.get_untracked(),
+                    "canister_id": canister_id,
+                    "toggled_state": toggle_state,
+                }),
+            );
+        }
+    }
+}

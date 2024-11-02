@@ -6,6 +6,11 @@ use leptos::*;
 
 use crate::component::spinner::FullScreenSpinner;
 use crate::consts::ICPUMP_LISTING_PAGE_SIZE;
+use crate::state::{
+    auth::account_connected_reader,
+    canisters::auth_canisters_store,
+};
+use crate::utils::event_streaming::events::BaseEvent;
 use crate::utils::token::firestore::init_firebase;
 use crate::utils::token::firestore::listen_to_documents;
 use crate::utils::token::icpump::get_paginated_token_list;
@@ -18,11 +23,19 @@ pub fn TokenListing(
     details: TokenListItem,
     #[prop(optional, default = false)] is_new_token: bool,
 ) -> impl IntoView {
+    let (is_connected, _) = account_connected_reader();
+    let canister_store = auth_canisters_store();
+
+    let token_click = move |_| {
+        BaseEvent.send_event("token_clicked".to_string(), is_connected, canister_store);
+    };
+
     view! {
         <a
             href=details.link
             class="relative flex h-fit max-h-[300px] w-full gap-2 overflow-hidden border border-transparent p-2 transition-colors hover:border-gray-700 active:border-gray-200"
             class:tada=is_new_token
+            on:click=token_click
         >
             <div class="min-w-32 relative self-start p-1">
                 <img

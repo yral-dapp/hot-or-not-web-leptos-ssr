@@ -7,14 +7,16 @@ use crate::component::title::Title;
 use crate::component::{connect::ConnectLogin, social::*, toggle::Toggle};
 use crate::consts::{social, NSFW_TOGGLE_STORE};
 use crate::state::auth::account_connected_reader;
-use crate::state::canisters::Canisters;
+use crate::state::canisters::{auth_canisters_store, Canisters};
 use crate::state::content_seed_client::ContentSeedClient;
+use crate::utils::event_streaming::events::{BaseEvent, ShowNSFWEvent};
 use crate::utils::notifications::get_token_for_principal;
 use crate::utils::profile::ProfileDetails;
 use candid::Principal;
 use codee::string::FromToStringCodec;
 use leptos::html::Input;
 use leptos::*;
+use leptos::ev::MouseEvent;
 use leptos_icons::*;
 use leptos_router::use_query_map;
 use leptos_use::storage::use_local_storage;
@@ -24,14 +26,15 @@ use leptos_use::use_event_listener;
 pub struct AuthorizedUserToSeedContent(pub RwSignal<Option<(bool, Principal)>>);
 
 #[component]
-fn MenuItem(
+fn MenuItem<F: Fn(MouseEvent) + 'static>(
+    on_click: F,
     #[prop(into)] text: String,
     #[prop(into)] href: String,
     #[prop(into)] icon: icondata::Icon,
     #[prop(into, optional)] target: String,
 ) -> impl IntoView {
     view! {
-        <a href=href class="grid grid-cols-3 items-center w-full" target=target>
+        <a href=href class="grid grid-cols-3 items-center w-full" target=target on:click=on_click>
             <div class="flex flex-row gap-4 items-center col-span-2">
                 <Icon class="text-2xl" icon=icon />
                 <span class="text-wrap">{text}</span>
@@ -86,8 +89,15 @@ fn ProfileLoading() -> impl IntoView {
 }
 
 #[component]
-fn ProfileLoaded(user_details: ProfileDetails) -> impl IntoView {
+fn ProfileLoaded(canisters: Canisters<true>) -> impl IntoView {
     let (is_connected, _) = account_connected_reader();
+    let user_details = canisters.profile_details();
+    let canister_store = RwSignal::new(Some(canisters));
+
+    let view_profile_click = move |_| {
+        BaseEvent.send_event("menu_view_profile".to_string(), is_connected, canister_store);
+    };
+
     view! {
         <div class="basis-4/12 aspect-square overflow-clip rounded-full">
             <img class="h-full w-full object-cover" src=user_details.profile_pic_or_random() />
@@ -100,7 +110,7 @@ fn ProfileLoaded(user_details: ProfileDetails) -> impl IntoView {
             <span class="text-white text-ellipsis line-clamp-1 text-xl">
                 {user_details.display_name_or_fallback()}
             </span>
-            <a class="text-primary-600 text-md" href="/profile/tokens">
+            <a class="text-primary-600 text-md" href="/profile/tokens" on:click=view_profile_click>
                 View Profile
             </a>
         </div>
@@ -111,7 +121,8 @@ fn ProfileLoaded(user_details: ProfileDetails) -> impl IntoView {
 fn ProfileInfo() -> impl IntoView {
     view! {
         <AuthCansProvider fallback=ProfileLoading let:canisters>
-            <ProfileLoaded user_details=canisters.profile_details() />
+            <ProfileLoaded canisters />
+            // <ProfileLoaded user_details=canisters.profile_details() />
         </AuthCansProvider>
     }
 }
@@ -121,6 +132,8 @@ fn NsfwToggle() -> impl IntoView {
     let (nsfw_enabled, set_nsfw_enabled, _) =
         use_local_storage::<bool, FromToStringCodec>(NSFW_TOGGLE_STORE);
     let toggle_ref = create_node_ref::<Input>();
+    let (logged_in, _) = account_connected_reader();
+    let canister_store = auth_canisters_store();
 
     _ = use_event_listener(toggle_ref, ev::change, move |_| {
         set_nsfw_enabled(
@@ -128,7 +141,8 @@ fn NsfwToggle() -> impl IntoView {
                 .get_untracked()
                 .map(|t| t.checked())
                 .unwrap_or_default(),
-        )
+        );
+        ShowNSFWEvent.send_event(logged_in, canister_store, nsfw_enabled.get_untracked());
     });
 
     view! {
@@ -176,6 +190,33 @@ pub fn Menu() -> impl IntoView {
     let query_map = use_query_map();
     let show_content_modal = create_rw_signal(false);
     let is_authorized_to_seed_content: AuthorizedUserToSeedContent = expect_context();
+
+    let canister_store: RwSignal<Option<Canisters<true>>> = auth_canisters_store();
+
+    let hon_account_transfer_click = move |_| {
+        BaseEvent.send_event("menu_HON_account_tranfer".to_string(), is_connected, canister_store);
+    };
+    let refer_and_earn_click = move |_| {
+        BaseEvent.send_event("menu_refer".to_string(), is_connected, canister_store);
+    };
+    let leaderboard_click = move |_| {
+        BaseEvent.send_event("menu_leaderboard".to_string(), is_connected, canister_store);
+    };
+    let talk_to_the_team_click = move |_| {
+        BaseEvent.send_event("menu_talk_to_the_team".to_string(), is_connected, canister_store);
+    };
+    let terms_of_service_click = move |_| {
+        BaseEvent.send_event("menu_terms".to_string(), is_connected, canister_store);
+    };
+    let privacy_policy_click = move |_| {
+        BaseEvent.send_event("menu_privacy".to_string(), is_connected, canister_store);
+    };
+    let settings_click = move |_| {
+        BaseEvent.send_event("menu_settings".to_string(), is_connected, canister_store);
+    };
+    let logout_click = move |_| {
+        BaseEvent.send_event("menu_logout".to_string(), is_connected, canister_store);
+    };
 
     create_effect(move |_| {
         //check whether query param is right if right set the show_modal_content as true.
@@ -254,23 +295,25 @@ pub fn Menu() -> impl IntoView {
             <div class="flex flex-col py-12 px-8 gap-8 w-full text-lg">
                 <NsfwToggle />
                 <MenuItem
+                    on_click=hon_account_transfer_click
                     href="/account-transfer"
                     text="HotorNot Account Transfer"
                     icon=icondata::FaMoneyBillTransferSolid
                 />
-                <MenuItem href="/refer-earn" text="Refer & Earn" icon=icondata::AiGiftFilled />
-                <MenuItem href="/leaderboard" text="Leaderboard" icon=icondata::ChTrophy />
+                <MenuItem on_click=refer_and_earn_click href="/refer-earn" text="Refer & Earn" icon=icondata::AiGiftFilled />
+                <MenuItem on_click=leaderboard_click href="/leaderboard" text="Leaderboard" icon=icondata::ChTrophy />
                 <MenuItem
+                    on_click=talk_to_the_team_click
                     href=social::TELEGRAM
                     text="Talk to the team"
                     icon=icondata::BiWhatsapp
                     target="_blank"
                 />
-                <MenuItem href="/terms-of-service" text="Terms of Service" icon=icondata::TbBook2 />
-                <MenuItem href="/privacy-policy" text="Privacy Policy" icon=icondata::TbLock />
-                <MenuItem href="/settings" text="Settings" icon=icondata::BiCogRegular />
+                <MenuItem on_click=terms_of_service_click href="/terms-of-service" text="Terms of Service" icon=icondata::TbBook2 />
+                <MenuItem on_click=privacy_policy_click href="/privacy-policy" text="Privacy Policy" icon=icondata::TbLock />
+                <MenuItem on_click=settings_click href="/settings" text="Settings" icon=icondata::BiCogRegular />
                 <Show when=is_connected>
-                    <MenuItem href="/logout" text="Logout" icon=icondata::FiLogOut />
+                    <MenuItem on_click=logout_click href="/logout" text="Logout" icon=icondata::FiLogOut />
                 </Show>
             // <MenuItem href="/install-app" text="Install App" icon=icondata::TbDownload/>
             </div>

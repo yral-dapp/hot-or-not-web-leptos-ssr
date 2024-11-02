@@ -1,4 +1,4 @@
-use crate::utils::web::copy_to_clipboard;
+use crate::{state::{auth::account_connected_reader, canisters::{auth_canisters_store, Canisters}}, utils::{event_streaming::events::BaseEvent, web::copy_to_clipboard}};
 use gloo::timers::callback::Timeout;
 use leptos::*;
 use leptos_icons::*;
@@ -13,11 +13,17 @@ pub fn DashboxLoading() -> impl IntoView {
 }
 
 #[component]
-pub fn DashboxLoaded(text: String) -> impl IntoView {
+pub fn DashboxLoaded(
+    text: String,
+    logged_in: ReadSignal<bool>,
+    canisters: Canisters<true>
+) -> impl IntoView {
     let show_copied_popup = create_rw_signal(false);
+    let canister_store = RwSignal::new(Some(canisters));
 
     let text_copy = text.clone();
     let click_copy = create_action(move |()| {
+        BaseEvent.send_event("HON_transfer_copy_principal_id".to_string(), logged_in, canister_store);
         let text = text_copy.clone();
         async move {
             let _ = copy_to_clipboard(&text);

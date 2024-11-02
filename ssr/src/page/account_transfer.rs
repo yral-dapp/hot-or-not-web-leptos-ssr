@@ -3,6 +3,7 @@ use leptos::*;
 
 use crate::component::canisters_prov::AuthCansProvider;
 use crate::component::connect::ConnectLogin;
+use crate::utils::event_streaming::events::BaseEvent;
 use crate::{
     component::{
         back_btn::BackButton,
@@ -14,17 +15,26 @@ use crate::{
 
 #[component]
 fn PrincipalInfo() -> impl IntoView {
+    let (logged_in, _) = account_connected_reader();
+    let visit_hon_click = move |canister_store| {
+        BaseEvent.send_event("HON_visit_to_transfer".to_string(), logged_in, canister_store);
+    };
     view! {
         <AuthCansProvider fallback=DashboxLoading let:cans>
-            <span class="uppercase text-sm md:text-md pb-5">COPY PRINICIPAL ID</span>
-            <DashboxLoaded text=cans.identity().sender().unwrap().to_text() />
-            <div class="pt-5 pb-10">
-                <a href="https://hotornot.wtf/migrate" target="_blank">
-                    <span class="text-md underline decoration-pink-500 text-pink-500">
-                        Visit HotorNot to complete transfer
-                    </span>
-                </a>
-            </div>
+            {
+                let canister_store = RwSignal::new(Some(cans.clone()));
+                view! {
+                    <span class="uppercase text-sm md:text-md pb-5">COPY PRINICIPAL ID</span>
+                    <DashboxLoaded text=cans.identity().sender().unwrap().to_text() logged_in canisters=cans />
+                    <div class="pt-5 pb-10">
+                        <a href="https://hotornot.wtf/migrate" target="_blank" on:click=move |_| visit_hon_click(canister_store)>
+                            <span class="text-md underline decoration-pink-500 text-pink-500">
+                                Visit HotorNot to complete transfer
+                            </span>
+                        </a>
+                    </div>
+                }
+            }
         </AuthCansProvider>
     }
 }
