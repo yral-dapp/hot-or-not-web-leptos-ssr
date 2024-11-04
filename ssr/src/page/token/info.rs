@@ -217,9 +217,10 @@ pub fn TokenInfo() -> impl IntoView {
                             )
                             .await?;
 
-                        if let Result21::Err(AirdropError::CanisterPrincipalDoNotMatch) = res {
-                            return Err(ServerFnError::new("Canister principal do not match"));
-                        } // returning due to a bad actor
+                        if let Result21::Ok = res {
+                            let user = cans.individual_user(cans.user_canister()).await;
+                            user.add_token(root).await?;
+                        }
 
                         airdrop_res = Some((
                             match res {
