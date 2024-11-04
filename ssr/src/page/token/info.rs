@@ -221,15 +221,28 @@ pub fn TokenInfo() -> impl IntoView {
                             return Err(ServerFnError::new("Canister principal do not match"));
                         } // returning due to a bad actor
 
-                        airdrop_res = Some((match res {
-                            Result21::Ok => "Airdrop Claimed Successfully!".to_string(),
-                            Result21::Err(AirdropError::CanisterPrincipalDoNotMatch) => "Canister principal do not match".to_string(),
-                            Result21::Err(AirdropError::NoBalance) => "Airdrops Over".to_string(),
-                            Result21::Err(AirdropError::RequestedAmountTooLow) => "Invalid amount".to_string(),
-                            Result21::Err(AirdropError::InvalidRoot) => "Invalid token".to_string(),
-                            Result21::Err(AirdropError::AlreadyClaimedAirdrop) => "Airdrop Already Claimed".to_string(),
-                            _ => "Error Occured While Claiming Airdrop".to_string(),
-                        }, airdrop_amt.airdrop_amt));
+                        airdrop_res = Some((
+                            match res {
+                                Result21::Ok => "Airdrop Claimed Successfully!".to_string(),
+                                Result21::Err(AirdropError::CanisterPrincipalDoNotMatch) => {
+                                    "Canister principal do not match".to_string()
+                                }
+                                Result21::Err(AirdropError::NoBalance) => {
+                                    "Airdrops Over".to_string()
+                                }
+                                Result21::Err(AirdropError::RequestedAmountTooLow) => {
+                                    "Invalid amount".to_string()
+                                }
+                                Result21::Err(AirdropError::InvalidRoot) => {
+                                    "Invalid token".to_string()
+                                }
+                                Result21::Err(AirdropError::AlreadyClaimedAirdrop) => {
+                                    "Airdrop Already Claimed".to_string()
+                                }
+                                _ => "Error Occured While Claiming Airdrop".to_string(),
+                            },
+                            airdrop_amt.airdrop_amt,
+                        ));
                     }
                 }
             }
@@ -287,7 +300,12 @@ pub fn TokenInfo() -> impl IntoView {
     }
 }
 #[component]
-fn AirdropPopup(airdrop_status: String, metadata: TokenMetadata, amt: Nat, toggle_signal: WriteSignal<bool>) -> impl IntoView {
+fn AirdropPopup(
+    airdrop_status: String,
+    metadata: TokenMetadata,
+    amt: Nat,
+    toggle_signal: WriteSignal<bool>,
+) -> impl IntoView {
     view! {
         // Wrapper div to center the popup
         <div class="fixed inset-0 flex items-center justify-center bg-black/75 z-[69]" on:click=move |_| toggle_signal(false)>
