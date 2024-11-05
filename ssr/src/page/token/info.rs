@@ -212,7 +212,7 @@ pub fn TokenInfo() -> impl IntoView {
                             .request_airdrop(
                                 root,
                                 None,
-                                Into::<Nat>::into(airdrop_amt.airdrop_amt.clone())
+                                Into::<Nat>::into(airdrop_amt.airdrop_amt)
                                     * 10u64.pow(
                                         meta.as_ref()
                                             .ok_or(ServerFnError::new(
@@ -321,7 +321,7 @@ fn AirdropPopup(
                 </div>
                 <div class="self-stretch text-center">
                     <span class="text-white text-xl font-bold font-['Kumbh Sans'] leading-[30px]">
-                        {format!("{} {}", amt.to_string(), metadata.symbol)} <br/>
+                        {format!("{} {}", amt, metadata.symbol)} <br/>
                     </span>
                     <span class="text-[#1ec981] text-xl font-bold font-['Kumbh Sans'] leading-[30px]">
                         {airdrop_status}
