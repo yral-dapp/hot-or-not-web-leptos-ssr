@@ -7,7 +7,7 @@ use ic_agent::{
     Identity,
 };
 use k256::elliptic_curve::JwkEcKey;
-use leptos::{server, ServerFnError};
+use leptos::{server, server_fn::codec::Json, ServerFnError};
 use rand_chacha::rand_core::OsRng;
 use serde::{Deserialize, Serialize};
 use web_time::Duration;
@@ -66,7 +66,7 @@ pub async fn generate_anonymous_identity_if_required() -> Result<Option<JwkEcKey
 }
 
 /// this server function is purely a side effect and only sets the refresh token cookie
-#[server]
+#[server(endpoint = "set_anonymous_identity_cookie", input = Json, output = Json)]
 pub async fn set_anonymous_identity_cookie(
     anonymous_identity: JwkEcKey,
 ) -> Result<(), ServerFnError> {
@@ -75,7 +75,7 @@ pub async fn set_anonymous_identity_cookie(
 
 /// Extract the identity from refresh token,
 /// returns None if refresh token doesn't exist
-#[server]
+#[server(endpoint = "extract_identity", input = Json, output = Json)]
 pub async fn extract_identity() -> Result<Option<DelegatedIdentityWire>, ServerFnError> {
     server_impl::extract_identity_impl().await
 }
