@@ -178,7 +178,7 @@ pub struct TokenKeyParam {
 
 #[derive(Params, PartialEq, Clone, Serialize, Deserialize)]
 pub struct AirdropAmount {
-    airdrop_amt: Nat,
+    airdrop_amt: u64,
 }
 #[component]
 pub fn TokenInfo() -> impl IntoView {
@@ -199,7 +199,7 @@ pub fn TokenInfo() -> impl IntoView {
                 .get_metadata(key_principal, cans.clone())
                 .await;
 
-            let mut airdrop_res: Option<(String, Nat)> = None;
+            let mut airdrop_res: Option<(String, u64)> = None;
             if let Some(key_principal) = key_principal {
                 if let Ok(airdrop_amt) = airdrop_param {
                     if let RootType::Other(root) = params.token_root {
@@ -212,41 +212,38 @@ pub fn TokenInfo() -> impl IntoView {
                             .request_airdrop(
                                 root,
                                 None,
-                                airdrop_amt.airdrop_amt.clone(),
+                                Into::<Nat>::into(airdrop_amt.airdrop_amt.clone())
+                                    * 10u64.pow(
+                                        meta.as_ref()
+                                            .ok_or(ServerFnError::new(
+                                                "Failed to get metadata to extract decimals",
+                                            ))?
+                                            .decimals
+                                            .into(),
+                                    ),
                                 cans.user_canister(),
                             )
                             .await?;
 
-                        if let Result21::Ok = res {
-                            let user = cans.individual_user(cans.user_canister()).await;
-                            user.add_token(root).await?;
-                        }
-
-                        airdrop_res = Some((
-                            match res {
-                                Result21::Ok => "Airdrop Claimed Successfully!".to_string(),
-                                Result21::Err(AirdropError::CanisterPrincipalDoNotMatch) => {
-                                    "Canister principal do not match".to_string()
-                                }
-                                Result21::Err(AirdropError::NoBalance) => {
-                                    "Airdrops Over".to_string()
-                                }
-                                Result21::Err(AirdropError::RequestedAmountTooLow) => {
-                                    "Invalid amount".to_string()
-                                }
-                                Result21::Err(AirdropError::InvalidRoot) => {
-                                    "Invalid token".to_string()
-                                }
-                                Result21::Err(AirdropError::AlreadyClaimedAirdrop) => {
-                                    "Airdrop Already Claimed".to_string()
-                                }
-                                _ => "Error Occured While Claiming Airdrop".to_string(),
-                            },
-                            airdrop_amt.airdrop_amt,
-                        ));
+                        airdrop_res = match res {
+                            Result21::Ok => {
+                                let user = cans.individual_user(cans.user_canister()).await;
+                                user.add_token(root).await?;
+                                Some((
+                                    "Airdrop Claimed Successfully!".to_string(),
+                                    airdrop_amt.airdrop_amt,
+                                ))
+                            }
+                            Result21::Err(AirdropError::NoBalance) => Some((
+                                "Airdrops Cannot be Claimed...".to_string(),
+                                airdrop_amt.airdrop_amt,
+                            )),
+                            _ => None,
+                        };
                     }
                 }
             }
+
             Ok(meta.map(|m| {
                 (
                     m,
@@ -304,19 +301,27 @@ pub fn TokenInfo() -> impl IntoView {
 fn AirdropPopup(
     airdrop_status: String,
     metadata: TokenMetadata,
-    amt: Nat,
+    amt: u64,
     toggle_signal: WriteSignal<bool>,
 ) -> impl IntoView {
     view! {
         // Wrapper div to center the popup
         <div class="fixed inset-0 flex items-center justify-center bg-black/75 z-[69]" on:click=move |_| toggle_signal(false)>
-            <div class="w-[315px] h-[263px] px-[30px] py-[62px] bg-[#191919] rounded-sm flex flex-col justify-start items-center gap-4">
-                <div class="flex justify-center items-center gap-3">
+            <div class="w-[315px] h-[263px] px-[30px] py-[62px] bg-[#191919] rounded-sm flex flex-col justify-start items-center gap-4 relative">
+
+                // Cancel button in the top right corner
+                <button class="absolute top-3 right-3 text-white" on:click=move |_| toggle_signal(false)>
+                    <div class="rounded-xl hover:bg-white/10 p-1">
+                        <Icon class="text-sm text-white" icon=icondata::AiCloseOutlined />
+                    </div>
+                </button>
+
+                <div class="flex justify-center items-center">
                     <img class="w-[84px] h-[83px] rounded-full shadow" src={metadata.logo_b64} />
                 </div>
                 <div class="self-stretch text-center">
                     <span class="text-white text-xl font-bold font-['Kumbh Sans'] leading-[30px]">
-                        {amt.to_string()} {metadata.name} <br/>
+                        {format!("{} {}", amt.to_string(), metadata.symbol)} <br/>
                     </span>
                     <span class="text-[#1ec981] text-xl font-bold font-['Kumbh Sans'] leading-[30px]">
                         {airdrop_status}
