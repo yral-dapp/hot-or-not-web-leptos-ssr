@@ -209,8 +209,10 @@ mod real_impl {
     #[cfg(all(feature = "backend-admin", feature = "qstash"))]
     use super::qstash_claim::enqueue_claim_token;
 
+    #[allow(dead_code)]
     const ICP_TX_FEE: u64 = 10000;
 
+    #[allow(unused_variables)]
     pub async fn is_server_available() -> Result<(bool, AccountIdentifier), ServerFnError> {
         let admin_cans = admin_canisters();
         let admin_principal = admin_cans.principal();
@@ -232,12 +234,12 @@ mod real_impl {
             .await?;
         let balance: Nat = Decode!(&balance_res, Nat).unwrap();
         let acc_id = AccountIdentifier::new(PrincipalId(admin_principal), None);
-        if balance >= (1000000 + ICP_TX_FEE) {
-            // amount we participate + icp tx fee
-            Ok((true, acc_id))
-        } else {
-            Ok((false, acc_id))
-        }
+        // if balance >= (1000000 + ICP_TX_FEE) {
+        // amount we participate + icp tx fee
+        // Ok((true, acc_id))
+        // } else {
+        Ok((false, acc_id))
+        // }
     }
 
     async fn participate_in_swap(swap_canister: Principal) -> Result<(), ServerFnError> {

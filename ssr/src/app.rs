@@ -1,6 +1,7 @@
 use crate::page::icpump::ai::ICPumpAi;
 use crate::page::icpump::ICPumpLanding;
 
+use crate::page::token::create::{CreateToken, CreateTokenSettings};
 // use crate::page::wallet::TestIndex;
 use crate::{
     component::{base_route::BaseRoute, nav::NavBar},
@@ -43,7 +44,7 @@ use leptos_router::*;
 fn NotFound() -> impl IntoView {
     let mut outside_errors = Errors::default();
     outside_errors.insert_with_default_key(AppError::NotFound);
-    view! { <ErrorTemplate outside_errors /> }
+    view! { <ErrorTemplate outside_errors/> }
 }
 
 #[component(transparent)]
@@ -52,11 +53,11 @@ fn GoogleAuthRedirectHandlerRoute() -> impl IntoView {
     #[cfg(any(feature = "oauth-ssr", feature = "oauth-hydrate"))]
     {
         use crate::page::google_redirect::GoogleRedirectHandler;
-        view! { <Route path view=GoogleRedirectHandler /> }
+        view! { <Route path view=GoogleRedirectHandler/> }
     }
     #[cfg(not(any(feature = "oauth-ssr", feature = "oauth-hydrate")))]
     {
-        view! { <Route path view=NotFound /> }
+        view! { <Route path view=NotFound/> }
     }
 }
 
@@ -66,11 +67,11 @@ fn GoogleAuthRedirectorRoute() -> impl IntoView {
     #[cfg(any(feature = "oauth-ssr", feature = "oauth-hydrate"))]
     {
         use crate::page::google_redirect::GoogleRedirector;
-        view! { <Route path view=GoogleRedirector /> }
+        view! { <Route path view=GoogleRedirector/> }
     }
     #[cfg(not(any(feature = "oauth-ssr", feature = "oauth-hydrate")))]
     {
-        view! { <Route path view=NotFound /> }
+        view! { <Route path view=NotFound/> }
     }
 }
 
@@ -109,12 +110,12 @@ pub fn App() -> impl IntoView {
     }
 
     view! {
-        <Stylesheet id="leptos" href="/pkg/hot-or-not-leptos-ssr.css" />
+        <Stylesheet id="leptos" href="/pkg/hot-or-not-leptos-ssr.css"/>
 
         // sets the document title
-        <Title text="Yral" />
+        <Title text="Yral"/>
 
-        <Link rel="manifest" href="/app.webmanifest" />
+        <Link rel="manifest" href="/app.webmanifest"/>
 
         // GA4 Global Site Tag (gtag.js) - Google Analytics
         // G-6W5Q2MRX0E to test locally | G-PLNNETMSLM
@@ -137,46 +138,46 @@ pub fn App() -> impl IntoView {
         // <Script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js"></Script>
 
         // content for this welcome page
-        <Router fallback=|| view! { <NotFound /> }.into_view()>
+        <Router fallback=|| view! { <NotFound/> }.into_view()>
             <main>
                 <Routes>
                     // auth redirect routes exist outside main context
-                    <GoogleAuthRedirectHandlerRoute />
-                    <GoogleAuthRedirectorRoute />
+                    <GoogleAuthRedirectHandlerRoute/>
+                    <GoogleAuthRedirectorRoute/>
                     <Route path="" view=BaseRoute>
-                        <Route path="/" view=RootPage />
-                        <Route path="/hot-or-not/:canister_id/:post_id" view=PostView />
-                        <Route path="/post/:canister_id/:post_id" view=SinglePost />
-                        <Route path="/profile/:canister_id/post/:post_id" view=ProfilePost />
-                        <Route path="/upload" view=UploadPostPage />
-                        <Route path="/error" view=ServerErrorPage />
-                        <Route path="/menu" view=Menu />
-                        <Route path="/settings" view=Settings />
-                        <Route path="/refer-earn" view=ReferEarn />
-                        <Route path="/profile/:id/:tab" view=ProfileView />
-                        <Route path="/profile/:tab" view=ProfileView />
-                        <Route path="/terms-of-service" view=TermsOfService />
-                        <Route path="/privacy-policy" view=PrivacyPolicy />
-                        <Route path="/wallet/:id" view=Wallet />
-                        <Route path="/wallet" view=Wallet />
-                        <Route path="/leaderboard" view=Leaderboard />
-                        <Route path="/account-transfer" view=AccountTransfer />
-                        <Route path="/logout" view=Logout />
-                        //<Route path="/token/create" view=CreateToken />
-                        //<Route path="/token/create/settings" view=CreateTokenSettings />
-                        <Route path="/token/create/faq" view=CreateTokenFAQ />
-                        <Route path="/token/info/:token_root/:key_principal" view=TokenInfo />
-                        <Route path="/token/info/:token_root" view=TokenInfo />
-                        <Route path="/token/transfer/:token_root" view=TokenTransfer />
-                        <Route path="/board" view=ICPumpLanding />
+                        <Route path="/" view=RootPage/>
+                        <Route path="/hot-or-not/:canister_id/:post_id" view=PostView/>
+                        <Route path="/post/:canister_id/:post_id" view=SinglePost/>
+                        <Route path="/profile/:canister_id/post/:post_id" view=ProfilePost/>
+                        <Route path="/upload" view=UploadPostPage/>
+                        <Route path="/error" view=ServerErrorPage/>
+                        <Route path="/menu" view=Menu/>
+                        <Route path="/settings" view=Settings/>
+                        <Route path="/refer-earn" view=ReferEarn/>
+                        <Route path="/profile/:id/:tab" view=ProfileView/>
+                        <Route path="/profile/:tab" view=ProfileView/>
+                        <Route path="/terms-of-service" view=TermsOfService/>
+                        <Route path="/privacy-policy" view=PrivacyPolicy/>
+                        <Route path="/wallet/:id" view=Wallet/>
+                        <Route path="/wallet" view=Wallet/>
+                        <Route path="/leaderboard" view=Leaderboard/>
+                        <Route path="/account-transfer" view=AccountTransfer/>
+                        <Route path="/logout" view=Logout/>
+                        <Route path="/token/create" view=CreateToken/>
+                        <Route path="/token/create/settings" view=CreateTokenSettings/>
+                        <Route path="/token/create/faq" view=CreateTokenFAQ/>
+                        <Route path="/token/info/:token_root/:key_principal" view=TokenInfo/>
+                        <Route path="/token/info/:token_root" view=TokenInfo/>
+                        <Route path="/token/transfer/:token_root" view=TokenTransfer/>
+                        <Route path="/board" view=ICPumpLanding/>
                         <Route path="/icpump-ai" view=ICPumpAi/>
-                        // <Route path="/test" view=TestIndex/>
+                    // <Route path="/test" view=TestIndex/>
                     </Route>
                 </Routes>
 
             </main>
             <nav>
-                <NavBar />
+                <NavBar/>
             </nav>
         </Router>
     }
