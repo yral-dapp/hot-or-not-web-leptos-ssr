@@ -194,7 +194,9 @@ mod server_fn_impl {
         use leptos::ServerFnError;
 
         use crate::state::canisters::unauth_canisters;
-        use yral_canisters_client::individual_user_template::KnownPrincipalType;
+        use yral_canisters_client::individual_user_template::{
+            KnownPrincipalType, Result13, Result25,
+        };
 
         pub async fn issue_referral_rewards_impl(
             referee_canister: Principal,
@@ -270,15 +272,13 @@ mod server_fn_impl {
             user_canister: Principal,
         ) -> Result<bool, ServerFnError> {
             use crate::state::admin_canisters::admin_canisters;
-            use yral_canisters_client::individual_user_template::{
-                Result12, Result23, SessionType,
-            };
+            use yral_canisters_client::individual_user_template::SessionType;
 
             let admin_cans = admin_canisters();
             let user = admin_cans.individual_user_for(user_canister).await;
             if matches!(
                 user.get_session_type().await?,
-                Result12::Ok(SessionType::RegisteredSession)
+                Result13::Ok(SessionType::RegisteredSession)
             ) {
                 return Ok(false);
             }
@@ -286,8 +286,8 @@ mod server_fn_impl {
                 .await
                 .map_err(ServerFnError::from)
                 .and_then(|res| match res {
-                    Result23::Ok(_) => Ok(()),
-                    Result23::Err(e) => Err(ServerFnError::new(format!(
+                    Result25::Ok(_) => Ok(()),
+                    Result25::Err(e) => Err(ServerFnError::new(format!(
                         "failed to mark user as registered {e}"
                     ))),
                 })?;

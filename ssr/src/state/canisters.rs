@@ -9,7 +9,7 @@ use yral_metadata_client::MetadataClient;
 use yral_metadata_types::UserMetadata;
 
 use yral_canisters_client::{
-    individual_user_template::{IndividualUserTemplate, Result23, Result7, UserCanisterDetails},
+    individual_user_template::{IndividualUserTemplate, Result25, Result7, UserCanisterDetails},
     platform_orchestrator::PlatformOrchestrator,
     post_cache::PostCache,
     sns_governance::SnsGovernance,
@@ -310,8 +310,8 @@ pub async fn do_canister_auth(
         .await
         .map_err(|e| e.to_string())
     {
-        Ok(Result23::Ok(_)) => (),
-        Err(e) | Ok(Result23::Err(e)) => log::warn!("Failed to update last access time: {}", e),
+        Ok(Result25::Ok(_)) => (),
+        Err(e) | Ok(Result25::Err(e)) => log::warn!("Failed to update last access time: {}", e),
     }
     let profile_details = user.get_profile_details().await?.into();
 

@@ -1,6 +1,6 @@
 use candid::Principal;
 use futures::stream::{FuturesOrdered, StreamExt, TryStreamExt};
-use yral_canisters_client::individual_user_template::{GetPostsOfUserProfileError, Result11};
+use yral_canisters_client::individual_user_template::{GetPostsOfUserProfileError, Result12};
 
 use crate::{
     state::canisters::Canisters,
@@ -70,7 +70,7 @@ impl<const LIMIT: u64> ProfVideoStream<LIMIT> for ProfileVideoStream<LIMIT> {
             .get_posts_of_this_user_profile_with_pagination_cursor(cursor.start, cursor.limit)
             .await?;
         match posts {
-            Result11::Ok(v) => {
+            Result12::Ok(v) => {
                 let end = v.len() < LIMIT as usize;
                 let posts = v
                     .into_iter()
@@ -78,7 +78,7 @@ impl<const LIMIT: u64> ProfVideoStream<LIMIT> for ProfileVideoStream<LIMIT> {
                     .collect::<Vec<_>>();
                 Ok(PostsRes { posts, end })
             }
-            Result11::Err(GetPostsOfUserProfileError::ReachedEndOfItemsList) => Ok(PostsRes {
+            Result12::Err(GetPostsOfUserProfileError::ReachedEndOfItemsList) => Ok(PostsRes {
                 posts: vec![],
                 end: true,
             }),

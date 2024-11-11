@@ -7,11 +7,14 @@ use crate::{
     page::wallet::{transactions::Transactions, txn::IndexOrLedger},
     utils::{token::TokenMetadata, web::copy_to_clipboard},
 };
+use candid::Nat;
 use candid::Principal;
 use leptos::*;
 use leptos_icons::*;
 use leptos_router::*;
 use serde::{Deserialize, Serialize};
+use yral_canisters_client::individual_user_template::AirdropError;
+use yral_canisters_client::individual_user_template::Result21;
 
 #[component]
 fn TokenField(
@@ -181,14 +184,20 @@ fn TokenInfoInner(
 pub struct TokenKeyParam {
     key_principal: Principal,
 }
+
+#[derive(Params, PartialEq, Clone, Serialize, Deserialize)]
+pub struct AirdropAmount {
+    airdrop_amt: u64,
+}
 #[component]
 pub fn TokenInfo() -> impl IntoView {
     let params = use_params::<TokenInfoParams>();
+    let airdrop_param = use_query::<AirdropAmount>();
     let key_principal = use_params::<TokenKeyParam>();
     let key_principal = move || key_principal.with(|p| p.as_ref().map(|p| p.key_principal).ok());
     let token_metadata_fetch = authenticated_canisters().derive(
-        move || (params(), key_principal()),
-        move |cans_wire, (params, key_principal)| async move {
+        move || (params(), key_principal(), airdrop_param()),
+        move |cans_wire, (params, key_principal, airdrop_param)| async move {
             let Ok(params) = params else {
                 return Ok::<_, ServerFnError>(None);
             };
@@ -198,17 +207,65 @@ pub fn TokenInfo() -> impl IntoView {
                 .token_root
                 .get_metadata(key_principal, cans.clone())
                 .await;
+
+            let mut airdrop_res: Option<(String, u64)> = None;
+            if let Some(key_principal) = key_principal {
+                if let Ok(airdrop_amt) = airdrop_param {
+                    if let RootType::Other(root) = params.token_root {
+                        let user = cans
+                            .get_individual_canister_by_user_principal(key_principal)
+                            .await?;
+                        let user = cans.individual_user(user.unwrap()).await;
+
+                        let res = user
+                            .request_airdrop(
+                                root,
+                                None,
+                                Into::<Nat>::into(airdrop_amt.airdrop_amt)
+                                    * 10u64.pow(
+                                        meta.as_ref()
+                                            .ok_or(ServerFnError::new(
+                                                "Failed to get metadata to extract decimals",
+                                            ))?
+                                            .decimals
+                                            .into(),
+                                    ),
+                                cans.user_canister(),
+                            )
+                            .await?;
+
+                        airdrop_res = match res {
+                            Result21::Ok => {
+                                let user = cans.individual_user(cans.user_canister()).await;
+                                user.add_token(root).await?;
+                                Some((
+                                    "Airdrop Claimed Successfully!".to_string(),
+                                    airdrop_amt.airdrop_amt,
+                                ))
+                            }
+                            Result21::Err(AirdropError::NoBalance) => Some((
+                                "Airdrops Cannot be Claimed...".to_string(),
+                                airdrop_amt.airdrop_amt,
+                            )),
+                            _ => None,
+                        };
+                    }
+                }
+            }
+
             Ok(meta.map(|m| {
                 (
                     m,
                     params.token_root,
                     key_principal,
                     Some(cans.user_principal()) == key_principal,
+                    airdrop_res,
                 )
             }))
         },
     );
 
+    let (airdrop, set_airdrop) = create_signal(true);
     view! {
         <Suspense fallback=FullScreenSpinner>
             {move || {
@@ -216,21 +273,70 @@ pub fn TokenInfo() -> impl IntoView {
                     .and_then(|info| info.ok())
                     .map(|info| {
                         match info {
-                            Some((metadata, root, key_principal, is_user_principal)) => {
+                            Some((metadata, root, key_principal, is_user_principal, res)) => {
+
                                 view! {
+                                    {
+                                        res.map(|(airdrop_status, amt)|{
+                                            if airdrop.get(){
+                                                Some(
+                                                    view! {
+                                                        <AirdropPopup airdrop_status metadata=metadata.clone() toggle_signal=set_airdrop amt/>
+                                                    }
+                                                )
+                                            }else{
+                                                None
+                                            }
+                                        })
+                                    }
                                     <TokenInfoInner
                                         root
                                         key_principal
                                         meta=metadata
                                         is_user_principal=is_user_principal
                                     />
-                                }
+
+                                }.into_view()
                             }
-                            None => view! { <Redirect path="/" /> },
+                            None => view! { <Redirect path="/" /> }.into_view(),
                         }
                     })
             }}
 
         </Suspense>
+    }
+}
+#[component]
+fn AirdropPopup(
+    airdrop_status: String,
+    metadata: TokenMetadata,
+    amt: u64,
+    toggle_signal: WriteSignal<bool>,
+) -> impl IntoView {
+    view! {
+        // Wrapper div to center the popup
+        <div class="fixed inset-0 flex items-center justify-center bg-black/75 z-[69]" on:click=move |_| toggle_signal(false)>
+            <div class="w-[315px] h-[263px] px-[30px] py-[62px] bg-[#191919] rounded-sm flex flex-col justify-start items-center gap-4 relative">
+
+                // Cancel button in the top right corner
+                <button class="absolute top-3 right-3 text-white" on:click=move |_| toggle_signal(false)>
+                    <div class="rounded-xl hover:bg-white/10 p-1">
+                        <Icon class="text-sm text-white" icon=icondata::AiCloseOutlined />
+                    </div>
+                </button>
+
+                <div class="flex justify-center items-center">
+                    <img class="w-[84px] h-[83px] rounded-full shadow" src={metadata.logo_b64} />
+                </div>
+                <div class="self-stretch text-center">
+                    <span class="text-white text-xl font-bold font-['Kumbh Sans'] leading-[30px]">
+                        {format!("{} {}", amt, metadata.symbol)} <br/>
+                    </span>
+                    <span class="text-[#1ec981] text-xl font-bold font-['Kumbh Sans'] leading-[30px]">
+                        {airdrop_status}
+                    </span>
+                </div>
+            </div>
+        </div>
     }
 }

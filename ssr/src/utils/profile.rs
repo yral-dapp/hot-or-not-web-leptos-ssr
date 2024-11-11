@@ -6,7 +6,7 @@ use leptos::{RwSignal, SignalUpdateUntracked};
 use serde::{Deserialize, Serialize};
 
 use yral_canisters_client::individual_user_template::{
-    BetDirection, BetOutcomeForBetMaker, PlacedBetDetail, Result11, UserProfileDetailsForFrontend,
+    BetDirection, BetOutcomeForBetMaker, PlacedBetDetail, Result12, UserProfileDetailsForFrontend,
 };
 
 use crate::{
@@ -226,8 +226,8 @@ impl CursoredDataProvider for PostsProvider {
             .get_posts_of_this_user_profile_with_pagination_cursor(start as u64, limit as u64)
             .await?;
         let posts = match posts {
-            Result11::Ok(v) => v,
-            Result11::Err(_) => {
+            Result12::Ok(v) => v,
+            Result12::Err(_) => {
                 log::warn!("failed to get posts");
                 return Ok(PageEntry {
                     data: vec![],
