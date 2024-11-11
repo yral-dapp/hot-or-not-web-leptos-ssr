@@ -80,6 +80,8 @@ fn TokenInfoInner(
     ));
 
     let decimals = meta.decimals;
+    let blur_active = create_rw_signal(meta.is_nsfw);
+
     view! {
         <div class="w-dvw min-h-dvh bg-neutral-800  flex flex-col gap-4">
             <Title justify_center=false>
@@ -94,8 +96,15 @@ fn TokenInfoInner(
                         <div class="flex flex-row justify-between items-center">
                             <div class="flex flex-row gap-2 items-center">
                                 <img
-                                    class="object-cover h-14 w-14 md:w-18 md:h-18 rounded-full"
+                                    class=move || format!("object-cover h-14 w-14 md:w-18 md:h-18 rounded-full cursor-pointer {}",
+                                        if blur_active() { "blur-md" } else { "" }
+                                    )
                                     src=meta.logo_b64
+                                    on:click=move |_| {
+                                        if meta.is_nsfw {
+                                            blur_active.update(|b| *b = !*b);
+                                        }
+                                    }
                                 />
                                 <span class="text-base md:text-lg font-semibold text-white">
                                     {meta.name}

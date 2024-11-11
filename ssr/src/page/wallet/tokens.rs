@@ -141,6 +141,7 @@ async fn token_metadata_or_fallback(
         ledger: Principal::anonymous(),
         index: Principal::anonymous(),
         decimals: 8,
+        is_nsfw: false,
     })
 }
 
@@ -231,7 +232,16 @@ pub fn TokenTile(user_principal: Principal, token_meta_data: TokenMetadata) -> i
                 class="flex flex-1  p-y-4"
             >
                 <div class="flex flex-2 items-center space-x-2 px-2">
-                    <img class="w-12 h-12 rounded-full" src=info.logo_b64.clone() />
+                    <img
+                        class=move || {
+                            let mut classes = "w-12 h-12 rounded-full".to_string();
+                            if info.is_nsfw {
+                                classes.push_str(" blur-md");
+                            }
+                            classes
+                        }
+                        src=info.logo_b64.clone()
+                    />
                     <span class="text-white text-xs truncate">{info.name.clone()}</span>
                 </div>
                 <div class="flex flex-1 flex-col">

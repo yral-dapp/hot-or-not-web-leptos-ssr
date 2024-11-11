@@ -157,6 +157,7 @@ impl From<TokenFirestoreBindingsItem> for TokenListItem {
             created_at: "".to_string(),
             formatted_created_at: elapsed_str,
             link: item.link,
+            is_nsfw: false,
         }
     }
 }
