@@ -30,8 +30,8 @@ http = "1.1.0"
 serde.workspace = true
 candid.workspace = true
 ic-agent = { version = "0.38.1", default-features = false, features = ["pem"] }
-ic-base-types = { git = "https://github.com/dfinity/ic", rev = "tags/release-2024-05-29_23-02-base" }
-icp-ledger = { git = "https://github.com/dfinity/ic", rev = "tags/release-2024-05-29_23-02-base" }
+ic-base-types = { git = "https://github.com/dfinity/ic", rev = "tags/release-2024-10-17_03-07-base" }
+icp-ledger = { git = "https://github.com/dfinity/ic", rev = "tags/release-2024-10-17_03-07-base" }
 serde-wasm-bindgen = "0.6.5"
 futures = "0.3.30"
 leptos-use = "0.12.0"
@@ -107,9 +107,9 @@ firestore = { version = "0.43.1", default-features = false, features = [
 ], optional = true }
 speedate = { version = "0.14.4", optional = true }
 urlencoding = "2.1.3"
-yral-types = { git = "https://github.com/yral-dapp/yral-common.git", rev = "2e432882052a69d5a625e7188cd69ad8aa5bcec7" }
-yral-qstash-types = { git = "https://github.com/yral-dapp/yral-common.git", rev = "2e432882052a69d5a625e7188cd69ad8aa5bcec7" }
-yral-canisters-client = { git = "https://github.com/yral-dapp/yral-common.git", rev = "2e432882052a69d5a625e7188cd69ad8aa5bcec7", features = ["full"] }
+yral-types = { git = "https://github.com/yral-dapp/yral-common.git", rev = "0247d886ad95747deee4618c3fd42524ba78d5fe" }
+yral-qstash-types = { git = "https://github.com/yral-dapp/yral-common.git", rev = "0247d886ad95747deee4618c3fd42524ba78d5fe" }
+yral-canisters-client = { git = "https://github.com/yral-dapp/yral-common.git", rev = "0247d886ad95747deee4618c3fd42524ba78d5fe", features = ["full"] }
 pulldown-cmark = "0.12.1"
 ic-certification = "2.6.0"
 ciborium = "0.2.2"

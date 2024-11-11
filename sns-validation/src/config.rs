@@ -5,12 +5,10 @@ use crate::{
     humanize,
     pbs::{
         gov_pb::CreateServiceNervousSystem,
-        nns_pb::{self, GlobalTimeOfDay, Image},
+        nns_pb::{self, Image},
         sns_pb::SnsInitPayload,
-        ExecutedCreateServiceNervousSystemProposal,
     },
 };
-use web_time::{SystemTime, UNIX_EPOCH};
 
 // Alias CreateServiceNervousSystem-related types, but since we have many
 // related types in this module, put these aliases in their own module to avoid
@@ -32,7 +30,7 @@ mod nns_governance_pb {
 // the format that we are trying to implement here.
 //
 // (Thanks to the magic of serde, all the code here is declarative.)
-#[derive(serde::Deserialize, serde::Serialize, Debug, PartialEq, Eq)]
+#[derive(Eq, PartialEq, Debug, serde::Deserialize, serde::Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct SnsConfigurationFile {
     pub name: String,
@@ -68,7 +66,7 @@ pub struct SnsConfigurationFile {
     pub nns_proposal: NnsProposal,
 }
 
-#[derive(serde::Deserialize, serde::Serialize, Debug, PartialEq, Eq)]
+#[derive(Eq, PartialEq, Debug, serde::Deserialize, serde::Serialize, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct PrincipalAlias {
     id: String, // PrincipalId
@@ -76,7 +74,7 @@ pub struct PrincipalAlias {
     email: Option<String>,
 }
 
-#[derive(serde::Deserialize, serde::Serialize, Debug, PartialEq, Eq)]
+#[derive(Eq, PartialEq, Debug, serde::Deserialize, serde::Serialize, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct Token {
     pub name: String,
@@ -86,7 +84,7 @@ pub struct Token {
     pub logo_b64: String,
 }
 
-#[derive(serde::Deserialize, serde::Serialize, Debug, PartialEq, Eq, Clone)]
+#[derive(Eq, PartialEq, Debug, serde::Deserialize, serde::Serialize, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct Proposals {
     #[serde(with = "humanize::ser_de::tokens")]
@@ -99,14 +97,14 @@ pub struct Proposals {
     pub maximum_wait_for_quiet_deadline_extension: nns_pb::Duration,
 }
 
-#[derive(serde::Deserialize, serde::Serialize, Debug, PartialEq, Eq, Clone)]
+#[derive(Eq, PartialEq, Debug, serde::Deserialize, serde::Serialize, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct Neurons {
     #[serde(with = "humanize::ser_de::tokens")]
     pub minimum_creation_stake: nns_pb::Tokens,
 }
 
-#[derive(serde::Deserialize, serde::Serialize, Debug, PartialEq, Eq, Clone)]
+#[derive(Eq, PartialEq, Debug, serde::Deserialize, serde::Serialize, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct Voting {
     #[serde(with = "humanize::ser_de::duration")]
@@ -119,7 +117,7 @@ pub struct Voting {
     pub reward_rate: RewardRate,
 }
 
-#[derive(serde::Deserialize, serde::Serialize, Debug, PartialEq, Eq, Clone)]
+#[derive(Eq, PartialEq, Debug, serde::Deserialize, serde::Serialize, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct MaximumVotingPowerBonuses {
     #[serde(rename = "DissolveDelay")]
@@ -129,7 +127,7 @@ pub struct MaximumVotingPowerBonuses {
     pub age: Bonus,
 }
 
-#[derive(serde::Deserialize, serde::Serialize, Debug, PartialEq, Eq, Clone)]
+#[derive(Eq, PartialEq, Debug, serde::Deserialize, serde::Serialize, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct Bonus {
     #[serde(with = "humanize::ser_de::duration")]
@@ -139,7 +137,7 @@ pub struct Bonus {
     pub bonus: nns_pb::Percentage,
 }
 
-#[derive(serde::Deserialize, serde::Serialize, Debug, PartialEq, Eq, Clone)]
+#[derive(Eq, PartialEq, Debug, serde::Deserialize, serde::Serialize, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct RewardRate {
     #[serde(with = "humanize::ser_de::percentage")]
@@ -152,7 +150,7 @@ pub struct RewardRate {
     pub transition_duration: nns_pb::Duration,
 }
 
-#[derive(serde::Deserialize, serde::Serialize, Debug, PartialEq, Eq, Clone)]
+#[derive(Eq, PartialEq, Debug, serde::Deserialize, serde::Serialize, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct Swap {
     pub minimum_participants: u64,
@@ -196,7 +194,7 @@ pub struct Swap {
     pub neurons_fund_participation: Option<bool>,
 }
 
-#[derive(serde::Deserialize, serde::Serialize, Debug, PartialEq, Eq, Clone)]
+#[derive(Eq, PartialEq, Debug, serde::Deserialize, serde::Serialize, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct VestingSchedule {
     pub events: u64,
@@ -205,7 +203,7 @@ pub struct VestingSchedule {
     pub interval: nns_pb::Duration,
 }
 
-#[derive(serde::Deserialize, serde::Serialize, Debug, PartialEq, Eq, Clone)]
+#[derive(Eq, PartialEq, Debug, serde::Deserialize, serde::Serialize, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct Distribution {
     #[serde(rename = "Neurons")]
@@ -218,7 +216,7 @@ pub struct Distribution {
     pub total: nns_pb::Tokens,
 }
 
-#[derive(serde::Deserialize, serde::Serialize, Debug, PartialEq, Eq, Clone)]
+#[derive(Eq, PartialEq, Debug, serde::Deserialize, serde::Serialize, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct Neuron {
     pub principal: String, // Principal (alias)
@@ -236,7 +234,7 @@ pub struct Neuron {
     pub vesting_period: nns_pb::Duration,
 }
 
-#[derive(serde::Deserialize, serde::Serialize, Debug, PartialEq, Eq, Clone)]
+#[derive(Eq, PartialEq, Debug, serde::Deserialize, serde::Serialize, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct InitialBalances {
     #[serde(with = "humanize::ser_de::tokens")]
@@ -246,7 +244,7 @@ pub struct InitialBalances {
     pub swap: nns_pb::Tokens,
 }
 
-#[derive(serde::Deserialize, serde::Serialize, Debug, PartialEq, Eq, Clone)]
+#[derive(Eq, PartialEq, Debug, serde::Deserialize, serde::Serialize, Clone)]
 pub struct NnsProposal {
     pub title: String,
     pub summary: String,
@@ -257,7 +255,7 @@ struct AliasToPrincipalId<'a> {
     #[allow(unused)]
     source: &'a Vec<PrincipalAlias>,
     /* TODO
-    #[derive(Debug, PartialEq, Eq, Hash)]
+    #[derive(Eq, PartialEq, Hash, Debug)]
     enum Key { // TODO: This name is just a placeholder.
         Name(String),
         Email(String),
@@ -410,24 +408,19 @@ impl SnsConfigurationFile {
         Ok(result)
     }
 
-    pub fn try_convert_to_executed_sns_init(&self) -> Result<SnsInitPayload, String> {
-        let create_sns = self.try_convert_to_create_service_nervous_system()?;
-        let executed_create_sns = ExecutedCreateServiceNervousSystemProposal {
-            current_timestamp_seconds: SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .unwrap()
-                .as_secs(),
-            create_service_nervous_system: create_sns,
-            random_swap_start_time: GlobalTimeOfDay {
-                seconds_after_utc_midnight: Some(0),
-            },
-            neurons_fund_participation_constraints: None,
-            // `proposal_id` only exists to be exposed to the user for audit purposes, which don't apply here.
-            // But it's required, so we can just use any arbitrary value.
-            proposal_id: 10,
-        };
+    pub fn try_convert_to_sns_init_payload(&self) -> Result<SnsInitPayload, String> {
+        let create_nervous_system = self.try_convert_to_create_service_nervous_system()?;
+        let now = web_time::SystemTime::now()
+            .duration_since(web_time::UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
+        let mut sns_init = SnsInitPayload::try_from(create_nervous_system)?;
+        sns_init.nns_proposal_id = Some(1);
+        sns_init.swap_start_timestamp_seconds = Some(now - 1000);
+        sns_init.swap_due_timestamp_seconds = Some(now + 300);
+        sns_init.validate_post_execution()?;
 
-        SnsInitPayload::try_from(executed_create_sns)
+        Ok(sns_init)
     }
 }
 
@@ -580,14 +573,12 @@ impl Token {
         let token_symbol = Some(symbol.clone());
         let transaction_fee = Some(*transaction_fee);
 
-        let token_logo = logo_b64.clone();
-
         nns_governance_pb::LedgerParameters {
             token_name,
             token_symbol,
             transaction_fee,
             token_logo: Some(Image {
-                base64_encoding: Some(token_logo),
+                base64_encoding: Some(logo_b64.clone()),
             }),
         }
     }

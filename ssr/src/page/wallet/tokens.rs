@@ -17,7 +17,7 @@ use crate::{
 };
 use futures::stream::{self, StreamExt};
 use leptos::*;
-use yral_canisters_client::individual_user_template::Result14;
+use yral_canisters_client::individual_user_template::Result15;
 use yral_canisters_client::sns_ledger::{Account, SnsLedger};
 #[derive(Clone)]
 pub struct TokenRootList {
@@ -65,11 +65,11 @@ impl CursoredDataProvider for TokenRootList {
             .get_token_roots_of_this_user_with_pagination_cursor(start as u64, end as u64)
             .await?;
         let mut tokens: Vec<RootType> = match tokens {
-            Result14::Ok(v) => v
+            Result15::Ok(v) => v
                 .into_iter()
                 .map(|t| RootType::from_str(&t.to_text()).unwrap())
                 .collect(),
-            Result14::Err(_) => vec![],
+            Result15::Err(_) => vec![],
         };
         let list_end = tokens.len() < (end - start);
         if start == 0 {

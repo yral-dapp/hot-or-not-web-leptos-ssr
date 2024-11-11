@@ -328,7 +328,7 @@ pub fn CreateToken() -> impl IntoView {
             let sns_form = ctx.form_state.get_untracked();
             let sns_config = sns_form.try_into_config(&cans)?;
 
-            let create_sns = sns_config.try_convert_to_executed_sns_init()?;
+            let create_sns = sns_config.try_convert_to_sns_init_payload()?;
             let server_available = is_server_available().await.map_err(|e| e.to_string())?;
             log::debug!(
                 "Server details: {}, {}",

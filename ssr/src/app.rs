@@ -1,7 +1,6 @@
 use crate::page::icpump::ai::ICPumpAi;
 use crate::page::icpump::ICPumpLanding;
 
-use crate::page::token::create::{CreateToken, CreateTokenSettings};
 // use crate::page::wallet::TestIndex;
 use crate::{
     component::{base_route::BaseRoute, nav::NavBar},
@@ -20,8 +19,7 @@ use crate::{
         settings::Settings,
         terms::TermsOfService,
         token::{
-            //create::{CreateToken, CreateTokenCtx, CreateTokenSettings},
-            create::CreateTokenCtx,
+            create::{CreateToken, CreateTokenCtx, CreateTokenSettings},
             create_token_faq::CreateTokenFAQ,
             info::TokenInfo,
             transfer::TokenTransfer,
