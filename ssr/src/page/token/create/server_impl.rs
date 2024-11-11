@@ -232,12 +232,13 @@ mod real_impl {
             .await?;
         let balance: Nat = Decode!(&balance_res, Nat).unwrap();
         let acc_id = AccountIdentifier::new(PrincipalId(admin_principal), None);
-        if balance >= (1000000 + ICP_TX_FEE) {
+        // if balance >= (1000000 + ICP_TX_FEE) {
             // amount we participate + icp tx fee
-            Ok((true, acc_id))
-        } else {
-            Ok((false, acc_id))
-        }
+            // Ok((true, acc_id))
+        // } else {
+        Ok((false, acc_id))
+        // }
+
     }
 
     async fn participate_in_swap(swap_canister: Principal) -> Result<(), ServerFnError> {
