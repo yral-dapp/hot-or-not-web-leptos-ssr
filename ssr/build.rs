@@ -15,7 +15,10 @@ mod build_common {
             .build_client(true)
             .build_server(false)
             .out_dir(out_dir.clone())
-            .compile(&[ml_feed_proto, icpump_search_proto, nsfw_proto], &["proto"])?;
+            .compile(
+                &[ml_feed_proto, icpump_search_proto, nsfw_proto],
+                &["proto"],
+            )?;
 
         out_dir = out_dir.join("grpc-web");
         fs::create_dir_all(&out_dir)?;

@@ -232,7 +232,7 @@ pub fn TokenTile(user_principal: Principal, token_meta_data: TokenMetadata) -> i
                 class="flex flex-1  p-y-4"
             >
                 <div class="flex flex-2 items-center space-x-2 px-2">
-                    <img 
+                    <img
                         class=move || {
                             let mut classes = "w-12 h-12 rounded-full".to_string();
                             if info.is_nsfw {
@@ -240,7 +240,7 @@ pub fn TokenTile(user_principal: Principal, token_meta_data: TokenMetadata) -> i
                             }
                             classes
                         }
-                        src=info.logo_b64.clone() 
+                        src=info.logo_b64.clone()
                     />
                     <span class="text-white text-xs truncate">{info.name.clone()}</span>
                 </div>

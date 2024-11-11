@@ -301,12 +301,11 @@ mod real_impl {
         cans_wire: CanistersAuthWire,
         create_sns: SnsInitPayload,
     ) -> Result<DeployedCdaoCanistersRes, ServerFnError> {
-
         // NSFW check
         let nsfw_info = match create_sns.token_logo.clone() {
-            Some(logo) => nsfw::get_nsfw_info(logo).await.map_err(|e| {
-                ServerFnError::new(format!("failed to get nsfw info {e:?}"))
-            })?,
+            Some(logo) => nsfw::get_nsfw_info(logo)
+                .await
+                .map_err(|e| ServerFnError::new(format!("failed to get nsfw info {e:?}")))?,
             None => NSFWInfo::default(),
         };
         if nsfw_info.csam_detected {
@@ -347,10 +346,10 @@ mod real_impl {
 
 #[cfg(not(feature = "backend-admin"))]
 mod no_op_impl {
-    use crate::state::canisters::CanistersAuthWire;
-    use crate::utils::token::DeployedCdaoCanisters;
     use crate::page::token::create::DeployedCdaoCanistersRes;
+    use crate::state::canisters::CanistersAuthWire;
     use crate::utils::token::nsfw::NSFWInfo;
+    use crate::utils::token::DeployedCdaoCanisters;
     use candid::Principal;
     use ic_base_types::PrincipalId;
     use icp_ledger::AccountIdentifier;

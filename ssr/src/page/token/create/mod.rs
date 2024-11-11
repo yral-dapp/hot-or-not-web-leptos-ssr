@@ -54,7 +54,13 @@ async fn deploy_cdao_canisters(
     match res {
         Ok(c) => {
             TokenCreationCompleted
-                .send_event(create_sns, c.deploy_cdao_canisters.root, profile_details, canister_id, c.token_nsfw_info)
+                .send_event(
+                    create_sns,
+                    c.deploy_cdao_canisters.root,
+                    profile_details,
+                    canister_id,
+                    c.token_nsfw_info,
+                )
                 .await;
             Ok(c.deploy_cdao_canisters)
         }

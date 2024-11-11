@@ -313,9 +313,7 @@ pub async fn get_token_metadata<const A: bool>(
     let decimals = ledger_can.icrc_1_decimals().await?;
 
     let is_nsfw = match get_token_by_id(root.to_string()).await {
-        Ok(token_info) => {
-            token_info.is_nsfw
-        },
+        Ok(token_info) => token_info.is_nsfw,
         Err(_) => false, // Default to false if we can't fetch the status
     };
 

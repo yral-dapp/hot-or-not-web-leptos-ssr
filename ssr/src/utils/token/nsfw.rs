@@ -1,8 +1,7 @@
-
 use std::env;
 
 use leptos::*;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "ssr")]
 pub mod nsfw_detector {
@@ -15,19 +14,18 @@ pub struct ICPumpNSFWGrpcChannel {
     pub channel: tonic::transport::Channel,
 }
 
-
 #[derive(Clone, Serialize, Deserialize, Debug, Default)]
 pub struct NSFWInfo {
     pub is_nsfw: bool,
     pub nsfw_ec: String,
-    pub nsfw_gore:  String,
+    pub nsfw_gore: String,
     pub csam_detected: bool,
 }
 
 #[server]
 pub async fn get_nsfw_info(base64_image: String) -> Result<NSFWInfo, ServerFnError> {
-    use tonic::Request;
     use tonic::metadata::MetadataValue;
+    use tonic::Request;
 
     let channel: ICPumpNSFWGrpcChannel = expect_context();
     let nsfw_grpc_auth_token = env::var("NSFW_GRPC_TOKEN").expect("NSFW_GRPC_TOKEN");
@@ -40,8 +38,11 @@ pub async fn get_nsfw_info(base64_image: String) -> Result<NSFWInfo, ServerFnErr
         },
     );
 
-    let request = nsfw_detector::NsfwDetectorRequestImg { image: base64_image };
-    let resp: tonic::Response<nsfw_detector::NsfwDetectorResponse> = client.detect_nsfw_img(request).await?;
+    let request = nsfw_detector::NsfwDetectorRequestImg {
+        image: base64_image,
+    };
+    let resp: tonic::Response<nsfw_detector::NsfwDetectorResponse> =
+        client.detect_nsfw_img(request).await?;
 
     let res = resp.into_inner();
 
@@ -54,7 +55,10 @@ pub async fn get_nsfw_info(base64_image: String) -> Result<NSFWInfo, ServerFnErr
 impl From<nsfw_detector::NsfwDetectorResponse> for NSFWInfo {
     fn from(item: nsfw_detector::NsfwDetectorResponse) -> Self {
         let is_nsfw = item.csam_detected
-            || matches!(item.nsfw_gore.as_str(), "POSSIBLE" | "LIKELY" | "VERY_LIKELY")
+            || matches!(
+                item.nsfw_gore.as_str(),
+                "POSSIBLE" | "LIKELY" | "VERY_LIKELY"
+            )
             || matches!(item.nsfw_ec.as_str(), "nudity" | "provocative" | "explicit");
 
         Self {
@@ -65,5 +69,3 @@ impl From<nsfw_detector::NsfwDetectorResponse> for NSFWInfo {
         }
     }
 }
-
-

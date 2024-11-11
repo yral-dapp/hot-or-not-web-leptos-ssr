@@ -45,7 +45,7 @@ pub struct TokenListItem {
 #[server]
 pub async fn get_token_by_id(token_id: String) -> Result<TokenListItemFS, ServerFnError> {
     #[cfg(feature = "firestore")]
-    {   
+    {
         let firestore_db: firestore::FirestoreDb = expect_context();
         const TEST_COLLECTION_NAME: &str = "tokens-list";
 
@@ -57,14 +57,20 @@ pub async fn get_token_by_id(token_id: String) -> Result<TokenListItemFS, Server
             .one(token_id)
             .await
             .map_err(|e| ServerFnError::ServerError::<std::convert::Infallible>(e.to_string()))?
-            .ok_or_else(|| ServerFnError::ServerError::<std::convert::Infallible>("Token not found".to_string()))?;
+            .ok_or_else(|| {
+                ServerFnError::ServerError::<std::convert::Infallible>(
+                    "Token not found".to_string(),
+                )
+            })?;
 
         Ok(token)
     }
 
     #[cfg(not(feature = "firestore"))]
     {
-        Err(ServerFnError::ServerError("Firestore feature not enabled".to_string()))
+        Err(ServerFnError::ServerError(
+            "Firestore feature not enabled".to_string(),
+        ))
     }
 }
 
@@ -262,4 +268,3 @@ impl From<icpump_search::SearchItem> for TokenListItem {
         }
     }
 }
-
