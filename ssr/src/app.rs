@@ -19,7 +19,8 @@ use crate::{
         settings::Settings,
         terms::TermsOfService,
         token::{
-            create::{CreateToken, CreateTokenCtx, CreateTokenSettings},
+            //create::{CreateToken, CreateTokenCtx, CreateTokenSettings},
+            create::CreateTokenCtx,
             create_token_faq::CreateTokenFAQ,
             info::TokenInfo,
             transfer::TokenTransfer,
