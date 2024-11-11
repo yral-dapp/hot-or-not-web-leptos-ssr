@@ -23,6 +23,8 @@ pub struct TokenListItemFS {
     pub created_at: String,
     #[serde(default)]
     pub link: String,
+    #[serde(default)]
+    pub is_nsfw: bool,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, Eq, PartialEq, Hash)]
@@ -36,6 +38,34 @@ pub struct TokenListItem {
     pub created_at: String,
     pub formatted_created_at: String,
     pub link: String,
+    #[serde(default)]
+    pub is_nsfw: bool,
+}
+
+#[server]
+pub async fn get_token_by_id(token_id: String) -> Result<TokenListItemFS, ServerFnError> {
+    #[cfg(feature = "firestore")]
+    {   
+        let firestore_db: firestore::FirestoreDb = expect_context();
+        const TEST_COLLECTION_NAME: &str = "tokens-list";
+
+        let token = firestore_db
+            .fluent()
+            .select()
+            .by_id_in(TEST_COLLECTION_NAME)
+            .obj()
+            .one(token_id)
+            .await
+            .map_err(|e| ServerFnError::ServerError::<std::convert::Infallible>(e.to_string()))?
+            .ok_or_else(|| ServerFnError::ServerError::<std::convert::Infallible>("Token not found".to_string()))?;
+
+        Ok(token)
+    }
+
+    #[cfg(not(feature = "firestore"))]
+    {
+        Err(ServerFnError::ServerError("Firestore feature not enabled".to_string()))
+    }
 }
 
 #[server]
@@ -96,6 +126,7 @@ pub async fn get_paginated_token_list(page: u32) -> Result<Vec<TokenListItem>, S
                     created_at: item.created_at.clone(),
                     formatted_created_at: elapsed_str,
                     link: item.link.clone(),
+                    is_nsfw: item.is_nsfw,
                 }
             })
             .collect();
@@ -227,6 +258,8 @@ impl From<icpump_search::SearchItem> for TokenListItem {
             created_at: item.created_at,
             formatted_created_at: elapsed_str,
             link: item.link,
+            is_nsfw: false,
         }
     }
 }
+

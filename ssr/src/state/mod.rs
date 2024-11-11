@@ -11,7 +11,7 @@ pub mod local_storage;
 pub mod server {
 
     use crate::auth::server_impl::store::KVStoreImpl;
-    use crate::utils::token::icpump::ICPumpSearchGrpcChannel;
+    use crate::utils::token::{icpump::ICPumpSearchGrpcChannel, nsfw::ICPumpNSFWGrpcChannel};
 
     use super::canisters::Canisters;
     use axum::extract::FromRef;
@@ -39,5 +39,6 @@ pub mod server {
         #[cfg(feature = "qstash")]
         pub qstash: crate::utils::qstash::QStashClient,
         pub grpc_icpump_search_channel: ICPumpSearchGrpcChannel,
+        pub grpc_nsfw_channel: ICPumpNSFWGrpcChannel,
     }
 }

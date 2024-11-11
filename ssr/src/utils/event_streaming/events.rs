@@ -19,6 +19,7 @@ use crate::utils::event_streaming::{
 };
 use crate::utils::posts::PostDetails;
 use crate::utils::profile::ProfileDetails;
+use crate::utils::token::nsfw::NSFWInfo;
 use crate::utils::user::{user_details_can_store_or_ret, user_details_or_ret};
 
 pub enum AnalyticsEvent {
@@ -779,6 +780,7 @@ impl TokenCreationCompleted {
         token_root: Principal,
         profile_details: ProfileDetails,
         canister_id: Principal,
+        nsfw_info: NSFWInfo,
     ) {
         #[cfg(feature = "ga4")]
         {
@@ -798,6 +800,10 @@ impl TokenCreationCompleted {
                     "description": sns_init_payload.description,
                     "logo": sns_init_payload.logo,
                     "link": link,
+                    "is_nsfw": nsfw_info.is_nsfw,
+                    "nsfw_ec": nsfw_info.nsfw_ec,
+                    "nsfw_gore": nsfw_info.nsfw_gore,
+                    "csam_detected": nsfw_info.csam_detected,
                 }),
             )
             .await;
