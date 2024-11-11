@@ -312,10 +312,10 @@ pub async fn get_token_metadata<const A: bool>(
     let fees = ledger_can.icrc_1_fee().await?;
     let decimals = ledger_can.icrc_1_decimals().await?;
 
-    let is_nsfw = match get_token_by_id(root.to_string()).await {
-        Ok(token_info) => token_info.is_nsfw,
-        Err(_) => false, // Default to false if we can't fetch the status
-    };
+    let is_nsfw = get_token_by_id(root.to_string())
+        .await
+        .map(|token_info| token_info.is_nsfw)
+        .unwrap_or(false);
 
     let mut token_metadata = TokenMetadata {
         logo_b64: metadata.logo.unwrap_or_default(),

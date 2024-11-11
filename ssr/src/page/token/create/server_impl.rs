@@ -302,14 +302,11 @@ mod real_impl {
         create_sns: SnsInitPayload,
     ) -> Result<DeployedCdaoCanistersRes, ServerFnError> {
         // NSFW check
-        let nsfw_info = match create_sns.token_logo.clone() {
-            Some(logo) => nsfw::get_nsfw_info(logo)
-                .await
-                .map_err(|e| ServerFnError::new(format!("failed to get nsfw info {e:?}")))?,
-            None => NSFWInfo::default(),
-        };
-        if nsfw_info.csam_detected {
-            return Err(ServerFnError::new("logo rejected"));
+        let mut nsfw_info = NSFWInfo::default();
+        if create_sns.token_logo.is_some() {
+            nsfw_info = nsfw::get_nsfw_info(create_sns.token_logo.clone().unwrap())
+            .await
+            .map_err(|e| ServerFnError::new(format!("failed to get nsfw info {e:?}")))?;
         }
 
         let cans = cans_wire.canisters().unwrap();
