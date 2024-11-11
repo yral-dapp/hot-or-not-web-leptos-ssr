@@ -27,6 +27,7 @@ pub fn TokenListing(
             <div class="min-w-32 relative self-start p-1">
                 <img
                     class="mr-4 w-32 h-auto select-none"
+                    class:blur-lg=details.is_nsfw
                     src=details.logo
                     alt=details.token_name.clone()
                 />

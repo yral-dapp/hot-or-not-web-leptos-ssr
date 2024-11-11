@@ -1,5 +1,6 @@
 pub mod firestore;
 pub mod icpump;
+pub mod nsfw;
 
 use std::{
     cmp::Ordering,
@@ -10,6 +11,7 @@ use std::{
 
 use candid::{Nat, Principal};
 use ic_agent::AgentError;
+use icpump::get_token_by_id;
 use leptos::ServerFnError;
 use rust_decimal::{Decimal, RoundingStrategy};
 use serde::{Deserialize, Serialize};
@@ -259,6 +261,8 @@ pub struct TokenMetadata {
     pub ledger: Principal,
     pub index: Principal,
     pub decimals: u8,
+    #[serde(default)]
+    pub is_nsfw: bool,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -307,6 +311,12 @@ pub async fn get_token_metadata<const A: bool>(
 
     let fees = ledger_can.icrc_1_fee().await?;
     let decimals = ledger_can.icrc_1_decimals().await?;
+
+    let is_nsfw = get_token_by_id(root.to_string())
+        .await
+        .map(|token_info| token_info.is_nsfw)
+        .unwrap_or(false);
+
     let mut token_metadata = TokenMetadata {
         logo_b64: metadata.logo.unwrap_or_default(),
         name: metadata.name.unwrap_or_default(),
@@ -318,6 +328,7 @@ pub async fn get_token_metadata<const A: bool>(
         ledger,
         index,
         decimals,
+        is_nsfw,
     };
 
     if let Some(user_principal) = user_principal {
@@ -395,6 +406,7 @@ pub async fn get_ck_metadata<const A: bool>(
         ledger,
         index,
         decimals: decimals.clone().unwrap().0.to_u64_digits()[0] as u8,
+        is_nsfw: false,
     };
 
     // If a user principal is provided, try to get the balance

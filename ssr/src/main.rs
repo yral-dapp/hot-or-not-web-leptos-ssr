@@ -40,6 +40,7 @@ pub async fn server_fn_handler(
             provide_context(app_state.qstash.clone());
 
             provide_context(app_state.grpc_icpump_search_channel.clone());
+            provide_context(app_state.grpc_nsfw_channel.clone());
         },
         request,
     )
@@ -74,6 +75,7 @@ pub async fn leptos_routes_handler(
             provide_context(app_state.qstash.clone());
 
             provide_context(app_state.grpc_icpump_search_channel.clone());
+            provide_context(app_state.grpc_nsfw_channel.clone());
         },
         App,
     );

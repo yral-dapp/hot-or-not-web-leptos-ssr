@@ -184,13 +184,15 @@ mod real_impl {
     use std::str::FromStr;
 
     use crate::auth::delegate_short_lived_identity;
+    use crate::page::token::create::DeployedCdaoCanistersRes;
+    use crate::utils::token::nsfw::NSFWInfo;
     use yral_canisters_client::individual_user_template::Result7;
     use yral_canisters_client::sns_swap::{
         NewSaleTicketRequest, RefreshBuyerTokensRequest, Result2,
     };
 
     use crate::consts::ICP_LEDGER_CANISTER_ID;
-    use crate::utils::token::DeployedCdaoCanisters;
+    use crate::utils::token::nsfw;
     use candid::{Decode, Encode, Nat, Principal};
     use ic_base_types::PrincipalId;
     use icp_ledger::{AccountIdentifier, Subaccount};
@@ -298,7 +300,15 @@ mod real_impl {
     pub async fn deploy_cdao_canisters(
         cans_wire: CanistersAuthWire,
         create_sns: SnsInitPayload,
-    ) -> Result<DeployedCdaoCanisters, ServerFnError> {
+    ) -> Result<DeployedCdaoCanistersRes, ServerFnError> {
+        // NSFW check
+        let mut nsfw_info = NSFWInfo::default();
+        if let Some(token_logo) = create_sns.token_logo.clone() {
+            nsfw_info = nsfw::get_nsfw_info(token_logo)
+                .await
+                .map_err(|e| ServerFnError::new(format!("failed to get nsfw info {e:?}")))?;
+        }
+
         let cans = cans_wire.canisters().unwrap();
         log::debug!("deploying canisters {:?}", cans.user_canister().to_string());
         let res = cans
@@ -324,13 +334,18 @@ mod real_impl {
         };
         enqueue_claim_token(claim_req).await?;
 
-        Ok(deployed_cans.into())
+        Ok(DeployedCdaoCanistersRes {
+            deploy_cdao_canisters: deployed_cans.into(),
+            token_nsfw_info: nsfw_info,
+        })
     }
 }
 
 #[cfg(not(feature = "backend-admin"))]
 mod no_op_impl {
+    use crate::page::token::create::DeployedCdaoCanistersRes;
     use crate::state::canisters::CanistersAuthWire;
+    use crate::utils::token::nsfw::NSFWInfo;
     use crate::utils::token::DeployedCdaoCanisters;
     use candid::Principal;
     use ic_base_types::PrincipalId;
@@ -348,13 +363,16 @@ mod no_op_impl {
     pub async fn deploy_cdao_canisters(
         _cans_wire: CanistersAuthWire,
         _create_sns: SnsInitPayload,
-    ) -> Result<DeployedCdaoCanisters, ServerFnError> {
-        Ok(DeployedCdaoCanisters {
-            governance: Principal::anonymous(),
-            swap: Principal::anonymous(),
-            root: Principal::anonymous(),
-            ledger: Principal::anonymous(),
-            index: Principal::anonymous(),
+    ) -> Result<DeployedCdaoCanistersRes, ServerFnError> {
+        Ok(DeployedCdaoCanistersRes {
+            deploy_cdao_canisters: DeployedCdaoCanisters {
+                governance: Principal::anonymous(),
+                swap: Principal::anonymous(),
+                root: Principal::anonymous(),
+                ledger: Principal::anonymous(),
+                index: Principal::anonymous(),
+            },
+            token_nsfw_info: NSFWInfo::default(),
         })
     }
 }
