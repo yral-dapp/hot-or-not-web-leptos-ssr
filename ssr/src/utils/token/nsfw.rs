@@ -38,8 +38,10 @@ pub async fn get_nsfw_info(base64_image: String) -> Result<NSFWInfo, ServerFnErr
         },
     );
 
+    let base64_image_without_prefix = base64_image.replace("data:image/png;base64,", "");
+
     let request = nsfw_detector::NsfwDetectorRequestImg {
-        image: base64_image,
+        image: base64_image_without_prefix,
     };
     let resp: tonic::Response<nsfw_detector::NsfwDetectorResponse> =
         client.detect_nsfw_img(request).await?;
