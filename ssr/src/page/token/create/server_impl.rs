@@ -303,8 +303,8 @@ mod real_impl {
     ) -> Result<DeployedCdaoCanistersRes, ServerFnError> {
         // NSFW check
         let mut nsfw_info = NSFWInfo::default();
-        if create_sns.token_logo.is_some() {
-            nsfw_info = nsfw::get_nsfw_info(create_sns.token_logo.clone().unwrap())
+        if let Some(token_logo) = create_sns.token_logo.clone() {
+            nsfw_info = nsfw::get_nsfw_info(token_logo)
                 .await
                 .map_err(|e| ServerFnError::new(format!("failed to get nsfw info {e:?}")))?;
         }
