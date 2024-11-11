@@ -49,7 +49,10 @@ mod local_claim {
 
     use crate::{
         consts::{CDAO_SWAP_PRE_READY_TIME_SECS, CDAO_SWAP_TIME_SECS, ICP_LEDGER_CANISTER_ID},
-        state::{admin_canisters::{admin_canisters, AdminCanisters}, canisters::{unauth_canisters, Canisters}},
+        state::{
+            admin_canisters::{admin_canisters, AdminCanisters},
+            canisters::{unauth_canisters, Canisters},
+        },
         utils::ic::AgentWrapper,
     };
     use std::str::FromStr;
@@ -69,7 +72,10 @@ mod local_claim {
         Ok(neurons.neurons)
     }
 
-    async fn claim_tokens(cans: Canisters<false>, req: ClaimTokensRequest) -> Result<(), ServerFnError> {
+    async fn claim_tokens(
+        cans: Canisters<false>,
+        req: ClaimTokensRequest,
+    ) -> Result<(), ServerFnError> {
         let identity: DelegatedIdentity = req.identity.try_into()?;
         let user_principal = identity
             .sender()
@@ -186,7 +192,10 @@ mod local_claim {
         Ok(())
     }
 
-    async fn participate_in_swap(admin_cans: AdminCanisters, req: ParticipateInSwapRequest) -> Result<(), ServerFnError> {
+    async fn participate_in_swap(
+        admin_cans: AdminCanisters,
+        req: ParticipateInSwapRequest,
+    ) -> Result<(), ServerFnError> {
         use crate::page::token::types::{Recipient, Transaction, TransferResult};
         use icp_ledger::Subaccount;
 
@@ -291,10 +300,12 @@ mod real_impl {
     use std::str::FromStr;
 
     use crate::auth::delegate_short_lived_identity;
+    use crate::page::token::create::DeployedCdaoCanistersRes;
+    use crate::utils::token::nsfw::NSFWInfo;
     use yral_canisters_client::individual_user_template::Result7;
 
     use crate::consts::ICP_LEDGER_CANISTER_ID;
-    use crate::utils::token::DeployedCdaoCanisters;
+    use crate::utils::token::nsfw;
     use candid::{Decode, Nat, Principal};
     use ic_base_types::PrincipalId;
     use icp_ledger::AccountIdentifier;
@@ -334,8 +345,8 @@ mod real_impl {
             .await?;
         let balance: Nat = Decode!(&balance_res, Nat).unwrap();
         let acc_id = AccountIdentifier::new(PrincipalId(admin_principal), None);
+        // amount we participate + icp tx fee
         if balance >= (1000000 + ICP_TX_FEE) {
-            // amount we participate + icp tx fee
             Ok((true, acc_id))
         } else {
             Ok((false, acc_id))
@@ -345,7 +356,15 @@ mod real_impl {
     pub async fn deploy_cdao_canisters(
         cans_wire: CanistersAuthWire,
         create_sns: SnsInitPayload,
-    ) -> Result<DeployedCdaoCanisters, ServerFnError> {
+    ) -> Result<DeployedCdaoCanistersRes, ServerFnError> {
+        // NSFW check
+        let mut nsfw_info = NSFWInfo::default();
+        if let Some(token_logo) = create_sns.token_logo.clone() {
+            nsfw_info = nsfw::get_nsfw_info(token_logo)
+                .await
+                .map_err(|e| ServerFnError::new(format!("failed to get nsfw info {e:?}")))?;
+        }
+
         let cans = cans_wire.canisters().unwrap();
         log::debug!("deploying canisters {:?}", cans.user_canister().to_string());
         let res = cans
@@ -374,13 +393,18 @@ mod real_impl {
         };
         enqueue_claim_token(claim_req).await?;
 
-        Ok(deployed_cans.into())
+        Ok(DeployedCdaoCanistersRes {
+            deploy_cdao_canisters: deployed_cans.into(),
+            token_nsfw_info: nsfw_info,
+        })
     }
 }
 
 #[cfg(not(feature = "backend-admin"))]
 mod no_op_impl {
+    use crate::page::token::create::DeployedCdaoCanistersRes;
     use crate::state::canisters::CanistersAuthWire;
+    use crate::utils::token::nsfw::NSFWInfo;
     use crate::utils::token::DeployedCdaoCanisters;
     use candid::Principal;
     use ic_base_types::PrincipalId;
@@ -398,13 +422,16 @@ mod no_op_impl {
     pub async fn deploy_cdao_canisters(
         _cans_wire: CanistersAuthWire,
         _create_sns: SnsInitPayload,
-    ) -> Result<DeployedCdaoCanisters, ServerFnError> {
-        Ok(DeployedCdaoCanisters {
-            governance: Principal::anonymous(),
-            swap: Principal::anonymous(),
-            root: Principal::anonymous(),
-            ledger: Principal::anonymous(),
-            index: Principal::anonymous(),
+    ) -> Result<DeployedCdaoCanistersRes, ServerFnError> {
+        Ok(DeployedCdaoCanistersRes {
+            deploy_cdao_canisters: DeployedCdaoCanisters {
+                governance: Principal::anonymous(),
+                swap: Principal::anonymous(),
+                root: Principal::anonymous(),
+                ledger: Principal::anonymous(),
+                index: Principal::anonymous(),
+            },
+            token_nsfw_info: NSFWInfo::default(),
         })
     }
 }

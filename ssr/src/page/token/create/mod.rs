@@ -9,7 +9,7 @@ use crate::{
             TokenCreationCompleted, TokenCreationFailed, TokenCreationStarted,
         },
         profile::ProfileDetails,
-        token::DeployedCdaoCanisters,
+        token::{nsfw::NSFWInfo, DeployedCdaoCanisters},
         web::FileWithUrl,
     },
 };
@@ -35,6 +35,11 @@ async fn is_server_available() -> Result<(bool, AccountIdentifier), ServerFnErro
     server_impl::is_server_available().await
 }
 
+pub struct DeployedCdaoCanistersRes {
+    pub deploy_cdao_canisters: DeployedCdaoCanisters,
+    pub token_nsfw_info: NSFWInfo,
+}
+
 #[server(
     input = Cbor
 )]
@@ -49,9 +54,15 @@ async fn deploy_cdao_canisters(
     match res {
         Ok(c) => {
             TokenCreationCompleted
-                .send_event(create_sns, c.root, profile_details, canister_id)
+                .send_event(
+                    create_sns,
+                    c.deploy_cdao_canisters.root,
+                    profile_details,
+                    canister_id,
+                    c.token_nsfw_info,
+                )
                 .await;
-            Ok(c)
+            Ok(c.deploy_cdao_canisters)
         }
         Err(e) => {
             TokenCreationFailed

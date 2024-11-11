@@ -14,7 +14,7 @@ use leptos_router::RouteListing;
 use crate::{
     auth::server_impl::store::KVStoreImpl,
     state::{canisters::Canisters, server::AppState},
-    utils::token::icpump::ICPumpSearchGrpcChannel,
+    utils::token::{icpump::ICPumpSearchGrpcChannel, nsfw::ICPumpNSFWGrpcChannel},
 };
 
 #[cfg(feature = "cloudflare")]
@@ -176,6 +176,21 @@ async fn init_grpc_icpump_search_channel() -> ICPumpSearchGrpcChannel {
     ICPumpSearchGrpcChannel { channel }
 }
 
+async fn init_grpc_nsfw_channel() -> ICPumpNSFWGrpcChannel {
+    use crate::consts::NSFW_SERVER_URL;
+    use tonic::transport::{Channel, ClientTlsConfig};
+
+    let tls_config = ClientTlsConfig::new().with_webpki_roots();
+    let channel = Channel::from_static(NSFW_SERVER_URL)
+        .tls_config(tls_config)
+        .expect("Couldn't update TLS config for nsfw agent")
+        .connect()
+        .await
+        .expect("Couldn't connect to nsfw agent");
+
+    ICPumpNSFWGrpcChannel { channel }
+}
+
 #[cfg(feature = "backend-admin")]
 fn init_admin_canisters() -> crate::state::admin_canisters::AdminCanisters {
     use crate::state::admin_canisters::AdminCanisters;
@@ -287,6 +302,7 @@ impl AppStateBuilder {
             #[cfg(feature = "qstash")]
             qstash: init_qstash_client(),
             grpc_icpump_search_channel: init_grpc_icpump_search_channel().await,
+            grpc_nsfw_channel: init_grpc_nsfw_channel().await,
         };
 
         AppStateRes {
