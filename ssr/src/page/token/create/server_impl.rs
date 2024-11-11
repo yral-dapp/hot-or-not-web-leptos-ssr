@@ -305,8 +305,8 @@ mod real_impl {
         let mut nsfw_info = NSFWInfo::default();
         if create_sns.token_logo.is_some() {
             nsfw_info = nsfw::get_nsfw_info(create_sns.token_logo.clone().unwrap())
-            .await
-            .map_err(|e| ServerFnError::new(format!("failed to get nsfw info {e:?}")))?;
+                .await
+                .map_err(|e| ServerFnError::new(format!("failed to get nsfw info {e:?}")))?;
         }
 
         let cans = cans_wire.canisters().unwrap();
