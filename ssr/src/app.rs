@@ -19,7 +19,8 @@ use crate::{
         settings::Settings,
         terms::TermsOfService,
         token::{
-            create::{CreateToken, CreateTokenCtx, CreateTokenSettings},
+            //create::{CreateToken, CreateTokenCtx, CreateTokenSettings},
+            create::CreateTokenCtx,
             create_token_faq::CreateTokenFAQ,
             info::TokenInfo,
             transfer::TokenTransfer,
@@ -161,8 +162,8 @@ pub fn App() -> impl IntoView {
                         <Route path="/leaderboard" view=Leaderboard />
                         <Route path="/account-transfer" view=AccountTransfer />
                         <Route path="/logout" view=Logout />
-                        <Route path="/token/create" view=CreateToken />
-                        <Route path="/token/create/settings" view=CreateTokenSettings />
+                        //<Route path="/token/create" view=CreateToken />
+                        //<Route path="/token/create/settings" view=CreateTokenSettings />
                         <Route path="/token/create/faq" view=CreateTokenFAQ />
                         <Route path="/token/info/:token_root/:key_principal" view=TokenInfo />
                         <Route path="/token/info/:token_root" view=TokenInfo />
