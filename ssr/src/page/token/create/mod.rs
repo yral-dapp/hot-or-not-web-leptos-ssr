@@ -317,8 +317,7 @@ pub fn CreateToken() -> impl IntoView {
             let sns_form = ctx.form_state.get_untracked();
             let sns_config = sns_form.try_into_config(&cans)?;
 
-            let create_sns = sns_config.try_convert_to_create_service_nervous_system()?;
-            let payload = SnsInitPayload::try_from(create_sns)?;
+            let create_sns = sns_config.try_convert_to_sns_init_payload()?;
             let server_available = is_server_available().await.map_err(|e| e.to_string())?;
             log::debug!(
                 "Server details: {}, {}",
@@ -329,10 +328,10 @@ pub fn CreateToken() -> impl IntoView {
                 return Err("Server is not available".to_string());
             }
 
-            TokenCreationStarted.send_event(payload.clone(), auth_cans);
+            TokenCreationStarted.send_event(create_sns.clone(), auth_cans);
 
             let _deployed_cans_response =
-                deploy_cdao_canisters(cans_wire, payload.clone(), profile_details, canister_id)
+                deploy_cdao_canisters(cans_wire, create_sns.clone(), profile_details, canister_id)
                     .await
                     .map_err(|e| e.to_string())?;
 

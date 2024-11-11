@@ -407,6 +407,21 @@ impl SnsConfigurationFile {
         // Step 5: Ship it!
         Ok(result)
     }
+
+    pub fn try_convert_to_sns_init_payload(&self) -> Result<SnsInitPayload, String> {
+        let create_nervous_system = self.try_convert_to_create_service_nervous_system()?;
+        let now = web_time::SystemTime::now()
+            .duration_since(web_time::UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
+        let mut sns_init = SnsInitPayload::try_from(create_nervous_system)?;
+        sns_init.nns_proposal_id = Some(1);
+        sns_init.swap_start_timestamp_seconds = Some(now - 1000);
+        sns_init.swap_due_timestamp_seconds = Some(now + 300);
+        sns_init.validate_post_execution()?;
+
+        Ok(sns_init)
+    }
 }
 
 impl Distribution {

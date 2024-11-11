@@ -6,12 +6,22 @@ pub use real_impl::{deploy_cdao_canisters, is_server_available};
 #[cfg(all(feature = "backend-admin", feature = "qstash"))]
 mod qstash_claim {
     use leptos::{expect_context, ServerFnError};
-    use yral_qstash_types::ClaimTokensRequest;
+    use yral_qstash_types::{ClaimTokensRequest, ParticipateInSwapRequest};
 
     pub async fn enqueue_claim_token(req: ClaimTokensRequest) -> Result<(), ServerFnError> {
         use crate::utils::qstash::QStashClient;
         let client: QStashClient = expect_context();
         client.enqueue_claim_token(req).await?;
+
+        Ok(())
+    }
+
+    pub async fn enqueue_participate_in_swap(
+        req: ParticipateInSwapRequest,
+    ) -> Result<(), ServerFnError> {
+        use crate::utils::qstash::QStashClient;
+        let client: QStashClient = expect_context();
+        client.enqueue_participate_in_swap(req).await?;
 
         Ok(())
     }
@@ -21,8 +31,10 @@ mod qstash_claim {
 mod local_claim {
     use web_time::Duration;
 
+    use candid::{Decode, Encode};
     use candid::{Nat, Principal};
     use ic_agent::{identity::DelegatedIdentity, Identity};
+    use ic_base_types::PrincipalId;
     use leptos::ServerFnError;
     use yral_canisters_client::{
         sns_governance::{
@@ -31,10 +43,16 @@ mod local_claim {
         },
         sns_ledger::{Account as LedgerAccount, SnsLedger, TransferArg, TransferResult},
         sns_root::{ListSnsCanistersArg, SnsRoot},
+        sns_swap::{NewSaleTicketRequest, RefreshBuyerTokensRequest, Result2},
     };
-    use yral_qstash_types::ClaimTokensRequest;
+    use yral_qstash_types::{ClaimTokensRequest, ParticipateInSwapRequest};
 
-    use crate::{consts::CDAO_SWAP_TIME_SECS, utils::ic::AgentWrapper};
+    use crate::{
+        consts::{CDAO_SWAP_PRE_READY_TIME_SECS, CDAO_SWAP_TIME_SECS, ICP_LEDGER_CANISTER_ID},
+        state::{admin_canisters::{admin_canisters, AdminCanisters}, canisters::{unauth_canisters, Canisters}},
+        utils::ic::AgentWrapper,
+    };
+    use std::str::FromStr;
 
     async fn get_neurons(
         governance: &SnsGovernance<'_>,
@@ -51,7 +69,7 @@ mod local_claim {
         Ok(neurons.neurons)
     }
 
-    async fn claim_tokens(req: ClaimTokensRequest) -> Result<(), ServerFnError> {
+    async fn claim_tokens(cans: Canisters<false>, req: ClaimTokensRequest) -> Result<(), ServerFnError> {
         let identity: DelegatedIdentity = req.identity.try_into()?;
         let user_principal = identity
             .sender()
@@ -59,6 +77,10 @@ mod local_claim {
 
         let agent_w = AgentWrapper::build(|b| b.with_identity(identity));
         let agent = agent_w.get_agent().await;
+        let user_canister = cans
+            .get_individual_canister_by_user_principal(user_principal)
+            .await?
+            .ok_or_else(|| ServerFnError::new("unable to get user canister"))?;
 
         let root_canister = SnsRoot(req.token_root, agent);
         let token_cans = root_canister
@@ -130,7 +152,6 @@ mod local_claim {
         }
 
         // Transfer to canister
-        let user_canister = req.user_canister;
         let ledger_can = SnsLedger(ledger, agent);
         // User has 50% of the overall amount
         // 20% of this 50% is 10% of the overall amount
@@ -165,83 +186,19 @@ mod local_claim {
         Ok(())
     }
 
-    pub async fn enqueue_claim_token(req: ClaimTokensRequest) -> Result<(), ServerFnError> {
-        tokio::spawn(async move {
-            log::info!("started claiming job");
-            tokio::time::sleep(Duration::from_secs(CDAO_SWAP_TIME_SECS)).await;
-            if let Err(e) = claim_tokens(req).await {
-                log::error!("claim job failed: {e:?}");
-            }
-            log::info!("claiming completed")
-        });
+    async fn participate_in_swap(admin_cans: AdminCanisters, req: ParticipateInSwapRequest) -> Result<(), ServerFnError> {
+        use crate::page::token::types::{Recipient, Transaction, TransferResult};
+        use icp_ledger::Subaccount;
 
-        Ok(())
-    }
-}
-
-#[cfg(feature = "backend-admin")]
-mod real_impl {
-    use std::str::FromStr;
-
-    use crate::auth::delegate_short_lived_identity;
-    use yral_canisters_client::individual_user_template::Result7;
-    use yral_canisters_client::sns_swap::{
-        NewSaleTicketRequest, RefreshBuyerTokensRequest, Result2,
-    };
-
-    use crate::consts::ICP_LEDGER_CANISTER_ID;
-    use crate::utils::token::DeployedCdaoCanisters;
-    use candid::{Decode, Encode, Nat, Principal};
-    use ic_base_types::PrincipalId;
-    use icp_ledger::{AccountIdentifier, Subaccount};
-    use leptos::ServerFnError;
-    use sns_validation::pbs::sns_pb::SnsInitPayload;
-    use yral_qstash_types::ClaimTokensRequest;
-
-    use crate::page::token::types::{Icrc1BalanceOfArg, Recipient, Transaction, TransferResult};
-    use crate::state::admin_canisters::admin_canisters;
-    use crate::state::canisters::CanistersAuthWire;
-
-    #[cfg(all(feature = "backend-admin", not(feature = "qstash")))]
-    use super::local_claim::enqueue_claim_token;
-    #[cfg(all(feature = "backend-admin", feature = "qstash"))]
-    use super::qstash_claim::enqueue_claim_token;
-
-    const ICP_TX_FEE: u64 = 10000;
-
-    pub async fn is_server_available() -> Result<(bool, AccountIdentifier), ServerFnError> {
-        let admin_cans = admin_canisters();
         let admin_principal = admin_cans.principal();
         let agent = admin_cans.get_agent().await;
 
-        let balance_res: Vec<u8> = agent
-            .query(
-                &Principal::from_str(ICP_LEDGER_CANISTER_ID).unwrap(),
-                "icrc1_balance_of",
-            )
-            .with_arg(
-                candid::encode_one(Icrc1BalanceOfArg {
-                    owner: admin_principal,
-                    subaccount: None,
-                })
-                .unwrap(),
-            )
-            .call()
-            .await?;
-        let balance: Nat = Decode!(&balance_res, Nat).unwrap();
-        let acc_id = AccountIdentifier::new(PrincipalId(admin_principal), None);
-        if balance >= (1000000 + ICP_TX_FEE) {
-            // amount we participate + icp tx fee
-            Ok((true, acc_id))
-        } else {
-            Ok((false, acc_id))
-        }
-    }
-
-    async fn participate_in_swap(swap_canister: Principal) -> Result<(), ServerFnError> {
-        let admin_cans = admin_canisters();
-        let admin_principal = admin_cans.principal();
-        let agent = admin_cans.get_agent().await;
+        let root = SnsRoot(req.token_root, agent);
+        let token_cans = root.list_sns_canisters(ListSnsCanistersArg {}).await?;
+        let Some(swap_canister) = token_cans.swap else {
+            log::warn!("No swap canister found for token. Ignoring...");
+            return Ok(());
+        };
 
         let swap = admin_cans.sns_swap(swap_canister).await;
 
@@ -253,8 +210,11 @@ mod real_impl {
             .await?;
         match new_sale_ticket.result {
             Some(Result2::Ok(_)) => (),
-            None | Some(Result2::Err(_)) => {
-                return Err(ServerFnError::new("failed to perform swap new_sale_ticket"))
+            None => return Err(ServerFnError::new("failed to perform swap new_sale_ticket")),
+            Some(Result2::Err(e)) => {
+                return Err(ServerFnError::new(format!(
+                    "failed to perform swap new_sale_ticket {e:?}"
+                )))
             }
         };
 
@@ -295,6 +255,93 @@ mod real_impl {
         Ok(())
     }
 
+    pub async fn enqueue_claim_token(req: ClaimTokensRequest) -> Result<(), ServerFnError> {
+        let cans = unauth_canisters();
+        tokio::spawn(async move {
+            log::info!("started claiming job");
+            tokio::time::sleep(Duration::from_secs(CDAO_SWAP_TIME_SECS)).await;
+            if let Err(e) = claim_tokens(cans, req).await {
+                log::error!("claim job failed: {e:?}");
+            }
+            log::info!("claiming completed")
+        });
+
+        Ok(())
+    }
+
+    pub async fn enqueue_participate_in_swap(
+        req: ParticipateInSwapRequest,
+    ) -> Result<(), ServerFnError> {
+        let admin_cans = admin_canisters();
+        tokio::spawn(async move {
+            log::info!("started participate in swap job");
+            tokio::time::sleep(Duration::from_secs(CDAO_SWAP_PRE_READY_TIME_SECS)).await;
+            if let Err(e) = participate_in_swap(admin_cans, req).await {
+                log::error!("participate in swap job failed: {e:?}");
+            }
+            log::info!("participate in swap completed")
+        });
+
+        Ok(())
+    }
+}
+
+#[cfg(feature = "backend-admin")]
+mod real_impl {
+    use std::str::FromStr;
+
+    use crate::auth::delegate_short_lived_identity;
+    use yral_canisters_client::individual_user_template::Result7;
+
+    use crate::consts::ICP_LEDGER_CANISTER_ID;
+    use crate::utils::token::DeployedCdaoCanisters;
+    use candid::{Decode, Nat, Principal};
+    use ic_base_types::PrincipalId;
+    use icp_ledger::AccountIdentifier;
+    use leptos::ServerFnError;
+    use sns_validation::pbs::sns_pb::SnsInitPayload;
+    use yral_qstash_types::{ClaimTokensRequest, ParticipateInSwapRequest};
+
+    use crate::page::token::types::Icrc1BalanceOfArg;
+    use crate::state::admin_canisters::admin_canisters;
+    use crate::state::canisters::CanistersAuthWire;
+
+    #[cfg(not(feature = "qstash"))]
+    use super::local_claim::{enqueue_claim_token, enqueue_participate_in_swap};
+    #[cfg(feature = "qstash")]
+    use super::qstash_claim::{enqueue_claim_token, enqueue_participate_in_swap};
+
+    const ICP_TX_FEE: u64 = 10000;
+
+    pub async fn is_server_available() -> Result<(bool, AccountIdentifier), ServerFnError> {
+        let admin_cans = admin_canisters();
+        let admin_principal = admin_cans.principal();
+        let agent = admin_cans.get_agent().await;
+
+        let balance_res: Vec<u8> = agent
+            .query(
+                &Principal::from_str(ICP_LEDGER_CANISTER_ID).unwrap(),
+                "icrc1_balance_of",
+            )
+            .with_arg(
+                candid::encode_one(Icrc1BalanceOfArg {
+                    owner: admin_principal,
+                    subaccount: None,
+                })
+                .unwrap(),
+            )
+            .call()
+            .await?;
+        let balance: Nat = Decode!(&balance_res, Nat).unwrap();
+        let acc_id = AccountIdentifier::new(PrincipalId(admin_principal), None);
+        if balance >= (1000000 + ICP_TX_FEE) {
+            // amount we participate + icp tx fee
+            Ok((true, acc_id))
+        } else {
+            Ok((false, acc_id))
+        }
+    }
+
     pub async fn deploy_cdao_canisters(
         cans_wire: CanistersAuthWire,
         create_sns: SnsInitPayload,
@@ -314,12 +361,15 @@ mod real_impl {
             Result7::Err(e) => return Err(ServerFnError::new(format!("{e:?}"))),
         };
 
-        participate_in_swap(deployed_cans.swap).await?;
+        let participate_in_swap_req = ParticipateInSwapRequest {
+            user_principal: cans.user_principal(),
+            token_root: deployed_cans.root,
+        };
+        enqueue_participate_in_swap(participate_in_swap_req).await?;
 
         let temp_id = delegate_short_lived_identity(cans.identity());
         let claim_req = ClaimTokensRequest {
             identity: temp_id,
-            user_canister: cans.user_canister(),
             token_root: deployed_cans.root,
         };
         enqueue_claim_token(claim_req).await?;

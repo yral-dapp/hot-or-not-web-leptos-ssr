@@ -5,9 +5,9 @@ use http::{
     HeaderMap, HeaderValue,
 };
 use reqwest::{Client, Url};
-use yral_qstash_types::ClaimTokensRequest;
+use yral_qstash_types::{ClaimTokensRequest, ParticipateInSwapRequest};
 
-use crate::consts::{CDAO_SWAP_TIME_SECS, OFF_CHAIN_AGENT_URL};
+use crate::consts::{CDAO_SWAP_PRE_READY_TIME_SECS, CDAO_SWAP_TIME_SECS, OFF_CHAIN_AGENT_URL};
 
 #[derive(Clone, Debug)]
 pub struct QStashClient {
@@ -48,6 +48,27 @@ impl QStashClient {
             .header(CONTENT_TYPE, "application/json")
             .header("upstash-method", "POST")
             .header("upstash-delay", format!("{CDAO_SWAP_TIME_SECS}s"))
+            .send()
+            .await?;
+        Ok(())
+    }
+
+    pub async fn enqueue_participate_in_swap(
+        &self,
+        req: ParticipateInSwapRequest,
+    ) -> Result<(), reqwest::Error> {
+        let off_chain_ep = OFF_CHAIN_AGENT_URL
+            .join("qstash/participate_in_swap")
+            .unwrap();
+        let path = format!("publish/{off_chain_ep}");
+        let ep = self.base_url.join(&path).unwrap();
+
+        self.client
+            .post(ep)
+            .json(&req)
+            .header(CONTENT_TYPE, "application/json")
+            .header("upstash-method", "POST")
+            .header("upstash-delay", format!("{CDAO_SWAP_PRE_READY_TIME_SECS}s"))
             .send()
             .await?;
         Ok(())
