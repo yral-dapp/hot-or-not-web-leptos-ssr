@@ -17,6 +17,7 @@ use crate::{
 };
 use futures::stream::{self, StreamExt};
 use leptos::*;
+use leptos_icons::*;
 use yral_canisters_client::individual_user_template::Result15;
 use yral_canisters_client::sns_ledger::{Account, SnsLedger};
 #[derive(Clone)]
@@ -232,16 +233,28 @@ pub fn TokenTile(user_principal: Principal, token_meta_data: TokenMetadata) -> i
                 class="flex flex-1  p-y-4"
             >
                 <div class="flex flex-2 items-center space-x-2 px-2">
-                    <img
-                        class=move || {
-                            let mut classes = "w-12 h-12 rounded-full".to_string();
-                            if info.is_nsfw {
-                                classes.push_str(" blur-md");
+                    <div class="relative">
+                        <img
+                            class=move || {
+                                let mut classes = "w-12 h-12 rounded-full".to_string();
+                                if info.is_nsfw {
+                                    classes.push_str(" blur-md");
+                                }
+                                classes
                             }
-                            classes
-                        }
-                        src=info.logo_b64.clone()
-                    />
+                            src=info.logo_b64.clone()
+                        />
+                        {move || if info.is_nsfw {
+                            view! {
+                                    <Icon
+                                        icon=icondata::AiEyeInvisibleOutlined
+                                        class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-6 h-6 text-white"
+                                    />
+                            }
+                        } else {
+                            view!{}.into_view()
+                        }}
+                    </div>
                     <span class="text-white text-xs truncate">{info.name.clone()}</span>
                 </div>
                 <div class="flex flex-1 flex-col">
