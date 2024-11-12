@@ -208,8 +208,8 @@ pub fn ICPumpAiToken(details: TokenListItem) -> impl IntoView {
             href=details.link
             class="text-xs w-full p-2 flex gap-2 border border-gray-900 bg-transparent hover:bg-white/10 active:bg-white/5">
           <div class="relative">
-            <img 
-                src=details.logo 
+            <img
+                src=details.logo
                 class=move || {
                     let mut classes = "w-[5.5rem] shrink-0 h-[5.5rem]".to_string();
                     if details.is_nsfw {
