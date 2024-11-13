@@ -16,6 +16,30 @@ let vapidKey =
 export function get_token() {
   return new Promise((resolve, reject) => {
     const messaging = firebase.messaging();
+
+    // Handle foreground messages
+    messaging.onMessage((payload) => {
+      if (!("Notification" in window)) {
+        console.log("This browser does not support notifications");
+        return;
+      }
+
+      if (Notification.permission === "granted") {
+        const notification = new Notification(payload.notification.title, {
+          body: payload.notification.body,
+          icon: '/img/android-chrome-192x192.png',
+          badge: '/img/android-chrome-192x192.png',
+          vibrate: [200, 100, 200],
+          tag: 'yral-notification'
+        });
+
+        notification.onclick = function() {
+          window.focus();
+          notification.close();
+        };
+      }
+    });
+
     messaging
       .getToken({ vapidKey: vapidKey })
       .then((currentToken) => {

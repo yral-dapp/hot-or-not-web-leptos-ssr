@@ -16,3 +16,31 @@ firebase.initializeApp({
 });
 
 const messaging = firebase.messaging();
+
+// Handle foreground messages
+messaging.onMessage((payload) => {
+  const notificationTitle = payload.notification.title;
+  const notificationOptions = {
+    body: payload.notification.body,
+    icon: '/img/android-chrome-192x192.png',
+    badge: '/img/android-chrome-192x192.png',
+    vibrate: [200, 100, 200],
+    tag: 'yral-notification'
+  };
+
+  self.registration.showNotification(notificationTitle, notificationOptions);
+});
+
+// Handle background messages
+messaging.onBackgroundMessage((payload) => {
+  const notificationTitle = payload.notification.title;
+  const notificationOptions = {
+    body: payload.notification.body,
+    icon: '/img/android-chrome-192x192.png',
+    badge: '/img/android-chrome-192x192.png',
+    vibrate: [200, 100, 200],
+    tag: 'yral-notification'
+  };
+
+  self.registration.showNotification(notificationTitle, notificationOptions);
+});
