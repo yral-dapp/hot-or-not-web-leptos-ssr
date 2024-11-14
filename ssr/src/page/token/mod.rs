@@ -4,6 +4,7 @@ pub mod info;
 pub mod non_yral_tokens;
 mod popups;
 mod sns_form;
+pub mod swap;
 pub mod transfer;
 pub mod types;
 
