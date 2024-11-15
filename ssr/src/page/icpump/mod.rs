@@ -3,6 +3,7 @@ use std::collections::VecDeque;
 
 use futures::StreamExt;
 use leptos::*;
+use leptos_icons::*;
 
 use crate::component::spinner::FullScreenSpinner;
 use crate::consts::ICPUMP_LISTING_PAGE_SIZE;
@@ -31,6 +32,16 @@ pub fn TokenListing(
                     src=details.logo
                     alt=details.token_name.clone()
                 />
+                <Show
+                    when=move || details.is_nsfw
+                >
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <Icon
+                            icon=icondata::AiEyeInvisibleOutlined
+                            class="w-8 h-8 text-gray-200"
+                        />
+                    </div>
+                </Show>
             </div>
             <div class="gap-1 flex-col flex h-fit">
                 <div class="flex items-center justify-between gap-4 text-gray-200">
