@@ -244,16 +244,14 @@ pub fn TokenTile(user_principal: Principal, token_meta_data: TokenMetadata) -> i
                             }
                             src=info.logo_b64.clone()
                         />
-                        {move || if info.is_nsfw {
-                            view! {
-                                    <Icon
-                                        icon=icondata::AiEyeInvisibleOutlined
-                                        class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-6 h-6 text-white"
-                                    />
-                            }
-                        } else {
-                            view!{}.into_view()
-                        }}
+                        <Show
+                            when=move || info.is_nsfw
+                        >
+                            <Icon
+                                icon=icondata::AiEyeInvisibleOutlined
+                                class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-6 h-6 text-white"
+                            />
+                        </Show>
                     </div>
                     <span class="text-white text-xs truncate">{info.name.clone()}</span>
                 </div>

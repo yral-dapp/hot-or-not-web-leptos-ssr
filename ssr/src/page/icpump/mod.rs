@@ -32,21 +32,16 @@ pub fn TokenListing(
                     src=details.logo
                     alt=details.token_name.clone()
                 />
-                {move || {
-                    if details.is_nsfw {
-                        view! {
-                            <div class="absolute inset-0 flex items-center justify-center">
-                                <Icon
-                                    icon=icondata::AiEyeInvisibleOutlined
-                                    class="w-8 h-8 text-gray-200"
-                                />
-                            </div>
-                        }
-                    } else {
-                        // empty div
-                        view! { <div></div> }
-                    }
-                }}
+                <Show
+                    when=move || details.is_nsfw
+                >
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <Icon
+                            icon=icondata::AiEyeInvisibleOutlined
+                            class="w-8 h-8 text-gray-200"
+                        />
+                    </div>
+                </Show>
             </div>
             <div class="gap-1 flex-col flex h-fit">
                 <div class="flex items-center justify-between gap-4 text-gray-200">

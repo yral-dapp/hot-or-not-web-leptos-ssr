@@ -218,18 +218,16 @@ pub fn ICPumpAiToken(details: TokenListItem) -> impl IntoView {
                     classes
                 }
             />
-            {move || if details.is_nsfw {
-                view! {
-                    <div class="absolute inset-0 flex items-center justify-center">
-                        <Icon
-                            icon=icondata::AiEyeInvisibleOutlined
-                            class="w-8 h-8 text-gray-200"
-                        />
-                    </div>
-                }
-            } else {
-                view! { <div></div> }
-            }}
+            <Show
+                when=move || details.is_nsfw
+            >
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <Icon
+                        icon=icondata::AiEyeInvisibleOutlined
+                        class="w-8 h-8 text-gray-200"
+                    />
+                </div>
+            </Show>
           </div>
           <div class="flex flex-col gap-1 text-left">
             <div class="flex w-full items-center justify-between gap-4">
