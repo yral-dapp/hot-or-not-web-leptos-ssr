@@ -1,10 +1,10 @@
 use leptos::*;
 
 use crate::{
-    component::canisters_prov::AuthCansProvider,
-    state::auth::account_connected_reader,
-    utils::{notifications::get_token_for_principal, profile::ProfileDetails},
+    component::canisters_prov::AuthCansProvider, state::auth::account_connected_reader,
+    utils::notifications::get_token_for_principal,
 };
+use yral_canisters_common::utils::profile::ProfileDetails;
 
 #[component]
 fn NotifInnerComponent(details: ProfileDetails) -> impl IntoView {

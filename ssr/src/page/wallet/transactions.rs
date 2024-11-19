@@ -1,7 +1,7 @@
 use leptos::*;
+use yral_canisters_common::cursored_data::transaction::IndexOrLedger;
 
 use super::txn::{provider::get_history_provider, TxnView};
-use crate::page::wallet::txn::IndexOrLedger;
 use crate::{component::infinite_scroller::InfiniteScroller, state::canisters::unauth_canisters};
 
 const FETCH_CNT: usize = 15;

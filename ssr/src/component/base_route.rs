@@ -15,7 +15,7 @@ use crate::{
     component::spinner::FullScreenSpinner,
     state::{
         auth::AuthState,
-        canisters::{do_canister_auth, AuthCansResource, Canisters},
+        canisters::{do_canister_auth, AuthCansResource},
         local_storage::use_referrer_store,
     },
     try_or_redirect,
@@ -23,6 +23,7 @@ use crate::{
 };
 use codee::string::{FromToStringCodec, JsonSerdeCodec};
 use leptos_use::storage::use_local_storage;
+use yral_canisters_common::Canisters;
 
 #[derive(Params, PartialEq, Clone)]
 struct Referrer {
@@ -115,7 +116,8 @@ fn CtxProvider(temp_identity: Option<JwkEcKey>, children: ChildrenFn) -> impl In
                 (canisters_res.0)()
                     .map(|res| {
                         let cans_wire = try_or_redirect!(res);
-                        let cans = try_or_redirect!(cans_wire.canisters());
+                        let maybe_cans = Canisters::from_wire(cans_wire, expect_context());
+                        let cans = try_or_redirect!(maybe_cans);
                         let user_canister = cans.user_canister();
                         let user_principal = cans.user_principal();
                         create_effect(move |_| {

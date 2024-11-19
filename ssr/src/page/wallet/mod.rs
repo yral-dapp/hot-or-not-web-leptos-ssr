@@ -9,12 +9,13 @@ use leptos::*;
 use leptos_router::Params;
 use leptos_router::{use_params, Redirect};
 use tokens::TokenList;
+use yral_canisters_common::utils::profile::ProfileDetails;
+use yral_canisters_common::Canisters;
 
 use crate::{
     component::{canisters_prov::AuthCansProvider, connect::ConnectLogin},
     state::{auth::account_connected_reader, canisters::authenticated_canisters},
     try_or_redirect_opt,
-    utils::profile::ProfileDetails,
 };
 
 #[component]
@@ -125,7 +126,7 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
         move || principal,
         move |cans_wire, principal| async move {
             let cans_wire = cans_wire?;
-            let canisters = cans_wire.clone().canisters()?;
+            let canisters = Canisters::from_wire(cans_wire, expect_context())?;
 
             let Some(user_canister) = canisters
                 .get_individual_canister_by_user_principal(principal)
@@ -143,7 +144,7 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
         move || principal,
         move |cans_wire, principal| async move {
             let cans_wire = cans_wire?;
-            let canisters = cans_wire.clone().canisters()?;
+            let canisters = Canisters::from_wire(cans_wire, expect_context())?;
             Ok::<_, ServerFnError>(canisters.user_principal() == principal)
         },
     );

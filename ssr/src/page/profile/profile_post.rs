@@ -12,7 +12,7 @@ use crate::{
     page::profile::{profile_iter::FixedFetchCursor, ProfilePostsContext},
     state::canisters::{auth_canisters_store, unauth_canisters},
     try_or_redirect,
-    utils::{posts::get_post_uid, route::failure_redirect},
+    utils::route::failure_redirect,
 };
 
 use super::{
@@ -20,7 +20,7 @@ use super::{
     profile_iter::{ProfVideoStream, ProfileVideoStream},
 };
 
-use crate::utils::posts::PostDetails;
+use yral_canisters_common::utils::posts::PostDetails;
 
 #[component]
 fn ProfilePostWithUpdates<const LIMIT: u64, VidStream: ProfVideoStream<LIMIT>>(
@@ -156,7 +156,7 @@ fn ProfilePostBase<IV: IntoView, C: Fn(PostDetails) -> IV + Clone + 'static>(
                 return Some(post);
             };
 
-            match get_post_uid(&canisters, canister_id, post_id).await {
+            match canisters.get_post_details(canister_id, post_id).await {
                 Ok(res) => res,
                 Err(e) => {
                     failure_redirect(e);

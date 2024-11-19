@@ -7,10 +7,8 @@ use crate::component::title::Title;
 use crate::component::{connect::ConnectLogin, social::*, toggle::Toggle};
 use crate::consts::{social, NSFW_TOGGLE_STORE};
 use crate::state::auth::account_connected_reader;
-use crate::state::canisters::Canisters;
 use crate::state::content_seed_client::ContentSeedClient;
 use crate::utils::notifications::get_token_for_principal;
-use crate::utils::profile::ProfileDetails;
 use candid::Principal;
 use codee::string::FromToStringCodec;
 use leptos::html::Input;
@@ -19,6 +17,7 @@ use leptos_icons::*;
 use leptos_router::use_query_map;
 use leptos_use::storage::use_local_storage;
 use leptos_use::use_event_listener;
+use yral_canisters_common::utils::profile::ProfileDetails;
 
 #[derive(Default, Clone, Copy)]
 pub struct AuthorizedUserToSeedContent(pub RwSignal<Option<(bool, Principal)>>);
@@ -187,7 +186,7 @@ pub fn Menu() -> impl IntoView {
         Some(())
     });
 
-    let authorized_fetch = with_cans(move |cans: Canisters<true>| async move {
+    let authorized_fetch = with_cans(move |cans| async move {
         let user_principal = cans.user_principal();
         match is_authorized_to_seed_content.0.get_untracked() {
             Some((auth, principal)) if principal == user_principal => return auth,

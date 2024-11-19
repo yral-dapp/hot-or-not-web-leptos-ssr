@@ -13,11 +13,11 @@ pub mod server {
     use crate::auth::server_impl::store::KVStoreImpl;
     use crate::utils::token::{icpump::ICPumpSearchGrpcChannel, nsfw::ICPumpNSFWGrpcChannel};
 
-    use super::canisters::Canisters;
     use axum::extract::FromRef;
     use axum_extra::extract::cookie::Key;
     use leptos::LeptosOptions;
     use leptos_router::RouteListing;
+    use yral_canisters_common::Canisters;
 
     #[derive(FromRef, Clone)]
     pub struct AppState {

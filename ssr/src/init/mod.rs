@@ -13,9 +13,10 @@ use leptos_router::RouteListing;
 
 use crate::{
     auth::server_impl::store::KVStoreImpl,
-    state::{canisters::Canisters, server::AppState},
+    state::server::AppState,
     utils::token::{icpump::ICPumpSearchGrpcChannel, nsfw::ICPumpNSFWGrpcChannel},
 };
+use yral_canisters_common::Canisters;
 
 #[cfg(feature = "cloudflare")]
 fn init_cf() -> gob_cloudflare::CloudflareAuth {

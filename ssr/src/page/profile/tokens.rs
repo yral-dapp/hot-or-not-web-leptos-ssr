@@ -1,15 +1,15 @@
 use candid::Principal;
 use futures::{stream::FuturesOrdered, TryStreamExt};
-use ic_agent::AgentError;
 use leptos::*;
 use yral_canisters_client::individual_user_template::DeployedCdaoCanisters;
 
 use crate::{
     component::{bullet_loader::BulletLoader, token_confetti_symbol::TokenConfettiSymbol},
     page::wallet::tokens::TokenTile,
-    state::canisters::{authenticated_canisters, unauth_canisters, Canisters},
-    utils::token::{get_token_metadata, TokenMetadata},
+    state::canisters::{authenticated_canisters, unauth_canisters},
+    utils::token::icpump::IcpumpTokenInfo,
 };
+use yral_canisters_common::{utils::token::TokenMetadata, Canisters, Error as CanistersError};
 
 #[component]
 fn CreateYourToken(header_text: &'static str) -> impl IntoView {
@@ -27,12 +27,12 @@ async fn token_metadata(
     cans: &Canisters<false>,
     user_principal: Principal,
     deployed_cans: DeployedCdaoCanisters,
-) -> Result<TokenMetadata, AgentError> {
+) -> Result<TokenMetadata, CanistersError> {
     let governance = deployed_cans.governance;
     let ledger = deployed_cans.ledger;
     let index = deployed_cans.index;
-    get_token_metadata(
-        cans,
+    cans.get_token_metadata(
+        &IcpumpTokenInfo,
         Some(user_principal),
         deployed_cans.root,
         governance,
@@ -59,7 +59,8 @@ pub fn ProfileTokens(user_canister: Principal, user_principal: Principal) -> imp
                 .try_collect()
                 .await?;
 
-            let my_principal = auth_cans_wire?.canisters()?.user_principal();
+            let my_principal =
+                Canisters::from_wire(auth_cans_wire?, expect_context())?.user_principal();
             Ok::<_, ServerFnError>((tokens, my_principal == user_principal))
         },
     );

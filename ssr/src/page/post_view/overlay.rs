@@ -5,10 +5,9 @@ use crate::{
         modal::Modal,
         option::SelectOption,
     },
-    state::canisters::{auth_canisters_store, Canisters},
+    state::canisters::auth_canisters_store,
     utils::{
         event_streaming::events::{LikeVideo, ShareVideo},
-        posts::PostDetails,
         report::ReportOption,
         route::failure_redirect,
         user::UserDetails,
@@ -19,8 +18,9 @@ use gloo::timers::callback::Timeout;
 use leptos::*;
 use leptos_icons::*;
 use leptos_use::use_window;
+use yral_canisters_common::{utils::posts::PostDetails, Canisters};
 
-use super::{bet::HNGameOverlay, video_iter::post_liked_by_me};
+use super::bet::HNGameOverlay;
 
 #[component]
 fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
@@ -79,7 +79,7 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
             return (liked, initial_liked.1);
         }
 
-        match post_liked_by_me(&cans, post_canister, post_id).await {
+        match cans.post_like_info(post_canister, post_id).await {
             Ok(liked) => liked,
             Err(e) => {
                 failure_redirect(e);

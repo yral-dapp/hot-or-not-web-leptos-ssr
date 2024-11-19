@@ -8,8 +8,7 @@ use sns_validation::{
     humanize::{parse_duration, parse_percentage, parse_tokens},
     pbs::nns_pb,
 };
-
-use crate::state::canisters::Canisters;
+use yral_canisters_common::Canisters;
 
 #[derive(Clone, Debug)]
 struct NeuronForm {

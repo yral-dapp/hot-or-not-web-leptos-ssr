@@ -5,7 +5,7 @@ use leptos_use::{use_intersection_observer_with_options, UseIntersectionObserver
 use crate::page::post_view::video_loader::{BgView, VideoViewForQueue};
 
 use crate::state::audio_state::AudioState;
-use crate::utils::posts::PostDetails;
+use yral_canisters_common::utils::posts::PostDetails;
 
 #[component]
 pub fn MuteIconOverlay(show_mute_icon: RwSignal<bool>) -> impl IntoView {

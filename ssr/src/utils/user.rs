@@ -1,9 +1,7 @@
 use candid::Principal;
 use leptos::{use_context, RwSignal, SignalGetUntracked};
 
-use crate::state::canisters::Canisters;
-
-use super::profile::ProfileDetails;
+use yral_canisters_common::{utils::profile::ProfileDetails, Canisters};
 
 #[derive(Clone)]
 pub struct UserDetails {

@@ -13,11 +13,9 @@ use crate::{
         audio_state::AudioState,
         canisters::{auth_canisters_store, unauth_canisters},
     },
-    utils::{
-        bg_url,
-        posts::{get_post_uid, PostDetails},
-    },
+    utils::bg_url,
 };
+use yral_canisters_common::utils::posts::PostDetails;
 
 #[derive(Params, PartialEq, Clone, Copy)]
 struct PostParams {
@@ -79,10 +77,14 @@ pub fn SinglePost() -> impl IntoView {
     let fetch_post = create_resource(params, move |params| async move {
         let params = params.map_err(|_| PostFetchError::Invalid)?;
         let post_uid = if let Some(canisters) = auth_cans.get_untracked() {
-            get_post_uid(&canisters, params.canister_id, params.post_id).await
+            canisters
+                .get_post_details(params.canister_id, params.post_id)
+                .await
         } else {
             let canisters = unauth_canisters();
-            get_post_uid(&canisters, params.canister_id, params.post_id).await
+            canisters
+                .get_post_details(params.canister_id, params.post_id)
+                .await
         };
         post_uid
             .map_err(|e| PostFetchError::GetUid(e.to_string()))

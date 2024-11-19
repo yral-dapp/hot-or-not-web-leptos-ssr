@@ -1,10 +1,10 @@
 use super::spinner::Spinner;
 use crate::{
-    auth::delegate_short_lived_identity,
-    page::menu::AuthorizedUserToSeedContent,
-    state::{canisters::Canisters, content_seed_client::ContentSeedClient},
+    auth::delegate_short_lived_identity, page::menu::AuthorizedUserToSeedContent,
+    state::content_seed_client::ContentSeedClient,
 };
 use leptos::*;
+use yral_canisters_common::Canisters;
 
 #[component]
 fn YoutubeUploadInner(canisters: Canisters<true>, #[prop(optional)] url: String) -> impl IntoView {
