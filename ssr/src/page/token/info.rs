@@ -99,17 +99,32 @@ fn TokenInfoInner(
                     <div class="flex flex-col gap-4 w-full bg-white/5 p-4 drop-shadow-lg rounded-xl">
                         <div class="flex flex-row justify-between items-center">
                             <div class="flex flex-row gap-2 items-center">
-                                <img
-                                    class=move || format!("object-cover h-14 w-14 md:w-18 md:h-18 rounded-full cursor-pointer {}",
-                                        if blur_active() { "blur-md" } else { "" }
-                                    )
-                                    src=meta.logo_b64
-                                    on:click=move |_| {
-                                        if meta.is_nsfw {
-                                            blur_active.update(|b| *b = !*b);
+                                <div class="relative">
+                                    <img
+                                        class=move || format!("object-cover h-14 w-14 md:w-18 md:h-18 rounded-full cursor-pointer {}",
+                                            if blur_active() { "blur-md" } else { "" }
+                                        )
+                                        src=meta.logo_b64
+                                        on:click=move |_| {
+                                            if meta.is_nsfw {
+                                                blur_active.update(|b| *b = !*b);
+                                            }
                                         }
-                                    }
-                                />
+                                    />
+                                    <Show when=move || blur_active()>
+                                        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
+                                            on:click=move |_| {
+                                                if meta.is_nsfw {
+                                                    blur_active.update(|b| *b = !*b);
+                                                }
+                                            }>
+                                            <Icon
+                                                class="w-6 h-6 text-white/80"
+                                                icon=icondata::AiEyeInvisibleOutlined
+                                            />
+                                        </div>
+                                    </Show>
+                                </div>
                                 <span class="text-base md:text-lg font-semibold text-white">
                                     {meta.name}
                                 </span>

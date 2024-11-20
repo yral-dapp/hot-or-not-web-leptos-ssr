@@ -1,6 +1,7 @@
 use std::collections::VecDeque;
 
 use leptos::*;
+use leptos_icons::*;
 use pulldown_cmark::{Options, Parser};
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::Closure;
@@ -206,7 +207,28 @@ pub fn ICPumpAiToken(details: TokenListItem) -> impl IntoView {
         <a
             href=details.link
             class="text-xs w-full p-2 flex gap-2 border border-gray-900 bg-transparent hover:bg-white/10 active:bg-white/5">
-          <img src=details.logo class="w-[5.5rem] shrink-0 h-[5.5rem]" />
+          <div class="relative">
+            <img
+                src=details.logo
+                class=move || {
+                    let mut classes = "w-[5.5rem] shrink-0 h-[5.5rem]".to_string();
+                    if details.is_nsfw {
+                        classes.push_str(" blur-md");
+                    }
+                    classes
+                }
+            />
+            <Show
+                when=move || details.is_nsfw
+            >
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <Icon
+                        icon=icondata::AiEyeInvisibleOutlined
+                        class="w-8 h-8 text-gray-200"
+                    />
+                </div>
+            </Show>
+          </div>
           <div class="flex flex-col gap-1 text-left">
             <div class="flex w-full items-center justify-between gap-4">
               <span class="shrink line-clamp-1">{details.token_name}</span>

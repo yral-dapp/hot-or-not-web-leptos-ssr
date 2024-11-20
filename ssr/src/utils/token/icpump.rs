@@ -72,7 +72,7 @@ pub async fn get_paginated_token_list(page: u32) -> Result<Vec<TokenListItem>, S
 
         let firestore_db: firestore::FirestoreDb = expect_context();
 
-        const TEST_COLLECTION_NAME: &str = "tokens-list"; //"test-tokens-3"
+        const TEST_COLLECTION_NAME: &str = "tokens-list";
 
         let object_stream: BoxStream<TokenListItemFS> = firestore_db
             .fluent()
@@ -167,7 +167,7 @@ pub async fn get_pumpai_results(query: String) -> Result<ICPumpSearchResult, Ser
     );
 
     let request = icpump_search::SearchRequest { input_query: query };
-    let resp: tonic::Response<icpump_search::SearchResponse> = client.search(request).await?;
+    let resp: tonic::Response<icpump_search::SearchResponseV1> = client.search_v1(request).await?;
 
     let res = resp.into_inner();
     let items = res.items;
@@ -222,8 +222,8 @@ impl From<ICPumpChatInteraction> for icpump_search::QueryResponsePair {
 }
 
 #[cfg(feature = "ssr")]
-impl From<icpump_search::SearchItem> for TokenListItem {
-    fn from(item: icpump_search::SearchItem) -> Self {
+impl From<icpump_search::SearchItemV1> for TokenListItem {
+    fn from(item: icpump_search::SearchItemV1) -> Self {
         use speedate::DateTime;
 
         let created_at_str = item.created_at.clone();
@@ -251,7 +251,7 @@ impl From<icpump_search::SearchItem> for TokenListItem {
             created_at: item.created_at,
             formatted_created_at: elapsed_str,
             link: item.link,
-            is_nsfw: false,
+            is_nsfw: item.is_nsfw,
         }
     }
 }
