@@ -1,10 +1,10 @@
 use leptos::*;
 use leptos_icons::*;
+use yral_canisters_common::utils::token::balance::TokenBalance;
 
 use crate::{
     component::{overlay::ActionTrackerPopup, token_confetti_symbol::TokenConfettiSymbol},
     page::token::create::CreateTokenCtx,
-    utils::token::TokenBalance,
 };
 
 #[component]

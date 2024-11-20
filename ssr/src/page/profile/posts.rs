@@ -6,14 +6,12 @@ use candid::Principal;
 use crate::{
     component::profile_placeholders::NoMorePostsGraphic,
     state::canisters::{auth_canisters_store, unauth_canisters},
-    utils::{
-        bg_url, event_streaming::events::ProfileViewVideo, posts::PostDetails,
-        profile::PostsProvider,
-    },
+    utils::{bg_url, event_streaming::events::ProfileViewVideo, profile::PostsProvider},
 };
 
 use super::ic::ProfileStream;
 use super::ProfilePostsContext;
+use yral_canisters_common::utils::posts::PostDetails;
 
 #[component]
 fn Post(details: PostDetails, user_canister: Principal, _ref: NodeRef<html::Div>) -> impl IntoView {

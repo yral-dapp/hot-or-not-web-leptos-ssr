@@ -45,17 +45,18 @@ mod local_claim {
         sns_root::{ListSnsCanistersArg, SnsRoot},
         sns_swap::{NewSaleTicketRequest, RefreshBuyerTokensRequest, Result2},
     };
+    use yral_canisters_common::agent_wrapper::AgentWrapper;
     use yral_qstash_types::{ClaimTokensRequest, ParticipateInSwapRequest};
 
     use crate::{
         consts::{CDAO_SWAP_PRE_READY_TIME_SECS, CDAO_SWAP_TIME_SECS, ICP_LEDGER_CANISTER_ID},
         state::{
             admin_canisters::{admin_canisters, AdminCanisters},
-            canisters::{unauth_canisters, Canisters},
+            canisters::unauth_canisters,
         },
-        utils::ic::AgentWrapper,
     };
     use std::str::FromStr;
+    use yral_canisters_common::Canisters;
 
     async fn get_neurons(
         governance: &SnsGovernance<'_>,
@@ -309,13 +310,13 @@ mod real_impl {
     use candid::{Decode, Nat, Principal};
     use ic_base_types::PrincipalId;
     use icp_ledger::AccountIdentifier;
-    use leptos::ServerFnError;
+    use leptos::{expect_context, ServerFnError};
     use sns_validation::pbs::sns_pb::SnsInitPayload;
     use yral_qstash_types::{ClaimTokensRequest, ParticipateInSwapRequest};
 
     use crate::page::token::types::Icrc1BalanceOfArg;
     use crate::state::admin_canisters::admin_canisters;
-    use crate::state::canisters::CanistersAuthWire;
+    use yral_canisters_common::{Canisters, CanistersAuthWire};
 
     #[cfg(not(feature = "qstash"))]
     use super::local_claim::{enqueue_claim_token, enqueue_participate_in_swap};
@@ -365,7 +366,7 @@ mod real_impl {
                 .map_err(|e| ServerFnError::new(format!("failed to get nsfw info {e:?}")))?;
         }
 
-        let cans = cans_wire.canisters().unwrap();
+        let cans = Canisters::from_wire(cans_wire, expect_context())?;
         log::debug!("deploying canisters {:?}", cans.user_canister().to_string());
         let res = cans
             .deploy_cdao_sns(create_sns)
@@ -403,7 +404,6 @@ mod real_impl {
 #[cfg(not(feature = "backend-admin"))]
 mod no_op_impl {
     use crate::page::token::create::DeployedCdaoCanistersRes;
-    use crate::state::canisters::CanistersAuthWire;
     use crate::utils::token::nsfw::NSFWInfo;
     use crate::utils::token::DeployedCdaoCanisters;
     use candid::Principal;
@@ -411,6 +411,7 @@ mod no_op_impl {
     use icp_ledger::AccountIdentifier;
     use leptos::ServerFnError;
     use sns_validation::pbs::sns_pb::SnsInitPayload;
+    use yral_canisters_common::CanistersAuthWire;
 
     pub async fn is_server_available() -> Result<(bool, AccountIdentifier), ServerFnError> {
         Ok((

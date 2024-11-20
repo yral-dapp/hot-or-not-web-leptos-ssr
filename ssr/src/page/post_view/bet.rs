@@ -1,9 +1,8 @@
-use candid::Principal;
 use leptos::*;
 use leptos_icons::*;
 use leptos_use::use_interval_fn;
 use web_time::Duration;
-use yral_canisters_client::individual_user_template::{BettingStatus, PlaceBetArg, Result3};
+use yral_canisters_client::individual_user_template::BettingStatus;
 
 use crate::{
     component::{
@@ -11,14 +10,16 @@ use crate::{
         spinner::SpinnerFit,
     },
     page::post_view::BetEligiblePostCtx,
-    state::canisters::{unauth_canisters, Canisters},
+    state::canisters::unauth_canisters,
     try_or_redirect_opt,
+    utils::{time::to_hh_mm_ss, MockPartialEq},
+};
+use yral_canisters_common::{
     utils::{
         posts::PostDetails,
-        profile::{BetDetails, BetKind, BetOutcome},
-        time::to_hh_mm_ss,
-        MockPartialEq,
+        vote::{VoteDetails, VoteKind, VoteOutcome},
     },
+    Canisters,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -56,37 +57,6 @@ impl From<CoinState> for u64 {
     }
 }
 
-async fn bet_on_post(
-    canisters: Canisters<true>,
-    bet_amount: u64,
-    bet_direction: BetKind,
-    post_id: u64,
-    post_canister_id: Principal,
-) -> Result<BettingStatus, ServerFnError> {
-    let user = canisters.authenticated_user().await;
-
-    let place_bet_arg = PlaceBetArg {
-        bet_amount,
-        post_id,
-        bet_direction: bet_direction.into(),
-        post_canister_id,
-    };
-
-    let res = user.bet_on_currently_viewing_post(place_bet_arg).await?;
-
-    let betting_status = match res {
-        Result3::Ok(p) => p,
-        Result3::Err(_e) => {
-            // todo send event that betting failed
-            return Err(ServerFnError::new(
-                "bet on bet_on_currently_viewing_post error".to_string(),
-            ));
-        }
-    };
-
-    Ok(betting_status)
-}
-
 #[component]
 fn CoinStateView(
     #[prop(into)] coin: MaybeSignal<CoinState>,
@@ -108,13 +78,13 @@ fn CoinStateView(
 
 #[component]
 fn HNButton(
-    bet_direction: RwSignal<Option<BetKind>>,
-    kind: BetKind,
+    bet_direction: RwSignal<Option<VoteKind>>,
+    kind: VoteKind,
     #[prop(into)] disabled: Signal<bool>,
 ) -> impl IntoView {
     let grayscale = create_memo(move |_| bet_direction() != Some(kind) && disabled());
     let show_spinner = move || disabled() && bet_direction() == Some(kind);
-    let icon = if kind == BetKind::Hot {
+    let icon = if kind == VoteKind::Hot {
         HotIcon
     } else {
         NotIcon
@@ -138,18 +108,21 @@ fn HNButton(
 fn HNButtonOverlay(
     post: PostDetails,
     coin: RwSignal<CoinState>,
-    bet_direction: RwSignal<Option<BetKind>>,
+    bet_direction: RwSignal<Option<VoteKind>>,
     refetch_bet: Trigger,
 ) -> impl IntoView {
     let place_bet_action = create_action(
-        move |(canisters, bet_direction, bet_amount): &(Canisters<true>, BetKind, u64)| {
+        move |(canisters, bet_direction, bet_amount): &(Canisters<true>, VoteKind, u64)| {
             let post_can_id = post.canister_id;
             let post_id = post.post_id;
             let cans = canisters.clone();
             let bet_amount = *bet_amount;
             let bet_direction = *bet_direction;
             async move {
-                match bet_on_post(cans, bet_amount, bet_direction, post_id, post_can_id).await {
+                match cans
+                    .vote_on_post(bet_amount, bet_direction, post_id, post_can_id)
+                    .await
+                {
                     Ok(_) => Some(()),
                     Err(e) => {
                         log::error!("{e}");
@@ -198,7 +171,7 @@ fn HNButtonOverlay(
             </button>
         </div>
         <div class="flex flex-row gap-6 justify-center items-center w-full touch-manipulation">
-            <HNButton disabled=running bet_direction kind=BetKind::Hot />
+            <HNButton disabled=running bet_direction kind=VoteKind::Hot />
             <button disabled=running on:click=move |_| coin.update(|c| *c = c.wrapping_next())>
                 <CoinStateView
                     disabled=running
@@ -207,7 +180,7 @@ fn HNButtonOverlay(
                 />
 
             </button>
-            <HNButton disabled=running bet_direction kind=BetKind::Not />
+            <HNButton disabled=running bet_direction kind=VoteKind::Not />
         </div>
         // Bottom row: Hot <down arrow> Not
         // most of the CSS is for alignment with above icons
@@ -251,9 +224,9 @@ fn LostBadge() -> impl IntoView {
 }
 
 #[component]
-fn HNWonLost(participation: BetDetails) -> impl IntoView {
-    let won = matches!(participation.outcome, BetOutcome::Won(_));
-    let bet_amount = participation.bet_amount;
+fn HNWonLost(participation: VoteDetails) -> impl IntoView {
+    let won = matches!(participation.outcome, VoteOutcome::Won(_));
+    let bet_amount = participation.vote_amount;
     let coin = match bet_amount {
         50 => CoinState::C50,
         100 => CoinState::C100,
@@ -263,7 +236,7 @@ fn HNWonLost(participation: BetDetails) -> impl IntoView {
             CoinState::C50
         }
     };
-    let is_hot = matches!(participation.bet_kind, BetKind::Hot);
+    let is_hot = matches!(participation.vote_kind, VoteKind::Hot);
     let hn_icon = if is_hot { HotIcon } else { NotIcon };
 
     view! {
@@ -301,8 +274,8 @@ fn HNWonLost(participation: BetDetails) -> impl IntoView {
 }
 
 #[component]
-fn BetTimer(post: PostDetails, participation: BetDetails, refetch_bet: Trigger) -> impl IntoView {
-    let bet_duration = participation.bet_duration().as_secs();
+fn BetTimer(post: PostDetails, participation: VoteDetails, refetch_bet: Trigger) -> impl IntoView {
+    let bet_duration = participation.vote_duration().as_secs();
     let time_remaining = create_rw_signal(participation.time_remaining(post.created_at));
     _ = use_interval_fn(
         move || {
@@ -339,14 +312,14 @@ fn BetTimer(post: PostDetails, participation: BetDetails, refetch_bet: Trigger) 
 #[component]
 fn HNAwaitingResults(
     post: PostDetails,
-    participation: BetDetails,
+    participation: VoteDetails,
     refetch_bet: Trigger,
 ) -> impl IntoView {
-    let is_hot = matches!(participation.bet_kind, BetKind::Hot);
+    let is_hot = matches!(participation.vote_kind, VoteKind::Hot);
     let bet_direction_text = if is_hot { "Hot" } else { "Not" };
     let hn_icon = if is_hot { HotIcon } else { NotIcon };
 
-    let bet_amount = participation.bet_amount;
+    let bet_amount = participation.vote_amount;
     let coin = match bet_amount {
         50 => CoinState::C50,
         100 => CoinState::C100,
@@ -384,19 +357,19 @@ fn HNAwaitingResults(
 #[component]
 pub fn HNUserParticipation(
     post: PostDetails,
-    participation: BetDetails,
+    participation: VoteDetails,
     refetch_bet: Trigger,
 ) -> impl IntoView {
     view! {
         {match participation.outcome {
-            BetOutcome::AwaitingResult => {
+            VoteOutcome::AwaitingResult => {
                 view! { <HNAwaitingResults post refetch_bet participation /> }
             }
-            BetOutcome::Won(_) => {
+            VoteOutcome::Won(_) => {
                 view! { <HNWonLost participation /> }
             }
-            BetOutcome::Draw(_) => view! { "Draw" }.into_view(),
-            BetOutcome::Lost => {
+            VoteOutcome::Draw(_) => view! { "Draw" }.into_view(),
+            VoteOutcome::Lost => {
                 view! { <HNWonLost participation /> }
             }
         }
@@ -408,7 +381,7 @@ pub fn HNUserParticipation(
 #[component]
 fn MaybeHNButtons(
     post: PostDetails,
-    bet_direction: RwSignal<Option<BetKind>>,
+    bet_direction: RwSignal<Option<VoteKind>>,
     coin: RwSignal<CoinState>,
     refetch_bet: Trigger,
 ) -> impl IntoView {
@@ -476,7 +449,7 @@ fn ShadowBg() -> impl IntoView {
 
 #[component]
 pub fn HNGameOverlay(post: PostDetails) -> impl IntoView {
-    let bet_direction = create_rw_signal(None::<BetKind>);
+    let bet_direction = create_rw_signal(None::<VoteKind>);
     let coin = create_rw_signal(CoinState::C50);
 
     let refetch_bet = create_trigger();
@@ -502,7 +475,7 @@ pub fn HNGameOverlay(post: PostDetails) -> impl IntoView {
                             post.post_id,
                         )
                         .await?;
-                    Ok::<_, ServerFnError>(bet_participation.map(BetDetails::from))
+                    Ok::<_, ServerFnError>(bet_participation.map(VoteDetails::from))
                 }
             },
         )

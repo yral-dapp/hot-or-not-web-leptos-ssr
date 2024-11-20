@@ -9,11 +9,14 @@ use super::ic::ProfileStream;
 use crate::{
     component::{canisters_prov::AuthCansProvider, profile_placeholders::NoMoreBetsGraphic},
     state::canisters::unauth_canisters,
+    utils::{bg_url, time::to_hh_mm_ss},
+};
+use yral_canisters_common::{
+    cursored_data::vote::VotesProvider,
     utils::{
-        bg_url,
         posts::PostDetails,
-        profile::{BetDetails, BetOutcome, BetsProvider, ProfileDetails},
-        time::to_hh_mm_ss,
+        profile::ProfileDetails,
+        vote::{VoteDetails, VoteOutcome},
     },
 };
 
@@ -69,8 +72,8 @@ pub fn FallbackUser() -> impl IntoView {
 }
 
 #[component]
-fn BetTimer(post: PostDetails, details: BetDetails) -> impl IntoView {
-    let bet_duration = details.bet_duration().as_secs();
+fn BetTimer(post: PostDetails, details: VoteDetails) -> impl IntoView {
+    let bet_duration = details.vote_duration().as_secs();
     let time_remaining = create_rw_signal(details.time_remaining(post.created_at));
     _ = use_interval_fn(
         move || {
@@ -102,7 +105,7 @@ fn BetTimer(post: PostDetails, details: BetDetails) -> impl IntoView {
 }
 
 #[component]
-pub fn Speculation(details: BetDetails, _ref: NodeRef<html::Div>) -> impl IntoView {
+pub fn Speculation(details: VoteDetails, _ref: NodeRef<html::Div>) -> impl IntoView {
     // TODO: enable scrolling videos for bets
     let profile_post_url = format!("/post/{}/{}", details.canister_id, details.post_id);
 
@@ -134,7 +137,7 @@ pub fn Speculation(details: BetDetails, _ref: NodeRef<html::Div>) -> impl IntoVi
 
     let details = store_value(details);
     let (bet_res, amt, icon) = match details.with_value(|d| d.outcome) {
-        BetOutcome::Won(amt) => (
+        VoteOutcome::Won(amt) => (
             "RECEIVED",
             amt,
             view! {
@@ -144,7 +147,7 @@ pub fn Speculation(details: BetDetails, _ref: NodeRef<html::Div>) -> impl IntoVi
                 </div>
             }.into_view(),
         ),
-        BetOutcome::Draw(amt) => (
+        VoteOutcome::Draw(amt) => (
             "RECEIVED",
             amt,
             view! {
@@ -153,18 +156,18 @@ pub fn Speculation(details: BetDetails, _ref: NodeRef<html::Div>) -> impl IntoVi
                 </div>
             }.into_view(),
         ),
-        BetOutcome::Lost => (
+        VoteOutcome::Lost => (
             "VOTE",
-            details.with_value(|d| d.bet_amount),
+            details.with_value(|d| d.vote_amount),
             view! {
                 <div class="flex w-full justify-center items-center h-6 bg-white text-black py-2 text-xs font-medium">
                     You Lost
                 </div>
             }.into_view(),
         ),
-        BetOutcome::AwaitingResult => (
+        VoteOutcome::AwaitingResult => (
             "VOTE",
-            details.with_value(|d| d.bet_amount),
+            details.with_value(|d| d.vote_amount),
             view! {
                 <Suspense>
                     {move || {
@@ -224,7 +227,7 @@ pub fn ProfileSpeculations(user_canister: Principal) -> impl IntoView {
     view! {
         <AuthCansProvider let:canister>
             {
-                let provider = BetsProvider::new(unauth_canisters(), user_canister);
+                let provider = VotesProvider::new(unauth_canisters(), user_canister);
                 let location = use_location();
                 let empty_text = if location
                     .pathname

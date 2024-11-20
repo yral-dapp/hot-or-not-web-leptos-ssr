@@ -4,7 +4,7 @@ use super::{
 };
 use crate::{
     component::modal::Modal,
-    state::canisters::{auth_canisters_store, authenticated_canisters, Canisters},
+    state::canisters::{auth_canisters_store, authenticated_canisters},
     try_or_redirect_opt,
     utils::{
         event_streaming::events::{
@@ -26,6 +26,7 @@ use leptos::{
 use leptos_icons::*;
 use leptos_use::use_event_listener;
 use web_time::SystemTime;
+use yral_canisters_common::Canisters;
 
 #[component]
 pub fn DropBox() -> impl IntoView {
@@ -325,7 +326,8 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
                 <Suspense>
                     {move || {
                         let uid = upload_action().flatten()?;
-                        let canisters = (cans_res.0)()?.ok()?.canisters().ok()?;
+                        let cans_wire = (cans_res.0)()?.ok()?;
+                        let canisters = Canisters::from_wire(cans_wire, expect_context()).ok()?;
                         publish_action.dispatch((canisters, uid));
                         Some(())
                     }}

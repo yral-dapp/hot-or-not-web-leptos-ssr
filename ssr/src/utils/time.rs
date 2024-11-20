@@ -1,12 +1,6 @@
 use speedate::{DateTime, ParseError};
 use uts2ts::uts2ts;
-use web_time::{Duration, SystemTime};
-
-pub fn current_epoch() -> Duration {
-    web_time::SystemTime::now()
-        .duration_since(SystemTime::UNIX_EPOCH)
-        .unwrap()
-}
+use web_time::Duration;
 
 /// Get day & month -> DD MMM format
 /// where DD -> 2 digits

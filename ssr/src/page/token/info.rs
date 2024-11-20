@@ -2,16 +2,20 @@ use crate::page::token::RootType;
 use crate::page::token::TokenInfoParams;
 use crate::state::canisters::authenticated_canisters;
 
+use crate::utils::token::icpump::IcpumpTokenInfo;
 use crate::{
     component::{back_btn::BackButton, share_popup::*, spinner::FullScreenSpinner, title::Title},
-    page::wallet::{transactions::Transactions, txn::IndexOrLedger},
-    utils::{token::TokenMetadata, web::copy_to_clipboard},
+    page::wallet::transactions::Transactions,
+    utils::web::copy_to_clipboard,
 };
 use candid::Principal;
 use leptos::*;
 use leptos_icons::*;
 use leptos_router::*;
 use serde::{Deserialize, Serialize};
+use yral_canisters_common::cursored_data::transaction::IndexOrLedger;
+use yral_canisters_common::utils::token::TokenMetadata;
+use yral_canisters_common::Canisters;
 
 #[component]
 fn TokenField(
@@ -192,10 +196,12 @@ fn TokenInfoInner(
         </div>
     }
 }
+
 #[derive(Params, PartialEq, Clone, Serialize, Deserialize)]
 pub struct TokenKeyParam {
     key_principal: Principal,
 }
+
 #[component]
 pub fn TokenInfo() -> impl IntoView {
     let params = use_params::<TokenInfoParams>();
@@ -207,12 +213,17 @@ pub fn TokenInfo() -> impl IntoView {
             let Ok(params) = params else {
                 return Ok::<_, ServerFnError>(None);
             };
-            let cans = cans_wire?.canisters()?;
+            let cans = Canisters::from_wire(cans_wire?, expect_context())?;
 
-            let meta = params
-                .token_root
-                .get_metadata(key_principal, cans.clone())
-                .await;
+            let meta = cans
+                .token_metadata_by_root_type(
+                    &IcpumpTokenInfo,
+                    key_principal,
+                    params.token_root.clone(),
+                )
+                .await
+                .ok()
+                .flatten();
             Ok(meta.map(|m| {
                 (
                     m,

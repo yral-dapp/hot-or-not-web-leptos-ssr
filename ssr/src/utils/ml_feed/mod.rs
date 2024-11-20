@@ -9,8 +9,8 @@ pub mod ml_feed_grpcweb {
     use crate::utils::ml_feed::ml_feed_grpcweb::ml_feed_proto::{
         ml_feed_client::MlFeedClient, FeedRequest, PostItem,
     };
-    use crate::utils::posts::PostDetails;
     use tonic_web_wasm_client::Client;
+    use yral_canisters_common::utils::posts::PostDetails;
 
     pub mod ml_feed_proto {
         include!(concat!(env!("OUT_DIR"), "/grpc-web/ml_feed.rs"));
@@ -76,7 +76,7 @@ pub mod ml_feed_grpcweb {
 #[cfg(feature = "ssr")]
 pub mod ml_feed_grpc {
     use super::*;
-    use crate::utils::posts::PostDetails;
+    use yral_canisters_common::utils::posts::PostDetails;
 
     pub mod ml_feed_proto {
         tonic::include_proto!("ml_feed");

@@ -14,11 +14,9 @@ use k256::elliptic_curve::JwkEcKey;
 use leptos::{expect_context, ServerFnError};
 use leptos_axum::{extract_with_state, ResponseOptions};
 use rand_chacha::rand_core::OsRng;
+use yral_canisters_common::utils::time::current_epoch;
 
-use crate::{
-    consts::auth::{REFRESH_MAX_AGE, REFRESH_TOKEN_COOKIE},
-    utils::time::current_epoch,
-};
+use crate::consts::auth::{REFRESH_MAX_AGE, REFRESH_TOKEN_COOKIE};
 
 use self::store::{KVStore, KVStoreImpl};
 use yral_types::delegated_identity::DelegatedIdentityWire;

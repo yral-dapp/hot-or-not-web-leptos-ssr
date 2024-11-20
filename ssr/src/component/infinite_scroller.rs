@@ -1,29 +1,8 @@
 use super::bullet_loader::BulletLoader;
 use leptos::{html::ElementDescriptor, *};
 use leptos_use::{use_intersection_observer_with_options, UseIntersectionObserverOptions};
-use std::{error::Error, hash::Hash, marker::PhantomData};
-
-pub struct PageEntry<T> {
-    pub data: Vec<T>,
-    pub end: bool,
-}
-
-/// Globally Unique key for the given type
-pub trait KeyedData {
-    type Key: Eq + Hash + 'static;
-
-    fn key(&self) -> Self::Key;
-}
-pub(crate) trait CursoredDataProvider {
-    type Data: KeyedData + Clone + 'static;
-    type Error: Error;
-
-    async fn get_by_cursor(
-        &self,
-        start: usize,
-        end: usize,
-    ) -> Result<PageEntry<Self::Data>, Self::Error>;
-}
+use std::marker::PhantomData;
+use yral_canisters_common::cursored_data::{CursoredDataProvider, KeyedData, PageEntry};
 
 pub(crate) type InferData<T> = <T as CursoredDataProvider>::Data;
 

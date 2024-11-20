@@ -6,25 +6,12 @@ use futures::StreamExt;
 
 use leptos::*;
 
+use yral_grpc_traits::{TokenInfoProvider, TokenListItemFS};
+
 #[cfg(feature = "ssr")]
 #[derive(Debug, Clone)]
 pub struct ICPumpSearchGrpcChannel {
     pub channel: tonic::transport::Channel,
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct TokenListItemFS {
-    pub user_id: String,
-    pub name: String,
-    pub token_name: String,
-    pub token_symbol: String,
-    pub logo: String,
-    pub description: String,
-    pub created_at: String,
-    #[serde(default)]
-    pub link: String,
-    #[serde(default)]
-    pub is_nsfw: bool,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, Eq, PartialEq, Hash)]
@@ -266,5 +253,16 @@ impl From<icpump_search::SearchItemV1> for TokenListItem {
             link: item.link,
             is_nsfw: item.is_nsfw,
         }
+    }
+}
+
+#[derive(Clone, Copy)]
+pub struct IcpumpTokenInfo;
+
+impl TokenInfoProvider for IcpumpTokenInfo {
+    type Error = ServerFnError;
+
+    async fn get_token_by_id(&self, token_id: String) -> Result<TokenListItemFS, ServerFnError> {
+        get_token_by_id(token_id).await
     }
 }

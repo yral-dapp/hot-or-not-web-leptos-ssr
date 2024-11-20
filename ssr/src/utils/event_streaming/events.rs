@@ -11,16 +11,18 @@ use wasm_bindgen::JsCast;
 use super::EventHistory;
 use crate::component::auth_providers::ProviderKind;
 use crate::state::auth::account_connected_reader;
-use crate::state::canisters::{auth_canisters_store, Canisters};
+use crate::state::canisters::auth_canisters_store;
 use crate::state::history::HistoryCtx;
 #[cfg(feature = "ga4")]
 use crate::utils::event_streaming::{
     send_event, send_event_ssr, send_event_warehouse, send_user_id,
 };
-use crate::utils::posts::PostDetails;
-use crate::utils::profile::ProfileDetails;
 use crate::utils::token::nsfw::NSFWInfo;
 use crate::utils::user::{user_details_can_store_or_ret, user_details_or_ret};
+use yral_canisters_common::{
+    utils::{posts::PostDetails, profile::ProfileDetails},
+    Canisters,
+};
 
 pub enum AnalyticsEvent {
     VideoWatched(VideoWatched),

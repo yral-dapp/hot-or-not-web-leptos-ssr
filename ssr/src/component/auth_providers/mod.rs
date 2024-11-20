@@ -12,16 +12,13 @@ use yral_types::delegated_identity::DelegatedIdentityWire;
 
 use crate::{
     consts::ACCOUNT_CONNECTED_STORE,
-    state::{
-        auth::auth_state,
-        canisters::{do_canister_auth, Canisters},
-        local_storage::use_referrer_store,
-    },
+    state::{auth::auth_state, local_storage::use_referrer_store},
     utils::{
         event_streaming::events::{LoginMethodSelected, LoginSuccessful},
         MockPartialEq,
     },
 };
+use yral_canisters_common::Canisters;
 
 #[server]
 async fn issue_referral_rewards(referee_canister: Principal) -> Result<(), ServerFnError> {
@@ -130,8 +127,7 @@ pub fn LoginProviders(show_modal: RwSignal<bool>, lock_closing: RwSignal<bool>) 
             let referrer = referrer_store.get_untracked();
 
             // This is some redundant work, but saves us 100+ lines of resource handling
-            let cans_wire = do_canister_auth(identity, referrer).await?;
-            let canisters = cans_wire.canisters()?;
+            let canisters = Canisters::authenticate_with_network(identity, referrer).await?;
 
             if let Err(e) = handle_user_login(canisters.clone(), referrer).await {
                 log::warn!("failed to handle user login, err {e}. skipping");

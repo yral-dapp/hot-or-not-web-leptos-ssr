@@ -10,12 +10,9 @@ use std::cmp::Reverse;
 use crate::{
     component::{scrolling_post_view::ScrollingPostView, spinner::FullScreenSpinner},
     consts::NSFW_TOGGLE_STORE,
-    state::canisters::{authenticated_canisters, unauth_canisters, Canisters},
+    state::canisters::{authenticated_canisters, unauth_canisters},
     try_or_redirect,
-    utils::{
-        posts::{get_post_uid, FetchCursor, PostDetails},
-        route::failure_redirect,
-    },
+    utils::{posts::FetchCursor, route::failure_redirect},
 };
 use candid::Principal;
 use codee::string::FromToStringCodec;
@@ -25,6 +22,7 @@ use leptos_router::*;
 use leptos_use::{storage::use_local_storage, use_debounce_fn};
 
 use video_iter::{FeedResultType, VideoFetchStream};
+use yral_canisters_common::{utils::posts::PostDetails, Canisters};
 
 #[derive(Params, PartialEq, Clone, Copy)]
 struct PostParams {
@@ -221,7 +219,7 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
                 };
 
                 let canisters = auth_cans.wait_untracked().await;
-                let cans_true = canisters.unwrap().canisters().unwrap();
+                let cans_true = Canisters::from_wire(canisters.unwrap(), expect_context()).unwrap();
 
                 let mut fetch_stream = VideoFetchStream::new(&cans_true, cursor);
                 let chunks = fetch_stream
@@ -314,7 +312,10 @@ pub fn PostView() -> impl IntoView {
                 return Ok(Some(post));
             }
 
-            match get_post_uid(&canisters, params.canister_id, params.post_id).await {
+            match canisters
+                .get_post_details(params.canister_id, params.post_id)
+                .await
+            {
                 Ok(post) => Ok(post),
                 Err(e) => {
                     failure_redirect(e);

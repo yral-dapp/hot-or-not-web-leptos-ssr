@@ -1,95 +1,22 @@
-use std::fmt::{self, Display, Formatter};
-
-use candid::Principal;
 use leptos::*;
 use leptos_icons::Icon;
 use leptos_router::use_params;
-use serde::{Deserialize, Serialize};
+use yral_canisters_common::utils::transaction::{TxnDirection, TxnInfoType, TxnInfoWallet};
 
-use crate::{
-    component::infinite_scroller::KeyedData,
-    page::token::info::TokenKeyParam,
-    utils::{time::parse_ns_to_datetime, token::TokenBalance},
-};
+use crate::{page::token::info::TokenKeyParam, utils::time::parse_ns_to_datetime};
 
-#[derive(Clone, Copy)]
-pub enum TxnDirection {
-    Transaction,
-    Added,
-    Deducted,
-}
-#[derive(Clone)]
-pub enum IndexOrLedger {
-    Index {
-        key_principal: Principal,
-        index: Principal,
-    },
-    Ledger(Principal),
-}
-impl From<TxnDirection> for &'static icondata_core::IconData {
-    fn from(val: TxnDirection) -> Self {
-        use TxnDirection::*;
-        match val {
-            Transaction => icondata::LuArrowLeftRight,
-            Added => icondata::FaArrowDownSolid,
-            Deducted => icondata::FaArrowUpSolid,
-        }
+fn direction_to_icon(direction: TxnDirection) -> &'static icondata_core::IconData {
+    use TxnDirection::*;
+    match direction {
+        Transaction => icondata::LuArrowLeftRight,
+        Added => icondata::FaArrowDownSolid,
+        Deducted => icondata::FaArrowUpSolid,
     }
 }
 
-#[derive(Clone, Copy, Serialize, Deserialize, Debug)]
-pub enum TxnInfoType {
-    Mint { to: Principal },
-    Sent { to: Principal }, // only for keyed
-    Burn { from: Principal },
-    Received { from: Principal },                // only for keyed
-    Transfer { from: Principal, to: Principal }, // only for public transaction
-}
-#[derive(Clone, Serialize, Deserialize, Debug)]
-pub struct TxnInfoWallet {
-    pub tag: TxnInfoType,
-    pub timestamp: u64,
-    pub amount: TokenBalance,
-    pub id: u64,
-}
-
-impl KeyedData for TxnInfoWallet {
-    type Key = u64;
-
-    fn key(&self) -> Self::Key {
-        self.id
-    }
-}
-impl From<TxnInfoType> for TxnDirection {
-    fn from(value: TxnInfoType) -> TxnDirection {
-        match value {
-            TxnInfoType::Burn { .. } | TxnInfoType::Sent { .. } => TxnDirection::Deducted,
-            TxnInfoType::Mint { .. } | TxnInfoType::Received { .. } => TxnDirection::Added,
-            TxnInfoType::Transfer { .. } => TxnDirection::Transaction,
-        }
-    }
-}
-
-impl TxnInfoType {
-    fn to_text(self) -> &'static str {
-        match self {
-            TxnInfoType::Burn { .. } => "Burned",
-            TxnInfoType::Mint { .. } => "Minted",
-            TxnInfoType::Received { .. } => "Received",
-            TxnInfoType::Sent { .. } => "Sent",
-            TxnInfoType::Transfer { .. } => "Transferred",
-        }
-    }
-
-    fn icondata(self) -> &'static icondata_core::IconData {
-        TxnDirection::from(self).into()
-    }
-}
-
-impl Display for TxnInfoType {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.write_str(self.to_text())
-    }
+fn txn_info_to_icon(txn_info: TxnInfoType) -> &'static icondata_core::IconData {
+    let direction = TxnDirection::from(txn_info);
+    direction_to_icon(direction)
 }
 
 #[component]
@@ -118,21 +45,21 @@ pub fn TxnView(
                         TxnDirection::Added => {
                             view! {
                                 <div class="flex items-center justify-center w-7 h-7 lg:w-10 lg:h-10 rounded-md text-green-600 bg-green-600/5 text-lg lg:text-xl">
-                                    <Icon icon=info.tag.icondata() />
+                                    <Icon icon=txn_info_to_icon(info.tag) />
                                 </div>
                             }
                         },
                         TxnDirection::Deducted => {
                             view! {
                                 <div class="flex items-center justify-center w-7 h-7 lg:w-10 lg:h-10 rounded-md text-red-600 bg-red-600/5 text-lg lg:text-xl">
-                                    <Icon icon=info.tag.icondata() />
+                                    <Icon icon=txn_info_to_icon(info.tag) />
                                 </div>
                             }
                         },
                         TxnDirection::Transaction => {
                             view! {
                                 <div class="flex items-center justify-center w-7 h-7 lg:w-10 lg:h-10 rounded-md text-white bg-blue-600/5 text-lg lg:text-xl">
-                                    <Icon icon=info.tag.icondata() />
+                                    <Icon icon=txn_info_to_icon(info.tag) />
                                 </div>
                             }
                         },
@@ -188,8 +115,10 @@ pub fn TxnView(
 pub mod provider {
 
     use candid::Principal;
-
-    use crate::{component::infinite_scroller::CursoredDataProvider, state::canisters::Canisters};
+    use yral_canisters_common::{
+        cursored_data::{transaction::IndexOrLedger, CursoredDataProvider},
+        Canisters,
+    };
 
     use super::*;
 
@@ -207,269 +136,11 @@ pub mod provider {
         }
         #[cfg(not(feature = "mock-wallet-history"))]
         {
-            canister::TxnHistory {
+            use yral_canisters_common::cursored_data::transaction::TxnHistory;
+            TxnHistory {
                 canisters,
                 source,
                 decimals,
-            }
-        }
-    }
-
-    #[cfg(not(feature = "mock-wallet-history"))]
-    mod canister {
-        use std::io::Cursor;
-
-        use super::{
-            Canisters, CursoredDataProvider, IndexOrLedger, TokenBalance, TxnInfoType,
-            TxnInfoWallet,
-        };
-        use crate::component::infinite_scroller::PageEntry;
-        use candid::{Nat, Principal};
-        use ic_agent::AgentError;
-        use ic_certification::{HashTree, LookupResult};
-        use leptos::ServerFnError;
-        use yral_canisters_client::{
-            sns_index::{
-                Account, GetAccountTransactionsArgs, GetTransactionsResult, Transaction,
-                TransactionWithId,
-            },
-            sns_ledger::{GetTransactionsRequest, SnsLedger},
-        };
-
-        fn parse_transactions(
-            txn: TransactionWithId,
-            user_principal: Principal,
-            decimals: u8,
-        ) -> Result<TxnInfoWallet, ServerFnError> {
-            let timestamp = txn.transaction.timestamp;
-            let id = txn.id.0.to_u64_digits()[0];
-
-            match txn.transaction {
-                Transaction {
-                    mint: Some(mint), ..
-                } => Ok(TxnInfoWallet {
-                    tag: TxnInfoType::Mint { to: mint.to.owner },
-                    timestamp,
-                    amount: TokenBalance::new(mint.amount, decimals),
-                    id,
-                }),
-                Transaction {
-                    burn: Some(burn), ..
-                } => Ok(TxnInfoWallet {
-                    tag: TxnInfoType::Burn {
-                        from: user_principal,
-                    },
-                    timestamp,
-                    amount: TokenBalance::new(burn.amount, decimals),
-                    id,
-                }),
-                Transaction {
-                    transfer: Some(transfer),
-                    ..
-                } => {
-                    if user_principal == transfer.from.owner {
-                        // User is sending funds
-                        Ok(TxnInfoWallet {
-                            tag: TxnInfoType::Sent {
-                                to: transfer.to.owner,
-                            },
-                            timestamp,
-                            amount: TokenBalance::new(transfer.amount, decimals),
-                            id,
-                        })
-                    } else if user_principal == transfer.to.owner {
-                        // User is receiving funds
-                        Ok(TxnInfoWallet {
-                            tag: TxnInfoType::Received {
-                                from: transfer.from.owner,
-                            },
-                            timestamp,
-                            amount: TokenBalance::new(transfer.amount, decimals),
-                            id,
-                        })
-                    } else {
-                        Err(ServerFnError::new(
-                            "Transfer details do not match the user principal",
-                        ))
-                    }
-                }
-                _ => Err(ServerFnError::new("Unable to parse transaction details")),
-            }
-        }
-
-        fn parse_transactions_ledger(
-            txn: yral_canisters_client::sns_ledger::Transaction,
-            id: u64,
-            decimals: u8,
-        ) -> Result<TxnInfoWallet, ServerFnError> {
-            let timestamp = txn.timestamp;
-
-            match txn {
-                yral_canisters_client::sns_ledger::Transaction {
-                    mint: Some(mint), ..
-                } => Ok(TxnInfoWallet {
-                    tag: TxnInfoType::Mint { to: mint.to.owner },
-                    timestamp,
-                    amount: TokenBalance::new(mint.amount, decimals),
-                    id,
-                }),
-                yral_canisters_client::sns_ledger::Transaction {
-                    burn: Some(burn), ..
-                } => Ok(TxnInfoWallet {
-                    tag: TxnInfoType::Burn {
-                        from: burn.from.owner,
-                    },
-                    timestamp,
-                    amount: TokenBalance::new(burn.amount, decimals),
-                    id,
-                }),
-                yral_canisters_client::sns_ledger::Transaction {
-                    transfer: Some(transfer),
-                    ..
-                } => Ok(TxnInfoWallet {
-                    tag: TxnInfoType::Transfer {
-                        from: transfer.from.owner,
-                        to: transfer.to.owner,
-                    },
-                    timestamp,
-                    amount: TokenBalance::new(transfer.amount, decimals),
-                    id,
-                }),
-                _ => Err(ServerFnError::new("Unable to parse transaction details")),
-            }
-        }
-
-        async fn get_latest_ledger_transaction<'a>(
-            ledger: &SnsLedger<'a>,
-        ) -> Result<u64, ServerFnError> {
-            let tip_certificate =
-                ledger
-                    .icrc_3_get_tip_certificate()
-                    .await?
-                    .ok_or(ServerFnError::new(
-                        "Failed to get tip certificate from ledger canister",
-                    ))?;
-
-            let cursor = Cursor::new(&tip_certificate.hash_tree);
-
-            let hash_tree: HashTree = ciborium::from_reader(cursor)
-                .map_err(|e| ServerFnError::new(format!("Failed to parse HashTree: {}", e)))?;
-
-            let lookup_path = &[b"last_block_index"];
-            if let LookupResult::Found(res) = hash_tree.lookup_path(lookup_path) {
-                let last_block_index = u64::from_be_bytes(res.try_into()?);
-                return Ok(last_block_index);
-            }
-
-            Err(ServerFnError::new("Path not found in HashTree"))
-        }
-
-        #[derive(Clone)]
-        pub struct TxnHistory {
-            pub canisters: Canisters<false>,
-            pub source: IndexOrLedger,
-            pub decimals: u8,
-        }
-
-        impl CursoredDataProvider for TxnHistory {
-            type Data = TxnInfoWallet;
-            type Error = AgentError;
-
-            async fn get_by_cursor(
-                &self,
-                start: usize,
-                end: usize,
-            ) -> Result<PageEntry<TxnInfoWallet>, AgentError> {
-                match &self.source {
-                    IndexOrLedger::Index {
-                        index,
-                        key_principal,
-                    } => {
-                        let index_canister = self.canisters.sns_index(*index).await;
-
-                        // Fetch transactions up to the 'end' index
-                        let max_results = end; // Fetch enough transactions to cover 'end'
-
-                        let history = index_canister
-                            .get_account_transactions(GetAccountTransactionsArgs {
-                                max_results: Nat::from(max_results),
-                                start: None, // No cursor, fetch the latest transactions
-                                account: Account {
-                                    owner: *key_principal,
-                                    subaccount: None,
-                                },
-                            })
-                            .await?;
-
-                        let transactions = match history {
-                            GetTransactionsResult::Ok(v) => v.transactions,
-                            GetTransactionsResult::Err(_) => {
-                                return Err(AgentError::PrincipalError(
-                                    ic_agent::export::PrincipalError::CheckSequenceNotMatch(),
-                                ));
-                            }
-                        };
-
-                        let transactions = transactions.into_iter().skip(start).take(end - start);
-                        let txns_len = transactions.len();
-                        let data: Vec<TxnInfoWallet> = transactions
-                            .filter_map(|txn| {
-                                parse_transactions(txn, *key_principal, self.decimals).ok()
-                            })
-                            .collect();
-
-                        let is_end = txns_len < (end - start);
-
-                        Ok(PageEntry { data, end: is_end })
-                    }
-                    IndexOrLedger::Ledger(ledger) => {
-                        let ledger = self.canisters.sns_ledger(*ledger).await;
-
-                        let total_transactions = get_latest_ledger_transaction(&ledger)
-                            .await
-                            .map_err(|e| AgentError::MessageError(e.to_string()))?;
-
-                        let start_index = if total_transactions > end as u64 {
-                            total_transactions - end as u64
-                        } else {
-                            0
-                        };
-
-                        let length = if total_transactions > start as u64 {
-                            total_transactions - start_index - start as u64
-                        } else {
-                            total_transactions - start_index
-                        };
-
-                        let history = ledger
-                            .get_transactions(GetTransactionsRequest {
-                                start: start_index.into(),
-                                length: length.into(),
-                            })
-                            .await
-                            .map_err(|e| AgentError::MessageError(e.to_string()))?;
-
-                        let list_end = start_index == 0;
-
-                        Ok(PageEntry {
-                            data: history
-                                .transactions
-                                .into_iter()
-                                .enumerate()
-                                .filter_map(|(i, txn)| {
-                                    let idx = (history.first_index.clone() + i).0.to_u64_digits();
-                                    if idx.is_empty() {
-                                        None
-                                    } else {
-                                        parse_transactions_ledger(txn, idx[0], self.decimals).ok()
-                                    }
-                                })
-                                .rev()
-                                .collect(),
-                            end: list_end,
-                        })
-                    }
-                }
             }
         }
     }
@@ -482,8 +153,10 @@ pub mod provider {
             rand_core::{RngCore, SeedableRng},
             ChaCha8Rng,
         };
-
-        use crate::{component::infinite_scroller::PageEntry, utils::time::current_epoch};
+        use yral_canisters_common::{
+            cursored_data::PageEntry,
+            utils::{time::current_epoch, token::balance::TokenBalance},
+        };
 
         use super::*;
 

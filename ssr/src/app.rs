@@ -27,12 +27,10 @@ use crate::{
         upload::UploadPostPage,
         wallet::Wallet,
     },
-    state::{
-        audio_state::AudioState, canisters::Canisters, content_seed_client::ContentSeedClient,
-        history::HistoryCtx,
-    },
+    state::{audio_state::AudioState, content_seed_client::ContentSeedClient, history::HistoryCtx},
     utils::event_streaming::EventHistory,
 };
+use yral_canisters_common::Canisters;
 
 use leptos::*;
 use leptos_meta::*;

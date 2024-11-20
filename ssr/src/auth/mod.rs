@@ -11,8 +11,9 @@ use leptos::{server, server_fn::codec::Json, ServerFnError};
 use rand_chacha::rand_core::OsRng;
 use serde::{Deserialize, Serialize};
 use web_time::Duration;
+use yral_canisters_common::utils::time::current_epoch;
 
-use crate::{consts::auth::DELEGATION_MAX_AGE, utils::time::current_epoch};
+use crate::consts::auth::DELEGATION_MAX_AGE;
 use yral_types::delegated_identity::DelegatedIdentityWire;
 
 fn delegate_identity_with_max_age(

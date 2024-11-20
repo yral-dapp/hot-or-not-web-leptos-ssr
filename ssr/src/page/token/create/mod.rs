@@ -3,12 +3,11 @@ mod server_impl;
 
 use crate::{
     component::{back_btn::BackButton, title::Title, token_logo_sanitize::TokenLogoSanitize},
-    state::canisters::{auth_canisters_store, authenticated_canisters, CanistersAuthWire},
+    state::canisters::{auth_canisters_store, authenticated_canisters},
     utils::{
         event_streaming::events::{
             TokenCreationCompleted, TokenCreationFailed, TokenCreationStarted,
         },
-        profile::ProfileDetails,
         token::{nsfw::NSFWInfo, DeployedCdaoCanisters},
         web::FileWithUrl,
     },
@@ -16,6 +15,7 @@ use crate::{
 use candid::Principal;
 use leptos::*;
 use std::env;
+use yral_canisters_common::{utils::profile::ProfileDetails, Canisters, CanistersAuthWire};
 
 use server_fn::codec::Cbor;
 use sns_validation::{humanize::parse_tokens, pbs::nns_pb::Tokens};
@@ -317,9 +317,7 @@ pub fn CreateToken() -> impl IntoView {
                 .wait_untracked()
                 .await
                 .map_err(|e| e.to_string())?;
-            let cans = cans_wire
-                .clone()
-                .canisters()
+            let cans = Canisters::from_wire(cans_wire.clone(), expect_context())
                 .map_err(|_| "Unable to authenticate".to_string())?;
 
             let canister_id = cans.user_canister();

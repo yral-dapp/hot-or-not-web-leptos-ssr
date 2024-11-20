@@ -17,12 +17,15 @@ use crate::{
         auth::account_connected_reader,
         canisters::{authenticated_canisters, unauth_canisters},
     },
-    utils::{posts::PostDetails, profile::ProfileDetails},
 };
 
 use posts::ProfilePosts;
 use speculation::ProfileSpeculations;
 use tokens::ProfileTokens;
+use yral_canisters_common::{
+    utils::{posts::PostDetails, profile::ProfileDetails},
+    Canisters,
+};
 
 #[derive(Clone, Default)]
 pub struct ProfilePostsContext {
@@ -176,7 +179,7 @@ pub fn ProfileView() -> impl IntoView {
     let profile_info_res =
         auth_cans.derive(param_principal, move |cans_wire, principal| async move {
             let cans_wire = cans_wire?;
-            let canisters = cans_wire.clone().canisters()?;
+            let canisters = Canisters::from_wire(cans_wire.clone(), expect_context())?;
             let user_principal = canisters.user_principal();
 
             let Some(principal) = principal else {

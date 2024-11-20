@@ -1,10 +1,11 @@
 use leptos::*;
 use leptos_icons::*;
+use yral_canisters_common::cursored_data::CursoredDataProvider;
 
 use crate::{
     component::{
         bullet_loader::BulletLoader,
-        infinite_scroller::{CursoredDataProvider, InferData, InfiniteScroller},
+        infinite_scroller::{InferData, InfiniteScroller},
     },
     utils::profile::PROFILE_CHUNK_SZ,
 };
