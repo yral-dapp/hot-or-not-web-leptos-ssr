@@ -6,6 +6,7 @@ mod popups;
 mod sns_form;
 pub mod transfer;
 pub mod types;
+pub mod swap;
 
 use std::{fmt::Display, str::FromStr};
 
