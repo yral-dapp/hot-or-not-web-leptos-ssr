@@ -1,6 +1,7 @@
 use crate::component::canisters_prov::with_cans;
 use crate::component::canisters_prov::{AuthCansProvider, WithAuthCans};
 use crate::component::content_upload::YoutubeUpload;
+use crate::component::menu_item::MenuLink;
 use crate::component::modal::Modal;
 use crate::component::spinner::Spinner;
 use crate::component::title::Title;
@@ -21,24 +22,6 @@ use yral_canisters_common::utils::profile::ProfileDetails;
 
 #[derive(Default, Clone, Copy)]
 pub struct AuthorizedUserToSeedContent(pub RwSignal<Option<(bool, Principal)>>);
-
-#[component]
-fn MenuItem(
-    #[prop(into)] text: String,
-    #[prop(into)] href: String,
-    #[prop(into)] icon: icondata::Icon,
-    #[prop(into, optional)] target: String,
-) -> impl IntoView {
-    view! {
-        <a href=href class="grid grid-cols-3 items-center w-full" target=target>
-            <div class="flex flex-row gap-4 items-center col-span-2">
-                <Icon class="text-2xl" icon=icon />
-                <span class="text-wrap">{text}</span>
-            </div>
-            <Icon class="text-2xl justify-self-end" icon=icondata::AiRightOutlined />
-        </a>
-    }
-}
 
 #[component]
 fn MenuFooter() -> impl IntoView {
@@ -252,26 +235,21 @@ pub fn Menu() -> impl IntoView {
             </div>
             <div class="flex flex-col py-12 px-8 gap-8 w-full text-lg">
                 <NsfwToggle />
-                <MenuItem
+                <MenuLink
                     href="/account-transfer"
                     text="HotorNot Account Transfer"
                     icon=icondata::FaMoneyBillTransferSolid
                 />
-                <MenuItem href="/refer-earn" text="Refer & Earn" icon=icondata::AiGiftFilled />
-                <MenuItem href="/leaderboard" text="Leaderboard" icon=icondata::ChTrophy />
-                <MenuItem
+                <MenuLink href="/refer-earn" text="Refer & Earn" icon=icondata::AiGiftFilled />
+                <MenuLink href="/leaderboard" text="Leaderboard" icon=icondata::ChTrophy />
+                <MenuLink
                     href=social::TELEGRAM
                     text="Talk to the team"
-                    icon=icondata::BiWhatsapp
+                    icon=icondata::BiTelegram
                     target="_blank"
                 />
-                <MenuItem href="/terms-of-service" text="Terms of Service" icon=icondata::TbBook2 />
-                <MenuItem href="/privacy-policy" text="Privacy Policy" icon=icondata::TbLock />
-                <MenuItem href="/settings" text="Settings" icon=icondata::BiCogRegular />
-                <Show when=is_connected>
-                    <MenuItem href="/logout" text="Logout" icon=icondata::FiLogOut />
-                </Show>
-            // <MenuItem href="/install-app" text="Install App" icon=icondata::TbDownload/>
+                <MenuLink href="/settings" text="Settings" icon=icondata::BiCogRegular />
+                <MenuLink href="/account-help" text="Account & Help" icon=icondata::FiExternalLink />
             </div>
             <MenuFooter />
         </div>
