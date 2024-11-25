@@ -43,30 +43,41 @@ fn MenuFooter() -> impl IntoView {
 }
 
 #[component]
-pub fn AccountHelp() -> impl IntoView {
-    let (is_connected, _) = account_connected_reader();
-    let show_delete_modal = create_rw_signal(false);
-    let show_confirm_delete_modal = create_rw_signal(false);
-    let show_confirm_perma_delete_modal = create_rw_signal(false);
-
+fn ConfirmDeleteModal(#[prop(into)] show: RwSignal<bool>) -> impl IntoView {
     view! {
-        <ShadowOverlay show=show_confirm_delete_modal>
+        <ShadowOverlay show=show>
             <div class="flex flex-col gap-4 p-6 mx-6 w-full lg:w-1/2 max-h-[65%] rounded-xl bg-neutral-900">
                 <h2 class="text-white font-bold text-2xl text-center">Are you sure you want to delete your account?</h2>
                 <a class="bg-[#E2017B] text-white px-0 py-3 rounded-full text-center" href="/logout">Yes</a>
-                <button class="text-white border px-0 py-3 rounded-full border-[#E2017B]" on:click=move |_| show_confirm_delete_modal.set(false)>No</button>
+                <button class="text-white border px-0 py-3 rounded-full border-[#E2017B]" on:click=move |_| show.set(false)>No</button>
             </div>
         </ShadowOverlay>
-        <ShadowOverlay show=show_confirm_perma_delete_modal>
+    }
+}
+
+#[component]
+fn ConfirmPermaDeleteModal(#[prop(into)] show: RwSignal<bool>) -> impl IntoView {
+    view! {
+        <ShadowOverlay show=show>
             <div class="flex flex-col gap-4 p-6 mx-6 w-full lg:w-1/2 max-h-[65%] rounded-xl bg-neutral-900">
                 <h2 class="text-white font-bold text-2xl text-center">Do you want to permanently delete your account?</h2>
                 <button class="bg-[#E2017B] text-white px-0 py-3 rounded-full" on:click=move |_| {
                     logging::log!("Do the delete process");
                 }>Yes</button> // might make anchor
-                <button class="text-white border px-0 py-3 rounded-full border-[#E2017B]" on:click=move |_| show_confirm_perma_delete_modal.set(false)>No</button>
+                <button class="text-white border px-0 py-3 rounded-full border-[#E2017B]" on:click=move |_| show.set(false)>No</button>
             </div>
         </ShadowOverlay>
-        <ShadowOverlay show=show_delete_modal>
+    }
+}
+
+#[component]
+fn DeleteModal(
+    #[prop(into)] show_self: RwSignal<bool>,
+    #[prop(into)] show_confirm_delete_modal: RwSignal<bool>,
+    #[prop(into)] show_confirm_perma_delete_modal: RwSignal<bool>,
+) -> impl IntoView {
+    view! {
+        <ShadowOverlay show=show_self>
             <div class="flex flex-col gap-4 px-6 pt-12 pb-6 mx-6 w-full lg:w-1/2 max-h-[65%] rounded-xl bg-neutral-900">
                 <div class="sad_gob_gob w-[175px] self-center">
                     <img class="size-full object-contain" src="/img/dont_leave_us_gobgob.png" />
@@ -75,19 +86,34 @@ pub fn AccountHelp() -> impl IntoView {
                 <div class="text-white text-center">Deleting account will keep you away. Once you log in again, your data will be restored.</div>
                 <div class="actions flex flex-col gap-4">
                     <button class="bg-[#E2017B] text-white px-0 py-3 rounded-full" on:click=move |_| {
-                        show_delete_modal.set(false);
+                        show_self.set(false);
                         show_confirm_delete_modal.set(true)
                     }>Delete Account</button>
-                    <button class="text-white border px-0 py-3 rounded-full border-[#E2017B]" on:click=move |_| show_delete_modal.set(false)>No, I want to stay</button>
+                    <button class="text-white border px-0 py-3 rounded-full border-[#E2017B]" on:click=move |_| show_self.set(false)>No, I want to stay</button>
                 </div>
                 <div class="perma_delete self-center mt-2">
                     <button class="text-white" on:click=move |_| {
-                        show_delete_modal.set(false);
+                        show_self.set(false);
                         show_confirm_perma_delete_modal.set(true)
                     }>Forget me permanantly</button>
                 </div>
             </div>
         </ShadowOverlay>
+    }
+}
+
+#[component]
+pub fn AccountHelp() -> impl IntoView {
+    let (is_connected, _) = account_connected_reader();
+    let show_delete_modal = create_rw_signal(false);
+    let show_confirm_delete_modal = create_rw_signal(false);
+    let show_confirm_perma_delete_modal = create_rw_signal(false);
+
+    view! {
+        <ConfirmDeleteModal show=show_confirm_delete_modal />
+        <ConfirmPermaDeleteModal show=show_confirm_perma_delete_modal />
+        <DeleteModal show_self=show_delete_modal show_confirm_delete_modal=show_confirm_delete_modal show_confirm_perma_delete_modal=show_confirm_perma_delete_modal />
+
         <div class="min-h-screen w-full flex flex-col text-white pt-2 pb-12 bg-black items-center divide-y divide-white/10">
             <div class="flex flex-col items-center w-full gap-20 pb-16">
                 <Title justify_center=false>
@@ -99,7 +125,7 @@ pub fn AccountHelp() -> impl IntoView {
             <div class="flex flex-col py-12 px-8 gap-8 w-full text-lg">
                 <MenuLink href="/terms-of-service" text="Terms of Service" icon=icondata::TbBook2 />
                 <MenuLink href="/privacy-policy" text="Privacy Policy" icon=icondata::TbLock />
-                <Show when=is_connected>
+                <Show when=move || !is_connected()>
                     <MenuLink href="/logout" text="Logout" icon=icondata::FiLogOut />
                     <MenuButton on_click=move |_| { show_delete_modal.set(true) } text="Delete Account" icon=icondata::RiDeleteBinSystemLine />
                 </Show>
