@@ -48,8 +48,8 @@ fn ConfirmDeleteModal(#[prop(into)] show: RwSignal<bool>) -> impl IntoView {
         <ShadowOverlay show=show>
             <div class="flex flex-col gap-4 p-6 mx-6 w-full lg:w-1/2 max-h-[65%] rounded-xl bg-neutral-900">
                 <h2 class="text-white font-bold text-2xl text-center">Are you sure you want to delete your account?</h2>
-                <a class="bg-[#E2017B] text-white px-0 py-3 rounded-full text-center" href="/logout">Yes</a>
-                <button class="text-white border px-0 py-3 rounded-full border-[#E2017B]" on:click=move |_| show.set(false)>No</button>
+                <a class="bg-primary-600 text-white px-0 py-3 rounded-full text-center" href="/logout">Yes</a>
+                <button class="text-white border px-0 py-3 rounded-full border-primary-600" on:click=move |_| show.set(false)>No</button>
             </div>
         </ShadowOverlay>
     }
@@ -61,10 +61,10 @@ fn ConfirmPermaDeleteModal(#[prop(into)] show: RwSignal<bool>) -> impl IntoView 
         <ShadowOverlay show=show>
             <div class="flex flex-col gap-4 p-6 mx-6 w-full lg:w-1/2 max-h-[65%] rounded-xl bg-neutral-900">
                 <h2 class="text-white font-bold text-2xl text-center">Do you want to permanently delete your account?</h2>
-                <button class="bg-[#E2017B] text-white px-0 py-3 rounded-full" on:click=move |_| {
+                <button class="bg-primary-600 text-white px-0 py-3 rounded-full" on:click=move |_| {
                     logging::log!("Do the delete process");
                 }>Yes</button> // might make anchor
-                <button class="text-white border px-0 py-3 rounded-full border-[#E2017B]" on:click=move |_| show.set(false)>No</button>
+                <button class="text-white border px-0 py-3 rounded-full border-primary-600" on:click=move |_| show.set(false)>No</button>
             </div>
         </ShadowOverlay>
     }
@@ -85,11 +85,11 @@ fn DeleteModal(
                 <h2 class="text-white font-bold text-2xl text-center">Delete Account</h2>
                 <div class="text-white text-center">Deleting account will keep you away. Once you log in again, your data will be restored.</div>
                 <div class="actions flex flex-col gap-4">
-                    <button class="bg-[#E2017B] text-white px-0 py-3 rounded-full" on:click=move |_| {
+                    <button class="bg-primary-600 text-white px-0 py-3 rounded-full" on:click=move |_| {
                         show_self.set(false);
                         show_confirm_delete_modal.set(true)
                     }>Delete Account</button>
-                    <button class="text-white border px-0 py-3 rounded-full border-[#E2017B]" on:click=move |_| show_self.set(false)>No, I want to stay</button>
+                    <button class="text-white border px-0 py-3 rounded-full border-primary-600" on:click=move |_| show_self.set(false)>No, I want to stay</button>
                 </div>
                 <div class="perma_delete self-center mt-2">
                     <button class="text-white" on:click=move |_| {
