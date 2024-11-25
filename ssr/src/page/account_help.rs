@@ -125,7 +125,7 @@ pub fn AccountHelp() -> impl IntoView {
             <div class="flex flex-col py-12 px-8 gap-8 w-full text-lg">
                 <MenuLink href="/terms-of-service" text="Terms of Service" icon=icondata::TbBook2 />
                 <MenuLink href="/privacy-policy" text="Privacy Policy" icon=icondata::TbLock />
-                <Show when=move || !is_connected()>
+                <Show when=is_connected>
                     <MenuLink href="/logout" text="Logout" icon=icondata::FiLogOut />
                     <MenuButton on_click=move |_| { show_delete_modal.set(true) } text="Delete Account" icon=icondata::RiDeleteBinSystemLine />
                 </Show>
