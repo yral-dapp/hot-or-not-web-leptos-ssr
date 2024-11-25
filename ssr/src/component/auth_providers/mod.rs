@@ -172,7 +172,7 @@ pub fn LoginProviders(show_modal: RwSignal<bool>, lock_closing: RwSignal<bool>) 
                     view! { <google::GoogleAuthProvider></google::GoogleAuthProvider> }
                 }
                 <div id="tnc" class="text-white text-center">
-                    By continuing you agree to our <a class="text-brandpink underline" href="/terms-of-service">Terms of Service</a>
+                    By continuing you agree to our <a class="text-primary-600 underline" href="/terms-of-service">Terms of Service</a>
                 </div>
             </div>
         </div>
