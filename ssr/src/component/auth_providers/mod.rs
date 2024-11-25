@@ -159,7 +159,7 @@ pub fn LoginProviders(show_modal: RwSignal<bool>, lock_closing: RwSignal<bool>) 
             <h1 class="text-xl">Login to Yral</h1>
             <img class="h-32 w-32 object-contain my-8" src="/img/logo.webp" />
             <span class="text-md">Continue with</span>
-            <div class="flex w-full gap-4">
+            <div class="flex flex-col w-full gap-4">
 
                 {
                     #[cfg(feature = "local-auth")]
@@ -171,7 +171,9 @@ pub fn LoginProviders(show_modal: RwSignal<bool>, lock_closing: RwSignal<bool>) 
                     #[cfg(any(feature = "oauth-ssr", feature = "oauth-hydrate"))]
                     view! { <google::GoogleAuthProvider></google::GoogleAuthProvider> }
                 }
-
+                <div id="tnc" class="text-white text-center">
+                    By continuing you agree to our <a class="text-brandpink underline" href="/terms-of-service">Terms of Service</a>
+                </div>
             </div>
         </div>
     }

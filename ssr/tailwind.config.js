@@ -4,6 +4,7 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        brandpink: "#E2017B",
         primary: {
           50: "rgb(var(--color-primary-50))",
           100: "rgb(var(--color-primary-100))",
