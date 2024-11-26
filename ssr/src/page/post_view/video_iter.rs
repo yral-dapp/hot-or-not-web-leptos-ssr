@@ -9,8 +9,9 @@ use leptos_use::storage::use_local_storage;
 use yral_canisters_client::post_cache::{self, NsfwFilter};
 
 use crate::{
-    consts::USER_CANISTER_ID_STORE, state::canisters::auth_canisters_store,
-    utils::posts::FetchCursor,
+    consts::USER_CANISTER_ID_STORE,
+    state::canisters::auth_canisters_store,
+    utils::{host::show_nsfw_content, posts::FetchCursor},
 };
 use yral_canisters_common::{utils::posts::PostDetails, Canisters, Error as CanistersError};
 
@@ -121,10 +122,18 @@ impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
                 user_canister_id = cans.user_canister();
             }
 
-            let top_posts_fut =
-                ml_feed.get_next_feed(&user_canister_id, self.cursor.limit as u32, video_queue);
+            let show_nsfw = show_nsfw_content();
+            let top_posts = if show_nsfw {
+                ml_feed
+                    .get_next_feed_nsfw(&user_canister_id, self.cursor.limit as u32, video_queue)
+                    .await
+            } else {
+                ml_feed
+                    .get_next_feed_clean(&user_canister_id, self.cursor.limit as u32, video_queue)
+                    .await
+            };
 
-            let top_posts = match top_posts_fut.await {
+            let top_posts = match top_posts {
                 Ok(top_posts) => top_posts,
                 Err(e) => {
                     return Err(ServerFnError::new(
@@ -164,6 +173,7 @@ impl<'a> VideoFetchStream<'a, true> {
         &self,
         chunks: usize,
         allow_nsfw: bool,
+        video_queue: Vec<PostDetails>,
     ) -> Result<FetchVideosRes<'a>, ServerFnError> {
         let cans_true = self.canisters;
 
@@ -173,7 +183,9 @@ impl<'a> VideoFetchStream<'a, true> {
 
         let top_posts = top_posts_fut.await?;
         if top_posts.is_empty() {
-            return self.fetch_post_uids_chunked(chunks, allow_nsfw).await;
+            return self
+                .fetch_post_uids_ml_feed_chunked(chunks, allow_nsfw, video_queue)
+                .await;
         }
 
         let end = false;
@@ -202,18 +214,18 @@ impl<'a> VideoFetchStream<'a, true> {
     ) -> Result<FetchVideosRes<'a>, ServerFnError> {
         if video_queue.len() < 10 {
             self.cursor.set_limit(15);
-            self.fetch_post_uids_mlfeed_cache_chunked(chunks, _allow_nsfw)
+            self.fetch_post_uids_mlfeed_cache_chunked(chunks, _allow_nsfw, video_queue)
                 .await
         } else {
             let res = self
-                .fetch_post_uids_ml_feed_chunked(chunks, _allow_nsfw, video_queue)
+                .fetch_post_uids_ml_feed_chunked(chunks, _allow_nsfw, video_queue.clone())
                 .await;
 
             match res {
                 Ok(res) => Ok(res),
                 Err(_) => {
                     self.cursor.set_limit(15);
-                    self.fetch_post_uids_mlfeed_cache_chunked(chunks, _allow_nsfw)
+                    self.fetch_post_uids_mlfeed_cache_chunked(chunks, _allow_nsfw, video_queue)
                         .await
                 }
             }

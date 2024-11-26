@@ -70,6 +70,84 @@ pub mod ml_feed_grpcweb {
                 })
                 .collect())
         }
+
+        pub async fn get_next_feed_clean(
+            mut self,
+            canister_id: &Principal,
+            limit: u32,
+            filter_list: Vec<PostDetails>,
+        ) -> Result<Vec<PostId>, tonic::Status> {
+            let request = FeedRequest {
+                canister_id: canister_id.to_string(),
+                filter_posts: filter_list
+                    .iter()
+                    .map(|item| PostItem {
+                        post_id: item.post_id as u32,
+                        canister_id: item.canister_id.to_string(),
+                        video_id: item.uid.clone(),
+                    })
+                    .collect(),
+                num_results: limit,
+            };
+
+            let response = self.client.get_feed_clean(request).await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Internal,
+                    format!("Error fetching posts: {:?}", e),
+                )
+            })?;
+
+            let feed_res = response.into_inner().feed;
+
+            Ok(feed_res
+                .iter()
+                .map(|item| {
+                    (
+                        Principal::from_text(&item.canister_id).unwrap(),
+                        item.post_id as u64,
+                    )
+                })
+                .collect())
+        }
+
+        pub async fn get_next_feed_nsfw(
+            mut self,
+            canister_id: &Principal,
+            limit: u32,
+            filter_list: Vec<PostDetails>,
+        ) -> Result<Vec<PostId>, tonic::Status> {
+            let request = FeedRequest {
+                canister_id: canister_id.to_string(),
+                filter_posts: filter_list
+                    .iter()
+                    .map(|item| PostItem {
+                        post_id: item.post_id as u32,
+                        canister_id: item.canister_id.to_string(),
+                        video_id: item.uid.clone(),
+                    })
+                    .collect(),
+                num_results: limit,
+            };
+
+            let response = self.client.get_feed_nsfw(request).await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Internal,
+                    format!("Error fetching posts: {:?}", e),
+                )
+            })?;
+
+            let feed_res = response.into_inner().feed;
+
+            Ok(feed_res
+                .iter()
+                .map(|item| {
+                    (
+                        Principal::from_text(&item.canister_id).unwrap(),
+                        item.post_id as u64,
+                    )
+                })
+                .collect())
+        }
     }
 }
 
