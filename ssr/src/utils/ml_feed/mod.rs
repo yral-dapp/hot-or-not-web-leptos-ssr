@@ -192,7 +192,6 @@ pub mod ml_feed_grpcweb {
 #[cfg(feature = "ssr")]
 pub mod ml_feed_grpc {
     use super::*;
-    use yral_canisters_common::utils::posts::PostDetails;
 
     pub mod ml_feed_proto {
         tonic::include_proto!("ml_feed");
@@ -200,7 +199,7 @@ pub mod ml_feed_grpc {
 
     pub async fn get_coldstart_feed() -> Result<Vec<PostId>, tonic::Status> {
         use crate::utils::ml_feed::ml_feed_grpc::ml_feed_proto::{
-            ml_feed_client::MlFeedClient, FeedRequest, PostItem,
+            ml_feed_client::MlFeedClient, FeedRequest,
         };
         use tonic::transport::{Channel, ClientTlsConfig};
 

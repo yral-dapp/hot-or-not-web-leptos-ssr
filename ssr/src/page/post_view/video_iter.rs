@@ -178,10 +178,10 @@ impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
             use crate::utils::ml_feed::ml_feed_grpcweb::MLFeed;
 
             let ml_feed: MLFeed = expect_context();
-            
+
             let top_posts = ml_feed
-                    .get_next_feed_coldstart(self.cursor.limit as u32, video_queue)
-                    .await;
+                .get_next_feed_coldstart(self.cursor.limit as u32, video_queue)
+                .await;
 
             let top_posts = match top_posts {
                 Ok(top_posts) => top_posts,
