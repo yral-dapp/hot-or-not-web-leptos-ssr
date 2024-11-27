@@ -233,13 +233,6 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
                         for uid in chunk {
                             let post_detail = try_or_redirect!(uid);
 
-                            leptos::logging::log!(
-                                "post_detail: {:?} {:?} {:?}",
-                                post_detail.canister_id.to_text(),
-                                post_detail.post_id,
-                                post_detail.uid
-                            );
-
                             if video_queue.len() < 10 {
                                 video_queue.push(post_detail);
                             } else {
