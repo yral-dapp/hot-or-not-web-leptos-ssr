@@ -73,7 +73,6 @@ pub fn CommonPostViewWithUpdates(
                 return;
             }
             f.start = 1;
-            f.limit = 1;
         });
         video_queue.update_untracked(|v| {
             if v.len() > 1 {
