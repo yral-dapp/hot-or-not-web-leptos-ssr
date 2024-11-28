@@ -47,7 +47,7 @@ async fn get_top_post_id_mlcache() -> Result<Option<(Principal, u64)>, ServerFnE
     let jar: SignedCookieJar = extract_with_state(&key).await?;
     let principal = extract_principal_from_cookie(&jar)?;
     if principal.is_none() {
-        return get_top_post_id().await;
+        return get_top_post_id_mlfeed().await;
     }
 
     let canisters = unauth_canisters();
@@ -55,7 +55,7 @@ async fn get_top_post_id_mlcache() -> Result<Option<(Principal, u64)>, ServerFnE
         .get_individual_canister_by_user_principal(principal.unwrap())
         .await?;
     if user_canister_id.is_none() {
-        return get_top_post_id().await;
+        return get_top_post_id_mlfeed().await;
     }
 
     let user_canister = canisters.individual_user(user_canister_id.unwrap()).await;
@@ -65,7 +65,7 @@ async fn get_top_post_id_mlcache() -> Result<Option<(Principal, u64)>, ServerFnE
         .await
         .unwrap();
     if top_items.is_empty() {
-        return get_top_post_id().await;
+        return get_top_post_id_mlfeed().await;
     }
 
     let Some(top_item) = top_items.first() else {
@@ -75,30 +75,27 @@ async fn get_top_post_id_mlcache() -> Result<Option<(Principal, u64)>, ServerFnE
     Ok(Some((top_item.canister_id, top_item.post_id)))
 }
 
-// TODO: Use this when we shift to the new ml feed for first post
-// #[server]
-// async fn get_top_post_id_mlfeed() -> Result<Option<(Principal, u64)>, ServerFnError> {
-//     use crate::utils::ml_feed::ml_feed_grpc::get_start_feed;
+#[server]
+async fn get_top_post_id_mlfeed() -> Result<Option<(Principal, u64)>, ServerFnError> {
+    use crate::utils::ml_feed::ml_feed_grpc::get_coldstart_feed;
 
-//     let canisters = unauth_canisters();
-//     let user_canister_principal = canisters.user_canister();
-//     let top_posts_fut = get_start_feed(&user_canister_principal, 1, vec![]);
+    let top_posts_fut = get_coldstart_feed();
 
-//     let top_items = match top_posts_fut.await {
-//         Ok(top_posts) => top_posts,
-//         Err(e) => {
-//             log::error!("failed to fetch top post ml feed: {:?}", e);
-//             return Err(ServerFnError::ServerError(
-//                 "failed to fetch top post ml feed".to_string(),
-//             ));
-//         }
-//     };
-//     let Some(top_item) = top_items.first() else {
-//         return Ok(None);
-//     };
+    let top_items = match top_posts_fut.await {
+        Ok(top_posts) => top_posts,
+        Err(e) => {
+            log::error!("failed to fetch top post ml feed: {:?}", e);
+            return Err(ServerFnError::ServerError(
+                "failed to fetch top post ml feed".to_string(),
+            ));
+        }
+    };
+    let Some(top_item) = top_items.first() else {
+        return Ok(None);
+    };
 
-//     Ok(Some((top_item.0, top_item.1)))
-// }
+    Ok(Some((top_item.0, top_item.1)))
+}
 
 #[component]
 pub fn CreatorDaoRootPage() -> impl IntoView {
