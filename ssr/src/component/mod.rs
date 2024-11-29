@@ -14,6 +14,7 @@ pub mod ic_symbol;
 pub mod infinite_scroller;
 pub mod loading;
 pub mod login_modal;
+pub mod menu_item;
 pub mod modal;
 pub mod nav;
 pub mod nav_icons;

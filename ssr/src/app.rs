@@ -1,3 +1,4 @@
+use crate::page::account_help::AccountHelp;
 use crate::page::icpump::ai::ICPumpAi;
 use crate::page::icpump::ICPumpLanding;
 
@@ -148,6 +149,7 @@ pub fn App() -> impl IntoView {
                         <Route path="/upload" view=UploadPostPage/>
                         <Route path="/error" view=ServerErrorPage/>
                         <Route path="/menu" view=Menu/>
+                        <Route path="/account-help" view=AccountHelp/>
                         <Route path="/settings" view=Settings/>
                         <Route path="/refer-earn" view=ReferEarn/>
                         <Route path="/profile/:id/:tab" view=ProfileView/>
