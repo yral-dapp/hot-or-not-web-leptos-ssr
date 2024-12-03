@@ -170,6 +170,7 @@ macro_rules! input_component {
             #[prop(into)] placeholder: String,
             #[prop(optional)] initial_value: Option<String>,
             #[prop(optional, into)] input_type: Option<String>,
+            #[prop(default = false)] disabled: bool,
             updater: U,
             validator: V,
         ) -> impl IntoView {
@@ -233,6 +234,7 @@ macro_rules! input_component {
                         placeholder=placeholder
                         class=move || input_class()
                         type=input_type.unwrap_or_else(|| "text".into() )
+                        disabled=disabled
                     />
                     <span class="text-red-500 font-semibold">
                         <Show when=move || show_error() && error()>
@@ -542,6 +544,7 @@ pub fn CreateTokenSettings() -> impl IntoView {
             </label>
             <form _ref=form_ref>
                 <InputBox
+                    disabled=true
                     heading="Transaction Fee (e8s)"
                     input_type="number"
                     placeholder="100"
@@ -550,6 +553,7 @@ pub fn CreateTokenSettings() -> impl IntoView {
                     initial_value=transaction_fee.get_untracked().e8s.unwrap_or(1).to_string()
                 />
                 <InputBox
+                    disabled=true
                     heading="Rejection Fee (Token)"
                     placeholder="1 Token"
                     updater=set_rejection_fee
@@ -557,6 +561,7 @@ pub fn CreateTokenSettings() -> impl IntoView {
                     initial_value=format_tokens(&rejection_fee.get_untracked())
                 />
                 <InputBox
+                    disabled=true
                     heading="Initial Voting Period (days)"
                     placeholder="4 days"
                     updater=set_initial_voting_period
@@ -564,6 +569,7 @@ pub fn CreateTokenSettings() -> impl IntoView {
                     initial_value=format_duration(&initial_voting_period.get_untracked())
                 />
                 <InputBox
+                    disabled=true
                     heading="Maximum wait for quiet deadline extention (days)"
                     placeholder="1 day"
                     updater=set_max_wait_deadline_extension
@@ -572,6 +578,7 @@ pub fn CreateTokenSettings() -> impl IntoView {
                 />
 
                 <InputBox
+                    disabled=true
                     heading="Minimum creation stake (token)"
                     placeholder="1 token"
                     updater=set_min_creation_stake
@@ -580,6 +587,7 @@ pub fn CreateTokenSettings() -> impl IntoView {
                 />
 
                 <InputBox
+                    disabled=true
                     heading="Minimum dissolve delay (months)"
                     placeholder="1 month"
                     updater=set_min_dissolve_delay
@@ -588,6 +596,7 @@ pub fn CreateTokenSettings() -> impl IntoView {
                 />
 
                 <InputBox
+                    disabled=true
                     heading="Age (duration in years)"
                     placeholder="4 years"
                     updater=set_age
@@ -596,6 +605,7 @@ pub fn CreateTokenSettings() -> impl IntoView {
                 />
 
                 <InputBox
+                    disabled=true
                     heading="Age (bonus %)"
                     placeholder="25%"
                     updater=set_age_bonus
@@ -604,6 +614,7 @@ pub fn CreateTokenSettings() -> impl IntoView {
                 />
 
                 <InputBox
+                    disabled=true
                     heading="Minimum participants"
                     placeholder="57"
                     input_type="number"
@@ -612,6 +623,7 @@ pub fn CreateTokenSettings() -> impl IntoView {
                     initial_value=min_participants.get_untracked().to_string()
                 />
                 <InputBox
+                    disabled=true
                     heading="Minimum direct participant icp"
                     placeholder="100,000 tokens"
                     updater=set_min_direct_participants_icp
@@ -621,6 +633,7 @@ pub fn CreateTokenSettings() -> impl IntoView {
                         .unwrap_or_default()
                 />
                 <InputBox
+                    disabled=true
                     heading="Maximum direct participant icp"
                     placeholder="1000000 tokens"
                     updater=set_max_direct_participants_icp
@@ -630,6 +643,7 @@ pub fn CreateTokenSettings() -> impl IntoView {
                         .unwrap_or_default()
                 />
                 <InputBox
+                    disabled=true
                     heading="Minimum participant icp"
                     placeholder="10 tokens"
                     updater=set_min_participants_icp
@@ -637,6 +651,7 @@ pub fn CreateTokenSettings() -> impl IntoView {
                     initial_value=format_tokens(&min_participants_icp.get_untracked())
                 />
                 <InputBox
+                    disabled=true
                     heading="Maximum participant icp"
                     placeholder="10,000 tokens"
                     updater=set_max_participants_icp
@@ -651,6 +666,7 @@ pub fn CreateTokenSettings() -> impl IntoView {
             // />
             </form>
             <button
+                disabled=true
                 on:click=reset_settings
                 class="w-full flex justify-center underline text-sm text-white my-4 "
             >
