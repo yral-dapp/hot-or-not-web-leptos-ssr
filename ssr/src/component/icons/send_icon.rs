@@ -1,9 +1,9 @@
 use leptos::*;
 
 #[component]
-pub fn SendIcon(#[prop(optional)] classes: String, #[prop(optional)] filled: bool) -> impl IntoView {
+pub fn SendIcon(#[prop(optional, default = "w-full h-full".to_string())] classes: String, #[prop(optional)] filled: bool) -> impl IntoView {
     view! {
-        <svg class=classes viewBox="0 0 31 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg format!("{}" ,classes) viewBox="0 0 31 30" fill="none" xmlns="http://www.w3.org/2000/svg">
             <mask
                 id="mask0_500_15024"
                 style="mask-type:alpha"

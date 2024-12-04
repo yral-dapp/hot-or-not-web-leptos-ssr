@@ -1,6 +1,6 @@
 use leptos::*;
 
-pub struct BoardCardProps {
+pub struct PropsBoardCard {
 	pub image_url: String,
 	pub title: String,
 	pub symbol: String,
@@ -12,85 +12,78 @@ pub struct BoardCardProps {
 
 
 #[component]
-pub fn BoardCard(href: String, card: BoardCardProps) -> impl IntoView {
-    let (show_nsfw, set_show_nsfw) = signal(false);
+pub fn BoardCard(href: String, card: PropsBoardCard) -> impl IntoView {
+
+    let show_nsfw = create_rw_signal(false);
 
     view! {
-
-
-
-
-<div
-class="text-xs w-full py-3 px-3 md:px-4 flex rounded-lg flex-col gap-2 group transition-colors bg-[#131313] hover:from-[#626262] hover:to-[#3A3A3A] hover:bg-gradient-to-b font-kumbh"
->
-<div class="flex gap-3">
-	<div
-		style="box-shadow: 0px 0px 4px rgba(255, 255, 255, 0.16);"
-		class="relative w-[7rem] h-[7rem] rounded-[4px] overflow-hidden shrink-0"
-	>
-		if card.nsfw && !show_nsfw.get() {
-			<button
-				on:click={() => (showNsfw = true)}
-				class="absolute inset-0 z-[2] w-full h-full backdrop-blur-[4px] bg-black/50 flex items-center justify-center rounded-[4px]"
-			>
-				<div class="text-xs flex flex-col items-center gap-1">
-					<EyeHiddenIcon class="w-6 h-6" />
-					<span class="uppercase">"Nsfw"</span>
+			<div class="flex flex-col gap-2 py-3 px-3 w-full text-xs rounded-lg transition-colors md:px-4 hover:bg-gradient-to-b group bg-[#131313] font-kumbh hover:from-[#626262] hover:to-[#3A3A3A]">
+				<div class="flex gap-3">
+					<div
+						style="box-shadow: 0px 0px 4px rgba(255, 255, 255, 0.16);"
+						class="overflow-hidden relative w-[7rem] h-[7rem] rounded-[4px] shrink-0"
+					>
+						<Show when=move || card.nsfw.unwrap_or(false) && !show_nsfw.get()>
+							<button
+								on:click=move |_| show_nsfw.set(!show_nsfw.get())
+								class="flex absolute inset-0 justify-center items-center w-full h-full z-[2] backdrop-blur-[4px] bg-black/50 rounded-[4px]"
+							>
+								<div class="flex flex-col gap-1 items-center text-xs">
+									<EyeHiddenIcon classes="w-6 h-6".to_string() />
+									<span class="uppercase">nsfw</span>
+								</div>
+							</button>
+						</Show>
+						<img alt=card.title.clone() src=card.image_url class="w-full h-full" />
+					</div>
+					<div class="flex flex-col gap-3 text-left">
+						<div class="flex gap-4 justify-between items-center w-full text-lg">
+							<span class="font-medium shrink line-clamp-1">{card.title}</span>
+							<span class="font-bold shrink-0">{card.symbol}</span>
+						</div>
+						<span class="text-sm transition-colors group-hover:text-white line-clamp-2 text-[#A0A1A6]">
+							{card.description}
+						</span>
+						<div class="flex gap-2 justify-between items-center text-sm font-medium group-hover:text-white text-[#505156]">
+							<span class="line-clamp-1">"Created by" {card.created_by}</span>
+							<span class="shrink-0">{card.created_at}</span>
+						</div>
+					</div>
 				</div>
-			</button>
-		}
-		<img alt={card.title} src={card.imageUrl} class="w-full h-full" />
-	</div>
-	<div class="flex flex-col gap-3 text-left">
-		<div class="flex w-full items-center justify-between gap-4 text-lg">
-			<span class="shrink line-clamp-1 font-medium">{card.title}</span>
-			<span class="shrink-0 font-bold">{card.symbol}</span>
-		</div>
-		<span class="line-clamp-2 text-sm transition-colors text-[#A0A1A6] group-hover:text-white">
-			{card.description}
-		</span>
-		<div
-			class="flex items-center justify-between gap-2 text-[#505156] group-hover:text-white text-sm font-medium"
-		>
-			<span class="line-clamp-1">Created by {card.createdBy}</span>
-			<span class="shrink-0">{card.createdAt}</span>
-		</div>
-	</div>
-</div>
-<div class="flex items-center justify-between gap-4 p-2">
-	<BoardCardButton label="Send" href="#" >
-		<SendIcon classes="w-full h-full" />
-	</BoardCardButton>
-	<BoardCardButton label="Buy/Sell" href="#" >
-		<ArrowLeftRightIcon classes="w-full h-full" />
-	</BoardCardButton>
-	<BoardCardButton label="Airdrop" href="#" >
-		<AirdropIcon classes="w-full h-full" />
-	</BoardCardButton>
-	<BoardCardButton label="Share" href="#" >
-		<ShareIcon classes="w-full h-full" />
-	</BoardCardButton>
-	<BoardCardButton label="Details" href="#" >
-		<ChevronRightIcon classes="w-full h-full" />
-	</BoardCardButton>
-</div>
-</div>
-
-		}
-	}
+				<div class="flex gap-4 justify-between items-center p-2">
+					<BoardCardButton label="Send".to_string() href="#".to_string()>
+						<SendIcon classes="w-full h-full".to_string() />
+					</BoardCardButton>
+					<BoardCardButton label="Buy/Sell".to_string() href="#".to_string()>
+						<ArrowLeftRightIcon classes="w-full h-full".to_string() />
+					</BoardCardButton>
+					<BoardCardButton label="Airdrop".to_string() href="#".to_string()>
+						<AirdropIcon classes="w-full h-full".to_string() />
+					</BoardCardButton>
+					<BoardCardButton label="Share".to_string() href="#".to_string()>
+						<ShareIcon classes="w-full h-full".to_string() />
+					</BoardCardButton>
+					<BoardCardButton label="Details".to_string() href=href>
+						<ChevronRightIcon classes="w-full h-full".to_string() />
+					</BoardCardButton>
+				</div>
+			</div>
+		} 
+}
 
 #[component]
-pub fn BoardCardButton(href: String, label: String, child: Children) -> impl IntoView {
-    view! {
+pub fn BoardCardButton(href: String, label: String, children: Children) -> impl IntoView {
+	view! {
 		<a
-			{href}
-			class="text-xs flex flex-col gap-1 items-center transition-colors group-hover:text-white justify-center text-[#A0A1A6]"
+			href=href
+			class="flex flex-col gap-1 justify-center items-center text-xs transition-colors group-hover:text-white text-[#A0A1A6]"
 		>
-			<div class="w-[1.875rem] h-[1.875rem]">{child()}</div>
+			<div class="w-[1.875rem] h-[1.875rem]">
+				{children()}
+			</div>
 
 			<div>{label}</div>
 		</a>
 	}
-	}
-	
+}	
 

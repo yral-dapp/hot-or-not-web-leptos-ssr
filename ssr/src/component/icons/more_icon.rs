@@ -1,7 +1,7 @@
 use leptos::*;
 
 #[component]
-pub fn MoreIcon(#[prop(optional)] classes: String) -> impl IntoView {
+pub fn MoreIcon(#[prop(optional, default = "w-full h-full".to_string())] classes: String) -> impl IntoView {
     view! {
         <svg
             xmlns="http://www.w3.org/2000/svg"
