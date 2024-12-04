@@ -3,6 +3,9 @@ module.exports = {
   content: ["./ssr/*.html", "./ssr/src/**/*.rs"],
   theme: {
     extend: {
+      fontFamily: {
+        kumbh: ["Kumbh Sans", "sans-serif"],
+      },
       colors: {
         primary: {
           50: "rgb(var(--color-primary-50))",
@@ -19,12 +22,10 @@ module.exports = {
         },
       },
       keyframes: {
-        "blink-colors": {
-          "0%": { color: "red" },
-          "25%": { color: "lime" },
-          "50%": { color: "yellow" },
-          "75%": { color: "fuchsia" },
-          "100%": { color: "blue" },
+        shimmer: {
+          to: {
+            backgroundPositionX: "0%",
+          },
         },
         "searching-a-1": {
           "0%, 49%": { opacity: 1 },
@@ -36,7 +37,7 @@ module.exports = {
         },
       },
       animation: {
-        "blink-colors": "blink-colors 5s step-end infinite",
+        shimmer: "shimmer 1s infinite linear",
         "searching-a-1": "searching-a-1 2s infinite",
         "searching-a-2": "searching-a-2 2s infinite",
       },
