@@ -22,6 +22,7 @@ pub mod nav_icons;
 pub mod onboarding_flow;
 pub mod option;
 pub mod overlay;
+pub mod page_selector;
 pub mod profile_placeholders;
 pub mod scrolling_post_view;
 pub mod share_popup;
