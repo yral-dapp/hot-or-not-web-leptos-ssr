@@ -7,6 +7,7 @@ use crate::utils::token::icpump::IcpumpTokenInfo;
 use crate::{component::infinite_scroller::InfiniteScroller, state::canisters::unauth_canisters};
 use leptos::*;
 use leptos_icons::*;
+use crate::component::icons::{send_icon::SendIcon, arrow_left_right_icon::ArrowLeftRightIcon, airdrop_icon::AirdropIcon, share_icon::ShareIcon, chevron_right_icon::ChevronRightIcon};
 
 #[component]
 pub fn TokenViewFallback() -> impl IntoView {
@@ -149,5 +150,65 @@ pub fn TokenList(user_principal: Principal, user_canister: Principal) -> impl In
             />
 
         </div>
+    }
+}
+
+
+
+#[component]
+fn WalletCard(
+    icon_url:String,
+    token_name:String,
+    token_symbol:String,
+    balance:f64,
+) -> impl IntoView {
+    view! {
+
+        <div class="flex flex-col gap-4 bg-[#131313] rounded-lg w-full p-4 font-kumbh">
+        <div class="w-full flex items-center justify-between p-3 rounded-[4px] bg-[#202125]">
+            <div class="flex items-center gap-2">
+                <img src={icon_url} alt={token_name.clone()} class="w-8 h-8 rounded-full object-cover" />
+                <div class="text-sm font-medium uppercase">{token_name}</div>
+            </div>
+            <div class="flex flex-col items-end">
+                <div class="text-lg font-medium">{balance}</div>
+                <div class="text-xs">{token_symbol}</div>
+            </div>
+        </div>
+        <div class="flex items-center justify-around">
+           <ActionButton href="#".to_string() label="Send".to_string() >
+           <SendIcon classes="h-6 w-6".to_string() />
+           </ActionButton>
+           <ActionButton href="#".to_string() label="Swap".to_string() >
+            <ArrowLeftRightIcon classes="h-6 w-6".to_string() />
+           </ActionButton>
+           <ActionButton href="#".to_string() label="Airdrop".to_string() >
+            <AirdropIcon classes="h-6 w-6".to_string() />
+           </ActionButton>
+            <ActionButton href="#".to_string() label="Share".to_string() >
+            <ShareIcon classes="h-6 w-6".to_string() />
+           </ActionButton>
+           <ActionButton href="#".to_string() label="Details".to_string() >
+            <ChevronRightIcon classes="h-6 w-6".to_string() />
+           </ActionButton>
+        </div>
+    </div>
+    
+    }
+}
+
+#[component]
+fn ActionButton(
+    children:Children,
+    href: String,
+    label: String,
+) -> impl IntoView {
+    view! {
+        <a href=href class="flex flex-col flex-1 gap-1 items-center justify-center text-[#A0A1A6]">
+            <div class="flex items-center justify-center gap-4">
+                {children()}
+            </div>
+            <div class="text-sm">{label}</div>
+        </a>
     }
 }
