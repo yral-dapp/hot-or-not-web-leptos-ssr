@@ -11,6 +11,7 @@ use leptos_router::{use_params, Redirect};
 use tokens::TokenList;
 use yral_canisters_common::utils::profile::ProfileDetails;
 use yral_canisters_common::Canisters;
+use crate::component::icons::notification_icon::NotificationIcon;
 
 use crate::{
     component::{canisters_prov::AuthCansProvider, connect::ConnectLogin},
@@ -31,22 +32,23 @@ fn ProfileGreeter(details: ProfileDetails, is_own_account: bool) -> impl IntoVie
     );
 
     view! {
-        <div class="flex flex-col">
-            {is_own_account
-                .then(|| {
-                    view! { <span class="text-white/50 text-md">Welcome!</span> }
-                })} <div class="flex flex-row gap-2">
-                <span class="text-lg text-white md:text-xl truncate">
-                    // TEMP: Workaround for hydration bug until leptos 0.7
+        <div class="w-full flex items-center justify-between px-4 pb-2 pt-5 gap-10 mx-auto max-w-md">
+            <div class="flex items-center">
+                <img
+                    src=details.profile_pic_or_random()
+                    alt="Profile picture"
+                    class="w-8 h-8 rounded-full object-cover shrink-0"
+                />
+                <span class="line-clamp-2 text-sm text-[#A0A1A6] pl-2">
+                // TEMP: Workaround for hydration bug until leptos 0.7
                     // class=("md:w-5/12", move || !is_connected())
                     {details.display_name_or_fallback()}
-
                 </span>
                 <ShareButtonWithFallbackPopup share_link message />
             </div>
-        </div>
-        <div class="justify-self-end w-16 rounded-full aspect-square overflow-clip">
-            <img class="object-cover w-full h-full" src=details.profile_pic_or_random() />
+            <a href="/wallet/notifications" class="text-xl font-semibold">
+                <NotificationIcon show_dot=false classes="w-8 h-8".to_string() />
+            </a>
         </div>
     }
 }
@@ -163,87 +165,131 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
         },
     );
     view! {
-        <div>
-            <div class="flex flex-col gap-4 px-4 pt-4 pb-12 bg-black min-h-dvh">
-                <div class="grid grid-cols-2 grid-rows-1 items-center w-full">
-                    <Suspense>
-                        {move || {
-                            let profile_details = try_or_redirect_opt!(profile_info_res()?);
-                            let is_own_account = try_or_redirect_opt!(is_own_account()?);
-                            Some(
-                                view! { <ProfileGreeter details=profile_details is_own_account /> },
-                            )
-                        }}
-                    </Suspense>
-                </div>
-                <div class="flex flex-col items-center mt-6 w-full text-white">
-                    <Suspense>
-                        {move || {
-                            let is_own_account = try_or_redirect_opt!(is_own_account() ?);
-                            let balance = try_or_redirect_opt!(balance_fetch() ?);
-                            Some(
-                                view! {
-                                    <span class="uppercase lg:text-lg text-md">
-                                        {if is_own_account {
-                                            "Your Coyns Balance"
-                                        } else {
-                                            "Coyns Balance"
-                                        }}
-                                    </span>
-                                    <div class="text-xl lg:text-2xl">{balance}</div>
-                                },
-                            )
-                        }}
-                    </Suspense>
-                </div>
+        <div class="flex flex-col gap-4 px-4 pt-4 pb-12 bg-black min-h-dvh font-kumbh">
+            
+                <Suspense>
+                    {move || {
+                        let profile_details = try_or_redirect_opt!(profile_info_res()?);
+                        let is_own_account = try_or_redirect_opt!(is_own_account()?);
+                        Some(
+                            view! { <ProfileGreeter details=profile_details is_own_account /> },
+                        )
+                    }}
+                </Suspense>
+            
+            <div class="flex flex-col items-center mt-6 w-full text-white">
                 <Suspense>
                     {move || {
                         let is_own_account = try_or_redirect_opt!(is_own_account() ?);
+                        let balance = try_or_redirect_opt!(balance_fetch() ?);
                         Some(
                             view! {
-                                <Show when=move || !is_connected() && is_own_account>
-                                    <div class="flex flex-col items-center py-5 w-full">
-                                        <div class="flex flex-row items-center w-9/12 md:w-5/12">
-                                            <ConnectLogin
-                                                login_text="Login to claim your COYNs"
-                                                cta_location="wallet"
-                                            />
-                                        </div>
-                                    </div>
-                                </Show>
+                                <span class="uppercase lg:text-lg text-md">
+                                    {if is_own_account {
+                                        "Your Coyns Balance"
+                                    } else {
+                                        "Coyns Balance"
+                                    }}
+                                </span>
+                                <div class="text-xl lg:text-2xl">{balance}</div>
                             },
                         )
                     }}
                 </Suspense>
-                <div class="flex flex-col gap-2 w-full">
-                    <Suspense>
-                        {move || {
-                            let is_own_account = try_or_redirect_opt!(is_own_account()?);
-                            Some(
-                                view! {
-                                    <div class="flex flex-row justify-between items-end w-full">
-                                        <span class="text-sm text-white md:text-md">
-                                            {if is_own_account { "My Tokens" } else { "Tokens" }}
-                                        </span>
+            </div>
+            <Suspense>
+                {move || {
+                    let is_own_account = try_or_redirect_opt!(is_own_account() ?);
+                    Some(
+                        view! {
+                            <Show when=move || !is_connected() && is_own_account>
+                                <div class="flex flex-col items-center py-5 w-full">
+                                    <div class="flex flex-row items-center w-9/12 md:w-5/12">
+                                        <ConnectLogin
+                                            login_text="Login to claim your COYNs"
+                                            cta_location="wallet"
+                                        />
                                     </div>
-                                },
-                            )
-                        }}
-                    </Suspense>
-                    <div class="flex flex-col gap-2 items-center">
-                        <Suspense>
-                            {move || {
-                                let canister_id = try_or_redirect_opt!(canister_id() ?);
-                                Some(
-                                    view! {
-                                        <TokenList user_principal=canister_id.1 user_canister=canister_id.0 />
-                                    },
-                                )
-                            }}
-                        </Suspense>
-                    </div>
+                                </div>
+                            </Show>
+                        },
+                    )
+                }}
+            </Suspense>
+            <div class="h-full w-full py-8">
+            <div class="flex flex-col items-center justify-center gap-4 max-w-md mx-auto px-4">
+                <div class="font-kumbh self-start pb-4 font-bold text-xl">All tokens</div>
+                <Suspense>
+                    {move || {
+                        let canister_id = try_or_redirect_opt!(canister_id() ?);
+                        Some(
+                            view! {
+                                <TokenList user_principal=canister_id.1 user_canister=canister_id.0 />
+                            },
+                        )
+                    }}
+                </Suspense>
                 </div>
             </div>
         </div>
     }
+}
+
+
+#[component]
+fn WalletCard(
+    icon_url:String,
+    token_name:String,
+    token_symbol:String,
+    balance:f64,
+) -> impl IntoView {
+    view! {
+
+        <div class="flex flex-col gap-4 bg-[#131313] rounded-lg w-full p-4 font-kumbh">
+        <div class="w-full flex items-center justify-between p-3 rounded-[4px] bg-[#202125]">
+            <div class="flex items-center gap-2">
+                <img src={icon_url} alt={token_name.clone()} class="w-8 h-8 rounded-full object-cover" />
+                <div class="text-sm font-medium uppercase">{token_name}</div>
+            </div>
+            <div class="flex flex-col items-end">
+                <div class="text-lg font-medium">{balance}</div>
+                <div class="text-xs">{token_symbol}</div>
+            </div>
+        </div>
+        <div class="flex items-center justify-around">
+           <ActionButton href="#".to_string() label="Send".to_string() >
+           <SendIcon classes="h-6 w-6" />
+           </ActionButton>
+           <ActionButton href="#".to_string() label="Swap".to_string() >
+            <ArrowLeftRightIcon classes="h-6 w-6" />
+           </ActionButton>
+           <ActionButton href="#".to_string() label="Airdrop".to_string() >
+            <AirdropIcon classes="h-6 w-6" />
+           </ActionButton>
+            <ActionButton href="#".to_string() label="Share".to_string() >
+            <ShareIcon classes="h-6 w-6" />
+           </ActionButton>
+           <ActionButton href="#".to_string() label="Details".to_string() >
+            <ChevronRightIcon classes="h-6 w-6" />
+           </ActionButton>
+        </div>
+    </div>
+    
+    }
+}
+
+#[component]
+fn ActionButton(
+    children:Children,
+    href: String,
+    label: String,
+) -> impl IntoView {
+view! {
+	<a href=href class="flex flex-col flex-1 gap-1 items-center justify-center text-[#A0A1A6]">
+		<div class="flex items-center justify-center gap-4">
+		    {children()}
+		</div>
+		<div class="text-sm">{label}</div>
+	</a>
+}
 }

@@ -1,5 +1,6 @@
 pub mod airdrop_logo;
 pub mod auth_providers;
+pub mod buttons;
 pub mod back_btn;
 pub mod base_route;
 pub mod bullet_loader;
