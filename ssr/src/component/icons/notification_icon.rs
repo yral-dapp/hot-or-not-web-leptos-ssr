@@ -5,7 +5,7 @@ pub fn NotificationIcon(#[prop(optional, default = "w-full h-full".to_string())]
 			if show_dot {
 				view! {
                     <svg
-                        format!("{}" ,classes)
+                        class=format!("{}" ,classes)
                         viewBox="0 0 32 32"
                         fill="none"
                         xmlns="http://www.w3.org/2000/svg"
@@ -30,7 +30,7 @@ pub fn NotificationIcon(#[prop(optional, default = "w-full h-full".to_string())]
 			} else {
 				view! {
                     <svg
-                        format!("{}" ,classes)
+                        class=format!("{}" ,classes)
                         viewBox="0 0 32 32"
                         fill="none"
                         xmlns="http://www.w3.org/2000/svg"

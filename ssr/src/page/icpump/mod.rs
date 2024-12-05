@@ -3,9 +3,14 @@ use std::collections::VecDeque;
 
 use futures::StreamExt;
 use leptos::*;
-use leptos_icons::*;
 
 use crate::component::spinner::FullScreenSpinner;
+use crate::component::icons::airdrop_icon::AirdropIcon;
+use crate::component::icons::arrow_left_right_icon::ArrowLeftRightIcon;
+use crate::component::icons::chevron_right_icon::ChevronRightIcon;
+use crate::component::icons::eye_hide_icon::EyeHiddenIcon;
+use crate::component::icons::send_icon::SendIcon;
+use crate::component::icons::share_icon::ShareIcon;
 use crate::consts::ICPUMP_LISTING_PAGE_SIZE;
 use crate::utils::token::firestore::init_firebase;
 use crate::utils::token::firestore::listen_to_documents;
@@ -14,66 +19,7 @@ use crate::utils::token::icpump::TokenListItem;
 
 pub mod ai;
 
-#[component]
-pub fn TokenListing(
-    details: TokenListItem,
-    #[prop(optional, default = false)] is_new_token: bool,
-) -> impl IntoView {
-    view! {
-        <a
-            href=details.link
-            class="relative flex h-fit max-h-[300px] w-full gap-2 overflow-hidden border border-transparent p-2 transition-colors hover:border-gray-700 active:border-gray-200"
-            class:tada=is_new_token
-        >
-            <div class="min-w-32 relative self-start p-1">
-                <img
-                    class="mr-4 w-32 h-auto select-none"
-                    class:blur-lg=details.is_nsfw
-                    src=details.logo
-                    alt=details.token_name.clone()
-                />
-                <Show
-                    when=move || details.is_nsfw
-                >
-                    <div class="absolute inset-0 flex items-center justify-center">
-                        <Icon
-                            icon=icondata::AiEyeInvisibleOutlined
-                            class="w-8 h-8 text-gray-200"
-                        />
-                    </div>
-                </Show>
-            </div>
-            <div class="gap-1 flex-col flex h-fit">
-                <div class="flex items-center justify-between gap-4 text-gray-200">
-                    <span
-                        class="line-clamp-1 w-full overflow-hidden"
-                        style="word-break: break-word;"
-                    >
-                        {details.token_name}
-                    </span>
-                    <span class="shrink-0 font-bold underline">
-                        <span class="text-gray-400 italic select-none">"$"</span>
-                        {details.token_symbol}
-                    </span>
-                </div>
-                <div
-                    title=details.description.clone()
-                    class="text-sm line-clamp-3 text-gray-400"
-                    style="word-break: break-word"
-                >
-                    {details.description}
-                </div>
-                <div class="text-xs text-gray-500 line-clamp-2 pr-10">
-                    "Created by: "<span class="select-all">{details.user_id}</span>
-                    <span class="invisible">{details.formatted_created_at.clone()}</span>
-                </div>
-                <span class="absolute bottom-3 right-2 shrink-0 text-xs text-gray-500 underline">
-                    {details.formatted_created_at}
-                </span>
-            </div>
-        </a>
-    }
-}
+
 
 #[component]
 pub fn ICPumpListing() -> impl IntoView {
@@ -205,3 +151,85 @@ pub fn ICPumpLanding() -> impl IntoView {
         </div>
     }
 }
+
+
+#[component]
+pub fn TokenListing(
+    details: TokenListItem,
+    #[prop(optional, default = false)] is_new_token: bool,
+) -> impl IntoView {
+    let show_nsfw = create_rw_signal(false);
+
+    view! {
+			<div 
+            class:tada=is_new_token
+            class="flex flex-col gap-2 py-3 px-3 w-full text-xs rounded-lg transition-colors md:px-4 hover:bg-gradient-to-b group bg-[#131313] font-kumbh hover:from-[#626262] hover:to-[#3A3A3A]">
+				<div class="flex gap-3">
+					<div
+						style="box-shadow: 0px 0px 4px rgba(255, 255, 255, 0.16);"
+						class="overflow-hidden relative w-[7rem] h-[7rem] rounded-[4px] shrink-0"
+					>
+						<Show when=move || details.is_nsfw && !show_nsfw.get()>
+							<button
+								on:click=move |_| show_nsfw.set(!show_nsfw.get())
+								class="flex absolute inset-0 justify-center items-center w-full h-full z-[2] backdrop-blur-[4px] bg-black/50 rounded-[4px]"
+							>
+								<div class="flex flex-col gap-1 items-center text-xs">
+									<EyeHiddenIcon classes="w-6 h-6".to_string() />
+									<span class="uppercase">nsfw</span>
+								</div>
+							</button>
+						</Show>
+						<img alt=details.token_name.clone() src=details.logo.clone() class="w-full h-full" />
+					</div>
+					<div class="flex flex-col gap-3 text-left">
+						<div class="flex gap-4 justify-between items-center w-full text-lg">
+							<span class="font-medium shrink line-clamp-1">{details.name}</span>
+							<span class="font-bold shrink-0">{details.token_symbol}</span>
+						</div>
+						<span class="text-sm transition-colors group-hover:text-white line-clamp-2 text-[#A0A1A6]">
+							{details.description}
+						</span>
+						<div class="flex gap-2 justify-between items-center text-sm font-medium group-hover:text-white text-[#505156]">
+							<span class="line-clamp-1">"Created by" {details.user_id}</span>
+							<span class="shrink-0">{details.formatted_created_at}</span>
+						</div>
+					</div>
+				</div>
+				<div class="flex gap-4 justify-between items-center p-2">
+					<BoardCardButton label="Send".to_string() href="#".to_string()>
+						<SendIcon classes="w-full h-full".to_string() />
+					</BoardCardButton>
+					<BoardCardButton label="Buy/Sell".to_string() href="#".to_string()>
+						<ArrowLeftRightIcon classes="w-full h-full".to_string() />
+					</BoardCardButton>
+					<BoardCardButton label="Airdrop".to_string() href="#".to_string()>
+						<AirdropIcon classes="w-full h-full".to_string() />
+					</BoardCardButton>
+					<BoardCardButton label="Share".to_string() href="#".to_string()>
+						<ShareIcon classes="w-full h-full".to_string() />
+					</BoardCardButton>
+					<BoardCardButton label="Details".to_string() href=details.link>
+						<ChevronRightIcon classes="w-full h-full".to_string() />
+					</BoardCardButton>
+				</div>
+			</div>
+		} 
+    
+}
+
+#[component]
+pub fn BoardCardButton(href: String, label: String, children: Children) -> impl IntoView {
+	view! {
+		<a
+			href=href
+			class="flex flex-col gap-1 justify-center items-center text-xs transition-colors group-hover:text-white text-[#A0A1A6]"
+		>
+			<div class="w-[1.875rem] h-[1.875rem]">
+				{children()}
+			</div>
+
+			<div>{label}</div>
+		</a>
+	}
+}	

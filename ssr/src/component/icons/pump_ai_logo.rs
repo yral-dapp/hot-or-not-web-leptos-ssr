@@ -3,7 +3,7 @@ use leptos::*;
 #[component]
 pub fn PumpAILogo(#[prop(optional, default = "w-full h-full".to_string())] classes: String, #[prop(optional)] animate: bool) -> impl IntoView {
     view! {
-        <svg format!("{}" ,classes) viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg class=format!("{}" ,classes) viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path
                 d="M59.3831 43.2173C42.6979 48.7298 37.1418 54.287 31.6292 70.9712C31.1757 72.3429 29.2361 72.3429 28.7826 70.9712C23.2702 54.286 17.713 48.73 1.02874 43.2173C-0.342912 42.7638 -0.342912 40.8242 1.02874 40.3708C17.7139 34.8583 23.27 29.3011 28.7826 12.6169C29.2362 11.2452 31.1757 11.2452 31.6292 12.6169C37.1417 29.3021 42.6989 34.8581 59.3831 40.3708C60.7547 40.8243 60.7547 42.7639 59.3831 43.2173Z"
                 fill="url(#paint0_linear_234_3401)"
