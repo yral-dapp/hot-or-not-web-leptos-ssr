@@ -38,7 +38,7 @@ pub fn AirdropPage() -> impl IntoView {
         if bg_img_loaded.get() && !claimed.get() {
           return view! {
             <div class="relative h-[24rem] z-[2]">
-            <div style="--y: 50px" class="flex flex-col items-center justify-center parachute">
+            <div style="--y: 50px" class="flex flex-col items-center justify-center airdrop-parachute">
               <img alt="Parachute" src=parachute_image class="h-72 shrink-0" />
       
               <div
@@ -53,12 +53,12 @@ pub fn AirdropPage() -> impl IntoView {
                 />
               </div>
             </div>
-            <img alt="Cloud" src=cloud_image style="--x: -50px" class="w-12 absolute -top-10 left-0 cloud" />
+            <img alt="Cloud" src=cloud_image style="--x: -50px" class="w-12 absolute -top-10 left-0 airdrop-cloud" />
             <img
               alt="Cloud"
               src=cloud_image
               style="--x: 50px"
-              class="w-16 absolute bottom-10 right-10 cloud"
+              class="w-16 absolute bottom-10 right-10 airdrop-cloud"
             />
           </div>
           };
