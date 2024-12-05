@@ -26,6 +26,7 @@ pub mod scrolling_post_view;
 pub mod share_popup;
 pub mod social;
 pub mod spinner;
+pub mod shimmer;
 pub mod title;
 pub mod toggle;
 pub mod token_confetti_symbol;

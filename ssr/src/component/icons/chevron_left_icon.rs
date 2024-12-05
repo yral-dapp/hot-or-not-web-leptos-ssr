@@ -4,7 +4,12 @@ use leptos::*;
 #[component]
 pub fn ChevronLeftIcon(#[prop(optional, default = "w-full h-full".to_string())] classes: String) -> impl IntoView {
     view! {
-        <svg class=format!("{}" ,classes) viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg
+            class=format!("{}", classes)
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+        >
             <path
                 fill-rule="evenodd"
                 clip-rule="evenodd"

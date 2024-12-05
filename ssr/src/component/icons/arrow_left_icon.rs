@@ -3,7 +3,12 @@ use leptos::*;
 #[component]
 pub fn ArrowLeftIcon(#[prop(optional, default = "w-full h-full".to_string())] classes: String) -> impl IntoView {
     view! {
-        <svg class=format!("{}" ,classes) viewBox="0 0 31 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg
+            class=format!("{}", classes)
+            viewBox="0 0 31 30"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+        >
             <mask
                 id="mask0_500_15031"
                 style="mask-type:alpha"
