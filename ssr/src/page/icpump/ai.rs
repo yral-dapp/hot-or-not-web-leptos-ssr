@@ -251,7 +251,7 @@ pub fn ICPumpAiPage2(
         <Header on_back=move || {
             reset_state.dispatch(());
             page_no.set(1);
-        }/>
+        } />
         <div class="flex flex-col pt-5 gap-2">
             <SearchInput
                 classes="mt-20".to_string()
@@ -296,19 +296,17 @@ pub fn ICPumpAiPage3(
         <Header on_back=move || {
             reset_state.dispatch(());
             page_no.set(1);
-        }/>
+        } />
         <div class="grow flex gap-4 flex-col-reverse mt-12 overflow-y-auto py-4">
             {move || {
                 if search_action.pending().get() {
                     return view! {
-                            <div class="flex w-1/2 items-center justify-start">
-                                <Shimmer />
-                            </div>
+                        <div class="flex w-1/2 items-center justify-start">
+                            <Shimmer />
+                        </div>
                     };
                 }
-                view! {
-                    <div class="invisible"/>
-                }
+                view! { <div class="invisible" /> }
             }}
             <For
                 each=move || chat.get().items.clone()
@@ -340,9 +338,9 @@ pub fn ICPumpAiPage3(
 
         </div>
         <div class="pb-4">
-            <SearchInput 
-                query=query 
-                on_focus=move || {} 
+            <SearchInput
+                query=query
+                on_focus=move || {}
                 on_submit=move |q| {
                     query.set(q);
                     search_action.dispatch(());
@@ -397,19 +395,19 @@ pub fn SearchInput(
 pub fn Header(on_back: impl Fn() + 'static) -> impl IntoView {
     view! {
         <div class="bg-black z-[4] absolute top-0 w-full select-none inset-x-0">
-        <div class="flex items-center justify-center relative gap-3 px-4 py-3 mx-auto max-w-md">
-            <PumpAILogo classes="h-5 w-5".to_string() />
-            <div class="text-xl font-semibold">Pump AI</div>
-            <button
-                class="absolute z-[5] left-0 px-4 h-full"
-                on:click=move |_| {
-                   on_back();
-                }
-            >
-                <ChevronLeftIcon classes="w-4 h-4".to_string() />
-            </button>
+            <div class="flex items-center justify-center relative gap-3 px-4 py-3 mx-auto max-w-md">
+                <PumpAILogo classes="h-5 w-5".to_string() />
+                <div class="text-xl font-semibold">Pump AI</div>
+                <button
+                    class="absolute z-[5] left-0 px-4 h-full"
+                    on:click=move |_| {
+                        on_back();
+                    }
+                >
+                    <ChevronLeftIcon classes="w-4 h-4".to_string() />
+                </button>
+            </div>
         </div>
-    </div>
     }
 }
 
