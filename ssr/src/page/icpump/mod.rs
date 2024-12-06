@@ -125,7 +125,7 @@ pub fn ICPumpLanding() -> impl IntoView {
                     "Create a new coin"
                 </LinkButton>
             </div>
-            <div class="flex flex-col gap-8 pb-16">
+            <div class="flex flex-col gap-8 pb-24">
                 <ICPumpListing />
             </div>
         </div>
