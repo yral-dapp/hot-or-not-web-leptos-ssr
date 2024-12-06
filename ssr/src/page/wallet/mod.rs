@@ -1,6 +1,7 @@
 pub mod tokens;
 pub mod transactions;
 pub mod txn;
+use crate::component::icons::notification_icon::NotificationIcon;
 use crate::{
     component::share_popup::ShareButtonWithFallbackPopup, state::canisters::unauth_canisters,
 };
@@ -11,7 +12,6 @@ use leptos_router::{use_params, Redirect};
 use tokens::TokenList;
 use yral_canisters_common::utils::profile::ProfileDetails;
 use yral_canisters_common::Canisters;
-use crate::component::icons::notification_icon::NotificationIcon;
 
 use crate::{
     component::{canisters_prov::AuthCansProvider, connect::ConnectLogin},
@@ -166,7 +166,7 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
     );
     view! {
         <div class="flex flex-col gap-4 px-4 pt-4 pb-12 bg-black min-h-dvh font-kumbh">
-            
+
                 <Suspense>
                     {move || {
                         let profile_details = try_or_redirect_opt!(profile_info_res()?);
@@ -176,7 +176,7 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
                         )
                     }}
                 </Suspense>
-            
+
             <div class="flex flex-col items-center mt-6 w-full text-white">
                 <Suspense>
                     {move || {
