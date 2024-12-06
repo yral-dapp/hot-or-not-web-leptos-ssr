@@ -1,7 +1,9 @@
 use leptos::*;
 
 #[component]
-pub fn WalletIcon(#[prop(optional, default = "w-full h-full".to_string())] classes: String) -> impl IntoView {
+pub fn WalletIcon(
+    #[prop(optional, default = "w-full h-full".to_string())] classes: String,
+) -> impl IntoView {
     view! {
         <svg
             class=format!("{}", classes)
@@ -18,4 +20,4 @@ pub fn WalletIcon(#[prop(optional, default = "w-full h-full".to_string())] class
             />
         </svg>
     }
-	}
+}

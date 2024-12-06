@@ -1,7 +1,10 @@
 use leptos::*;
 
 #[component]
-pub fn SendIcon(#[prop(optional, default = "w-full h-full".to_string())] classes: String, #[prop(optional)] filled: bool) -> impl IntoView {
+pub fn SendIcon(
+    #[prop(optional, default = "w-full h-full".to_string())] classes: String,
+    #[prop(optional)] filled: bool,
+) -> impl IntoView {
     view! {
         <svg
             class=format!("{}", classes)
@@ -32,4 +35,4 @@ pub fn SendIcon(#[prop(optional, default = "w-full h-full".to_string())] classes
             </g>
         </svg>
     }
-	}
+}

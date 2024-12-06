@@ -3,7 +3,13 @@ use leptos::*;
 use crate::component::icons::chevron_right_icon::ChevronRightIcon;
 
 #[component]
-pub fn PageSelector(current_page: u8, total_pages: u8, previous_href: String, next_href: String, href: impl Fn(u8) -> String) -> impl IntoView {
+pub fn PageSelector(
+    current_page: u8,
+    total_pages: u8,
+    previous_href: String,
+    next_href: String,
+    href: impl Fn(u8) -> String,
+) -> impl IntoView {
     let pages = 0..total_pages;
     view! {
         <div class="flex gap-1 items-start text-sm font-medium text-[#A0A1A6]">
@@ -42,4 +48,4 @@ pub fn PageSelector(current_page: u8, total_pages: u8, previous_href: String, ne
             </a>
         </div>
     }
-	}
+}

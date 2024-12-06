@@ -1,7 +1,10 @@
 use leptos::*;
 
 #[component]
-pub fn PumpAILogo(#[prop(optional, default = "w-full h-full".to_string())] classes: String, #[prop(optional)] animate: bool) -> impl IntoView {
+pub fn PumpAILogo(
+    #[prop(optional, default = "w-full h-full".to_string())] classes: String,
+    #[prop(optional)] animate: bool,
+) -> impl IntoView {
     view! {
         <svg
             class=format!("{}", classes)
@@ -70,4 +73,4 @@ pub fn PumpAILogo(#[prop(optional, default = "w-full h-full".to_string())] class
             </defs>
         </svg>
     }
-	}
+}

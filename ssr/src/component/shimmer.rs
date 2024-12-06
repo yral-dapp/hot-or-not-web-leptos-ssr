@@ -8,4 +8,4 @@ pub fn Shimmer() -> impl IntoView {
             class="w-full h-8 bg-transparent animate-shimmer bg-zinc-900 rounded-full"
         />
     }
-	}
+}

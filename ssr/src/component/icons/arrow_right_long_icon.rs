@@ -1,7 +1,9 @@
 use leptos::*;
 
 #[component]
-pub fn ArrowRightLongIcon(#[prop(optional, default = "w-full h-full".to_string())] classes: String) -> impl IntoView {
+pub fn ArrowRightLongIcon(
+    #[prop(optional, default = "w-full h-full".to_string())] classes: String,
+) -> impl IntoView {
     view! {
         <svg
             class=format!("{}", classes)
@@ -27,4 +29,4 @@ pub fn ArrowRightLongIcon(#[prop(optional, default = "w-full h-full".to_string()
             />
         </svg>
     }
-	}
+}

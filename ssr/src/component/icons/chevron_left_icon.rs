@@ -1,8 +1,9 @@
-
 use leptos::*;
 
 #[component]
-pub fn ChevronLeftIcon(#[prop(optional, default = "w-full h-full".to_string())] classes: String) -> impl IntoView {
+pub fn ChevronLeftIcon(
+    #[prop(optional, default = "w-full h-full".to_string())] classes: String,
+) -> impl IntoView {
     view! {
         <svg
             class=format!("{}", classes)
@@ -18,4 +19,4 @@ pub fn ChevronLeftIcon(#[prop(optional, default = "w-full h-full".to_string())] 
             />
         </svg>
     }
-	}
+}

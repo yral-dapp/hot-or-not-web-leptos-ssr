@@ -1,15 +1,15 @@
 use std::collections::VecDeque;
 
+use crate::component::icons::chevron_left_icon::ChevronLeftIcon;
+use crate::component::icons::pump_ai_logo::PumpAILogo;
+use crate::component::icons::send_icon::SendIcon;
+use crate::component::shimmer::Shimmer;
 use leptos::*;
 use leptos_icons::*;
 use pulldown_cmark::{Options, Parser};
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::Closure;
 use wasm_bindgen::prelude::*;
-use crate::component::icons::chevron_left_icon::ChevronLeftIcon;
-use crate::component::icons::pump_ai_logo::PumpAILogo;
-use crate::component::icons::send_icon::SendIcon;
-use crate::component::shimmer::Shimmer;
 
 use crate::{
     try_or_redirect,
@@ -47,7 +47,6 @@ pub struct ICPumpAiChat {
     pub rag_data: String,
     pub interactions: Vec<ICPumpChatInteraction>,
 }
-
 
 #[component]
 pub fn ICPumpAi() -> impl IntoView {
@@ -172,7 +171,6 @@ pub fn ICPumpAi() -> impl IntoView {
         </div>
     }
 }
-
 
 #[component]
 pub fn ICPumpAiPage1(
@@ -355,9 +353,8 @@ pub fn SearchInput(
     #[prop(optional, default = "".to_string())] classes: String,
     on_submit: impl Fn(String) + 'static,
     on_focus: impl Fn() + 'static,
-    query: RwSignal<String>, 
+    query: RwSignal<String>,
 ) -> impl IntoView {
-
     view! {
         <form
             on:submit=move |ev| {
@@ -390,7 +387,6 @@ pub fn SearchInput(
     }
 }
 
-
 #[component]
 pub fn Header(on_back: impl Fn() + 'static) -> impl IntoView {
     view! {
@@ -410,7 +406,6 @@ pub fn Header(on_back: impl Fn() + 'static) -> impl IntoView {
         </div>
     }
 }
-
 
 #[component]
 pub fn ICPumpAiToken(details: TokenListItem) -> impl IntoView {
@@ -513,7 +508,6 @@ pub fn ICPumpAiTokenListing(tokens: Vec<TokenListItem>) -> impl IntoView {
 
     view! { <div class="flex flex-col gap-4">{tokens_view}</div> }
 }
-
 
 #[component]
 pub fn MarkdownRenderer(text: String) -> impl IntoView {

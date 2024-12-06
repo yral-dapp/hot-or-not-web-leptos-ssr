@@ -4,24 +4,22 @@ use std::collections::VecDeque;
 use futures::StreamExt;
 use leptos::*;
 
-use crate::component::spinner::FullScreenSpinner;
+use crate::component::buttons::LinkButton;
 use crate::component::icons::airdrop_icon::AirdropIcon;
 use crate::component::icons::arrow_left_right_icon::ArrowLeftRightIcon;
 use crate::component::icons::chevron_right_icon::ChevronRightIcon;
 use crate::component::icons::eye_hide_icon::EyeHiddenIcon;
 use crate::component::icons::send_icon::SendIcon;
 use crate::component::icons::share_icon::ShareIcon;
+use crate::component::page_selector::PageSelector;
+use crate::component::spinner::FullScreenSpinner;
 use crate::consts::ICPUMP_LISTING_PAGE_SIZE;
 use crate::utils::token::firestore::init_firebase;
 use crate::utils::token::firestore::listen_to_documents;
 use crate::utils::token::icpump::get_paginated_token_list;
 use crate::utils::token::icpump::TokenListItem;
-use crate::component::buttons::LinkButton;
-use crate::component::page_selector::PageSelector;
 
 pub mod ai;
-
-
 
 #[component]
 pub fn ICPumpListing() -> impl IntoView {
@@ -141,7 +139,6 @@ pub fn ICPumpLanding() -> impl IntoView {
     }
 }
 
-
 #[component]
 pub fn TokenCard(
     details: TokenListItem,
@@ -208,13 +205,12 @@ pub fn TokenCard(
                 </ActionButton>
             </div>
         </div>
-    } 
-    
+    }
 }
 
 #[component]
 pub fn ActionButton(href: String, label: String, children: Children) -> impl IntoView {
-	view! {
+    view! {
         <a
             href=href
             class="flex flex-col gap-1 justify-center items-center text-xs transition-colors group-hover:text-white text-[#A0A1A6]"
@@ -224,10 +220,10 @@ pub fn ActionButton(href: String, label: String, children: Children) -> impl Int
             <div>{label}</div>
         </a>
     }
-}	
+}
 
 #[component]
-pub fn TelegramIcon(href: String, classes:String) -> impl IntoView {
+pub fn TelegramIcon(href: String, classes: String) -> impl IntoView {
     view! {
         <a href=href target="_blank">
             <svg class=classes viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -250,7 +246,7 @@ pub fn TelegramIcon(href: String, classes:String) -> impl IntoView {
 }
 
 #[component]
-pub fn XIcon(href: String, classes:String) -> impl IntoView {
+pub fn XIcon(href: String, classes: String) -> impl IntoView {
     view! {
         <a href=href target="_blank">
 
@@ -274,7 +270,7 @@ pub fn XIcon(href: String, classes:String) -> impl IntoView {
 }
 
 #[component]
-pub fn InstagramIcon(href: String, classes:String) -> impl IntoView {
+pub fn InstagramIcon(href: String, classes: String) -> impl IntoView {
     view! {
         <a href=href target="_blank">
             <svg class=classes viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">

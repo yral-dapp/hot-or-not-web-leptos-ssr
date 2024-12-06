@@ -2,12 +2,15 @@ use candid::Principal;
 use yral_canisters_common::cursored_data::token_roots::TokenRootList;
 use yral_canisters_common::utils::token::{RootType, TokenMetadata};
 
+use crate::component::icons::{
+    airdrop_icon::AirdropIcon, arrow_left_right_icon::ArrowLeftRightIcon,
+    chevron_right_icon::ChevronRightIcon, send_icon::SendIcon, share_icon::ShareIcon,
+};
 use crate::page::wallet::ShareButtonWithFallbackPopup;
 use crate::utils::token::icpump::IcpumpTokenInfo;
 use crate::{component::infinite_scroller::InfiniteScroller, state::canisters::unauth_canisters};
 use leptos::*;
 use leptos_icons::*;
-use crate::component::icons::{send_icon::SendIcon, arrow_left_right_icon::ArrowLeftRightIcon, airdrop_icon::AirdropIcon, share_icon::ShareIcon, chevron_right_icon::ChevronRightIcon};
 
 #[component]
 pub fn TokenViewFallback() -> impl IntoView {
@@ -152,14 +155,12 @@ pub fn TokenList(user_principal: Principal, user_canister: Principal) -> impl In
     }
 }
 
-
-
 #[component]
 fn WalletCard(
-    icon_url:String,
-    token_name:String,
-    token_symbol:String,
-    balance:f64,
+    icon_url: String,
+    token_name: String,
+    token_symbol: String,
+    balance: f64,
 ) -> impl IntoView {
     view! {
         <div class="flex flex-col gap-4 bg-[#131313] rounded-lg w-full p-4 font-kumbh">
@@ -199,11 +200,7 @@ fn WalletCard(
 }
 
 #[component]
-fn ActionButton(
-    children:Children,
-    href: String,
-    label: String,
-) -> impl IntoView {
+fn ActionButton(children: Children, href: String, label: String) -> impl IntoView {
     view! {
         <a href=href class="flex flex-col flex-1 gap-1 items-center justify-center text-[#A0A1A6]">
             <div class="flex items-center justify-center gap-4">{children()}</div>
