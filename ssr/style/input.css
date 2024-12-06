@@ -18,6 +18,10 @@
   }
 }
 
+body {
+  background: #000;
+}
+
 @media (min-height: 820px) and (max-height: 899px) {
   .hot-left-arrow {
     margin-top: 206px !important;
