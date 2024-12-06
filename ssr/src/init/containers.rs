@@ -12,11 +12,15 @@ use yral_metadata_types::UserMetadata;
 use yral_testcontainers::{
     backend::{self, YralBackend, ADMIN_SECP_BYTES},
     metadata::{self, YralMetadata},
+    off_chain_agent::{OffChainAgent, OFF_CHAIN_AGENT_PORT},
 };
 
 use crate::{
     canister_ids::USER_INDEX_ID,
-    consts::{METADATA_API_BASE, YRAL_BACKEND_CONTAINER_TAG, YRAL_METADATA_CONTAINER_TAG},
+    consts::{
+        METADATA_API_BASE, OFF_CHAIN_AGENT_TAG, YRAL_BACKEND_CONTAINER_TAG,
+        YRAL_METADATA_CONTAINER_TAG,
+    },
     state::admin_canisters::AdminCanisters,
 };
 
@@ -30,6 +34,7 @@ pub struct TestContainers {
     redis: MaybeContainer<GenericImage>,
     metadata: MaybeContainer<YralMetadata>,
     backend: MaybeContainer<YralBackend>,
+    off_chain_agent: MaybeContainer<OffChainAgent>,
 }
 
 impl TestContainers {
@@ -47,6 +52,11 @@ impl TestContainers {
             .with_exposed_port(6379.tcp())
             .with_wait_for(WaitFor::message_on_stdout("Ready to accept connections"));
         self.redis = Some(Self::start_image(redis_im, 6379.tcp()).await);
+    }
+
+    pub async fn start_off_chain_agent(&mut self) {
+        let img = OffChainAgent::new(OFF_CHAIN_AGENT_TAG);
+        self.off_chain_agent = Some(Self::start_image(img, OFF_CHAIN_AGENT_PORT).await);
     }
 
     pub async fn start_metadata(&mut self) {
