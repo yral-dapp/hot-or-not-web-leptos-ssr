@@ -11,7 +11,6 @@ use crate::component::icons::chevron_right_icon::ChevronRightIcon;
 use crate::component::icons::eye_hide_icon::EyeHiddenIcon;
 use crate::component::icons::send_icon::SendIcon;
 use crate::component::icons::share_icon::ShareIcon;
-use crate::component::page_selector::PageSelector;
 use crate::component::spinner::FullScreenSpinner;
 use crate::consts::ICPUMP_LISTING_PAGE_SIZE;
 use crate::utils::token::firestore::init_firebase;
@@ -89,13 +88,7 @@ pub fn ICPumpListing() -> impl IntoView {
                         />
                     </div>
                     <div class="flex justify-center">
-                        <PageSelector
-                            previous_href="#".to_string()
-                            next_href="/board/3".to_string()
-                            current_page=1
-                            total_pages=4
-                            href=move |page| format!("/board/{page}").to_string()
-                        />
+                        <PageSelector page=page end_of_list=end_of_list />
                     </div>
                 }
             }}
@@ -132,7 +125,7 @@ pub fn ICPumpLanding() -> impl IntoView {
                     "Create a new coin"
                 </LinkButton>
             </div>
-            <div>
+            <div class="flex flex-col gap-8 pb-16">
                 <ICPumpListing />
             </div>
         </div>
@@ -204,6 +197,34 @@ pub fn TokenCard(
                     <ChevronRightIcon classes="w-full h-full".to_string() />
                 </ActionButton>
             </div>
+        </div>
+    }
+}
+
+#[component]
+pub fn PageSelector(page: RwSignal<u64>, end_of_list: RwSignal<bool>) -> impl IntoView {
+    view! {
+        <div class="flex gap-1 items-start text-sm font-medium text-[#A0A1A6]">
+            <button
+                class="flex justify-center items-center w-8 h-8 rounded-lg bg-[#3A3A3A]"
+                on:click=move |_| {
+                    page.update(|page| *page -= 1);
+                    end_of_list.set(false);
+                }
+                disabled=move || page.get() == 1
+            >
+                <ChevronRightIcon classes="w-4 h-4 rotate-180".to_string() />
+            </button>
+            <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white bg-[#3D8EFF]">{page}</div>
+            <button
+                class="flex justify-center items-center w-8 h-8 rounded-lg bg-[#3A3A3A]"
+                on:click=move |_| {
+                    page.update(|page| *page += 1);
+                }
+                disabled=move || end_of_list.get()
+            >
+                <ChevronRightIcon classes="w-4 h-4".to_string() />
+            </button>
         </div>
     }
 }
