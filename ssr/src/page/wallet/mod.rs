@@ -1,7 +1,6 @@
 pub mod tokens;
 pub mod transactions;
 pub mod txn;
-use crate::component::icons::notification_icon::NotificationIcon;
 use crate::{
     component::share_popup::ShareButtonWithFallbackPopup, state::canisters::unauth_canisters,
 };
@@ -12,6 +11,7 @@ use leptos_router::{use_params, Redirect};
 use tokens::TokenList;
 use yral_canisters_common::utils::profile::ProfileDetails;
 use yral_canisters_common::Canisters;
+use crate::component::icons::notification_icon::NotificationIcon;
 
 use crate::{
     component::{canisters_prov::AuthCansProvider, connect::ConnectLogin},
@@ -20,7 +20,7 @@ use crate::{
 };
 
 #[component]
-fn ProfileGreeter(details: ProfileDetails, is_own_account: bool) -> impl IntoView {
+fn ProfileGreeter(details: ProfileDetails, _is_own_account: bool) -> impl IntoView {
     // let (is_connected, _) = account_connected_reader();
     let share_link = {
         let principal = details.principal();
@@ -166,17 +166,17 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
     );
     view! {
         <div class="flex flex-col gap-4 px-4 pt-4 pb-12 bg-black min-h-dvh font-kumbh">
-
+            
                 <Suspense>
                     {move || {
                         let profile_details = try_or_redirect_opt!(profile_info_res()?);
                         let is_own_account = try_or_redirect_opt!(is_own_account()?);
                         Some(
-                            view! { <ProfileGreeter details=profile_details is_own_account /> },
+                            view! { <ProfileGreeter details=profile_details _is_own_account=is_own_account /> },
                         )
                     }}
                 </Suspense>
-
+            
             <div class="flex flex-col items-center mt-6 w-full text-white">
                 <Suspense>
                     {move || {
