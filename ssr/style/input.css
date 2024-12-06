@@ -88,6 +88,19 @@ body {
   }
 }
 
+.fade-in {
+  animation: fade-in var(--duration, 200ms);
+}
+
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
 .airdrop-parachute {
   animation: slide-in 2s, parachute-bounce 5s infinite;
 }
