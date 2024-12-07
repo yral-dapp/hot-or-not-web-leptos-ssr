@@ -173,7 +173,7 @@ fn TokenInfoInner(
 }
 #[derive(Params, PartialEq, Clone, Serialize, Deserialize)]
 pub struct TokenKeyParam {
-    key_principal: Principal,
+    pub key_principal: Principal,
 }
 
 #[derive(Params, PartialEq, Clone, Serialize, Deserialize)]
