@@ -30,11 +30,12 @@ use crate::{
     state::{audio_state::AudioState, content_seed_client::ContentSeedClient, history::HistoryCtx},
     utils::event_streaming::EventHistory,
 };
+use leptos_router::hooks::use_location;
 use yral_canisters_common::Canisters;
 
-use leptos::*;
+use leptos::prelude::*;
 use leptos_meta::*;
-use leptos_router::*;
+use leptos_router::{components::*, path, MatchNestedRoutes};
 
 #[component]
 fn NotFound() -> impl IntoView {
@@ -44,30 +45,48 @@ fn NotFound() -> impl IntoView {
 }
 
 #[component(transparent)]
-fn GoogleAuthRedirectHandlerRoute() -> impl IntoView {
-    let path = "/auth/google_redirect";
+fn GoogleAuthRedirectHandlerRoute() -> impl MatchNestedRoutes + Clone {
+    let path = path!("/auth/google_redirect");
     #[cfg(any(feature = "oauth-ssr", feature = "oauth-hydrate"))]
     {
         use crate::page::google_redirect::GoogleRedirectHandler;
-        view! { <Route path view=GoogleRedirectHandler/> }
+        view! { <Route path view=GoogleRedirectHandler/> }.into_inner()
     }
     #[cfg(not(any(feature = "oauth-ssr", feature = "oauth-hydrate")))]
     {
-        view! { <Route path view=NotFound/> }
+        view! { <Route path view=NotFound/> }.into_inner()
     }
 }
 
 #[component(transparent)]
-fn GoogleAuthRedirectorRoute() -> impl IntoView {
-    let path = "/auth/perform_google_redirect";
+fn GoogleAuthRedirectorRoute() -> impl MatchNestedRoutes + Clone {
+    let path = path!("/auth/perform_google_redirect");
     #[cfg(any(feature = "oauth-ssr", feature = "oauth-hydrate"))]
     {
         use crate::page::google_redirect::GoogleRedirector;
-        view! { <Route path view=GoogleRedirector/> }
+        view! { <Route path view=GoogleRedirector/> }.into_inner()
     }
     #[cfg(not(any(feature = "oauth-ssr", feature = "oauth-hydrate")))]
     {
-        view! { <Route path view=NotFound/> }
+        view! { <Route path view=NotFound/> }.into_inner()
+    }
+}
+
+pub fn shell(options: LeptosOptions) -> impl IntoView {
+    view! {
+        <!DOCTYPE html>
+        <html lang="en">
+            <head>
+                <meta charset="utf-8"/>
+                <meta name="viewport" content="width=device-width, initial-scale=1"/>
+                <AutoReload options=options.clone() />
+                <HydrationScripts options/>
+                <MetaTags/>
+            </head>
+            <body>
+                <App/>
+            </body>
+        </html>
     }
 }
 
@@ -92,13 +111,13 @@ pub fn App() -> impl IntoView {
     // History Tracking
     let history_ctx = HistoryCtx::default();
     provide_context(history_ctx.clone());
-    create_effect(move |_| {
+    Effect::new(move || {
         let loc = use_location();
         history_ctx.push(&loc.pathname.get());
     });
 
     // Analytics
-    let enable_ga4_script = create_rw_signal(false);
+    let enable_ga4_script = RwSignal::new(false);
     #[cfg(feature = "ga4")]
     {
         enable_ga4_script.set(true);
@@ -134,41 +153,40 @@ pub fn App() -> impl IntoView {
         // <Script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js"></Script>
 
         // content for this welcome page
-        <Router fallback=|| view! { <NotFound/> }.into_view()>
+        <Router>
             <main>
-                <Routes>
+                <Routes fallback=|| view! { <NotFound/> }>
                     // auth redirect routes exist outside main context
                     <GoogleAuthRedirectHandlerRoute/>
                     <GoogleAuthRedirectorRoute/>
-                    <Route path="" view=BaseRoute>
-                        <Route path="/" view=RootPage/>
-                        <Route path="/hot-or-not/:canister_id/:post_id" view=PostView/>
-                        <Route path="/post/:canister_id/:post_id" view=SinglePost/>
-                        <Route path="/profile/:canister_id/post/:post_id" view=ProfilePost/>
-                        <Route path="/upload" view=UploadPostPage/>
-                        <Route path="/error" view=ServerErrorPage/>
-                        <Route path="/menu" view=Menu/>
-                        <Route path="/settings" view=Settings/>
-                        <Route path="/refer-earn" view=ReferEarn/>
-                        <Route path="/profile/:id/:tab" view=ProfileView/>
-                        <Route path="/profile/:tab" view=ProfileView/>
-                        <Route path="/terms-of-service" view=TermsOfService/>
-                        <Route path="/privacy-policy" view=PrivacyPolicy/>
-                        <Route path="/wallet/:id" view=Wallet/>
-                        <Route path="/wallet" view=Wallet/>
-                        <Route path="/leaderboard" view=Leaderboard/>
-                        <Route path="/account-transfer" view=AccountTransfer/>
-                        <Route path="/logout" view=Logout/>
-                        <Route path="/token/create" view=CreateToken/>
-                        <Route path="/token/create/settings" view=CreateTokenSettings/>
-                        <Route path="/token/create/faq" view=CreateTokenFAQ/>
-                        <Route path="/token/info/:token_root/:key_principal" view=TokenInfo/>
-                        <Route path="/token/info/:token_root" view=TokenInfo/>
-                        <Route path="/token/transfer/:token_root" view=TokenTransfer/>
-                        <Route path="/board" view=ICPumpLanding/>
-                        <Route path="/icpump-ai" view=ICPumpAi/>
-                    // <Route path="/test" view=TestIndex/>
-                    </Route>
+                    <ParentRoute path=path!("") view=BaseRoute>
+                        <Route path=path!("/") view=RootPage/>
+                        <Route path=path!("/hot-or-not/:canister_id/:post_id") view=PostView/>
+                        <Route path=path!("/post/:canister_id/:post_id") view=SinglePost/>
+                        <Route path=path!("/profile/:canister_id/post/:post_id") view=ProfilePost/>
+                        <Route path=path!("/upload") view=UploadPostPage/>
+                        <Route path=path!("/error") view=ServerErrorPage/>
+                        <Route path=path!("/menu") view=Menu/>
+                        <Route path=path!("/settings") view=Settings/>
+                        <Route path=path!("/refer-earn") view=ReferEarn/>
+                        <Route path=path!("/profile/:id/:tab") view=ProfileView/>
+                        <Route path=path!("/profile/:tab") view=ProfileView/>
+                        <Route path=path!("/terms-of-service") view=TermsOfService/>
+                        <Route path=path!("/privacy-policy") view=PrivacyPolicy/>
+                        <Route path=path!("/wallet/:id") view=Wallet/>
+                        <Route path=path!("/wallet") view=Wallet/>
+                        <Route path=path!("/leaderboard") view=Leaderboard/>
+                        <Route path=path!("/account-transfer") view=AccountTransfer/>
+                        <Route path=path!("/logout") view=Logout/>
+                        <Route path=path!("/token/create") view=CreateToken/>
+                        <Route path=path!("/token/create/settings") view=CreateTokenSettings/>
+                        <Route path=path!("/token/create/faq") view=CreateTokenFAQ/>
+                        <Route path=path!("/token/info/:token_root/:key_principal") view=TokenInfo/>
+                        <Route path=path!("/token/info/:token_root") view=TokenInfo/>
+                        <Route path=path!("/token/transfer/:token_root") view=TokenTransfer/>
+                        <Route path=path!("/board") view=ICPumpLanding/>
+                        <Route path=path!("/icpump-ai") view=ICPumpAi/>
+                    </ParentRoute>
                 </Routes>
 
             </main>

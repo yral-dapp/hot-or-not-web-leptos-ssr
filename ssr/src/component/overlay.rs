@@ -1,5 +1,5 @@
 use super::spinner::Spinner;
-use leptos::*;
+use leptos::{portal::Portal, prelude::*};
 
 #[derive(Clone, Copy)]
 pub enum ShowOverlay {
@@ -32,7 +32,17 @@ impl From<Signal<bool>> for ShowOverlay {
     }
 }
 
-impl SignalGet for ShowOverlay {
+impl DefinedAt for ShowOverlay {
+    fn defined_at(&self) -> Option<&'static std::panic::Location<'static>> {
+        match self {
+            ShowOverlay::Closable(s) => s.defined_at(),
+            ShowOverlay::AlwaysLocked(s) => s.defined_at(),
+            ShowOverlay::MaybeClosable { show, .. } => show.defined_at(),
+        }
+    }
+}
+
+impl Get for ShowOverlay {
     type Value = bool;
 
     fn get(&self) -> bool {
@@ -52,7 +62,7 @@ impl SignalGet for ShowOverlay {
     }
 }
 
-impl SignalSet for ShowOverlay {
+impl Set for ShowOverlay {
     type Value = bool;
 
     fn set(&self, value: bool) {
@@ -84,7 +94,7 @@ impl SignalSet for ShowOverlay {
 
 #[component]
 pub fn ShadowOverlay(#[prop(into)] show: ShowOverlay, children: ChildrenFn) -> impl IntoView {
-    let children_s = store_value(children);
+    let children_s = StoredValue::new(children);
     view! {
         <Show when=move || show.get()>
             // Portal is necessary
@@ -107,7 +117,7 @@ pub fn ShadowOverlay(#[prop(into)] show: ShowOverlay, children: ChildrenFn) -> i
 
                     class="flex cursor-pointer modal-bg w-dvw h-dvh fixed left-0 top-0 bg-black/60 z-[99] justify-center items-center overflow-hidden"
                 >
-                    {(children_s())()}
+                    {(children_s.read_value())()}
                 </div>
             </Portal>
         </Show>
@@ -143,12 +153,13 @@ pub fn PopupOverlay(#[prop(into)] show: ShowOverlay, children: ChildrenFn) -> im
 /// close -> Set this signal to true to close the modal (automatically reset upon closing)
 #[component]
 pub fn ActionTrackerPopup<
-    S: 'static,
-    R: 'static + Clone,
-    V: IntoView,
-    IV: Fn(R) -> V + Clone + 'static,
+    S: 'static + Send + Sync,
+    R: 'static + Clone + Send + Sync,
+    Store: Storage<ArcAction<S, R>>,
+    V: IntoView + 'static,
+    IV: Fn(R) -> V + Clone + 'static + Send + Sync,
 >(
-    action: Action<S, R>,
+    action: Action<S, R, Store>,
     #[prop(into)] loading_message: String,
     modal: IV,
     #[prop(optional, into)] close: RwSignal<bool>,
@@ -163,11 +174,11 @@ pub fn ActionTrackerPopup<
     });
     let show_popup = Signal::derive(move || {
         let show = (pending() || res.with(|r| r.is_some())) && !close();
-        close.set_untracked(false);
+        close.update_untracked(|c| *c = false);
         show
     });
-    let modal_s = store_value(modal);
-    let loading_msg_s = store_value(loading_message);
+    let modal_s = StoredValue::new(modal);
+    let loading_msg_s = StoredValue::new(loading_message);
 
     view! {
         <ShadowOverlay show=show_popup>
@@ -178,7 +189,7 @@ pub fn ActionTrackerPopup<
                 }
             >
                 <div class="px-4 pt-4 pb-12 mx-6 w-full lg:w-1/2 max-h-[65%] rounded-xl bg-white">
-                    {move || (modal_s.get_value())(res().unwrap())}
+                    {move || (modal_s.read_value())(res().unwrap())}
                 </div>
             </Show>
         </ShadowOverlay>

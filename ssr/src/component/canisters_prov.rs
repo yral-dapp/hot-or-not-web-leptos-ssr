@@ -1,87 +1,61 @@
 use futures::Future;
-pub use leptos::*;
+use leptos::prelude::*;
+use serde::{Deserialize, Serialize};
 
-use crate::{state::canisters::authenticated_canisters, try_or_redirect_opt};
+use crate::{
+    state::canisters::{authenticated_canisters, unauth_canisters},
+    try_or_redirect_opt,
+    utils::MockPartialEq,
+};
 use yral_canisters_common::Canisters;
 
 #[component]
 pub fn AuthCansProvider<N, EF>(
-    #[prop(into, optional)] fallback: ViewFn,
+    #[prop(into, optional)] fallback: ViewFnOnce,
     children: EF,
 ) -> impl IntoView
 where
     N: IntoView + 'static,
-    EF: Fn(Canisters<true>) -> N + 'static + Clone,
+    EF: Fn(Canisters<true>) -> N + 'static + Clone + Send + Sync,
 {
     let cans_res = authenticated_canisters();
-    let children = store_value(children);
-    let loader = move || {
-        let cans_wire = try_or_redirect_opt!((cans_res.0)()?);
-        let maybe_cans = Canisters::from_wire(cans_wire, expect_context());
-        let cans = try_or_redirect_opt!(maybe_cans);
-        Some((children.get_value())(cans).into_view())
-    };
-
-    view! { <Suspense fallback=fallback>{loader}</Suspense> }
-}
-
-#[component]
-fn DataLoader<N, EF, D, St, DF>(
-    cans: Canisters<true>,
-    fallback: ViewFn,
-    with: DF,
-    children: EF,
-) -> impl IntoView
-where
-    N: IntoView + 'static,
-    EF: Fn((Canisters<true>, D)) -> N + 'static + Clone,
-    D: Serializable + Clone + 'static,
-    St: 'static + Clone,
-    DF: FnOnce(Canisters<true>) -> Resource<St, D> + 'static + Clone,
-{
-    let can_c = cans.clone();
-    let with_res = (with)(can_c);
-
-    let cans = store_value(cans.clone());
-    let children = store_value(children);
+    let children = StoredValue::new(children);
 
     view! {
         <Suspense fallback=fallback>
-            {move || {
-                with_res().map(move |d| (children.get_value())((cans.get_value(), d)).into_view())
-            }}
-
+            {move || Suspend::new(async move {
+                let cans_wire = try_or_redirect_opt!(cans_res.await);
+                let maybe_cans = Canisters::from_wire(cans_wire, expect_context());
+                let cans = try_or_redirect_opt!(maybe_cans);
+                Some((children.read_value())(cans))
+            })}
         </Suspense>
     }
 }
 
-pub fn with_cans<D: Serializable + Clone + 'static, DFut: Future<Output = D> + 'static>(
-    with: impl Fn(Canisters<true>) -> DFut + 'static + Clone,
-) -> impl FnOnce(Canisters<true>) -> Resource<(), D> + Clone {
-    move |cans: Canisters<true>| create_resource(|| (), move |_| (with.clone())(cans.clone()))
-}
-
-#[component]
-pub fn WithAuthCans<N, EF, D, St, DF>(
-    #[prop(into, optional)] fallback: ViewFn,
-    with: DF,
-    children: EF,
-) -> impl IntoView
-where
-    N: IntoView + 'static,
-    EF: Fn((Canisters<true>, D)) -> N + 'static + Clone,
-    St: 'static + Clone,
-    D: Serializable + Clone + 'static,
-    DF: FnOnce(Canisters<true>) -> Resource<St, D> + 'static + Clone,
-{
-    view! {
-        <AuthCansProvider fallback=fallback.clone() let:cans>
-            <DataLoader
-                cans
-                fallback=fallback.clone()
-                with=with.clone()
-                children=children.clone()
-            />
-        </AuthCansProvider>
-    }
+pub fn with_cans<
+    D: Send + Sync + Serialize + for<'x> Deserialize<'x>,
+    DFut: Future<Output = Result<D, ServerFnError>> + 'static + Send,
+>(
+    with: impl Fn(Canisters<true>) -> DFut + 'static + Clone + Send + Sync,
+) -> Resource<Result<D, ServerFnError>> {
+    let auth_cans = authenticated_canisters();
+    let base_cans = unauth_canisters();
+    Resource::new(
+        move || {
+            // MockPartialEq is necessary
+            // See: https://github.com/leptos-rs/leptos/issues/2661
+            auth_cans.track();
+            MockPartialEq(())
+        },
+        move |_| {
+            let base_cans = base_cans.clone();
+            let with = with.clone();
+            async move {
+                let cans_wire = auth_cans.await?;
+                let cans = Canisters::from_wire(cans_wire, base_cans)?;
+                with(cans).await
+            }
+        },
+    )
 }

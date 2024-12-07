@@ -1,6 +1,10 @@
-use leptos::*;
+use leptos::{
+    either::{Either, EitherOf3},
+    html,
+    prelude::*,
+};
 use leptos_icons::Icon;
-use leptos_router::use_params;
+use leptos_router::hooks::use_params;
 use yral_canisters_common::utils::transaction::{TxnDirection, TxnInfoType, TxnInfoWallet};
 
 use crate::{page::token::info::TokenKeyParam, utils::time::parse_ns_to_datetime};
@@ -38,30 +42,30 @@ pub fn TxnView(
     );
 
     view! {
-        <div _ref=_ref class="grid grid-cols-2 grid-rows-1 w-full py-3 border-b-2 border-white/10 justify-between">
+        <div node_ref=_ref class="grid grid-cols-2 grid-rows-1 w-full py-3 border-b-2 border-white/10 justify-between">
             <div class="flex flex-row gap-2">
                 {
                     match direction{
                         TxnDirection::Added => {
-                            view! {
+                            EitherOf3::A(view! {
                                 <div class="flex items-center justify-center w-7 h-7 lg:w-10 lg:h-10 rounded-md text-green-600 bg-green-600/5 text-lg lg:text-xl">
                                     <Icon icon=txn_info_to_icon(info.tag) />
                                 </div>
-                            }
+                            })
                         },
                         TxnDirection::Deducted => {
-                            view! {
+                            EitherOf3::B(view! {
                                 <div class="flex items-center justify-center w-7 h-7 lg:w-10 lg:h-10 rounded-md text-red-600 bg-red-600/5 text-lg lg:text-xl">
                                     <Icon icon=txn_info_to_icon(info.tag) />
                                 </div>
-                            }
+                            })
                         },
                         TxnDirection::Transaction => {
-                            view! {
+                            EitherOf3::C(view! {
                                 <div class="flex items-center justify-center w-7 h-7 lg:w-10 lg:h-10 rounded-md text-white bg-blue-600/5 text-lg lg:text-xl">
                                     <Icon icon=txn_info_to_icon(info.tag) />
                                 </div>
-                            }
+                            })
                         },
                     }
                 }
@@ -75,23 +79,39 @@ pub fn TxnView(
                                 TxnInfoType::Mint { to } => {
                                     match params.get(){
                                         Ok(_) => None,
-                                        Err(_) => Some(view! {<div class="text-sm md:text-md text-white/50">{format!("To: {}", to)}</div>})
+                                        Err(_) => Some(Either::Left(view! {
+                                            <div class="text-sm md:text-md text-white/50">
+                                                {format!("To: {}", to)}
+                                            </div>
+                                        }))
                                     }
                                 },
                                 TxnInfoType::Burn { from } => {
                                     match params.get(){
                                         Ok(_) => None,
-                                        Err(_) => Some(view! {<div class="text-sm md:text-md text-white/50">{format!("From: {}", from)}</div>})
+                                        Err(_) => Some(Either::Left(view! {
+                                            <div class="text-sm md:text-md text-white/50">
+                                                {format!("From: {}", from)}
+                                            </div>
+                                        }))
                                     }
                                 },
-                                TxnInfoType::Received { from } => Some(view! {<div class="text-sm md:text-md text-white/50">{format!("From: {}", from)}</div>}),
-                                TxnInfoType::Sent { to } => Some(view! {<div class="text-sm md:text-md text-white/50">{format!("To: {}", to)}</div>}),
-                                TxnInfoType::Transfer { from, to } => Some(view! {
+                                TxnInfoType::Received { from } => Some(Either::Left(view! {
+                                    <div class="text-sm md:text-md text-white/50">
+                                        {format!("From: {}", from)}
+                                        </div>
+                                })),
+                                TxnInfoType::Sent { to } => Some(Either::Left(view! {
+                                    <div class="text-sm md:text-md text-white/50">
+                                        {format!("To: {}", to)}
+                                    </div>
+                                })),
+                                TxnInfoType::Transfer { from, to } => Some(Either::Right(view! {
                                     <div class="flex flex-col space-y-1">
                                     <div class="text-sm md:text-md text-white/50">{format!("From: {}", from)}</div>
                                     <div class="text-sm md:text-md text-white/50">{format!("To: {}", to)}</div>
                                     </div>
-                                })
+                                }))
                             }
                         }
                     }
@@ -188,7 +208,7 @@ pub mod provider {
             type Data = TxnInfoWallet;
             type Error = Infallible;
 
-            async fn get_by_cursor(
+            async fn get_by_cursor_inner(
                 &self,
                 from: usize,
                 end: usize,

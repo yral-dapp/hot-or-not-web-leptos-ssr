@@ -7,16 +7,14 @@ mod speculation;
 mod tokens;
 
 use candid::Principal;
-use leptos::*;
+use leptos::{either::Either, prelude::*};
 use leptos_icons::*;
-use leptos_router::*;
+use leptos_router::{components::Redirect, hooks::use_params, params::Params};
 
 use crate::{
     component::connect::ConnectLogin,
-    state::{
-        auth::account_connected_reader,
-        canisters::{authenticated_canisters, unauth_canisters},
-    },
+    state::{auth::account_connected_reader, canisters::authenticated_canisters},
+    utils::{send_wrap, MockPartialEq},
 };
 
 use posts::ProfilePosts;
@@ -59,7 +57,7 @@ struct TabsParam {
 fn ListSwitcher1(user_canister: Principal, user_principal: Principal) -> impl IntoView {
     let param = use_params::<TabsParam>();
 
-    let current_tab = create_memo(move |_| {
+    let current_tab = Memo::new(move |_| {
         param.with(|p| {
             let tab = p.as_ref().map(|p| p.tab.as_str()).unwrap_or("tokens");
             match tab {
@@ -80,21 +78,21 @@ fn ListSwitcher1(user_canister: Principal, user_principal: Principal) -> impl In
     };
     view! {
         <div class="relative flex flex-row w-11/12 md:w-9/12 text-center text-xl md:text-2xl">
-            <A class=move || tab_class(0) href=move || format!("/profile/{}/posts", user_principal)>
+            <a class=move || tab_class(0) href=move || format!("/profile/{}/posts", user_principal)>
                 <Icon icon=icondata::FiGrid />
-            </A>
-            <A
+            </a>
+            <a
                 class=move || tab_class(1)
                 href=move || format!("/profile/{}/stakes", user_principal)
             >
                 <Icon icon=icondata::BsTrophy />
-            </A>
-            <A
+            </a>
+            <a
                 class=move || tab_class(2)
                 href=move || format!("/profile/{}/tokens", user_principal)
             >
                 <Icon icon=icondata::AiDollarCircleOutlined />
-            </A>
+            </a>
         </div>
 
         <div class="flex flex-col gap-y-12 justify-center pb-12 w-11/12 sm:w-7/12">
@@ -175,68 +173,73 @@ pub fn ProfileView() -> impl IntoView {
     };
 
     let auth_cans = authenticated_canisters();
+    let profile_info_res = Resource::new(
+        move || {
+            (
+                auth_cans.get().map(|_| MockPartialEq(())),
+                param_principal(),
+            )
+        },
+        move |(_, principal)| {
+            send_wrap(async move {
+                let cans_wire = auth_cans.await?;
+                let user_principal = cans_wire.profile_details.principal;
 
-    let profile_info_res =
-        auth_cans.derive(param_principal, move |cans_wire, principal| async move {
-            let cans_wire = cans_wire?;
-            let canisters = Canisters::from_wire(cans_wire.clone(), expect_context())?;
-            let user_principal = canisters.user_principal();
+                let Some(principal) = principal else {
+                    return Ok((None, Some(user_principal)));
+                };
 
-            let Some(principal) = principal else {
-                return Ok::<_, ServerFnError>((
-                    None::<(ProfileDetails, Principal)>,
-                    Some(user_principal),
-                ));
-            };
-            if user_principal == principal {
-                let details = cans_wire.profile_details.clone();
-                let user_canister = canisters.user_canister();
-                return Ok((Some((details, user_canister)), None));
-            }
-            let canisters = unauth_canisters();
-            let Some(user_canister) = canisters
-                .get_individual_canister_by_user_principal(principal)
-                .await?
-            else {
-                return Err(ServerFnError::new("Failed to get user canister"));
-            };
-            let user = canisters.individual_user(user_canister).await;
-            let user_details = user.get_profile_details().await?;
-            Ok((Some((user_details.into(), user_canister)), None))
-        });
+                let canisters = Canisters::from_wire(cans_wire, expect_context())?;
+                if user_principal == principal {
+                    let details = canisters.profile_details();
+                    let user_canister = canisters.user_canister();
+                    return Ok((Some((details, user_canister)), None));
+                }
+
+                let Some(user_canister) = canisters
+                    .get_individual_canister_by_user_principal(principal)
+                    .await?
+                else {
+                    return Err(ServerFnError::new("Failed to get user canister"));
+                };
+
+                let user = canisters.individual_user(user_canister).await;
+                let user_details = user.get_profile_details().await?;
+                Ok((Some((user_details.into(), user_canister)), None))
+            })
+        },
+    );
 
     view! {
         <Suspense>
-            {move || {
-                profile_info_res()
-                    .map(|res| {
-                        match res {
-                            Ok((None, Some(user_principal))) => {
-                                if let Ok(TabsParam { tab }) = tab_params() {
-                                    view! {
-                                        <Redirect path=format!(
-                                            "/profile/{}/{}",
-                                            user_principal,
-                                            tab,
-                                        ) />
-                                    }
-                                } else {
-                                    view! { <Redirect path="/" /> }
-                                }
-                            }
-                            Err(_) => view! { <Redirect path="/" /> },
-                            Ok((Some((user_details, user_canister)), None)) => {
-                                view! {
-                                    <ProfileComponent user_details=Some((
-                                        user_details,
-                                        user_canister,
-                                    )) />
-                                }
-                            }
-                            _ => view! { <Redirect path="/" /> },
+            {move || Suspend::new(async move {
+                let res = profile_info_res.await;
+                match res {
+                    Ok((None, Some(user_principal))) => {
+                        if let Ok(TabsParam { tab }) = tab_params() {
+                            Either::Left(view! {
+                                <Redirect path=format!(
+                                    "/profile/{}/{}",
+                                    user_principal,
+                                    tab,
+                                ) />
+                            })
+                        } else {
+                            Either::Left(view! { <Redirect path="/" /> })
                         }
-                    })
-            }}
+                    }
+                    Err(_) => Either::Left(view! { <Redirect path="/" /> }),
+                    Ok((Some((user_details, user_canister)), None)) => {
+                        Either::Right(view! {
+                            <ProfileComponent user_details=Some((
+                                user_details,
+                                user_canister,
+                            )) />
+                        })
+                    }
+                    _ => Either::Left(view! { <Redirect path="/" /> }),
+                }
+            })}
         </Suspense>
     }
 }
@@ -259,9 +262,9 @@ pub fn ProfileComponent(user_details: Option<(ProfileDetails, Principal)>) -> im
     view! {
         {move || {
             if let Some((user, user_canister)) = user_details.clone() {
-                view! { <ProfileViewInner user user_canister /> }
+                Either::Left(view! { <ProfileViewInner user user_canister /> })
             } else {
-                view! { <Redirect path="/" /> }
+                Either::Right(view! { <Redirect path="/" /> })
             }
         }}
     }

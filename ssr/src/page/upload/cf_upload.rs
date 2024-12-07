@@ -3,7 +3,7 @@ use candid::Principal;
 use cf_impl::server_func::*;
 #[cfg(feature = "cloudflare")]
 pub use cf_impl::{publish_video, upload_video_stream};
-use leptos::*;
+use leptos::prelude::*;
 #[cfg(all(not(feature = "cloudflare"), feature = "ssr"))]
 use mock_impl::server_func::*;
 #[cfg(not(feature = "cloudflare"))]
@@ -44,7 +44,7 @@ pub async fn get_video_status(uid: String) -> Result<String, ServerFnError> {
 
 #[cfg(feature = "cloudflare")]
 mod cf_impl {
-    use leptos::ServerFnError;
+    use leptos::prelude::ServerFnError;
     use yral_canisters_client::individual_user_template::{PostDetailsFromFrontend, Result1};
 
     use yral_canisters_common::Canisters;
@@ -58,7 +58,7 @@ mod cf_impl {
             api::stream_videos::{CreateDownloads, DirectUpload, VideoDetails},
             CloudflareAuth,
         };
-        use leptos::{expect_context, ServerFnError};
+        use leptos::prelude::{expect_context, ServerFnError};
 
         use crate::consts::CF_WATERMARK_UID;
 
@@ -149,13 +149,13 @@ mod cf_impl {
 #[cfg(not(feature = "cloudflare"))]
 mod mock_impl {
     use super::UploadInfo;
-    use leptos::ServerFnError;
+    use leptos::prelude::ServerFnError;
     use yral_canisters_common::Canisters;
 
     #[cfg(feature = "ssr")]
     pub mod server_func {
         use candid::Principal;
-        use leptos::ServerFnError;
+        use leptos::prelude::ServerFnError;
         use std::time::Duration;
 
         use super::UploadInfo;

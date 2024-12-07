@@ -1,7 +1,7 @@
 use candid::Principal;
-use leptos::*;
+use leptos::{either::EitherOf4, html, prelude::*};
 use leptos_icons::*;
-use leptos_router::use_location;
+use leptos_router::hooks::use_location;
 use leptos_use::use_interval_fn;
 use web_time::Duration;
 
@@ -9,7 +9,7 @@ use super::ic::ProfileStream;
 use crate::{
     component::{canisters_prov::AuthCansProvider, profile_placeholders::NoMoreBetsGraphic},
     state::canisters::unauth_canisters,
-    utils::{bg_url, time::to_hh_mm_ss},
+    utils::{bg_url, send_wrap, time::to_hh_mm_ss},
 };
 use yral_canisters_common::{
     cursored_data::vote::VotesProvider,
@@ -74,7 +74,7 @@ pub fn FallbackUser() -> impl IntoView {
 #[component]
 fn BetTimer(post: PostDetails, details: VoteDetails) -> impl IntoView {
     let bet_duration = details.vote_duration().as_secs();
-    let time_remaining = create_rw_signal(details.time_remaining(post.created_at));
+    let time_remaining = RwSignal::new(details.time_remaining(post.created_at));
     _ = use_interval_fn(
         move || {
             time_remaining.try_update(|t| *t = t.saturating_sub(Duration::from_secs(1)));
@@ -82,7 +82,7 @@ fn BetTimer(post: PostDetails, details: VoteDetails) -> impl IntoView {
         1000,
     );
 
-    let percentage = create_memo(move |_| {
+    let percentage = Memo::new(move |_| {
         let remaining_secs = time_remaining().as_secs();
         100 - ((remaining_secs * 100) / bet_duration).min(100)
     });
@@ -111,77 +111,81 @@ pub fn Speculation(details: VoteDetails, _ref: NodeRef<html::Div>) -> impl IntoV
 
     let bet_canister = details.canister_id;
 
-    let post_details = create_resource(
+    let post_details = Resource::new(
         move || (bet_canister, details.post_id),
-        move |(canister_id, post_id)| async move {
-            let canister = unauth_canisters();
-            let user = canister.individual_user(canister_id).await;
-            let post_details = user.get_individual_post_details_by_id(post_id).await.ok()?;
-            Some(PostDetails::from_canister_post(
-                false,
-                canister_id,
-                post_details,
-            ))
+        move |(canister_id, post_id)| {
+            send_wrap(async move {
+                let canister = unauth_canisters();
+                let user = canister.individual_user(canister_id).await;
+                let post_details = user.get_individual_post_details_by_id(post_id).await.ok()?;
+                Some(PostDetails::from_canister_post(
+                    false,
+                    canister_id,
+                    post_details,
+                ))
+            })
         },
     );
 
-    let profile_details = create_resource(
+    let profile_details = Resource::new(
         move || bet_canister,
-        move |canister_id| async move {
-            let canister = unauth_canisters();
-            let user = canister.individual_user(canister_id).await;
-            let profile_details = user.get_profile_details().await.ok()?;
-            Some(ProfileDetails::from(profile_details))
+        move |canister_id| {
+            send_wrap(async move {
+                let canister = unauth_canisters();
+                let user = canister.individual_user(canister_id).await;
+                let profile_details = user.get_profile_details().await.ok()?;
+                Some(ProfileDetails::from(profile_details))
+            })
         },
     );
 
-    let details = store_value(details);
+    let details = StoredValue::new(details);
     let (bet_res, amt, icon) = match details.with_value(|d| d.outcome) {
         VoteOutcome::Won(amt) => (
             "RECEIVED",
             amt,
-            view! {
+            EitherOf4::A(view! {
                 <div class="flex w-full justify-center items-center text-white bg-primary-600 h-6 gap-0.5">
                     <Icon class="text-sm fill-white" icon=icondata::RiTrophyFinanceFill />
                     <span class="text-xs font-medium">You Won</span>
                 </div>
-            }.into_view(),
+            }),
         ),
         VoteOutcome::Draw(amt) => (
             "RECEIVED",
             amt,
-            view! {
+            EitherOf4::B(view! {
                 <div class="flex w-full justify-center items-center bg-yellow-500 text-xs font-medium text-white h-6">
                     Draw
                 </div>
-            }.into_view(),
+            }),
         ),
         VoteOutcome::Lost => (
             "VOTE",
             details.with_value(|d| d.vote_amount),
-            view! {
+            EitherOf4::C(view! {
                 <div class="flex w-full justify-center items-center h-6 bg-white text-black py-2 text-xs font-medium">
                     You Lost
                 </div>
-            }.into_view(),
+            }),
         ),
         VoteOutcome::AwaitingResult => (
             "VOTE",
             details.with_value(|d| d.vote_amount),
-            view! {
+            EitherOf4::D(view! {
                 <Suspense>
                     {move || {
-                        let post = post_details().flatten()?;
+                        let post = post_details.get().flatten()?;
                         Some(view! { <BetTimer post details=details.get_value() /> })
                     }}
 
                 </Suspense>
-            },
+            }),
         ),
     };
 
     view! {
-        <div _ref=_ref class="relative w-1/2 md:w-1/3 lg:w-1/4 px-1">
+        <div node_ref=_ref class="relative w-1/2 md:w-1/3 lg:w-1/4 px-1">
             <a
                 href=profile_post_url
                 class="relative flex flex-col justify-between aspect-[3/5] rounded-md text-white"

@@ -25,7 +25,7 @@ pub fn share_url(url: &str) -> Option<()> {
     }
     #[cfg(feature = "hydrate")]
     {
-        use leptos::window;
+        use leptos::prelude::window;
         use wasm_bindgen::JsValue;
         use web_sys::{js_sys::Reflect, ShareData};
         let window = window();

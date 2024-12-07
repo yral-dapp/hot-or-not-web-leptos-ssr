@@ -10,10 +10,10 @@ crate-type = ["cdylib", "rlib"]
 axum = { version = "0.7", optional = true, features = ["macros"] }
 console_error_panic_hook = "0.1"
 console_log = "1"
-leptos = { version = "0.6", features = ["nightly"] }
-leptos_axum = { version = "0.6", optional = true }
-leptos_meta = { version = "0.6", features = ["nightly"] }
-leptos_router = { version = "0.6", features = ["nightly"] }
+leptos = { version = "0.7", features = ["nightly"] }
+leptos_axum = { version = "0.7", optional = true }
+leptos_meta = "0.7"
+leptos_router = { version = "0.7", features = ["nightly"] }
 log = "0.4"
 simple_logger = "4.0"
 tokio = { version = "1", optional = true, features = [
@@ -23,8 +23,8 @@ tokio = { version = "1", optional = true, features = [
 ] }
 tower = { version = "0.4", optional = true }
 tower-http = { version = "0.5", features = ["fs"], optional = true }
-wasm-bindgen = "=0.2.93"
-thiserror = "1.0"
+wasm-bindgen = "=0.2.96"
+thiserror = "2.0"
 tracing = { version = "0.1.37", optional = true }
 http = "1.1.0"
 serde.workspace = true
@@ -34,18 +34,17 @@ ic-base-types = { git = "https://github.com/dfinity/ic", rev = "tags/release-202
 icp-ledger = { git = "https://github.com/dfinity/ic", rev = "tags/release-2024-10-17_03-07-base" }
 serde-wasm-bindgen = "0.6.5"
 futures = "0.3.30"
-leptos-use = "0.12.0"
-codee = { version = "0.1.2", features = ["json_serde"] }
+leptos-use = "0.14.0"
+codee = { version = "0.2.0", features = ["json_serde"] }
 reqwest = { version = "0.12", default-features = false, features = [
     "json",
     "http2",
 ] }
 serde_bytes.workspace = true
 hex = "0.4.3"
-leptos_icons = "0.3.0"
+leptos_icons = { git = "https://github.com/ozpv/leptos-icons", rev = "cd80dc418aa5da2865b79c7822c68aeb2486f30f" }
 icondata = "0.3.0"
 gloo = { version = "0.11.0", features = ["futures", "net", "net"] }
-once_cell = "1.19.0"
 web-time.workspace = true
 k256 = { version = "0.13.4", default-features = false, features = [
     "std",
@@ -90,8 +89,8 @@ hmac = { version = "0.12.1", optional = true }
 wasm-bindgen-futures = { version = "0.4.42" }
 testcontainers = { version = "0.20.0", optional = true }
 yral-testcontainers = { git = "https://github.com/yral-dapp/yral-testcontainers", rev = "7438ba7cb281e7f195cf81f2a8532f63ce005771", optional = true }
-sns-validation = { git = "https://github.com/yral-dapp/yral-common.git", rev = "5e4414a3f1e0644d93f181949d533c6a9991da04" }
-yral-grpc-traits = { git = "https://github.com/yral-dapp/yral-common.git", rev = "5e4414a3f1e0644d93f181949d533c6a9991da04" }
+sns-validation = { git = "https://github.com/yral-dapp/yral-common.git", rev = "6a40d189d5ff02e3b0eb7d17b90027219c75d641" }
+yral-grpc-traits = { git = "https://github.com/yral-dapp/yral-common.git", rev = "6a40d189d5ff02e3b0eb7d17b90027219c75d641" }
 js-sys = "0.3.69"
 tonic-web-wasm-client = { version = "0.6" }
 tonic = { version = "0.12.0", default-features = false, features = [
@@ -106,16 +105,16 @@ firestore = { version = "0.43.1", default-features = false, features = [
 ], optional = true }
 speedate = { version = "0.14.4", optional = true }
 urlencoding = "2.1.3"
-yral-types = { git = "https://github.com/yral-dapp/yral-common.git", rev = "5e4414a3f1e0644d93f181949d533c6a9991da04" }
-yral-qstash-types = { git = "https://github.com/yral-dapp/yral-common.git", rev = "5e4414a3f1e0644d93f181949d533c6a9991da04" }
-yral-canisters-client = { git = "https://github.com/yral-dapp/yral-common.git", rev = "5e4414a3f1e0644d93f181949d533c6a9991da04", features = ["full"] }
-yral-canisters-common = { git = "https://github.com/yral-dapp/yral-common.git", rev = "5e4414a3f1e0644d93f181949d533c6a9991da04" } 
+yral-types = { git = "https://github.com/yral-dapp/yral-common.git", rev = "6a40d189d5ff02e3b0eb7d17b90027219c75d641" }
+yral-qstash-types = { git = "https://github.com/yral-dapp/yral-common.git", rev = "6a40d189d5ff02e3b0eb7d17b90027219c75d641" }
+yral-canisters-client = { git = "https://github.com/yral-dapp/yral-common.git", rev = "6a40d189d5ff02e3b0eb7d17b90027219c75d641", features = ["full"] }
+yral-canisters-common = { git = "https://github.com/yral-dapp/yral-common.git", rev = "6a40d189d5ff02e3b0eb7d17b90027219c75d641" } 
 pulldown-cmark = "0.12.1"
 ic-certification = "2.6.0"
 ciborium = "0.2.2"
 yral-metadata-client = { git = "https://github.com/yral-dapp/yral-metadata", rev = "56e3f1f1f5f452673bee17739520c800c1264295", optional = true }
 yral-metadata-types = { git = "https://github.com/yral-dapp/yral-metadata", rev = "56e3f1f1f5f452673bee17739520c800c1264295", optional = true }
-
+send_wrapper = { version = "0.6.0", optional = true, features = ["futures"] }
 
 [build-dependencies]
 tonic-build = { version = "0.12.0", default-features = false, features = [
@@ -126,14 +125,14 @@ anyhow = "1.0.86"
 [features]
 hydrate = [
     "leptos/hydrate",
-    "leptos_meta/hydrate",
-    "leptos_router/hydrate",
     "ic-agent/wasm-bindgen",
     "dep:web-sys",
     "reqwest/native-tls",
     "dep:rand_chacha",
     "tonic/codegen",
-    "speedate"
+    "speedate",
+    "yral-canisters-common/js",
+    "dep:send_wrapper"
 ]
 ssr = [
     "dep:axum",

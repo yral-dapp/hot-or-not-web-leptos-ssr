@@ -4,7 +4,7 @@ use axum_extra::extract::{
 };
 use candid::Principal;
 use ic_agent::{identity::Secp256k1Identity, Identity};
-use leptos::{expect_context, ServerFnError};
+use leptos::prelude::{expect_context, ServerFnError};
 use leptos_axum::{extract_with_state, ResponseOptions};
 use openidconnect::{
     core::{CoreAuthenticationFlow, CoreIdTokenVerifier},

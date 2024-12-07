@@ -1,5 +1,4 @@
-use leptos::*;
-use leptos_dom::html::Video;
+use leptos::{html::Video, prelude::*};
 
 use crate::state::audio_state::AudioState;
 
@@ -18,7 +17,7 @@ pub fn VideoPlayer(
                 class="sr-only"
             />
             <video
-                _ref=node_ref
+                node_ref=node_ref
                 class="object-contain h-dvh max-h-dvh cursor-pointer"
                 poster=view_bg_url
                 src=view_video_url

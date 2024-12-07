@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use leptos_router::use_navigate;
+use leptos_router::hooks::use_navigate;
 
 #[macro_export]
 macro_rules! try_or_redirect {

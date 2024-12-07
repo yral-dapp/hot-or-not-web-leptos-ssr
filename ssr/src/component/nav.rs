@@ -3,15 +3,15 @@ use crate::{consts::USER_PRINCIPAL_STORE, utils::host::show_cdao_page};
 use super::nav_icons::*;
 use candid::Principal;
 use codee::string::FromToStringCodec;
-use leptos::*;
+use leptos::prelude::*;
 use leptos_icons::*;
-use leptos_router::*;
+use leptos_router::hooks::use_location;
 use leptos_use::use_cookie;
 
 #[component]
 fn NavIcon(
     idx: usize,
-    #[prop(into)] href: MaybeSignal<String>,
+    #[prop(into)] href: Signal<String>,
     #[prop(into)] icon: icondata_core::Icon,
     #[prop(optional)] filled_icon: Option<icondata_core::Icon>,
     cur_selected: Memo<usize>,
@@ -97,9 +97,9 @@ fn UploadIcon(idx: usize, cur_selected: Memo<usize>) -> impl IntoView {
 #[component]
 pub fn NavBar() -> impl IntoView {
     let cur_location = use_location();
-    let home_path = create_rw_signal("/".to_string());
+    let home_path = RwSignal::new("/".to_string());
     let (user_principal, _) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE);
-    let cur_selected = create_memo(move |_| {
+    let cur_selected = Memo::new(move |_| {
         let path = cur_location.pathname.get();
 
         match path.as_str() {

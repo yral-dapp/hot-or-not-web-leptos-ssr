@@ -2,16 +2,21 @@ use crate::page::token::RootType;
 use crate::page::token::TokenInfoParams;
 use crate::state::canisters::authenticated_canisters;
 
+use crate::utils::send_wrap;
 use crate::utils::token::icpump::IcpumpTokenInfo;
+use crate::utils::MockPartialEq;
 use crate::{
     component::{back_btn::BackButton, share_popup::*, spinner::FullScreenSpinner, title::Title},
     page::wallet::transactions::Transactions,
     utils::web::copy_to_clipboard,
 };
 use candid::Principal;
-use leptos::*;
+use leptos::either::Either;
+use leptos::prelude::*;
 use leptos_icons::*;
-use leptos_router::*;
+use leptos_router::components::Redirect;
+use leptos_router::hooks::use_params;
+use leptos_router::params::Params;
 use serde::{Deserialize, Serialize};
 use yral_canisters_common::cursored_data::transaction::IndexOrLedger;
 use yral_canisters_common::utils::token::TokenMetadata;
@@ -69,7 +74,7 @@ fn TokenInfoInner(
 ) -> impl IntoView {
     let meta_c1 = meta.clone();
     let meta_c = meta.clone();
-    let detail_toggle = create_rw_signal(false);
+    let detail_toggle = RwSignal::new(false);
     let view_detail_icon = Signal::derive(move || {
         if detail_toggle() {
             icondata::AiUpOutlined
@@ -84,7 +89,7 @@ fn TokenInfoInner(
     ));
 
     let decimals = meta.decimals;
-    let blur_active = create_rw_signal(meta.is_nsfw);
+    let blur_active = RwSignal::new(meta.is_nsfw);
 
     view! {
         <div class="w-dvw min-h-dvh bg-neutral-800  flex flex-col gap-4">
@@ -207,23 +212,28 @@ pub fn TokenInfo() -> impl IntoView {
     let params = use_params::<TokenInfoParams>();
     let key_principal = use_params::<TokenKeyParam>();
     let key_principal = move || key_principal.with(|p| p.as_ref().map(|p| p.key_principal).ok());
-    let token_metadata_fetch = authenticated_canisters().derive(
-        move || (params(), key_principal()),
-        move |cans_wire, (params, key_principal)| async move {
+
+    let auth_cans = authenticated_canisters();
+    let token_metadata_fetch = Resource::new(
+        move || {
+            auth_cans.track();
+            (MockPartialEq(()), params.get(), key_principal())
+        },
+        move |(_, params, key_principal)| async move {
+            let cans_wire = auth_cans.await?;
             let Ok(params) = params else {
                 return Ok::<_, ServerFnError>(None);
             };
-            let cans = Canisters::from_wire(cans_wire?, expect_context())?;
+            let cans = Canisters::from_wire(cans_wire, expect_context())?;
 
-            let meta = cans
-                .token_metadata_by_root_type(
-                    &IcpumpTokenInfo,
-                    key_principal,
-                    params.token_root.clone(),
-                )
-                .await
-                .ok()
-                .flatten();
+            let meta = send_wrap(cans.token_metadata_by_root_type(
+                &IcpumpTokenInfo,
+                key_principal,
+                params.token_root.clone(),
+            ))
+            .await
+            .ok()
+            .flatten();
             Ok(meta.map(|m| {
                 (
                     m,
@@ -237,26 +247,20 @@ pub fn TokenInfo() -> impl IntoView {
 
     view! {
         <Suspense fallback=FullScreenSpinner>
-            {move || {
-                token_metadata_fetch()
-                    .and_then(|info| info.ok())
-                    .map(|info| {
-                        match info {
-                            Some((metadata, root, key_principal, is_user_principal)) => {
-                                view! {
-                                    <TokenInfoInner
-                                        root
-                                        key_principal
-                                        meta=metadata
-                                        is_user_principal=is_user_principal
-                                    />
-                                }
-                            }
-                            None => view! { <Redirect path="/" /> },
-                        }
-                    })
-            }}
-
+            {move || Suspend::new(async move {
+                let info = token_metadata_fetch.await;
+                match info.ok().flatten() {
+                    Some((metadata, root, key_principal, is_user_principal)) => Either::Left(view! {
+                        <TokenInfoInner
+                            root
+                            key_principal
+                            meta=metadata
+                            is_user_principal
+                        />
+                    }),
+                    None => Either::Right(view! { <Redirect path="/" /> }),
+                }
+            })}
         </Suspense>
     }
 }

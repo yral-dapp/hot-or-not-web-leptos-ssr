@@ -3,7 +3,7 @@ use crate::{
     auth::delegate_short_lived_identity, page::menu::AuthorizedUserToSeedContent,
     state::content_seed_client::ContentSeedClient,
 };
-use leptos::*;
+use leptos::prelude::*;
 use yral_canisters_common::Canisters;
 
 #[component]
@@ -14,7 +14,7 @@ fn YoutubeUploadInner(canisters: Canisters<true>, #[prop(optional)] url: String)
         delegate_short_lived_identity(id)
     };
 
-    let on_submit = create_action(move |_| {
+    let on_submit: Action<_, _, LocalStorage> = Action::new_unsync(move |_| {
         let canisters_copy = canisters.clone();
         async move {
             let delegated_identity = create_short_lived_delegated_identity(&canisters_copy);
@@ -54,7 +54,7 @@ fn YoutubeUploadInner(canisters: Canisters<true>, #[prop(optional)] url: String)
                         <button
                             type="submit"
                             class="border border-solid px-4 text-xl md:text-2xl w-fit text-white hover:bg-white hover:text-black"
-                            on:click=move |_| on_submit.dispatch(())
+                            on:click=move |_| { on_submit.dispatch(()); }
                         >
 
                             Submit
@@ -72,8 +72,8 @@ fn YoutubeUploadInner(canisters: Canisters<true>, #[prop(optional)] url: String)
 #[component]
 pub fn YoutubeUpload(canisters: Canisters<true>, #[prop(optional)] url: String) -> impl IntoView {
     let user_principal = canisters.user_principal();
-    let cans_s = store_value(canisters);
-    let url_s = store_value(url);
+    let cans_s = StoredValue::new(canisters);
+    let url_s = StoredValue::new(url);
 
     let authorized_ctx: AuthorizedUserToSeedContent = expect_context();
     let authorized = authorized_ctx.0;

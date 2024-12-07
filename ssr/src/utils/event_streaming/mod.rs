@@ -1,7 +1,7 @@
 use std::env;
 
 use gloo_utils::format::JsValueSerdeExt;
-use leptos::*;
+use leptos::prelude::*;
 use serde::Serialize;
 use serde_json::json;
 use wasm_bindgen::prelude::*;
@@ -80,7 +80,7 @@ pub async fn send_event_ssr(event_name: &str, params: &serde_json::Value) {
 
 #[cfg(feature = "ga4")]
 pub fn send_user_id(user_id: String) {
-    let gtag_measurement_id = GTAG_MEASUREMENT_ID.as_ref();
+    let gtag_measurement_id = GTAG_MEASUREMENT_ID;
 
     gtag(
         "config",
@@ -106,7 +106,7 @@ pub fn send_event_warehouse(event_name: &str, params: &serde_json::Value) {
 
     let params_str = params.to_string();
 
-    spawn_local(async move {
+    leptos::task::spawn_local(async move {
         stream_to_offchain_agent(event_name, params_str)
             .await
             .unwrap();
@@ -172,7 +172,7 @@ pub async fn send_event_ga4_ssr(
 ) -> Result<(), Box<dyn std::error::Error>> {
     use reqwest::Client;
 
-    let measurement_id: &str = GTAG_MEASUREMENT_ID.as_ref();
+    let measurement_id: &str = GTAG_MEASUREMENT_ID;
     let api_secret = env::var("GA4_API_SECRET")?;
 
     let client = Client::new();

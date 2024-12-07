@@ -1,9 +1,9 @@
-use leptos::*;
+use leptos::prelude::*;
 use leptos_icons::Icon;
 
 #[component]
 pub fn OnboardingPopUp(onboard_on_click: WriteSignal<bool>) -> impl IntoView {
-    let onboarding_page_no = create_rw_signal(1);
+    let onboarding_page_no = RwSignal::new(1);
 
     let style = move || {
         if onboarding_page_no.get() == 2 {

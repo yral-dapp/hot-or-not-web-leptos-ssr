@@ -1,5 +1,5 @@
 use super::overlay::ShadowOverlay;
-use leptos::*;
+use leptos::prelude::*;
 use leptos_icons::*;
 
 #[component]

@@ -1,5 +1,5 @@
 use candid::Principal;
-use leptos::{use_context, RwSignal, SignalGetUntracked};
+use leptos::prelude::{use_context, GetUntracked, RwSignal};
 
 use yral_canisters_common::{utils::profile::ProfileDetails, Canisters};
 

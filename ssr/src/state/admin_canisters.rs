@@ -1,6 +1,6 @@
 use candid::Principal;
 use ic_agent::Identity;
-use leptos::expect_context;
+use leptos::prelude::expect_context;
 use yral_canisters_client::{
     individual_user_template::IndividualUserTemplate, sns_swap::SnsSwap, user_index::UserIndex,
 };

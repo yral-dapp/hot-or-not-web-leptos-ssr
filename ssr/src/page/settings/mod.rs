@@ -7,13 +7,15 @@ use crate::state::auth::account_connected_reader;
 use crate::utils::notifications::get_token_for_principal;
 use codee::string::FromToStringCodec;
 use leptos::html::Input;
-use leptos::*;
+use leptos::{ev, prelude::*};
 use leptos_icons::*;
 use leptos_use::storage::use_local_storage;
 use leptos_use::use_event_listener;
 use yral_canisters_common::utils::profile::ProfileDetails;
 
+// TODO: Leptos needs a hot patch for us to remove #[allow(dead_code)]
 #[component]
+#[allow(dead_code)]
 fn MenuItem(
     #[prop(into)] text: String,
     #[prop(into)] href: String,
@@ -112,9 +114,9 @@ fn EnableNotifications(user_details: ProfileDetails) -> impl IntoView {
 
     let (notifs_enabled, set_notifs_enabled, _) =
         use_local_storage::<bool, FromToStringCodec>(NOTIFICATIONS_ENABLED_STORE);
-    let toggle_ref = create_node_ref::<Input>();
+    let toggle_ref = NodeRef::<Input>::new();
 
-    let on_token_click = create_action(move |()| async move {
+    let on_token_click: Action<_, _, LocalStorage> = Action::new_unsync(move |()| async move {
         get_token_for_principal(user_details.principal.to_string()).await;
     });
 

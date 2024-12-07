@@ -1,6 +1,10 @@
 use std::collections::VecDeque;
 
-use leptos::*;
+use leptos::{
+    either::{Either, EitherOf4},
+    ev, html,
+    prelude::*,
+};
 use leptos_icons::*;
 use pulldown_cmark::{Options, Parser};
 use serde::{Deserialize, Serialize};
@@ -46,7 +50,7 @@ pub struct ICPumpAiChat {
 
 #[component]
 pub fn MarkdownRenderer(text: String) -> impl IntoView {
-    let parsed_markdown = create_memo(move |_| {
+    let parsed_markdown = Memo::new(move |_| {
         let mut options = Options::empty();
         options.insert(Options::ENABLE_STRIKETHROUGH);
         let parser = Parser::new_ext(&text, options);
@@ -123,9 +127,9 @@ pub fn ICPumpAiPage2(
     search_action: Action<(), ()>,
     reset_state: Action<(), ()>,
 ) -> impl IntoView {
-    let input_ref = create_node_ref::<html::Input>();
+    let input_ref = NodeRef::<html::Input>::new();
 
-    create_effect(move |_| {
+    Effect::new(move || {
         if let Some(input) = input_ref.get() {
             // Focus the input
             let _ = input.focus();
@@ -157,7 +161,7 @@ pub fn ICPumpAiPage2(
         </div>
         <div class="bg-[#202125] mt-20 w-full rounded-sm relative">
           <input
-          _ref=input_ref
+          node_ref=input_ref
           on:input=move |ev| {
               let q = event_target_value(&ev);
               query.set(q);
@@ -244,7 +248,7 @@ pub fn ICPumpAiToken(details: TokenListItem) -> impl IntoView {
 
 #[component]
 pub fn ICPumpAiTokenListing(tokens: Vec<TokenListItem>) -> impl IntoView {
-    let view_more = create_rw_signal(false);
+    let view_more = RwSignal::new(false);
     let tokens_stripped = tokens
         .iter()
         .take(3)
@@ -252,7 +256,7 @@ pub fn ICPumpAiTokenListing(tokens: Vec<TokenListItem>) -> impl IntoView {
         .collect::<Vec<TokenListItem>>();
     let tokens_len = tokens.len();
 
-    let tokens_view_list = create_memo(move |_| {
+    let tokens_view_list = {
         let tokens_stripped = tokens_stripped.clone();
         let tokens = tokens.clone();
         let tokens_final = if view_more.get() {
@@ -274,37 +278,30 @@ pub fn ICPumpAiTokenListing(tokens: Vec<TokenListItem>) -> impl IntoView {
                 />
             </div>
         }
-        .into_view()
-    });
+    };
 
-    let tokens_view = create_memo(move |_| {
-        if tokens_len != 0 {
-            view! {
-                {tokens_view_list}
-                <div class="w-full flex items-center justify-center">
-                    <button
-                        class="flex items-center gap-2 rounded-xs border border-[#202125] w-fit p-2"
-                        on:click=move |_| view_more.update(|v| *v = !*v)
-                    >
-                        {move || if view_more.get() {
-                            view! {
-                                <span>View less</span>
-                                <span>"↑"</span>
-                            }
-                        } else {
-                            view! {
-                                <span>View more</span>
-                                <span>"↓"</span>
-                            }
-                        }}
-                    </button>
-                </div>
-            }
-            .into_view()
-        } else {
-            view! {<></>}.into_view()
-        }
-    });
+    let tokens_view = if tokens_len == 0 {
+        view! { <></> };
+        Either::Left(())
+    } else {
+        Either::Right(view! {
+            {tokens_view_list}
+            <div class="w-full flex items-center justify-center">
+                <button
+                    class="flex items-center gap-2 rounded-xs border border-[#202125] w-fit p-2"
+                    on:click=move |_| view_more.update(|v| *v = !*v)
+                >
+                    <Show when=view_more fallback=|| view! {
+                        <span>View more</span>
+                        <span>{"↓"}</span>
+                    }>
+                        <span>View less</span>
+                        <span>{"↑"}</span>
+                    </Show>
+                </button>
+            </div>
+        })
+    };
 
     view! {
         <div class="flex flex-col gap-4">
@@ -321,6 +318,8 @@ pub fn ICPumpAiPage3(
     search_action: Action<(), ()>,
     reset_state: Action<(), ()>,
 ) -> impl IntoView {
+    let search_pending = search_action.pending();
+
     view! {
         <div class="bg-black z-[4] absolute top-0 select-none inset-x-0 py-3 px-4 flex items-center justify-center gap-3">
             <img src="/img/pump-ai.svg" class="h-5 w-5"/>
@@ -336,47 +335,39 @@ pub fn ICPumpAiPage3(
             </button>
         </div>
         <div class="grow flex gap-4 flex-col-reverse h-full mt-12 overflow-y-auto py-4">
-            {
-                move || {
-                    if search_action.pending().get() {
-                        return view! {
-                            <>
-                            <div class="font-mono flex w-full  items-center justify-start">
-                                <div class="w-fit p-4 thinking"/>
-                                <div>Thinking</div>
-                            </div>
-                            </>
-                        };
-                    }
-                    view! {
-                        <><div></div></>
-                    }
-                }
-            }
-
+            <Show when=search_pending fallback=|| view! {
+                <><div></div></>
+            }>
+                <>
+                <div class="font-mono flex w-full  items-center justify-start">
+                    <div class="w-fit p-4 thinking"/>
+                    <div>Thinking</div>
+                </div>
+                </>
+            </Show>
             <For
                 each=move || chat.get().items.clone()
                 key=|item| item.clone()
                 children=move |item: ICPumpAiChatItem| {
                     match item {
                         ICPumpAiChatItem::UserItem{query} => {
-                            view! {
+                            Either::Left(view! {
                                 <div class="flex flex-col gap-2 relative w-full items-end pl-8">
                                     <div class="w-fit px-4 py-2 rounded-xs bg-[#202125]">
                                         {query}
                                     </div>
                                 </div>
-                            }
+                            })
                         }
                         ICPumpAiChatItem::ResponseItem{response, tokens} => {
-                            view! {
+                            Either::Right(view! {
                                 <div class="flex flex-col gap-2 relative w-full items-start pr-4">
                                     <div class="w-fit px-4 py-2 rounded-xs">
                                         <MarkdownRenderer text=response />
                                     </div>
                                     <ICPumpAiTokenListing tokens=tokens />
                                 </div>
-                            }
+                            })
                         }
                     }
                 }
@@ -410,15 +401,15 @@ pub fn ICPumpAiPage3(
 
 #[component]
 pub fn ICPumpAi() -> impl IntoView {
-    let page_no = create_rw_signal(1);
-    let query = create_rw_signal("".to_string());
-    let chat = create_rw_signal(ICPumpAiChat {
+    let page_no = RwSignal::new(1);
+    let query = RwSignal::new("".to_string());
+    let chat = RwSignal::new(ICPumpAiChat {
         items: VecDeque::new(),
         rag_data: "".to_string(),
         interactions: vec![],
     });
 
-    let search_action = create_action(move |()| async move {
+    let search_action = Action::new(move |()| async move {
         page_no.set(3);
         let q = query.get();
 
@@ -470,7 +461,7 @@ pub fn ICPumpAi() -> impl IntoView {
         query.set("".to_string());
     });
 
-    let reset_state = create_action(move |()| async move {
+    let reset_state = Action::new(move |()| async move {
         query.set("".to_string());
         chat.set(ICPumpAiChat {
             items: VecDeque::new(),
@@ -490,26 +481,27 @@ pub fn ICPumpAi() -> impl IntoView {
                 move || {
                     match page_no.get() {
                         1 => {
-                            view! {
+                           EitherOf4::A(view! {
                                 <ICPumpAiPage1 query={query} page_no={page_no} search_action={search_action}/>
-                            }.into_view()
+                            })
                         }
                         2 => {
-                            view! {
+                            EitherOf4::B(view! {
                                 <ICPumpAiPage2 query={query} page_no={page_no}
                                     search_action={search_action} reset_state={reset_state}/>
-                            }.into_view()
+                            })
                         }
                         3 => {
-                            view! {
+                            EitherOf4::C(view! {
                                 <ICPumpAiPage3 query={query} chat={chat} page_no={page_no}
                                     search_action={search_action} reset_state={reset_state}/>
-                            }.into_view()
+                            })
                         }
                         _ => {
                             view! {
                                 <></>
-                            }.into_view()
+                            };
+                            EitherOf4::D(())
                         }
                     }
                 }

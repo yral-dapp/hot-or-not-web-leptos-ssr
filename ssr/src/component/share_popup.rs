@@ -1,4 +1,4 @@
-use leptos::*;
+use leptos::{ev, prelude::*, reactive::wrappers::write::SignalSetter};
 use leptos_icons::*;
 
 use crate::{
@@ -37,7 +37,7 @@ fn ShareContent(
             </div>
             <SocialShare message=message.clone() share_link=share_link_social.clone() />
             <div class="flex overflow-x-auto justify-center items-center px-10 mx-1 space-x-2 w-full rounded-xl border-2 border-neutral-700 h-[2.5rem] md:h-[5rem]">
-                <span class="text-lg text-black md:text-xl truncate">{&share_link.clone()}</span>
+                <span class="text-lg text-black md:text-xl truncate">{share_link.clone()}</span>
                 <button on:click=copy_clipboard>
                     <Icon class="w-6 h-6 text-black cursor-pointer" icon=icondata::BiCopyRegular />
                 </button>
@@ -122,7 +122,7 @@ pub fn ShareButtonWithFallbackPopup(
     #[prop(optional)] style: String,
 ) -> impl IntoView {
     let base_url = get_host();
-    let show_fallback = create_rw_signal(false);
+    let show_fallback = RwSignal::new(false);
     let share_link_c = share_link.clone();
     let on_share_click = move |ev: ev::MouseEvent| {
         ev.stop_propagation();

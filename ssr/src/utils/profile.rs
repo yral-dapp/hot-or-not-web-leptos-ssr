@@ -1,6 +1,6 @@
 use candid::Principal;
 use ic_agent::AgentError;
-use leptos::{RwSignal, SignalUpdateUntracked};
+use leptos::prelude::{RwSignal, UpdateUntracked};
 
 use yral_canisters_client::individual_user_template::Result12;
 
@@ -40,7 +40,7 @@ impl CursoredDataProvider for PostsProvider {
     type Data = PostDetails;
     type Error = AgentError;
 
-    async fn get_by_cursor(
+    async fn get_by_cursor_inner(
         &self,
         start: usize,
         end: usize,

@@ -1,8 +1,8 @@
 use candid::Principal;
 use ic_agent::Identity;
 use leptos::html::Input;
-use leptos::{create_effect, MaybeSignal, ReadSignal, RwSignal, SignalGetUntracked};
-use leptos::{create_signal, ev, expect_context, html::Video, NodeRef, SignalGet, SignalSet};
+use leptos::prelude::*;
+use leptos::{ev, html::Video};
 use leptos_use::use_event_listener;
 use serde_json::json;
 use sns_validation::pbs::sns_pb::SnsInitPayload;
@@ -56,7 +56,7 @@ pub struct VideoWatched;
 impl VideoWatched {
     pub fn send_event(
         &self,
-        vid_details: MaybeSignal<Option<PostDetails>>,
+        vid_details: Signal<Option<PostDetails>>,
         container_ref: NodeRef<Video>,
     ) {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
@@ -64,12 +64,12 @@ impl VideoWatched {
             let (is_connected, _) = account_connected_reader();
 
             // video_viewed - analytics
-            let (video_watched, set_video_watched) = create_signal(false);
-            let (full_video_watched, set_full_video_watched) = create_signal(false);
+            let (video_watched, set_video_watched) = signal(false);
+            let (full_video_watched, set_full_video_watched) = signal(false);
 
             let cans_store: RwSignal<Option<Canisters<true>>> = auth_canisters_store();
 
-            let post_for_time = vid_details.clone();
+            let post_for_time = vid_details;
             let _ = use_event_listener(container_ref, ev::timeupdate, move |evt| {
                 let user = user_details_can_store_or_ret!(cans_store);
                 let post_o = post_for_time();
@@ -147,7 +147,7 @@ impl VideoWatched {
             });
 
             // video duration watched - warehousing
-            let post_for_warehouse = vid_details.clone();
+            let post_for_warehouse = vid_details;
             let _ = use_event_listener(container_ref, ev::pause, move |evt| {
                 let user = user_details_can_store_or_ret!(cans_store);
                 let post_o = post_for_warehouse();
@@ -341,7 +341,7 @@ impl VideoUploadUploadButtonClicked {
                 .map(|v| v.checked())
                 .unwrap_or_default();
 
-            create_effect(move |_| {
+            Effect::new(move || {
                 send_event(
                     "video_upload_upload_button_clicked",
                     &json!({

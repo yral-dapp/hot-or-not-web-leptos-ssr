@@ -2,7 +2,8 @@ use std::collections::HashMap;
 use std::collections::VecDeque;
 
 use futures::StreamExt;
-use leptos::*;
+use leptos::prelude::*;
+use leptos::task::spawn_local;
 use leptos_icons::*;
 
 use crate::component::spinner::FullScreenSpinner;
@@ -21,7 +22,7 @@ pub fn TokenListing(
 ) -> impl IntoView {
     view! {
         <a
-            href=details.link
+            href=details.link.clone()
             class="relative flex h-fit max-h-[300px] w-full gap-2 overflow-hidden border border-transparent p-2 transition-colors hover:border-gray-700 active:border-gray-200"
             class:tada=is_new_token
         >
@@ -29,7 +30,7 @@ pub fn TokenListing(
                 <img
                     class="mr-4 w-32 h-auto select-none"
                     class:blur-lg=details.is_nsfw
-                    src=details.logo
+                    src=details.logo.clone()
                     alt=details.token_name.clone()
                 />
                 <Show
@@ -49,11 +50,11 @@ pub fn TokenListing(
                         class="line-clamp-1 w-full overflow-hidden"
                         style="word-break: break-word;"
                     >
-                        {details.token_name}
+                        {details.token_name.clone()}
                     </span>
                     <span class="shrink-0 font-bold underline">
                         <span class="text-gray-400 italic select-none">"$"</span>
-                        {details.token_symbol}
+                        {details.token_symbol.clone()}
                     </span>
                 </div>
                 <div
@@ -61,14 +62,14 @@ pub fn TokenListing(
                     class="text-sm line-clamp-3 text-gray-400"
                     style="word-break: break-word"
                 >
-                    {details.description}
+                    {details.description.clone()}
                 </div>
                 <div class="text-xs text-gray-500 line-clamp-2 pr-10">
                     "Created by: "<span class="select-all">{details.user_id}</span>
                     <span class="invisible">{details.formatted_created_at.clone()}</span>
                 </div>
                 <span class="absolute bottom-3 right-2 shrink-0 text-xs text-gray-500 underline">
-                    {details.formatted_created_at}
+                    {details.formatted_created_at.clone()}
                 </span>
             </div>
         </a>
@@ -77,13 +78,13 @@ pub fn TokenListing(
 
 #[component]
 pub fn ICPumpListing() -> impl IntoView {
-    let page = create_rw_signal(1);
-    let token_list: RwSignal<Vec<TokenListItem>> = create_rw_signal(vec![]);
-    let end_of_list = create_rw_signal(false);
-    let cache = create_rw_signal(HashMap::<u64, Vec<TokenListItem>>::new());
-    let new_token_list: RwSignal<VecDeque<TokenListItem>> = create_rw_signal(VecDeque::new());
+    let page = RwSignal::new(1);
+    let token_list: RwSignal<Vec<TokenListItem>> = RwSignal::new(vec![]);
+    let end_of_list = RwSignal::new(false);
+    let cache = RwSignal::new(HashMap::<u64, Vec<TokenListItem>>::new());
+    let new_token_list: RwSignal<VecDeque<TokenListItem>> = RwSignal::new(VecDeque::new());
 
-    let act = create_resource(page, move |page| async move {
+    let act = Resource::new(page, move |page| async move {
         // reset new_token_list
         new_token_list.set(VecDeque::new());
 
@@ -94,7 +95,7 @@ pub fn ICPumpListing() -> impl IntoView {
         get_paginated_token_list(page as u32).await.unwrap()
     });
 
-    create_effect(move |_| {
+    Effect::new(move || {
         spawn_local(async move {
             let (_app, firestore) = init_firebase();
             let mut stream = listen_to_documents(&firestore);
@@ -119,12 +120,10 @@ pub fn ICPumpListing() -> impl IntoView {
                             if res.len() < ICPUMP_LISTING_PAGE_SIZE {
                                 end_of_list.set(true);
                             }
-                            update!(
-                                move |token_list, cache| {
-                                *token_list = res.clone();
-                                cache.insert(page.get_untracked(), res.clone());
-                            }
-                            );
+                            let mut token_list = token_list.write();
+                            let mut cache = cache.write();
+                            *token_list = res.clone();
+                            cache.insert(page.get_untracked(), res.clone());
                         });
                     view! {
                         <div class="grid grid-col-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

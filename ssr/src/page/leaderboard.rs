@@ -1,5 +1,5 @@
 use crate::component::coming_soon::ComingSoonGraphic;
-use leptos::*;
+use leptos::prelude::*;
 use leptos_icons::*;
 
 #[component]

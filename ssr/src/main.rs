@@ -5,9 +5,12 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use axum::{routing::get, Router};
-use hot_or_not_web_leptos_ssr::fallback::file_and_error_handler;
+use hot_or_not_web_leptos_ssr::app::shell;
 use hot_or_not_web_leptos_ssr::{app::App, init::AppStateBuilder, state::server::AppState};
-use leptos::{get_configuration, logging::log, provide_context};
+use leptos::{
+    logging::log,
+    prelude::{get_configuration, provide_context},
+};
 use leptos_axum::handle_server_fns_with_context;
 use leptos_axum::{generate_route_list, LeptosRoutes};
 
@@ -47,12 +50,9 @@ pub async fn server_fn_handler(
     .await
 }
 
-pub async fn leptos_routes_handler(
-    State(app_state): State<AppState>,
-    req: Request<AxumBody>,
-) -> Response {
+pub async fn leptos_routes_handler(state: State<AppState>, req: Request<AxumBody>) -> Response {
+    let State(app_state) = state.clone();
     let handler = leptos_axum::render_route_with_context(
-        app_state.leptos_options.clone(),
         app_state.routes.clone(),
         move || {
             provide_context(app_state.canisters.clone());
@@ -77,9 +77,9 @@ pub async fn leptos_routes_handler(
             provide_context(app_state.grpc_icpump_search_channel.clone());
             provide_context(app_state.grpc_nsfw_channel.clone());
         },
-        App,
+        move || shell(app_state.leptos_options.clone()),
     );
-    handler(req).await.into_response()
+    handler(state, req).await.into_response()
 }
 
 #[tokio::main]
@@ -92,7 +92,7 @@ async fn main() {
     // <https://github.com/leptos-rs/start-axum#executing-a-server-on-a-remote-machine-without-the-toolchain>
     // Alternately a file can be specified such as Some("Cargo.toml")
     // The file would need to be included with the executable when moved to deployment
-    let conf = get_configuration(None).await.unwrap();
+    let conf = get_configuration(None).unwrap();
     let leptos_options = conf.leptos_options;
     let addr = leptos_options.site_addr;
     let routes = generate_route_list(App);
@@ -140,7 +140,7 @@ async fn main() {
             get(server_fn_handler).post(server_fn_handler),
         )
         .leptos_routes_with_handler(routes, get(leptos_routes_handler))
-        .fallback(file_and_error_handler)
+        .fallback(leptos_axum::file_and_error_handler::<AppState, _>(shell))
         .with_state(res.app_state);
 
     // run our app with hyper
