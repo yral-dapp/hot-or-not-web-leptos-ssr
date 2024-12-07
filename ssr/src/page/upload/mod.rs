@@ -13,11 +13,12 @@ use crate::{
 };
 
 use leptos::{
+    either::Either,
     html::{Input, Textarea},
-    *,
+    prelude::*,
 };
 
-use leptos_router::Redirect;
+use leptos_router::components::Redirect;
 use validators::{description_validator, hashtags_validator};
 use video_upload::{PreVideoUpload, VideoUploader};
 
@@ -31,31 +32,34 @@ struct UploadParams {
 }
 
 #[component]
-fn PreUploadView(trigger_upload: WriteSignal<Option<UploadParams>>) -> impl IntoView {
-    let description_err = create_rw_signal(String::new());
-    let desc_err_memo = create_memo(move |_| description_err());
-    let hashtags = create_rw_signal(Vec::new());
-    let hashtags_err = create_rw_signal(String::new());
-    let hashtags_err_memo = create_memo(move |_| hashtags_err());
-    let file_blob = create_rw_signal(None::<FileWithUrl>);
-    let desc = create_node_ref::<Textarea>();
-    let invalid_form = create_memo(move |_| {
-        with!(|desc_err_memo, hashtags_err_memo, file_blob, hashtags| {
-            // Description error
-            !desc_err_memo.is_empty()
-                // Hashtags error
-                || !hashtags_err_memo.is_empty()
-                // File is not uploaded
-                || file_blob.is_none()
-                // Hashtags are empty
-                || hashtags.is_empty()
-                // Description is empty
-                || desc().map(|d| d.value().is_empty()).unwrap_or(true)
-        })
+fn PreUploadView(trigger_upload: WriteSignal<Option<UploadParams>, LocalStorage>) -> impl IntoView {
+    let description_err = RwSignal::new(String::new());
+    let desc_err_memo = Memo::new(move |_| description_err());
+    let hashtags = RwSignal::new(Vec::new());
+    let hashtags_err = RwSignal::new(String::new());
+    let hashtags_err_memo = Memo::new(move |_| hashtags_err());
+    let file_blob = RwSignal::new_local(None::<FileWithUrl>);
+    let desc = NodeRef::<Textarea>::new();
+    let invalid_form = Memo::new(move |_| {
+        let desc_err_memo = desc_err_memo.read();
+        let hashtags_err_memo = hashtags_err_memo.read();
+        let file_blob = file_blob.read();
+        let hashtags = hashtags.read();
+
+        // Description error
+        !desc_err_memo.is_empty()
+            // Hashtags error
+            || !hashtags_err_memo.is_empty()
+            // File is not uploaded
+            || file_blob.is_none()
+            // Hashtags are empty
+            || hashtags.is_empty()
+            // Description is empty
+            || desc.get().map(|d| d.value().is_empty()).unwrap_or(true)
     });
-    let hashtag_inp = create_node_ref::<Input>();
-    let enable_hot_or_not = create_node_ref::<Input>();
-    let is_nsfw = create_node_ref::<Input>();
+    let hashtag_inp = NodeRef::<Input>::new();
+    let enable_hot_or_not = NodeRef::<Input>::new();
+    let is_nsfw = NodeRef::<Input>::new();
     let canister_store = auth_canisters_store();
 
     VideoUploadInitiated.send_event();
@@ -93,8 +97,8 @@ fn PreUploadView(trigger_upload: WriteSignal<Option<UploadParams>>) -> impl Into
         Err(e) => hashtags_err.set(e),
     };
 
-    create_effect(move |_| {
-        let Some(hashtag_inp) = hashtag_inp() else {
+    Effect::new(move || {
+        let Some(hashtag_inp) = hashtag_inp.get() else {
             return;
         };
 
@@ -108,11 +112,11 @@ fn PreUploadView(trigger_upload: WriteSignal<Option<UploadParams>>) -> impl Into
         <PreVideoUpload file_blob=file_blob.write_only() />
         <div class="flex flex-col gap-4 lg:basis-7/12">
             <div class="flex flex-col gap-y-2">
-                <Show when=move || { with!(| description_err | ! description_err.is_empty()) }>
+                <Show when=move || { !description_err.read().is_empty() }>
                     <span class="text-red-500 text-sm">{desc_err_memo()}</span>
                 </Show>
                 <textarea
-                    _ref=desc
+                    node_ref=desc
                     on:input=move |ev| {
                         let desc = event_target_value(&ev);
                         description_err.set(description_validator(desc).err().unwrap_or_default());
@@ -125,7 +129,7 @@ fn PreUploadView(trigger_upload: WriteSignal<Option<UploadParams>>) -> impl Into
             </div>
             <div class="flex flex-col gap-y-2">
                 <Show
-                    when=move || { with!(| hashtags_err | ! hashtags_err.is_empty()) }
+                    when=move || { !hashtags_err.read().is_empty() }
                     fallback=|| {
                         view! { <h3 class="font-semibold text-neutral-600">Add Hashtags</h3> }
                     }
@@ -134,7 +138,7 @@ fn PreUploadView(trigger_upload: WriteSignal<Option<UploadParams>>) -> impl Into
                     <h3 class="text-red-500 font-semibold">{hashtags_err_memo()}</h3>
                 </Show>
                 <input
-                    _ref=hashtag_inp
+                    node_ref=hashtag_inp
                     on:input=move |ev| {
                         let hts = event_target_value(&ev);
                         hashtag_on_input(hts);
@@ -167,14 +171,14 @@ pub fn CreatorDaoCreatePage() -> impl IntoView {
 
 #[component]
 pub fn YralUploadPostPage() -> impl IntoView {
-    let trigger_upload = create_rw_signal(None::<UploadParams>);
+    let trigger_upload = RwSignal::new_local(None::<UploadParams>);
 
     view! {
         <div class="flex flex-col min-h-dvh w-dvw items-center overflow-y-scroll gap-6 md:gap-8 lg:gap-16 pb-12 pt-4 md:pt-6 px-3 md:px-6 lg:px-10 bg-black text-white">
             <h1 class="font-bold text-lg md:text-xl text-center">Upload</h1>
             <div class="flex flex-col lg:flex-row place-content-center min-h-full w-full">
                 <Show
-                    when=move || { with!(| trigger_upload | trigger_upload.is_some()) }
+                    when=move || { trigger_upload.read().is_some() }
                     fallback=move || {
                         view! { <PreUploadView trigger_upload=trigger_upload.write_only() /> }
                     }
@@ -190,8 +194,8 @@ pub fn YralUploadPostPage() -> impl IntoView {
 #[component]
 pub fn UploadPostPage() -> impl IntoView {
     if show_cdao_page() {
-        view! { <CreatorDaoCreatePage /> }
+        Either::Left(view! { <CreatorDaoCreatePage /> })
     } else {
-        view! { <YralUploadPostPage /> }
+        Either::Right(view! { <YralUploadPostPage /> })
     }
 }

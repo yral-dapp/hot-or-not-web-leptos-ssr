@@ -1,7 +1,7 @@
 use crate::{state::canisters::auth_canisters_store, utils::event_streaming::events::ErrorEvent};
 use gloo::history::{BrowserHistory, History};
-use leptos::*;
-use leptos_router::*;
+use leptos::prelude::*;
+use leptos_router::{hooks::use_query, params::Params};
 
 #[derive(Clone, Params, PartialEq)]
 struct ServerErrParams {
@@ -39,7 +39,7 @@ pub fn ServerErrorPage() -> impl IntoView {
 }
 
 #[component]
-pub fn ErrorView(#[prop(into)] error: MaybeSignal<String>) -> impl IntoView {
+pub fn ErrorView(#[prop(into)] error: Signal<String>) -> impl IntoView {
     let go_back = move || {
         let history = BrowserHistory::new();
 
@@ -52,7 +52,7 @@ pub fn ErrorView(#[prop(into)] error: MaybeSignal<String>) -> impl IntoView {
             <img src="/img/error-logo.svg" />
             <h1 class="p-2 text-2xl md:text-3xl font-bold text-white">"oh no!"</h1>
             <div class="text-center text-xs md:text-sm text-white/60 w-full md:w-2/3 lg:w-1/3 resize-none px-8 mb-4">
-                {error.clone()}
+                {error}
             </div>
             <button
                 on:click=move |_| go_back()

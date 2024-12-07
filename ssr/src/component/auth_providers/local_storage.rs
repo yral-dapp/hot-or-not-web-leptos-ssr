@@ -1,7 +1,7 @@
 use codee::string::JsonSerdeCodec;
 use ic_agent::identity::Secp256k1Identity;
 use k256::elliptic_curve::JwkEcKey;
-use leptos::*;
+use leptos::prelude::*;
 use leptos_use::storage::use_local_storage;
 
 use yral_types::delegated_identity::DelegatedIdentityWire;
@@ -43,7 +43,7 @@ pub fn LocalStorageProvider() -> impl IntoView {
 
     let ctx: LoginProvCtx = expect_context();
 
-    let do_login_action = create_action(move |()| async move {
+    let do_login_action = Action::new(move |()| async move {
         let secp256k1_key = jwk_identity.get_untracked();
         let (delegation, jwk) = perform_local_storage_auth(secp256k1_key).await?;
         set_jwk_identity(Some(jwk));

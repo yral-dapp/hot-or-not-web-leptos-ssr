@@ -1,4 +1,4 @@
-use leptos::*;
+use leptos::{html, prelude::*};
 
 use crate::component::bullet_loader::BulletLoader;
 use crate::component::canisters_prov::AuthCansProvider;
@@ -12,7 +12,7 @@ use yral_canisters_common::{
 #[component]
 fn HistoryItem(detail: HistoryDetails, _ref: NodeRef<html::Div>) -> impl IntoView {
     view! {
-        <div _ref=_ref class="px-2 grid grid-cols-4 grid-rows-1 items-center gap-2 w-full">
+        <div node_ref=_ref class="px-2 grid grid-cols-4 grid-rows-1 items-center gap-2 w-full">
             <div class="flex flex-row col-span-3 items-center gap-4 justify-items-start">
                 <img
                     class="aspect-square w-12 md:w-16 lg:w-24 rounded-full"
@@ -101,7 +101,7 @@ mod history_provider {
             type Data = HistoryDetails;
             type Error = Infallible;
 
-            async fn get_by_cursor(
+            async fn get_by_cursor_inner(
                 &self,
                 from: usize,
                 end: usize,

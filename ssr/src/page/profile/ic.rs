@@ -1,4 +1,4 @@
-use leptos::*;
+use leptos::{html, prelude::*};
 use leptos_icons::*;
 use yral_canisters_common::cursored_data::CursoredDataProvider;
 
@@ -18,8 +18,9 @@ pub fn ProfileStream<Prov, EF, N>(
     #[prop(into)] empty_text: String,
 ) -> impl IntoView
 where
-    Prov: CursoredDataProvider + Clone + 'static,
-    EF: Fn(InferData<Prov>, Option<NodeRef<html::Div>>) -> N + Clone + 'static,
+    Prov: CursoredDataProvider + Clone + 'static + Send + Sync,
+    <Prov as CursoredDataProvider>::Data: Send + Sync,
+    EF: Fn(InferData<Prov>, Option<NodeRef<html::Div>>) -> N + Clone + 'static + Send + Sync,
     N: IntoView + 'static,
 {
     view! {

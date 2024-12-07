@@ -1,6 +1,6 @@
 use candid::Principal;
-use leptos::*;
-use leptos_router::*;
+use leptos::{either::Either, prelude::*};
+use leptos_router::components::*;
 
 use crate::{component::spinner::FullScreenSpinner, utils::host::show_cdao_page};
 
@@ -112,11 +112,11 @@ pub fn YralRootPage() -> impl IntoView {
     let target_post;
     #[cfg(any(feature = "local-bin", feature = "local-lib"))]
     {
-        target_post = create_resource(|| (), |_| get_top_post_id());
+        target_post = Resource::new(|| (), |_| get_top_post_id());
     }
     #[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
     {
-        target_post = create_resource(|| (), |_| get_top_post_id_mlcache());
+        target_post = Resource::new(|| (), |_| get_top_post_id_mlcache());
     }
 
     view! {
@@ -143,8 +143,8 @@ pub fn YralRootPage() -> impl IntoView {
 #[component]
 pub fn RootPage() -> impl IntoView {
     if show_cdao_page() {
-        view! { <CreatorDaoRootPage /> }
+        Either::Left(view! { <CreatorDaoRootPage /> })
     } else {
-        view! { <YralRootPage /> }
+        Either::Right(view! { <YralRootPage /> })
     }
 }

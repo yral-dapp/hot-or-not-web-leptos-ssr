@@ -1,13 +1,15 @@
 use candid::Principal;
 use futures::{stream::FuturesOrdered, TryStreamExt};
-use leptos::*;
+use leptos::prelude::*;
 use yral_canisters_client::individual_user_template::DeployedCdaoCanisters;
 
 use crate::{
-    component::{bullet_loader::BulletLoader, token_confetti_symbol::TokenConfettiSymbol},
+    component::{
+        bullet_loader::BulletLoader, canisters_prov::with_cans,
+        token_confetti_symbol::TokenConfettiSymbol,
+    },
     page::wallet::tokens::TokenTile,
-    state::canisters::{authenticated_canisters, unauth_canisters},
-    utils::token::icpump::IcpumpTokenInfo,
+    utils::{send_wrap, token::icpump::IcpumpTokenInfo},
 };
 use yral_canisters_common::{utils::token::TokenMetadata, Canisters, Error as CanistersError};
 
@@ -23,8 +25,8 @@ fn CreateYourToken(header_text: &'static str) -> impl IntoView {
     }
 }
 
-async fn token_metadata(
-    cans: &Canisters<false>,
+async fn token_metadata<const A: bool>(
+    cans: &Canisters<A>,
     user_principal: Principal,
     deployed_cans: DeployedCdaoCanisters,
 ) -> Result<TokenMetadata, CanistersError> {
@@ -44,11 +46,8 @@ async fn token_metadata(
 
 #[component]
 pub fn ProfileTokens(user_canister: Principal, user_principal: Principal) -> impl IntoView {
-    let auth_cans_res = authenticated_canisters();
-    let token_list_res = auth_cans_res.derive(
-        || (),
-        move |auth_cans_wire, _| async move {
-            let cans = unauth_canisters();
+    let token_list_res = with_cans(move |cans| {
+        send_wrap(async move {
             let user = cans.individual_user(user_canister).await;
             let tokens: Vec<_> = user
                 .deployed_cdao_canisters()
@@ -59,11 +58,10 @@ pub fn ProfileTokens(user_canister: Principal, user_principal: Principal) -> imp
                 .try_collect()
                 .await?;
 
-            let my_principal =
-                Canisters::from_wire(auth_cans_wire?, expect_context())?.user_principal();
-            Ok::<_, ServerFnError>((tokens, my_principal == user_principal))
-        },
-    );
+            let my_principal = cans.user_principal();
+            Ok((tokens, my_principal == user_principal))
+        })
+    });
 
     view! {
         <div class="flex flex-col w-full items-center gap-4">
@@ -75,7 +73,7 @@ pub fn ProfileTokens(user_canister: Principal, user_principal: Principal) -> imp
                 }
             }>
                 {move || {
-                    token_list_res()
+                    token_list_res.get()
                         .map(|res| res.unwrap_or((vec![], false)))
                         .map(|(tokens, is_native_profile)| {
                             let empty = tokens.is_empty();

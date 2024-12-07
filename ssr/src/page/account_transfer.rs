@@ -1,5 +1,5 @@
 use ic_agent::Identity;
-use leptos::*;
+use leptos::prelude::*;
 
 use crate::component::canisters_prov::AuthCansProvider;
 use crate::component::connect::ConnectLogin;

@@ -1,5 +1,5 @@
 use super::ic_symbol::IcSymbol;
-use leptos::*;
+use leptos::prelude::*;
 use leptos_icons::*;
 
 #[component]

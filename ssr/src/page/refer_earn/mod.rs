@@ -3,9 +3,10 @@ mod history;
 use candid::Principal;
 use gloo::timers::callback::Timeout;
 use ic_agent::Identity;
-use leptos::*;
+use leptos::prelude::*;
+use leptos::reactive::wrappers::write::SignalSetter;
 use leptos_icons::*;
-use leptos_router::create_query_signal;
+use leptos_router::hooks::query_signal;
 use leptos_use::use_window;
 
 use crate::component::canisters_prov::AuthCansProvider;
@@ -46,10 +47,10 @@ fn ReferLoaded(user_principal: Principal) -> impl IntoView {
         .unwrap_or_default();
 
     let (logged_in, _) = account_connected_reader();
-    let show_copied_popup = create_rw_signal(false);
+    let show_copied_popup = RwSignal::new(false);
     let canister_store = auth_canisters_store();
 
-    let click_copy = create_action(move |refer_link: &String| {
+    let click_copy = Action::new(move |refer_link: &String| {
         let refer_link = refer_link.clone();
 
         async move {
@@ -67,7 +68,7 @@ fn ReferLoaded(user_principal: Principal) -> impl IntoView {
         if share_url(&url).is_some() {
             return;
         }
-        click_copy.dispatch(url)
+        click_copy.dispatch(url);
     };
 
     view! {
@@ -174,9 +175,9 @@ fn TabSelector(
 
 #[component]
 fn ListSwitcher() -> impl IntoView {
-    let (cur_tab, set_cur_tab) = create_query_signal::<String>("tab");
-    let current_tab = create_memo(move |_| {
-        with!(|cur_tab| match cur_tab.as_deref() {
+    let (cur_tab, set_cur_tab) = query_signal::<String>("tab");
+    let current_tab = Memo::new(move |_| {
+        cur_tab.with(|cur_tab| match cur_tab.as_deref() {
             Some("how-to") => 0,
             Some("history") => 1,
             _ => 0,

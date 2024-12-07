@@ -1,14 +1,14 @@
 mod items;
 
-use leptos::*;
+use leptos::prelude::*;
 use leptos_icons::*;
-use leptos_router::*;
+use leptos_router::hooks::query_signal;
 
 use crate::component::title::Title;
 
 #[component]
 fn FaqItem(#[prop(into)] header: String, #[prop(into)] content: String) -> impl IntoView {
-    let show = create_rw_signal(false);
+    let show = RwSignal::new(false);
 
     view! {
         <div class="bg-white/10 w-full p-3 flex flex-col gap-1 rounded-md">
@@ -71,9 +71,9 @@ fn FaqView(
 
 #[component]
 fn FaqSwitcher() -> impl IntoView {
-    let (cur_tab, set_cur_tab) = create_query_signal::<String>("tab");
+    let (cur_tab, set_cur_tab) = query_signal::<String>("tab");
     let current_tab = Signal::derive(move || {
-        with!(|cur_tab| match cur_tab.as_deref() {
+        cur_tab.with(|cur_tab| match cur_tab.as_deref() {
             Some("general") => 0,
             Some("tokens") => 1,
             Some("nfts") => 2,

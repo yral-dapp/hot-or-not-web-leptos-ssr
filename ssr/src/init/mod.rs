@@ -8,8 +8,8 @@ use std::{
 };
 
 use axum_extra::extract::cookie::Key;
-use leptos::LeptosOptions;
-use leptos_router::RouteListing;
+use leptos::prelude::LeptosOptions;
+use leptos_axum::AxumRouteListing;
 
 use crate::{
     auth::server_impl::store::KVStoreImpl,
@@ -237,13 +237,13 @@ pub struct AppStateRes {
 
 pub struct AppStateBuilder {
     leptos_options: LeptosOptions,
-    routes: Vec<RouteListing>,
+    routes: Vec<AxumRouteListing>,
     #[cfg(feature = "local-bin")]
     containers: containers::TestContainers,
 }
 
 impl AppStateBuilder {
-    pub fn new(leptos_options: LeptosOptions, routes: Vec<RouteListing>) -> Self {
+    pub fn new(leptos_options: LeptosOptions, routes: Vec<AxumRouteListing>) -> Self {
         Self {
             leptos_options,
             routes,

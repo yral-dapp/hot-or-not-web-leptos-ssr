@@ -1,11 +1,11 @@
-use leptos::*;
+use leptos::prelude::*;
 use leptos_use::{use_timeout_fn, UseTimeoutFnReturn};
 
 struct DisplayMutedIconTimeout {
     // TODO: use TAIT once stable
     // instead of Dyn dispatch
-    start: Box<dyn Fn(())>,
-    stop: Box<dyn Fn()>,
+    start: Box<dyn Fn(()) + Send + Sync>,
+    stop: Box<dyn Fn() + Send + Sync>,
     _is_pending: Signal<bool>,
     show_mute_icon: RwSignal<bool>,
 }
@@ -58,11 +58,11 @@ impl Default for AudioState {
 
 impl AudioState {
     pub fn new() -> Self {
-        let show_mute_icon = create_rw_signal(true);
+        let show_mute_icon = RwSignal::new(true);
         let display_flash = StoredValue::new(DisplayMutedIconTimeout::new(show_mute_icon));
         Self {
             show_mute_icon,
-            muted: create_rw_signal(true),
+            muted: RwSignal::new(true),
             display_flash,
         }
     }

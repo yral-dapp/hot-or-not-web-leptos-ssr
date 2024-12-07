@@ -1,5 +1,7 @@
 #[cfg(any(feature = "local-bin", feature = "local-lib"))]
 mod local;
+use std::sync::LazyLock;
+
 use candid::Principal;
 #[cfg(any(feature = "local-bin", feature = "local-lib"))]
 pub use local::*;
@@ -9,7 +11,6 @@ mod remote;
 #[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
 pub use remote::*;
 
-use once_cell::sync::Lazy;
 use reqwest::Url;
 
 pub const CF_STREAM_BASE: &str = "https://customer-2p3jflss4r4hmpnz.cloudflarestream.com";
@@ -19,8 +20,8 @@ pub const GOBGOB_PROPIC_URL: &str = "https://imagedelivery.net/abXI9nS4DYYtyR1yF
 pub const GOBGOB_TOTAL_COUNT: u32 = 18557;
 pub const CF_WATERMARK_UID: &str = "b5588fa1516ca33a08ebfef06c8edb33";
 pub const ACCOUNT_CONNECTED_STORE: &str = "account-connected-1";
-pub static CF_BASE_URL: Lazy<Url> =
-    Lazy::new(|| Url::parse("https://api.cloudflare.com/client/v4/").unwrap());
+pub static CF_BASE_URL: LazyLock<Url> =
+    LazyLock::new(|| Url::parse("https://api.cloudflare.com/client/v4/").unwrap());
 pub const NOTIFICATIONS_ENABLED_STORE: &str = "yral-notifications-enabled";
 pub const NSFW_TOGGLE_STORE: &str = "nsfw-enabled";
 pub const REFERRER_STORE: &str = "referrer";
@@ -28,18 +29,18 @@ pub const USER_CANISTER_ID_STORE: &str = "user-canister-id";
 pub const USER_PRINCIPAL_STORE: &str = "user-principal";
 pub const USER_ONBOARDING_STORE: &str = "user-onboarding";
 
-pub static OFF_CHAIN_AGENT_URL: Lazy<Url> =
-    Lazy::new(|| Url::parse("https://icp-off-chain-agent.fly.dev/").unwrap());
-pub static OFF_CHAIN_AGENT_GRPC_URL: Lazy<Url> =
-    Lazy::new(|| Url::parse("https://icp-off-chain-agent.fly.dev:443").unwrap()); // pr-91-yral-dapp-off-chain-agent
-                                                                                  // G-6W5Q2MRX0E to test locally | G-PLNNETMSLM
-pub static GTAG_MEASUREMENT_ID: Lazy<&str> = Lazy::new(|| "G-PLNNETMSLM");
-pub static DOWNLOAD_UPLOAD_SERVICE: Lazy<Url> =
-    Lazy::new(|| Url::parse("https://download-upload-service.fly.dev").unwrap());
+pub static OFF_CHAIN_AGENT_URL: LazyLock<Url> =
+    LazyLock::new(|| Url::parse("https://icp-off-chain-agent.fly.dev/").unwrap());
+pub static OFF_CHAIN_AGENT_GRPC_URL: LazyLock<Url> =
+    LazyLock::new(|| Url::parse("https://icp-off-chain-agent.fly.dev:443").unwrap()); // pr-91-yral-dapp-off-chain-agent
+                                                                                      // G-6W5Q2MRX0E to test locally | G-PLNNETMSLM
+pub const GTAG_MEASUREMENT_ID: &str = "G-PLNNETMSLM";
+pub static DOWNLOAD_UPLOAD_SERVICE: LazyLock<Url> =
+    LazyLock::new(|| Url::parse("https://download-upload-service.fly.dev").unwrap());
 pub const ML_FEED_GRPC_URL: &str = "https://yral-ml-feed-server.fly.dev:443"; // "http://localhost:50051";//
 
-pub static FALLBACK_USER_INDEX: Lazy<Principal> =
-    Lazy::new(|| Principal::from_text("rimrc-piaaa-aaaao-aaljq-cai").unwrap());
+pub static FALLBACK_USER_INDEX: LazyLock<Principal> =
+    LazyLock::new(|| Principal::from_text("rimrc-piaaa-aaaao-aaljq-cai").unwrap());
 
 pub const ICP_LEDGER_CANISTER_ID: &str = "ryjl3-tyaaa-aaaaa-aaaba-cai";
 

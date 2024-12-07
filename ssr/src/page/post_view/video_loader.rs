@@ -1,7 +1,7 @@
 use std::cmp::Ordering;
 
 use codee::string::FromToStringCodec;
-use leptos::{html::Video, *};
+use leptos::{ev, html::Video, prelude::*};
 use leptos_use::storage::use_local_storage;
 use leptos_use::use_event_listener;
 
@@ -30,32 +30,31 @@ pub fn BgView(
     idx: usize,
     children: Children,
 ) -> impl IntoView {
-    let post = create_memo(move |_| video_queue.with(|q| q.get(idx).cloned()));
+    let post = Memo::new(move |_| video_queue.with(|q| q.get(idx).cloned()));
     let uid = move || post().as_ref().map(|q| q.uid.clone()).unwrap_or_default();
 
     let (is_connected, _) = account_connected_reader();
-    let (show_login_popup, set_show_login_popup) = create_signal(true);
+    let (show_login_popup, set_show_login_popup) = signal(true);
 
-    let (show_refer_login_popup, set_show_refer_login_popup) = create_signal(true);
+    let (show_refer_login_popup, set_show_refer_login_popup) = signal(true);
     let (referrer_store, _, _) = use_referrer_store();
 
     let onboarding_eligible_post_context = BetEligiblePostCtx::default();
     provide_context(onboarding_eligible_post_context.clone());
 
-    let (show_onboarding_popup, set_show_onboarding_popup) = create_signal(false);
+    let (show_onboarding_popup, set_show_onboarding_popup) = signal(false);
     let (is_onboarded, set_onboarded, _) =
         use_local_storage::<bool, FromToStringCodec>(USER_ONBOARDING_STORE);
 
-    create_effect(move |_| {
+    Effect::new(move || {
         if current_idx.get() % 5 != 0 {
             set_show_login_popup.update(|n| *n = false);
         } else {
             set_show_login_popup.update(|n| *n = true);
         }
-        Some(())
     });
 
-    create_effect(move |_| {
+    Effect::new(move || {
         if onboarding_eligible_post_context.can_place_bet.get() && (!is_onboarded.get()) {
             set_show_onboarding_popup.update(|show| *show = true);
         } else {
@@ -105,25 +104,25 @@ pub fn BgView(
 
 #[component]
 pub fn VideoView(
-    #[prop(into)] post: MaybeSignal<Option<PostDetails>>,
+    #[prop(into)] post: Signal<Option<PostDetails>>,
     #[prop(optional)] _ref: NodeRef<Video>,
     #[prop(optional)] autoplay_at_render: bool,
     muted: RwSignal<bool>,
 ) -> impl IntoView {
-    let post_for_uid = post.clone();
-    let uid = create_memo(move |_| post_for_uid.with(|p| p.as_ref().map(|p| p.uid.clone())));
+    let post_for_uid = post;
+    let uid = Memo::new(move |_| post_for_uid.with(|p| p.as_ref().map(|p| p.uid.clone())));
     let view_bg_url = move || uid().map(bg_url);
     let view_video_url = move || uid().map(mp4_url);
 
     // Handles mute/unmute
-    create_effect(move |_| {
-        let vid = _ref()?;
+    Effect::new(move |_| {
+        let vid = _ref.get()?;
         vid.set_muted(muted());
         Some(())
     });
 
-    create_effect(move |_| {
-        let vid = _ref()?;
+    Effect::new(move |_| {
+        let vid = _ref.get()?;
         // the attributes in DOM don't seem to be working
         vid.set_muted(muted.get_untracked());
         vid.set_loop(true);
@@ -137,12 +136,12 @@ pub fn VideoView(
     // Video views send to canister
     // 1. When video is paused -> partial video view
     // 2. When video is 95% done -> full view
-    let post_for_view = post.clone();
-    let send_view_detail_action =
-        create_action(move |(percentage_watched, watch_count): &(u8, u8)| {
+    let post_for_view = post;
+    let send_view_detail_action: Action<_, _, LocalStorage> =
+        Action::new_unsync(move |(percentage_watched, watch_count): &(u8, u8)| {
             let percentage_watched = *percentage_watched;
             let watch_count = *watch_count;
-            let post_for_view = post_for_view.clone();
+            let post_for_view = post_for_view;
 
             async move {
                 let canisters = unauth_canisters();
@@ -173,10 +172,10 @@ pub fn VideoView(
             }
         });
 
-    let video_views_watch_multiple = create_rw_signal(false);
+    let video_views_watch_multiple = RwSignal::new(false);
 
     let _ = use_event_listener(_ref, ev::pause, move |_evt| {
-        let Some(video) = _ref() else {
+        let Some(video) = _ref.get() else {
             return;
         };
 
@@ -191,7 +190,7 @@ pub fn VideoView(
     });
 
     let _ = use_event_listener(_ref, ev::timeupdate, move |_evt| {
-        let Some(video) = _ref() else {
+        let Some(video) = _ref.get() else {
             return;
         };
 
@@ -228,11 +227,11 @@ pub fn VideoViewForQueue(
     idx: usize,
     muted: RwSignal<bool>,
 ) -> impl IntoView {
-    let container_ref = create_node_ref::<Video>();
+    let container_ref = NodeRef::<Video>::new();
 
     // Handles autoplay
-    create_effect(move |_| {
-        let Some(vid) = container_ref() else {
+    Effect::new(move || {
+        let Some(vid) = container_ref.get() else {
             return;
         };
         if idx != current_idx() {

@@ -6,17 +6,14 @@ mod local_storage;
 use candid::Principal;
 use codee::string::FromToStringCodec;
 use ic_agent::Identity;
-use leptos::*;
+use leptos::{ev, prelude::*, reactive::wrappers::write::SignalSetter};
 use leptos_use::storage::use_local_storage;
 use yral_types::delegated_identity::DelegatedIdentityWire;
 
 use crate::{
     consts::ACCOUNT_CONNECTED_STORE,
     state::{auth::auth_state, local_storage::use_referrer_store},
-    utils::{
-        event_streaming::events::{LoginMethodSelected, LoginSuccessful},
-        MockPartialEq,
-    },
+    utils::event_streaming::events::{LoginMethodSelected, LoginSuccessful},
 };
 use yral_canisters_common::Canisters;
 
@@ -81,12 +78,12 @@ fn LoginProvButton<Cb: Fn(ev::MouseEvent) + 'static>(
     prov: ProviderKind,
     #[prop(into)] class: Oco<'static, str>,
     on_click: Cb,
-    #[prop(optional, into)] disabled: MaybeSignal<bool>,
+    #[prop(optional, into)] disabled: Signal<bool>,
     children: Children,
 ) -> impl IntoView {
     let ctx: LoginProvCtx = expect_context();
 
-    let click_action = create_action(move |()| async move {
+    let click_action = Action::new(move |()| async move {
         LoginMethodSelected.send_event(prov);
     });
 
@@ -112,32 +109,29 @@ pub fn LoginProviders(show_modal: RwSignal<bool>, lock_closing: RwSignal<bool>) 
         use_local_storage::<bool, FromToStringCodec>(ACCOUNT_CONNECTED_STORE);
     let auth = auth_state();
 
-    let new_identity = create_rw_signal::<Option<DelegatedIdentityWire>>(None);
+    let new_identity = RwSignal::<Option<DelegatedIdentityWire>>::new(None);
 
-    let processing = create_rw_signal(None);
+    let processing = RwSignal::new(None);
 
-    create_local_resource(
-        move || MockPartialEq(new_identity()),
-        move |identity| async move {
-            let Some(identity) = identity.0 else {
-                return Ok(());
-            };
+    LocalResource::new(move || async move {
+        let Some(identity) = new_identity() else {
+            return Ok(());
+        };
 
-            let (referrer_store, _, _) = use_referrer_store();
-            let referrer = referrer_store.get_untracked();
+        let (referrer_store, _, _) = use_referrer_store();
+        let referrer = referrer_store.get_untracked();
 
-            // This is some redundant work, but saves us 100+ lines of resource handling
-            let canisters = Canisters::authenticate_with_network(identity, referrer).await?;
+        // This is some redundant work, but saves us 100+ lines of resource handling
+        let canisters = Canisters::authenticate_with_network(identity, referrer).await?;
 
-            if let Err(e) = handle_user_login(canisters.clone(), referrer).await {
-                log::warn!("failed to handle user login, err {e}. skipping");
-            }
+        if let Err(e) = handle_user_login(canisters.clone(), referrer).await {
+            log::warn!("failed to handle user login, err {e}. skipping");
+        }
 
-            LoginSuccessful.send_event(canisters);
+        LoginSuccessful.send_event(canisters);
 
-            Ok::<_, ServerFnError>(())
-        },
-    );
+        Ok::<_, ServerFnError>(())
+    });
 
     let ctx = LoginProvCtx {
         processing: processing.read_only(),
@@ -189,7 +183,7 @@ mod server_fn_impl {
     #[cfg(feature = "backend-admin")]
     mod backend_admin {
         use candid::Principal;
-        use leptos::ServerFnError;
+        use leptos::prelude::ServerFnError;
 
         use crate::state::canisters::unauth_canisters;
         use yral_canisters_client::individual_user_template::KnownPrincipalType;
@@ -296,7 +290,7 @@ mod server_fn_impl {
     #[cfg(not(feature = "backend-admin"))]
     mod mock {
         use candid::Principal;
-        use leptos::ServerFnError;
+        use leptos::prelude::ServerFnError;
 
         pub async fn issue_referral_rewards_impl(
             _referee_canister: Principal,

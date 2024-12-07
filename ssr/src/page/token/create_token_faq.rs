@@ -1,5 +1,5 @@
 use crate::component::{back_btn::BackButton, title::Title};
-use leptos::*;
+use leptos::{either::Either, prelude::*};
 
 #[derive(Clone)]
 struct Section {
@@ -107,7 +107,7 @@ E.g: TRAV".into()),
 
 #[component]
 fn CreateTokenFaqView(title: String, sections: Vec<Section>) -> impl IntoView {
-    let (open_section, set_open_section) = create_signal(None::<usize>);
+    let (open_section, set_open_section) = signal(None::<usize>);
 
     view! {
         <div class="bg-black text-white p-4">
@@ -167,13 +167,13 @@ fn CreateTokenFaqView(title: String, sections: Vec<Section>) -> impl IntoView {
                                     class=move || if is_open() { "" } else { "hidden" }
                                 >
                                     {if let Some(answer) = section.answer {
-                                        view! {
+                                        Either::Left(view! {
                                             <div class="py-2 mb-2">
                                                 <p class="text-xs text-gray-400">{answer}</p>
                                             </div>
-                                        }
+                                        })
                                     } else {
-                                        view! { <div></div> }
+                                        Either::Right(view! { <div></div> })
                                     }}
 
                                 </div>

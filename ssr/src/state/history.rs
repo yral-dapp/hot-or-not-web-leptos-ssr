@@ -1,7 +1,5 @@
 use circular_buffer::CircularBuffer;
-use leptos::{
-    RwSignal, SignalGet, SignalGetUntracked, SignalUpdate, SignalWith, SignalWithUntracked,
-};
+use leptos::prelude::{Get, GetUntracked, RwSignal, Update, With, WithUntracked};
 
 #[derive(Clone)]
 pub struct HistoryCtx {

@@ -1,6 +1,7 @@
 use crate::component::{canisters_prov::AuthCansProvider, spinner::FullScreenSpinner};
-use leptos::*;
-use leptos_router::Redirect;
+use leptos::prelude::*;
+use leptos_router::components::Redirect;
+
 #[component]
 pub fn ProfileInfo() -> impl IntoView {
     view! {

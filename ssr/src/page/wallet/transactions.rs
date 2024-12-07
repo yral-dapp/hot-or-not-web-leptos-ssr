@@ -1,4 +1,4 @@
-use leptos::*;
+use leptos::prelude::*;
 use yral_canisters_common::cursored_data::transaction::IndexOrLedger;
 
 use super::txn::{provider::get_history_provider, TxnView};

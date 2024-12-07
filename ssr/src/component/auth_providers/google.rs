@@ -1,4 +1,4 @@
-use leptos::*;
+use leptos::{ev, prelude::*};
 use leptos_icons::*;
 use leptos_use::{use_event_listener, use_interval_fn, use_window};
 
@@ -22,10 +22,10 @@ pub fn GoogleAuthProvider() -> impl IntoView {
             "Google Sign-In"
         }
     };
-    let done_guard = create_rw_signal(false);
-    let close_popup_store = store_value::<Option<Callback<()>>>(None);
+    let done_guard = RwSignal::new(false);
+    let close_popup_store = StoredValue::<Option<Callback<()>>>::new(None);
     let close_popup =
-        move || _ = close_popup_store.with_value(|cb| cb.as_ref().map(|close_cb| close_cb(())));
+        move || _ = close_popup_store.with_value(|cb| cb.as_ref().map(|close_cb| close_cb.run(())));
 
     let on_click = move || {
         let window = window();

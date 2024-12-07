@@ -1,4 +1,4 @@
-use leptos::*;
+use leptos::{either::Either, prelude::*};
 use leptos_icons::*;
 use yral_canisters_common::utils::token::balance::TokenBalance;
 
@@ -11,7 +11,7 @@ use crate::{
 fn SuccessPopup<ImgIV: IntoView, Img: Fn() -> ImgIV, TxtIV: IntoView, Txt: Fn() -> TxtIV>(
     img: Img,
     text: Txt,
-    #[prop(into)] previous_link: MaybeSignal<String>,
+    #[prop(into)] previous_link: Signal<String>,
     #[prop(into)] previous_text: String,
 ) -> impl IntoView {
     view! {
@@ -64,7 +64,7 @@ fn CreateTokenSuccessPopup(
 fn ErrorPopup<HeadIV: IntoView, Head: Fn() -> HeadIV>(
     error: String,
     header: Head,
-    #[prop(into)] previous_link: MaybeSignal<String>,
+    #[prop(into)] previous_link: Signal<String>,
     #[prop(into)] previous_text: String,
     close_popup: WriteSignal<bool>,
 ) -> impl IntoView {
@@ -99,7 +99,7 @@ fn ErrorPopup<HeadIV: IntoView, Head: Fn() -> HeadIV>(
 #[component]
 fn CreateTokenErrorPopup(
     error: String,
-    token_name: MaybeSignal<String>,
+    token_name: Signal<String>,
     close_popup: WriteSignal<bool>,
 ) -> impl IntoView {
     let profile_url = String::from("/profile/tokens");
@@ -108,7 +108,7 @@ fn CreateTokenErrorPopup(
         <ErrorPopup
             error
             header=move || {
-                let token_name = token_name.clone();
+                let token_name = token_name;
                 view! {
                     Token
                     <span class="text-primary-600">
@@ -128,31 +128,31 @@ fn CreateTokenErrorPopup(
 #[component]
 pub fn TokenCreationPopup(
     creation_action: Action<(), Result<(), String>>,
-    #[prop(into)] token_name: MaybeSignal<String>,
-    #[prop(into)] img_url: MaybeSignal<String>,
+    #[prop(into)] token_name: Signal<String>,
+    #[prop(into)] img_url: Signal<String>,
 ) -> impl IntoView {
-    let close_popup = create_rw_signal(false);
+    let close_popup = RwSignal::new(false);
     view! {
         <ActionTrackerPopup
             action=creation_action
             loading_message="Token creation in progress"
             modal=move |res| match res {
                 Ok(_) => {
-                    view! {
+                    Either::Left(view! {
                         <CreateTokenSuccessPopup
                             img_url=img_url.get_untracked().clone()
                             token_name=token_name.get_untracked().clone()
                         />
-                    }
+                    })
                 }
                 Err(e) => {
-                    view! {
+                    Either::Right(view! {
                         <CreateTokenErrorPopup
                             close_popup=close_popup.write_only()
                             error=e
-                            token_name=token_name.clone()
+                            token_name=token_name
                         />
-                    }
+                    })
                 }
             }
 
@@ -204,10 +204,10 @@ fn TokenTransferErrorPopup(
 
 #[component]
 pub fn TokenTransferPopup(
-    transfer_action: Action<(), Result<TokenBalance, ServerFnError>>,
-    #[prop(into)] token_name: MaybeSignal<String>,
+    transfer_action: Action<(), Result<TokenBalance, ServerFnError>, LocalStorage>,
+    #[prop(into)] token_name: Signal<String>,
 ) -> impl IntoView {
-    let close_popup = create_rw_signal(false);
+    let close_popup = RwSignal::new(false);
 
     view! {
         <ActionTrackerPopup
@@ -215,21 +215,21 @@ pub fn TokenTransferPopup(
             loading_message="Token transfer in progress"
             modal=move |res| match res {
                 Ok(amount) => {
-                    view! {
+                    Either::Left(view! {
                         <TokenTransferSuccessPopup
                             token_name=token_name.get_untracked().clone()
                             amount
                         />
-                    }
+                    })
                 }
                 Err(e) => {
-                    view! {
+                    Either::Right(view! {
                         <TokenTransferErrorPopup
                             error=e.to_string()
                             token_name=token_name.get_untracked().clone()
                             close_popup=close_popup.write_only()
                         />
-                    }
+                    })
                 }
             }
 

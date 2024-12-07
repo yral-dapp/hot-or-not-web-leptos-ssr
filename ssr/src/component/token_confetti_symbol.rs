@@ -1,4 +1,4 @@
-use leptos::*;
+use leptos::prelude::*;
 
 #[component]
 pub fn TokenConfettiSymbol(#[prop(into)] class: String) -> impl IntoView {

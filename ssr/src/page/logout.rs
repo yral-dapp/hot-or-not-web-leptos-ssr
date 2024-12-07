@@ -1,6 +1,6 @@
 use codee::string::FromToStringCodec;
-use leptos::*;
-use leptos_router::Redirect;
+use leptos::prelude::*;
+use leptos_router::components::Redirect;
 use leptos_use::storage::use_local_storage;
 
 use crate::{
@@ -19,7 +19,7 @@ pub fn Logout() -> impl IntoView {
     LogoutClicked.send_event(canister_store);
     let auth = auth_state();
 
-    let auth_res = create_blocking_resource(
+    let auth_res = Resource::new_blocking(
         || (),
         move |_| async move {
             let id = try_or_redirect_opt!(logout_identity().await);

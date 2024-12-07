@@ -1,5 +1,5 @@
 use crate::component::canisters_prov::with_cans;
-use crate::component::canisters_prov::{AuthCansProvider, WithAuthCans};
+use crate::component::canisters_prov::AuthCansProvider;
 use crate::component::content_upload::YoutubeUpload;
 use crate::component::modal::Modal;
 use crate::component::spinner::Spinner;
@@ -9,12 +9,13 @@ use crate::consts::{social, NSFW_TOGGLE_STORE};
 use crate::state::auth::account_connected_reader;
 use crate::state::content_seed_client::ContentSeedClient;
 use crate::utils::notifications::get_token_for_principal;
+use crate::utils::send_wrap;
 use candid::Principal;
 use codee::string::FromToStringCodec;
 use leptos::html::Input;
-use leptos::*;
+use leptos::{ev, prelude::*};
 use leptos_icons::*;
-use leptos_router::use_query_map;
+use leptos_router::hooks::use_query_map;
 use leptos_use::storage::use_local_storage;
 use leptos_use::use_event_listener;
 use yral_canisters_common::utils::profile::ProfileDetails;
@@ -119,7 +120,7 @@ fn ProfileInfo() -> impl IntoView {
 fn NsfwToggle() -> impl IntoView {
     let (nsfw_enabled, set_nsfw_enabled, _) =
         use_local_storage::<bool, FromToStringCodec>(NSFW_TOGGLE_STORE);
-    let toggle_ref = create_node_ref::<Input>();
+    let toggle_ref = NodeRef::<Input>::new();
 
     _ = use_event_listener(toggle_ref, ev::change, move |_| {
         set_nsfw_enabled(
@@ -143,11 +144,13 @@ fn NsfwToggle() -> impl IntoView {
     }
 }
 
+// TODO: Leptos needs a hot patch for us to remove #[allow(dead_code)]
 #[component]
+#[allow(dead_code)]
 fn EnableNotifications(user_details: ProfileDetails) -> impl IntoView {
     let (_, _) = account_connected_reader();
 
-    let on_token_click = create_action(move |()| async move {
+    let on_token_click: Action<_, _, LocalStorage> = Action::new_unsync(move |()| async move {
         get_token_for_principal(user_details.principal.to_string()).await;
     });
 
@@ -160,7 +163,7 @@ fn EnableNotifications(user_details: ProfileDetails) -> impl IntoView {
             <div class="justify-self-end">
                 <button
                     class="p-2 bg-black rounded-md text-white"
-                    on:click=move |_| on_token_click.dispatch(())
+                    on:click=move |_| { on_token_click.dispatch(()); }
                 >
                     Enable
                 </button>
@@ -173,13 +176,13 @@ fn EnableNotifications(user_details: ProfileDetails) -> impl IntoView {
 pub fn Menu() -> impl IntoView {
     let (is_connected, _) = account_connected_reader();
     let query_map = use_query_map();
-    let show_content_modal = create_rw_signal(false);
+    let show_content_modal = RwSignal::new(false);
     let is_authorized_to_seed_content: AuthorizedUserToSeedContent = expect_context();
 
-    create_effect(move |_| {
+    Effect::new(move |_| {
         //check whether query param is right if right set the show_modal_content as true.
         let query_params = query_map.get();
-        let url = query_params.0.get("text")?;
+        let url = query_params.get("text")?;
         if !url.is_empty() && is_connected.get() {
             show_content_modal.set(true);
         }
@@ -189,29 +192,30 @@ pub fn Menu() -> impl IntoView {
     let authorized_fetch = with_cans(move |cans| async move {
         let user_principal = cans.user_principal();
         match is_authorized_to_seed_content.0.get_untracked() {
-            Some((auth, principal)) if principal == user_principal => return auth,
+            Some((auth, principal)) if principal == user_principal => return Ok((auth, principal)),
             _ => (),
         }
 
         let content_seed_client: ContentSeedClient = expect_context();
 
-        content_seed_client
-            .check_if_authorized(user_principal)
+        let auth = send_wrap(content_seed_client.check_if_authorized(user_principal))
             .await
-            .unwrap_or_default()
+            .unwrap_or_default();
+        Ok((auth, user_principal))
     });
 
     view! {
-        <WithAuthCans with=authorized_fetch let:authorized>
-            {is_authorized_to_seed_content
-                .0
-                .set(Some((authorized.1, authorized.0.user_principal())))}
-        </WithAuthCans>
+        <Suspense>
+            {move || Suspend::new(async move {
+                let authorized = authorized_fetch.await.unwrap_or_else(|_| (false, Principal::anonymous()));
+                is_authorized_to_seed_content.0.set(Some(authorized));
+            })}
+        </Suspense>
         <Modal show=show_content_modal>
             <AuthCansProvider fallback=Spinner let:canisters>
                 <YoutubeUpload
                     canisters
-                    url=query_map.get().0.get("text").cloned().unwrap_or_default()
+                    url=query_map().get("text").clone().unwrap_or_default()
                 />
             </AuthCansProvider>
         </Modal>

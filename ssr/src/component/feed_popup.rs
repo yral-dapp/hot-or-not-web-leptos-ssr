@@ -1,4 +1,4 @@
-use leptos::{ev::MouseEvent, *};
+use leptos::{ev::MouseEvent, prelude::*};
 
 use crate::component::connect::ConnectLogin;
 
