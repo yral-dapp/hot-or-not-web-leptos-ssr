@@ -16,6 +16,6 @@ struct TokenParams {
 }
 
 #[derive(Params, PartialEq, Clone)]
-struct TokenInfoParams {
-    token_root: RootType,
+pub struct TokenInfoParams {
+    pub token_root: RootType,
 }
