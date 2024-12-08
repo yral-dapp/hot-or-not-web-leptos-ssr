@@ -1,20 +1,19 @@
+use crate::component::buttons::Button;
 use leptos::*;
 
-use crate::component::buttons::Button;
-
 #[component]
-pub fn AirdropPage() -> impl IntoView {
-    let (bg_img_loaded, set_bg_img_loaded) = create_signal(false);
+pub fn AirdropPage(
+    coin_image: String,
+    airdrop_amount: u64,
+    airdrop_from_token: String,
+) -> impl IntoView {
+    let (bg_img_loaded, set_bg_img_loaded) = create_signal(true);
     let (claimed, set_claimed) = create_signal(false);
-    let (coin_image_loaded, set_coin_image_loaded) = create_signal(false);
+    let (coin_image_loaded, set_coin_image_loaded) = create_signal(true);
 
-    let coin_image = "https://picsum.photos/200";
-    let bg_image = "https://picsum.photos/1000";
-    let cloud_image = "https://picsum.photos/200";
-    let parachute_image = "https://picsum.photos/200";
-
-    let airdrop_amount = 100;
-    let airdrop_from_token = "Rock_Salt";
+    let bg_image = "/img/bg.png";
+    let cloud_image = "/img/cloud.webp";
+    let parachute_image = "/img/parachute.webp";
 
     let handle_claim = move || {
         if !claimed.get() {
@@ -27,12 +26,13 @@ pub fn AirdropPage() -> impl IntoView {
     view! {
         <div
             style="background: radial-gradient(circle, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 75%, rgba(50,0,28,0.5) 100%);"
-            class="h-screen w-screen relative bg-black items-center justify-center gap-8 text-white font-kumbh flex flex-col overflow-hidden"
+            class="h-screen w-screen relative items-center justify-center gap-8 text-white font-kumbh flex flex-col overflow-hidden"
         >
             <img
                 alt="bg"
                 src=bg_image
                 on:load=move |_| {
+                    log::info!("Background image loaded");
                     set_bg_img_loaded(true);
                 }
                 class=move || {
@@ -63,7 +63,7 @@ pub fn AirdropPage() -> impl IntoView {
                                 >
                                     <img
                                         alt="Airdrop"
-                                        src=coin_image
+                                        src=coin_image.clone()
                                         on:load=move |_| set_coin_image_loaded(true)
                                         class=move || {
                                             format!(
@@ -103,16 +103,18 @@ pub fn AirdropPage() -> impl IntoView {
                                 >
                                     <img
                                         alt="Airdrop"
-                                        src=coin_image
+                                        src=coin_image.clone()
                                         on:load=move |_| set_coin_image_loaded(true)
-                                        class=format!(
-                                            "w-full rounded-full h-full object-cover transition-opacity {}",
-                                            if coin_image_loaded.get() {
-                                                "opacity-100"
-                                            } else {
-                                                "opacity-0"
-                                            },
-                                        )
+                                        class=move || {
+                                            format!(
+                                                "w-full rounded-full h-full object-cover transition-opacity {}",
+                                                if coin_image_loaded.get() {
+                                                    "opacity-100"
+                                                } else {
+                                                    "opacity-0"
+                                                },
+                                            )
+                                        }
                                     />
                                 </div>
                             </div>
@@ -140,7 +142,7 @@ pub fn AirdropPage() -> impl IntoView {
                             } else {
                                 view! {
                                     <div class="text-center">
-                                        {format!("{} {} Airdrop received received received", airdrop_amount, airdrop_from_token)}
+                                        {format!("{} {} Airdrop received", airdrop_amount, airdrop_from_token)}
                                     </div>
                                 }
                             }}
@@ -151,7 +153,6 @@ pub fn AirdropPage() -> impl IntoView {
                             >
                                 {if claimed.get() { "Go to wallet" } else { "Claim Now" }}
                             </Button>
-
                         </div>
                     }
                 } else {

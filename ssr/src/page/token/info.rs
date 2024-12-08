@@ -1,5 +1,6 @@
 use crate::page::token::RootType;
 use crate::page::token::TokenInfoParams;
+use crate::page::wallet::airdrop::AirdropPage;
 use crate::state::canisters::authenticated_canisters;
 
 use crate::utils::token::icpump::IcpumpTokenInfo;
@@ -8,11 +9,13 @@ use crate::{
     page::wallet::transactions::Transactions,
     utils::web::copy_to_clipboard,
 };
+use candid::Nat;
 use candid::Principal;
 use leptos::*;
 use leptos_icons::*;
 use leptos_router::*;
 use serde::{Deserialize, Serialize};
+use yral_canisters_client::individual_user_template::Result21;
 use yral_canisters_common::cursored_data::transaction::IndexOrLedger;
 use yral_canisters_common::utils::token::TokenMetadata;
 use yral_canisters_common::Canisters;
@@ -199,7 +202,12 @@ fn TokenInfoInner(
 
 #[derive(Params, PartialEq, Clone, Serialize, Deserialize)]
 pub struct TokenKeyParam {
-    key_principal: Principal,
+    pub key_principal: Principal,
+}
+
+#[derive(Params, PartialEq, Clone, Serialize, Deserialize)]
+pub struct AirdropAmount {
+    pub airdrop_amt: u64,
 }
 
 #[component]
@@ -207,9 +215,11 @@ pub fn TokenInfo() -> impl IntoView {
     let params = use_params::<TokenInfoParams>();
     let key_principal = use_params::<TokenKeyParam>();
     let key_principal = move || key_principal.with(|p| p.as_ref().map(|p| p.key_principal).ok());
+    let airdrop_param = use_query::<AirdropAmount>();
+
     let token_metadata_fetch = authenticated_canisters().derive(
-        move || (params(), key_principal()),
-        move |cans_wire, (params, key_principal)| async move {
+        move || (params(), key_principal(), airdrop_param()),
+        move |cans_wire, (params, key_principal, airdrop_param)| async move {
             let Ok(params) = params else {
                 return Ok::<_, ServerFnError>(None);
             };
@@ -224,12 +234,52 @@ pub fn TokenInfo() -> impl IntoView {
                 .await
                 .ok()
                 .flatten();
+
+            let mut airdrop_res: Option<u64> = None;
+            if let Some(key_principal) = key_principal {
+                if let Ok(airdrop_amt) = airdrop_param {
+                    if let RootType::Other(root) = params.token_root {
+                        let user = cans
+                            .get_individual_canister_by_user_principal(key_principal)
+                            .await?;
+                        let user = cans.individual_user(user.unwrap()).await;
+
+                        let res = user
+                            .request_airdrop(
+                                root,
+                                None,
+                                Into::<Nat>::into(airdrop_amt.airdrop_amt)
+                                    * 10u64.pow(
+                                        meta.as_ref()
+                                            .ok_or(ServerFnError::new(
+                                                "Failed to get metadata to extract decimals",
+                                            ))?
+                                            .decimals
+                                            .into(),
+                                    ),
+                                cans.user_canister(),
+                            )
+                            .await?;
+
+                        airdrop_res = match res {
+                            Result21::Ok => {
+                                let user = cans.individual_user(cans.user_canister()).await;
+                                user.add_token(root).await?;
+                                Some(airdrop_amt.airdrop_amt)
+                            }
+                            _ => None,
+                        };
+                    }
+                }
+            }
+
             Ok(meta.map(|m| {
                 (
                     m,
                     params.token_root,
                     key_principal,
                     Some(cans.user_principal()) == key_principal,
+                    airdrop_res,
                 )
             }))
         },
@@ -242,14 +292,23 @@ pub fn TokenInfo() -> impl IntoView {
                     .and_then(|info| info.ok())
                     .map(|info| {
                         match info {
-                            Some((metadata, root, key_principal, is_user_principal)) => {
-                                view! {
-                                    <TokenInfoInner
-                                        root
-                                        key_principal
-                                        meta=metadata
-                                        is_user_principal=is_user_principal
-                                    />
+                            Some((metadata, root, key_principal, is_user_principal, res)) => {
+                                match res{
+                                    Some(amt) => {
+                                        view! {
+                                            <AirdropPage coin_image=metadata.logo_b64 airdrop_amount=amt airdrop_from_token=metadata.name/>
+                                        }
+                                    },
+                                    None => {
+                                        view! {
+                                            <TokenInfoInner
+                                                root
+                                                key_principal
+                                                meta=metadata
+                                                is_user_principal=is_user_principal
+                                            />
+                                        }
+                                    }
                                 }
                             }
                             None => view! { <Redirect path="/" /> },
