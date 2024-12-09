@@ -1,9 +1,9 @@
 pub mod airdrop_logo;
 pub mod auth_providers;
 pub mod back_btn;
-pub mod buttons;
 pub mod base_route;
 pub mod bullet_loader;
+pub mod buttons;
 pub mod canisters_prov;
 pub mod coming_soon;
 pub mod connect;
