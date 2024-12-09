@@ -1,7 +1,7 @@
+pub mod airdrop;
 pub mod tokens;
 pub mod transactions;
 pub mod txn;
-pub mod airdrop;
 
 use crate::{
     component::share_popup::ShareButtonWithFallbackPopup, state::canisters::unauth_canisters,

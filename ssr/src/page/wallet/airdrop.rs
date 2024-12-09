@@ -49,7 +49,6 @@ pub fn AirdropPage(
                                     <img
                                         alt="Airdrop"
                                         src=coin_image.clone()
-                                        
                                         class="w-full fade-in rounded-full h-full object-cover"
                                     />
                                 </div>
@@ -91,7 +90,7 @@ pub fn AirdropPage(
                 }
             }}
 
-            
+
             <div
                 style="--duration:1500ms"
                 class="fade-in flex text-xl font-bold z-[2] w-full flex-col gap-4 items-center justify-center px-8"
