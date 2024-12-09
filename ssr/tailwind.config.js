@@ -26,19 +26,15 @@ module.exports = {
           "75%": { color: "fuchsia" },
           "100%": { color: "blue" },
         },
-        "searching-a-1": {
-          "0%, 49%": { opacity: 1 },
-          "50%, 100%": { opacity: 0 },
-        },
-        "searching-a-2": {
-          "0%, 49%": { opacity: 0 },
-          "50%, 100%": { opacity: 1 },
+        shimmer: {
+          "to": {
+            "backgroundPositionX": "0%",
+          },
         },
       },
       animation: {
         "blink-colors": "blink-colors 5s step-end infinite",
-        "searching-a-1": "searching-a-1 2s infinite",
-        "searching-a-2": "searching-a-2 2s infinite",
+        "shimmer": "shimmer 1s infinite linear",
       },
     },
   },
