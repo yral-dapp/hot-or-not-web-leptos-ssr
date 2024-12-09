@@ -2,6 +2,10 @@ use candid::Principal;
 use yral_canisters_common::cursored_data::token_roots::TokenRootList;
 use yral_canisters_common::utils::token::{RootType, TokenMetadata};
 
+use crate::component::icons::{
+    airdrop_icon::AirdropIcon, arrow_left_right_icon::ArrowLeftRightIcon,
+    chevron_right_icon::ChevronRightIcon, send_icon::SendIcon, share_icon::ShareIcon,
+};
 use crate::page::wallet::ShareButtonWithFallbackPopup;
 use crate::utils::token::icpump::IcpumpTokenInfo;
 use crate::{component::infinite_scroller::InfiniteScroller, state::canisters::unauth_canisters};
@@ -37,12 +41,7 @@ pub fn TokenView(
         <Suspense fallback=TokenViewFallback>
             {move || {
                 info.map(|info| {
-                    view! {
-                        <TokenTile
-                            user_principal
-                            token_meta_data=info.clone()
-                        />
-                    }
+                    view! { <TokenTile user_principal token_meta_data=info.clone() /> }
                 })
             }}
 
@@ -93,9 +92,7 @@ pub fn TokenTile(user_principal: Principal, token_meta_data: TokenMetadata) -> i
                             }
                             src=info.logo_b64.clone()
                         />
-                        <Show
-                            when=move || info.is_nsfw
-                        >
+                        <Show when=move || info.is_nsfw>
                             <Icon
                                 icon=icondata::AiEyeInvisibleOutlined
                                 class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-6 h-6 text-white"
@@ -144,10 +141,70 @@ pub fn TokenList(user_principal: Principal, user_canister: Principal) -> impl In
                 provider
                 fetch_count=10
                 children=move |token_root, _ref| {
-                    view! { <TokenView user_principal token_root=token_root _ref=_ref.unwrap_or_default() /> }
+                    view! {
+                        <TokenView
+                            user_principal
+                            token_root=token_root
+                            _ref=_ref.unwrap_or_default()
+                        />
+                    }
                 }
             />
 
         </div>
+    }
+}
+
+#[component]
+fn WalletCard(
+    icon_url: String,
+    token_name: String,
+    token_symbol: String,
+    balance: f64,
+) -> impl IntoView {
+    view! {
+        <div class="flex flex-col gap-4 bg-[#131313] rounded-lg w-full p-4 font-kumbh">
+            <div class="w-full flex items-center justify-between p-3 rounded-[4px] bg-[#202125]">
+                <div class="flex items-center gap-2">
+                    <img
+                        src=icon_url
+                        alt=token_name.clone()
+                        class="w-8 h-8 rounded-full object-cover"
+                    />
+                    <div class="text-sm font-medium uppercase">{token_name}</div>
+                </div>
+                <div class="flex flex-col items-end">
+                    <div class="text-lg font-medium">{balance}</div>
+                    <div class="text-xs">{token_symbol}</div>
+                </div>
+            </div>
+            <div class="flex items-center justify-around">
+                <ActionButton href="#".to_string() label="Send".to_string()>
+                    <SendIcon classes="h-6 w-6".to_string() />
+                </ActionButton>
+                <ActionButton href="#".to_string() label="Swap".to_string()>
+                    <ArrowLeftRightIcon classes="h-6 w-6".to_string() />
+                </ActionButton>
+                <ActionButton href="#".to_string() label="Airdrop".to_string()>
+                    <AirdropIcon classes="h-6 w-6".to_string() />
+                </ActionButton>
+                <ActionButton href="#".to_string() label="Share".to_string()>
+                    <ShareIcon classes="h-6 w-6".to_string() />
+                </ActionButton>
+                <ActionButton href="#".to_string() label="Details".to_string()>
+                    <ChevronRightIcon classes="h-6 w-6".to_string() />
+                </ActionButton>
+            </div>
+        </div>
+    }
+}
+
+#[component]
+fn ActionButton(children: Children, href: String, label: String) -> impl IntoView {
+    view! {
+        <a href=href class="flex flex-col flex-1 gap-1 items-center justify-center text-[#A0A1A6]">
+            <div class="flex items-center justify-center gap-4">{children()}</div>
+            <div class="text-sm">{label}</div>
+        </a>
     }
 }
