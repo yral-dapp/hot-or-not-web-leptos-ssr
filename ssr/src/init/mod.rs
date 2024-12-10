@@ -282,6 +282,7 @@ impl AppStateBuilder {
         {
             self.containers.start_backend().await;
             self.containers.start_metadata().await;
+            self.containers.start_off_chain_agent().await;
         }
 
         let app_state = AppState {

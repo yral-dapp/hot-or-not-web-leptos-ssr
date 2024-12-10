@@ -8040,7 +8040,7 @@ dependencies = [
 [[package]]
 name = "yral-testcontainers"
 version = "0.1.0"
-source = "git+https://github.com/yral-dapp/yral-testcontainers?rev=7438ba7cb281e7f195cf81f2a8532f63ce005771#7438ba7cb281e7f195cf81f2a8532f63ce005771"
+source = "git+https://github.com/yral-dapp/yral-testcontainers?rev=99084e7b8e7170211e99d72a080c0e3ee2e491ca#99084e7b8e7170211e99d72a080c0e3ee2e491ca"
 dependencies = [
  "anyhow",
  "gix",
