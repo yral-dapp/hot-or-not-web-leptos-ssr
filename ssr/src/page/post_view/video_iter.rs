@@ -176,14 +176,10 @@ impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
         &self,
         chunks: usize,
         _allow_nsfw: bool,
-        video_queue: Vec<PostDetails>,
+        _video_queue: Vec<PostDetails>,
     ) -> Result<FetchVideosRes<'a>, ServerFnError> {
         #[cfg(feature = "hydrate")]
         {
-            use crate::utils::ml_feed::ml_feed_grpcweb::MLFeed;
-
-            let ml_feed: MLFeed = expect_context();
-
             let top_posts =
                 get_coldstart_feed_paginated(self.cursor.start, self.cursor.limit).await;
 
