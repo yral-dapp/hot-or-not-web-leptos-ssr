@@ -17,6 +17,7 @@ use crate::utils::token::firestore::init_firebase;
 use crate::utils::token::firestore::listen_to_documents;
 use crate::utils::token::icpump::get_paginated_token_list;
 use crate::utils::token::icpump::TokenListItem;
+use crate::utils::web::copy_to_clipboard;
 
 pub mod ai;
 
@@ -142,7 +143,8 @@ pub fn TokenCard(
         .trim_end_matches('/')
         .split('/')
         .last()
-        .expect("URL should have at least one segment");
+        .expect("URL should have at least one segment")
+        .to_string(); // Convert to owned String
     view! {
         <div
             class:tada=is_new_token
@@ -194,9 +196,9 @@ pub fn TokenCard(
                 <ActionButton label="Airdrop".to_string() href="#".to_string() disabled=true>
                     <AirdropIcon classes="w-full h-full".to_string() />
                 </ActionButton>
-                <ActionButton label="Share".to_string() href=format!("/token/info/{root}?airdrop_amt=100")>
+                <ActionButtonWithHandler label="Share".to_string() on_click=move || {let _ =copy_to_clipboard(&format!("/token/info/{root}?airdrop_amt=100"));} >
                     <ShareIcon classes="w-full h-full".to_string() />
-                </ActionButton>
+                </ActionButtonWithHandler>
                 <ActionButton label="Details".to_string() href=details.link>
                     <ChevronRightIcon classes="w-full h-full".to_string() />
                 </ActionButton>
@@ -252,6 +254,24 @@ pub fn ActionButton(
     }
 }
 
+#[component]
+pub fn ActionButtonWithHandler(
+    label: String,
+    children: Children,
+    #[prop(optional, default = false)] disabled: bool,
+    on_click: impl Fn() + 'static,
+) -> impl IntoView {
+    view! {
+        <button
+            on:click=move |_| on_click()
+            class=format!("flex flex-col gap-1 justify-center items-center text-xs transition-colors {} text-[#A0A1A6]", if !disabled{"group-hover:text-white "}else{""})
+        >
+            <div class="w-[1.875rem] h-[1.875rem]">{children()}</div>
+
+            <div>{label}</div>
+        </button>
+    }
+}
 #[component]
 pub fn TelegramIcon(href: String, classes: String) -> impl IntoView {
     view! {
