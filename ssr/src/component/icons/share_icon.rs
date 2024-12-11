@@ -1,17 +1,9 @@
-use leptos::*;
+use crate::utils::icon::icon_gen;
 
-#[component]
-pub fn ShareIcon(
-    #[prop(optional, default = "w-full h-full".to_string())] classes: String,
-) -> impl IntoView {
-    view! {
-        <svg
-            class=format!("{}", classes)
-            viewBox="0 0 31 30"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-        >
-            <mask
+icon_gen!(
+    ShareIcon,
+    view_box = "0 0 31 30",
+    r###"<mask
                 id="mask0_500_15047"
                 style="mask-type:alpha"
                 maskUnits="userSpaceOnUse"
@@ -40,7 +32,5 @@ pub fn ShareIcon(
                         fill="currentColor"
                     />
                 </g>
-            </g>
-        </svg>
-    }
-}
+            </g>"###
+);

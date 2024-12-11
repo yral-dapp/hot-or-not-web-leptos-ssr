@@ -1,18 +1,9 @@
-use leptos::*;
+use crate::utils::icon::icon_gen;
 
-#[component]
-pub fn SendIcon(
-    #[prop(optional, default = "w-full h-full".to_string())] classes: String,
-    #[prop(optional)] filled: bool,
-) -> impl IntoView {
-    view! {
-        <svg
-            class=format!("{}", classes)
-            viewBox="0 0 31 30"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-        >
-            <mask
+icon_gen!(
+    SendIcon,
+    view_box = "0 0 31 30",
+    r###"<mask
                 id="mask0_500_15024"
                 style="mask-type:alpha"
                 maskUnits="userSpaceOnUse"
@@ -30,7 +21,5 @@ pub fn SendIcon(
                     fill=move || format!("{} ", if filled { "currentColor" } else { "none" })
                     stroke-width="1.2"
                 />
-            </g>
-        </svg>
-    }
-}
+            </g>"###
+);

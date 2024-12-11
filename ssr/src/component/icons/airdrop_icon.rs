@@ -1,17 +1,9 @@
-use leptos::*;
+use crate::utils::icon::icon_gen;
 
-#[component]
-pub fn AirdropIcon(
-    #[prop(optional, default = "w-full h-full".to_string())] classes: String,
-) -> impl IntoView {
-    view! {
-        <svg
-            class=format!("{}", classes)
-            viewBox="0 0 30 30"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-        >
-            <mask
+icon_gen!(
+    AirdropIcon,
+    view_box = "0 0 30 30",
+    r###"<mask
                 id="mask0_694_2577"
                 style="mask-type:alpha"
                 maskUnits="userSpaceOnUse"
@@ -40,7 +32,5 @@ pub fn AirdropIcon(
                         fill="currentColor"
                     />
                 </g>
-            </g>
-        </svg>
-    }
-}
+            </g>"###
+);

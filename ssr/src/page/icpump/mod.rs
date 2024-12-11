@@ -3,6 +3,7 @@ use std::collections::VecDeque;
 
 use futures::StreamExt;
 use leptos::*;
+use leptos_icons::Icon;
 
 use crate::component::buttons::LinkButton;
 use crate::component::icons::airdrop_icon::AirdropIcon;
@@ -188,19 +189,19 @@ pub fn TokenCard(
             </div>
             <div class="flex gap-4 justify-between items-center p-2">
                 <ActionButton label="Send".to_string() href=format!("/token/transfer/{root}")>
-                    <SendIcon classes="w-full h-full".to_string() />
+                    <Icon class="w-full h-full" icon=SendIcon />
                 </ActionButton>
                 <ActionButton label="Buy/Sell".to_string() href="#".to_string() disabled=true>
-                    <ArrowLeftRightIcon classes="w-full h-full".to_string() />
+                    <Icon class="w-full h-full" icon=ArrowLeftRightIcon />
                 </ActionButton>
                 <ActionButton label="Airdrop".to_string() href="#".to_string() disabled=true>
-                    <AirdropIcon classes="w-full h-full".to_string() />
+                    <Icon class="w-full h-full" icon=AirdropIcon />
                 </ActionButton>
-                <ActionButtonWithHandler label="Share".to_string() on_click=move || {let _ =copy_to_clipboard(&format!("/token/info/{root}?airdrop_amt=100"));} >
-                    <ShareIcon classes="w-full h-full".to_string() />
+                <ActionButtonWithHandler label="Share".to_string() on_click=move || {let _ =copy_to_clipboard(&format!("https://icpump.fun/token/info/{root}?airdrop_amt=100"));} >
+                    <Icon class="w-full h-full" icon=ShareIcon />
                 </ActionButtonWithHandler>
                 <ActionButton label="Details".to_string() href=details.link>
-                    <ChevronRightIcon classes="w-full h-full".to_string() />
+                    <Icon class="w-full h-full" icon=ChevronRightIcon />
                 </ActionButton>
             </div>
         </div>
@@ -219,7 +220,7 @@ pub fn PageSelector(page: RwSignal<u64>, end_of_list: RwSignal<bool>) -> impl In
                 }
                 disabled=move || page.get() == 1
             >
-                <ChevronRightIcon classes="w-4 h-4 rotate-180".to_string() />
+                    <Icon class="w-4 h-4 rotate-180" icon=ChevronRightIcon />
             </button>
             <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white bg-[#3D8EFF]">{page}</div>
             <button
@@ -229,7 +230,7 @@ pub fn PageSelector(page: RwSignal<u64>, end_of_list: RwSignal<bool>) -> impl In
                 }
                 disabled=move || end_of_list.get()
             >
-                <ChevronRightIcon classes="w-4 h-4".to_string() />
+                <Icon class="w-4 h-4" icon=ChevronRightIcon />
             </button>
         </div>
     }
