@@ -12,9 +12,7 @@ use crate::{
     consts::USER_CANISTER_ID_STORE,
     state::canisters::auth_canisters_store,
     utils::{
-        host::show_nsfw_content,
-        ml_feed::{get_coldstart_feed_paginated, get_posts_ml_feed_cache_paginated},
-        posts::FetchCursor,
+        host::show_nsfw_content, ml_feed::get_posts_ml_feed_cache_paginated, posts::FetchCursor,
     },
 };
 use yral_canisters_common::{utils::posts::PostDetails, Canisters, Error as CanistersError};
@@ -176,12 +174,17 @@ impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
         &self,
         chunks: usize,
         _allow_nsfw: bool,
-        _video_queue: Vec<PostDetails>,
+        video_queue: Vec<PostDetails>,
     ) -> Result<FetchVideosRes<'a>, ServerFnError> {
         #[cfg(feature = "hydrate")]
         {
-            let top_posts =
-                get_coldstart_feed_paginated(self.cursor.start, self.cursor.limit).await;
+            use crate::utils::ml_feed::ml_feed_grpcweb::MLFeed;
+
+            let ml_feed: MLFeed = expect_context();
+
+            let top_posts = ml_feed
+                .get_next_feed_coldstart(self.cursor.limit as u32, video_queue)
+                .await;
 
             let top_posts = match top_posts {
                 Ok(top_posts) => top_posts,
@@ -212,7 +215,7 @@ impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
             return Ok(FetchVideosRes {
                 posts_stream: Box::pin(futures::stream::empty()),
                 end: true,
-                res_type: FeedResultType::MLFeed,
+                res_type: FeedResultType::MLFeedColdstart,
             });
         }
     }

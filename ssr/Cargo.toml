@@ -55,7 +55,7 @@ icondata_core = "0.1.0"
 serde_json = "1.0"
 crc32fast = "1.4.0"
 uts2ts = "0.4.1"
-rand_chacha = { version = "0.3.1", optional = true }
+rand_chacha = { version = "0.3.1" }
 web-sys = { version = "0.3", features = [
     "Clipboard",
     "Navigator",
@@ -117,7 +117,6 @@ ic-certification = "2.6.0"
 ciborium = "0.2.2"
 yral-metadata-client = { git = "https://github.com/yral-dapp/yral-metadata", rev = "56e3f1f1f5f452673bee17739520c800c1264295", optional = true }
 yral-metadata-types = { git = "https://github.com/yral-dapp/yral-metadata", rev = "56e3f1f1f5f452673bee17739520c800c1264295", optional = true }
-rand = "0.8.5"
 
 [build-dependencies]
 tonic-build = { version = "0.12.0", default-features = false, features = [
@@ -133,7 +132,6 @@ hydrate = [
     "ic-agent/wasm-bindgen",
     "dep:web-sys",
     "reqwest/native-tls",
-    "dep:rand_chacha",
     "tonic/codegen",
     "speedate",
 ]

@@ -1,7 +1,6 @@
 use candid::Principal;
 use leptos::*;
 use leptos_router::*;
-use rand::Rng;
 
 use crate::{
     component::spinner::FullScreenSpinner,
@@ -87,7 +86,8 @@ async fn get_top_post_id_mlfeed() -> Result<Option<(Principal, u64)>, ServerFnEr
             ));
         }
     };
-    let rand_num = rand::thread_rng().gen_range(0..top_items.len());
+    let mut rand_gen = ChaCha8Rng::seed_from_u64(current_epoch().as_nanos() as u64);
+    let rand_num = rand_gen.next_u32() as usize % top_items.len();
     let top_item = top_items[rand_num];
 
     Ok(Some((top_item.0, top_item.1)))

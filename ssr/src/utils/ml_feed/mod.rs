@@ -193,57 +193,57 @@ pub mod ml_feed_grpcweb {
     }
 }
 
-// #[cfg(feature = "ssr")]
-// pub mod ml_feed_grpc {
-//     use super::*;
+#[cfg(feature = "ssr")]
+pub mod ml_feed_grpc {
+    use super::*;
 
-//     pub mod ml_feed_proto {
-//         tonic::include_proto!("ml_feed");
-//     }
+    pub mod ml_feed_proto {
+        tonic::include_proto!("ml_feed");
+    }
 
-//     // pub async fn get_coldstart_feed() -> Result<Vec<PostId>, tonic::Status> {
-//     //     use crate::utils::ml_feed::ml_feed_grpc::ml_feed_proto::{
-//     //         ml_feed_client::MlFeedClient, FeedRequest,
-//     //     };
-//     //     use tonic::transport::{Channel, ClientTlsConfig};
+    pub async fn get_coldstart_feed() -> Result<Vec<PostId>, tonic::Status> {
+        use crate::utils::ml_feed::ml_feed_grpc::ml_feed_proto::{
+            ml_feed_client::MlFeedClient, FeedRequest,
+        };
+        use tonic::transport::{Channel, ClientTlsConfig};
 
-//     //     let tls_config = ClientTlsConfig::new().with_webpki_roots();
+        let tls_config = ClientTlsConfig::new().with_webpki_roots();
 
-//     //     let channel = Channel::from_static(ML_FEED_GRPC_URL)
-//     //         .tls_config(tls_config)
-//     //         .expect("Couldn't update TLS config for nsfw agent")
-//     //         .connect()
-//     //         .await
-//     //         .expect("Couldn't connect to ML feed server");
+        let channel = Channel::from_static(ML_FEED_GRPC_URL)
+            .tls_config(tls_config)
+            .expect("Couldn't update TLS config for nsfw agent")
+            .connect()
+            .await
+            .expect("Couldn't connect to ML feed server");
 
-//     //     let mut client = MlFeedClient::new(channel);
+        let mut client = MlFeedClient::new(channel);
 
-//     //     let request = tonic::Request::new(FeedRequest {
-//     //         canister_id: "".to_string(),
-//     //         filter_posts: vec![],
-//     //         num_results: 1,
-//     //     });
+        let request = tonic::Request::new(FeedRequest {
+            canister_id: "".to_string(),
+            filter_posts: vec![],
+            num_results: 1,
+        });
 
-//     //     let response = client.get_feed_coldstart(request).await.map_err(|e| {
-//     //         tonic::Status::new(
-//     //             tonic::Code::Internal,
-//     //             format!("error fetching posts: {:?}", e),
-//     //         )
-//     //     })?;
+        let response = client.get_feed_coldstart(request).await.map_err(|e| {
+            tonic::Status::new(
+                tonic::Code::Internal,
+                format!("error fetching posts: {:?}", e),
+            )
+        })?;
 
-//     //     let feed_res = response.into_inner().feed;
+        let feed_res = response.into_inner().feed;
 
-//     //     Ok(feed_res
-//     //         .iter()
-//     //         .map(|item| {
-//     //             (
-//     //                 Principal::from_text(&item.canister_id).unwrap(),
-//     //                 item.post_id as u64,
-//     //             )
-//     //         })
-//     //         .collect())
-//     // }
-// }
+        Ok(feed_res
+            .iter()
+            .map(|item| {
+                (
+                    Principal::from_text(&item.canister_id).unwrap(),
+                    item.post_id as u64,
+                )
+            })
+            .collect())
+    }
+}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct CustomMlFeedCacheItem {
