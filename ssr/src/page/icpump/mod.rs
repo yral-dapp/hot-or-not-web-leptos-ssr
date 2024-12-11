@@ -246,7 +246,7 @@ pub fn ActionButton(
     view! {
         <a
             href={if disabled {"#".to_string()}else{href}}
-            class=format!("flex flex-col gap-1 justify-center items-center text-xs transition-colors {} text-[#A0A1A6]", if !disabled{"group-hover:text-white "}else{""})
+            class=format!("flex flex-col gap-1 justify-center items-center text-xs transition-colors {} text-[#A0A1A6]", if !disabled{"group-hover:text-white "}else{"group-hover:cursor-default"})
         >
             <div class="w-[1.875rem] h-[1.875rem]">{children()}</div>
 
