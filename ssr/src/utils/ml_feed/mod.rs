@@ -259,12 +259,6 @@ pub async fn get_posts_ml_feed_cache_paginated(
     start: u64,
     limit: u64,
 ) -> Result<Vec<PostId>, ServerFnError> {
-    leptos::logging::log!(
-        "get_posts_ml_feed_cache_paginated {} {} {}",
-        start,
-        limit,
-        canister_id.to_text()
-    );
     get_posts_ml_feed_cache_paginated_impl(canister_id.to_text(), start, limit).await
 }
 
@@ -273,7 +267,6 @@ pub async fn get_coldstart_feed_paginated(
     start: u64,
     limit: u64,
 ) -> Result<Vec<PostId>, ServerFnError> {
-    leptos::logging::log!("get_coldstart_feed_paginated {} {}", start, limit);
     get_posts_ml_feed_cache_paginated_impl("global-feed".to_string(), start, limit).await
 }
 
