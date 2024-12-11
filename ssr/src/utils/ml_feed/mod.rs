@@ -268,6 +268,7 @@ pub async fn get_posts_ml_feed_cache_paginated(
     get_posts_ml_feed_cache_paginated_impl(canister_id.to_text(), start, limit).await
 }
 
+#[server]
 pub async fn get_coldstart_feed_paginated(
     start: u64,
     limit: u64,
