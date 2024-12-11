@@ -1,8 +1,15 @@
 use candid::Principal;
 use leptos::*;
 use leptos_router::*;
+use rand::Rng;
 
-use crate::{component::spinner::FullScreenSpinner, utils::host::show_cdao_page};
+use crate::{
+    component::spinner::FullScreenSpinner,
+    utils::{
+        host::show_cdao_page,
+        ml_feed::{get_coldstart_feed_paginated, get_posts_ml_feed_cache_paginated},
+    },
+};
 
 #[server]
 async fn get_top_post_id() -> Result<Option<(Principal, u64)>, ServerFnError> {
@@ -58,28 +65,18 @@ async fn get_top_post_id_mlcache() -> Result<Option<(Principal, u64)>, ServerFnE
         return get_top_post_id_mlfeed().await;
     }
 
-    let user_canister = canisters.individual_user(user_canister_id.unwrap()).await;
-
-    let top_items = user_canister
-        .get_ml_feed_cache_paginated(0, 1)
-        .await
-        .unwrap();
-    if top_items.is_empty() {
-        return get_top_post_id_mlfeed().await;
+    let posts = get_posts_ml_feed_cache_paginated(user_canister_id.unwrap(), 0, 1).await;
+    if let Ok(posts) = posts {
+        if !posts.is_empty() {
+            return Ok(Some((posts[0].0, posts[0].1)));
+        }
     }
-
-    let Some(top_item) = top_items.first() else {
-        return Ok(None);
-    };
-
-    Ok(Some((top_item.canister_id, top_item.post_id)))
+    get_top_post_id_mlfeed().await
 }
 
 #[server]
 async fn get_top_post_id_mlfeed() -> Result<Option<(Principal, u64)>, ServerFnError> {
-    use crate::utils::ml_feed::ml_feed_grpc::get_coldstart_feed;
-
-    let top_posts_fut = get_coldstart_feed();
+    let top_posts_fut = get_coldstart_feed_paginated(0, 50);
 
     let top_items = match top_posts_fut.await {
         Ok(top_posts) => top_posts,
@@ -90,9 +87,8 @@ async fn get_top_post_id_mlfeed() -> Result<Option<(Principal, u64)>, ServerFnEr
             ));
         }
     };
-    let Some(top_item) = top_items.first() else {
-        return Ok(None);
-    };
+    let rand_num = rand::thread_rng().gen_range(0..top_items.len());
+    let top_item = top_items[rand_num];
 
     Ok(Some((top_item.0, top_item.1)))
 }

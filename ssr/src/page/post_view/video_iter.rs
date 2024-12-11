@@ -11,7 +11,11 @@ use yral_canisters_client::post_cache::{self, NsfwFilter};
 use crate::{
     consts::USER_CANISTER_ID_STORE,
     state::canisters::auth_canisters_store,
-    utils::{host::show_nsfw_content, posts::FetchCursor},
+    utils::{
+        host::show_nsfw_content,
+        ml_feed::{get_coldstart_feed_paginated, get_posts_ml_feed_cache_paginated},
+        posts::FetchCursor,
+    },
 };
 use yral_canisters_common::{utils::posts::PostDetails, Canisters, Error as CanistersError};
 
@@ -22,6 +26,7 @@ pub enum FeedResultType {
     PostCache,
     MLFeedCache,
     MLFeed,
+    MLFeedColdstart,
 }
 
 pub struct FetchVideosRes<'a> {
@@ -179,9 +184,8 @@ impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
 
             let ml_feed: MLFeed = expect_context();
 
-            let top_posts = ml_feed
-                .get_next_feed_coldstart(self.cursor.limit as u32, video_queue)
-                .await;
+            let top_posts =
+                get_coldstart_feed_paginated(self.cursor.start, self.cursor.limit).await;
 
             let top_posts = match top_posts {
                 Ok(top_posts) => top_posts,
@@ -203,7 +207,7 @@ impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
             Ok(FetchVideosRes {
                 posts_stream: Box::pin(chunk_stream),
                 end,
-                res_type: FeedResultType::MLFeed,
+                res_type: FeedResultType::MLFeedColdstart,
             })
         }
 
@@ -227,25 +231,31 @@ impl<'a> VideoFetchStream<'a, true> {
     ) -> Result<FetchVideosRes<'a>, ServerFnError> {
         let cans_true = self.canisters;
 
-        let user_canister = cans_true.authenticated_user().await;
-        let top_posts_fut =
-            user_canister.get_ml_feed_cache_paginated(self.cursor.start, self.cursor.limit);
-
-        let top_posts = top_posts_fut.await?;
-        if top_posts.is_empty() {
-            // try ml feed once again - with coldstart feed
-            return self
-                .fetch_post_uids_ml_feed_coldstart_chunked(chunks, allow_nsfw, video_queue)
-                .await;
-        }
+        let user_canister_id = cans_true.user_canister();
+        let top_posts = match get_posts_ml_feed_cache_paginated(
+            user_canister_id,
+            self.cursor.start,
+            self.cursor.limit,
+        )
+        .await
+        {
+            Ok(posts) if posts.is_empty() => {
+                return self
+                    .fetch_post_uids_ml_feed_coldstart_chunked(chunks, allow_nsfw, video_queue)
+                    .await;
+            }
+            Ok(posts) => posts,
+            Err(_) => {
+                return self
+                    .fetch_post_uids_ml_feed_coldstart_chunked(chunks, allow_nsfw, video_queue)
+                    .await;
+            }
+        };
 
         let end = false;
         let chunk_stream = top_posts
             .into_iter()
-            .map(move |item| {
-                self.canisters
-                    .get_post_details(item.canister_id, item.post_id)
-            })
+            .map(move |item| self.canisters.get_post_details(item.0, item.1))
             .collect::<FuturesOrdered<_>>()
             .filter_map(|res| async { res.transpose() })
             .chunks(chunks);

@@ -1,5 +1,9 @@
-use crate::consts::ML_FEED_GRPC_URL;
+use std::env;
+
+use crate::consts::{self, ML_FEED_GRPC_URL};
 use candid::Principal;
+use leptos::{server, ServerFnError};
+use serde::{Deserialize, Serialize};
 
 use super::types::PostId;
 
@@ -197,46 +201,118 @@ pub mod ml_feed_grpc {
         tonic::include_proto!("ml_feed");
     }
 
-    pub async fn get_coldstart_feed() -> Result<Vec<PostId>, tonic::Status> {
-        use crate::utils::ml_feed::ml_feed_grpc::ml_feed_proto::{
-            ml_feed_client::MlFeedClient, FeedRequest,
-        };
-        use tonic::transport::{Channel, ClientTlsConfig};
+    // pub async fn get_coldstart_feed() -> Result<Vec<PostId>, tonic::Status> {
+    //     use crate::utils::ml_feed::ml_feed_grpc::ml_feed_proto::{
+    //         ml_feed_client::MlFeedClient, FeedRequest,
+    //     };
+    //     use tonic::transport::{Channel, ClientTlsConfig};
 
-        let tls_config = ClientTlsConfig::new().with_webpki_roots();
+    //     let tls_config = ClientTlsConfig::new().with_webpki_roots();
 
-        let channel = Channel::from_static(ML_FEED_GRPC_URL)
-            .tls_config(tls_config)
-            .expect("Couldn't update TLS config for nsfw agent")
-            .connect()
-            .await
-            .expect("Couldn't connect to ML feed server");
+    //     let channel = Channel::from_static(ML_FEED_GRPC_URL)
+    //         .tls_config(tls_config)
+    //         .expect("Couldn't update TLS config for nsfw agent")
+    //         .connect()
+    //         .await
+    //         .expect("Couldn't connect to ML feed server");
 
-        let mut client = MlFeedClient::new(channel);
+    //     let mut client = MlFeedClient::new(channel);
 
-        let request = tonic::Request::new(FeedRequest {
-            canister_id: "".to_string(),
-            filter_posts: vec![],
-            num_results: 1,
-        });
+    //     let request = tonic::Request::new(FeedRequest {
+    //         canister_id: "".to_string(),
+    //         filter_posts: vec![],
+    //         num_results: 1,
+    //     });
 
-        let response = client.get_feed_coldstart(request).await.map_err(|e| {
-            tonic::Status::new(
-                tonic::Code::Internal,
-                format!("error fetching posts: {:?}", e),
-            )
-        })?;
+    //     let response = client.get_feed_coldstart(request).await.map_err(|e| {
+    //         tonic::Status::new(
+    //             tonic::Code::Internal,
+    //             format!("error fetching posts: {:?}", e),
+    //         )
+    //     })?;
 
-        let feed_res = response.into_inner().feed;
+    //     let feed_res = response.into_inner().feed;
 
-        Ok(feed_res
-            .iter()
-            .map(|item| {
-                (
-                    Principal::from_text(&item.canister_id).unwrap(),
-                    item.post_id as u64,
-                )
-            })
-            .collect())
+    //     Ok(feed_res
+    //         .iter()
+    //         .map(|item| {
+    //             (
+    //                 Principal::from_text(&item.canister_id).unwrap(),
+    //                 item.post_id as u64,
+    //             )
+    //         })
+    //         .collect())
+    // }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct CustomMlFeedCacheItem {
+    post_id: u64,
+    canister_id: String,
+    video_id: String,
+    creator_principal_id: String,
+}
+
+#[server]
+pub async fn get_posts_ml_feed_cache_paginated(
+    canister_id: Principal,
+    start: u64,
+    limit: u64,
+) -> Result<Vec<PostId>, ServerFnError> {
+    leptos::logging::log!(
+        "get_posts_ml_feed_cache_paginated {} {} {}",
+        start,
+        limit,
+        canister_id.to_text()
+    );
+    get_posts_ml_feed_cache_paginated_impl(canister_id.to_text(), start, limit).await
+}
+
+pub async fn get_coldstart_feed_paginated(
+    start: u64,
+    limit: u64,
+) -> Result<Vec<PostId>, ServerFnError> {
+    leptos::logging::log!("get_coldstart_feed_paginated {} {}", start, limit);
+    get_posts_ml_feed_cache_paginated_impl("global-feed".to_string(), start, limit).await
+}
+
+pub async fn get_posts_ml_feed_cache_paginated_impl(
+    canister_id_str: String,
+    start: u64,
+    limit: u64,
+) -> Result<Vec<PostId>, ServerFnError> {
+    let client = reqwest::Client::new();
+    let account_id = consts::CLOUDFLARE_ACCOUNT_ID;
+    let namespace_id = consts::CF_KV_ML_CACHE_NAMESPACE_ID;
+    let api_token = env::var("CF_TOKEN").unwrap();
+
+    let url = format!(
+        "https://api.cloudflare.com/client/v4/accounts/{}/storage/kv/namespaces/{}/values/{}",
+        account_id, namespace_id, canister_id_str
+    );
+
+    let response = client
+        .get(&url)
+        .header("Authorization", format!("Bearer {}", api_token))
+        .header("Content-Type", "application/json")
+        .send()
+        .await?;
+
+    if !response.status().is_success() {
+        return Ok(vec![]);
     }
+
+    let response = response.json::<Vec<CustomMlFeedCacheItem>>().await.unwrap();
+
+    Ok(response
+        .into_iter()
+        .skip(start as usize)
+        .take(limit as usize)
+        .map(|item| {
+            (
+                Principal::from_text(&item.canister_id).unwrap(),
+                item.post_id as u64,
+            )
+        })
+        .collect::<Vec<PostId>>())
 }

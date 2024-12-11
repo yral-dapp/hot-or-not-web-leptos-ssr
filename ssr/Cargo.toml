@@ -108,14 +108,16 @@ speedate = { version = "0.14.4", optional = true }
 urlencoding = "2.1.3"
 yral-types = { git = "https://github.com/yral-dapp/yral-common.git", rev = "5e4414a3f1e0644d93f181949d533c6a9991da04" }
 yral-qstash-types = { git = "https://github.com/yral-dapp/yral-common.git", rev = "5e4414a3f1e0644d93f181949d533c6a9991da04" }
-yral-canisters-client = { git = "https://github.com/yral-dapp/yral-common.git", rev = "5e4414a3f1e0644d93f181949d533c6a9991da04", features = ["full"] }
-yral-canisters-common = { git = "https://github.com/yral-dapp/yral-common.git", rev = "5e4414a3f1e0644d93f181949d533c6a9991da04" } 
+yral-canisters-client = { git = "https://github.com/yral-dapp/yral-common.git", rev = "5e4414a3f1e0644d93f181949d533c6a9991da04", features = [
+    "full",
+] }
+yral-canisters-common = { git = "https://github.com/yral-dapp/yral-common.git", rev = "5e4414a3f1e0644d93f181949d533c6a9991da04" }
 pulldown-cmark = "0.12.1"
 ic-certification = "2.6.0"
 ciborium = "0.2.2"
 yral-metadata-client = { git = "https://github.com/yral-dapp/yral-metadata", rev = "56e3f1f1f5f452673bee17739520c800c1264295", optional = true }
 yral-metadata-types = { git = "https://github.com/yral-dapp/yral-metadata", rev = "56e3f1f1f5f452673bee17739520c800c1264295", optional = true }
-
+rand = "0.8.5"
 
 [build-dependencies]
 tonic-build = { version = "0.12.0", default-features = false, features = [
@@ -133,7 +135,7 @@ hydrate = [
     "reqwest/native-tls",
     "dep:rand_chacha",
     "tonic/codegen",
-    "speedate"
+    "speedate",
 ]
 ssr = [
     "dep:axum",
@@ -162,7 +164,7 @@ ssr = [
     "tonic/tls-webpki-roots",
     "tonic/transport",
     "tonic-build/transport",
-    "speedate"
+    "speedate",
 ]
 # Fetch mock referral history instead of history via canister
 mock-referral-history = ["dep:rand_chacha", "k256/arithmetic"]
@@ -209,7 +211,13 @@ local-bin = [
     "dep:yral-metadata-client",
     "dep:yral-metadata-types",
 ]
-local-lib = ["hydrate", "redis-kv", "local-auth", "backend-admin", "yral-canisters-common/local"]
+local-lib = [
+    "hydrate",
+    "redis-kv",
+    "local-auth",
+    "backend-admin",
+    "yral-canisters-common/local",
+]
 
 [package.metadata.leptos]
 # The name used by wasm-bindgen/cargo-leptos for the JS/WASM bundle. Defaults to the crate name

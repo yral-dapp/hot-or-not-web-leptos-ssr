@@ -2850,6 +2850,7 @@ dependencies = [
  "priority-queue",
  "prost",
  "pulldown-cmark",
+ "rand",
  "rand_chacha",
  "redb",
  "redis",
