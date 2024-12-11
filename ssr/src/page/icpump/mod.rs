@@ -197,7 +197,7 @@ pub fn TokenCard(
                 <ActionButton label="Airdrop".to_string() href="#".to_string() disabled=true>
                     <Icon class="w-full h-full" icon=AirdropIcon />
                 </ActionButton>
-                <ActionButtonWithHandler label="Share".to_string() on_click=move || {let _ =copy_to_clipboard(&format!("https://icpump.fun/token/info/{root}?airdrop_amt=100"));} >
+                <ActionButtonWithHandler label="Share".to_string() disabled=true on_click=move || {let _ =copy_to_clipboard(&format!("https://icpump.fun/token/info/{root}?airdrop_amt=100"));} >
                     <Icon class="w-full h-full" icon=ShareIcon />
                 </ActionButtonWithHandler>
                 <ActionButton label="Details".to_string() href=details.link>
