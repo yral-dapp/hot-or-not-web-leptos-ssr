@@ -12,7 +12,9 @@ use crate::{
     consts::USER_CANISTER_ID_STORE,
     state::canisters::auth_canisters_store,
     utils::{
-        host::show_nsfw_content, ml_feed::get_posts_ml_feed_cache_paginated, posts::FetchCursor,
+        host::show_nsfw_content,
+        ml_feed::{get_coldstart_feed_paginated, get_posts_ml_feed_cache_paginated},
+        posts::FetchCursor,
     },
 };
 use yral_canisters_common::{utils::posts::PostDetails, Canisters, Error as CanistersError};
@@ -174,50 +176,32 @@ impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
         &self,
         chunks: usize,
         _allow_nsfw: bool,
-        video_queue: Vec<PostDetails>,
+        _video_queue: Vec<PostDetails>,
     ) -> Result<FetchVideosRes<'a>, ServerFnError> {
-        #[cfg(feature = "hydrate")]
-        {
-            use crate::utils::ml_feed::ml_feed_grpcweb::MLFeed;
+        let top_posts = get_coldstart_feed_paginated(self.cursor.start, self.cursor.limit).await;
 
-            let ml_feed: MLFeed = expect_context();
+        let top_posts = match top_posts {
+            Ok(top_posts) => top_posts,
+            Err(e) => {
+                return Err(ServerFnError::new(
+                    format!("Error fetching ml feed: {e:?}",),
+                ));
+            }
+        };
 
-            let top_posts = ml_feed
-                .get_next_feed_coldstart(self.cursor.limit as u32, video_queue)
-                .await;
+        let end = false;
+        let chunk_stream = top_posts
+            .into_iter()
+            .map(move |item| self.canisters.get_post_details(item.0, item.1))
+            .collect::<FuturesOrdered<_>>()
+            .filter_map(|res| async { res.transpose() })
+            .chunks(chunks);
 
-            let top_posts = match top_posts {
-                Ok(top_posts) => top_posts,
-                Err(e) => {
-                    return Err(ServerFnError::new(
-                        format!("Error fetching ml feed: {e:?}",),
-                    ));
-                }
-            };
-
-            let end = false;
-            let chunk_stream = top_posts
-                .into_iter()
-                .map(move |item| self.canisters.get_post_details(item.0, item.1))
-                .collect::<FuturesOrdered<_>>()
-                .filter_map(|res| async { res.transpose() })
-                .chunks(chunks);
-
-            Ok(FetchVideosRes {
-                posts_stream: Box::pin(chunk_stream),
-                end,
-                res_type: FeedResultType::MLFeedColdstart,
-            })
-        }
-
-        #[cfg(not(feature = "hydrate"))]
-        {
-            return Ok(FetchVideosRes {
-                posts_stream: Box::pin(futures::stream::empty()),
-                end: true,
-                res_type: FeedResultType::MLFeedColdstart,
-            });
-        }
+        Ok(FetchVideosRes {
+            posts_stream: Box::pin(chunk_stream),
+            end,
+            res_type: FeedResultType::MLFeedColdstart,
+        })
     }
 }
 
@@ -231,6 +215,7 @@ impl<'a> VideoFetchStream<'a, true> {
         let cans_true = self.canisters;
 
         let user_canister_id = cans_true.user_canister();
+
         let top_posts = match get_posts_ml_feed_cache_paginated(
             user_canister_id,
             self.cursor.start,
