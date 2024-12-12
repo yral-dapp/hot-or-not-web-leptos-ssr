@@ -1,8 +1,19 @@
 use candid::Principal;
 use leptos::*;
 use leptos_router::*;
+use rand_chacha::{
+    rand_core::{RngCore, SeedableRng},
+    ChaCha8Rng,
+};
+use yral_canisters_common::utils::time::current_epoch;
 
-use crate::{component::spinner::FullScreenSpinner, utils::host::show_cdao_page};
+use crate::{
+    component::spinner::FullScreenSpinner,
+    utils::{
+        host::show_cdao_page,
+        ml_feed::{get_coldstart_feed_paginated, get_posts_ml_feed_cache_paginated},
+    },
+};
 
 #[server]
 async fn get_top_post_id() -> Result<Option<(Principal, u64)>, ServerFnError> {
@@ -47,7 +58,7 @@ async fn get_top_post_id_mlcache() -> Result<Option<(Principal, u64)>, ServerFnE
     let jar: SignedCookieJar = extract_with_state(&key).await?;
     let principal = extract_principal_from_cookie(&jar)?;
     if principal.is_none() {
-        return get_top_post_id().await;
+        return get_top_post_id_mlfeed().await;
     }
 
     let canisters = unauth_canisters();
@@ -55,50 +66,37 @@ async fn get_top_post_id_mlcache() -> Result<Option<(Principal, u64)>, ServerFnE
         .get_individual_canister_by_user_principal(principal.unwrap())
         .await?;
     if user_canister_id.is_none() {
-        return get_top_post_id().await;
+        return get_top_post_id_mlfeed().await;
     }
 
-    let user_canister = canisters.individual_user(user_canister_id.unwrap()).await;
-
-    let top_items = user_canister
-        .get_ml_feed_cache_paginated(0, 1)
-        .await
-        .unwrap();
-    if top_items.is_empty() {
-        return get_top_post_id().await;
+    let posts = get_posts_ml_feed_cache_paginated(user_canister_id.unwrap(), 0, 1).await;
+    if let Ok(posts) = posts {
+        if !posts.is_empty() {
+            return Ok(Some((posts[0].0, posts[0].1)));
+        }
     }
-
-    let Some(top_item) = top_items.first() else {
-        return Ok(None);
-    };
-
-    Ok(Some((top_item.canister_id, top_item.post_id)))
+    get_top_post_id_mlfeed().await
 }
 
-// TODO: Use this when we shift to the new ml feed for first post
-// #[server]
-// async fn get_top_post_id_mlfeed() -> Result<Option<(Principal, u64)>, ServerFnError> {
-//     use crate::utils::ml_feed::ml_feed_grpc::get_start_feed;
+#[server]
+async fn get_top_post_id_mlfeed() -> Result<Option<(Principal, u64)>, ServerFnError> {
+    let top_posts_fut = get_coldstart_feed_paginated(0, 50);
 
-//     let canisters = unauth_canisters();
-//     let user_canister_principal = canisters.user_canister();
-//     let top_posts_fut = get_start_feed(&user_canister_principal, 1, vec![]);
+    let top_items = match top_posts_fut.await {
+        Ok(top_posts) => top_posts,
+        Err(e) => {
+            log::error!("failed to fetch top post ml feed: {:?}", e);
+            return Err(ServerFnError::ServerError(
+                "failed to fetch top post ml feed".to_string(),
+            ));
+        }
+    };
+    let mut rand_gen = ChaCha8Rng::seed_from_u64(current_epoch().as_nanos() as u64);
+    let rand_num = rand_gen.next_u32() as usize % top_items.len();
+    let top_item = top_items[rand_num];
 
-//     let top_items = match top_posts_fut.await {
-//         Ok(top_posts) => top_posts,
-//         Err(e) => {
-//             log::error!("failed to fetch top post ml feed: {:?}", e);
-//             return Err(ServerFnError::ServerError(
-//                 "failed to fetch top post ml feed".to_string(),
-//             ));
-//         }
-//     };
-//     let Some(top_item) = top_items.first() else {
-//         return Ok(None);
-//     };
-
-//     Ok(Some((top_item.0, top_item.1)))
-// }
+    Ok(Some((top_item.0, top_item.1)))
+}
 
 #[component]
 pub fn CreatorDaoRootPage() -> impl IntoView {
