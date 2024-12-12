@@ -460,7 +460,9 @@ fn CommingSoonBanner() -> impl IntoView {
 #[component]
 fn AdvanceSettingCard(
     #[prop(into)] heading: String,
-    #[prop(into)] description: String,
+    #[allow(unused_variables)] // will use when i implement the tooltip
+    #[prop(into)]
+    description: String,
     #[prop(into)] value: String,
 ) -> impl IntoView {
     view! {
