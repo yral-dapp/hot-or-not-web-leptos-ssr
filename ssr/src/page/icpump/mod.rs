@@ -246,7 +246,7 @@ pub fn ActionButton(
     view! {
         <a
             href={if disabled {"#".to_string()}else{href}}
-            class=format!("flex flex-col gap-1 justify-center items-center text-xs transition-colors {} text-[#A0A1A6]", if !disabled{"group-hover:text-white "}else{"group-hover:cursor-default"})
+            class=format!("flex flex-col gap-1 justify-center items-center text-xs transition-colors {} text-[#D4D4D4]", if !disabled{"group-hover:text-white text-[#D4D4D4]"}else{"group-hover:cursor-default text-[#525252]"})
         >
             <div class="w-[1.875rem] h-[1.875rem]">{children()}</div>
 
@@ -266,7 +266,7 @@ pub fn ActionButtonWithHandler(
         <button
             disabled
             on:click=move |_| {if !disabled{on_click()}}
-            class=format!("flex flex-col gap-1 justify-center items-center text-xs transition-colors {} text-[#A0A1A6]", if !disabled{"group-hover:text-white "}else{"group-hover:cursor-default"})
+            class=format!("flex flex-col gap-1 justify-center items-center text-xs transition-colors {}", if !disabled{"group-hover:text-white text-[#D4D4D4]"}else{"group-hover:cursor-default text-[#525252]"})
         >
             <div class="w-[1.875rem] h-[1.875rem]">{children()}</div>
 
