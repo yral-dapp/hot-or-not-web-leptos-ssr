@@ -460,17 +460,21 @@ fn CommingSoonBanner() -> impl IntoView {
 #[component]
 fn AdvanceSettingCard(
     #[prop(into)] heading: String,
-    #[allow(unused_variables)] // will use when i implement the tooltip
-    #[prop(into)]
-    description: String,
+    #[prop(into)] description: String,
     #[prop(into)] value: String,
 ) -> impl IntoView {
     view! {
         <div class="bg-[#171717] flex flex-col rounded-md p-3">
             <div class="flex justify-between">
                 <h2 class="text-[#A3A3A3]">{heading}</h2>
-                <div class="tooltip-trigger bg-[#262626] rounded-full grid place-center size-6">
-                    <span class="text-white text-center">i</span>
+                <div class="relative group">
+                    <div class="tooltip-trigger cursor-pointer bg-[#262626] rounded-full grid place-center size-6">
+                        <span class="text-white text-center">i</span>
+                    </div>
+                    <div class="w-max max-w-[85vw] md:max-w-[400px] absolute pointer-events-none duration-150 rounded-md top-0 right-0 mt-8 z-50 opacity-0 group-hover:opacity-100 bg-[#EAC9DB] text-[#A00157] p-4">
+                        {description}
+                        <div class="absolute right-0 mr-1 -translate-x-1/2 bottom-full h-0 w-0 border-r-4 border-l-4 border-b-4 border-l-transparent border-r-transparent border-b-[#EAC9DB]"></div>
+                    </div>
                 </div>
             </div>
             <div class="text-[#525252]">{value}</div>
@@ -483,7 +487,7 @@ fn AdvanceSettings(
     #[prop()] items: Vec<(String, String, String)>, // heading, value, description
 ) -> impl IntoView {
     view! {
-        <div class="flex flex-col gap-2">
+        <div class="flex flex-col gap-2 pb-8">
             {
                 items.into_iter().map(|(h, v, d)| {
                     view! { <AdvanceSettingCard heading=h value=v description=d /> }
@@ -531,71 +535,72 @@ pub fn CreateTokenSettings() -> impl IntoView {
         (
             "Transaction Fee (e8s)".into(),
             transaction_fee.get_untracked().e8s.unwrap_or(1).to_string(),
-            "Some really long description".into(),
+            "Fee for sending, receiving token post creation (canister to canister sending)".into(),
         ),
         (
             "Rejection Fee (Token)".into(),
             format_tokens(&rejection_fee.get_untracked()),
-            "dummy description".into(),
+            "Fee for proposal rejection once we raised the SNS proposal".into(),
         ),
         (
             "Initial Voting Period (days)".into(),
             format_duration(&initial_voting_period.get_untracked()),
-            "dummy desscription".into(),
+            "Duration for which the proposal remains live".into(),
         ),
         (
             "Maximum wait for quiet deadline extention (days)".into(),
             format_duration(&max_wait_deadline_extension.get_untracked()),
-            "dummy desscription".into(),
+            "Till how far into the sns swap process you can increase the duration for the swap"
+                .into(),
         ),
         (
             "Minimum creation stake (token)".into(),
             format_tokens(&min_creation_stake.get_untracked()),
-            "dummy desscription".into(),
+            "Minimum amount of tokens (e8s) to stake in each neuron".into(),
         ),
         (
             "Minimum dissolve delay (months)".into(),
             format_duration(&min_dissolve_delay.get_untracked()),
-            "dummy desscription".into(),
+            "Time commitment you give that by when will you get the liquid token".into(),
         ),
         (
             "Age (duration in years)".into(),
             format_duration(&age.get_untracked()),
-            "dummy desscription".into(),
+            "Age at which participants will earn full bonus".into(),
         ),
         (
             "Age (bonus %)".into(),
             format_percentage(&age_bonus.get_untracked()),
-            "dummy desscription".into(),
+            "% reward post max. age is hit".into(),
         ),
         (
             "Minimum participants".into(),
             min_participants.get_untracked().to_string(),
-            "dummy desscription".into(),
+            "Min number of participant required for execution of SNS".into(),
         ),
         (
             "Minimum direct participant icp".into(),
             min_direct_participants_icp
                 .with_untracked(|p| p.as_ref().map(format_tokens))
                 .unwrap_or_default(),
-            "dummy desscription".into(),
+            "Min token when direct participant is taking part in swap".into(),
         ),
         (
             "Maximum direct participant icp".into(),
             max_direct_participants_icp
                 .with_untracked(|p| p.as_ref().map(format_tokens))
                 .unwrap_or_default(),
-            "dummy desscription".into(),
+            "Max token when direct participant is taking part in swap".into(),
         ),
         (
             "Minimum participant icp".into(),
             format_tokens(&min_participants_icp.get_untracked()),
-            "dummy desscription".into(),
+            "Min. ICP taken from treasury of YRAL".into(),
         ),
         (
             "Maximum participant icp".into(),
             format_tokens(&max_participants_icp.get_untracked()),
-            "dummy desscription".into(),
+            "Max. ICP token from treasury of YRAL".into(),
         ),
     ];
 
