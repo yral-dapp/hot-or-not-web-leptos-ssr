@@ -18,11 +18,9 @@ use std::env;
 use yral_canisters_common::{utils::profile::ProfileDetails, Canisters, CanistersAuthWire};
 
 use server_fn::codec::Cbor;
-use sns_validation::{humanize::parse_tokens, pbs::nns_pb::Tokens};
+use sns_validation::humanize::parse_tokens;
 use sns_validation::{
-    humanize::{
-        format_duration, format_percentage, format_tokens, parse_duration, parse_percentage,
-    },
+    humanize::{format_duration, format_percentage, format_tokens},
     pbs::sns_pb::SnsInitPayload,
 };
 
@@ -278,15 +276,6 @@ impl CreateTokenCtx {
     }
 }
 
-fn parse_token_e8s(s: &str) -> Result<Tokens, String> {
-    let e8s: u64 = s
-        .replace('_', "")
-        .parse::<u64>()
-        .map_err(|err| err.to_string())?;
-
-    Ok(Tokens { e8s: Some(e8s) })
-}
-
 #[component]
 pub fn CreateToken() -> impl IntoView {
     let auth_cans = auth_canisters_store();
@@ -458,12 +447,46 @@ pub fn CreateToken() -> impl IntoView {
 #[component]
 fn CommingSoonBanner() -> impl IntoView {
     view! {
-        <div class="with-gradient relative bg-black rounded-md p-4 bg-no-repeat bg-cover bg-left" style="background-image: url('/img/gradient-backdrop.png')">
+        <div class="with-gradient relative bg-black rounded-md p-3 bg-no-repeat bg-cover bg-left" style="background-image: url('/img/gradient-backdrop.png')">
             <div class="flex flex-col gap-1">
                 <h2 class="text-white font-bold">Want to raise ICP?</h2>
                 <span class="text-font bg-clip-text text-transparent bg-gradient-to-r from-[#FFFFFF80] to-[#882B5E80]">Coming Soon...</span>
             </div>
             <img src="/img/coming-soon-art.svg" class="absolute right-0 bottom-0" />
+        </div>
+    }
+}
+
+#[component]
+fn AdvanceSettingCard(
+    #[prop(into)] heading: String,
+    #[prop(into)] description: String,
+    #[prop(into)] value: String,
+) -> impl IntoView {
+    view! {
+        <div class="bg-[#171717] flex flex-col rounded-md p-3">
+            <div class="flex justify-between">
+                <h2 class="text-[#A3A3A3]">{heading}</h2>
+                <div class="tooltip-trigger bg-[#262626] rounded-full grid place-center size-6">
+                    <span class="text-white text-center">i</span>
+                </div>
+            </div>
+            <div class="text-[#525252]">{value}</div>
+        </div>
+    }
+}
+
+#[component]
+fn AdvanceSettings(
+    #[prop()] items: Vec<(String, String, String)>, // heading, value, description
+) -> impl IntoView {
+    view! {
+        <div class="flex flex-col gap-2">
+            {
+                items.into_iter().map(|(h, v, d)| {
+                    view! { <AdvanceSettingCard heading=h value=v description=d /> }
+                }).collect_view()
+            }
         </div>
     }
 }
@@ -478,39 +501,23 @@ pub fn CreateTokenSettings() -> impl IntoView {
     });
     let fstate = ctx.form_state;
 
-    let validate_tokens = |value: String| parse_tokens(&value).ok();
-    let validate_tokens_e8s = |value: String| parse_token_e8s(&value).ok();
-    let (transaction_fee, set_transaction_fee) = slice!(fstate.transaction_fee);
-    let (rejection_fee, set_rejection_fee) = slice!(fstate.proposals.rejection_fee);
+    let (transaction_fee, _) = slice!(fstate.transaction_fee);
+    let (rejection_fee, _) = slice!(fstate.proposals.rejection_fee);
 
-    let validate_duration = |value: String| parse_duration(&value).ok();
-    let (initial_voting_period, set_initial_voting_period) =
-        slice!(fstate.proposals.initial_voting_period);
-    let (max_wait_deadline_extension, set_max_wait_deadline_extension) =
+    let (initial_voting_period, _) = slice!(fstate.proposals.initial_voting_period);
+    let (max_wait_deadline_extension, _) =
         slice!(fstate.proposals.maximum_wait_for_quiet_deadline_extension);
-    let (min_creation_stake, set_min_creation_stake) =
-        slice!(fstate.neurons.minimum_creation_stake);
-    let (min_dissolve_delay, set_min_dissolve_delay) = slice!(fstate.voting.minimum_dissolve_delay);
-    let (age, set_age) = slice!(fstate.voting.maximum_voting_power_bonuses.age.duration);
+    let (min_creation_stake, _) = slice!(fstate.neurons.minimum_creation_stake);
+    let (min_dissolve_delay, _) = slice!(fstate.voting.minimum_dissolve_delay);
+    let (age, _) = slice!(fstate.voting.maximum_voting_power_bonuses.age.duration);
 
-    let validate_percentage = |value: String| parse_percentage(&value).ok();
-    let (age_bonus, set_age_bonus) = slice!(fstate.voting.maximum_voting_power_bonuses.age.bonus);
-    let (min_participants, set_min_participants) = slice!(fstate.swap.minimum_participants);
+    let (age_bonus, _) = slice!(fstate.voting.maximum_voting_power_bonuses.age.bonus);
+    let (min_participants, _) = slice!(fstate.swap.minimum_participants);
 
-    let optional_tokens_validator = |value: String| {
-        if value.is_empty() {
-            return Some(None);
-        }
-        Some(Some(parse_tokens(&value).ok()?))
-    };
-    let (min_direct_participants_icp, set_min_direct_participants_icp) =
-        slice!(fstate.swap.minimum_direct_participation_icp);
-    let (max_direct_participants_icp, set_max_direct_participants_icp) =
-        slice!(fstate.swap.maximum_direct_participation_icp);
-    let (min_participants_icp, set_min_participants_icp) =
-        slice!(fstate.swap.minimum_participant_icp);
-    let (max_participants_icp, set_max_participants_icp) =
-        slice!(fstate.swap.maximum_participant_icp);
+    let (min_direct_participants_icp, _) = slice!(fstate.swap.minimum_direct_participation_icp);
+    let (max_direct_participants_icp, _) = slice!(fstate.swap.maximum_direct_participation_icp);
+    let (min_participants_icp, _) = slice!(fstate.swap.minimum_participant_icp);
+    let (max_participants_icp, _) = slice!(fstate.swap.maximum_participant_icp);
 
     // let set_restricted_country = move |value: String| {
     //     ctx.form_state.update(|f| {
@@ -518,13 +525,77 @@ pub fn CreateTokenSettings() -> impl IntoView {
     //     });
     // };
 
-    let form_ref = create_node_ref::<html::Form>();
-    let reset_settings = move |_| {
-        let Some(form) = form_ref() else { return };
-        form.reset();
-        // ctx.form_state.update(|f| f.reset_advanced_settings());
-        ctx.on_form_reset.notify();
-    };
+    let items = vec![
+        (
+            "Transaction Fee (e8s)".into(),
+            transaction_fee.get_untracked().e8s.unwrap_or(1).to_string(),
+            "Some really long description".into(),
+        ),
+        (
+            "Rejection Fee (Token)".into(),
+            format_tokens(&rejection_fee.get_untracked()),
+            "dummy description".into(),
+        ),
+        (
+            "Initial Voting Period (days)".into(),
+            format_duration(&initial_voting_period.get_untracked()),
+            "dummy desscription".into(),
+        ),
+        (
+            "Maximum wait for quiet deadline extention (days)".into(),
+            format_duration(&max_wait_deadline_extension.get_untracked()),
+            "dummy desscription".into(),
+        ),
+        (
+            "Minimum creation stake (token)".into(),
+            format_tokens(&min_creation_stake.get_untracked()),
+            "dummy desscription".into(),
+        ),
+        (
+            "Minimum dissolve delay (months)".into(),
+            format_duration(&min_dissolve_delay.get_untracked()),
+            "dummy desscription".into(),
+        ),
+        (
+            "Age (duration in years)".into(),
+            format_duration(&age.get_untracked()),
+            "dummy desscription".into(),
+        ),
+        (
+            "Age (bonus %)".into(),
+            format_percentage(&age_bonus.get_untracked()),
+            "dummy desscription".into(),
+        ),
+        (
+            "Minimum participants".into(),
+            min_participants.get_untracked().to_string(),
+            "dummy desscription".into(),
+        ),
+        (
+            "Minimum direct participant icp".into(),
+            min_direct_participants_icp
+                .with_untracked(|p| p.as_ref().map(format_tokens))
+                .unwrap_or_default(),
+            "dummy desscription".into(),
+        ),
+        (
+            "Maximum direct participant icp".into(),
+            max_direct_participants_icp
+                .with_untracked(|p| p.as_ref().map(format_tokens))
+                .unwrap_or_default(),
+            "dummy desscription".into(),
+        ),
+        (
+            "Minimum participant icp".into(),
+            format_tokens(&min_participants_icp.get_untracked()),
+            "dummy desscription".into(),
+        ),
+        (
+            "Maximum participant icp".into(),
+            format_tokens(&max_participants_icp.get_untracked()),
+            "dummy desscription".into(),
+        ),
+    ];
 
     view! {
         <div
@@ -541,136 +612,7 @@ pub fn CreateTokenSettings() -> impl IntoView {
                 </div>
             </Title>
             <CommingSoonBanner />
-            <form _ref=form_ref>
-                <InputBox
-                    disabled=true
-                    heading="Transaction Fee (e8s)"
-                    input_type="number"
-                    placeholder="100"
-                    updater=set_transaction_fee
-                    validator=validate_tokens_e8s
-                    initial_value=transaction_fee.get_untracked().e8s.unwrap_or(1).to_string()
-                />
-                <InputBox
-                    disabled=true
-                    heading="Rejection Fee (Token)"
-                    placeholder="1 Token"
-                    updater=set_rejection_fee
-                    validator=validate_tokens
-                    initial_value=format_tokens(&rejection_fee.get_untracked())
-                />
-                <InputBox
-                    disabled=true
-                    heading="Initial Voting Period (days)"
-                    placeholder="4 days"
-                    updater=set_initial_voting_period
-                    validator=validate_duration
-                    initial_value=format_duration(&initial_voting_period.get_untracked())
-                />
-                <InputBox
-                    disabled=true
-                    heading="Maximum wait for quiet deadline extention (days)"
-                    placeholder="1 day"
-                    updater=set_max_wait_deadline_extension
-                    validator=validate_duration
-                    initial_value=format_duration(&max_wait_deadline_extension.get_untracked())
-                />
-
-                <InputBox
-                    disabled=true
-                    heading="Minimum creation stake (token)"
-                    placeholder="1 token"
-                    updater=set_min_creation_stake
-                    validator=validate_tokens
-                    initial_value=format_tokens(&min_creation_stake.get_untracked())
-                />
-
-                <InputBox
-                    disabled=true
-                    heading="Minimum dissolve delay (months)"
-                    placeholder="1 month"
-                    updater=set_min_dissolve_delay
-                    validator=validate_duration
-                    initial_value=format_duration(&min_dissolve_delay.get_untracked())
-                />
-
-                <InputBox
-                    disabled=true
-                    heading="Age (duration in years)"
-                    placeholder="4 years"
-                    updater=set_age
-                    validator=validate_duration
-                    initial_value=format_duration(&age.get_untracked())
-                />
-
-                <InputBox
-                    disabled=true
-                    heading="Age (bonus %)"
-                    placeholder="25%"
-                    updater=set_age_bonus
-                    validator=validate_percentage
-                    initial_value=format_percentage(&age_bonus.get_untracked())
-                />
-
-                <InputBox
-                    disabled=true
-                    heading="Minimum participants"
-                    placeholder="57"
-                    input_type="number"
-                    updater=set_min_participants
-                    validator=non_empty_string_validator_for_u64
-                    initial_value=min_participants.get_untracked().to_string()
-                />
-                <InputBox
-                    disabled=true
-                    heading="Minimum direct participant icp"
-                    placeholder="100,000 tokens"
-                    updater=set_min_direct_participants_icp
-                    validator=optional_tokens_validator
-                    initial_value=min_direct_participants_icp
-                        .with_untracked(|p| p.as_ref().map(format_tokens))
-                        .unwrap_or_default()
-                />
-                <InputBox
-                    disabled=true
-                    heading="Maximum direct participant icp"
-                    placeholder="1000000 tokens"
-                    updater=set_max_direct_participants_icp
-                    validator=optional_tokens_validator
-                    initial_value=max_direct_participants_icp
-                        .with_untracked(|p| p.as_ref().map(format_tokens))
-                        .unwrap_or_default()
-                />
-                <InputBox
-                    disabled=true
-                    heading="Minimum participant icp"
-                    placeholder="10 tokens"
-                    updater=set_min_participants_icp
-                    validator=validate_tokens
-                    initial_value=format_tokens(&min_participants_icp.get_untracked())
-                />
-                <InputBox
-                    disabled=true
-                    heading="Maximum participant icp"
-                    placeholder="10,000 tokens"
-                    updater=set_max_participants_icp
-                    validator=validate_tokens
-                    initial_value=format_tokens(&max_participants_icp.get_untracked())
-                />
-            // <InputBox
-            // heading="Restricted Country"
-            // placeholder="Antarctica"
-            // updater=set_restricted_country
-            // validator=non_empty_string_validator
-            // />
-            </form>
-            <button
-                disabled=true
-                on:click=reset_settings
-                class="w-full flex justify-center underline text-sm text-white my-4 "
-            >
-                Reset to default
-            </button>
+            <AdvanceSettings items=items />
         </div>
     }
 }
