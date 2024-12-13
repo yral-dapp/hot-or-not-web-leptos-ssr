@@ -145,13 +145,14 @@ pub fn TokenCard(
         .split('/')
         .last()
         .expect("URL should have at least one segment")
-        .to_string(); // Convert to owned String
+        .to_string();
+
     view! {
         <div
             class:tada=is_new_token
             class="flex flex-col gap-2 py-3 px-3 w-full text-xs rounded-lg transition-colors md:px-4 hover:bg-gradient-to-b group bg-[#131313] font-kumbh hover:from-[#626262] hover:to-[#3A3A3A]"
         >
-            <div class="flex gap-3">
+            <div class="flex gap-3 items-stretch">
                 <div
                     style="box-shadow: 0px 0px 4px rgba(255, 255, 255, 0.16);"
                     class="overflow-hidden relative w-[7rem] h-[7rem] rounded-[4px] shrink-0"
@@ -170,23 +171,26 @@ pub fn TokenCard(
                     <img
                         alt=details.token_name.clone()
                         src=details.logo.clone()
-                        class="w-full h-full"
+                        class="w-full h-full object-cover"
                     />
                 </div>
-                <div class="flex flex-col gap-3 text-left">
-                    <div class="flex gap-4 justify-between items-center w-full text-lg">
-                        <span class="font-medium shrink line-clamp-1">{details.name}</span>
-                        <span class="font-bold shrink-0">{details.token_symbol}</span>
+                <div class="flex flex-col justify-between overflow-hidden w-full">
+                    <div class="flex flex-col gap-2">
+                        <div class="flex gap-4 justify-between items-center w-full text-lg">
+                            <span class="font-medium shrink line-clamp-1">{details.name}</span>
+                            <span class="font-bold shrink-0">{details.token_symbol}</span>
+                        </div>
+                        <span class="text-sm line-clamp-2 text-[#A0A1A6]">
+                            {details.description}
+                        </span>
                     </div>
-                    <span class="text-sm transition-colors group-hover:text-white line-clamp-2 text-[#A0A1A6]">
-                        {details.description}
-                    </span>
                     <div class="flex gap-2 justify-between items-center text-sm font-medium group-hover:text-white text-[#505156]">
                         <span class="line-clamp-1">"Created by" {details.user_id}</span>
                         <span class="shrink-0">{details.formatted_created_at}</span>
                     </div>
                 </div>
             </div>
+
             <div class="flex gap-4 justify-between items-center p-2">
                 <ActionButton label="Send".to_string() href=format!("/token/transfer/{root}")>
                     <Icon class="w-full h-full" icon=SendIcon />
@@ -197,7 +201,9 @@ pub fn TokenCard(
                 <ActionButton label="Airdrop".to_string() href="#".to_string() disabled=true>
                     <Icon class="w-full h-full" icon=AirdropIcon />
                 </ActionButton>
-                <ActionButtonWithHandler label="Share".to_string() disabled=true on_click=move || {let _ =copy_to_clipboard(&format!("https://icpump.fun/token/info/{root}?airdrop_amt=100"));} >
+                <ActionButtonWithHandler label="Share".to_string() disabled=true on_click=move || {
+                    let _ = copy_to_clipboard(&format!("https://icpump.fun/token/info/{root}?airdrop_amt=100"));
+                }>
                     <Icon class="w-full h-full" icon=ShareIcon />
                 </ActionButtonWithHandler>
                 <ActionButton label="Details".to_string() href=details.link>
