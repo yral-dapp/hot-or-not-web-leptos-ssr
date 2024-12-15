@@ -464,12 +464,12 @@ fn AdvanceSettingCard(
     #[prop(into)] value: String,
 ) -> impl IntoView {
     view! {
-        <div class="bg-[#171717] flex flex-col rounded-md p-3">
+        <div class="bg-neutral-900 flex flex-col rounded-md p-3 gap-1">
             <div class="flex justify-between">
-                <h2 class="text-[#A3A3A3]">{heading}</h2>
+                <h2 class="text-neutral-400">{heading}</h2>
                 <div class="relative group">
-                    <div class="tooltip-trigger cursor-pointer bg-[#262626] rounded-full grid place-center size-6">
-                        <span class="text-white text-center">i</span>
+                    <div class="tooltip-trigger cursor-pointer bg-neutral-800 rounded-full size-6 grid">
+                        <span class="text-neutral-400 text-center text-xs grid place-items-center font-bold">i</span>
                     </div>
                     <div class="w-max max-w-[85vw] md:max-w-[400px] absolute pointer-events-none duration-150 rounded-md top-0 right-0 mt-8 z-50 opacity-0 group-hover:opacity-100 bg-[#EAC9DB] text-[#A00157] p-4">
                         {description}
@@ -477,7 +477,7 @@ fn AdvanceSettingCard(
                     </div>
                 </div>
             </div>
-            <div class="text-[#525252]">{value}</div>
+            <div class="text-neutral-600">{value}</div>
         </div>
     }
 }
@@ -487,7 +487,7 @@ fn AdvanceSettings(
     #[prop()] items: Vec<(String, String, String)>, // heading, value, description
 ) -> impl IntoView {
     view! {
-        <div class="flex flex-col gap-2 pb-8">
+        <div class="flex flex-col gap-3 pb-8">
             {
                 items.into_iter().map(|(h, v, d)| {
                     view! { <AdvanceSettingCard heading=h value=v description=d /> }
@@ -606,11 +606,11 @@ pub fn CreateTokenSettings() -> impl IntoView {
 
     view! {
         <div
-            class="w-dvw min-h-dvh bg-black pt-4 flex flex-col gap-4 p-4"
+            class="w-dvw min-h-dvh bg-black pt-4 flex flex-col gap-3 px-4"
             style="padding-bottom:5rem;"
         >
             <Title justify_center=false>
-                <div class="flex justify-between w-full" style="background: black">
+                <div class="flex justify-between w-full h-[54px]" style="background: black">
                     <BackButton fallback=fallback_url />
                     <span class="font-bold justify-self-center">Settings</span>
                     <a href="/token/create/faq">
