@@ -1,4 +1,3 @@
-use candid::Principal;
 use serde::{Deserialize, Serialize};
 use std::env;
 
