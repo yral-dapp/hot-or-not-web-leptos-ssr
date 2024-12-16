@@ -12,8 +12,8 @@ pub fn HighlightedButton(
     view! {
         <button
             on:click=on_click
-            disabled=disabled.get()
-            class=format!(
+            disabled=move ||disabled.get()
+            class=move || format!(
                 "w-full px-5 py-3 rounded-lg disabled:text-white/50 flex items-center transition-all justify-center gap-8 font-kumbh font-bold {} {}",
                 if alt_style.get() {
                     "text-primary-600"
@@ -22,7 +22,7 @@ pub fn HighlightedButton(
                 },
                 classes,
             )
-            style=format!(
+            style=move || format!(
                 "background: linear-gradient(73deg, {} );",
                 if disabled.get() {
                     "#DE98BE 0%, #E761A9 33%, #7B5369 100%"
@@ -49,8 +49,8 @@ pub fn HighlightedLinkButton(
     view! {
         <a
             href=href
-            disabled=disabled.get()
-            class=format!(
+            disabled=move || disabled.get()
+            class=move ||format!(
                 "w-full px-5 py-3 rounded-lg {} disabled:text-white/50 flex items-center transition-all justify-center gap-8 font-kumbh font-bold {}",
                 if alt_style.get() {
                     "text-primary-600"
@@ -59,7 +59,7 @@ pub fn HighlightedLinkButton(
                 },
                 classes,
             )
-            style=format!(
+            style=move || format!(
                 "background: linear-gradient(73deg, {} );",
                 if disabled.get() {
                     "#DE98BE 0%, #E761A9 33%, #7B5369 100%"
@@ -85,7 +85,7 @@ pub fn SecondaryHighlightedLinkButton(
     view! {
         <a
             href=href
-            class=format!(
+            class=move || format!(
                 "rounded-full border border-white text-sm font-bold font-kumbh px-5 py-2 {} {}",
                 if alt_style.get() {
                     "bg-transparent text-white hover:bg-white/10 active:bg-white/5"
@@ -111,9 +111,9 @@ pub fn SecondaryHighlightedButton(
     let on_click = move |_| on_click();
     view! {
         <button
-            disabled=disabled.get()
+            disabled=move || disabled.get()
             on:click=on_click
-            class=format!(
+            class=move ||format!(
                 "rounded-full border border-white text-sm font-bold font-kumbh px-5 py-2 {} {}",
                 if alt_style.get() {
                     "bg-transparent text-white hover:bg-white/10 active:bg-white/5"

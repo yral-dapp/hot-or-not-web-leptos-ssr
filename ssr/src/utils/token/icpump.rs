@@ -130,6 +130,7 @@ pub async fn get_paginated_token_list(page: u32) -> Result<Vec<TokenListItem>, S
     #[cfg(not(feature = "firestore"))]
     {
         use crate::consts::ICPUMP_LISTING_PAGE_SIZE;
+        use candid::Principal;
         let test_user_id = TokenListItem {
             user_id: Principal::anonymous().to_text(),
             name: "Test Token".to_string(),

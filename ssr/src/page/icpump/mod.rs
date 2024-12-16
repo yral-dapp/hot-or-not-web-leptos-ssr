@@ -18,7 +18,6 @@ use crate::utils::token::firestore::init_firebase;
 use crate::utils::token::firestore::listen_to_documents;
 use crate::utils::token::icpump::get_paginated_token_list;
 use crate::utils::token::icpump::TokenListItem;
-use crate::utils::web::copy_to_clipboard;
 
 pub mod ai;
 
@@ -150,7 +149,7 @@ pub fn TokenCard(
     view! {
         <div
             class:tada=is_new_token
-            class="flex flex-col gap-2 py-3 px-3 w-full text-xs rounded-lg transition-colors md:px-4 hover:bg-gradient-to-b group bg-[#131313] font-kumbh hover:from-[#626262] hover:to-[#3A3A3A]"
+            class="flex flex-col gap-2 py-3 px-3 w-full text-xs rounded-lg transition-colors md:px-4 hover:bg-gradient-to-b group bg-neutral-900/90 font-kumbh hover:from-neutral-600 hover:to-neutral-800"
         >
             <div class="flex gap-3 items-stretch">
                 <div
@@ -180,11 +179,11 @@ pub fn TokenCard(
                             <span class="font-medium shrink line-clamp-1">{details.name}</span>
                             <span class="font-bold shrink-0">{details.token_symbol}</span>
                         </div>
-                        <span class="text-sm line-clamp-2 text-[#A0A1A6]">
+                        <span class="text-sm line-clamp-2 text-neutral-400">
                             {details.description}
                         </span>
                     </div>
-                    <div class="flex gap-2 justify-between items-center text-sm font-medium group-hover:text-white text-[#505156]">
+                    <div class="flex gap-2 justify-between items-center text-sm font-medium group-hover:text-white text-neutral-600">
                         <span class="line-clamp-1">"Created by" {details.user_id}</span>
                         <span class="shrink-0">{details.formatted_created_at}</span>
                     </div>
@@ -201,11 +200,9 @@ pub fn TokenCard(
                 <ActionButton label="Airdrop".to_string() href="#".to_string() disabled=true>
                     <Icon class="w-full h-full" icon=AirdropIcon />
                 </ActionButton>
-                <ActionButtonWithHandler label="Share".to_string() disabled=true on_click=move || {
-                    let _ = copy_to_clipboard(&format!("https://icpump.fun/token/info/{root}?airdrop_amt=100"));
-                }>
+                <ActionButton label="Share".to_string() disabled=true href="#".to_string()>
                     <Icon class="w-full h-full" icon=ShareIcon />
-                </ActionButtonWithHandler>
+                </ActionButton>
                 <ActionButton label="Details".to_string() href=details.link>
                     <Icon class="w-full h-full" icon=ChevronRightIcon />
                 </ActionButton>
@@ -217,9 +214,9 @@ pub fn TokenCard(
 #[component]
 pub fn PageSelector(page: RwSignal<u64>, end_of_list: RwSignal<bool>) -> impl IntoView {
     view! {
-        <div class="flex gap-1 items-start text-sm font-medium text-[#A0A1A6]">
+        <div class="flex gap-1 items-start text-sm font-medium text-gray-400">
             <button
-                class="flex justify-center items-center w-8 h-8 rounded-lg bg-[#3A3A3A]"
+                class="flex justify-center items-center w-8 h-8 rounded-lg bg-neutral-800"
                 on:click=move |_| {
                     page.update(|page| *page -= 1);
                     end_of_list.set(false);
@@ -228,14 +225,13 @@ pub fn PageSelector(page: RwSignal<u64>, end_of_list: RwSignal<bool>) -> impl In
             >
                     <Icon class="w-4 h-4 rotate-180" icon=ChevronRightIcon />
             </button>
-            <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white bg-[#3D8EFF]">{page}</div>
+            <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white bg-blue-500">{page}</div>
             <button
-                class="flex justify-center items-center w-8 h-8 rounded-lg bg-[#3A3A3A]"
+                class="flex justify-center items-center w-8 h-8 rounded-lg bg-neutral-800"
                 on:click=move |_| {
                     page.update(|page| *page += 1);
                 }
-                disabled=move || end_of_list.get()
-            >
+                disabled=move || end_of_list.get()>
                 <Icon class="w-4 h-4" icon=ChevronRightIcon />
             </button>
         </div>
@@ -251,8 +247,9 @@ pub fn ActionButton(
 ) -> impl IntoView {
     view! {
         <a
-            href={if disabled {"#".to_string()}else{href}}
-            class=format!("flex flex-col gap-1 justify-center items-center text-xs transition-colors {}", if !disabled{"group-hover:text-white text-[#D4D4D4]"}else{"group-hover:cursor-default text-[#525252]"})
+            disabled=disabled
+            href=href
+            class=move || format!("flex flex-col gap-1 justify-center items-center text-xs transition-colors {}", if !disabled{"group-hover:text-white text-neutral-300"}else{"group-hover:cursor-default text-neutral-600"})
         >
             <div class="w-[1.875rem] h-[1.875rem]">{children()}</div>
 
@@ -261,25 +258,6 @@ pub fn ActionButton(
     }
 }
 
-#[component]
-pub fn ActionButtonWithHandler(
-    label: String,
-    children: Children,
-    #[prop(optional, default = false)] disabled: bool,
-    on_click: impl Fn() + 'static,
-) -> impl IntoView {
-    view! {
-        <button
-            disabled
-            on:click=move |_| {if !disabled{on_click()}}
-            class=format!("flex flex-col gap-1 justify-center items-center text-xs transition-colors {}", if !disabled{"group-hover:text-white text-[#D4D4D4]"}else{"group-hover:cursor-default text-[#525252]"})
-        >
-            <div class="w-[1.875rem] h-[1.875rem]">{children()}</div>
-
-            <div>{label}</div>
-        </button>
-    }
-}
 #[component]
 pub fn TelegramIcon(href: String, classes: String) -> impl IntoView {
     view! {
