@@ -1,7 +1,7 @@
 use leptos::*;
 
 #[component]
-pub fn Button(
+pub fn HighlightedButton(
     children: Children,
     on_click: impl Fn() + 'static,
     #[prop(optional)] classes: String,
@@ -14,11 +14,9 @@ pub fn Button(
             on:click=on_click
             disabled=disabled.get()
             class=format!(
-                "w-full px-5 py-3 rounded-lg flex items-center transition-all justify-center gap-8 font-kumbh font-bold {} {}",
-                if disabled.get() {
-                    "text-white/50"
-                } else if alt_style.get() {
-                    "text-[#E2017B]"
+                "w-full px-5 py-3 rounded-lg disabled:text-white/50 flex items-center transition-all justify-center gap-8 font-kumbh font-bold {} {}",
+                if alt_style.get() {
+                    "text-primary-600"
                 } else {
                     "text-white"
                 },
@@ -41,7 +39,7 @@ pub fn Button(
 }
 
 #[component]
-pub fn LinkButton(
+pub fn HighlightedLinkButton(
     children: Children,
     href: String,
     #[prop(optional)] classes: String,
@@ -51,12 +49,11 @@ pub fn LinkButton(
     view! {
         <a
             href=href
+            disabled=disabled.get()
             class=format!(
-                "w-full px-5 py-3 rounded-lg flex items-center transition-all justify-center gap-8 font-kumbh font-bold {} {}",
-                if disabled.get() {
-                    "text-white/50"
-                } else if alt_style.get() {
-                    "text-[#E2017B]"
+                "w-full px-5 py-3 rounded-lg {} disabled:text-white/50 flex items-center transition-all justify-center gap-8 font-kumbh font-bold {}",
+                if alt_style.get() {
+                    "text-primary-600"
                 } else {
                     "text-white"
                 },
@@ -79,7 +76,7 @@ pub fn LinkButton(
 }
 
 #[component]
-pub fn SecondaryLinkButton(
+pub fn SecondaryHighlightedLinkButton(
     children: Children,
     href: String,
     #[prop(optional)] classes: String,
@@ -104,7 +101,7 @@ pub fn SecondaryLinkButton(
 }
 
 #[component]
-pub fn SecondaryButton(
+pub fn SecondaryHighlightedButton(
     children: Children,
     disabled: Signal<bool>,
     alt_style: Signal<bool>,

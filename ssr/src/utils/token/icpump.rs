@@ -1,3 +1,4 @@
+use candid::Principal;
 use serde::{Deserialize, Serialize};
 use std::env;
 
@@ -132,11 +133,11 @@ pub async fn get_paginated_token_list(page: u32) -> Result<Vec<TokenListItem>, S
         use crate::consts::ICPUMP_LISTING_PAGE_SIZE;
         let test_user_id = TokenListItem {
             user_id: Principal::anonymous().to_text(),
-            name: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA".to_string(),
-            token_name: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA".to_string(),
-            token_symbol: "AAAAA".to_string(),
+            name: "Test Token".to_string(),
+            token_name: "Test Token".to_string(),
+            token_symbol: "TST".to_string(),
             logo: "https://picsum.photos/200".to_string(),
-            description: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA".to_string(),
+            description: "This is a test token".to_string(),
             created_at: "69".to_string(),
             formatted_created_at: "69 mins".to_string(),
             link: "link".to_string(),

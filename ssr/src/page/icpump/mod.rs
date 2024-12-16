@@ -5,7 +5,7 @@ use futures::StreamExt;
 use leptos::*;
 use leptos_icons::Icon;
 
-use crate::component::buttons::LinkButton;
+use crate::component::buttons::HighlightedLinkButton;
 use crate::component::icons::airdrop_icon::AirdropIcon;
 use crate::component::icons::arrow_left_right_icon::ArrowLeftRightIcon;
 use crate::component::icons::chevron_right_icon::ChevronRightIcon;
@@ -118,12 +118,12 @@ pub fn ICPumpLanding() -> impl IntoView {
                         />
                     </div>
                 </div>
-                <LinkButton
+                <HighlightedLinkButton
                     classes="max-w-96 lg:max-w-[32.5%]".to_string()
                     href="/token/create".to_string()
                 >
                     "Create a new coin"
-                </LinkButton>
+                </HighlightedLinkButton>
             </div>
             <div class="flex flex-col gap-8 pb-24">
                 <ICPumpListing />
