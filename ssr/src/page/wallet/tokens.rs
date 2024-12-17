@@ -116,7 +116,7 @@ pub fn WalletCard(user_principal: Principal, token_meta_data: TokenMetadata) -> 
     let base_url = get_host();
     view! {
         <div class="flex flex-col gap-4 bg-neutral-900/90 rounded-lg w-full p-4 font-kumbh text-white">
-            <div class="w-full flex items-center justify-between p-3 rounded-[4px] bg-black/50">
+            <div class="w-full flex items-center justify-between p-3 rounded-[4px] bg-neutral-800/70">
                 <div class="flex items-center gap-2">
                     <img
                         src=token_meta_data.logo_b64
