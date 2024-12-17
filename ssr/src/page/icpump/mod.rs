@@ -12,8 +12,10 @@ use crate::component::icons::chevron_right_icon::ChevronRightIcon;
 use crate::component::icons::eye_hide_icon::EyeHiddenIcon;
 use crate::component::icons::send_icon::SendIcon;
 use crate::component::icons::share_icon::ShareIcon;
+use crate::component::share_popup::ShareContent;
 use crate::component::spinner::FullScreenSpinner;
 use crate::consts::ICPUMP_LISTING_PAGE_SIZE;
+use crate::utils::host::get_host;
 use crate::utils::token::firestore::init_firebase;
 use crate::utils::token::firestore::listen_to_documents;
 use crate::utils::token::icpump::get_paginated_token_list;
@@ -146,6 +148,17 @@ pub fn TokenCard(
         .expect("URL should have at least one segment")
         .to_string();
 
+    let popup = create_rw_signal(false);
+    let base_url = get_host();
+
+    let share_link_s = store_value(format!("{}/{}", details.link, details.user_id));
+    let share_message = format!(
+        "Hey! Check out the token: {} I created on YRAL 👇 {}. I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter",
+        details.token_symbol,
+        share_link_s(),
+    );
+    let share_message_s = store_value(share_message);
+
     view! {
         <div
             class:tada=is_new_token
@@ -200,17 +213,24 @@ pub fn TokenCard(
                 <ActionButton label="Airdrop".to_string() href="#".to_string() disabled=true>
                     <Icon class="w-full h-full" icon=AirdropIcon />
                 </ActionButton>
-                <ActionButton label="Share".to_string() disabled=true href="#".to_string()>
-                    <Icon class="w-full h-full" icon=ShareIcon />
+                <ActionButton label="Share".to_string() href="#".to_string()>
+                    <Icon class="w-full h-full" icon=ShareIcon on:click=move |_| popup.set(true)/>
                 </ActionButton>
                 <ActionButton label="Details".to_string() href=details.link>
                     <Icon class="w-full h-full" icon=ChevronRightIcon />
                 </ActionButton>
             </div>
+            <PopupOverlay show=popup >
+                <ShareContent
+                    share_link=format!("{base_url}{}", share_link_s())
+                    message=share_message_s()
+                    show_popup=popup
+            />
+            </PopupOverlay>
         </div>
     }
 }
-
+use crate::component::overlay::PopupOverlay;
 #[component]
 pub fn PageSelector(page: RwSignal<u64>, end_of_list: RwSignal<bool>) -> impl IntoView {
     view! {

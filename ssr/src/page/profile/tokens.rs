@@ -5,7 +5,7 @@ use yral_canisters_client::individual_user_template::DeployedCdaoCanisters;
 
 use crate::{
     component::{bullet_loader::BulletLoader, token_confetti_symbol::TokenConfettiSymbol},
-    page::wallet::tokens::TokenTile,
+    page::wallet::tokens::WalletCard,
     state::canisters::{authenticated_canisters, unauth_canisters},
     utils::token::icpump::IcpumpTokenInfo,
 };
@@ -84,7 +84,7 @@ pub fn ProfileTokens(user_canister: Principal, user_principal: Principal) -> imp
                                     .into_iter()
                                     .map(|token| {
                                         view! {
-                                            <TokenTile
+                                            <WalletCard
                                                 user_principal
                                                 token_meta_data=token
                                             />

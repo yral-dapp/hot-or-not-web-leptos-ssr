@@ -21,7 +21,7 @@ use crate::{
 };
 
 #[component]
-fn ProfileGreeter(details: ProfileDetails, _is_own_account: bool) -> impl IntoView {
+fn ProfileGreeter(details: ProfileDetails, is_own_account: bool) -> impl IntoView {
     // let (is_connected, _) = account_connected_reader();
     let share_link = {
         let principal = details.principal();
@@ -47,9 +47,12 @@ fn ProfileGreeter(details: ProfileDetails, _is_own_account: bool) -> impl IntoVi
                 </span>
                 <ShareButtonWithFallbackPopup share_link message />
             </div>
-            <a href="/wallet/notifications" class="text-xl font-semibold">
-                <NotificationIcon show_dot=false classes="w-8 h-8".to_string() />
-            </a>
+
+            <Show when=move || is_own_account>
+                <a href="/wallet/notifications" class="text-xl font-semibold">
+                    <NotificationIcon show_dot=is_own_account classes="w-8 h-8".to_string() />
+                </a>
+            </Show>
         </div>
     }
 }
@@ -108,22 +111,6 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
     let (is_connected, _) = account_connected_reader();
 
     let auth_cans = authenticated_canisters();
-    let balance_fetch = create_resource(
-        move || principal,
-        move |principal| async move {
-            let canisters = unauth_canisters();
-            let Some(user_canister) = canisters
-                .get_individual_canister_by_user_principal(principal)
-                .await?
-            else {
-                return Err(ServerFnError::new("Failed to get user canister"));
-            };
-            let user = canisters.individual_user(user_canister).await;
-
-            let bal = user.get_utility_token_balance().await?;
-            Ok::<_, ServerFnError>(bal.to_string())
-        },
-    );
 
     let profile_info_res = auth_cans.derive(
         move || principal,
@@ -173,31 +160,10 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
                         let profile_details = try_or_redirect_opt!(profile_info_res()?);
                         let is_own_account = try_or_redirect_opt!(is_own_account()?);
                         Some(
-                            view! { <ProfileGreeter details=profile_details _is_own_account=is_own_account /> },
+                            view! { <ProfileGreeter details=profile_details is_own_account=is_own_account /> },
                         )
                     }}
                 </Suspense>
-
-            <div class="flex flex-col items-center mt-6 w-full text-white">
-                <Suspense>
-                    {move || {
-                        let is_own_account = try_or_redirect_opt!(is_own_account() ?);
-                        let balance = try_or_redirect_opt!(balance_fetch() ?);
-                        Some(
-                            view! {
-                                <span class="uppercase lg:text-lg text-md">
-                                    {if is_own_account {
-                                        "Your Coyns Balance"
-                                    } else {
-                                        "Coyns Balance"
-                                    }}
-                                </span>
-                                <div class="text-xl lg:text-2xl">{balance}</div>
-                            },
-                        )
-                    }}
-                </Suspense>
-            </div>
             <Suspense>
                 {move || {
                     let is_own_account = try_or_redirect_opt!(is_own_account() ?);
@@ -217,9 +183,9 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
                     )
                 }}
             </Suspense>
-            <div class="h-full w-full py-8">
-            <div class="flex flex-col items-center justify-center gap-4 max-w-md mx-auto px-4">
-                <div class="font-kumbh self-start pb-4 font-bold text-xl">All tokens</div>
+            <div class="h-full w-full">
+            <div class="flex flex-col items-center justify-center max-w-md mx-auto px-4 mt-4">
+                <div class="font-kumbh self-start pb-4 font-bold text-xl text-white">All Tokens</div>
                 <Suspense>
                     {move || {
                         let canister_id = try_or_redirect_opt!(canister_id() ?);

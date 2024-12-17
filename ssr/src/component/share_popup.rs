@@ -10,7 +10,7 @@ use crate::{
 };
 
 #[component]
-fn ShareContent(
+pub fn ShareContent(
     share_link: String,
     message: String,
     #[prop(into)] show_popup: SignalSetter<bool>,
