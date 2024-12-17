@@ -180,19 +180,19 @@ fn WalletCard(
             </div>
             <div class="flex items-center justify-around">
                 <ActionButton href="#".to_string() label="Send".to_string()>
-                    <SendIcon classes="h-6 w-6".to_string() />
+                    <Icon class="h-6 w-6" icon=SendIcon/>
                 </ActionButton>
                 <ActionButton href="#".to_string() label="Swap".to_string()>
-                    <ArrowLeftRightIcon classes="h-6 w-6".to_string() />
+                    <Icon class="h-6 w-6" icon=ArrowLeftRightIcon />
                 </ActionButton>
                 <ActionButton href="#".to_string() label="Airdrop".to_string()>
-                    <AirdropIcon classes="h-6 w-6".to_string() />
+                    <Icon class="h-6 w-6" icon=AirdropIcon />
                 </ActionButton>
                 <ActionButton href="#".to_string() label="Share".to_string()>
-                    <ShareIcon classes="h-6 w-6".to_string() />
+                    <Icon class="h-6 w-6" icon=ShareIcon />
                 </ActionButton>
                 <ActionButton href="#".to_string() label="Details".to_string()>
-                    <ChevronRightIcon classes="h-6 w-6".to_string() />
+                    <Icon class="h-6 w-6" icon=ChevronRightIcon />
                 </ActionButton>
             </div>
         </div>
