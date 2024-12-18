@@ -1,14 +1,13 @@
 name: nightwatch tests
 on:
   workflow_call: 
-    
+
 jobs:
   tests: 
     name: 'nightwatch tests'
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@master
       - uses: actions/setup-node@v2
         with:
           node-version: "22.x"
