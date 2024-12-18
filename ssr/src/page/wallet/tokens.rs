@@ -143,7 +143,7 @@ pub fn WalletCard(user_principal: Principal, token_meta_data: TokenMetadata) -> 
                 <ActionButton href="#".to_string() label="Share".to_string()>
                     <Icon class="h-6 w-6" icon=ShareIcon on:click=move |_| pop_up.set(true) />
                 </ActionButton>
-                <ActionButton href=format!("/token/{root}/{user_principal}") label="Details".to_string()>
+                <ActionButton href=format!("/token/info/{root}/{user_principal}") label="Details".to_string()>
                     <Icon class="h-6 w-6" icon=ChevronRightIcon />
                 </ActionButton>
             </div>
