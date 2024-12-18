@@ -1,9 +1,6 @@
 name: nightwatch tests
 on:
-  workflow_run:
-    workflows: ["deploy preview"]  # Name of the first workflow
-    types:
-      - completed
+  deployment
 jobs:
   tests: 
     name: 'nightwatch tests'
