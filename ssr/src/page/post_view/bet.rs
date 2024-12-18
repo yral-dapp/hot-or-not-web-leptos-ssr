@@ -1,24 +1,25 @@
-use candid::Principal;
 use leptos::*;
 use leptos_icons::*;
 use leptos_use::use_interval_fn;
 use web_time::Duration;
+use yral_canisters_client::individual_user_template::BettingStatus;
 
 use crate::{
-    canister::individual_user_template::{BettingStatus, PlaceBetArg, Result3},
     component::{
         bullet_loader::BulletLoader, canisters_prov::AuthCansProvider, hn_icons::*,
         spinner::SpinnerFit,
     },
     page::post_view::BetEligiblePostCtx,
-    state::canisters::{unauth_canisters, Canisters},
+    state::canisters::unauth_canisters,
     try_or_redirect_opt,
+    utils::{time::to_hh_mm_ss, MockPartialEq},
+};
+use yral_canisters_common::{
     utils::{
         posts::PostDetails,
-        profile::{BetDetails, BetKind, BetOutcome},
-        time::to_hh_mm_ss,
-        MockPartialEq,
+        vote::{VoteDetails, VoteKind, VoteOutcome},
     },
+    Canisters,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -56,37 +57,6 @@ impl From<CoinState> for u64 {
     }
 }
 
-async fn bet_on_post(
-    canisters: Canisters<true>,
-    bet_amount: u64,
-    bet_direction: BetKind,
-    post_id: u64,
-    post_canister_id: Principal,
-) -> Result<BettingStatus, ServerFnError> {
-    let user = canisters.authenticated_user().await;
-
-    let place_bet_arg = PlaceBetArg {
-        bet_amount,
-        post_id,
-        bet_direction: bet_direction.into(),
-        post_canister_id,
-    };
-
-    let res = user.bet_on_currently_viewing_post(place_bet_arg).await?;
-
-    let betting_status = match res {
-        Result3::Ok(p) => p,
-        Result3::Err(_e) => {
-            // todo send event that betting failed
-            return Err(ServerFnError::new(
-                "bet on bet_on_currently_viewing_post error".to_string(),
-            ));
-        }
-    };
-
-    Ok(betting_status)
-}
-
 #[component]
 fn CoinStateView(
     #[prop(into)] coin: MaybeSignal<CoinState>,
@@ -101,20 +71,20 @@ fn CoinStateView(
 
     view! {
         <div class:grayscale=disabled>
-            <Icon class=class icon/>
+            <Icon class=class icon />
         </div>
     }
 }
 
 #[component]
 fn HNButton(
-    bet_direction: RwSignal<Option<BetKind>>,
-    kind: BetKind,
+    bet_direction: RwSignal<Option<VoteKind>>,
+    kind: VoteKind,
     #[prop(into)] disabled: Signal<bool>,
 ) -> impl IntoView {
     let grayscale = create_memo(move |_| bet_direction() != Some(kind) && disabled());
     let show_spinner = move || disabled() && bet_direction() == Some(kind);
-    let icon = if kind == BetKind::Hot {
+    let icon = if kind == VoteKind::Hot {
         HotIcon
     } else {
         NotIcon
@@ -122,13 +92,13 @@ fn HNButton(
 
     view! {
         <button
-            class="h-14 w-14 md:h-16 md:w-16 lg:h-18 md:w-18"
+            class="w-14 h-14 md:w-16 md:h-16 md:w-18 lg:h-18"
             class=("grayscale", grayscale)
             disabled=disabled
             on:click=move |_| bet_direction.set(Some(kind))
         >
             <Show when=move || !show_spinner() fallback=SpinnerFit>
-                <Icon class="h-full w-full drop-shadow-lg" icon=icon/>
+                <Icon class="w-full h-full drop-shadow-lg" icon=icon />
             </Show>
         </button>
     }
@@ -138,18 +108,21 @@ fn HNButton(
 fn HNButtonOverlay(
     post: PostDetails,
     coin: RwSignal<CoinState>,
-    bet_direction: RwSignal<Option<BetKind>>,
+    bet_direction: RwSignal<Option<VoteKind>>,
     refetch_bet: Trigger,
 ) -> impl IntoView {
     let place_bet_action = create_action(
-        move |(canisters, bet_direction, bet_amount): &(Canisters<true>, BetKind, u64)| {
+        move |(canisters, bet_direction, bet_amount): &(Canisters<true>, VoteKind, u64)| {
             let post_can_id = post.canister_id;
             let post_id = post.post_id;
             let cans = canisters.clone();
             let bet_amount = *bet_amount;
             let bet_direction = *bet_direction;
             async move {
-                match bet_on_post(cans, bet_amount, bet_direction, post_id, post_can_id).await {
+                match cans
+                    .vote_on_post(bet_amount, bet_direction, post_id, post_can_id)
+                    .await
+                {
                     Ok(_) => Some(()),
                     Err(e) => {
                         log::error!("{e}");
@@ -191,44 +164,47 @@ fn HNButtonOverlay(
             }
 
         </AuthCansProvider>
-        <div class="flex w-full justify-center touch-manipulation">
+
+        <div class="flex justify-center w-full touch-manipulation">
             <button disabled=running on:click=move |_| coin.update(|c| *c = c.wrapping_next())>
-                <Icon class="text-2xl justify-self-end text-white" icon=icondata::AiUpOutlined/>
+                <Icon class="justify-self-end text-2xl text-white" icon=icondata::AiUpOutlined />
             </button>
         </div>
-        <div class="flex flex-row w-full items-center justify-center gap-6 touch-manipulation">
-            <HNButton disabled=running bet_direction kind=BetKind::Hot/>
+        <div class="flex flex-row gap-6 justify-center items-center w-full touch-manipulation">
+            <HNButton disabled=running bet_direction kind=VoteKind::Hot />
             <button disabled=running on:click=move |_| coin.update(|c| *c = c.wrapping_next())>
                 <CoinStateView
                     disabled=running
-                    class="w-12 h-12 md:h-14 md:w-14 lg:w-16 lg:h-16 drop-shadow-lg"
+                    class="w-12 h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 drop-shadow-lg"
                     coin
                 />
+
             </button>
-            <HNButton disabled=running bet_direction kind=BetKind::Not/>
+            <HNButton disabled=running bet_direction kind=VoteKind::Not />
         </div>
         // Bottom row: Hot <down arrow> Not
         // most of the CSS is for alignment with above icons
-        <div class="flex w-full justify-center items-center gap-6 text-base md:text-lg lg:text-xl text-center font-medium pt-2 touch-manipulation">
+        <div class="flex gap-6 justify-center items-center pt-2 w-full text-base font-medium text-center md:text-lg lg:text-xl touch-manipulation">
             <p class="w-14 md:w-16 lg:w-18">Hot</p>
             <div class="flex justify-center w-12 md:w-14 lg:w-16">
                 <button disabled=running on:click=move |_| coin.update(|c| *c = c.wrapping_prev())>
-                    <Icon class="text-2xl text-white" icon=icondata::AiDownOutlined/>
+                    <Icon class="text-2xl text-white" icon=icondata::AiDownOutlined />
                 </button>
             </div>
             <p class="w-14 md:w-16 lg:w-18">Not</p>
         </div>
-        <ShadowBg/>
+        <ShadowBg />
     }
 }
 
 #[component]
 fn WinBadge() -> impl IntoView {
     view! {
-        <button class="w-full rounded-sm bg-primary-600 px-4 py-2 text-sm font-bold text-white">
+        <button class="py-2 px-4 w-full text-sm font-bold text-white rounded-sm bg-primary-600">
+
             <div class="flex justify-center items-center">
                 <span class="">
-                    <Icon class="fill-white" style="" icon=icondata::RiTrophyFinanceFill/>
+                    <Icon class="fill-white" style="" icon=icondata::RiTrophyFinanceFill />
                 </span>
                 <span class="ml-2">"You Won"</span>
             </div>
@@ -239,17 +215,18 @@ fn WinBadge() -> impl IntoView {
 #[component]
 fn LostBadge() -> impl IntoView {
     view! {
-        <button class="w-full rounded-sm bg-white px-4 py-2 text-sm font-bold text-black">
-            <Icon class="fill-white" style="" icon=icondata::RiTrophyFinanceFill/>
+        <button class="py-2 px-4 w-full text-sm font-bold text-black bg-white rounded-sm">
+            <Icon class="fill-white" style="" icon=icondata::RiTrophyFinanceFill />
+
             "You Lost"
         </button>
     }
 }
 
 #[component]
-fn HNWonLost(participation: BetDetails) -> impl IntoView {
-    let won = matches!(participation.outcome, BetOutcome::Won(_));
-    let bet_amount = participation.bet_amount;
+fn HNWonLost(participation: VoteDetails) -> impl IntoView {
+    let won = matches!(participation.outcome, VoteOutcome::Won(_));
+    let bet_amount = participation.vote_amount;
     let coin = match bet_amount {
         50 => CoinState::C50,
         100 => CoinState::C100,
@@ -259,34 +236,35 @@ fn HNWonLost(participation: BetDetails) -> impl IntoView {
             CoinState::C50
         }
     };
-    let is_hot = matches!(participation.bet_kind, BetKind::Hot);
+    let is_hot = matches!(participation.vote_kind, VoteKind::Hot);
     let hn_icon = if is_hot { HotIcon } else { NotIcon };
 
     view! {
-        <div class="flex w-full justify-center items-center gap-6 rounded-xl bg-transparent p-4 shadow-sm">
+        <div class="flex gap-6 justify-center items-center p-4 w-full bg-transparent rounded-xl shadow-sm">
             <div class="relative flex-shrink-0 drop-shadow-lg">
-                <CoinStateView class="w-14 h-14 md:w-16 md:h-16" coin/>
-                <Icon class="absolute -bottom-0.5 -right-3 h-7 w-7 md:w-9 md:h-9" icon=hn_icon/>
+                <CoinStateView class="w-14 h-14 md:w-16 md:h-16" coin />
+                <Icon class="absolute -bottom-0.5 -right-3 w-7 h-7 md:w-9 md:h-9" icon=hn_icon />
+
             </div>
 
             // <!-- Text and Badge Column -->
-            <div class="gap-2 w-full md:w-1/2 lg:w-1/3 flex flex-col">
+            <div class="flex flex-col gap-2 w-full md:w-1/2 lg:w-1/3">
                 // <!-- Result Text -->
-                <div class="text-sm leading-snug text-white rounded-full p-1">
-                    <p>You staked {bet_amount} tokens on {if is_hot { "Hot" } else { "Not" }} .</p>
+                <div class="p-1 text-sm leading-snug text-white rounded-full">
+                    <p>You staked {bet_amount}tokens on {if is_hot { "Hot" } else { "Not" }}.</p>
                     <p>
                         {if let Some(reward) = participation.reward() {
                             format!("You received {reward} tokens.")
                         } else {
                             format!("You lost {bet_amount} tokens.")
                         }}
-
                     </p>
+
                 </div>
                 {if won {
-                    view! { <WinBadge/> }
+                    view! { <WinBadge /> }
                 } else {
-                    view! { <LostBadge/> }
+                    view! { <LostBadge /> }
                 }}
 
             </div>
@@ -296,8 +274,8 @@ fn HNWonLost(participation: BetDetails) -> impl IntoView {
 }
 
 #[component]
-fn BetTimer(post: PostDetails, participation: BetDetails, refetch_bet: Trigger) -> impl IntoView {
-    let bet_duration = participation.bet_duration().as_secs();
+fn BetTimer(post: PostDetails, participation: VoteDetails, refetch_bet: Trigger) -> impl IntoView {
+    let bet_duration = participation.vote_duration().as_secs();
     let time_remaining = create_rw_signal(participation.time_remaining(post.created_at));
     _ = use_interval_fn(
         move || {
@@ -321,10 +299,11 @@ fn BetTimer(post: PostDetails, participation: BetDetails, refetch_bet: Trigger) 
 
     view! {
         <div
-            class="flex flex-row justify-end items-center gap-1 w-full rounded-full py-px pe-4 text-white text-base md:text-lg"
+            class="flex flex-row gap-1 justify-end items-center py-px w-full text-base text-white rounded-full md:text-lg pe-4"
             style=gradient
         >
-            <Icon icon=icondata::AiClockCircleFilled/>
+
+            <Icon icon=icondata::AiClockCircleFilled />
             <span>{move || to_hh_mm_ss(time_remaining())}</span>
         </div>
     }
@@ -333,14 +312,14 @@ fn BetTimer(post: PostDetails, participation: BetDetails, refetch_bet: Trigger) 
 #[component]
 fn HNAwaitingResults(
     post: PostDetails,
-    participation: BetDetails,
+    participation: VoteDetails,
     refetch_bet: Trigger,
 ) -> impl IntoView {
-    let is_hot = matches!(participation.bet_kind, BetKind::Hot);
+    let is_hot = matches!(participation.vote_kind, VoteKind::Hot);
     let bet_direction_text = if is_hot { "Hot" } else { "Not" };
     let hn_icon = if is_hot { HotIcon } else { NotIcon };
 
-    let bet_amount = participation.bet_amount;
+    let bet_amount = participation.vote_amount;
     let coin = match bet_amount {
         50 => CoinState::C50,
         100 => CoinState::C100,
@@ -352,21 +331,24 @@ fn HNAwaitingResults(
     };
 
     view! {
-        <div class="flex flex-col w-full items-center gap-1 p-4 shadow-sm">
-            <div class="flex flex-row w-full justify-center items-end gap-4">
+        <div class="flex flex-col gap-1 items-center p-4 w-full shadow-sm">
+            <div class="flex flex-row gap-4 justify-center items-end w-full">
                 <div class="relative flex-shrink-0 drop-shadow-lg">
-                    <Icon class="w-12 h-12 md:w-14 md:h-14 lg:w-16 lg:h-16" icon=hn_icon/>
+                    <Icon class="w-12 h-12 md:w-14 md:h-14 lg:w-16 lg:h-16" icon=hn_icon />
                     <CoinStateView
-                        class="absolute bottom-0 -right-3 h-7 w-7 md:w-9 md:h-9 lg:w-11 lg:h-11"
+                        class="absolute bottom-0 -right-3 w-7 h-7 md:w-9 md:h-9 lg:w-11 lg:h-11"
                         coin
                     />
+
                 </div>
                 <div class="w-1/2 md:w-1/3 lg:w-1/4">
-                    <BetTimer post refetch_bet participation/>
+                    <BetTimer post refetch_bet participation />
                 </div>
             </div>
-            <p class="text-center text-white bg-black/15 rounded-full p-1 ps-2">
-                You staked {bet_amount} tokens on {bet_direction_text} Result is still pending
+            <p class="p-1 text-center text-white rounded-full bg-black/15 ps-2">
+                You staked {bet_amount}tokens on {bet_direction_text}.
+                Result is still pending.
+
             </p>
         </div>
     }
@@ -375,31 +357,31 @@ fn HNAwaitingResults(
 #[component]
 pub fn HNUserParticipation(
     post: PostDetails,
-    participation: BetDetails,
+    participation: VoteDetails,
     refetch_bet: Trigger,
 ) -> impl IntoView {
     view! {
         {match participation.outcome {
-            BetOutcome::AwaitingResult => {
-                view! { <HNAwaitingResults post refetch_bet participation/> }
+            VoteOutcome::AwaitingResult => {
+                view! { <HNAwaitingResults post refetch_bet participation /> }
             }
-            BetOutcome::Won(_) => {
-                view! { <HNWonLost participation/> }
+            VoteOutcome::Won(_) => {
+                view! { <HNWonLost participation /> }
             }
-            BetOutcome::Draw(_) => view! { "Draw" }.into_view(),
-            BetOutcome::Lost => {
-                view! { <HNWonLost participation/> }
+            VoteOutcome::Draw(_) => view! { "Draw" }.into_view(),
+            VoteOutcome::Lost => {
+                view! { <HNWonLost participation /> }
             }
         }
             .into_view()}
-        <ShadowBg/>
+        <ShadowBg />
     }
 }
 
 #[component]
 fn MaybeHNButtons(
     post: PostDetails,
-    bet_direction: RwSignal<Option<BetKind>>,
+    bet_direction: RwSignal<Option<VoteKind>>,
     coin: RwSignal<CoinState>,
     refetch_bet: Trigger,
 ) -> impl IntoView {
@@ -450,8 +432,8 @@ fn MaybeHNButtons(
 #[component]
 fn LoaderWithShadowBg() -> impl IntoView {
     view! {
-        <BulletLoader/>
-        <ShadowBg/>
+        <BulletLoader />
+        <ShadowBg />
     }
 }
 
@@ -459,7 +441,7 @@ fn LoaderWithShadowBg() -> impl IntoView {
 fn ShadowBg() -> impl IntoView {
     view! {
         <div
-            class="absolute bottom-0 left-0 w-dvw h-2/5 -z-[1]"
+            class="absolute bottom-0 left-0 h-2/5 w-dvw -z-[1]"
             style="background: linear-gradient(to bottom, #00000000 0%, #00000099 45%, #000000a8 100%, #000000cc 100%, #000000a8 100%);"
         ></div>
     }
@@ -467,7 +449,7 @@ fn ShadowBg() -> impl IntoView {
 
 #[component]
 pub fn HNGameOverlay(post: PostDetails) -> impl IntoView {
-    let bet_direction = create_rw_signal(None::<BetKind>);
+    let bet_direction = create_rw_signal(None::<VoteKind>);
     let coin = create_rw_signal(CoinState::C50);
 
     let refetch_bet = create_trigger();
@@ -493,7 +475,7 @@ pub fn HNGameOverlay(post: PostDetails) -> impl IntoView {
                             post.post_id,
                         )
                         .await?;
-                    Ok::<_, ServerFnError>(bet_participation.map(BetDetails::from))
+                    Ok::<_, ServerFnError>(bet_participation.map(VoteDetails::from))
                 }
             },
         )
@@ -513,16 +495,16 @@ pub fn HNGameOverlay(post: PostDetails) -> impl IntoView {
                                 Some(
                                     if let Some(participation) = participation {
                                         view! {
-                                            <HNUserParticipation post refetch_bet participation/>
+                                            <HNUserParticipation post refetch_bet participation />
                                         }
                                     } else {
                                         view! {
-                                            <MaybeHNButtons post bet_direction coin refetch_bet/>
+                                            <MaybeHNButtons post bet_direction coin refetch_bet />
                                         }
                                     },
                                 )
                             })
-                            .unwrap_or_else(|| view! { <LoaderWithShadowBg/> })
+                            .unwrap_or_else(|| view! { <LoaderWithShadowBg /> })
                     }}
                 }
             }

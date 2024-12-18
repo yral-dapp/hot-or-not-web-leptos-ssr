@@ -84,27 +84,32 @@ impl SignalSet for ShowOverlay {
 
 #[component]
 pub fn ShadowOverlay(#[prop(into)] show: ShowOverlay, children: ChildrenFn) -> impl IntoView {
+    let children_s = store_value(children);
     view! {
         <Show when=move || show.get()>
-            <div
-                on:click={
-                    #[cfg(feature = "hydrate")]
-                    {
-                        move |ev| {
-                            use web_sys::HtmlElement;
-                            let target = event_target::<HtmlElement>(&ev);
-                            if !target.class_list().contains("modal-bg") {
-                                show.set(false);
+            // Portal is necessary
+            // see more: https://stackoverflow.com/questions/28157125/why-does-transform-break-position-fixed/28157774#28157774
+            <Portal>
+                <div
+                    on:click={
+                        #[cfg(feature = "hydrate")]
+                        {
+                            move |ev| {
+                                use web_sys::HtmlElement;
+                                let target = event_target::<HtmlElement>(&ev);
+                                if target.class_list().contains("modal-bg") {
+                                    show.set(false);
+                                }
                             }
                         }
+                        #[cfg(not(feature = "hydrate"))] { |_| () }
                     }
-                    #[cfg(not(feature = "hydrate"))] { |_| () }
-                }
 
-                class="flex cursor-pointer modal-bg w-dvw h-dvh fixed left-0 top-0 bg-black/60 z-[99] justify-center items-center overflow-hidden"
-            >
-                {children()}
-            </div>
+                    class="flex cursor-pointer modal-bg w-dvw h-dvh fixed left-0 top-0 bg-black/60 z-[99] justify-center items-center overflow-hidden"
+                >
+                    {(children_s())()}
+                </div>
+            </Portal>
         </Show>
     }
 }
@@ -113,10 +118,21 @@ pub fn ShadowOverlay(#[prop(into)] show: ShowOverlay, children: ChildrenFn) -> i
 fn ActionRunningOverlay(message: String) -> impl IntoView {
     view! {
         <div class="w-full h-full flex flex-col gap-6 items-center justify-center text-white text-center text-xl font-semibold">
-            <Spinner/>
+            <Spinner />
             <span>{message}</span>
             <span>Please wait...</span>
         </div>
+    }
+}
+
+#[component]
+pub fn PopupOverlay(#[prop(into)] show: ShowOverlay, children: ChildrenFn) -> impl IntoView {
+    view! {
+        <ShadowOverlay show>
+            <div class="px-4 pt-4 pb-12 mx-6 w-full lg:w-1/2 max-h-[65%] rounded-xl bg-white">
+                {children()}
+            </div>
+        </ShadowOverlay>
     }
 }
 
@@ -126,7 +142,7 @@ fn ActionRunningOverlay(message: String) -> impl IntoView {
 /// modal -> The modal to show when the action is done
 /// close -> Set this signal to true to close the modal (automatically reset upon closing)
 #[component]
-pub fn PopupOverlay<
+pub fn ActionTrackerPopup<
     S: 'static,
     R: 'static + Clone,
     V: IntoView,
@@ -157,7 +173,9 @@ pub fn PopupOverlay<
         <ShadowOverlay show=show_popup>
             <Show
                 when=move || res.with(|r| r.is_some())
-                fallback=move || view! { <ActionRunningOverlay message=loading_msg_s.get_value()/> }
+                fallback=move || {
+                    view! { <ActionRunningOverlay message=loading_msg_s.get_value() /> }
+                }
             >
                 <div class="px-4 pt-4 pb-12 mx-6 w-full lg:w-1/2 max-h-[65%] rounded-xl bg-white">
                     {move || (modal_s.get_value())(res().unwrap())}

@@ -3,16 +3,19 @@ mod server_impl;
 
 use crate::{
     component::{back_btn::BackButton, title::Title, token_logo_sanitize::TokenLogoSanitize},
-    state::canisters::{auth_canisters_store, authenticated_canisters, CanistersAuthWire},
+    state::canisters::{auth_canisters_store, authenticated_canisters},
     utils::{
         event_streaming::events::{
             TokenCreationCompleted, TokenCreationFailed, TokenCreationStarted,
         },
+        token::{nsfw::NSFWInfo, DeployedCdaoCanisters},
         web::FileWithUrl,
     },
 };
+use candid::Principal;
 use leptos::*;
 use std::env;
+use yral_canisters_common::{utils::profile::ProfileDetails, Canisters, CanistersAuthWire};
 
 use server_fn::codec::Cbor;
 use sns_validation::{humanize::parse_tokens, pbs::nns_pb::Tokens};
@@ -32,14 +35,42 @@ async fn is_server_available() -> Result<(bool, AccountIdentifier), ServerFnErro
     server_impl::is_server_available().await
 }
 
+pub struct DeployedCdaoCanistersRes {
+    pub deploy_cdao_canisters: DeployedCdaoCanisters,
+    pub token_nsfw_info: NSFWInfo,
+}
+
 #[server(
     input = Cbor
 )]
 async fn deploy_cdao_canisters(
     cans_wire: CanistersAuthWire,
     create_sns: SnsInitPayload,
-) -> Result<(), ServerFnError> {
-    server_impl::deploy_cdao_canisters(cans_wire, create_sns).await
+    profile_details: ProfileDetails,
+    canister_id: Principal,
+) -> Result<DeployedCdaoCanisters, ServerFnError> {
+    let res = server_impl::deploy_cdao_canisters(cans_wire, create_sns.clone()).await;
+
+    match res {
+        Ok(c) => {
+            TokenCreationCompleted
+                .send_event(
+                    create_sns,
+                    c.deploy_cdao_canisters.root,
+                    profile_details,
+                    canister_id,
+                    c.token_nsfw_info,
+                )
+                .await;
+            Ok(c.deploy_cdao_canisters)
+        }
+        Err(e) => {
+            TokenCreationFailed
+                .send_event(e.to_string(), create_sns, profile_details, canister_id)
+                .await;
+            Err(e)
+        }
+    }
 }
 
 #[component]
@@ -103,7 +134,7 @@ fn TokenImage() -> impl IntoView {
                         class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                     />
                     <div class="absolute bottom-0 right-0 p-1 rounded-full bg-white ">
-                        <img src="/img/upload.svg" class="bg-white"/>
+                        <img src="/img/upload.svg" class="bg-white" />
                     </div>
                     <Show
                         when=move || logo_b64.with(|u| u.is_some())
@@ -118,7 +149,7 @@ fn TokenImage() -> impl IntoView {
                                 on:click=on_edit_click
                                 class="w-4 h-4 flex items-center justify-center rounded-full bg-white"
                             >
-                                <img src="/img/edit.svg" class="bg-white w-4 h-4 rounded-full"/>
+                                <img src="/img/edit.svg" class="bg-white w-4 h-4 rounded-full" />
                             </button>
                         </div>
                     </Show>
@@ -127,7 +158,7 @@ fn TokenImage() -> impl IntoView {
 
             </div>
         </div>
-        <TokenLogoSanitize img_file=img_file output_b64=set_logo_b64/>
+        <TokenLogoSanitize img_file=img_file output_b64=set_logo_b64 />
     }
 }
 
@@ -257,7 +288,6 @@ fn parse_token_e8s(s: &str) -> Result<Tokens, String> {
 #[component]
 pub fn CreateToken() -> impl IntoView {
     let auth_cans = auth_canisters_store();
-    let fallback_url = String::from("/your-profile?tab=tokens");
 
     let ctx: CreateTokenCtx = expect_context();
 
@@ -287,15 +317,16 @@ pub fn CreateToken() -> impl IntoView {
                 .wait_untracked()
                 .await
                 .map_err(|e| e.to_string())?;
-            let cans = cans_wire
-                .clone()
-                .canisters()
+            let cans = Canisters::from_wire(cans_wire.clone(), expect_context())
                 .map_err(|_| "Unable to authenticate".to_string())?;
+
+            let canister_id = cans.user_canister();
+            let profile_details = cans.profile_details();
 
             let sns_form = ctx.form_state.get_untracked();
             let sns_config = sns_form.try_into_config(&cans)?;
 
-            let create_sns = sns_config.try_convert_to_executed_sns_init()?;
+            let create_sns = sns_config.try_convert_to_sns_init_payload()?;
             let server_available = is_server_available().await.map_err(|e| e.to_string())?;
             log::debug!(
                 "Server details: {}, {}",
@@ -308,16 +339,12 @@ pub fn CreateToken() -> impl IntoView {
 
             TokenCreationStarted.send_event(create_sns.clone(), auth_cans);
 
-            let deployed_cans_response = deploy_cdao_canisters(cans_wire, create_sns.clone())
-                .await
-                .map_err(|e| e.to_string());
+            let _deployed_cans_response =
+                deploy_cdao_canisters(cans_wire, create_sns.clone(), profile_details, canister_id)
+                    .await
+                    .map_err(|e| e.to_string())?;
 
-            match deployed_cans_response.clone() {
-                Ok(_) => TokenCreationCompleted.send_event(create_sns, auth_cans),
-                Err(e) => TokenCreationFailed.send_event(e, create_sns, auth_cans),
-            }
-
-            deployed_cans_response
+            Ok(())
         }
     });
     let creating = create_action.pending();
@@ -338,16 +365,16 @@ pub fn CreateToken() -> impl IntoView {
         <div class="w-dvw min-h-dvh bg-black pt-4 flex flex-col gap-4" style="padding-bottom:6rem">
             <Title justify_center=false>
                 <div class="flex justify-between w-full">
-                    <BackButton fallback=fallback_url/>
+                    <div></div>
                     <span class="font-bold justify-self-center">Create Meme Token</span>
                     <a href="/token/create/faq">
-                        <img src="/img/info.svg"/>
+                        <img src="/img/info.svg" />
                     </a>
                 </div>
             </Title>
             <div class="flex flex-col w-full px-6 md:px-8 gap-2 md:gap-8">
                 <div class="flex flex-row w-full gap-4  justify-between items-center">
-                    <TokenImage/>
+                    <TokenImage />
                     <InputBox
                         heading="Token name"
                         placeholder="Add a name to your crypto currency"
@@ -491,10 +518,10 @@ pub fn CreateTokenSettings() -> impl IntoView {
         >
             <Title justify_center=false>
                 <div class="flex justify-between w-full" style="background: black">
-                    <BackButton fallback=fallback_url/>
+                    <BackButton fallback=fallback_url />
                     <span class="font-bold justify-self-center">Settings</span>
                     <a href="/token/create/faq">
-                        <img src="/img/info.svg"/>
+                        <img src="/img/info.svg" />
                     </a>
                 </div>
             </Title>

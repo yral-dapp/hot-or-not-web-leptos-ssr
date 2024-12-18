@@ -12,7 +12,7 @@ use crate::{
     page::profile::{profile_iter::FixedFetchCursor, ProfilePostsContext},
     state::canisters::{auth_canisters_store, unauth_canisters},
     try_or_redirect,
-    utils::{posts::get_post_uid, route::failure_redirect},
+    utils::route::failure_redirect,
 };
 
 use super::{
@@ -20,7 +20,7 @@ use super::{
     profile_iter::{ProfVideoStream, ProfileVideoStream},
 };
 
-use crate::utils::posts::PostDetails;
+use yral_canisters_common::utils::posts::PostDetails;
 
 #[component]
 fn ProfilePostWithUpdates<const LIMIT: u64, VidStream: ProfVideoStream<LIMIT>>(
@@ -42,7 +42,7 @@ fn ProfilePostWithUpdates<const LIMIT: u64, VidStream: ProfVideoStream<LIMIT>>(
     let auth_canister = auth_canisters_store();
     let overlay = match auth_canister.get_untracked() {
         Some(canisters) if canisters.user_canister() == initial_post.canister_id => {
-            || view! { <YourProfileOverlay/> }.into_view()
+            || view! { <YourProfileOverlay /> }.into_view()
         }
         _ => || view! {}.into_view(),
     };
@@ -104,7 +104,7 @@ fn ProfilePostWithUpdates<const LIMIT: u64, VidStream: ProfVideoStream<LIMIT>>(
         }
 
         use_navigate()(
-            &format!("profile/{canister_id}/{post_id}"),
+            &format!("profile/{canister_id}/post/{post_id}"),
             NavigateOptions {
                 replace: true,
                 ..Default::default()
@@ -156,7 +156,7 @@ fn ProfilePostBase<IV: IntoView, C: Fn(PostDetails) -> IV + Clone + 'static>(
                 return Some(post);
             };
 
-            match get_post_uid(&canisters, canister_id, post_id).await {
+            match canisters.get_post_details(canister_id, post_id).await {
                 Ok(res) => res,
                 Err(e) => {
                     failure_redirect(e);
@@ -177,7 +177,7 @@ fn ProfilePostBase<IV: IntoView, C: Fn(PostDetails) -> IV + Clone + 'static>(
                         Some(
                             view! {
                                 <div class="absolute left-4 top-4 bg-transparent z-10 text-white">
-                                    <BackButton fallback="/".to_string()/>
+                                    <BackButton fallback="/".to_string() />
                                 </div>
                                 {(children_s.get_value())(pd)}
                             },
@@ -211,7 +211,10 @@ pub fn ProfilePost() -> impl IntoView {
 
     view! {
         <ProfilePostBase canister_and_post let:pd>
-            <ProfilePostWithUpdates<PROFILE_POST_LIMIT, DefProfileVidStream> user_canister=pd.canister_id initial_post=pd/>
+            <ProfilePostWithUpdates<
+            PROFILE_POST_LIMIT,
+            DefProfileVidStream,
+        > user_canister=pd.canister_id initial_post=pd />
         </ProfilePostBase>
     }
 }

@@ -11,12 +11,18 @@ use wasm_bindgen::JsCast;
 use super::EventHistory;
 use crate::component::auth_providers::ProviderKind;
 use crate::state::auth::account_connected_reader;
-use crate::state::canisters::{auth_canisters_store, Canisters};
+use crate::state::canisters::auth_canisters_store;
 use crate::state::history::HistoryCtx;
 #[cfg(feature = "ga4")]
-use crate::utils::event_streaming::{send_event, send_event_warehouse, send_user_id};
-use crate::utils::posts::PostDetails;
+use crate::utils::event_streaming::{
+    send_event, send_event_ssr, send_event_warehouse, send_user_id,
+};
+use crate::utils::token::nsfw::NSFWInfo;
 use crate::utils::user::{user_details_can_store_or_ret, user_details_or_ret};
+use yral_canisters_common::{
+    utils::{posts::PostDetails, profile::ProfileDetails},
+    Canisters,
+};
 
 pub enum AnalyticsEvent {
     VideoWatched(VideoWatched),
@@ -770,21 +776,22 @@ impl TokenCreationStarted {
 pub struct TokenCreationCompleted;
 
 impl TokenCreationCompleted {
-    pub fn send_event(
+    pub async fn send_event(
         &self,
         sns_init_payload: SnsInitPayload,
-        cans_store: RwSignal<Option<Canisters<true>>>,
+        token_root: Principal,
+        profile_details: ProfileDetails,
+        canister_id: Principal,
+        nsfw_info: NSFWInfo,
     ) {
-        #[cfg(all(feature = "hydrate", feature = "ga4"))]
+        #[cfg(feature = "ga4")]
         {
-            let user = user_details_can_store_or_ret!(cans_store);
-            let details = user.details;
+            let user_id = profile_details.principal;
 
-            let user_id = details.principal;
-            let canister_id = user.canister_id;
+            let link = format!("/token/info/{token_root}");
 
             // token_creation_completed - analytics
-            send_event(
+            send_event_ssr(
                 "token_creation_completed",
                 &json!({
                     "user_id": user_id,
@@ -793,9 +800,15 @@ impl TokenCreationCompleted {
                     "token_symbol": sns_init_payload.token_symbol,
                     "name": sns_init_payload.name,
                     "description": sns_init_payload.description,
-                    "logo": sns_init_payload.logo
+                    "logo": sns_init_payload.logo,
+                    "link": link,
+                    "is_nsfw": nsfw_info.is_nsfw,
+                    "nsfw_ec": nsfw_info.nsfw_ec,
+                    "nsfw_gore": nsfw_info.nsfw_gore,
+                    "csam_detected": nsfw_info.csam_detected,
                 }),
-            );
+            )
+            .await;
         }
     }
 }
@@ -804,22 +817,19 @@ impl TokenCreationCompleted {
 pub struct TokenCreationFailed;
 
 impl TokenCreationFailed {
-    pub fn send_event(
+    pub async fn send_event(
         &self,
         error_str: String,
         sns_init_payload: SnsInitPayload,
-        cans_store: RwSignal<Option<Canisters<true>>>,
+        profile_details: ProfileDetails,
+        canister_id: Principal,
     ) {
-        #[cfg(all(feature = "hydrate", feature = "ga4"))]
+        #[cfg(feature = "ga4")]
         {
-            let user = user_details_can_store_or_ret!(cans_store);
-            let details = user.details;
-
-            let user_id = details.principal;
-            let canister_id = user.canister_id;
+            let user_id = profile_details.principal;
 
             // token_creation_failed - analytics
-            send_event(
+            send_event_ssr(
                 "token_creation_failed",
                 &json!({
                     "user_id": user_id,
@@ -830,7 +840,8 @@ impl TokenCreationFailed {
                     "description": sns_init_payload.description,
                     "error": error_str
                 }),
-            );
+            )
+            .await;
         }
     }
 }

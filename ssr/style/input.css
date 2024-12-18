@@ -18,18 +18,122 @@
     }
 }
 
-@media (min-height:820px) and (max-height:899px){
-    .hot-left-arrow{
+@media (min-height: 820px) and (max-height: 899px) {
+    .hot-left-arrow {
         margin-top: 206px !important;
     }
 }
-@media (min-height:768px) and (max-height:819px){
-    .hot-left-arrow{
+@media (min-height: 768px) and (max-height: 819px) {
+    .hot-left-arrow {
         margin-top: 166px !important;
     }
 }
-@media (max-height:767px){
-    .hot-left-arrow{
+@media (max-height: 767px) {
+    .hot-left-arrow {
         margin-top: 75px !important;
+    }
+}
+
+.tada {
+    animation-name: tada;
+    animation-duration: 1s;
+}
+
+@keyframes tada {
+    from {
+        transform: scale3d(1, 1, 1);
+        background: linear-gradient(
+            90deg,
+            red,
+            orange,
+            yellow,
+            green,
+            blue,
+            indigo,
+            violet,
+            black
+        );
+        background-size: 1000% 100%;
+        background-position: 0% 25%;
+    }
+
+    10%,
+    20% {
+        transform: scale3d(0.9, 0.9, 0.9) rotate3d(0, 0, 1, -1deg);
+    }
+
+    30%,
+    50%,
+    70%,
+    90% {
+        transform: scale3d(1.05, 1.05, 1.05) rotate3d(0, 0, 1, 1deg);
+    }
+
+    40%,
+    60%,
+    80% {
+        transform: scale3d(1.02, 1.02, 1.02) rotate3d(0, 0, 1, -1deg);
+    }
+
+    99% {
+        background-position: 100% 100%;
+    }
+
+    to {
+        transform: scale3d(1, 1, 1);
+    }
+}
+
+.thinking:before {
+    content: "[=---]";
+    font: "monospace";
+    animation: thinking 2s infinite 0s;
+}
+
+@keyframes thinking {
+    7% {
+        content: "[=---]";
+    }
+    14% {
+        content: "[==--]";
+    }
+    21% {
+        content: "[===-]";
+    }
+    28% {
+        content: "[====]";
+    }
+    35% {
+        content: "[-===]";
+    }
+    42% {
+        content: "[--==]";
+    }
+    50% {
+        content: "[---=]";
+    }
+    57% {
+        content: "[----]";
+    }
+    64% {
+        content: "[---=]";
+    }
+    71% {
+        content: "[--==]";
+    }
+    78% {
+        content: "[-===]";
+    }
+    85% {
+        content: "[====]";
+    }
+    92% {
+        content: "[===-]";
+    }
+    99% {
+        content: "[==--]";
+    }
+    100% {
+        content: "[=---]";
     }
 }

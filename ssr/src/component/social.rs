@@ -10,7 +10,7 @@ fn FollowItem(#[prop(into)] href: String, #[prop(into)] icon: icondata::Icon) ->
             target="_blank"
             class="h-12 w-12 text-2xl rounded-full grid place-items-center aspect-square border border-primary-600"
         >
-            <Icon icon/>
+            <Icon icon />
         </a>
     }
 }

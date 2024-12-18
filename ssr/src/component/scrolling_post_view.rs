@@ -5,7 +5,7 @@ use leptos_use::{use_intersection_observer_with_options, UseIntersectionObserver
 use crate::page::post_view::video_loader::{BgView, VideoViewForQueue};
 
 use crate::state::audio_state::AudioState;
-use crate::utils::posts::PostDetails;
+use yral_canisters_common::utils::posts::PostDetails;
 
 #[component]
 pub fn MuteIconOverlay(show_mute_icon: RwSignal<bool>) -> impl IntoView {
@@ -15,7 +15,10 @@ pub fn MuteIconOverlay(show_mute_icon: RwSignal<bool>) -> impl IntoView {
                 class="fixed top-1/2 left-1/2 z-20 cursor-pointer pointer-events-none"
                 on:click=move |_| AudioState::toggle_mute()
             >
-                <Icon class="text-white/80 animate-ping text-4xl" icon=icondata::BiVolumeMuteSolid/>
+                <Icon
+                    class="text-white/80 animate-ping text-4xl"
+                    icon=icondata::BiVolumeMuteSolid
+                />
             </button>
         </Show>
     }
@@ -114,7 +117,7 @@ pub fn ScrollingPostView<F: Fn() -> V + Clone + 'static, V>(
                     </div>
                 </Show>
 
-                <MuteIconOverlay show_mute_icon/>
+                <MuteIconOverlay show_mute_icon />
             </div>
         </div>
     };

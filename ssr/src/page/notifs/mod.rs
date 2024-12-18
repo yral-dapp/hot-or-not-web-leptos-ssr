@@ -1,10 +1,10 @@
 use leptos::*;
 
 use crate::{
-    component::canisters_prov::AuthCansProvider,
-    state::auth::account_connected_reader,
-    utils::{notifications::get_token_for_principal, profile::ProfileDetails},
+    component::canisters_prov::AuthCansProvider, state::auth::account_connected_reader,
+    utils::notifications::get_token_for_principal,
 };
+use yral_canisters_common::utils::profile::ProfileDetails;
 
 #[component]
 fn NotifInnerComponent(details: ProfileDetails) -> impl IntoView {
@@ -17,7 +17,7 @@ fn NotifInnerComponent(details: ProfileDetails) -> impl IntoView {
     view! {
         <h1>"YRAL Notifs for"</h1>
         <h2>{details.username_or_principal()}</h2>
-        <br/>
+        <br />
         <div class="flex flex-row gap-2 text-black">
             <button
                 class="p-2 bg-gray-200 rounded-md"
@@ -34,7 +34,7 @@ pub fn Notif() -> impl IntoView {
     view! {
         <div class="h-screen w-screen grid grid-cols-1 justify-items-center place-content-center">
             <AuthCansProvider let:cans>
-                <NotifInnerComponent details=cans.profile_details()/>
+                <NotifInnerComponent details=cans.profile_details() />
             </AuthCansProvider>
         </div>
     }

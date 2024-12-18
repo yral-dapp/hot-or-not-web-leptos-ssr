@@ -1,4 +1,7 @@
-use crate::page::profile::YourProfileView;
+use crate::page::icpump::ai::ICPumpAi;
+use crate::page::icpump::ICPumpLanding;
+
+// use crate::page::wallet::TestIndex;
 use crate::{
     component::{base_route::BaseRoute, nav::NavBar},
     error_template::{AppError, ErrorTemplate},
@@ -12,7 +15,7 @@ use crate::{
         privacy::PrivacyPolicy,
         profile::{profile_post::ProfilePost, ProfilePostsContext, ProfileView},
         refer_earn::ReferEarn,
-        root::{RootPage, YralRootPage},
+        root::RootPage,
         settings::Settings,
         terms::TermsOfService,
         token::{
@@ -22,14 +25,12 @@ use crate::{
             transfer::TokenTransfer,
         },
         upload::UploadPostPage,
-        wallet::{tokens::Tokens, transactions::Transactions, Wallet},
+        wallet::Wallet,
     },
-    state::{
-        audio_state::AudioState, canisters::Canisters, content_seed_client::ContentSeedClient,
-        history::HistoryCtx,
-    },
+    state::{audio_state::AudioState, content_seed_client::ContentSeedClient, history::HistoryCtx},
     utils::event_streaming::EventHistory,
 };
+use yral_canisters_common::Canisters;
 
 use leptos::*;
 use leptos_meta::*;
@@ -101,7 +102,6 @@ pub fn App() -> impl IntoView {
     #[cfg(feature = "ga4")]
     {
         enable_ga4_script.set(true);
-
         provide_context(EventHistory::default());
     }
 
@@ -130,6 +130,9 @@ pub fn App() -> impl IntoView {
             </Script>
         </Show>
 
+        // <Script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js"></Script>
+        // <Script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js"></Script>
+
         // content for this welcome page
         <Router fallback=|| view! { <NotFound/> }.into_view()>
             <main>
@@ -140,30 +143,31 @@ pub fn App() -> impl IntoView {
                     <Route path="" view=BaseRoute>
                         <Route path="/" view=RootPage/>
                         <Route path="/hot-or-not/:canister_id/:post_id" view=PostView/>
-                        <Route path="/hot-or-not" view=YralRootPage/>
                         <Route path="/post/:canister_id/:post_id" view=SinglePost/>
-                        <Route path="/profile/:canister_id/:post_id" view=ProfilePost/>
-                        <Route path="/your-profile/:canister_id/:post_id" view=ProfilePost/>
-                        <Route path="/profile/:id" view=ProfileView/>
+                        <Route path="/profile/:canister_id/post/:post_id" view=ProfilePost/>
                         <Route path="/upload" view=UploadPostPage/>
                         <Route path="/error" view=ServerErrorPage/>
                         <Route path="/menu" view=Menu/>
                         <Route path="/settings" view=Settings/>
                         <Route path="/refer-earn" view=ReferEarn/>
-                        <Route path="/your-profile" view=YourProfileView/>
+                        <Route path="/profile/:id/:tab" view=ProfileView/>
+                        <Route path="/profile/:tab" view=ProfileView/>
                         <Route path="/terms-of-service" view=TermsOfService/>
                         <Route path="/privacy-policy" view=PrivacyPolicy/>
+                        <Route path="/wallet/:id" view=Wallet/>
                         <Route path="/wallet" view=Wallet/>
-                        <Route path="/transactions" view=Transactions/>
                         <Route path="/leaderboard" view=Leaderboard/>
                         <Route path="/account-transfer" view=AccountTransfer/>
                         <Route path="/logout" view=Logout/>
                         <Route path="/token/create" view=CreateToken/>
                         <Route path="/token/create/settings" view=CreateTokenSettings/>
                         <Route path="/token/create/faq" view=CreateTokenFAQ/>
-                        <Route path="/token/info/:token_root/:user_principal" view=TokenInfo/>
+                        <Route path="/token/info/:token_root/:key_principal" view=TokenInfo/>
+                        <Route path="/token/info/:token_root" view=TokenInfo/>
                         <Route path="/token/transfer/:token_root" view=TokenTransfer/>
-                        <Route path="/tokens" view=Tokens/>
+                        <Route path="/board" view=ICPumpLanding/>
+                        <Route path="/icpump-ai" view=ICPumpAi/>
+                    // <Route path="/test" view=TestIndex/>
                     </Route>
                 </Routes>
 

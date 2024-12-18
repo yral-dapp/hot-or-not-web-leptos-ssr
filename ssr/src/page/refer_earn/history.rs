@@ -3,11 +3,11 @@ use leptos::*;
 use crate::component::bullet_loader::BulletLoader;
 use crate::component::canisters_prov::AuthCansProvider;
 use crate::component::infinite_scroller::InfiniteScroller;
-use crate::{
-    state::canisters::Canisters,
-    utils::{profile::propic_from_principal, time::get_day_month},
-};
+use crate::utils::time::get_day_month;
 use history_provider::*;
+use yral_canisters_common::{
+    cursored_data::ref_history::HistoryDetails, utils::profile::propic_from_principal, Canisters,
+};
 
 #[component]
 fn HistoryItem(detail: HistoryDetails, _ref: NodeRef<html::Div>) -> impl IntoView {
@@ -26,7 +26,7 @@ fn HistoryItem(detail: HistoryDetails, _ref: NodeRef<html::Div>) -> impl IntoVie
                 </div>
             </div>
             <span class="text-white text-md md:text-xl text-center justify-self-end">
-                {detail.amount} Coyns
+                {detail.amount}Coyns
             </span>
         </div>
     }
@@ -41,7 +41,7 @@ fn AuthenticatedHistory(canisters: Canisters<true>) -> impl IntoView {
                 provider
                 fetch_count=10
                 children=|detail, _ref| {
-                    view! { <HistoryItem detail _ref=_ref.unwrap_or_default()/> }
+                    view! { <HistoryItem detail _ref=_ref.unwrap_or_default() /> }
                 }
             />
 
@@ -53,33 +53,16 @@ fn AuthenticatedHistory(canisters: Canisters<true>) -> impl IntoView {
 pub fn HistoryView() -> impl IntoView {
     view! {
         <AuthCansProvider fallback=BulletLoader let:canisters>
-            <AuthenticatedHistory canisters/>
+            <AuthenticatedHistory canisters />
         </AuthCansProvider>
     }
 }
 
 mod history_provider {
-    use candid::Principal;
-
-    use crate::{
-        component::infinite_scroller::{CursoredDataProvider, KeyedData, PageEntry},
-        state::canisters::Canisters,
+    use yral_canisters_common::{
+        cursored_data::{ref_history::HistoryDetails, CursoredDataProvider, PageEntry},
+        Canisters,
     };
-
-    #[derive(Clone, Copy)]
-    pub struct HistoryDetails {
-        pub epoch_secs: u64,
-        pub referee: Principal,
-        pub amount: u64,
-    }
-
-    impl KeyedData for HistoryDetails {
-        type Key = Principal;
-
-        fn key(&self) -> Self::Key {
-            self.referee
-        }
-    }
 
     pub fn get_history_provider(
         canisters: Canisters<true>,
@@ -91,74 +74,8 @@ mod history_provider {
         }
         #[cfg(not(feature = "mock-referral-history"))]
         {
-            canister::ReferralHistory(canisters)
-        }
-    }
-
-    #[cfg(not(feature = "mock-referral-history"))]
-    mod canister {
-        use super::*;
-        use ic_agent::AgentError;
-
-        #[derive(Clone)]
-        pub struct ReferralHistory(pub Canisters<true>);
-
-        impl CursoredDataProvider for ReferralHistory {
-            type Data = HistoryDetails;
-            type Error = AgentError;
-
-            async fn get_by_cursor(
-                &self,
-                from: usize,
-                end: usize,
-            ) -> Result<PageEntry<HistoryDetails>, AgentError> {
-                use crate::canister::individual_user_template::{MintEvent, Result15, TokenEvent};
-                use crate::utils::route::failure_redirect;
-                let individual = self.0.authenticated_user().await;
-                let history = individual
-                    .get_user_utility_token_transaction_history_with_pagination(
-                        from as u64,
-                        end as u64,
-                    )
-                    .await?;
-                let history = match history {
-                    Result15::Ok(history) => history,
-                    Result15::Err(_) => {
-                        failure_redirect("failed to get posts");
-                        return Ok(PageEntry {
-                            data: vec![],
-                            end: true,
-                        });
-                    }
-                };
-                let list_end = history.len() < (end - from);
-                let details = history
-                    .into_iter()
-                    .filter_map(|(_, ev)| {
-                        let TokenEvent::Mint {
-                            timestamp,
-                            details:
-                                MintEvent::Referral {
-                                    referee_user_principal_id,
-                                    ..
-                                },
-                            amount,
-                        } = ev
-                        else {
-                            return None;
-                        };
-                        Some(HistoryDetails {
-                            epoch_secs: timestamp.secs_since_epoch,
-                            referee: referee_user_principal_id,
-                            amount,
-                        })
-                    })
-                    .collect();
-                Ok(PageEntry {
-                    data: details,
-                    end: list_end,
-                })
-            }
+            use yral_canisters_common::cursored_data::ref_history::ReferralHistory;
+            ReferralHistory(canisters)
         }
     }
 
@@ -173,7 +90,7 @@ mod history_provider {
             ChaCha8Rng,
         };
 
-        use crate::utils::time::current_epoch;
+        use yral_canisters_common::utils::time::current_epoch;
 
         use super::*;
 

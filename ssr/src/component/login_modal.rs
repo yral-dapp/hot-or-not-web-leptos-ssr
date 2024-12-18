@@ -12,7 +12,7 @@ pub fn LoginModal(#[prop(into)] show: RwSignal<bool>) -> impl IntoView {
             show,
             closable: lock_closing,
         }>
-            <LoginProviders show_modal=show lock_closing/>
+            <LoginProviders show_modal=show lock_closing />
         </ShadowOverlay>
     }
 }

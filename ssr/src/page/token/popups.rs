@@ -1,10 +1,10 @@
 use leptos::*;
 use leptos_icons::*;
+use yral_canisters_common::utils::token::balance::TokenBalance;
 
 use crate::{
-    component::{overlay::PopupOverlay, token_confetti_symbol::TokenConfettiSymbol},
+    component::{overlay::ActionTrackerPopup, token_confetti_symbol::TokenConfettiSymbol},
     page::token::create::CreateTokenCtx,
-    utils::token::TokenBalance,
 };
 
 #[component]
@@ -33,7 +33,7 @@ fn CreateTokenSuccessPopup(
     #[prop(into)] img_url: String,
 ) -> impl IntoView {
     CreateTokenCtx::reset();
-    let profile_url = "/your-profile?tab=tokens";
+    let profile_url = "/profile/tokens";
     view! {
         <SuccessPopup
             img=move || {
@@ -71,7 +71,7 @@ fn ErrorPopup<HeadIV: IntoView, Head: Fn() -> HeadIV>(
     view! {
         <div class="flex flex-col items-center w-full h-full gap-6">
             <div class="flex flex-row items-center justify-center bg-amber-100 text-orange-400 rounded-full p-3 text-2xl md:text-3xl">
-                <Icon icon=icondata::BsExclamationTriangle/>
+                <Icon icon=icondata::BsExclamationTriangle />
             </div>
             <span class="text-2xl md:text-3xl font-bold text-center">{header()}</span>
             <textarea
@@ -102,7 +102,7 @@ fn CreateTokenErrorPopup(
     token_name: MaybeSignal<String>,
     close_popup: WriteSignal<bool>,
 ) -> impl IntoView {
-    let profile_url = String::from("/your-profile?tab=tokens");
+    let profile_url = String::from("/profile/tokens");
 
     view! {
         <ErrorPopup
@@ -133,7 +133,7 @@ pub fn TokenCreationPopup(
 ) -> impl IntoView {
     let close_popup = create_rw_signal(false);
     view! {
-        <PopupOverlay
+        <ActionTrackerPopup
             action=creation_action
             loading_message="Token creation in progress"
             modal=move |res| match res {
@@ -166,10 +166,10 @@ fn TokenTransferSuccessPopup(
     #[prop(into)] token_name: String,
     amount: TokenBalance,
 ) -> impl IntoView {
-    let amount_str = amount.humanize();
+    let amount_str = amount.humanize_float();
     view! {
         <SuccessPopup
-            img=|| view! { <TokenConfettiSymbol class="w-8/12"/> }
+            img=|| view! { <TokenConfettiSymbol class="w-8/12" /> }
             text=move || { format!("{amount_str} {token_name} Successfully sent") }
 
             previous_link="/wallet"
@@ -210,7 +210,7 @@ pub fn TokenTransferPopup(
     let close_popup = create_rw_signal(false);
 
     view! {
-        <PopupOverlay
+        <ActionTrackerPopup
             action=transfer_action
             loading_message="Token transfer in progress"
             modal=move |res| match res {

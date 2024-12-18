@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.yral.lite",
+        "sha256_cert_fingerprints": ["FA:AC:91:6B:17:5E:08:2D:F9:20:10:2F:A3:EF:85:28:8A:66:87:74:1A:33:B6:AD:C9:EC:CC:E0:6D:B3:02:44"]
+      }
+    }]

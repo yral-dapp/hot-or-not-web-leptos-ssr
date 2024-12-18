@@ -4,35 +4,20 @@ use leptos_icons::*;
 use candid::Principal;
 
 use crate::{
-    canister::utils::bg_url,
     component::profile_placeholders::NoMorePostsGraphic,
     state::canisters::{auth_canisters_store, unauth_canisters},
-    utils::{
-        event_streaming::events::ProfileViewVideo, posts::PostDetails, profile::PostsProvider,
-    },
+    utils::{bg_url, event_streaming::events::ProfileViewVideo, profile::PostsProvider},
 };
 
 use super::ic::ProfileStream;
 use super::ProfilePostsContext;
+use yral_canisters_common::utils::posts::PostDetails;
 
 #[component]
 fn Post(details: PostDetails, user_canister: Principal, _ref: NodeRef<html::Div>) -> impl IntoView {
     let image_error = create_rw_signal(false);
 
-    let auth_canister = auth_canisters_store();
-
-    let auth_canister_id = auth_canister
-        .get_untracked()
-        .map(|canisters| canisters.user_canister());
-
-    let profile_post_url = match auth_canister_id {
-        Some(canister_id) if canister_id == user_canister => {
-            format!("/your-profile/{}/{}", canister_id, details.post_id)
-        }
-        _ => {
-            format!("/profile/{}/{}", user_canister, details.post_id)
-        }
-    };
+    let profile_post_url = format!("/profile/{user_canister}/post/{}", details.post_id);
 
     let handle_image_error =
         move |_| _ = image_error.try_update(|image_error| *image_error = !*image_error);
@@ -61,7 +46,7 @@ fn Post(details: PostDetails, user_canister: Principal, _ref: NodeRef<html::Div>
                     >
 
                         <div class="h-full flex text-center flex-col place-content-center items-center text-white">
-                            <Icon class="h-8 w-8" icon=icondata::TbCloudX/>
+                            <Icon class="h-8 w-8" icon=icondata::TbCloudX />
                             <span class="text-md">Not Available</span>
                         </div>
                     </Show>

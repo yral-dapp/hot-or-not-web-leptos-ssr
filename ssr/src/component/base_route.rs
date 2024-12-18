@@ -3,25 +3,27 @@ use ic_agent::identity::Secp256k1Identity;
 use k256::elliptic_curve::JwkEcKey;
 use leptos::*;
 use leptos_router::*;
+use leptos_use::use_cookie;
 
-use crate::consts::USER_CANISTER_ID_STORE;
+use crate::auth::delegate_identity;
+use crate::consts::{ACCOUNT_CONNECTED_STORE, USER_CANISTER_ID_STORE, USER_PRINCIPAL_STORE};
 use crate::utils::ParentResource;
 use crate::{
     auth::{
         extract_identity, generate_anonymous_identity_if_required, set_anonymous_identity_cookie,
-        DelegatedIdentityWire,
     },
     component::spinner::FullScreenSpinner,
     state::{
         auth::AuthState,
-        canisters::{do_canister_auth, AuthCansResource, Canisters},
+        canisters::{do_canister_auth, AuthCansResource},
         local_storage::use_referrer_store,
     },
     try_or_redirect,
     utils::MockPartialEq,
 };
-use codee::string::JsonSerdeCodec;
+use codee::string::{FromToStringCodec, JsonSerdeCodec};
 use leptos_use::storage::use_local_storage;
+use yral_canisters_common::Canisters;
 
 #[derive(Params, PartialEq, Clone)]
 struct Referrer {
@@ -36,6 +38,7 @@ fn CtxProvider(temp_identity: Option<JwkEcKey>, children: ChildrenFn) -> impl In
     let canisters_store = create_rw_signal(None::<Canisters<true>>);
     provide_context(canisters_store);
 
+    let new_identity_issued = temp_identity.is_some();
     let temp_identity_c = temp_identity.clone();
     create_local_resource(
         || (),
@@ -66,6 +69,20 @@ fn CtxProvider(temp_identity: Option<JwkEcKey>, children: ChildrenFn) -> impl In
         set_referrer_store(referrer_principal.get_untracked())
     });
 
+    // We need to perform this cleanup in case the user's cookie expired
+    let (_, set_logged_in, _) =
+        use_local_storage::<bool, FromToStringCodec>(ACCOUNT_CONNECTED_STORE);
+    let (_, set_user_canister_id, _) =
+        use_local_storage::<Option<Principal>, JsonSerdeCodec>(USER_CANISTER_ID_STORE);
+    let (_, set_user_principal) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE);
+    create_effect(move |_| {
+        if new_identity_issued {
+            set_logged_in(false);
+            set_user_canister_id(None);
+            set_user_principal(None);
+        }
+    });
+
     let canisters_res: AuthCansResource = ParentResource(create_resource(
         move || MockPartialEq(auth()),
         move |auth_id| {
@@ -84,7 +101,7 @@ fn CtxProvider(temp_identity: Option<JwkEcKey>, children: ChildrenFn) -> impl In
 
                 let key = k256::SecretKey::from_jwk(&jwk_key)?;
                 let id = Secp256k1Identity::from_private_key(key);
-                let id_wire = DelegatedIdentityWire::delegate(&id);
+                let id_wire = delegate_identity(&id);
 
                 do_canister_auth(id_wire, ref_principal).await
             }
@@ -99,12 +116,14 @@ fn CtxProvider(temp_identity: Option<JwkEcKey>, children: ChildrenFn) -> impl In
                 (canisters_res.0)()
                     .map(|res| {
                         let cans_wire = try_or_redirect!(res);
-                        let cans = try_or_redirect!(cans_wire.canisters());
-                        let (_, set_user_canister_id, _) = use_local_storage::<
-                            Option<Principal>,
-                            JsonSerdeCodec,
-                        >(USER_CANISTER_ID_STORE);
-                        set_user_canister_id(Some(cans.user_canister()));
+                        let maybe_cans = Canisters::from_wire(cans_wire, expect_context());
+                        let cans = try_or_redirect!(maybe_cans);
+                        let user_canister = cans.user_canister();
+                        let user_principal = cans.user_principal();
+                        create_effect(move |_| {
+                            set_user_canister_id(Some(user_canister));
+                            set_user_principal(Some(user_principal));
+                        });
                         canisters_store.set(Some(cans));
                     })
             }}
@@ -131,7 +150,7 @@ pub fn BaseRoute() -> impl IntoView {
                     .map(|temp_identity| {
                         view! {
                             <CtxProvider temp_identity>
-                                <Outlet/>
+                                <Outlet />
                             </CtxProvider>
                         }
                     })

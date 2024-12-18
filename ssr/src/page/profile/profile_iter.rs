@@ -1,11 +1,8 @@
 use candid::Principal;
 use futures::stream::{FuturesOrdered, StreamExt, TryStreamExt};
+use yral_canisters_client::individual_user_template::{GetPostsOfUserProfileError, Result12};
 
-use crate::{
-    canister::individual_user_template::{GetPostsOfUserProfileError, Result11},
-    state::canisters::Canisters,
-    utils::posts::{get_post_uid, PostDetails, PostViewError},
-};
+use yral_canisters_common::{utils::posts::PostDetails, Canisters, Error as CanistersError};
 
 #[derive(Clone, Copy, PartialEq)]
 pub struct FixedFetchCursor<const LIMIT: u64> {
@@ -30,7 +27,7 @@ pub(crate) trait ProfVideoStream<const LIMIT: u64>: Sized {
         cursor: FixedFetchCursor<LIMIT>,
         canisters: &Canisters<AUTH>,
         user_canister: Principal,
-    ) -> Result<PostsRes, PostViewError>;
+    ) -> Result<PostsRes, CanistersError>;
 }
 
 pub struct ProfileVideoBetsStream;
@@ -40,7 +37,7 @@ impl ProfVideoStream<10> for ProfileVideoBetsStream {
         cursor: FixedFetchCursor<10>,
         canisters: &Canisters<AUTH>,
         user_canister: Principal,
-    ) -> Result<PostsRes, PostViewError> {
+    ) -> Result<PostsRes, CanistersError> {
         let user = canisters.individual_user(user_canister).await;
         let bets = user
             .get_hot_or_not_bets_placed_by_this_profile_with_pagination(cursor.start)
@@ -48,7 +45,7 @@ impl ProfVideoStream<10> for ProfileVideoBetsStream {
         let end = bets.len() < 10;
         let posts = bets
             .into_iter()
-            .map(|bet| get_post_uid(canisters, bet.canister_id, bet.post_id))
+            .map(|bet| canisters.get_post_details(bet.canister_id, bet.post_id))
             .collect::<FuturesOrdered<_>>()
             .filter_map(|res| async { res.transpose() })
             .try_collect::<Vec<_>>()
@@ -64,13 +61,13 @@ impl<const LIMIT: u64> ProfVideoStream<LIMIT> for ProfileVideoStream<LIMIT> {
         cursor: FixedFetchCursor<LIMIT>,
         canisters: &Canisters<AUTH>,
         user_canister: Principal,
-    ) -> Result<PostsRes, PostViewError> {
+    ) -> Result<PostsRes, CanistersError> {
         let user = canisters.individual_user(user_canister).await;
         let posts = user
             .get_posts_of_this_user_profile_with_pagination_cursor(cursor.start, cursor.limit)
             .await?;
         match posts {
-            Result11::Ok(v) => {
+            Result12::Ok(v) => {
                 let end = v.len() < LIMIT as usize;
                 let posts = v
                     .into_iter()
@@ -78,11 +75,11 @@ impl<const LIMIT: u64> ProfVideoStream<LIMIT> for ProfileVideoStream<LIMIT> {
                     .collect::<Vec<_>>();
                 Ok(PostsRes { posts, end })
             }
-            Result11::Err(GetPostsOfUserProfileError::ReachedEndOfItemsList) => Ok(PostsRes {
+            Result12::Err(GetPostsOfUserProfileError::ReachedEndOfItemsList) => Ok(PostsRes {
                 posts: vec![],
                 end: true,
             }),
-            _ => Err(PostViewError::Canister(
+            _ => Err(CanistersError::YralCanister(
                 "user canister refused to send posts".into(),
             )),
         }

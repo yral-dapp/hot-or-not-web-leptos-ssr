@@ -12,7 +12,7 @@ pub fn Modal(#[prop(into)] show: RwSignal<bool>, children: ChildrenFn) -> impl I
                         on:click=move |_| show.set(false)
                         class="text-white text-center p-1 text-lg md:text-xl bg-primary-600 rounded-full"
                     >
-                        <Icon icon=icondata::ChCross/>
+                        <Icon icon=icondata::ChCross />
                     </button>
                 </div>
                 <div class="py-4 w-full">{children()}</div>

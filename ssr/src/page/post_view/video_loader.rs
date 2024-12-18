@@ -8,11 +8,9 @@ use leptos_use::use_event_listener;
 use crate::consts::USER_ONBOARDING_STORE;
 use crate::page::post_view::BetEligiblePostCtx;
 use crate::utils::event_streaming::events::VideoWatched;
+use yral_canisters_client::individual_user_template::PostViewDetailsFromFrontend;
+
 use crate::{
-    canister::{
-        individual_user_template::PostViewDetailsFromFrontend,
-        utils::{bg_url, mp4_url},
-    },
     component::{
         feed_popup::FeedPopUp, onboarding_flow::OnboardingPopUp, video_player::VideoPlayer,
     },
@@ -20,6 +18,7 @@ use crate::{
         auth::account_connected_reader, canisters::unauth_canisters,
         local_storage::use_referrer_store,
     },
+    utils::{bg_url, mp4_url},
 };
 
 use super::{overlay::VideoDetailsOverlay, PostDetails};
@@ -96,9 +95,9 @@ pub fn BgView(
                 />
             </Show>
             <Show when=move || { show_onboarding_popup.get() }>
-                <OnboardingPopUp onboard_on_click=set_onboarded/>
+                <OnboardingPopUp onboard_on_click=set_onboarded />
             </Show>
-            {move || post().map(|post| view! { <VideoDetailsOverlay post/> })}
+            {move || post().map(|post| view! { <VideoDetailsOverlay post /> })}
             {children()}
         </div>
     }
@@ -246,5 +245,5 @@ pub fn VideoViewForQueue(
 
     let post = Signal::derive(move || video_queue.with(|q| q.get(idx).cloned()));
 
-    view! { <VideoView post _ref=container_ref muted/> }
+    view! { <VideoView post _ref=container_ref muted /> }
 }

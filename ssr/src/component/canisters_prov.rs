@@ -1,10 +1,8 @@
 use futures::Future;
 pub use leptos::*;
 
-use crate::{
-    state::canisters::{authenticated_canisters, Canisters},
-    try_or_redirect_opt,
-};
+use crate::{state::canisters::authenticated_canisters, try_or_redirect_opt};
+use yral_canisters_common::Canisters;
 
 #[component]
 pub fn AuthCansProvider<N, EF>(
@@ -19,7 +17,8 @@ where
     let children = store_value(children);
     let loader = move || {
         let cans_wire = try_or_redirect_opt!((cans_res.0)()?);
-        let cans = try_or_redirect_opt!(cans_wire.canisters());
+        let maybe_cans = Canisters::from_wire(cans_wire, expect_context());
+        let cans = try_or_redirect_opt!(maybe_cans);
         Some((children.get_value())(cans).into_view())
     };
 
@@ -77,7 +76,12 @@ where
 {
     view! {
         <AuthCansProvider fallback=fallback.clone() let:cans>
-            <DataLoader cans fallback=fallback.clone() with=with.clone() children=children.clone()/>
+            <DataLoader
+                cans
+                fallback=fallback.clone()
+                with=with.clone()
+                children=children.clone()
+            />
         </AuthCansProvider>
     }
 }

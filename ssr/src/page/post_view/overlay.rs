@@ -5,10 +5,9 @@ use crate::{
         modal::Modal,
         option::SelectOption,
     },
-    state::canisters::{auth_canisters_store, Canisters},
+    state::canisters::auth_canisters_store,
     utils::{
         event_streaming::events::{LikeVideo, ShareVideo},
-        posts::PostDetails,
         report::ReportOption,
         route::failure_redirect,
         user::UserDetails,
@@ -19,8 +18,9 @@ use gloo::timers::callback::Timeout;
 use leptos::*;
 use leptos_icons::*;
 use leptos_use::use_window;
+use yral_canisters_common::{utils::posts::PostDetails, Canisters};
 
-use super::{bet::HNGameOverlay, video_iter::post_liked_by_me};
+use super::bet::HNGameOverlay;
 
 #[component]
 fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
@@ -79,7 +79,7 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
             return (liked, initial_liked.1);
         }
 
-        match post_liked_by_me(&cans, post_canister, post_id).await {
+        match cans.post_like_info(post_canister, post_id).await {
             Ok(liked) => liked,
             Err(e) => {
                 failure_redirect(e);
@@ -96,7 +96,7 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
                 on:click=move |_| like_toggle.dispatch(())
                 disabled=move || liking() || liked.with(|l| l.is_none())
             >
-                <img src=icon_name style="width: 1em; height: 1em;"/>
+                <img src=icon_name style="width: 1em; height: 1em;" />
             </button>
             <span class="text-sm md:text-md">{likes}</span>
             <WithAuthCans with=liked_fetch let:d>
@@ -142,7 +142,7 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
         ShareVideo.send_event(post_details, canisters);
     };
 
-    let profile_url = format!("/profile/{}", post.poster_principal.to_text());
+    let profile_url = format!("/profile/{}/tokens", post.poster_principal.to_text());
     let post_c = post.clone();
 
     let click_copy = move |text: String| {
@@ -188,7 +188,7 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
                         href=profile_url.clone()
                         class="w-10 md:w-12 h-10 md:h-12 overflow-clip rounded-full border-primary-600 border-2"
                     >
-                        <img class="h-full w-full object-cover" src=post.propic_url/>
+                        <img class="h-full w-full object-cover" src=post.propic_url />
                     </a>
                 </div>
                 <div class="flex flex-col justify-center min-w-0">
@@ -205,24 +205,24 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
                             {post.views}
                         </span>
                     </div>
-                    <ExpandableText description=post.description/>
+                    <ExpandableText description=post.description />
                 </div>
             </div>
             <div class="flex flex-col gap-2 w-full">
                 <div class="flex flex-col pointer-events-auto gap-6 self-end items-end text-2xl md:text-3xl lg:text-4xl">
                     <button on:click=move |_| show_report.set(true)>
-                        <Icon class="drop-shadow-lg" icon=icondata::TbMessageReport/>
+                        <Icon class="drop-shadow-lg" icon=icondata::TbMessageReport />
                     </button>
                     <a href="/refer-earn">
-                        <Icon class="drop-shadow-lg" icon=icondata::AiGiftFilled/>
+                        <Icon class="drop-shadow-lg" icon=icondata::AiGiftFilled />
                     </a>
-                    <LikeAndAuthCanLoader post=post_c.clone()/>
+                    <LikeAndAuthCanLoader post=post_c.clone() />
                     <button on:click=move |_| share()>
-                        <Icon class="drop-shadow-lg" icon=HomeFeedShareIcon/>
+                        <Icon class="drop-shadow-lg" icon=HomeFeedShareIcon />
                     </button>
                 </div>
                 <div class="w-full bg-transparent pointer-events-auto">
-                    <HNGameOverlay post=post_c/>
+                    <HNGameOverlay post=post_c />
                 </div>
             </div>
         </div>
@@ -234,7 +234,7 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
                         {video_url}
                     </p>
                     <button on:click=move |_| click_copy(video_url())>
-                        <Icon class="text-xl" icon=icondata::FaCopyRegular/>
+                        <Icon class="text-xl" icon=icondata::FaCopyRegular />
                     </button>
                 </div>
             </div>

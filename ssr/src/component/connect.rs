@@ -30,6 +30,6 @@ pub fn ConnectLogin(
             {move || if show_login() { "Connecting..." } else { login_text }}
 
         </button>
-        <LoginModal show=show_login/>
+        <LoginModal show=show_login />
     }
 }

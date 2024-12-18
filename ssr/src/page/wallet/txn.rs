@@ -1,226 +1,146 @@
-use std::fmt::{self, Display, Formatter};
-
 use leptos::*;
 use leptos_icons::Icon;
-use serde::{Deserialize, Serialize};
+use leptos_router::use_params;
+use yral_canisters_common::utils::transaction::{TxnDirection, TxnInfoType, TxnInfoWallet};
 
-use crate::component::infinite_scroller::KeyedData;
+use crate::{page::token::info::TokenKeyParam, utils::time::parse_ns_to_datetime};
 
-#[derive(Clone, Copy)]
-pub enum TxnDirection {
-    Bonus,
-    Added,
-    Deducted,
-}
-
-impl TxnDirection {
-    fn positive(self) -> bool {
-        use TxnDirection::*;
-        match self {
-            Bonus => true,
-            Added => true,
-            Deducted => false,
-        }
+fn direction_to_icon(direction: TxnDirection) -> &'static icondata_core::IconData {
+    use TxnDirection::*;
+    match direction {
+        Transaction => icondata::LuArrowLeftRight,
+        Added => icondata::FaArrowDownSolid,
+        Deducted => icondata::FaArrowUpSolid,
     }
 }
 
-impl From<TxnDirection> for &'static icondata_core::IconData {
-    fn from(val: TxnDirection) -> Self {
-        use TxnDirection::*;
-        match val {
-            Bonus => icondata::AiPlusCircleOutlined,
-            Added => icondata::AiUpCircleOutlined,
-            Deducted => icondata::AiDownCircleOutlined,
-        }
-    }
-}
-
-#[derive(Clone, Copy, Serialize, Deserialize)]
-pub enum TxnTag {
-    BetPlaced,
-    SignupBonus,
-    Referral,
-    Winnings,
-    Commission,
-    Transfer,
-    HotorNotAccountTransfer,
-}
-
-impl From<TxnTag> for TxnDirection {
-    fn from(value: TxnTag) -> TxnDirection {
-        use TxnTag::*;
-        match value {
-            BetPlaced | Transfer => TxnDirection::Deducted,
-            Winnings | Commission | HotorNotAccountTransfer => TxnDirection::Added,
-            SignupBonus | Referral => TxnDirection::Bonus,
-        }
-    }
-}
-
-impl TxnTag {
-    fn to_text(self) -> &'static str {
-        use TxnTag::*;
-        match self {
-            BetPlaced => "Vote Placement",
-            SignupBonus => "Joining Bonus",
-            Referral => "Referral Reward",
-            Winnings => "Vote Winnings",
-            Commission => "Vote Commission",
-            Transfer => "Transfer",
-            HotorNotAccountTransfer => "HotorNot Account Transfer",
-        }
-    }
-
-    fn icondata(self) -> &'static icondata_core::IconData {
-        TxnDirection::from(self).into()
-    }
-}
-
-impl Display for TxnTag {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.write_str(self.to_text())
-    }
-}
-
-#[derive(Clone, Copy, Serialize, Deserialize)]
-pub struct TxnInfo {
-    pub tag: TxnTag,
-    pub amount: u64,
-    pub id: u64,
-}
-
-impl KeyedData for TxnInfo {
-    type Key = u64;
-
-    fn key(&self) -> Self::Key {
-        self.id
-    }
+fn txn_info_to_icon(txn_info: TxnInfoType) -> &'static icondata_core::IconData {
+    let direction = TxnDirection::from(txn_info);
+    direction_to_icon(direction)
 }
 
 #[component]
-pub fn TxnView(info: TxnInfo, #[prop(optional)] _ref: NodeRef<html::Div>) -> impl IntoView {
+pub fn TxnView(
+    info: TxnInfoWallet,
+    #[prop(optional)] _ref: NodeRef<html::Div>,
+    symbol: String,
+) -> impl IntoView {
+    let params = use_params::<TokenKeyParam>();
     let direction = TxnDirection::from(info.tag);
     let bal_res = format!(
-        "{} {}",
-        if direction.positive() { "+" } else { "-" },
-        info.amount
+        "{}{}",
+        match direction {
+            TxnDirection::Added => "+",
+            TxnDirection::Deducted => "-",
+            TxnDirection::Transaction => "",
+        },
+        info.amount.humanize_float_truncate_to_dp(2)
     );
 
     view! {
-        <div _ref=_ref class="grid grid-cols-2 grid-rows-1 w-full items-center py-4">
+        <div _ref=_ref class="grid grid-cols-2 grid-rows-1 w-full py-3 border-b-2 border-white/10 justify-between">
             <div class="flex flex-row gap-2">
-                <div class="grid grid-cols-1 place-items-center place-content-center p-2 rounded-full text-primary-600 text-xl lg:text-2xl">
-                    <Icon icon=info.tag.icondata()/>
-                </div>
+                {
+                    match direction{
+                        TxnDirection::Added => {
+                            view! {
+                                <div class="flex items-center justify-center w-7 h-7 lg:w-10 lg:h-10 rounded-md text-green-600 bg-green-600/5 text-lg lg:text-xl">
+                                    <Icon icon=txn_info_to_icon(info.tag) />
+                                </div>
+                            }
+                        },
+                        TxnDirection::Deducted => {
+                            view! {
+                                <div class="flex items-center justify-center w-7 h-7 lg:w-10 lg:h-10 rounded-md text-red-600 bg-red-600/5 text-lg lg:text-xl">
+                                    <Icon icon=txn_info_to_icon(info.tag) />
+                                </div>
+                            }
+                        },
+                        TxnDirection::Transaction => {
+                            view! {
+                                <div class="flex items-center justify-center w-7 h-7 lg:w-10 lg:h-10 rounded-md text-white bg-blue-600/5 text-lg lg:text-xl">
+                                    <Icon icon=txn_info_to_icon(info.tag) />
+                                </div>
+                            }
+                        },
+                    }
+                }
                 <div class="flex flex-col">
                     <span class="text-md md:text-lg font-semibold text-white">
                         {info.tag.to_text()}
                     </span>
-                    <span class="text-sm md:text-md text-white/50">{info.amount} COYNs</span>
+                    {
+                        move || {
+                            match info.tag{
+                                TxnInfoType::Mint { to } => {
+                                    match params.get(){
+                                        Ok(_) => None,
+                                        Err(_) => Some(view! {<div class="text-sm md:text-md text-white/50">{format!("To: {}", to)}</div>})
+                                    }
+                                },
+                                TxnInfoType::Burn { from } => {
+                                    match params.get(){
+                                        Ok(_) => None,
+                                        Err(_) => Some(view! {<div class="text-sm md:text-md text-white/50">{format!("From: {}", from)}</div>})
+                                    }
+                                },
+                                TxnInfoType::Received { from } => Some(view! {<div class="text-sm md:text-md text-white/50">{format!("From: {}", from)}</div>}),
+                                TxnInfoType::Sent { to } => Some(view! {<div class="text-sm md:text-md text-white/50">{format!("To: {}", to)}</div>}),
+                                TxnInfoType::Transfer { from, to } => Some(view! {
+                                    <div class="flex flex-col space-y-1">
+                                    <div class="text-sm md:text-md text-white/50">{format!("From: {}", from)}</div>
+                                    <div class="text-sm md:text-md text-white/50">{format!("To: {}", to)}</div>
+                                    </div>
+                                })
+                            }
+                        }
+                    }
                 </div>
             </div>
+            <div class="flex flex-col top-0 text-right">
             <span class=move || {
-                if direction.positive() {
-                    "text-green-600 justify-self-end"
-                } else {
-                    "text-red-600 justify-self-end"
+                match direction {
+                    TxnDirection::Added => "text-green-600 font-semibold",
+                    _ => "text-white font-semibold",
                 }
-            }>{bal_res} COYNs</span>
+            }>{format!("{} {}", bal_res, symbol)}</span>
+            <span class="text-sm md:text-md text-white/50">
+                {parse_ns_to_datetime(info.timestamp).ok()}
+            </span>
+            </div>
         </div>
     }
 }
 
 pub mod provider {
-    use crate::{component::infinite_scroller::CursoredDataProvider, state::canisters::Canisters};
+
+    use candid::Principal;
+    use yral_canisters_common::{
+        cursored_data::{transaction::IndexOrLedger, CursoredDataProvider},
+        Canisters,
+    };
 
     use super::*;
 
-    pub fn get_history_provider(
-        canisters: Canisters<true>,
-    ) -> impl CursoredDataProvider<Data = TxnInfo> + Clone {
+    pub(crate) fn get_history_provider(
+        canisters: Canisters<false>,
+        source: IndexOrLedger,
+        decimals: u8,
+    ) -> impl CursoredDataProvider<Data = TxnInfoWallet> + Clone {
         #[cfg(feature = "mock-wallet-history")]
         {
             _ = canisters;
+            _ = source;
+            _ = decimals;
             mock::MockHistoryProvider
         }
         #[cfg(not(feature = "mock-wallet-history"))]
         {
-            canister::TxnHistory(canisters)
-        }
-    }
-
-    #[cfg(not(feature = "mock-wallet-history"))]
-    mod canister {
-        use super::{Canisters, CursoredDataProvider, TxnInfo, TxnTag};
-        use crate::canister::individual_user_template::{
-            HotOrNotOutcomePayoutEvent, MintEvent, Result15, TokenEvent,
-        };
-        use crate::component::infinite_scroller::PageEntry;
-        use ic_agent::AgentError;
-
-        fn event_to_txn(event: (u64, TokenEvent)) -> Option<TxnInfo> {
-            let (amount, tag) = match event.1 {
-                TokenEvent::Stake { amount, .. } => (amount, TxnTag::BetPlaced),
-                TokenEvent::Burn => return None,
-                TokenEvent::Mint {
-                    amount,
-                    details: MintEvent::NewUserSignup { .. },
-                    ..
-                } => (amount, TxnTag::SignupBonus),
-                TokenEvent::Mint {
-                    amount,
-                    details: MintEvent::Referral { .. },
-                    ..
-                } => (amount, TxnTag::Referral),
-                TokenEvent::Transfer { amount, .. } => (amount, TxnTag::Transfer),
-                TokenEvent::Receive { amount, .. } => (amount, TxnTag::HotorNotAccountTransfer),
-                TokenEvent::HotOrNotOutcomePayout {
-                    amount,
-                    details: HotOrNotOutcomePayoutEvent::CommissionFromHotOrNotBet { .. },
-                    ..
-                } => (amount, TxnTag::Commission),
-                TokenEvent::HotOrNotOutcomePayout {
-                    amount,
-                    details: HotOrNotOutcomePayoutEvent::WinningsEarnedFromBet { .. },
-                    ..
-                } => (amount, TxnTag::Winnings),
-            };
-
-            Some(TxnInfo {
-                tag,
-                amount,
-                id: event.0,
-            })
-        }
-
-        #[derive(Clone)]
-        pub struct TxnHistory(pub Canisters<true>);
-
-        impl CursoredDataProvider for TxnHistory {
-            type Data = TxnInfo;
-            type Error = AgentError;
-
-            async fn get_by_cursor(
-                &self,
-                start: usize,
-                end: usize,
-            ) -> Result<PageEntry<TxnInfo>, AgentError> {
-                let user = self.0.authenticated_user().await;
-                let history = user
-                    .get_user_utility_token_transaction_history_with_pagination(
-                        start as u64,
-                        end as u64,
-                    )
-                    .await?;
-                let history = match history {
-                    Result15::Ok(v) => v,
-                    Result15::Err(_) => vec![],
-                };
-                let list_end = history.len() < (end - start);
-                Ok(PageEntry {
-                    data: history.into_iter().filter_map(event_to_txn).collect(),
-                    end: list_end,
-                })
+            use yral_canisters_common::cursored_data::transaction::TxnHistory;
+            TxnHistory {
+                canisters,
+                source,
+                decimals,
             }
         }
     }
@@ -233,38 +153,51 @@ pub mod provider {
             rand_core::{RngCore, SeedableRng},
             ChaCha8Rng,
         };
-
-        use crate::{component::infinite_scroller::PageEntry, utils::time::current_epoch};
+        use yral_canisters_common::{
+            cursored_data::PageEntry,
+            utils::{time::current_epoch, token::balance::TokenBalance},
+        };
 
         use super::*;
 
         #[derive(Clone, Copy)]
         pub struct MockHistoryProvider;
 
-        fn tag_from_u32(v: u32) -> TxnTag {
-            match v % 5 {
-                0 => TxnTag::BetPlaced,
-                1 => TxnTag::SignupBonus,
-                2 => TxnTag::Referral,
-                3 => TxnTag::Winnings,
-                4 => TxnTag::Commission,
+        fn tag_from_u32(v: u32) -> TxnInfoType {
+            match v % 4 {
+                0 => TxnInfoType::Mint {
+                    to: Principal::anonymous(),
+                },
+                1 => TxnInfoType::Burn {
+                    from: Principal::anonymous(),
+                },
+                2 => TxnInfoType::Received {
+                    from: Principal::anonymous(),
+                },
+                3 => TxnInfoType::Sent {
+                    to: Principal::anonymous(),
+                },
+                4 => TxnInfoType::Transfer {
+                    from: Principal::anonymous(),
+                    to: Principal::anonymous(),
+                },
                 _ => unreachable!(),
             }
         }
-
         impl CursoredDataProvider for MockHistoryProvider {
-            type Data = TxnInfo;
+            type Data = TxnInfoWallet;
             type Error = Infallible;
 
             async fn get_by_cursor(
                 &self,
                 from: usize,
                 end: usize,
-            ) -> Result<PageEntry<TxnInfo>, Infallible> {
+            ) -> Result<PageEntry<TxnInfoWallet>, Infallible> {
                 let mut rand_gen = ChaCha8Rng::seed_from_u64(current_epoch().as_nanos() as u64);
                 let data = (from..end)
-                    .map(|_| TxnInfo {
-                        amount: rand_gen.next_u64() % 3001,
+                    .map(|_| TxnInfoWallet {
+                        amount: TokenBalance::new_cdao((rand_gen.next_u64() % 3001).into()),
+                        timestamp: rand_gen.next_u64(),
                         tag: tag_from_u32(rand_gen.next_u32()),
                         id: rand_gen.next_u64(),
                     })

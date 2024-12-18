@@ -5,8 +5,8 @@ use serde::Deserialize;
 use serde::Serialize;
 use std::error::Error;
 
-use crate::auth::DelegatedIdentityWire;
 use crate::consts::DOWNLOAD_UPLOAD_SERVICE;
+use yral_types::delegated_identity::DelegatedIdentityWire;
 
 #[derive(Deserialize)]
 pub struct AllowPrincpalRes {

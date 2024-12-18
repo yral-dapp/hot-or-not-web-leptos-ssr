@@ -5,7 +5,6 @@ use serde::{Deserialize, Serialize};
 
 use super::{overlay::VideoDetailsOverlay, video_loader::VideoView};
 use crate::{
-    canister::utils::bg_url,
     component::{
         back_btn::go_back_or_fallback, scrolling_post_view::MuteIconOverlay,
         spinner::FullScreenSpinner,
@@ -14,8 +13,9 @@ use crate::{
         audio_state::AudioState,
         canisters::{auth_canisters_store, unauth_canisters},
     },
-    utils::posts::{get_post_uid, PostDetails},
+    utils::bg_url,
 };
+use yral_canisters_common::utils::posts::PostDetails;
 
 #[derive(Params, PartialEq, Clone, Copy)]
 struct PostParams {
@@ -47,10 +47,10 @@ fn SinglePostViewInner(post: PostDetails) -> impl IntoView {
                     style:background-color="rgb(0, 0, 0)"
                     style:background-image=format!("url({bg_url})")
                 ></div>
-                <VideoDetailsOverlay post=post.clone()/>
-                <VideoView post=Some(post) muted autoplay_at_render=true/>
+                <VideoDetailsOverlay post=post.clone() />
+                <VideoView post=Some(post) muted autoplay_at_render=true />
             </div>
-            <MuteIconOverlay show_mute_icon/>
+            <MuteIconOverlay show_mute_icon />
         </div>
     }
 }
@@ -77,10 +77,14 @@ pub fn SinglePost() -> impl IntoView {
     let fetch_post = create_resource(params, move |params| async move {
         let params = params.map_err(|_| PostFetchError::Invalid)?;
         let post_uid = if let Some(canisters) = auth_cans.get_untracked() {
-            get_post_uid(&canisters, params.canister_id, params.post_id).await
+            canisters
+                .get_post_details(params.canister_id, params.post_id)
+                .await
         } else {
             let canisters = unauth_canisters();
-            get_post_uid(&canisters, params.canister_id, params.post_id).await
+            canisters
+                .get_post_details(params.canister_id, params.post_id)
+                .await
         };
         post_uid
             .map_err(|e| PostFetchError::GetUid(e.to_string()))
@@ -92,11 +96,11 @@ pub fn SinglePost() -> impl IntoView {
             {move || {
                 fetch_post()
                     .map(|post| match post {
-                        Ok(post) => view! { <SinglePostViewInner post/> },
-                        Err(PostFetchError::Invalid) => view! { <Redirect path="/"/> },
-                        Err(PostFetchError::Unavailable) => view! { <UnavailablePost/> },
+                        Ok(post) => view! { <SinglePostViewInner post /> },
+                        Err(PostFetchError::Invalid) => view! { <Redirect path="/" /> },
+                        Err(PostFetchError::Unavailable) => view! { <UnavailablePost /> },
                         Err(PostFetchError::GetUid(e)) => {
-                            view! { <Redirect path=format!("/error?err={e}")/> }
+                            view! { <Redirect path=format!("/error?err={e}") /> }
                         }
                     })
             }}

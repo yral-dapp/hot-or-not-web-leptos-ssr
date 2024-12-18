@@ -5,13 +5,13 @@ use crate::component::{social::*, toggle::Toggle};
 use crate::consts::NOTIFICATIONS_ENABLED_STORE;
 use crate::state::auth::account_connected_reader;
 use crate::utils::notifications::get_token_for_principal;
-use crate::utils::profile::ProfileDetails;
 use codee::string::FromToStringCodec;
 use leptos::html::Input;
 use leptos::*;
 use leptos_icons::*;
 use leptos_use::storage::use_local_storage;
 use leptos_use::use_event_listener;
+use yral_canisters_common::utils::profile::ProfileDetails;
 
 #[component]
 fn MenuItem(
@@ -23,10 +23,10 @@ fn MenuItem(
     view! {
         <a href=href class="grid grid-cols-3 items-center w-full" target=target>
             <div class="flex flex-row gap-4 items-center col-span-2">
-                <Icon class="text-2xl" icon=icon/>
+                <Icon class="text-2xl" icon=icon />
                 <span class="text-wrap">{text}</span>
             </div>
-            <Icon class="text-2xl justify-self-end" icon=icondata::AiRightOutlined/>
+            <Icon class="text-2xl justify-self-end" icon=icondata::AiRightOutlined />
         </a>
     }
 }
@@ -37,10 +37,10 @@ fn MenuFooter() -> impl IntoView {
         <div class="flex flex-col items-center w-full gap-4 pt-10 pb-8">
             <span class="text-white/50 text-sm">Follow us on</span>
             <div class="flex flex-row gap-4">
-                <Telegram/>
-                <Discord/>
-                <Twitter/>
-                <IcWebsite/>
+                <Telegram />
+                <Discord />
+                <Twitter />
+                <IcWebsite />
             </div>
             <svg class="h-14 rounded-md outline outline-primary-600 outline-1" viewBox="0 0 228 49">
                 <path
@@ -80,7 +80,7 @@ fn ProfileLoaded(user_details: ProfileDetails) -> impl IntoView {
     let (is_connected, _) = account_connected_reader();
     view! {
         <div class="basis-4/12 aspect-square overflow-clip rounded-full">
-            <img class="h-full w-full object-cover" src=user_details.profile_pic_or_random()/>
+            <img class="h-full w-full object-cover" src=user_details.profile_pic_or_random() />
         </div>
         <div
             class="flex flex-col basis-8/12"
@@ -101,7 +101,7 @@ fn ProfileLoaded(user_details: ProfileDetails) -> impl IntoView {
 fn ProfileInfo() -> impl IntoView {
     view! {
         <AuthCansProvider fallback=ProfileLoading let:canisters>
-            <ProfileLoaded user_details=canisters.profile_details()/>
+            <ProfileLoaded user_details=canisters.profile_details() />
         </AuthCansProvider>
     }
 }
@@ -126,11 +126,11 @@ fn EnableNotifications(user_details: ProfileDetails) -> impl IntoView {
     view! {
         <div class="grid grid-cols-2 items-center w-full">
             <div class="flex flex-row gap-4 items-center">
-                <Icon class="text-2xl" icon=icondata::BiCommentDotsRegular/>
+                <Icon class="text-2xl" icon=icondata::BiCommentDotsRegular />
                 <span>Enable Notifications</span>
             </div>
             <div class="justify-self-end">
-                <Toggle checked=notifs_enabled node_ref=toggle_ref/>
+                <Toggle checked=notifs_enabled node_ref=toggle_ref />
             </div>
         </div>
     }
@@ -143,7 +143,7 @@ pub fn Settings() -> impl IntoView {
             <div class="flex flex-col items-center w-full gap-20 pb-16">
                 <Title justify_center=false>
                     <div class="flex flex-row justify-between">
-                        <BackButton fallback="/menu".to_string()/>
+                        <BackButton fallback="/menu".to_string() />
                         <span class="font-bold text-2xl">Settings</span>
                         <div></div>
                     </div>
@@ -151,10 +151,10 @@ pub fn Settings() -> impl IntoView {
             </div>
             <div class="flex flex-col py-12 px-8 gap-8 w-full text-lg">
                 <AuthCansProvider let:canisters>
-                    <EnableNotifications user_details=canisters.profile_details()/>
+                    <EnableNotifications user_details=canisters.profile_details() />
                 </AuthCansProvider>
             </div>
-            <MenuFooter/>
+            <MenuFooter />
         </div>
     }
 }

@@ -1,17 +1,17 @@
 use super::spinner::Spinner;
 use crate::{
-    auth::DelegatedIdentityWire,
-    page::menu::AuthorizedUserToSeedContent,
-    state::{canisters::Canisters, content_seed_client::ContentSeedClient},
+    auth::delegate_short_lived_identity, page::menu::AuthorizedUserToSeedContent,
+    state::content_seed_client::ContentSeedClient,
 };
 use leptos::*;
+use yral_canisters_common::Canisters;
 
 #[component]
 fn YoutubeUploadInner(canisters: Canisters<true>, #[prop(optional)] url: String) -> impl IntoView {
     let url_value = RwSignal::new(url);
     let create_short_lived_delegated_identity = |canisters: &Canisters<true>| {
         let id = canisters.identity();
-        DelegatedIdentityWire::delegate_short_lived_identity(id)
+        delegate_short_lived_identity(id)
     };
 
     let on_submit = create_action(move |_| {
@@ -86,7 +86,7 @@ pub fn YoutubeUpload(canisters: Canisters<true>, #[prop(optional)] url: String) 
     view! {
         <Show when=loaded fallback=Spinner>
             <Show when=move || authorized().map(|(a, _)| a).unwrap_or_default()>
-                <YoutubeUploadInner canisters=cans_s.get_value() url=url_s.get_value()/>
+                <YoutubeUploadInner canisters=cans_s.get_value() url=url_s.get_value() />
             </Show>
         </Show>
     }

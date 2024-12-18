@@ -6,17 +6,16 @@ mod sns_form;
 pub mod transfer;
 pub mod types;
 
-use candid::Principal;
 use leptos::Params;
 use leptos_router::Params;
+use yral_canisters_common::utils::token::RootType;
 
 #[derive(Params, PartialEq, Clone)]
 struct TokenParams {
-    token_root: Principal,
+    token_root: RootType,
 }
 
 #[derive(Params, PartialEq, Clone)]
 struct TokenInfoParams {
-    token_root: Principal,
-    user_principal: Principal,
+    token_root: RootType,
 }

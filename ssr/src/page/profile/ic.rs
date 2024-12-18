@@ -1,10 +1,11 @@
 use leptos::*;
 use leptos_icons::*;
+use yral_canisters_common::cursored_data::CursoredDataProvider;
 
 use crate::{
     component::{
         bullet_loader::BulletLoader,
-        infinite_scroller::{CursoredDataProvider, InferData, InfiniteScroller},
+        infinite_scroller::{InferData, InfiniteScroller},
     },
     utils::profile::PROFILE_CHUNK_SZ,
 };
@@ -30,7 +31,7 @@ where
                 empty_content=move || {
                     view! {
                         <div class="flex flex-col pt-9 gap-2 w-full justify-center items-center">
-                            <Icon class="w-36 h-36" icon=empty_graphic/>
+                            <Icon class="w-36 h-36" icon=empty_graphic />
                             <span class="text-lg text-white">{empty_text.clone()}</span>
                         </div>
                     }
@@ -39,7 +40,7 @@ where
                 custom_loader=move || {
                     view! {
                         <div class="w-full flex justify-center items-center pt-9">
-                            <BulletLoader/>
+                            <BulletLoader />
                         </div>
                     }
                 }

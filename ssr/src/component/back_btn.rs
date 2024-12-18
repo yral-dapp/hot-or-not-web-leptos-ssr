@@ -44,7 +44,7 @@ pub fn BackButton(#[prop(into)] fallback: MaybeSignal<String>) -> impl IntoView 
             on:click=move |_| go_back_or_fallback(&fallback.get_untracked())
             class="items-center"
         >
-            <Icon icon=icondata::AiLeftOutlined/>
+            <Icon icon=icondata::AiLeftOutlined />
         </button>
     }
 }

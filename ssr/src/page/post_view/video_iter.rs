@@ -6,26 +6,16 @@ use futures::{stream::FuturesOrdered, Stream, StreamExt};
 use leptos::*;
 use leptos_use::storage::use_local_storage;
 
+use yral_canisters_client::post_cache::{self, NsfwFilter};
+
 use crate::{
-    canister::post_cache::{self, NsfwFilter},
     consts::USER_CANISTER_ID_STORE,
-    state::canisters::{auth_canisters_store, Canisters},
-    utils::posts::{get_post_uid, FetchCursor, PostDetails, PostViewError},
+    state::canisters::auth_canisters_store,
+    utils::{host::show_nsfw_content, posts::FetchCursor},
 };
+use yral_canisters_common::{utils::posts::PostDetails, Canisters, Error as CanistersError};
 
-pub async fn post_liked_by_me(
-    canisters: &Canisters<true>,
-    post_canister: Principal,
-    post_id: u64,
-) -> Result<(bool, u64), PostViewError> {
-    let individual = canisters.individual_user(post_canister).await;
-    let post = individual
-        .get_individual_post_details_by_id(post_id)
-        .await?;
-    Ok((post.liked_by_me, post.like_count))
-}
-
-type PostsStream<'a> = Pin<Box<dyn Stream<Item = Vec<Result<PostDetails, PostViewError>>> + 'a>>;
+type PostsStream<'a> = Pin<Box<dyn Stream<Item = Vec<Result<PostDetails, CanistersError>>> + 'a>>;
 
 #[derive(Debug, Eq, PartialEq)]
 pub enum FeedResultType {
@@ -54,7 +44,7 @@ impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
         &self,
         chunks: usize,
         allow_nsfw: bool,
-    ) -> Result<FetchVideosRes<'a>, PostViewError> {
+    ) -> Result<FetchVideosRes<'a>, ServerFnError> {
         let post_cache = self.canisters.post_cache().await;
         let top_posts_fut = post_cache
             .get_top_posts_aggregated_from_canisters_on_this_network_for_home_feed_cursor(
@@ -78,16 +68,17 @@ impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
                 })
             }
             post_cache::Result_::Err(_) => {
-                return Err(PostViewError::Canister(
-                    "canister refused to send posts".into(),
-                ))
+                return Err(ServerFnError::new("canister refused to send posts"))
             }
         };
 
         let end = top_posts.len() < self.cursor.limit as usize;
         let chunk_stream = top_posts
             .into_iter()
-            .map(move |item| get_post_uid(self.canisters, item.publisher_canister_id, item.post_id))
+            .map(move |item| {
+                self.canisters
+                    .get_post_details(item.publisher_canister_id, item.post_id)
+            })
             .collect::<FuturesOrdered<_>>()
             .filter_map(|res| async { res.transpose() })
             .chunks(chunks);
@@ -104,7 +95,7 @@ impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
         chunks: usize,
         _allow_nsfw: bool,
         video_queue: Vec<PostDetails>,
-    ) -> Result<FetchVideosRes<'a>, PostViewError> {
+    ) -> Result<FetchVideosRes<'a>, ServerFnError> {
         #[cfg(feature = "hydrate")]
         {
             use crate::utils::ml_feed::ml_feed_grpcweb::MLFeed;
@@ -131,23 +122,80 @@ impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
                 user_canister_id = cans.user_canister();
             }
 
-            let top_posts_fut =
-                ml_feed.get_next_feed(&user_canister_id, self.cursor.limit as u32, video_queue);
+            let show_nsfw = show_nsfw_content();
+            let top_posts = if show_nsfw {
+                ml_feed
+                    .get_next_feed_nsfw(&user_canister_id, self.cursor.limit as u32, video_queue)
+                    .await
+            } else {
+                ml_feed
+                    .get_next_feed_clean(&user_canister_id, self.cursor.limit as u32, video_queue)
+                    .await
+            };
 
-            let top_posts = match top_posts_fut.await {
+            let top_posts = match top_posts {
                 Ok(top_posts) => top_posts,
                 Err(e) => {
-                    return Err(PostViewError::MLFeedError(format!(
-                        "Error fetching ml feed: {:?}",
-                        e
-                    )));
+                    return Err(ServerFnError::new(
+                        format!("Error fetching ml feed: {e:?}",),
+                    ));
                 }
             };
 
             let end = false;
             let chunk_stream = top_posts
                 .into_iter()
-                .map(move |item| get_post_uid(self.canisters, item.0, item.1))
+                .map(move |item| self.canisters.get_post_details(item.0, item.1))
+                .collect::<FuturesOrdered<_>>()
+                .filter_map(|res| async { res.transpose() })
+                .chunks(chunks);
+
+            Ok(FetchVideosRes {
+                posts_stream: Box::pin(chunk_stream),
+                end,
+                res_type: FeedResultType::MLFeed,
+            })
+        }
+
+        #[cfg(not(feature = "hydrate"))]
+        {
+            return Ok(FetchVideosRes {
+                posts_stream: Box::pin(futures::stream::empty()),
+                end: true,
+                res_type: FeedResultType::MLFeed,
+            });
+        }
+    }
+
+    pub async fn fetch_post_uids_ml_feed_coldstart_chunked(
+        &self,
+        chunks: usize,
+        _allow_nsfw: bool,
+        video_queue: Vec<PostDetails>,
+    ) -> Result<FetchVideosRes<'a>, ServerFnError> {
+        #[cfg(feature = "hydrate")]
+        {
+            use crate::utils::ml_feed::ml_feed_grpcweb::MLFeed;
+
+            let ml_feed: MLFeed = expect_context();
+
+            let top_posts = ml_feed
+                .get_next_feed_coldstart(self.cursor.limit as u32, video_queue)
+                .await;
+
+            let top_posts = match top_posts {
+                Ok(top_posts) => top_posts,
+                Err(e) => {
+                    return Err(ServerFnError::new(
+                        format!("Error fetching ml feed: {e:?}",),
+                    ));
+                }
+            };
+
+            let end = false;
+            let chunk_stream = top_posts
+                .into_iter()
+                .map(move |item| self.canisters.get_post_details(item.0, item.1))
                 .collect::<FuturesOrdered<_>>()
                 .filter_map(|res| async { res.transpose() })
                 .chunks(chunks);
@@ -175,7 +223,8 @@ impl<'a> VideoFetchStream<'a, true> {
         &self,
         chunks: usize,
         allow_nsfw: bool,
-    ) -> Result<FetchVideosRes<'a>, PostViewError> {
+        video_queue: Vec<PostDetails>,
+    ) -> Result<FetchVideosRes<'a>, ServerFnError> {
         let cans_true = self.canisters;
 
         let user_canister = cans_true.authenticated_user().await;
@@ -184,13 +233,19 @@ impl<'a> VideoFetchStream<'a, true> {
 
         let top_posts = top_posts_fut.await?;
         if top_posts.is_empty() {
-            return self.fetch_post_uids_chunked(chunks, allow_nsfw).await;
+            // try ml feed once again - with coldstart feed
+            return self
+                .fetch_post_uids_ml_feed_coldstart_chunked(chunks, allow_nsfw, video_queue)
+                .await;
         }
 
         let end = false;
         let chunk_stream = top_posts
             .into_iter()
-            .map(move |item| get_post_uid(self.canisters, item.canister_id, item.post_id))
+            .map(move |item| {
+                self.canisters
+                    .get_post_details(item.canister_id, item.post_id)
+            })
             .collect::<FuturesOrdered<_>>()
             .filter_map(|res| async { res.transpose() })
             .chunks(chunks);
@@ -207,21 +262,21 @@ impl<'a> VideoFetchStream<'a, true> {
         chunks: usize,
         _allow_nsfw: bool,
         video_queue: Vec<PostDetails>,
-    ) -> Result<FetchVideosRes<'a>, PostViewError> {
+    ) -> Result<FetchVideosRes<'a>, ServerFnError> {
         if video_queue.len() < 10 {
             self.cursor.set_limit(15);
-            self.fetch_post_uids_mlfeed_cache_chunked(chunks, _allow_nsfw)
+            self.fetch_post_uids_mlfeed_cache_chunked(chunks, _allow_nsfw, video_queue)
                 .await
         } else {
             let res = self
-                .fetch_post_uids_ml_feed_chunked(chunks, _allow_nsfw, video_queue)
+                .fetch_post_uids_ml_feed_chunked(chunks, _allow_nsfw, video_queue.clone())
                 .await;
 
             match res {
                 Ok(res) => Ok(res),
                 Err(_) => {
                     self.cursor.set_limit(15);
-                    self.fetch_post_uids_mlfeed_cache_chunked(chunks, _allow_nsfw)
+                    self.fetch_post_uids_ml_feed_coldstart_chunked(chunks, _allow_nsfw, video_queue)
                         .await
                 }
             }

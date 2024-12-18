@@ -1,7 +1,13 @@
+use crate::{consts::USER_PRINCIPAL_STORE, utils::host::show_cdao_page};
+
 use super::nav_icons::*;
+use candid::Principal;
+use codee::string::FromToStringCodec;
 use leptos::*;
 use leptos_icons::*;
 use leptos_router::*;
+use leptos_use::use_cookie;
+
 #[component]
 fn NavIcon(
     idx: usize,
@@ -17,7 +23,7 @@ fn NavIcon(
                 fallback=move || {
                     view! {
                         <div class="py-5">
-                            <Icon icon=icon class="text-2xl text-white md:text-3xl"/>
+                            <Icon icon=icon class="text-2xl text-white md:text-3xl" />
                         </div>
                     }
                 }
@@ -91,28 +97,55 @@ fn UploadIcon(idx: usize, cur_selected: Memo<usize>) -> impl IntoView {
 #[component]
 pub fn NavBar() -> impl IntoView {
     let cur_location = use_location();
-    let home_path = create_rw_signal("/hot-or-not".to_string());
+    let home_path = create_rw_signal("/".to_string());
+    let (user_principal, _) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE);
     let cur_selected = create_memo(move |_| {
         let path = cur_location.pathname.get();
+
         match path.as_str() {
             "/" => 0,
             // "/leaderboard" => 1,
             "/upload" => 2,
-            "/wallet" | "/transactions" => 3,
+            "/transactions" => 3,
             "/menu" | "/leaderboard" => 4,
+            "/board" => 0,
             s if s.starts_with("/hot-or-not") => {
                 home_path.set(path);
                 0
             }
-            s if s.starts_with("/profile") => 0,
+            s if s.starts_with("/profile/") => match user_principal.get() {
+                Some(user_principal) => {
+                    if s.starts_with(&format!("/profile/{}", user_principal)) {
+                        5
+                    } else {
+                        6 // having a number out of range to not highlight anything
+                    }
+                }
+                None => 0,
+            },
+            s if s.starts_with("/wallet/") => match user_principal.get() {
+                Some(user_principal) => {
+                    if s.starts_with(&format!("/wallet/{}", user_principal)) {
+                        3
+                    } else {
+                        6 // having a number out of range to not highlight anything
+                    }
+                }
+                None => 0,
+            },
+            s if s.starts_with("/profile") => 5,
+            s if s.starts_with("/wallet") => 3, // highlights during redirects
             s if s.starts_with("/token/info") => 3,
-            s if s.starts_with("/token/create") => 5,
-            s if s.starts_with("/your-profile") => 5,
+            s if s.starts_with("/token/create") => 2,
+            s if s.starts_with("/icpump-ai") => 5,
             _ => 4,
         }
     });
 
+    let show_cdao_icon = show_cdao_page();
+
     view! {
+    <Suspense>
         <div class="flex fixed bottom-0 left-0 z-50 flex-row justify-between items-center px-6 w-full bg-black/80">
             <NavIcon
                 idx=0
@@ -128,15 +161,36 @@ pub fn NavBar() -> impl IntoView {
                 filled_icon=WalletSymbolFilled
                 cur_selected=cur_selected
             />
-            <UploadIcon idx=2 cur_selected/>
-            <NavIcon
-                idx=5
-                href="/your-profile"
-                icon=ProfileIcon
-                filled_icon=ProfileIconFilled
-                cur_selected=cur_selected
-            />
-            <NavIcon idx=4 href="/menu" icon=MenuSymbol cur_selected=cur_selected/>
+            <UploadIcon idx=2 cur_selected />
+
+            {
+                move || {
+                    if show_cdao_icon {
+                        view! {
+                            <NavIcon
+                                idx=5
+                                href="/icpump-ai"
+                                icon=ICPumpAiIcon
+                                cur_selected=cur_selected
+                            />
+                        }
+                    } else {
+                        view! {
+                            <NavIcon
+                                idx=5
+                                href="/profile/tokens"
+                                icon=ProfileIcon
+                                filled_icon=ProfileIconFilled
+                                cur_selected=cur_selected
+                            />
+                        }
+                    }
+                }
+            }
+
+            <NavIcon idx=4 href="/menu" icon=MenuSymbol cur_selected=cur_selected />
         </div>
+
+    </Suspense>
     }
 }

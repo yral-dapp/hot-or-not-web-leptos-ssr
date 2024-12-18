@@ -1,7 +1,11 @@
 #[cfg(feature = "local-bin")]
 pub mod containers;
 
-use std::env;
+use std::{
+    env,
+    fs::OpenOptions,
+    io::{BufWriter, Write},
+};
 
 use axum_extra::extract::cookie::Key;
 use leptos::LeptosOptions;
@@ -9,8 +13,10 @@ use leptos_router::RouteListing;
 
 use crate::{
     auth::server_impl::store::KVStoreImpl,
-    state::{canisters::Canisters, server::AppState},
+    state::server::AppState,
+    utils::token::{icpump::ICPumpSearchGrpcChannel, nsfw::ICPumpNSFWGrpcChannel},
 };
+use yral_canisters_common::Canisters;
 
 #[cfg(feature = "cloudflare")]
 fn init_cf() -> gob_cloudflare::CloudflareAuth {
@@ -23,9 +29,20 @@ fn init_cf() -> gob_cloudflare::CloudflareAuth {
 }
 
 fn init_cookie_key() -> Key {
-    let cookie_key_str = env::var("COOKIE_KEY").expect("`COOKIE_KEY` is required!");
-    let cookie_key_raw =
-        hex::decode(cookie_key_str).expect("Invalid `COOKIE_KEY` (must be length 128 hex)");
+    let cookie_key_raw = {
+        #[cfg(not(feature = "local-bin"))]
+        {
+            let cookie_key_str = env::var("COOKIE_KEY").expect("`COOKIE_KEY` is required!");
+            hex::decode(cookie_key_str).expect("Invalid `COOKIE_KEY` (must be length 128 hex)")
+        }
+        #[cfg(feature = "local-bin")]
+        {
+            use rand_chacha::rand_core::{OsRng, RngCore};
+            let mut cookie_key = [0u8; 64];
+            OsRng.fill_bytes(&mut cookie_key);
+            cookie_key.to_vec()
+        }
+    };
     Key::from(&cookie_key_raw)
 }
 
@@ -99,6 +116,36 @@ fn init_google_oauth() -> crate::auth::core_clients::CoreClients {
     }
 }
 
+#[cfg(feature = "firestore")]
+async fn init_firestoredb() -> firestore::FirestoreDb {
+    use firestore::{FirestoreDb, FirestoreDbOptions};
+
+    // firestore-rs needs the service account key to be in a file
+    let sa_key_file = env::var("HON_GOOGLE_SERVICE_ACCOUNT").expect("HON_GOOGLE_SERVICE_ACCOUNT");
+    let file = OpenOptions::new()
+        .write(true)
+        .create(true)
+        .truncate(true)
+        .open("hon_google_service_account.json")
+        .expect("create file");
+
+    let mut f = BufWriter::new(file);
+    f.write_all(sa_key_file.as_bytes()).expect("write file");
+    f.flush().expect("flush file");
+
+    env::set_var(
+        "GOOGLE_APPLICATION_CREDENTIALS",
+        "hon_google_service_account.json",
+    );
+
+    let options = FirestoreDbOptions::new("hot-or-not-feed-intelligence".to_string())
+        .with_database_id("ic-pump-fun".to_string());
+
+    FirestoreDb::with_options(options)
+        .await
+        .expect("failed to create db")
+}
+
 #[cfg(feature = "ga4")]
 async fn init_grpc_offchain_channel() -> tonic::transport::Channel {
     use crate::consts::OFF_CHAIN_AGENT_GRPC_URL;
@@ -112,6 +159,37 @@ async fn init_grpc_offchain_channel() -> tonic::transport::Channel {
         .connect()
         .await
         .expect("Couldn't connect to off-chain agent")
+}
+
+async fn init_grpc_icpump_search_channel() -> ICPumpSearchGrpcChannel {
+    use crate::consts::ICPUMP_SEARCH_GRPC_URL;
+    use tonic::transport::{Channel, ClientTlsConfig};
+
+    let tls_config = ClientTlsConfig::new().with_webpki_roots();
+    let off_chain_agent_url = ICPUMP_SEARCH_GRPC_URL;
+    let channel = Channel::from_static(off_chain_agent_url)
+        .tls_config(tls_config)
+        .expect("Couldn't update TLS config for off-chain agent")
+        .connect()
+        .await
+        .expect("Couldn't connect to off-chain agent");
+
+    ICPumpSearchGrpcChannel { channel }
+}
+
+async fn init_grpc_nsfw_channel() -> ICPumpNSFWGrpcChannel {
+    use crate::consts::NSFW_SERVER_URL;
+    use tonic::transport::{Channel, ClientTlsConfig};
+
+    let tls_config = ClientTlsConfig::new().with_webpki_roots();
+    let channel = Channel::from_static(NSFW_SERVER_URL)
+        .tls_config(tls_config)
+        .expect("Couldn't update TLS config for nsfw agent")
+        .connect()
+        .await
+        .expect("Couldn't connect to nsfw agent");
+
+    ICPumpNSFWGrpcChannel { channel }
 }
 
 #[cfg(feature = "backend-admin")]
@@ -140,6 +218,15 @@ fn init_admin_canisters() -> crate::state::admin_canisters::AdminCanisters {
             BasicIdentity::from_pem(admin_id_pem_by).expect("Invalid `BACKEND_ADMIN_IDENTITY`");
         AdminCanisters::new(admin_id)
     }
+}
+
+#[cfg(feature = "qstash")]
+fn init_qstash_client() -> crate::utils::qstash::QStashClient {
+    use crate::utils::qstash::QStashClient;
+
+    let auth_token = env::var("QSTASH_TOKEN").expect("`QSTASH_TOKEN` is required!");
+
+    QStashClient::new(&auth_token)
 }
 
 pub struct AppStateRes {
@@ -211,6 +298,12 @@ impl AppStateBuilder {
             google_oauth_clients: init_google_oauth(),
             #[cfg(feature = "ga4")]
             grpc_offchain_channel: init_grpc_offchain_channel().await,
+            #[cfg(feature = "firestore")]
+            firestore_db: init_firestoredb().await,
+            #[cfg(feature = "qstash")]
+            qstash: init_qstash_client(),
+            grpc_icpump_search_channel: init_grpc_icpump_search_channel().await,
+            grpc_nsfw_channel: init_grpc_nsfw_channel().await,
         };
 
         AppStateRes {

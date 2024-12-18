@@ -7,6 +7,7 @@ use crate::{
     state::canisters::auth_canisters_store,
     utils::{
         event_streaming::events::{VideoUploadInitiated, VideoUploadUploadButtonClicked},
+        host::show_cdao_page,
         web::FileWithUrl,
     },
 };
@@ -16,6 +17,7 @@ use leptos::{
     *,
 };
 
+use leptos_router::Redirect;
 use validators::{description_validator, hashtags_validator};
 use video_upload::{PreVideoUpload, VideoUploader};
 
@@ -103,7 +105,7 @@ fn PreUploadView(trigger_upload: WriteSignal<Option<UploadParams>>) -> impl Into
     });
 
     view! {
-        <PreVideoUpload file_blob=file_blob.write_only()/>
+        <PreVideoUpload file_blob=file_blob.write_only() />
         <div class="flex flex-col gap-4 lg:basis-7/12">
             <div class="flex flex-col gap-y-2">
                 <Show when=move || { with!(| description_err | ! description_err.is_empty()) }>
@@ -145,7 +147,7 @@ fn PreUploadView(trigger_upload: WriteSignal<Option<UploadParams>>) -> impl Into
             </div>
             <div class="flex flex-col gap-y-2">
                 // <ToggleWithLabel node_ref=enable_hot_or_not lab="Participate in Hot or Not"/>
-                <ToggleWithLabel lab="NSFW"/>
+                <ToggleWithLabel lab="NSFW" />
             </div>
             <button
                 on:click=move |_| on_submit()
@@ -159,7 +161,12 @@ fn PreUploadView(trigger_upload: WriteSignal<Option<UploadParams>>) -> impl Into
 }
 
 #[component]
-pub fn UploadPostPage() -> impl IntoView {
+pub fn CreatorDaoCreatePage() -> impl IntoView {
+    view! { <Redirect path="/token/create" /> }
+}
+
+#[component]
+pub fn YralUploadPostPage() -> impl IntoView {
     let trigger_upload = create_rw_signal(None::<UploadParams>);
 
     view! {
@@ -169,13 +176,22 @@ pub fn UploadPostPage() -> impl IntoView {
                 <Show
                     when=move || { with!(| trigger_upload | trigger_upload.is_some()) }
                     fallback=move || {
-                        view! { <PreUploadView trigger_upload=trigger_upload.write_only()/> }
+                        view! { <PreUploadView trigger_upload=trigger_upload.write_only() /> }
                     }
                 >
 
-                    <VideoUploader params=trigger_upload.get_untracked().unwrap()/>
+                    <VideoUploader params=trigger_upload.get_untracked().unwrap() />
                 </Show>
             </div>
         </div>
+    }
+}
+
+#[component]
+pub fn UploadPostPage() -> impl IntoView {
+    if show_cdao_page() {
+        view! { <CreatorDaoCreatePage /> }
+    } else {
+        view! { <YralUploadPostPage /> }
     }
 }

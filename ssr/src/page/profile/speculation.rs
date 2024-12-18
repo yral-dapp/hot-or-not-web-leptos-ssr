@@ -7,13 +7,16 @@ use web_time::Duration;
 
 use super::ic::ProfileStream;
 use crate::{
-    canister::utils::bg_url,
-    component::profile_placeholders::NoMoreBetsGraphic,
+    component::{canisters_prov::AuthCansProvider, profile_placeholders::NoMoreBetsGraphic},
     state::canisters::unauth_canisters,
+    utils::{bg_url, time::to_hh_mm_ss},
+};
+use yral_canisters_common::{
+    cursored_data::vote::VotesProvider,
     utils::{
         posts::PostDetails,
-        profile::{BetDetails, BetOutcome, BetsProvider, ProfileDetails},
-        time::to_hh_mm_ss,
+        profile::ProfileDetails,
+        vote::{VoteDetails, VoteOutcome},
     },
 };
 
@@ -31,7 +34,7 @@ pub fn ExternalUser(user: Option<ProfileDetails>) -> impl IntoView {
     view! {
         <div class="flex flex-row items-center gap-1 w-full h-8 px-3 pt-3 text-ellipsis z-20">
             <div class="w-5 h-5 flex-shrink-0 rounded-full border-2 border-white bg-white">
-                <img class="rounded-full object-cover object-center" src=propic/>
+                <img class="rounded-full object-cover object-center" src=propic />
             </div>
             <div class="max-w-full text-xs truncate font-semibold">{name}</div>
         </div>
@@ -47,7 +50,7 @@ pub fn ExternalPost(post: Option<PostDetails>) -> impl IntoView {
                 bg_url
                     .clone()
                     .map(|bgurl| {
-                        view! { <img class="object-cover h-full w-full" src=bgurl.clone()/> }
+                        view! { <img class="object-cover h-full w-full" src=bgurl.clone() /> }
                     })
             }}
 
@@ -69,8 +72,8 @@ pub fn FallbackUser() -> impl IntoView {
 }
 
 #[component]
-fn BetTimer(post: PostDetails, details: BetDetails) -> impl IntoView {
-    let bet_duration = details.bet_duration().as_secs();
+fn BetTimer(post: PostDetails, details: VoteDetails) -> impl IntoView {
+    let bet_duration = details.vote_duration().as_secs();
     let time_remaining = create_rw_signal(details.time_remaining(post.created_at));
     _ = use_interval_fn(
         move || {
@@ -94,7 +97,7 @@ fn BetTimer(post: PostDetails, details: BetDetails) -> impl IntoView {
                 class="flex flex-row justify-center items-center gap-1 w-full rounded-full py-px text-white text-xs"
                 style=gradient
             >
-                <Icon icon=icondata::AiClockCircleFilled/>
+                <Icon icon=icondata::AiClockCircleFilled />
                 <span>{move || to_hh_mm_ss(time_remaining())}</span>
             </div>
         </div>
@@ -102,7 +105,7 @@ fn BetTimer(post: PostDetails, details: BetDetails) -> impl IntoView {
 }
 
 #[component]
-pub fn Speculation(details: BetDetails, _ref: NodeRef<html::Div>) -> impl IntoView {
+pub fn Speculation(details: VoteDetails, _ref: NodeRef<html::Div>) -> impl IntoView {
     // TODO: enable scrolling videos for bets
     let profile_post_url = format!("/post/{}/{}", details.canister_id, details.post_id);
 
@@ -134,17 +137,17 @@ pub fn Speculation(details: BetDetails, _ref: NodeRef<html::Div>) -> impl IntoVi
 
     let details = store_value(details);
     let (bet_res, amt, icon) = match details.with_value(|d| d.outcome) {
-        BetOutcome::Won(amt) => (
+        VoteOutcome::Won(amt) => (
             "RECEIVED",
             amt,
             view! {
                 <div class="flex w-full justify-center items-center text-white bg-primary-600 h-6 gap-0.5">
-                    <Icon class="text-sm fill-white" icon=icondata::RiTrophyFinanceFill/>
+                    <Icon class="text-sm fill-white" icon=icondata::RiTrophyFinanceFill />
                     <span class="text-xs font-medium">You Won</span>
                 </div>
             }.into_view(),
         ),
-        BetOutcome::Draw(amt) => (
+        VoteOutcome::Draw(amt) => (
             "RECEIVED",
             amt,
             view! {
@@ -153,23 +156,23 @@ pub fn Speculation(details: BetDetails, _ref: NodeRef<html::Div>) -> impl IntoVi
                 </div>
             }.into_view(),
         ),
-        BetOutcome::Lost => (
+        VoteOutcome::Lost => (
             "VOTE",
-            details.with_value(|d| d.bet_amount),
+            details.with_value(|d| d.vote_amount),
             view! {
                 <div class="flex w-full justify-center items-center h-6 bg-white text-black py-2 text-xs font-medium">
                     You Lost
                 </div>
             }.into_view(),
         ),
-        BetOutcome::AwaitingResult => (
+        VoteOutcome::AwaitingResult => (
             "VOTE",
-            details.with_value(|d| d.bet_amount),
+            details.with_value(|d| d.vote_amount),
             view! {
                 <Suspense>
                     {move || {
                         let post = post_details().flatten()?;
-                        Some(view! { <BetTimer post details=details.get_value()/> })
+                        Some(view! { <BetTimer post details=details.get_value() /> })
                     }}
 
                 </Suspense>
@@ -192,7 +195,7 @@ pub fn Speculation(details: BetDetails, _ref: NodeRef<html::Div>) -> impl IntoVi
                         post_details
                             .get()
                             .map(|post| {
-                                view! { <ExternalPost post/> }
+                                view! { <ExternalPost post /> }
                             })
                     }}
 
@@ -202,7 +205,7 @@ pub fn Speculation(details: BetDetails, _ref: NodeRef<html::Div>) -> impl IntoVi
                         profile_details
                             .get()
                             .map(|user| {
-                                view! { <ExternalUser user/> }
+                                view! { <ExternalUser user /> }
                             })
                     }}
 
@@ -210,7 +213,7 @@ pub fn Speculation(details: BetDetails, _ref: NodeRef<html::Div>) -> impl IntoVi
                 <div class="flex flex-col gap-y-5 z-20">
                     <div class="flex flex-col px-3">
                         <span class="text-xs font-medium uppercase">{bet_res}</span>
-                        <span class="text-sm font-semibold md:text-base">{amt} Tokens</span>
+                        <span class="text-sm font-semibold md:text-base">{amt}Tokens</span>
                     </div>
                     {icon}
                 </div>
@@ -221,26 +224,31 @@ pub fn Speculation(details: BetDetails, _ref: NodeRef<html::Div>) -> impl IntoVi
 
 #[component]
 pub fn ProfileSpeculations(user_canister: Principal) -> impl IntoView {
-    let provider = BetsProvider::new(unauth_canisters(), user_canister);
-    let location = use_location();
-    let empty_text = if location
-        .pathname
-        .get_untracked()
-        .starts_with("/your-profile")
-    {
-        "You haven't placed any votes yet!"
-    } else {
-        "Not played any games yet!"
-    };
-
     view! {
-        <ProfileStream
-            provider
-            empty_graphic=NoMoreBetsGraphic
-            empty_text
-            children=move |details, _ref| {
-                view! { <Speculation details _ref=_ref.unwrap_or_default()/> }
+        <AuthCansProvider let:canister>
+            {
+                let provider = VotesProvider::new(unauth_canisters(), user_canister);
+                let location = use_location();
+                let empty_text = if location
+                    .pathname
+                    .get_untracked()
+                    .starts_with(&format!("/profile/{}", canister.user_principal()))
+                {
+                    "You haven't placed any votes yet!"
+                } else {
+                    "Not played any games yet!"
+                };
+                view! {
+                    <ProfileStream
+                        provider
+                        empty_graphic=NoMoreBetsGraphic
+                        empty_text
+                        children=move |details, _ref| {
+                            view! { <Speculation details _ref=_ref.unwrap_or_default() /> }
+                        }
+                    />
+                }
             }
-        />
+        </AuthCansProvider>
     }
 }

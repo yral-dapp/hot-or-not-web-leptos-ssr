@@ -8,20 +8,17 @@ use codee::string::FromToStringCodec;
 use ic_agent::Identity;
 use leptos::*;
 use leptos_use::storage::use_local_storage;
+use yral_types::delegated_identity::DelegatedIdentityWire;
 
 use crate::{
-    auth::DelegatedIdentityWire,
     consts::ACCOUNT_CONNECTED_STORE,
-    state::{
-        auth::auth_state,
-        canisters::{do_canister_auth, Canisters},
-        local_storage::use_referrer_store,
-    },
+    state::{auth::auth_state, local_storage::use_referrer_store},
     utils::{
         event_streaming::events::{LoginMethodSelected, LoginSuccessful},
         MockPartialEq,
     },
 };
+use yral_canisters_common::Canisters;
 
 #[server]
 async fn issue_referral_rewards(referee_canister: Principal) -> Result<(), ServerFnError> {
@@ -130,8 +127,7 @@ pub fn LoginProviders(show_modal: RwSignal<bool>, lock_closing: RwSignal<bool>) 
             let referrer = referrer_store.get_untracked();
 
             // This is some redundant work, but saves us 100+ lines of resource handling
-            let cans_wire = do_canister_auth(identity, referrer).await?;
-            let canisters = cans_wire.canisters()?;
+            let canisters = Canisters::authenticate_with_network(identity, referrer).await?;
 
             if let Err(e) = handle_user_login(canisters.clone(), referrer).await {
                 log::warn!("failed to handle user login, err {e}. skipping");
@@ -161,9 +157,9 @@ pub fn LoginProviders(show_modal: RwSignal<bool>, lock_closing: RwSignal<bool>) 
     view! {
         <div class="flex flex-col py-12 px-16 items-center gap-2 bg-neutral-900 text-white cursor-auto">
             <h1 class="text-xl">Login to Yral</h1>
-            <img class="h-32 w-32 object-contain my-8" src="/img/logo.webp"/>
+            <img class="h-32 w-32 object-contain my-8" src="/img/logo.webp" />
             <span class="text-md">Continue with</span>
-            <div class="flex w-full gap-4">
+            <div class="flex flex-col w-full gap-4">
 
                 {
                     #[cfg(feature = "local-auth")]
@@ -175,7 +171,9 @@ pub fn LoginProviders(show_modal: RwSignal<bool>, lock_closing: RwSignal<bool>) 
                     #[cfg(any(feature = "oauth-ssr", feature = "oauth-hydrate"))]
                     view! { <google::GoogleAuthProvider></google::GoogleAuthProvider> }
                 }
-
+                <div id="tnc" class="text-white text-center">
+                    By continuing you agree to our <a class="text-primary-600 underline" href="/terms-of-service">Terms of Service</a>
+                </div>
             </div>
         </div>
     }
@@ -193,10 +191,8 @@ mod server_fn_impl {
         use candid::Principal;
         use leptos::ServerFnError;
 
-        use crate::{
-            canister::individual_user_template::KnownPrincipalType,
-            state::canisters::unauth_canisters,
-        };
+        use crate::state::canisters::unauth_canisters;
+        use yral_canisters_client::individual_user_template::KnownPrincipalType;
 
         pub async fn issue_referral_rewards_impl(
             referee_canister: Principal,
@@ -248,7 +244,8 @@ mod server_fn_impl {
             referrer_principal_id: Principal,
             referee_principal_id: Principal,
         ) -> Result<(), ServerFnError> {
-            use crate::{canister::user_index::Result_, state::admin_canisters::admin_canisters};
+            use crate::state::admin_canisters::admin_canisters;
+            use yral_canisters_client::user_index::Result_;
 
             let admin_cans = admin_canisters();
             let user_idx = admin_cans.user_index_with(user_index).await;
@@ -270,16 +267,16 @@ mod server_fn_impl {
         pub async fn mark_user_registered_impl(
             user_canister: Principal,
         ) -> Result<bool, ServerFnError> {
-            use crate::{
-                canister::individual_user_template::{Result12, Result23, SessionType},
-                state::admin_canisters::admin_canisters,
+            use crate::state::admin_canisters::admin_canisters;
+            use yral_canisters_client::individual_user_template::{
+                Result13, Result25, SessionType,
             };
 
             let admin_cans = admin_canisters();
             let user = admin_cans.individual_user_for(user_canister).await;
             if matches!(
                 user.get_session_type().await?,
-                Result12::Ok(SessionType::RegisteredSession)
+                Result13::Ok(SessionType::RegisteredSession)
             ) {
                 return Ok(false);
             }
@@ -287,8 +284,8 @@ mod server_fn_impl {
                 .await
                 .map_err(ServerFnError::from)
                 .and_then(|res| match res {
-                    Result23::Ok(_) => Ok(()),
-                    Result23::Err(e) => Err(ServerFnError::new(format!(
+                    Result25::Ok(_) => Ok(()),
+                    Result25::Err(e) => Err(ServerFnError::new(format!(
                         "failed to mark user as registered {e}"
                     ))),
                 })?;
