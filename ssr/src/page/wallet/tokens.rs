@@ -131,7 +131,7 @@ pub fn WalletCard(user_principal: Principal, token_meta_data: TokenMetadata) -> 
                 </div>
             </div>
             <div class="flex items-center justify-around">
-                <ActionButton href=format!("/token/transfer{root}") label="Send".to_string()>
+                <ActionButton href=format!("/token/transfer/{root}") label="Send".to_string()>
                     <Icon class="h-6 w-6" icon=SendIcon/>
                 </ActionButton>
                 <ActionButton disabled=true href="#".to_string() label="Swap".to_string()>
