@@ -1,6 +1,7 @@
 name: nightwatch tests
 on:
-  deployment
+  workflow_call: 
+    
 jobs:
   tests: 
     name: 'nightwatch tests'
