@@ -123,7 +123,7 @@ pub fn WalletCard(user_principal: Principal, token_meta_data: TokenMetadata) -> 
                         alt=token_meta_data.name.clone()
                         class="w-8 h-8 rounded-full object-cover"
                     />
-                    <div class="text-sm font-medium uppercase">{token_meta_data.name}</div>
+                    <div class="text-sm font-medium uppercase truncate">{token_meta_data.name}</div>
                 </div>
                 <div class="flex flex-col items-end">
                     <div class="text-lg font-medium">{token_meta_data.balance.unwrap().humanize_float_truncate_to_dp(2)}</div>
@@ -134,7 +134,7 @@ pub fn WalletCard(user_principal: Principal, token_meta_data: TokenMetadata) -> 
                 <ActionButton href=format!("/token/transfer/{root}") label="Send".to_string()>
                     <Icon class="h-6 w-6" icon=SendIcon/>
                 </ActionButton>
-                <ActionButton disabled=true href="#".to_string() label="Swap".to_string()>
+                <ActionButton disabled=true href="#".to_string() label="Buy/Sell".to_string()>
                     <Icon class="h-6 w-6" icon=ArrowLeftRightIcon />
                 </ActionButton>
                 <ActionButton disabled=true href="#".to_string() label="Airdrop".to_string()>

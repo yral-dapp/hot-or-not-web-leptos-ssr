@@ -49,8 +49,8 @@ fn ProfileGreeter(details: ProfileDetails, is_own_account: bool) -> impl IntoVie
             </div>
 
             <Show when=move || is_own_account>
-                <a href="/wallet/notifications" class="text-xl font-semibold">
-                    <NotificationIcon show_dot=is_own_account classes="w-8 h-8".to_string() />
+                <a href="/wallet/notifications" disabled=true class="text-xl font-semibold">
+                    <NotificationIcon show_dot=false classes="w-8 h-8 text-neutral-600".to_string() />
                 </a>
             </Show>
         </div>
@@ -153,7 +153,7 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
         },
     );
     view! {
-        <div class="flex flex-col gap-4 px-4 pt-4 pb-12 bg-black min-h-dvh font-kumbh">
+        <div class="flex flex-col gap-4 pt-4 pb-12 bg-black min-h-dvh font-kumbh">
 
                 <Suspense>
                     {move || {

@@ -271,7 +271,7 @@ pub fn ActionButton(
             href=href
             class=move || format!("flex flex-col gap-1 justify-center items-center text-xs transition-colors {}", if !disabled{"group-hover:text-white text-neutral-300"}else{"group-hover:cursor-default text-neutral-600"})
         >
-            <div class="w-[1.875rem] h-[1.875rem]">{children()}</div>
+            <div class="w-[1.875rem] h-[1.875rem] flex items-center justify-center">{children()}</div>
 
             <div>{label}</div>
         </a>
