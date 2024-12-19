@@ -1,3 +1,4 @@
+use crate::component::overlay::PopupOverlay;
 use std::collections::HashMap;
 use std::collections::VecDeque;
 
@@ -230,7 +231,7 @@ pub fn TokenCard(
         </div>
     }
 }
-use crate::component::overlay::PopupOverlay;
+
 #[component]
 pub fn PageSelector(page: RwSignal<u64>, end_of_list: RwSignal<bool>) -> impl IntoView {
     view! {

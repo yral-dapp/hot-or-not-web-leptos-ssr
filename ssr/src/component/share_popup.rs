@@ -9,6 +9,7 @@ use crate::{
     },
 };
 
+use crate::component::icons::share_icon::ShareIcon;
 #[component]
 pub fn ShareContent(
     share_link: String,
@@ -137,8 +138,8 @@ pub fn ShareButtonWithFallbackPopup(
 
     view! {
         <button on:click=on_share_click class=class>
-            <div class="border-2 rounded-full p-1">
-                <Icon icon=icondata::AiShareAltOutlined />
+            <div class="rounded-full p-[6px] bg-neutral-800">
+                <Icon icon=ShareIcon />
             </div>
 
         </button>
