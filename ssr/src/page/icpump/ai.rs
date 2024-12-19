@@ -480,7 +480,7 @@ pub fn ICPumpAi() -> impl IntoView {
     });
 
     view! {
-        <div class="h-screen w-screen block bg-black text-white bg-[#111212]">
+        <div class="h-screen w-screen block bg-black text-white">
           <div class="max-w-md flex flex-col relative w-full mx-auto h-full"
                 class:justify-center={move|| page_no.get() != 2}
                 class:px-8={move|| page_no.get() != 3}
