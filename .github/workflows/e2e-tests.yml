@@ -30,4 +30,4 @@ jobs:
             PREVIEW_URL: https://pr-${{github.event.number}}-go-bazzinga-hot-or-not-web-leptos-ssr.fly.dev
             BUILD_NAME: PR-${{github.event.number}}-attempt-${{github.run_attempt}}
             BROWSERSTACK_USER_NAME: ${{vars.BROWSERSTACK_USER_NAME}}
-            BROWSERSTACK_ACCESS_KEY: ${{secrets.BROWSERSTACK_ACCESS_KEY}}
+            BROWSERSTACK_ACCESS_KEY: ${{secrets.BROWSERSTACK_API_KEY}}
