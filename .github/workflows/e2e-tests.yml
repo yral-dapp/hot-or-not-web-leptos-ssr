@@ -25,7 +25,7 @@ jobs:
       - name: Run Nightwatch tests
         run: |
             cd tests/e2e
-            npm test -- --serial
+            npm test
         env: 
             PREVIEW_URL: https://pr-${{github.event.number}}-go-bazzinga-hot-or-not-web-leptos-ssr.fly.dev
             BUILD_NAME: PR-${{github.event.number}}-attempt-${{github.run_attempt}}
