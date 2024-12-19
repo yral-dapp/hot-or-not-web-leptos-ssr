@@ -4,12 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "nightwatch"
+    "test": "nightwatch --env browserstack.chrome"
   },
   "keywords": [],
-  "author": "",
+  "author": "Ravi Sawlani",
   "license": "ISC",
   "devDependencies": {
-    "nightwatch": "^3.7.0"
+    "nightwatch": "^3.9.0"
   }
 }
