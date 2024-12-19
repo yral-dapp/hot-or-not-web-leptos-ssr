@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "nightwatch --env browserstack.chrome"
+    "test": "nightwatch --env browserstack.chrome --verbose"
   },
   "keywords": [],
   "author": "Ravi Sawlani",
