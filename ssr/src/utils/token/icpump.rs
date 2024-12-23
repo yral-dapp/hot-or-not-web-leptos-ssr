@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
-use std::env;
+use tokio::time::timeout;
+use std::{env, time::Duration};
 
 use futures::stream::BoxStream;
 use futures::StreamExt;
@@ -7,6 +8,11 @@ use futures::StreamExt;
 use leptos::*;
 
 use yral_grpc_traits::{TokenInfoProvider, TokenListItemFS};
+
+use futures::future::join_all;
+use wasm_bindgen::prelude::*;
+use web_sys::Storage;
+use serde_json::{self, json};
 
 #[cfg(feature = "ssr")]
 #[derive(Debug, Clone)]
@@ -265,4 +271,93 @@ impl TokenInfoProvider for IcpumpTokenInfo {
     async fn get_token_by_id(&self, token_id: String) -> Result<TokenListItemFS, ServerFnError> {
         get_token_by_id(token_id).await
     }
+}
+
+fn extract_hash(link: &str) -> Option<String> {
+    link.split("/token/info/")
+        .nth(1)
+        .map(|s| s.to_string())
+}
+
+async fn validate_single_token(token: TokenListItem) -> (TokenListItem, bool) {
+    if let Some(hash) = extract_hash(&token.link) {
+        match timeout(Duration::from_secs(5), reqwest::get(&token.link)).await {
+            Ok(Ok(response)) => {
+                if response.status().is_success() {
+                    if let Ok(_) = store_token_in_cache(&hash, &token) {
+                        return (token, true);
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+    (token, false)
+}
+
+#[server]
+pub async fn validate_token_links(tokens: Vec<TokenListItem>) -> Result<Vec<TokenListItem>, ServerFnError> {
+    // Create futures for all token validations
+    let validation_futures: Vec<_> = tokens
+        .into_iter()
+        .map(|token| validate_single_token(token))
+        .collect();
+
+    // Run all validations concurrently
+    let results = join_all(validation_futures).await;
+
+    // Collect invalid tokens
+    let invalid_tokens: Vec<TokenListItem> = results
+        .into_iter()
+        .filter_map(|(token, is_valid)| if !is_valid { Some(token) } else { None })
+        .collect();
+
+    Ok(invalid_tokens)
+}
+
+#[client]
+fn store_token_in_cache(hash: &str, token: &TokenListItem) -> Result<(), ServerFnError> {
+    let window = web_sys::window().expect("no window exists");
+    let storage = window
+        .local_storage()
+        .map_err(|_| ServerFnError::ServerError::<std::convert::Infallible>("Failed to get localStorage".into()))?
+        .expect("no localStorage exists");
+
+    let cache_key = format!("token_cache_{}", hash);
+    
+    let cache_data = json!({
+        "token": token,
+        "timestamp": js_sys::Date::now(),
+    });
+
+    storage
+        .set_item(
+            &cache_key,
+            &cache_data.to_string(),
+        )
+        .map_err(|_| ServerFnError::ServerError::<std::convert::Infallible>("Failed to store in cache".into()))?;
+
+    Ok(())
+}
+
+#[client]
+pub fn get_cached_token(link: &str) -> Option<TokenListItem> {
+    let window = web_sys::window()?;
+    let storage = window.local_storage().ok()??;
+    
+    let hash = extract_hash(link)?;
+    let cache_key = format!("token_cache_{}", hash);
+    
+    let cached_data = storage.get_item(&cache_key).ok()??;
+    let cache_value: serde_json::Value = serde_json::from_str(&cached_data).ok()?;
+    
+    // Check expiration (24 hours)
+    let timestamp = cache_value["timestamp"].as_f64()?;
+    if js_sys::Date::now() - timestamp > 24.0 * 60.0 * 60.0 * 1000.0 {
+        storage.remove_item(&cache_key).ok()?;
+        return None;
+    }
+    
+    // Get token directly from the "token" field
+    serde_json::from_value(cache_value["token"].clone()).ok()
 }
