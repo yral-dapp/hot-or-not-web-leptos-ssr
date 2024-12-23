@@ -1,6 +1,7 @@
 use candid::Principal;
 use yral_canisters_common::cursored_data::token_roots::TokenRootList;
 use yral_canisters_common::utils::token::{RootType, TokenMetadata};
+use yral_canisters_common::Canisters;
 
 use crate::component::icons::{
     airdrop_icon::AirdropIcon, arrow_left_right_icon::ArrowLeftRightIcon,
@@ -9,6 +10,7 @@ use crate::component::icons::{
 use crate::component::overlay::PopupOverlay;
 use crate::component::share_popup::ShareContent;
 use crate::page::icpump::ActionButton;
+use crate::state::canisters::authenticated_canisters;
 use crate::utils::host::get_host;
 use crate::utils::token::icpump::IcpumpTokenInfo;
 use crate::{component::infinite_scroller::InfiniteScroller, state::canisters::unauth_canisters};
@@ -29,27 +31,37 @@ pub fn TokenView(
     token_root: RootType,
     #[prop(optional)] _ref: NodeRef<html::A>,
 ) -> impl IntoView {
-    let info = create_resource(
+    let info = authenticated_canisters().derive(
         move || (token_root.clone(), user_principal),
-        move |(token_root, user_principal)| async move {
-            let cans = unauth_canisters();
-
+        move |cans, (token_root, user_principal)| async move {
+            let cans = Canisters::from_wire(cans.unwrap(), expect_context()).unwrap();
             // TODO: remove these unwraps
             let meta = cans
-                .token_metadata_by_root_type(&IcpumpTokenInfo, Some(user_principal), token_root)
+                .token_metadata_by_root_type(
+                    &IcpumpTokenInfo,
+                    Some(user_principal),
+                    token_root.clone(),
+                )
                 .await
                 .unwrap()
                 .unwrap();
 
-            meta.clone()
+            let is_token_viewer_airdrop_claimed = cans
+                .get_airdrop_status(
+                    meta.token_owner.clone().unwrap(),
+                    Principal::from_text(token_root.to_string()).unwrap(),
+                    cans.user_canister(),
+                )
+                .await
+                .unwrap();
+            (meta.clone(), is_token_viewer_airdrop_claimed)
         },
     );
-
     view! {
         <Suspense fallback=TokenViewFallback>
             {move || {
-                info.map(|info| {
-                    view! { <WalletCard user_principal token_meta_data=info.clone()/> }
+                info.map(|(info, is_token_airdrop_claimed)| {
+                    view! { <WalletCard user_principal token_meta_data=info.clone() is_airdrop_claimed=*is_token_airdrop_claimed/> }
                 })
             }}
 
@@ -102,7 +114,11 @@ pub fn TokenList(user_principal: Principal, user_canister: Principal) -> impl In
 }
 
 #[component]
-pub fn WalletCard(user_principal: Principal, token_meta_data: TokenMetadata) -> impl IntoView {
+pub fn WalletCard(
+    user_principal: Principal,
+    token_meta_data: TokenMetadata,
+    is_airdrop_claimed: bool,
+) -> impl IntoView {
     let root: String = token_meta_data
         .root
         .map(|r| r.to_text())
@@ -142,7 +158,7 @@ pub fn WalletCard(user_principal: Principal, token_meta_data: TokenMetadata) -> 
                 <ActionButton disabled=true href="#".to_string() label="Buy/Sell".to_string()>
                     <Icon class="h-6 w-6" icon=ArrowLeftRightIcon />
                 </ActionButton>
-                <ActionButton disabled=token_meta_data.is_airdrop_claimed.unwrap_or(true) href=token_meta_data.token_owner.map(|token_owner| format!("/token/info/{root}/{}?airdrop_amt=100", token_owner)).unwrap_or_default() label="Airdrop".to_string()>
+                <ActionButton disabled=is_airdrop_claimed href=token_meta_data.token_owner.map(|token_owner| format!("/token/info/{root}/{}?airdrop_amt=100", token_owner)).unwrap_or_default() label="Airdrop".to_string()>
                     <Icon class="h-6 w-6" icon=AirdropIcon />
                 </ActionButton>
                 <ActionButton href="#".to_string() label="Share".to_string()>

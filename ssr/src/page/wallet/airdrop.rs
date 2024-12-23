@@ -1,17 +1,13 @@
 use crate::{
     component::{buttons::HighlightedButton, spinner::SpinnerFit},
-    state::canisters::unauth_canisters,
+    state::canisters::authenticated_canisters,
 };
-use candid::Principal;
+use candid::Nat;
 use leptos::*;
-use yral_canisters_common::utils::token::TokenMetadata;
+use yral_canisters_common::{utils::token::TokenMetadata, Canisters};
 
 #[component]
-pub fn AirdropPage(
-    meta: TokenMetadata,
-    airdrop_amount: u64,
-    user_canister_id: Principal,
-) -> impl IntoView {
+pub fn AirdropPage(meta: TokenMetadata, airdrop_amount: u64) -> impl IntoView {
     let (claimed, set_claimed) = create_signal(false);
 
     let bg_image = "/img/airdrop/bg.webp";
@@ -20,25 +16,42 @@ pub fn AirdropPage(
 
     let (buffer_signal, set_buffer_signal) = create_signal(false);
 
-    let airdrop_action = create_action(move |()| async move {
-        if claimed.get() && !buffer_signal.get() {
-            return Ok(());
-        }
-        set_buffer_signal.set(true);
-        let cans = unauth_canisters();
-        let token_owner = cans.individual_user(meta.token_owner.unwrap()).await;
+    let cans_res = authenticated_canisters();
+    let airdrop_action = create_action(move |&()| {
+        let cans_res = cans_res.clone();
+        async move {
+            if claimed.get() && !buffer_signal.get() {
+                return Ok(());
+            }
+            set_buffer_signal.set(true);
+            let cans_wire = cans_res.wait_untracked().await?;
+            let cans = Canisters::from_wire(cans_wire, expect_context())?;
+            let token_owner = cans.individual_user(meta.token_owner.unwrap()).await;
 
-        token_owner
-            .request_airdrop(
-                meta.root.unwrap(),
-                None,
-                airdrop_amount.into(),
-                user_canister_id,
-            )
-            .await?;
-        set_buffer_signal(false);
-        set_claimed(true);
-        Ok::<_, ServerFnError>(())
+            println!(
+                "{:?}",
+                token_owner
+                    .request_airdrop(
+                        meta.root.unwrap(),
+                        None,
+                        Into::<Nat>::into(airdrop_amount) * 10u64.pow(8),
+                        cans.user_canister(),
+                    )
+                    .await?
+            );
+
+            println!(
+                "{:?}",
+                token_owner
+                    .deployed_cdao_canisters()
+                    .await?
+                    .into_iter()
+                    .find(|cdao| Some(cdao.root) == meta.root)
+            );
+            set_buffer_signal(false);
+            set_claimed(true);
+            Ok::<_, ServerFnError>(())
+        }
     });
 
     let meta_c = meta.clone();
@@ -140,7 +153,7 @@ pub fn AirdropPage(
                 >
                     {move || {
                         if buffer_signal.get() {
-                            view!{<SpinnerFit />}
+                            view!{<div classes="max-w-90"><SpinnerFit /></div>}.into_view()
                         }else if claimed.get() {
                             view!{<a href="/wallet">"Go to wallet"</a>}.into_view()
                             } else {

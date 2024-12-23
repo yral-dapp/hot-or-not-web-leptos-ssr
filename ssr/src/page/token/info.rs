@@ -203,7 +203,7 @@ pub struct TokenKeyParam {
     key_principal: Principal,
 }
 
-#[derive(Params, PartialEq, Clone, Serialize, Deserialize)]
+#[derive(Params, PartialEq, Clone, Serialize, Deserialize, Debug)]
 struct AirdropParam {
     airdrop_amt: u64,
 }
@@ -215,21 +215,23 @@ struct TokenInfoResponse {
     #[serde(default)]
     key_principal: Option<Principal>,
     is_user_principal: bool,
-    user_canister: Principal, // Make this optional if it's missing.
+    is_token_viewer_airdrop_claimed: bool,
 }
 
 #[component]
 pub fn TokenInfo() -> impl IntoView {
     let params = use_params::<TokenInfoParams>();
     let key_principal = use_params::<TokenKeyParam>();
-    let airdrop_param = use_params::<AirdropParam>();
+    let airdrop_param = use_query::<AirdropParam>();
     let key_principal = move || key_principal.with(|p| p.as_ref().map(|p| p.key_principal).ok());
     let token_metadata_fetch = authenticated_canisters().derive(
         move || (params(), key_principal()),
-        move |cans_wire, (params, key_principal)| async move {
-            let Ok(params) = params else {
-                return Ok::<_, ServerFnError>(None);
+        move |cans_wire, (params_result, key_principal)| async move {
+            let params = match params_result {
+                Ok(p) => p,
+                Err(_) => return Ok::<_, ServerFnError>(None),
             };
+
             let cans = Canisters::from_wire(cans_wire?, expect_context())?;
 
             let meta = cans
@@ -242,18 +244,35 @@ pub fn TokenInfo() -> impl IntoView {
                 .ok()
                 .flatten();
 
-            Ok(meta.map(|m| {
-                let res = TokenInfoResponse {
+            let token_root = &params.token_root;
+            let res = match (meta, token_root) {
+                (Some(m), RootType::Other(root)) => {
+                    let token_owner = m
+                        .token_owner
+                        .ok_or(ServerFnError::new("Token owner not found for yral token"))?;
+                    let is_airdrop_claimed = cans
+                        .get_airdrop_status(token_owner, *root, cans.user_principal())
+                        .await?;
+
+                    Some(TokenInfoResponse {
+                        meta: m,
+                        root: token_root.clone(),
+                        key_principal,
+                        is_user_principal: Some(cans.user_principal()) == key_principal,
+                        is_token_viewer_airdrop_claimed: is_airdrop_claimed,
+                    })
+                }
+                (Some(m), _) => Some(TokenInfoResponse {
                     meta: m,
-                    root: params.token_root,
+                    root: token_root.clone(),
                     key_principal,
                     is_user_principal: Some(cans.user_principal()) == key_principal,
-                    user_canister: cans.user_canister(),
-                };
-                println!("{:?}", res);
+                    is_token_viewer_airdrop_claimed: true,
+                }),
+                _ => None,
+            };
 
-                res
-            }))
+            Ok(res)
         },
     );
 
@@ -263,11 +282,14 @@ pub fn TokenInfo() -> impl IntoView {
                 token_metadata_fetch.get()
                     .map(|info| {
                         match info {
-                            Ok(Some(TokenInfoResponse { meta, root, key_principal, is_user_principal, user_canister })) => {
-                                if let (Ok(AirdropParam { airdrop_amt }), Some(airdrop_claimed)) = (airdrop_param.get(), meta.is_airdrop_claimed){
-                                    if !airdrop_claimed && meta.token_owner != key_principal && !is_user_principal{
+                            Ok(Some(TokenInfoResponse { meta, root, key_principal, is_user_principal, is_token_viewer_airdrop_claimed })) => {
+                                println!("Airdrop Inner2 {:?}", airdrop_param.get());
+                                if let Ok(AirdropParam { airdrop_amt }) = airdrop_param.get(){
+                                    println!("Airdrop Inner1 {} {:?} {:?} {}", is_token_viewer_airdrop_claimed, meta.token_owner.map(|t| t.to_text()), key_principal.map(|k| k.to_text()), is_user_principal);
+                                    if !is_token_viewer_airdrop_claimed && meta.token_owner != key_principal{
+                                        println!("Airdrop Inner");
                                         return view! {
-                                            <AirdropPage airdrop_amount=airdrop_amt meta user_canister_id=user_canister/>
+                                            <AirdropPage airdrop_amount=airdrop_amt meta/>
                                         }
                                     }
                                 }
