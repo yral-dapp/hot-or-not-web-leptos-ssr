@@ -1,0 +1,15 @@
+{
+  "name": "e2e",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "nightwatch --env browserstack.chrome"
+  },
+  "keywords": [],
+  "author": "Ravi Sawlani",
+  "license": "ISC",
+  "devDependencies": {
+    "nightwatch": "^3.9.0"
+  }
+}

@@ -8,6 +8,9 @@ pkg
 
 # node e2e test tools and outputs
 node_modules/
+tests_output/
+vrt-report/
+logs/
 test-results/
 ssr/end2end/playwright-report/
 playwright/.cache/
