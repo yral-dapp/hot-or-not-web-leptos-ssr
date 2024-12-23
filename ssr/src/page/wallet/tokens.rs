@@ -48,7 +48,7 @@ pub fn TokenView(
 
             let is_token_viewer_airdrop_claimed = cans
                 .get_airdrop_status(
-                    meta.token_owner.clone().unwrap(),
+                    meta.token_owner.unwrap(),
                     Principal::from_text(token_root.to_string()).unwrap(),
                     cans.user_canister(),
                 )
