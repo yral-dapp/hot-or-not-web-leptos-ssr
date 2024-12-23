@@ -11,10 +11,6 @@ use futures::StreamExt;
 use leptos::*;
 use leptos_icons::Icon;
 use leptos_use::use_cookie;
-use yral_canisters_client::individual_user_template::ClaimStatus;
-use yral_canisters_client::sns_root::ListSnsCanistersArg;
-use yral_canisters_client::sns_root::ListSnsCanistersResponse;
-use yral_canisters_client::sns_swap::GetInitArg;
 
 use crate::component::buttons::HighlightedLinkButton;
 use crate::component::icons::airdrop_icon::AirdropIcon;
@@ -31,7 +27,6 @@ use crate::utils::token::firestore::init_firebase;
 use crate::utils::token::firestore::listen_to_documents;
 use crate::utils::token::icpump::get_paginated_token_list;
 use crate::utils::token::icpump::TokenListItem;
-use yral_canisters_client::sns_swap::SnsSwap;
 
 pub mod ai;
 type IsAirdropClaimed = bool;
@@ -56,7 +51,7 @@ async fn process_token_list_item(
             .unwrap();
 
             let token_owner_canister_id = cans.get_token_owner(root_principal).await.unwrap();
-            let is_airdrop_claimed = if let Some(token_owner) = token_owner_canister_id.clone() {
+            let is_airdrop_claimed = if let Some(token_owner) = token_owner_canister_id {
                 cans.get_airdrop_status(token_owner, root_principal, key_principal)
                     .await
                     .unwrap()
@@ -66,7 +61,7 @@ async fn process_token_list_item(
 
             (
                 token,
-                token_owner_canister_id,
+                token_owner_canister_id.unwrap(),
                 is_airdrop_claimed,
                 root_principal,
             )
