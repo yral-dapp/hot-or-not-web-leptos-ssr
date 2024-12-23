@@ -253,7 +253,7 @@ pub fn TokenInfo() -> impl IntoView {
                         match info {
                             Some((metadata, root, key_principal, is_user_principal, user_canister_id)) => {
                                 if let (Ok(AirdropParam { airdrop_amt }), Some(airdrop_claimed)) = (airdrop_param.get(), metadata.is_airdrop_claimed){
-                                    if !airdrop_claimed && !(metadata.token_owner == key_principal) && !is_user_principal{
+                                    if !airdrop_claimed && metadata.token_owner != key_principal && !is_user_principal{
                                         return view! {
                                             <AirdropPage airdrop_amount=airdrop_amt meta=metadata user_canister_id/>
                                         }

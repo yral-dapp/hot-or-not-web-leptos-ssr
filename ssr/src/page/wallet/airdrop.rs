@@ -140,11 +140,11 @@ pub fn AirdropPage(
                 >
                     {move || {
                         if buffer_signal.get() {
-                            return view!{<SpinnerFit />}
+                            view!{<SpinnerFit />}
                         }else if claimed.get() {
-                             return view!{<a href="/wallet">"Go to wallet"</a>}.into_view()
+                            view!{<a href="/wallet">"Go to wallet"</a>}.into_view()
                             } else {
-                                return view!{"Claim Now"}.into_view()
+                            view!{"Claim Now"}.into_view()
                             }
                         }
                     }
