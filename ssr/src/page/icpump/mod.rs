@@ -1,10 +1,20 @@
 use crate::component::overlay::PopupOverlay;
+use crate::consts::USER_PRINCIPAL_STORE;
+use crate::state::canisters::unauth_canisters;
 use std::collections::HashMap;
 use std::collections::VecDeque;
 
+use candid::Principal;
+use codee::string::FromToStringCodec;
+use futures::stream::FuturesOrdered;
 use futures::StreamExt;
 use leptos::*;
 use leptos_icons::Icon;
+use leptos_use::use_cookie;
+use yral_canisters_client::individual_user_template::ClaimStatus;
+use yral_canisters_client::sns_root::ListSnsCanistersArg;
+use yral_canisters_client::sns_root::ListSnsCanistersResponse;
+use yral_canisters_client::sns_swap::GetInitArg;
 
 use crate::component::buttons::HighlightedLinkButton;
 use crate::component::icons::airdrop_icon::AirdropIcon;
@@ -21,31 +31,118 @@ use crate::utils::token::firestore::init_firebase;
 use crate::utils::token::firestore::listen_to_documents;
 use crate::utils::token::icpump::get_paginated_token_list;
 use crate::utils::token::icpump::TokenListItem;
+use yral_canisters_client::sns_swap::SnsSwap;
 
 pub mod ai;
+type IsAirdropClaimed = bool;
 
+async fn process_token_list_item(
+    token_list_item: Vec<TokenListItem>,
+    key_principal: Principal,
+) -> Vec<(TokenListItem, Principal, bool, Principal)> {
+    let mut fut = FuturesOrdered::new();
+
+    for token in token_list_item {
+        fut.push_back(async move {
+            let cans = unauth_canisters();
+            let root_principal = Principal::from_text(
+                token
+                    .link
+                    .trim_end_matches('/')
+                    .split('/')
+                    .last()
+                    .expect("URL should have at least one segment")
+                    .to_string(),
+            )
+            .unwrap();
+            let root = cans.sns_root(root_principal).await;
+
+            let ListSnsCanistersResponse { swap, .. } = root
+                .list_sns_canisters(ListSnsCanistersArg {})
+                .await
+                .unwrap();
+
+            let swap: SnsSwap<'_> = cans.sns_swap(swap.unwrap()).await;
+
+            let init = swap.get_init(GetInitArg {}).await.unwrap();
+
+            let token_owner_canister_id = Principal::from_text(
+                init.init
+                    .unwrap()
+                    .fallback_controller_principal_ids
+                    .into_iter()
+                    .filter(|controller| controller.ends_with("-cai"))
+                    .collect::<Vec<_>>()[0]
+                    .clone(),
+            )
+            .unwrap();
+
+            let token_owner = cans.individual_user(token_owner_canister_id).await;
+
+            let is_airdrop_claimed = token_owner
+                .deployed_cdao_canisters()
+                .await
+                .unwrap()
+                .into_iter()
+                .any(|token| {
+                    token.root == root_principal
+                        && token
+                            .airdrop_info
+                            .principals_who_successfully_claimed
+                            .iter()
+                            .any(|claimee| *claimee == (key_principal, ClaimStatus::Claimed))
+                });
+
+            (
+                token,
+                token_owner_canister_id,
+                is_airdrop_claimed,
+                root_principal,
+            )
+        });
+    }
+
+    fut.collect::<Vec<_>>().await
+}
 #[component]
 pub fn ICPumpListing() -> impl IntoView {
     let page = create_rw_signal(1);
-    let token_list: RwSignal<Vec<TokenListItem>> = create_rw_signal(vec![]);
+    let token_list: RwSignal<Vec<(TokenListItem, Principal, IsAirdropClaimed, Principal)>> =
+        create_rw_signal(vec![]);
     let end_of_list = create_rw_signal(false);
-    let cache = create_rw_signal(HashMap::<u64, Vec<TokenListItem>>::new());
-    let new_token_list: RwSignal<VecDeque<TokenListItem>> = create_rw_signal(VecDeque::new());
+    let cache = create_rw_signal(HashMap::<
+        u64,
+        Vec<(TokenListItem, Principal, IsAirdropClaimed, Principal)>,
+    >::new());
+    let new_token_list: RwSignal<
+        VecDeque<(TokenListItem, Principal, IsAirdropClaimed, Principal)>,
+    > = create_rw_signal(VecDeque::new());
+    let (curr_principal, _) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE);
 
-    let act = create_resource(page, move |page| async move {
-        new_token_list.set(VecDeque::new());
+    let act = create_resource(
+        move || (page(), curr_principal()),
+        move |(page, curr_principal)| async move {
+            new_token_list.set(VecDeque::new());
 
-        if let Some(cached) = cache.with_untracked(|c| c.get(&page).cloned()) {
-            return cached.clone();
-        }
-        get_paginated_token_list(page as u32).await.unwrap()
-    });
+            if let Some(cached) = cache.with_untracked(|c| c.get(&page).cloned()) {
+                return cached.clone();
+            }
+
+            process_token_list_item(
+                get_paginated_token_list(page as u32).await.unwrap(),
+                curr_principal.unwrap(),
+            )
+            .await
+        },
+    );
 
     create_effect(move |_| {
         spawn_local(async move {
             let (_app, firestore) = init_firebase();
             let mut stream = listen_to_documents(&firestore);
+            let curr_principal = curr_principal.get().unwrap();
             while let Some(doc) = stream.next().await {
+                let doc = process_token_list_item(doc, curr_principal).await;
                 // push each item in doc to new_token_list
                 for item in doc {
                     new_token_list.update(move |list| {
@@ -76,16 +173,16 @@ pub fn ICPumpListing() -> impl IntoView {
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         <For
                             each=move || new_token_list.get()
-                            key=|t| t.token_symbol.clone()
-                            children=move |token| {
-                                view! { <TokenCard details=token is_new_token=true /> }
+                            key=|(t, _, _, _)| t.token_symbol.clone()
+                            children=move |(token, canister_id, is_airdrop_claimed, root)| {
+                                view! { <TokenCard details=token is_new_token=true token_owner_canister_id=canister_id is_airdrop_claimed root/> }
                             }
                         />
                         <For
                             each=move || token_list.get()
-                            key=|t| t.token_symbol.clone()
-                            children=move |token| {
-                                view! { <TokenCard details=token /> }
+                            key=|(t, _, _, _)| t.token_symbol.clone()
+                            children=move |(token, canister, is_airdrop_claimed, root)| {
+                                view! { <TokenCard details=token token_owner_canister_id=canister is_airdrop_claimed root/> }
                             }
                         />
                     </div>
@@ -137,17 +234,12 @@ pub fn ICPumpLanding() -> impl IntoView {
 #[component]
 pub fn TokenCard(
     details: TokenListItem,
+    token_owner_canister_id: Principal,
     #[prop(optional, default = false)] is_new_token: bool,
-    #[prop(optional, default = true)] _is_airdrop_claimed: bool,
+    root: Principal,
+    is_airdrop_claimed: bool,
 ) -> impl IntoView {
     let show_nsfw = create_rw_signal(false);
-    let root = details
-        .link
-        .trim_end_matches('/')
-        .split('/')
-        .last()
-        .expect("URL should have at least one segment")
-        .to_string();
 
     let popup = create_rw_signal(false);
     let base_url = get_host();
@@ -211,7 +303,7 @@ pub fn TokenCard(
                 <ActionButton label="Buy/Sell".to_string() href="#".to_string() disabled=true>
                     <Icon class="w-full h-full" icon=ArrowLeftRightIcon />
                 </ActionButton>
-                <ActionButton label="Airdrop".to_string() href="#".to_string() disabled=true>
+                <ActionButton label="Airdrop".to_string() href=format!("/token/info/{root}/{token_owner_canister_id}?airdrop_amt=100") disabled=is_airdrop_claimed>
                     <Icon class="w-full h-full" icon=AirdropIcon />
                 </ActionButton>
                 <ActionButton label="Share".to_string() href="#".to_string()>

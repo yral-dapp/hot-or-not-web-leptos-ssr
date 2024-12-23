@@ -33,11 +33,15 @@ pub fn TokenView(
         move || (token_root.clone(), user_principal),
         move |(token_root, user_principal)| async move {
             let cans = unauth_canisters();
+
             // TODO: remove these unwraps
-            cans.token_metadata_by_root_type(&IcpumpTokenInfo, Some(user_principal), token_root)
+            let meta = cans
+                .token_metadata_by_root_type(&IcpumpTokenInfo, Some(user_principal), token_root)
                 .await
                 .unwrap()
-                .unwrap()
+                .unwrap();
+
+            meta.clone()
         },
     );
 
@@ -45,7 +49,7 @@ pub fn TokenView(
         <Suspense fallback=TokenViewFallback>
             {move || {
                 info.map(|info| {
-                    view! { <WalletCard user_principal token_meta_data=info.clone() /> }
+                    view! { <WalletCard user_principal token_meta_data=info.clone()/> }
                 })
             }}
 
@@ -114,6 +118,7 @@ pub fn WalletCard(user_principal: Principal, token_meta_data: TokenMetadata) -> 
     let share_message_s = store_value(share_message);
     let pop_up = create_rw_signal(false);
     let base_url = get_host();
+
     view! {
         <div class="flex flex-col gap-4 bg-neutral-900/90 rounded-lg w-full p-4 font-kumbh text-white">
             <div class="w-full flex items-center justify-between p-3 rounded-[4px] bg-neutral-800/70">
@@ -137,7 +142,7 @@ pub fn WalletCard(user_principal: Principal, token_meta_data: TokenMetadata) -> 
                 <ActionButton disabled=true href="#".to_string() label="Buy/Sell".to_string()>
                     <Icon class="h-6 w-6" icon=ArrowLeftRightIcon />
                 </ActionButton>
-                <ActionButton disabled=true href="#".to_string() label="Airdrop".to_string()>
+                <ActionButton disabled=token_meta_data.is_airdrop_claimed.unwrap_or(true) href=token_meta_data.token_owner.map(|token_owner| format!("/token/info/{root}/{}?airdrop_amt=100", token_owner)).unwrap_or_default() label="Airdrop".to_string()>
                     <Icon class="h-6 w-6" icon=AirdropIcon />
                 </ActionButton>
                 <ActionButton href="#".to_string() label="Share".to_string()>

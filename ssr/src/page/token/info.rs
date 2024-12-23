@@ -1,5 +1,6 @@
 use crate::page::token::RootType;
 use crate::page::token::TokenInfoParams;
+use crate::page::wallet::airdrop::AirdropPage;
 use crate::state::canisters::authenticated_canisters;
 
 use crate::utils::token::icpump::IcpumpTokenInfo;
@@ -202,10 +203,16 @@ pub struct TokenKeyParam {
     key_principal: Principal,
 }
 
+#[derive(Params, PartialEq, Clone, Serialize, Deserialize)]
+struct AirdropParam {
+    airdrop_amt: u64,
+}
+
 #[component]
 pub fn TokenInfo() -> impl IntoView {
     let params = use_params::<TokenInfoParams>();
     let key_principal = use_params::<TokenKeyParam>();
+    let airdrop_param = use_params::<AirdropParam>();
     let key_principal = move || key_principal.with(|p| p.as_ref().map(|p| p.key_principal).ok());
     let token_metadata_fetch = authenticated_canisters().derive(
         move || (params(), key_principal()),
@@ -224,12 +231,14 @@ pub fn TokenInfo() -> impl IntoView {
                 .await
                 .ok()
                 .flatten();
+
             Ok(meta.map(|m| {
                 (
                     m,
                     params.token_root,
                     key_principal,
                     Some(cans.user_principal()) == key_principal,
+                    cans.user_canister(),
                 )
             }))
         },
@@ -242,7 +251,14 @@ pub fn TokenInfo() -> impl IntoView {
                     .and_then(|info| info.ok())
                     .map(|info| {
                         match info {
-                            Some((metadata, root, key_principal, is_user_principal)) => {
+                            Some((metadata, root, key_principal, is_user_principal, user_canister_id)) => {
+                                if let (Ok(AirdropParam { airdrop_amt }), Some(airdrop_claimed)) = (airdrop_param.get(), metadata.is_airdrop_claimed){
+                                    if !airdrop_claimed && !(metadata.token_owner == key_principal) && !is_user_principal{
+                                        return view! {
+                                            <AirdropPage airdrop_amount=airdrop_amt meta=metadata user_canister_id/>
+                                        }
+                                    }
+                                }
                                 view! {
                                     <TokenInfoInner
                                         root

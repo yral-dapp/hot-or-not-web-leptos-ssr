@@ -1,11 +1,16 @@
-use crate::component::buttons::HighlightedButton;
+use crate::{
+    component::{buttons::HighlightedButton, spinner::SpinnerFit},
+    state::canisters::unauth_canisters,
+};
+use candid::Principal;
 use leptos::*;
+use yral_canisters_common::utils::token::TokenMetadata;
 
 #[component]
 pub fn AirdropPage(
-    coin_image: String,
+    meta: TokenMetadata,
     airdrop_amount: u64,
-    airdrop_from_token: String,
+    user_canister_id: Principal,
 ) -> impl IntoView {
     let (claimed, set_claimed) = create_signal(false);
 
@@ -13,14 +18,30 @@ pub fn AirdropPage(
     let cloud_image = "/img/airdrop/cloud.webp";
     let parachute_image = "/img/airdrop/parachute.webp";
 
-    let handle_claim = move || {
-        if !claimed.get() {
-            set_claimed(true);
-        } else {
-            // goto wallet page
-        }
-    };
+    let (buffer_signal, set_buffer_signal) = create_signal(false);
 
+    let airdrop_action = create_action(move |()| async move {
+        if claimed.get() && !buffer_signal.get() {
+            return Ok(());
+        }
+        set_buffer_signal.set(true);
+        let cans = unauth_canisters();
+        let token_owner = cans.individual_user(meta.token_owner.unwrap()).await;
+
+        token_owner
+            .request_airdrop(
+                meta.root.unwrap(),
+                None,
+                airdrop_amount.into(),
+                user_canister_id,
+            )
+            .await?;
+        set_buffer_signal(false);
+        set_claimed(true);
+        Ok::<_, ServerFnError>(())
+    });
+
+    let meta_c = meta.clone();
     view! {
         <div
             style="background: radial-gradient(circle, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 75%, rgba(50,0,28,0.5) 100%);"
@@ -33,6 +54,7 @@ pub fn AirdropPage(
             />
 
             {move || {
+                let meta = meta_c.clone();
                 if !claimed.get() {
                     view! {
                         <div class="relative h-[24rem] z-[2]">
@@ -48,7 +70,7 @@ pub fn AirdropPage(
                                 >
                                     <img
                                         alt="Airdrop"
-                                        src=coin_image.clone()
+                                        src=meta.logo_b64
                                         class="w-full fade-in rounded-full h-full object-cover"
                                     />
                                 </div>
@@ -78,7 +100,7 @@ pub fn AirdropPage(
                                 >
                                     <img
                                         alt="Airdrop"
-                                        src=coin_image.clone()
+                                        src=meta.logo_b64
                                         class="w-full fade-in rounded-full h-full object-cover"
                                     />
                                 </div>
@@ -95,26 +117,37 @@ pub fn AirdropPage(
                 style="--duration:1500ms"
                 class="fade-in flex text-xl font-bold z-[2] w-full flex-col gap-4 items-center justify-center px-8"
             >
-                {if claimed.get() {
+                {move || {if claimed.get() {
+                    let meta = meta.clone();
                     view! {
                         <div class="text-center">
-                            {format!("{} {}", airdrop_amount, airdrop_from_token)} <br />
+                            {format!("{} {}", airdrop_amount, meta.name)} <br />
                             <span class="font-normal">"added to wallet"</span>
                         </div>
                     }
                 } else {
                     view! {
                         <div class="text-center">
-                            {format!("{} {} Airdrop received", airdrop_amount, airdrop_from_token)}
+                            {format!("{} {} Airdrop received", airdrop_amount, meta.name)}
                         </div>
                     }
-                }}
+                }}}
                 <HighlightedButton
                     classes="max-w-96 mx-auto".to_string()
                     alt_style=claimed.into()
-                    on_click=handle_claim
+                    disabled=buffer_signal.into()
+                    on_click=move || {airdrop_action.dispatch(());}
                 >
-                    {if claimed.get() { "Go to wallet" } else { "Claim Now" }}
+                    {move || {
+                        if buffer_signal.get() {
+                            return view!{<SpinnerFit />}
+                        }else if claimed.get() {
+                             return view!{<a href="/wallet">"Go to wallet"</a>}.into_view()
+                            } else {
+                                return view!{"Claim Now"}.into_view()
+                            }
+                        }
+                    }
                 </HighlightedButton>
             </div>
         </div>
