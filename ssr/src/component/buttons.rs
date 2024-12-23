@@ -1,7 +1,7 @@
 use leptos::*;
 
 #[component]
-pub fn Button(
+pub fn HighlightedButton(
     children: Children,
     on_click: impl Fn() + 'static,
     #[prop(optional)] classes: String,
@@ -12,19 +12,17 @@ pub fn Button(
     view! {
         <button
             on:click=on_click
-            disabled=disabled.get()
-            class=format!(
-                "w-full px-5 py-3 rounded-lg flex items-center transition-all justify-center gap-8 font-kumbh font-bold {} {}",
-                if disabled.get() {
-                    "text-white/50"
-                } else if alt_style.get() {
-                    "text-[#E2017B]"
+            disabled=move ||disabled.get()
+            class=move || format!(
+                "w-full px-5 py-3 rounded-lg disabled:text-white/50 flex items-center transition-all justify-center gap-8 font-kumbh font-bold {} {}",
+                if alt_style.get() {
+                    "text-primary-600"
                 } else {
                     "text-white"
                 },
                 classes,
             )
-            style=format!(
+            style=move || format!(
                 "background: linear-gradient(73deg, {} );",
                 if disabled.get() {
                     "#DE98BE 0%, #E761A9 33%, #7B5369 100%"
@@ -41,7 +39,7 @@ pub fn Button(
 }
 
 #[component]
-pub fn LinkButton(
+pub fn HighlightedLinkButton(
     children: Children,
     href: String,
     #[prop(optional)] classes: String,
@@ -51,18 +49,17 @@ pub fn LinkButton(
     view! {
         <a
             href=href
-            class=format!(
-                "w-full px-5 py-3 rounded-lg flex items-center transition-all justify-center gap-8 font-kumbh font-bold {} {}",
-                if disabled.get() {
-                    "text-white/50"
-                } else if alt_style.get() {
-                    "text-[#E2017B]"
+            disabled=move || disabled.get()
+            class=move ||format!(
+                "w-full px-5 py-3 rounded-lg {} disabled:text-white/50 flex items-center transition-all justify-center gap-8 font-kumbh font-bold {}",
+                if alt_style.get() {
+                    "text-primary-600"
                 } else {
                     "text-white"
                 },
                 classes,
             )
-            style=format!(
+            style=move || format!(
                 "background: linear-gradient(73deg, {} );",
                 if disabled.get() {
                     "#DE98BE 0%, #E761A9 33%, #7B5369 100%"
@@ -79,7 +76,7 @@ pub fn LinkButton(
 }
 
 #[component]
-pub fn SecondaryLinkButton(
+pub fn SecondaryHighlightedLinkButton(
     children: Children,
     href: String,
     #[prop(optional)] classes: String,
@@ -88,7 +85,7 @@ pub fn SecondaryLinkButton(
     view! {
         <a
             href=href
-            class=format!(
+            class=move || format!(
                 "rounded-full border border-white text-sm font-bold font-kumbh px-5 py-2 {} {}",
                 if alt_style.get() {
                     "bg-transparent text-white hover:bg-white/10 active:bg-white/5"
@@ -104,7 +101,7 @@ pub fn SecondaryLinkButton(
 }
 
 #[component]
-pub fn SecondaryButton(
+pub fn SecondaryHighlightedButton(
     children: Children,
     disabled: Signal<bool>,
     alt_style: Signal<bool>,
@@ -114,9 +111,9 @@ pub fn SecondaryButton(
     let on_click = move |_| on_click();
     view! {
         <button
-            disabled=disabled.get()
+            disabled=move || disabled.get()
             on:click=on_click
-            class=format!(
+            class=move ||format!(
                 "rounded-full border border-white text-sm font-bold font-kumbh px-5 py-2 {} {}",
                 if alt_style.get() {
                     "bg-transparent text-white hover:bg-white/10 active:bg-white/5"
