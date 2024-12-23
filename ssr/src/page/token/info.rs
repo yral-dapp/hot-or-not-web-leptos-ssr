@@ -208,6 +208,16 @@ struct AirdropParam {
     airdrop_amt: u64,
 }
 
+#[derive(Deserialize, Serialize, Clone, Debug)]
+struct TokenInfoResponse {
+    meta: TokenMetadata,
+    root: RootType,
+    #[serde(default)]
+    key_principal: Option<Principal>,
+    is_user_principal: bool,
+    user_canister: Principal, // Make this optional if it's missing.
+}
+
 #[component]
 pub fn TokenInfo() -> impl IntoView {
     let params = use_params::<TokenInfoParams>();
@@ -233,13 +243,16 @@ pub fn TokenInfo() -> impl IntoView {
                 .flatten();
 
             Ok(meta.map(|m| {
-                (
-                    m,
-                    params.token_root,
+                let res = TokenInfoResponse {
+                    meta: m,
+                    root: params.token_root,
                     key_principal,
-                    Some(cans.user_principal()) == key_principal,
-                    cans.user_canister(),
-                )
+                    is_user_principal: Some(cans.user_principal()) == key_principal,
+                    user_canister: cans.user_canister(),
+                };
+                println!("{:?}", res);
+
+                res
             }))
         },
     );
@@ -247,15 +260,14 @@ pub fn TokenInfo() -> impl IntoView {
     view! {
         <Suspense fallback=FullScreenSpinner>
             {move || {
-                token_metadata_fetch()
-                    .and_then(|info| info.ok())
+                token_metadata_fetch.get()
                     .map(|info| {
                         match info {
-                            Some((metadata, root, key_principal, is_user_principal, user_canister_id)) => {
-                                if let (Ok(AirdropParam { airdrop_amt }), Some(airdrop_claimed)) = (airdrop_param.get(), metadata.is_airdrop_claimed){
-                                    if !airdrop_claimed && metadata.token_owner != key_principal && !is_user_principal{
+                            Ok(Some(TokenInfoResponse { meta, root, key_principal, is_user_principal, user_canister })) => {
+                                if let (Ok(AirdropParam { airdrop_amt }), Some(airdrop_claimed)) = (airdrop_param.get(), meta.is_airdrop_claimed){
+                                    if !airdrop_claimed && meta.token_owner != key_principal && !is_user_principal{
                                         return view! {
-                                            <AirdropPage airdrop_amount=airdrop_amt meta=metadata user_canister_id/>
+                                            <AirdropPage airdrop_amount=airdrop_amt meta user_canister_id=user_canister/>
                                         }
                                     }
                                 }
@@ -263,12 +275,12 @@ pub fn TokenInfo() -> impl IntoView {
                                     <TokenInfoInner
                                         root
                                         key_principal
-                                        meta=metadata
+                                        meta
                                         is_user_principal=is_user_principal
                                     />
                                 }
                             }
-                            None => view! { <Redirect path="/" /> },
+                            _ => view! { <Redirect path="/" /> },
                         }
                     })
             }}
