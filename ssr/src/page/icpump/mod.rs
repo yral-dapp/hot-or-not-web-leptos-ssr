@@ -51,47 +51,18 @@ async fn process_token_list_item(
                     .trim_end_matches('/')
                     .split('/')
                     .last()
-                    .expect("URL should have at least one segment")
-                    .to_string(),
+                    .expect("URL should have at least one segment"),
             )
             .unwrap();
-            let root = cans.sns_root(root_principal).await;
 
-            let ListSnsCanistersResponse { swap, .. } = root
-                .list_sns_canisters(ListSnsCanistersArg {})
-                .await
-                .unwrap();
-
-            let swap: SnsSwap<'_> = cans.sns_swap(swap.unwrap()).await;
-
-            let init = swap.get_init(GetInitArg {}).await.unwrap();
-
-            let token_owner_canister_id = Principal::from_text(
-                init.init
+            let token_owner_canister_id = cans.get_token_owner(root_principal).await.unwrap();
+            let is_airdrop_claimed = if let Some(token_owner) = token_owner_canister_id.clone() {
+                cans.get_airdrop_status(token_owner, root_principal, key_principal)
+                    .await
                     .unwrap()
-                    .fallback_controller_principal_ids
-                    .into_iter()
-                    .filter(|controller| controller.ends_with("-cai"))
-                    .collect::<Vec<_>>()[0]
-                    .clone(),
-            )
-            .unwrap();
-
-            let token_owner = cans.individual_user(token_owner_canister_id).await;
-
-            let is_airdrop_claimed = token_owner
-                .deployed_cdao_canisters()
-                .await
-                .unwrap()
-                .into_iter()
-                .any(|token| {
-                    token.root == root_principal
-                        && token
-                            .airdrop_info
-                            .principals_who_successfully_claimed
-                            .iter()
-                            .any(|claimee| *claimee == (key_principal, ClaimStatus::Claimed))
-                });
+            } else {
+                true
+            };
 
             (
                 token,
