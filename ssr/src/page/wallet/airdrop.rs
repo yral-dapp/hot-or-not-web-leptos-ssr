@@ -1,4 +1,4 @@
-use crate::component::buttons::Button;
+use crate::component::buttons::HighlightedButton;
 use leptos::*;
 
 #[component]
@@ -109,13 +109,13 @@ pub fn AirdropPage(
                         </div>
                     }
                 }}
-                <Button
+                <HighlightedButton
                     classes="max-w-96 mx-auto".to_string()
                     alt_style=claimed.into()
                     on_click=handle_claim
                 >
                     {if claimed.get() { "Go to wallet" } else { "Claim Now" }}
-                </Button>
+                </HighlightedButton>
             </div>
         </div>
     }
