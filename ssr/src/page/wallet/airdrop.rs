@@ -34,7 +34,7 @@ pub fn AirdropPage(meta: TokenMetadata, airdrop_amount: u64) -> impl IntoView {
 
             token_owner
                 .request_airdrop(
-                    meta.root.clone().unwrap(),
+                    meta.root.unwrap(),
                     None,
                     Into::<Nat>::into(airdrop_amount) * 10u64.pow(8),
                     cans.user_canister(),

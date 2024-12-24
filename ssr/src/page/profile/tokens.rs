@@ -63,7 +63,7 @@ pub fn ProfileTokens(user_canister: Principal, user_principal: Principal) -> imp
                         {
                             Some(
                                 cans.get_airdrop_status(
-                                    token_owner.canister_id.clone(),
+                                    token_owner.canister_id,
                                     root,
                                     user_principal,
                                 )
