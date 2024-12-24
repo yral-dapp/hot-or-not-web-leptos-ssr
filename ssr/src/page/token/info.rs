@@ -285,7 +285,6 @@ pub fn TokenInfo() -> impl IntoView {
                     .map(|info| {
                         match info {
                             Ok(Some(TokenInfoResponse { meta, root, key_principal, is_user_principal, is_token_viewer_airdrop_claimed })) => {
-                                println!("{} {:?} {:?}", is_token_viewer_airdrop_claimed, key_principal.clone().unwrap().to_text(), meta.token_owner.clone().unwrap().principal_id.to_text());
                                 if let Ok(AirdropParam { airdrop_amt }) = airdrop_param.get(){
                                     if !is_token_viewer_airdrop_claimed && meta.token_owner.clone().map(|t| t.principal_id) == key_principal && !is_user_principal{
                                         return view! {
