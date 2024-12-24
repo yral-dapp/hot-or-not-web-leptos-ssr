@@ -150,7 +150,7 @@ pub fn AirdropPage(meta: TokenMetadata, airdrop_amount: u64) -> impl IntoView {
                     if buffer_signal.get() {
                         view! {
                             <HighlightedButton
-                                classes="max-w-96 mx-auto".to_string()
+                                classes="max-w-96 mx-auto py-[12px] px-[20px]".to_string()
                                 alt_style=false
                                 disabled=true
                                 on_click=move || {}
@@ -160,7 +160,7 @@ pub fn AirdropPage(meta: TokenMetadata, airdrop_amount: u64) -> impl IntoView {
                         }.into_view()
                     } else if claimed.get() {
                         view! {
-                            <a href="/wallet" class="max-w-96 mx-auto">
+                            <a href="/wallet" class="max-w-96 mx-auto py-[12px] px-[20px]">
                                 <HighlightedButton
                                     alt_style=true
                                     disabled=false
@@ -173,7 +173,7 @@ pub fn AirdropPage(meta: TokenMetadata, airdrop_amount: u64) -> impl IntoView {
                     } else {
                         view! {
                             <HighlightedButton
-                                classes="max-w-96 mx-auto".to_string()
+                                classes="max-w-96 mx-auto py-[12px] px-[20px]".to_string()
                                 alt_style=false
                                 disabled=false
                                 on_click=move || { airdrop_action.dispatch(()); }

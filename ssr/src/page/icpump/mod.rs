@@ -53,29 +53,29 @@ async fn process_token_list_item(
                     .trim_end_matches('/')
                     .split('/')
                     .last()
-                    .expect("URL should have at least one segment"),
-            )
-            .unwrap();
+                    .ok_or(ServerFnError::new("Not root given"))?,
+            )?;
 
-            let token_owner_canister_id = cans.get_token_owner(root_principal).await.unwrap();
+            let token_owner_canister_id = cans.get_token_owner(root_principal).await?;
             let is_airdrop_claimed = if let Some(token_owner) = token_owner_canister_id {
                 cans.get_airdrop_status(token_owner.canister_id, root_principal, key_principal)
-                    .await
-                    .unwrap()
+                    .await?
             } else {
                 true
             };
             // let token_owner = cans.individual_user(token_owner_canister_id.unwrap()).await;
             // token_owner_principal_id: token_owner.get_profile_details().await.unwrap().principal_id,
-            ProcessedTokenListResponse {
+            Ok::<_, ServerFnError>(ProcessedTokenListResponse {
                 token_details: token,
                 root: root_principal,
                 is_airdrop_claimed,
-            }
+            })
         });
     }
 
-    fut.collect::<Vec<_>>().await
+    fut.filter_map(|result| async move { result.ok() })
+        .collect()
+        .await
 }
 #[component]
 pub fn ICPumpListing() -> impl IntoView {
