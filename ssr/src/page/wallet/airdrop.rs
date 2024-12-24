@@ -16,9 +16,13 @@ pub fn AirdropPage(meta: TokenMetadata, airdrop_amount: u64) -> impl IntoView {
 
     let (buffer_signal, set_buffer_signal) = create_signal(false);
 
+    let meta_c = meta.clone();
+    let meta_c2 = meta.clone();
+
     let cans_res = authenticated_canisters();
     let airdrop_action = create_action(move |&()| {
         let cans_res = cans_res.clone();
+        let token_owner_cans_id = meta.token_owner.clone().unwrap().canister_id;
         async move {
             if claimed.get() && !buffer_signal.get() {
                 return Ok(());
@@ -26,35 +30,32 @@ pub fn AirdropPage(meta: TokenMetadata, airdrop_amount: u64) -> impl IntoView {
             set_buffer_signal.set(true);
             let cans_wire = cans_res.wait_untracked().await?;
             let cans = Canisters::from_wire(cans_wire, expect_context())?;
-            let token_owner = cans.individual_user(meta.token_owner.unwrap()).await;
+            let token_owner = cans.individual_user(token_owner_cans_id).await;
 
-            println!(
-                "{:?}",
-                token_owner
-                    .request_airdrop(
-                        meta.root.unwrap(),
-                        None,
-                        Into::<Nat>::into(airdrop_amount) * 10u64.pow(8),
-                        cans.user_canister(),
-                    )
-                    .await?
-            );
+            token_owner
+                .request_airdrop(
+                    meta.root.clone().unwrap(),
+                    None,
+                    Into::<Nat>::into(airdrop_amount) * 10u64.pow(8),
+                    cans.user_canister(),
+                )
+                .await?;
 
-            println!(
-                "{:?}",
-                token_owner
-                    .deployed_cdao_canisters()
-                    .await?
-                    .into_iter()
-                    .find(|cdao| Some(cdao.root) == meta.root)
-            );
+            token_owner
+                .deployed_cdao_canisters()
+                .await?
+                .into_iter()
+                .find(|cdao| Some(cdao.root) == meta.root);
+
+            let user = cans.individual_user(cans.user_canister()).await;
+            user.add_token(meta.root.unwrap()).await?;
+
             set_buffer_signal(false);
             set_claimed(true);
             Ok::<_, ServerFnError>(())
         }
     });
 
-    let meta_c = meta.clone();
     view! {
         <div
             style="background: radial-gradient(circle, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 75%, rgba(50,0,28,0.5) 100%);"
@@ -131,7 +132,7 @@ pub fn AirdropPage(meta: TokenMetadata, airdrop_amount: u64) -> impl IntoView {
                 class="fade-in flex text-xl font-bold z-[2] w-full flex-col gap-4 items-center justify-center px-8"
             >
                 {move || {if claimed.get() {
-                    let meta = meta.clone();
+                    let meta = meta_c2.clone();
                     view! {
                         <div class="text-center">
                             {format!("{} {}", airdrop_amount, meta.name)} <br />

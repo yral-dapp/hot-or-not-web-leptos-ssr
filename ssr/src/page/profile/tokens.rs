@@ -59,11 +59,15 @@ pub fn ProfileTokens(user_canister: Principal, user_principal: Principal) -> imp
                     async move {
                         let token = token_metadata(&cans, user_principal, deployed_cans).await?;
                         let is_airdrop_claimed = if let (Some(token_owner), Some(root)) =
-                            (token.token_owner, token.root)
+                            (token.token_owner.clone(), token.root)
                         {
                             Some(
-                                cans.get_airdrop_status(token_owner, root, user_principal)
-                                    .await?,
+                                cans.get_airdrop_status(
+                                    token_owner.canister_id.clone(),
+                                    root,
+                                    user_principal,
+                                )
+                                .await?,
                             )
                         } else {
                             None

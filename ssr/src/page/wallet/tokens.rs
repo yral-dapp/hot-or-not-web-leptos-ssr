@@ -48,7 +48,7 @@ pub fn TokenView(
 
             let is_token_viewer_airdrop_claimed = cans
                 .get_airdrop_status(
-                    meta.token_owner.unwrap(),
+                    meta.token_owner.clone().unwrap().canister_id,
                     Principal::from_text(token_root.to_string()).unwrap(),
                     cans.user_canister(),
                 )
@@ -158,7 +158,7 @@ pub fn WalletCard(
                 <ActionButton disabled=true href="#".to_string() label="Buy/Sell".to_string()>
                     <Icon class="h-6 w-6" icon=ArrowLeftRightIcon />
                 </ActionButton>
-                <ActionButton disabled=is_airdrop_claimed href=token_meta_data.token_owner.map(|token_owner| format!("/token/info/{root}/{}?airdrop_amt=100", token_owner)).unwrap_or_default() label="Airdrop".to_string()>
+                <ActionButton disabled=is_airdrop_claimed href=token_meta_data.token_owner.map(|token_owner| format!("/token/info/{root}/{}?airdrop_amt=100", token_owner.principal_id)).unwrap_or_default() label="Airdrop".to_string()>
                     <Icon class="h-6 w-6" icon=AirdropIcon />
                 </ActionButton>
                 <ActionButton href="#".to_string() label="Share".to_string()>

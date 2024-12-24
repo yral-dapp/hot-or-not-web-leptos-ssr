@@ -224,6 +224,7 @@ pub fn TokenInfo() -> impl IntoView {
     let key_principal = use_params::<TokenKeyParam>();
     let airdrop_param = use_query::<AirdropParam>();
     let key_principal = move || key_principal.with(|p| p.as_ref().map(|p| p.key_principal).ok());
+
     let token_metadata_fetch = authenticated_canisters().derive(
         move || (params(), key_principal()),
         move |cans_wire, (params_result, key_principal)| async move {
@@ -249,9 +250,10 @@ pub fn TokenInfo() -> impl IntoView {
                 (Some(m), RootType::Other(root)) => {
                     let token_owner = m
                         .token_owner
+                        .clone()
                         .ok_or(ServerFnError::new("Token owner not found for yral token"))?;
                     let is_airdrop_claimed = cans
-                        .get_airdrop_status(token_owner, *root, cans.user_principal())
+                        .get_airdrop_status(token_owner.canister_id, *root, cans.user_principal())
                         .await?;
 
                     Some(TokenInfoResponse {
@@ -283,11 +285,8 @@ pub fn TokenInfo() -> impl IntoView {
                     .map(|info| {
                         match info {
                             Ok(Some(TokenInfoResponse { meta, root, key_principal, is_user_principal, is_token_viewer_airdrop_claimed })) => {
-                                println!("Airdrop Inner2 {:?}", airdrop_param.get());
                                 if let Ok(AirdropParam { airdrop_amt }) = airdrop_param.get(){
-                                    println!("Airdrop Inner1 {} {:?} {:?} {}", is_token_viewer_airdrop_claimed, meta.token_owner.map(|t| t.to_text()), key_principal.map(|k| k.to_text()), is_user_principal);
-                                    if !is_token_viewer_airdrop_claimed && meta.token_owner != key_principal{
-                                        println!("Airdrop Inner");
+                                    if !is_token_viewer_airdrop_claimed && meta.token_owner.clone().map(|t| t.principal_id) != key_principal{
                                         return view! {
                                             <AirdropPage airdrop_amount=airdrop_amt meta/>
                                         }

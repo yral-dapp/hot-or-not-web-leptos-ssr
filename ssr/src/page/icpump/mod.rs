@@ -11,6 +11,8 @@ use futures::StreamExt;
 use leptos::*;
 use leptos_icons::Icon;
 use leptos_use::use_cookie;
+use serde::Deserialize;
+use serde::Serialize;
 
 use crate::component::buttons::HighlightedLinkButton;
 use crate::component::icons::airdrop_icon::AirdropIcon;
@@ -29,12 +31,17 @@ use crate::utils::token::icpump::get_paginated_token_list;
 use crate::utils::token::icpump::TokenListItem;
 
 pub mod ai;
-type IsAirdropClaimed = bool;
+#[derive(Serialize, Deserialize, Clone)]
+struct ProcessedTokenListResponse {
+    token_details: TokenListItem,
+    root: Principal,
+    is_airdrop_claimed: bool,
+}
 
 async fn process_token_list_item(
     token_list_item: Vec<TokenListItem>,
     key_principal: Principal,
-) -> Vec<(TokenListItem, Principal, bool, Principal)> {
+) -> Vec<ProcessedTokenListResponse> {
     let mut fut = FuturesOrdered::new();
 
     for token in token_list_item {
@@ -52,19 +59,19 @@ async fn process_token_list_item(
 
             let token_owner_canister_id = cans.get_token_owner(root_principal).await.unwrap();
             let is_airdrop_claimed = if let Some(token_owner) = token_owner_canister_id {
-                cans.get_airdrop_status(token_owner, root_principal, key_principal)
+                cans.get_airdrop_status(token_owner.canister_id, root_principal, key_principal)
                     .await
                     .unwrap()
             } else {
                 true
             };
-
-            (
-                token,
-                token_owner_canister_id.unwrap(),
+            // let token_owner = cans.individual_user(token_owner_canister_id.unwrap()).await;
+            // token_owner_principal_id: token_owner.get_profile_details().await.unwrap().principal_id,
+            ProcessedTokenListResponse {
+                token_details: token,
+                root: root_principal,
                 is_airdrop_claimed,
-                root_principal,
-            )
+            }
         });
     }
 
@@ -73,16 +80,11 @@ async fn process_token_list_item(
 #[component]
 pub fn ICPumpListing() -> impl IntoView {
     let page = create_rw_signal(1);
-    let token_list: RwSignal<Vec<(TokenListItem, Principal, IsAirdropClaimed, Principal)>> =
-        create_rw_signal(vec![]);
+    let token_list: RwSignal<Vec<ProcessedTokenListResponse>> = create_rw_signal(vec![]);
     let end_of_list = create_rw_signal(false);
-    let cache = create_rw_signal(HashMap::<
-        u64,
-        Vec<(TokenListItem, Principal, IsAirdropClaimed, Principal)>,
-    >::new());
-    let new_token_list: RwSignal<
-        VecDeque<(TokenListItem, Principal, IsAirdropClaimed, Principal)>,
-    > = create_rw_signal(VecDeque::new());
+    let cache = create_rw_signal(HashMap::<u64, Vec<ProcessedTokenListResponse>>::new());
+    let new_token_list: RwSignal<VecDeque<ProcessedTokenListResponse>> =
+        create_rw_signal(VecDeque::new());
     let (curr_principal, _) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE);
 
     let act = create_resource(
@@ -139,16 +141,16 @@ pub fn ICPumpListing() -> impl IntoView {
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         <For
                             each=move || new_token_list.get()
-                            key=|(t, _, _, _)| t.token_symbol.clone()
-                            children=move |(token, canister_id, is_airdrop_claimed, root)| {
-                                view! { <TokenCard details=token is_new_token=true token_owner_canister_id=canister_id is_airdrop_claimed root/> }
+                            key=|t| t.token_details.token_symbol.clone()
+                            children=move |ProcessedTokenListResponse { token_details, root, is_airdrop_claimed }| {
+                                view! { <TokenCard is_new_token=true details=token_details is_airdrop_claimed root/> }
                             }
                         />
                         <For
                             each=move || token_list.get()
-                            key=|(t, _, _, _)| t.token_symbol.clone()
-                            children=move |(token, canister, is_airdrop_claimed, root)| {
-                                view! { <TokenCard details=token token_owner_canister_id=canister is_airdrop_claimed root/> }
+                            key=|t| t.token_details.token_symbol.clone()
+                            children=move |ProcessedTokenListResponse { token_details, root, is_airdrop_claimed }| {
+                                view! { <TokenCard details=token_details is_airdrop_claimed root/> }
                             }
                         />
                     </div>
@@ -200,7 +202,6 @@ pub fn ICPumpLanding() -> impl IntoView {
 #[component]
 pub fn TokenCard(
     details: TokenListItem,
-    token_owner_canister_id: Principal,
     #[prop(optional, default = false)] is_new_token: bool,
     root: Principal,
     is_airdrop_claimed: bool,
@@ -256,7 +257,7 @@ pub fn TokenCard(
                         </span>
                     </div>
                     <div class="flex gap-2 justify-between items-center text-sm font-medium group-hover:text-white text-neutral-600">
-                        <span class="line-clamp-1">"Created by" {details.user_id}</span>
+                        <span class="line-clamp-1">"Created by" {details.user_id.clone()}</span>
                         <span class="shrink-0">{details.formatted_created_at}</span>
                     </div>
                 </div>
@@ -269,7 +270,7 @@ pub fn TokenCard(
                 <ActionButton label="Buy/Sell".to_string() href="#".to_string() disabled=true>
                     <Icon class="w-full h-full" icon=ArrowLeftRightIcon />
                 </ActionButton>
-                <ActionButton label="Airdrop".to_string() href=format!("/token/info/{root}/{token_owner_canister_id}?airdrop_amt=100") disabled=is_airdrop_claimed>
+                <ActionButton label="Airdrop".to_string() href=format!("/token/info/{root}/{}?airdrop_amt=100", details.user_id) disabled=is_airdrop_claimed>
                     <Icon class="w-full h-full" icon=AirdropIcon />
                 </ActionButton>
                 <ActionButton label="Share".to_string() href="#".to_string()>
