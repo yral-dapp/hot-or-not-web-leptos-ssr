@@ -146,23 +146,43 @@ pub fn AirdropPage(meta: TokenMetadata, airdrop_amount: u64) -> impl IntoView {
                         </div>
                     }
                 }}}
-                <HighlightedButton
-                    classes="max-w-96 mx-auto".to_string()
-                    alt_style=claimed.into()
-                    disabled=buffer_signal.into()
-                    on_click=move || {airdrop_action.dispatch(());}
-                >
-                    {move || {
-                        if buffer_signal.get() {
-                            view!{<div classes="max-w-90"><SpinnerFit /></div>}.into_view()
-                        }else if claimed.get() {
-                            view!{<a href="/wallet">"Go to wallet"</a>}.into_view()
-                            } else {
-                            view!{"Claim Now"}.into_view()
-                            }
-                        }
+                {move || {
+                    if buffer_signal.get() {
+                        view! {
+                            <HighlightedButton
+                                classes="max-w-96 mx-auto".to_string()
+                                alt_style=false
+                                disabled=true
+                                on_click=move || {}
+                            >
+                                <div class="max-w-90"><SpinnerFit /></div>
+                            </HighlightedButton>
+                        }.into_view()
+                    } else if claimed.get() {
+                        view! {
+                            <a href="/wallet" classes="max-w-96 mx-auto">
+                                <HighlightedButton
+                                    alt_style=true
+                                    disabled=false
+                                    on_click=move || {}
+                                >
+                                    "Go to wallet"
+                                </HighlightedButton>
+                            </a>
+                        }.into_view()
+                    } else {
+                        view! {
+                            <HighlightedButton
+                                classes="max-w-96 mx-auto".to_string()
+                                alt_style=false
+                                disabled=false
+                                on_click=move || { airdrop_action.dispatch(()); }
+                            >
+                                "Claim Now"
+                            </HighlightedButton>
+                        }.into_view()
                     }
-                </HighlightedButton>
+                }}
             </div>
         </div>
     }
