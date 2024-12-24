@@ -44,12 +44,6 @@ pub fn AirdropPage(meta: TokenMetadata, airdrop_amount: u64) -> impl IntoView {
                 )
                 .await?;
 
-            token_owner
-                .deployed_cdao_canisters()
-                .await?
-                .into_iter()
-                .find(|cdao| Some(cdao.root) == meta.root);
-
             let user = cans.individual_user(cans.user_canister()).await;
             user.add_token(meta.root.unwrap()).await?;
 
