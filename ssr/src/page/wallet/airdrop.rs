@@ -1,5 +1,8 @@
 use crate::{
-    component::{buttons::{HighlightedButton, HighlightedLinkButton}, spinner::{SpinnerCircle, SpinnerFit}},
+    component::{
+        buttons::{HighlightedButton, HighlightedLinkButton},
+        spinner::SpinnerCircle,
+    },
     state::canisters::authenticated_canisters,
 };
 use candid::Nat;
