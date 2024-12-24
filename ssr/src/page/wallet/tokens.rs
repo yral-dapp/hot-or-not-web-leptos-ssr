@@ -50,7 +50,7 @@ pub fn TokenView(
                 .get_airdrop_status(
                     meta.token_owner.clone().unwrap().canister_id,
                     Principal::from_text(token_root.to_string()).unwrap(),
-                    cans.user_canister(),
+                    cans.user_principal(),
                 )
                 .await
                 .unwrap();
