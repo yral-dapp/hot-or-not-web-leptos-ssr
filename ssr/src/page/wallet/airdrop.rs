@@ -160,7 +160,7 @@ pub fn AirdropPage(meta: TokenMetadata, airdrop_amount: u64) -> impl IntoView {
                         }.into_view()
                     } else if claimed.get() {
                         view! {
-                            <a href="/wallet" classes="max-w-96 mx-auto">
+                            <a href="/wallet" class="max-w-96 mx-auto">
                                 <HighlightedButton
                                     alt_style=true
                                     disabled=false
