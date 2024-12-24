@@ -1,5 +1,6 @@
 use crate::page::token::RootType;
 use crate::page::token::TokenInfoParams;
+use crate::page::wallet::airdrop::AirdropPage;
 use crate::state::canisters::authenticated_canisters;
 
 use crate::utils::token::icpump::IcpumpTokenInfo;
@@ -202,17 +203,36 @@ pub struct TokenKeyParam {
     key_principal: Principal,
 }
 
+#[derive(Params, PartialEq, Clone, Serialize, Deserialize, Debug)]
+struct AirdropParam {
+    airdrop_amt: u64,
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug)]
+struct TokenInfoResponse {
+    meta: TokenMetadata,
+    root: RootType,
+    #[serde(default)]
+    key_principal: Option<Principal>,
+    is_user_principal: bool,
+    is_token_viewer_airdrop_claimed: bool,
+}
+
 #[component]
 pub fn TokenInfo() -> impl IntoView {
     let params = use_params::<TokenInfoParams>();
     let key_principal = use_params::<TokenKeyParam>();
+    let airdrop_param = use_query::<AirdropParam>();
     let key_principal = move || key_principal.with(|p| p.as_ref().map(|p| p.key_principal).ok());
+
     let token_metadata_fetch = authenticated_canisters().derive(
         move || (params(), key_principal()),
-        move |cans_wire, (params, key_principal)| async move {
-            let Ok(params) = params else {
-                return Ok::<_, ServerFnError>(None);
+        move |cans_wire, (params_result, key_principal)| async move {
+            let params = match params_result {
+                Ok(p) => p,
+                Err(_) => return Ok::<_, ServerFnError>(None),
             };
+
             let cans = Canisters::from_wire(cans_wire?, expect_context())?;
 
             let meta = cans
@@ -224,35 +244,64 @@ pub fn TokenInfo() -> impl IntoView {
                 .await
                 .ok()
                 .flatten();
-            Ok(meta.map(|m| {
-                (
-                    m,
-                    params.token_root,
+
+            let token_root = &params.token_root;
+            let res = match (meta, token_root) {
+                (Some(m), RootType::Other(root)) => {
+                    let token_owner = m
+                        .token_owner
+                        .clone()
+                        .ok_or(ServerFnError::new("Token owner not found for yral token"))?;
+                    let is_airdrop_claimed = cans
+                        .get_airdrop_status(token_owner.canister_id, *root, cans.user_principal())
+                        .await?;
+
+                    Some(TokenInfoResponse {
+                        meta: m,
+                        root: token_root.clone(),
+                        key_principal,
+                        is_user_principal: Some(cans.user_principal()) == key_principal,
+                        is_token_viewer_airdrop_claimed: is_airdrop_claimed,
+                    })
+                }
+                (Some(m), _) => Some(TokenInfoResponse {
+                    meta: m,
+                    root: token_root.clone(),
                     key_principal,
-                    Some(cans.user_principal()) == key_principal,
-                )
-            }))
+                    is_user_principal: Some(cans.user_principal()) == key_principal,
+                    is_token_viewer_airdrop_claimed: true,
+                }),
+                _ => None,
+            };
+
+            Ok(res)
         },
     );
 
     view! {
         <Suspense fallback=FullScreenSpinner>
             {move || {
-                token_metadata_fetch()
-                    .and_then(|info| info.ok())
+                token_metadata_fetch.get()
                     .map(|info| {
                         match info {
-                            Some((metadata, root, key_principal, is_user_principal)) => {
+                            Ok(Some(TokenInfoResponse { meta, root, key_principal, is_user_principal, is_token_viewer_airdrop_claimed })) => {
+                                if let Ok(AirdropParam { airdrop_amt }) = airdrop_param.get(){
+                                    if !is_token_viewer_airdrop_claimed && meta.token_owner.clone().map(|t| t.principal_id) == key_principal && !is_user_principal{
+                                        return view! {
+                                            <AirdropPage airdrop_amount=airdrop_amt meta/>
+                                        }
+                                    }
+                                }
                                 view! {
                                     <TokenInfoInner
                                         root
                                         key_principal
-                                        meta=metadata
+                                        meta
                                         is_user_principal=is_user_principal
                                     />
                                 }
                             }
-                            None => view! { <Redirect path="/" /> },
+                            _ => view! { <Redirect path="/" /> },
                         }
                     })
             }}

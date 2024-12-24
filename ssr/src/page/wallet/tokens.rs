@@ -1,6 +1,7 @@
 use candid::Principal;
 use yral_canisters_common::cursored_data::token_roots::TokenRootList;
 use yral_canisters_common::utils::token::{RootType, TokenMetadata};
+use yral_canisters_common::Canisters;
 
 use crate::component::icons::{
     airdrop_icon::AirdropIcon, arrow_left_right_icon::ArrowLeftRightIcon,
@@ -8,7 +9,8 @@ use crate::component::icons::{
 };
 use crate::component::overlay::PopupOverlay;
 use crate::component::share_popup::ShareContent;
-use crate::page::icpump::ActionButton;
+use crate::page::icpump::{ActionButton, ActionButtonLink};
+use crate::state::canisters::authenticated_canisters;
 use crate::utils::host::get_host;
 use crate::utils::token::icpump::IcpumpTokenInfo;
 use crate::{component::infinite_scroller::InfiniteScroller, state::canisters::unauth_canisters};
@@ -29,23 +31,37 @@ pub fn TokenView(
     token_root: RootType,
     #[prop(optional)] _ref: NodeRef<html::A>,
 ) -> impl IntoView {
-    let info = create_resource(
+    let info = authenticated_canisters().derive(
         move || (token_root.clone(), user_principal),
-        move |(token_root, user_principal)| async move {
-            let cans = unauth_canisters();
+        move |cans, (token_root, user_principal)| async move {
+            let cans = Canisters::from_wire(cans.unwrap(), expect_context()).unwrap();
             // TODO: remove these unwraps
-            cans.token_metadata_by_root_type(&IcpumpTokenInfo, Some(user_principal), token_root)
+            let meta = cans
+                .token_metadata_by_root_type(
+                    &IcpumpTokenInfo,
+                    Some(user_principal),
+                    token_root.clone(),
+                )
                 .await
                 .unwrap()
-                .unwrap()
+                .unwrap();
+
+            let is_token_viewer_airdrop_claimed = cans
+                .get_airdrop_status(
+                    meta.token_owner.clone().unwrap().canister_id,
+                    Principal::from_text(token_root.to_string()).unwrap(),
+                    cans.user_principal(),
+                )
+                .await
+                .unwrap();
+            (meta.clone(), is_token_viewer_airdrop_claimed)
         },
     );
-
     view! {
         <Suspense fallback=TokenViewFallback>
             {move || {
-                info.map(|info| {
-                    view! { <WalletCard user_principal token_meta_data=info.clone() /> }
+                info.map(|(info, is_token_airdrop_claimed)| {
+                    view! { <WalletCard user_principal token_meta_data=info.clone() is_airdrop_claimed=*is_token_airdrop_claimed/> }
                 })
             }}
 
@@ -53,12 +69,12 @@ pub fn TokenView(
     }
 }
 
-fn generate_share_link_from_metadata(
+pub fn generate_share_link_from_metadata(
     token_meta_data: &TokenMetadata,
     user_principal: Principal,
 ) -> String {
     format!(
-        "/token/info/{}/{user_principal}?airdrop_amt=100",
+        "/token/info/{}/{user_principal}",
         token_meta_data
             .root
             .map(|r| r.to_text())
@@ -98,20 +114,26 @@ pub fn TokenList(user_principal: Principal, user_canister: Principal) -> impl In
 }
 
 #[component]
-pub fn WalletCard(user_principal: Principal, token_meta_data: TokenMetadata) -> impl IntoView {
+pub fn WalletCard(
+    user_principal: Principal,
+    token_meta_data: TokenMetadata,
+    is_airdrop_claimed: bool,
+) -> impl IntoView {
     let root: String = token_meta_data
         .root
         .map(|r| r.to_text())
         .unwrap_or(token_meta_data.name.to_lowercase());
 
-    let share_link = generate_share_link_from_metadata(&token_meta_data, user_principal);
-    let share_link_s = store_value(share_link);
-    let share_message = format!(
+    let share_link = create_rw_signal("".to_string());
+    let share_link_coin = generate_share_link_from_metadata(&token_meta_data, user_principal);
+    let symbol = token_meta_data.symbol.clone();
+    let share_message = move || {
+        format!(
         "Hey! Check out the token: {} I created on YRAL 👇 {}. I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter",
-        token_meta_data.symbol,
-        share_link_s(),
-    );
-    let share_message_s = store_value(share_message);
+        token_meta_data.symbol.clone(),
+        share_link.get(),
+    )
+    };
     let pop_up = create_rw_signal(false);
     let base_url = get_host();
     view! {
@@ -127,7 +149,7 @@ pub fn WalletCard(user_principal: Principal, token_meta_data: TokenMetadata) -> 
                 </div>
                 <div class="flex flex-col items-end">
                     <div class="text-lg font-medium">{token_meta_data.balance.unwrap().humanize_float_truncate_to_dp(2)}</div>
-                    <div class="text-xs">{token_meta_data.symbol}</div>
+                    <div class="text-xs">{symbol}</div>
                 </div>
             </div>
             <div class="flex items-center justify-around">
@@ -137,11 +159,35 @@ pub fn WalletCard(user_principal: Principal, token_meta_data: TokenMetadata) -> 
                 <ActionButton disabled=true href="#".to_string() label="Buy/Sell".to_string()>
                     <Icon class="h-6 w-6" icon=ArrowLeftRightIcon />
                 </ActionButton>
-                <ActionButton disabled=true href="#".to_string() label="Airdrop".to_string()>
-                    <Icon class="h-6 w-6" icon=AirdropIcon />
-                </ActionButton>
+                {
+                    match token_meta_data.token_owner{
+                        Some(token_owner) => {
+                            if is_airdrop_claimed{
+                                let root = root.clone();
+                                view! {
+                                    <ActionButtonLink on:click=move |_|{pop_up.set(true); share_link.set(format!("/token/info/{}/{}?airdrop_amt=100",root, token_owner.principal_id))} label="Airdrop".to_string()>
+                                        <Icon class="h-6 w-6" icon=AirdropIcon />
+                                    </ActionButtonLink>
+                                }
+                            }else{
+                                view! {
+                                    <ActionButton href=format!("/token/info/{}/{}?airdrop_amt=100",root, token_owner.principal_id) label="Airdrop".to_string()>
+                                    <Icon class="h-6 w-6" icon=AirdropIcon />
+                                    </ActionButton>
+                                }
+                            }
+                        },
+                        None => {
+                            view! {
+                                <ActionButton href="#".to_string() label="Airdrop".to_string() disabled=true>
+                                <Icon class="h-6 w-6" icon=AirdropIcon />
+                                </ActionButton>
+                            }
+                        }
+                    }
+                }
                 <ActionButton href="#".to_string() label="Share".to_string()>
-                    <Icon class="h-6 w-6" icon=ShareIcon on:click=move |_| pop_up.set(true) />
+                    <Icon class="h-6 w-6" icon=ShareIcon on:click=move |_| {pop_up.set(true); share_link.set(share_link_coin.clone())}/>
                 </ActionButton>
                 <ActionButton href=format!("/token/info/{root}/{user_principal}") label="Details".to_string()>
                     <Icon class="h-6 w-6" icon=ChevronRightIcon />
@@ -150,8 +196,8 @@ pub fn WalletCard(user_principal: Principal, token_meta_data: TokenMetadata) -> 
 
             <PopupOverlay show=pop_up >
                 <ShareContent
-                    share_link=format!("{base_url}{}", share_link_s())
-                    message=share_message_s()
+                    share_link=format!("{base_url}{}", share_link())
+                    message=share_message()
                     show_popup=pop_up
                 />
             </PopupOverlay>
