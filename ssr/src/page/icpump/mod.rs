@@ -208,16 +208,18 @@ pub fn TokenCard(
 ) -> impl IntoView {
     let show_nsfw = create_rw_signal(false);
 
-    let popup = create_rw_signal(false);
-    let base_url = get_host();
-
-    let share_link_s = store_value(format!("{}/{}", details.link, details.user_id));
-    let share_message = format!(
+    let share_link = create_rw_signal("".to_string());
+    let share_link_coin = format!("/token/info/{}/{}", root, details.user_id);
+    let symbol = details.token_symbol.clone();
+    let share_message = move || {
+        format!(
         "Hey! Check out the token: {} I created on YRAL 👇 {}. I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter",
-        details.token_symbol,
-        share_link_s(),
-    );
-    let share_message_s = store_value(share_message);
+        details.token_symbol.clone(),
+        share_link.get(),
+    )
+    };
+    let pop_up = create_rw_signal(false);
+    let base_url = get_host();
 
     view! {
         <div
@@ -250,7 +252,7 @@ pub fn TokenCard(
                     <div class="flex flex-col gap-2">
                         <div class="flex gap-4 justify-between items-center w-full text-lg">
                             <span class="font-medium shrink line-clamp-1">{details.name}</span>
-                            <span class="font-bold shrink-0">{details.token_symbol}</span>
+                            <span class="font-bold shrink-0">{symbol}</span>
                         </div>
                         <span class="text-sm line-clamp-2 text-neutral-400">
                             {details.description}
@@ -270,22 +272,35 @@ pub fn TokenCard(
                 <ActionButton label="Buy/Sell".to_string() href="#".to_string() disabled=true>
                     <Icon class="w-full h-full" icon=ArrowLeftRightIcon />
                 </ActionButton>
-                <ActionButton label="Airdrop".to_string() href=format!("/token/info/{root}/{}?airdrop_amt=100", details.user_id) disabled=is_airdrop_claimed>
-                    <Icon class="w-full h-full" icon=AirdropIcon />
-                </ActionButton>
+                {
+                    if is_airdrop_claimed{
+
+                        view! {
+                            <ActionButtonLink on:click=move |_|{pop_up.set(true); share_link.set(format!("/token/info/{}/{}?airdrop_amt=100",root, details.user_id))} label="Airdrop".to_string()>
+                                <Icon class="h-6 w-6" icon=AirdropIcon />
+                            </ActionButtonLink>
+                        }
+                    }else{
+                        view! {
+                            <ActionButton href=format!("/token/info/{}/{}?airdrop_amt=100",root, details.user_id) label="Airdrop".to_string()>
+                            <Icon class="h-6 w-6" icon=AirdropIcon />
+                            </ActionButton>
+                        }
+                    }
+                }
                 <ActionButton label="Share".to_string() href="#".to_string()>
-                    <Icon class="w-full h-full" icon=ShareIcon on:click=move |_| popup.set(true)/>
+                    <Icon class="w-full h-full" icon=ShareIcon on:click=move |_| {pop_up.set(true); share_link.set(share_link_coin.clone())}/>
                 </ActionButton>
                 <ActionButton label="Details".to_string() href=details.link>
                     <Icon class="w-full h-full" icon=ChevronRightIcon />
                 </ActionButton>
             </div>
-            <PopupOverlay show=popup >
+            <PopupOverlay show=pop_up >
                 <ShareContent
-                    share_link=format!("{base_url}{}", share_link_s())
-                    message=share_message_s()
-                    show_popup=popup
-            />
+                    share_link=format!("{base_url}{}", share_link())
+                    message=share_message()
+                    show_popup=pop_up
+                />
             </PopupOverlay>
         </div>
     }
@@ -335,6 +350,24 @@ pub fn ActionButton(
 
             <div>{label}</div>
         </a>
+    }
+}
+
+#[component]
+pub fn ActionButtonLink(
+    label: String,
+    children: Children,
+    #[prop(optional, default = false)] disabled: bool,
+) -> impl IntoView {
+    view! {
+        <button
+            disabled=disabled
+            class=move || format!("flex flex-col gap-1 justify-center items-center text-xs transition-colors {}", if !disabled{"group-hover:text-white text-neutral-300"}else{"group-hover:cursor-default text-neutral-600"})
+        >
+            <div class="w-[1.875rem] h-[1.875rem] flex items-center justify-center">{children()}</div>
+
+            <div>{label}</div>
+        </button>
     }
 }
 

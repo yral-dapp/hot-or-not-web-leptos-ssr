@@ -9,7 +9,7 @@ use crate::component::icons::{
 };
 use crate::component::overlay::PopupOverlay;
 use crate::component::share_popup::ShareContent;
-use crate::page::icpump::ActionButton;
+use crate::page::icpump::{ActionButton, ActionButtonLink};
 use crate::state::canisters::authenticated_canisters;
 use crate::utils::host::get_host;
 use crate::utils::token::icpump::IcpumpTokenInfo;
@@ -69,12 +69,12 @@ pub fn TokenView(
     }
 }
 
-fn generate_share_link_from_metadata(
+pub fn generate_share_link_from_metadata(
     token_meta_data: &TokenMetadata,
     user_principal: Principal,
 ) -> String {
     format!(
-        "/token/info/{}/{user_principal}?airdrop_amt=100",
+        "/token/info/{}/{user_principal}",
         token_meta_data
             .root
             .map(|r| r.to_text())
@@ -124,17 +124,18 @@ pub fn WalletCard(
         .map(|r| r.to_text())
         .unwrap_or(token_meta_data.name.to_lowercase());
 
-    let share_link = generate_share_link_from_metadata(&token_meta_data, user_principal);
-    let share_link_s = store_value(share_link);
-    let share_message = format!(
+    let share_link = create_rw_signal("".to_string());
+    let share_link_coin = generate_share_link_from_metadata(&token_meta_data, user_principal);
+    let symbol = token_meta_data.symbol.clone();
+    let share_message = move || {
+        format!(
         "Hey! Check out the token: {} I created on YRAL 👇 {}. I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter",
-        token_meta_data.symbol,
-        share_link_s(),
-    );
-    let share_message_s = store_value(share_message);
+        token_meta_data.symbol.clone(),
+        share_link.get(),
+    )
+    };
     let pop_up = create_rw_signal(false);
     let base_url = get_host();
-
     view! {
         <div class="flex flex-col gap-4 bg-neutral-900/90 rounded-lg w-full p-4 font-kumbh text-white">
             <div class="w-full flex items-center justify-between p-3 rounded-[4px] bg-neutral-800/70">
@@ -148,7 +149,7 @@ pub fn WalletCard(
                 </div>
                 <div class="flex flex-col items-end">
                     <div class="text-lg font-medium">{token_meta_data.balance.unwrap().humanize_float_truncate_to_dp(2)}</div>
-                    <div class="text-xs">{token_meta_data.symbol}</div>
+                    <div class="text-xs">{symbol}</div>
                 </div>
             </div>
             <div class="flex items-center justify-around">
@@ -158,11 +159,35 @@ pub fn WalletCard(
                 <ActionButton disabled=true href="#".to_string() label="Buy/Sell".to_string()>
                     <Icon class="h-6 w-6" icon=ArrowLeftRightIcon />
                 </ActionButton>
-                <ActionButton disabled=is_airdrop_claimed href=token_meta_data.token_owner.map(|token_owner| format!("/token/info/{root}/{}?airdrop_amt=100", token_owner.principal_id)).unwrap_or_default() label="Airdrop".to_string()>
-                    <Icon class="h-6 w-6" icon=AirdropIcon />
-                </ActionButton>
+                {
+                    match token_meta_data.token_owner{
+                        Some(token_owner) => {
+                            if is_airdrop_claimed{
+                                let root = root.clone();
+                                view! {
+                                    <ActionButtonLink on:click=move |_|{pop_up.set(true); share_link.set(format!("/token/info/{}/{}?airdrop_amt=100",root, token_owner.principal_id))} label="Airdrop".to_string()>
+                                        <Icon class="h-6 w-6" icon=AirdropIcon />
+                                    </ActionButtonLink>
+                                }
+                            }else{
+                                view! {
+                                    <ActionButton href=format!("/token/info/{}/{}?airdrop_amt=100",root, token_owner.principal_id) label="Airdrop".to_string()>
+                                    <Icon class="h-6 w-6" icon=AirdropIcon />
+                                    </ActionButton>
+                                }
+                            }
+                        },
+                        None => {
+                            view! {
+                                <ActionButton href="#".to_string() label="Airdrop".to_string() disabled=true>
+                                <Icon class="h-6 w-6" icon=AirdropIcon />
+                                </ActionButton>
+                            }
+                        }
+                    }
+                }
                 <ActionButton href="#".to_string() label="Share".to_string()>
-                    <Icon class="h-6 w-6" icon=ShareIcon on:click=move |_| pop_up.set(true) />
+                    <Icon class="h-6 w-6" icon=ShareIcon on:click=move |_| {pop_up.set(true); share_link.set(share_link_coin.clone())}/>
                 </ActionButton>
                 <ActionButton href=format!("/token/info/{root}/{user_principal}") label="Details".to_string()>
                     <Icon class="h-6 w-6" icon=ChevronRightIcon />
@@ -171,8 +196,8 @@ pub fn WalletCard(
 
             <PopupOverlay show=pop_up >
                 <ShareContent
-                    share_link=format!("{base_url}{}", share_link_s())
-                    message=share_message_s()
+                    share_link=format!("{base_url}{}", share_link())
+                    message=share_message()
                     show_popup=pop_up
                 />
             </PopupOverlay>
