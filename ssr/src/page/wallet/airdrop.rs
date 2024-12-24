@@ -1,5 +1,5 @@
 use crate::{
-    component::{buttons::HighlightedButton, spinner::SpinnerFit},
+    component::{buttons::{HighlightedButton, HighlightedLinkButton}, spinner::{SpinnerCircle, SpinnerFit}},
     state::canisters::authenticated_canisters,
 };
 use candid::Nat;
@@ -150,36 +150,36 @@ pub fn AirdropPage(meta: TokenMetadata, airdrop_amount: u64) -> impl IntoView {
                     if buffer_signal.get() {
                         view! {
                             <HighlightedButton
-                                classes="max-w-96 mx-auto py-[12px] px-[20px]".to_string()
-                                alt_style=false
-                                disabled=true
-                                on_click=move || {}
-                            >
-                                <div class="max-w-90"><SpinnerFit /></div>
-                            </HighlightedButton>
+                            classes="max-w-96 mx-auto py-[16px] px-[20px]".to_string()
+                            alt_style=false
+                            disabled=true
+                            on_click=move || {}
+                        >
+                            <div class="max-w-90"><SpinnerCircle /></div>
+                        </HighlightedButton>
                         }.into_view()
                     } else if claimed.get() {
                         view! {
-                            <a href="/wallet" class="max-w-96 mx-auto py-[12px] px-[20px]">
-                                <HighlightedButton
-                                    alt_style=true
-                                    disabled=false
-                                    on_click=move || {}
-                                >
-                                    "Go to wallet"
-                                </HighlightedButton>
-                            </a>
+                            <HighlightedLinkButton
+                            alt_style=true
+                            disabled=false
+                            classes="max-w-96 mx-auto py-[12px] px-[20px]".to_string()
+                            href="/wallet".to_string()
+                        >
+                            "Go to wallet"
+                        </HighlightedLinkButton>
                         }.into_view()
                     } else {
                         view! {
                             <HighlightedButton
-                                classes="max-w-96 mx-auto py-[12px] px-[20px]".to_string()
+                                classes="max-w-96 mx-auto py-[12px] px-[20px] w-full".to_string()
                                 alt_style=false
                                 disabled=false
                                 on_click=move || { airdrop_action.dispatch(()); }
                             >
                                 "Claim Now"
                             </HighlightedButton>
+
                         }.into_view()
                     }
                 }}
