@@ -1,5 +1,6 @@
 use candid::Principal;
 use yral_canisters_common::cursored_data::token_roots::TokenRootList;
+use yral_canisters_common::utils::token::balance::{TokenBalance, TokenBalanceOrClaiming};
 use yral_canisters_common::utils::token::{RootType, TokenMetadata};
 use yral_canisters_common::Canisters;
 
@@ -69,6 +70,45 @@ pub fn TokenView(
     }
 }
 
+#[component]
+pub fn CoynsTokenView() -> impl IntoView {
+    let info = authenticated_canisters().derive(
+        move || (),
+        move |cans, _| async move {
+            let cans = Canisters::from_wire(cans.unwrap(), expect_context()).unwrap();
+            let user = cans.individual_user(cans.user_canister()).await;
+
+            let bal = user.get_utility_token_balance().await.unwrap();
+
+            (cans.user_principal(), TokenMetadata{
+                logo_b64: "/img/coyns.png".to_string(),
+                name: "COYNS".to_string(),
+                description: "".to_string(),
+                symbol: "COYNS".to_string(),
+                balance: Some(TokenBalanceOrClaiming::new(TokenBalance::new_cdao(bal.into()))),
+                fees: TokenBalance::new_cdao(0u32.into()),
+                root: None,
+                ledger: Principal::anonymous(),
+                index: Principal::anonymous(),
+                decimals: 8,
+                is_nsfw: false,
+                token_owner: None
+            })
+        },
+    );
+    view! {
+        <Suspense fallback=TokenViewFallback>
+            {move || {
+                info.map(|(user_principal, meta)| {
+                    view! { <WalletCard user_principal=*user_principal token_meta_data=meta.clone() is_airdrop_claimed=false is_utility_token=true/> }
+                })
+            }}
+
+        </Suspense>
+    }
+}
+
+
 pub fn generate_share_link_from_metadata(
     token_meta_data: &TokenMetadata,
     user_principal: Principal,
@@ -95,6 +135,7 @@ pub fn TokenList(user_principal: Principal, user_canister: Principal) -> impl In
 
     view! {
         <div class="flex flex-col w-full gap-2 items-center">
+            <CoynsTokenView />
             <InfiniteScroller
                 provider
                 fetch_count=10
@@ -118,6 +159,7 @@ pub fn WalletCard(
     user_principal: Principal,
     token_meta_data: TokenMetadata,
     is_airdrop_claimed: bool,
+    #[prop(optional)]is_utility_token: bool
 ) -> impl IntoView {
     let root: String = token_meta_data
         .root
@@ -153,7 +195,7 @@ pub fn WalletCard(
                 </div>
             </div>
             <div class="flex items-center justify-around">
-                <ActionButton href=format!("/token/transfer/{root}") label="Send".to_string()>
+                <ActionButton disabled=is_utility_token href=format!("/token/transfer/{root}") label="Send".to_string()>
                     <Icon class="h-6 w-6" icon=SendIcon/>
                 </ActionButton>
                 <ActionButton disabled=true href="#".to_string() label="Buy/Sell".to_string()>
@@ -186,10 +228,10 @@ pub fn WalletCard(
                         }
                     }
                 }
-                <ActionButton href="#".to_string() label="Share".to_string()>
+                <ActionButton disabled=is_utility_token href="#".to_string() label="Share".to_string()>
                     <Icon class="h-6 w-6" icon=ShareIcon on:click=move |_| {pop_up.set(true); share_link.set(share_link_coin.clone())}/>
                 </ActionButton>
-                <ActionButton href=format!("/token/info/{root}/{user_principal}") label="Details".to_string()>
+                <ActionButton disabled=is_utility_token href=format!("/token/info/{root}/{user_principal}") label="Details".to_string()>
                     <Icon class="h-6 w-6" icon=ChevronRightIcon />
                 </ActionButton>
             </div>
