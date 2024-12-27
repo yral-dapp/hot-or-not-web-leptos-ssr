@@ -138,7 +138,7 @@ pub fn TokenList(user_principal: Principal, user_canister: Principal) -> impl In
     };
 
     view! {
-        <div class="flex flex-col w-full gap-2 items-center">
+        <div class="flex flex-col w-full gap-2 mb-2 items-center">
             <CoynsTokenView />
             <InfiniteScroller
                 provider
