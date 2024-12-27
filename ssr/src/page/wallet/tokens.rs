@@ -80,20 +80,25 @@ pub fn CoynsTokenView() -> impl IntoView {
 
             let bal = user.get_utility_token_balance().await.unwrap();
 
-            (cans.user_principal(), TokenMetadata{
-                logo_b64: "/img/coyns.png".to_string(),
-                name: "COYNS".to_string(),
-                description: "".to_string(),
-                symbol: "COYNS".to_string(),
-                balance: Some(TokenBalanceOrClaiming::new(TokenBalance::new_cdao(bal.into()))),
-                fees: TokenBalance::new_cdao(0u32.into()),
-                root: None,
-                ledger: Principal::anonymous(),
-                index: Principal::anonymous(),
-                decimals: 8,
-                is_nsfw: false,
-                token_owner: None
-            })
+            (
+                cans.user_principal(),
+                TokenMetadata {
+                    logo_b64: "/img/coyns.png".to_string(),
+                    name: "COYNS".to_string(),
+                    description: "".to_string(),
+                    symbol: "COYNS".to_string(),
+                    balance: Some(TokenBalanceOrClaiming::new(TokenBalance::new_cdao(
+                        bal.into(),
+                    ))),
+                    fees: TokenBalance::new_cdao(0u32.into()),
+                    root: None,
+                    ledger: Principal::anonymous(),
+                    index: Principal::anonymous(),
+                    decimals: 8,
+                    is_nsfw: false,
+                    token_owner: None,
+                },
+            )
         },
     );
     view! {
@@ -107,7 +112,6 @@ pub fn CoynsTokenView() -> impl IntoView {
         </Suspense>
     }
 }
-
 
 pub fn generate_share_link_from_metadata(
     token_meta_data: &TokenMetadata,
@@ -159,7 +163,7 @@ pub fn WalletCard(
     user_principal: Principal,
     token_meta_data: TokenMetadata,
     is_airdrop_claimed: bool,
-    #[prop(optional)]is_utility_token: bool
+    #[prop(optional)] is_utility_token: bool,
 ) -> impl IntoView {
     let root: String = token_meta_data
         .root
