@@ -14,7 +14,7 @@ pub fn HighlightedButton(
             on:click=on_click
             disabled=disabled
             class=format!(
-                "w-full px-5 py-3 rounded-lg disabled:text-white/50 flex items-center transition-all justify-center gap-8 font-kumbh font-bold {} {}",
+                "w-full px-5 py-3 rounded-lg flex items-center transition-all justify-center gap-8 font-kumbh font-bold {} {}",
                 if alt_style{
                     "text-primary-600"
                 } else {
@@ -24,9 +24,7 @@ pub fn HighlightedButton(
             )
             style=format!(
                 "background: linear-gradient(73deg, {} );",
-                if disabled {
-                    "#DE98BE 0%, #E761A9 33%, #7B5369 100%"
-                } else if alt_style {
+                if alt_style {
                     "#FFF 0%, #FFF 1000%"
                 } else {
                     "#DA539C 0%, #E2017B 33%, #5F0938 100%"
@@ -51,7 +49,7 @@ pub fn HighlightedLinkButton(
             href=href
             disabled=disabled
             class=format!(
-                "w-full px-5 py-3 rounded-lg {} disabled:text-white/50 flex items-center transition-all justify-center gap-8 font-kumbh font-bold {}",
+                "w-full px-5 py-3 rounded-lg {} flex items-center transition-all justify-center gap-8 font-kumbh font-bold {}",
                 if alt_style {
                     "text-primary-600"
                 } else {
@@ -61,9 +59,7 @@ pub fn HighlightedLinkButton(
             )
             style=move || format!(
                 "background: linear-gradient(73deg, {} );",
-                if disabled {
-                    "#DE98BE 0%, #E761A9 33%, #7B5369 100%"
-                } else if alt_style {
+                if alt_style {
                     "#FFF 0%, #FFF 1000%"
                 } else {
                     "#DA539C 0%, #E2017B 33%, #5F0938 100%"

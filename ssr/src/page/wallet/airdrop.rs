@@ -77,12 +77,12 @@ pub fn AirdropPage(meta: TokenMetadata, airdrop_amount: u64) -> impl IntoView {
 
                                 <div
                                     style="background: radial-gradient(circle, rgb(244 141 199) 0%, rgb(255 255 255) 100%); box-shadow: 0px 0px 3.43px 0px #FFFFFF29;"
-                                    class="p-[1px] w-16 h-16 -translate-y-8 rounded-full"
+                                    class="p-[1px] w-16 h-16 -translate-y-8 rounded-md"
                                 >
                                     <img
                                         alt="Airdrop"
                                         src=meta.logo_b64
-                                        class="w-full fade-in rounded-full h-full object-cover"
+                                        class="w-full fade-in rounded-md h-full object-cover"
                                     />
                                 </div>
                             </div>
@@ -107,12 +107,12 @@ pub fn AirdropPage(meta: TokenMetadata, airdrop_amount: u64) -> impl IntoView {
                                 <AnimatedTick />
                                 <div
                                     style="--duration:1500ms; background: radial-gradient(circle, rgba(27,0,15,1) 0%, rgba(0,0,0,1) 100%); box-shadow: 0px 0px 3.43px 0px #FFFFFF29;"
-                                    class="p-[1px] fade-in absolute w-16 h-16 -bottom-4 -right-4 rounded-full"
+                                    class="p-[1px] fade-in absolute w-16 h-16 -bottom-4 -right-4 rounded-md"
                                 >
                                     <img
                                         alt="Airdrop"
                                         src=meta.logo_b64
-                                        class="w-full fade-in rounded-full h-full object-cover"
+                                        class="w-full fade-in rounded-md h-full object-cover"
                                     />
                                 </div>
                             </div>

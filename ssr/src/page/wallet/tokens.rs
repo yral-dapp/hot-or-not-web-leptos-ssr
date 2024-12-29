@@ -102,7 +102,7 @@ pub fn CoynsTokenView() -> impl IntoView {
         },
     );
     view! {
-        <Suspense fallback=TokenViewFallback>
+        <Suspense>
             {move || {
                 info.map(|(user_principal, meta)| {
                     view! { <WalletCard user_principal=*user_principal token_meta_data=meta.clone() is_airdrop_claimed=false is_utility_token=true/> }
