@@ -56,7 +56,7 @@ pub fn AirdropPage(meta: TokenMetadata, airdrop_amount: u64) -> impl IntoView {
     view! {
         <div
             style="background: radial-gradient(circle, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 75%, rgba(50,0,28,0.5) 100%);"
-            class="h-screen w-screen relative items-center justify-center gap-8 text-white font-kumbh flex flex-col overflow-hidden"
+            class="h-screen w-screen relative items-center justify-center text-white font-kumbh flex flex-col overflow-hidden"
         >
             <img
                 alt="bg"

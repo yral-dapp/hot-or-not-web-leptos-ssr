@@ -14,12 +14,7 @@ pub fn HighlightedButton(
             on:click=on_click
             disabled=disabled
             class=format!(
-                "w-full px-5 py-3 rounded-lg flex items-center transition-all justify-center gap-8 font-kumbh font-bold {} {}",
-                if alt_style{
-                    "text-primary-600"
-                } else {
-                    "text-white"
-                },
+                "w-full px-5 py-3 rounded-lg flex items-center transition-all justify-center gap-8 font-kumbh font-bold {}",
                 classes,
             )
             style=format!(
@@ -27,11 +22,17 @@ pub fn HighlightedButton(
                 if alt_style {
                     "#FFF 0%, #FFF 1000%"
                 } else {
-                    "#DA539C 0%, #E2017B 33%, #5F0938 100%"
+                    "#FF78C1 0%, #E2017B 33%, #5F0938 100%"
                 },
             )
         >
-            {children()}
+            <div class=move || {
+                if alt_style{
+                    "bg-gradient-to-r from-[#FF78C1] via-[#E2017B] to-[#5F0938] inline-block text-transparent bg-clip-text"
+                } else {
+                    "text-white"
+                }
+            }>{children()}</div>
         </button>
     }
 }
@@ -49,12 +50,7 @@ pub fn HighlightedLinkButton(
             href=href
             disabled=disabled
             class=format!(
-                "w-full px-5 py-3 rounded-lg {} flex items-center transition-all justify-center gap-8 font-kumbh font-bold {}",
-                if alt_style {
-                    "text-primary-600"
-                } else {
-                    "text-white"
-                },
+                "w-full px-5 py-3 rounded-lg flex items-center transition-all justify-center gap-8 font-kumbh font-bold {}",
                 classes,
             )
             style=move || format!(
@@ -62,11 +58,18 @@ pub fn HighlightedLinkButton(
                 if alt_style {
                     "#FFF 0%, #FFF 1000%"
                 } else {
-                    "#DA539C 0%, #E2017B 33%, #5F0938 100%"
+                    "#FF78C1 0%, #E2017B 33%, #5F0938 100%"
                 },
             )
         >
-            {children()}
+        <div class=move || {
+            if alt_style{
+                "bg-gradient-to-r from-[#FF78C1] via-[#E2017B] to-[#5F0938] inline-block text-transparent bg-clip-text"
+            } else {
+                "text-white"
+            }
+        }>{children()}</div>
+            
         </a>
     }
 }
