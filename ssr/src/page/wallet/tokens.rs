@@ -71,17 +71,22 @@ pub fn TokenView(
 }
 
 #[component]
-pub fn CoynsTokenView() -> impl IntoView {
-    let info = authenticated_canisters().derive(
-        move || (),
-        move |cans, _| async move {
-            let cans = Canisters::from_wire(cans.unwrap(), expect_context()).unwrap();
-            let user = cans.individual_user(cans.user_canister()).await;
+pub fn CoynsTokenView(user_principal: Principal) -> impl IntoView {
+    let info = create_resource(
+        move || user_principal,
+        move |user_principal| async move {
+            let cans = unauth_canisters();
+            let user_canister_id = cans
+                .get_individual_canister_by_user_principal(user_principal)
+                .await
+                .unwrap()
+                .unwrap();
+            let user = cans.individual_user(user_canister_id).await;
 
             let bal = user.get_utility_token_balance().await.unwrap();
 
             (
-                cans.user_principal(),
+                user_principal,
                 TokenMetadata {
                     logo_b64: "/img/coyns.png".to_string(),
                     name: "COYNS".to_string(),
@@ -104,9 +109,7 @@ pub fn CoynsTokenView() -> impl IntoView {
     view! {
         <Suspense>
             {move || {
-                info.map(|(user_principal, meta)| {
-                    view! { <WalletCard user_principal=*user_principal token_meta_data=meta.clone() is_airdrop_claimed=false is_utility_token=true/> }
-                })
+                info.map(|(user_principal, meta)| view! { <WalletCard user_principal=*user_principal token_meta_data=meta.clone() is_airdrop_claimed=false is_utility_token=true/>})
             }}
 
         </Suspense>
@@ -139,7 +142,7 @@ pub fn TokenList(user_principal: Principal, user_canister: Principal) -> impl In
 
     view! {
         <div class="flex flex-col w-full gap-2 mb-2 items-center">
-            <CoynsTokenView />
+            <CoynsTokenView user_principal/>
             <InfiniteScroller
                 provider
                 fetch_count=10
