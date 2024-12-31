@@ -69,7 +69,7 @@ pub fn HighlightedLinkButton(
                 "text-white"
             }
         }>{children()}</div>
-            
+
         </a>
     }
 }

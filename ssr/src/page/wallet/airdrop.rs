@@ -68,12 +68,12 @@ pub fn AirdropPage(meta: TokenMetadata, airdrop_amount: u64) -> impl IntoView {
                 let meta = meta_c.clone();
                 if !claimed.get() {
                     view! {
-                        <div class="relative h-[24rem] z-[2]">
+                        <div class="relative h-[50vh] max-h-96 z-[2]">
                             <div
                                 style="--y: 50px"
                                 class="flex flex-col items-center justify-center airdrop-parachute"
                             >
-                                <img alt="Parachute" src=parachute_image class="h-72 shrink-0" />
+                                <img alt="Parachute" src=parachute_image class="h-auto max-h-72" />
 
                                 <div
                                     style="background: radial-gradient(circle, rgb(244 141 199) 0%, rgb(255 255 255) 100%); box-shadow: 0px 0px 3.43px 0px #FFFFFF29;"
@@ -102,8 +102,8 @@ pub fn AirdropPage(meta: TokenMetadata, airdrop_amount: u64) -> impl IntoView {
                     }
                 } else if claimed.get() {
                     view! {
-                        <div class="h-[24rem] w-full flex items-center justify-center z-[2]">
-                            <div class="h-[12rem] w-[12rem] relative">
+                        <div class="h-[50vh] max-h-96 w-full flex items-center justify-center z-[2]">
+                            <div class="h-[25vh] w-[25vh] relative">
                                 <AnimatedTick />
                                 <div
                                     style="--duration:1500ms; background: radial-gradient(circle, rgba(27,0,15,1) 0%, rgba(0,0,0,1) 100%); box-shadow: 0px 0px 3.43px 0px #FFFFFF29;"
