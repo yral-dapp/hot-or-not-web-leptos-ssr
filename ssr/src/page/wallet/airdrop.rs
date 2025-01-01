@@ -102,8 +102,8 @@ pub fn AirdropPage(meta: TokenMetadata, airdrop_amount: u64) -> impl IntoView {
                     }
                 } else if claimed.get() {
                     view! {
-                        <div class="h-[50vh] max-h-96 w-full flex items-center justify-center z-[2]">
-                            <div class="h-[25vh] w-[25vh] relative">
+                        <div class="h-[40vh] max-h-96 w-full flex items-center justify-center z-[2]">
+                            <div class="h-[20vh] w-[20vh] relative">
                                 <AnimatedTick />
                                 <div
                                     style="--duration:1500ms; background: radial-gradient(circle, rgba(27,0,15,1) 0%, rgba(0,0,0,1) 100%); box-shadow: 0px 0px 3.43px 0px #FFFFFF29;"
