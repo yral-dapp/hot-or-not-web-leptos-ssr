@@ -1,5 +1,6 @@
 use crate::{
     component::{
+        back_btn::BackButton,
         buttons::{HighlightedButton, HighlightedLinkButton},
         spinner::SpinnerCircle,
     },
@@ -58,6 +59,9 @@ pub fn AirdropPage(meta: TokenMetadata, airdrop_amount: u64) -> impl IntoView {
             style="background: radial-gradient(circle, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 75%, rgba(50,0,28,0.5) 100%);"
             class="h-screen w-screen relative items-center justify-center text-white font-kumbh flex flex-col overflow-hidden gap-4"
         >
+            <div class="absolute z-40 left-5 top-10 scale-[1.75]">
+                <BackButton fallback="/wallet" />
+            </div>
             <img
                 alt="bg"
                 src=bg_image
@@ -100,7 +104,7 @@ pub fn AirdropPage(meta: TokenMetadata, airdrop_amount: u64) -> impl IntoView {
                             />
                         </div>
                     }
-                } else if claimed.get() {
+                } else {
                     view! {
                         <div class="h-[30vh] max-h-96 w-full flex items-center justify-center z-[2]">
                             <div class="h-[25vh] w-[25vh] relative">
@@ -118,8 +122,6 @@ pub fn AirdropPage(meta: TokenMetadata, airdrop_amount: u64) -> impl IntoView {
                             </div>
                         </div>
                     }
-                } else {
-                    view! { <div class="invisible" /> }
                 }
             }}
 
