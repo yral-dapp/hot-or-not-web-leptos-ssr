@@ -50,14 +50,11 @@ pub fn HighlightedLinkButton(
                 "w-full px-5 py-3 rounded-lg flex items-center transition-all justify-center gap-8 font-kumbh font-bold {}",
                 classes,
             )
-            style=move || format!(
-                "background: linear-gradient(73deg, {} );",
-                if alt_style {
-                    "#FFF 0%, #FFF 1000%"
-                } else {
-                    "#FF78C1 0%, #E2017B 33%, #5F0938 100%"
-                },
-            )
+            style=if alt_style {
+                "background: linear-gradient(73deg, #FFF 0%, #FFF 1000%)"
+            } else {
+                "background: linear-gradient(190.27deg, #FF6DC4 8%, #F7007C 38.79%, #690039 78.48%);"
+            }
         >
         <div class=move || {
             if alt_style{
