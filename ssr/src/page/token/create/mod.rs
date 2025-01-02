@@ -610,7 +610,7 @@ pub fn CreateTokenSettings() -> impl IntoView {
             style="padding-bottom:5rem;"
         >
             <Title justify_center=false>
-                <div class="flex justify-between w-full h-[54px]" style="background: black">
+                <div class="flex justify-between w-full" style="background: black">
                     <BackButton fallback=fallback_url />
                     <span class="font-bold justify-self-center">Settings</span>
                     <a href="/token/create/faq">
