@@ -1,10 +1,18 @@
 use crate::component::overlay::PopupOverlay;
+use crate::consts::USER_PRINCIPAL_STORE;
+use crate::state::canisters::unauth_canisters;
 use std::collections::HashMap;
 use std::collections::VecDeque;
 
+use candid::Principal;
+use codee::string::FromToStringCodec;
+use futures::stream::FuturesOrdered;
 use futures::StreamExt;
 use leptos::*;
 use leptos_icons::Icon;
+use leptos_use::use_cookie;
+use serde::Deserialize;
+use serde::Serialize;
 
 use crate::component::buttons::HighlightedLinkButton;
 use crate::component::icons::airdrop_icon::AirdropIcon;
@@ -23,29 +31,86 @@ use crate::utils::token::icpump::get_paginated_token_list;
 use crate::utils::token::icpump::TokenListItem;
 
 pub mod ai;
+#[derive(Serialize, Deserialize, Clone)]
+struct ProcessedTokenListResponse {
+    token_details: TokenListItem,
+    root: Principal,
+    is_airdrop_claimed: bool,
+}
 
+async fn process_token_list_item(
+    token_list_item: Vec<TokenListItem>,
+    key_principal: Principal,
+) -> Vec<ProcessedTokenListResponse> {
+    let mut fut = FuturesOrdered::new();
+
+    for token in token_list_item {
+        fut.push_back(async move {
+            let cans = unauth_canisters();
+            let root_principal = Principal::from_text(
+                token
+                    .link
+                    .trim_end_matches('/')
+                    .split('/')
+                    .last()
+                    .ok_or(ServerFnError::new("Not root given"))?,
+            )?;
+
+            let token_owner_canister_id = cans.get_token_owner(root_principal).await?;
+            let is_airdrop_claimed = if let Some(token_owner) = token_owner_canister_id {
+                cans.get_airdrop_status(token_owner.canister_id, root_principal, key_principal)
+                    .await?
+            } else {
+                true
+            };
+            // let token_owner = cans.individual_user(token_owner_canister_id.unwrap()).await;
+            // token_owner_principal_id: token_owner.get_profile_details().await.unwrap().principal_id,
+            Ok::<_, ServerFnError>(ProcessedTokenListResponse {
+                token_details: token,
+                root: root_principal,
+                is_airdrop_claimed,
+            })
+        });
+    }
+
+    fut.filter_map(|result| async move { result.ok() })
+        .collect()
+        .await
+}
 #[component]
 pub fn ICPumpListing() -> impl IntoView {
     let page = create_rw_signal(1);
-    let token_list: RwSignal<Vec<TokenListItem>> = create_rw_signal(vec![]);
+    let token_list: RwSignal<Vec<ProcessedTokenListResponse>> = create_rw_signal(vec![]);
     let end_of_list = create_rw_signal(false);
-    let cache = create_rw_signal(HashMap::<u64, Vec<TokenListItem>>::new());
-    let new_token_list: RwSignal<VecDeque<TokenListItem>> = create_rw_signal(VecDeque::new());
+    let cache = create_rw_signal(HashMap::<u64, Vec<ProcessedTokenListResponse>>::new());
+    let new_token_list: RwSignal<VecDeque<ProcessedTokenListResponse>> =
+        create_rw_signal(VecDeque::new());
+    let (curr_principal, _) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE);
 
-    let act = create_resource(page, move |page| async move {
-        new_token_list.set(VecDeque::new());
+    let act = create_resource(
+        move || (page(), curr_principal()),
+        move |(page, curr_principal)| async move {
+            new_token_list.set(VecDeque::new());
 
-        if let Some(cached) = cache.with_untracked(|c| c.get(&page).cloned()) {
-            return cached.clone();
-        }
-        get_paginated_token_list(page as u32).await.unwrap()
-    });
+            if let Some(cached) = cache.with_untracked(|c| c.get(&page).cloned()) {
+                return cached.clone();
+            }
+
+            process_token_list_item(
+                get_paginated_token_list(page as u32).await.unwrap(),
+                curr_principal.unwrap(),
+            )
+            .await
+        },
+    );
 
     create_effect(move |_| {
         spawn_local(async move {
             let (_app, firestore) = init_firebase();
             let mut stream = listen_to_documents(&firestore);
+            let curr_principal = curr_principal.get().unwrap();
             while let Some(doc) = stream.next().await {
+                let doc = process_token_list_item(doc, curr_principal).await;
                 // push each item in doc to new_token_list
                 for item in doc {
                     new_token_list.update(move |list| {
@@ -76,16 +141,16 @@ pub fn ICPumpListing() -> impl IntoView {
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         <For
                             each=move || new_token_list.get()
-                            key=|t| t.token_symbol.clone()
-                            children=move |token| {
-                                view! { <TokenCard details=token is_new_token=true /> }
+                            key=|t| t.token_details.token_symbol.clone()
+                            children=move |ProcessedTokenListResponse { token_details, root, is_airdrop_claimed }| {
+                                view! { <TokenCard is_new_token=true details=token_details is_airdrop_claimed root/> }
                             }
                         />
                         <For
                             each=move || token_list.get()
-                            key=|t| t.token_symbol.clone()
-                            children=move |token| {
-                                view! { <TokenCard details=token /> }
+                            key=|t| t.token_details.token_symbol.clone()
+                            children=move |ProcessedTokenListResponse { token_details, root, is_airdrop_claimed }| {
+                                view! { <TokenCard details=token_details is_airdrop_claimed root/> }
                             }
                         />
                     </div>
@@ -138,27 +203,23 @@ pub fn ICPumpLanding() -> impl IntoView {
 pub fn TokenCard(
     details: TokenListItem,
     #[prop(optional, default = false)] is_new_token: bool,
-    #[prop(optional, default = true)] _is_airdrop_claimed: bool,
+    root: Principal,
+    is_airdrop_claimed: bool,
 ) -> impl IntoView {
     let show_nsfw = create_rw_signal(false);
-    let root = details
-        .link
-        .trim_end_matches('/')
-        .split('/')
-        .last()
-        .expect("URL should have at least one segment")
-        .to_string();
 
-    let popup = create_rw_signal(false);
-    let base_url = get_host();
-
-    let share_link_s = store_value(format!("{}/{}", details.link, details.user_id));
-    let share_message = format!(
+    let share_link = create_rw_signal("".to_string());
+    let share_link_coin = format!("/token/info/{}/{}", root, details.user_id);
+    let symbol = details.token_symbol.clone();
+    let share_message = move || {
+        format!(
         "Hey! Check out the token: {} I created on YRAL 👇 {}. I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter",
-        details.token_symbol,
-        share_link_s(),
-    );
-    let share_message_s = store_value(share_message);
+        details.token_symbol.clone(),
+        share_link.get(),
+    )
+    };
+    let pop_up = create_rw_signal(false);
+    let base_url = get_host();
 
     view! {
         <div
@@ -191,14 +252,14 @@ pub fn TokenCard(
                     <div class="flex flex-col gap-2">
                         <div class="flex gap-4 justify-between items-center w-full text-lg">
                             <span class="font-medium shrink line-clamp-1">{details.name}</span>
-                            <span class="font-bold shrink-0">{details.token_symbol}</span>
+                            <span class="font-bold shrink-0">{symbol}</span>
                         </div>
                         <span class="text-sm line-clamp-2 text-neutral-400">
                             {details.description}
                         </span>
                     </div>
                     <div class="flex gap-2 justify-between items-center text-sm font-medium group-hover:text-white text-neutral-600">
-                        <span class="line-clamp-1">"Created by" {details.user_id}</span>
+                        <span class="line-clamp-1">"Created by" {details.user_id.clone()}</span>
                         <span class="shrink-0">{details.formatted_created_at}</span>
                     </div>
                 </div>
@@ -211,22 +272,35 @@ pub fn TokenCard(
                 <ActionButton label="Buy/Sell".to_string() href="#".to_string() disabled=true>
                     <Icon class="w-full h-full" icon=ArrowLeftRightIcon />
                 </ActionButton>
-                <ActionButton label="Airdrop".to_string() href="#".to_string() disabled=true>
-                    <Icon class="w-full h-full" icon=AirdropIcon />
-                </ActionButton>
+                {
+                    if is_airdrop_claimed{
+
+                        view! {
+                            <ActionButtonLink on:click=move |_|{pop_up.set(true); share_link.set(format!("/token/info/{}/{}?airdrop_amt=100",root, details.user_id))} label="Airdrop".to_string()>
+                                <Icon class="h-6 w-6" icon=AirdropIcon />
+                            </ActionButtonLink>
+                        }
+                    }else{
+                        view! {
+                            <ActionButton href=format!("/token/info/{}/{}?airdrop_amt=100",root, details.user_id) label="Airdrop".to_string()>
+                            <Icon class="h-6 w-6" icon=AirdropIcon />
+                            </ActionButton>
+                        }
+                    }
+                }
                 <ActionButton label="Share".to_string() href="#".to_string()>
-                    <Icon class="w-full h-full" icon=ShareIcon on:click=move |_| popup.set(true)/>
+                    <Icon class="w-full h-full" icon=ShareIcon on:click=move |_| {pop_up.set(true); share_link.set(share_link_coin.clone())}/>
                 </ActionButton>
                 <ActionButton label="Details".to_string() href=details.link>
                     <Icon class="w-full h-full" icon=ChevronRightIcon />
                 </ActionButton>
             </div>
-            <PopupOverlay show=popup >
+            <PopupOverlay show=pop_up >
                 <ShareContent
-                    share_link=format!("{base_url}{}", share_link_s())
-                    message=share_message_s()
-                    show_popup=popup
-            />
+                    share_link=format!("{base_url}{}", share_link())
+                    message=share_message()
+                    show_popup=pop_up
+                />
             </PopupOverlay>
         </div>
     }
@@ -276,6 +350,24 @@ pub fn ActionButton(
 
             <div>{label}</div>
         </a>
+    }
+}
+
+#[component]
+pub fn ActionButtonLink(
+    label: String,
+    children: Children,
+    #[prop(optional, default = false)] disabled: bool,
+) -> impl IntoView {
+    view! {
+        <button
+            disabled=disabled
+            class=move || format!("flex flex-col gap-1 justify-center items-center text-xs transition-colors {}", if !disabled{"group-hover:text-white text-neutral-300"}else{"group-hover:cursor-default text-neutral-600"})
+        >
+            <div class="w-[1.875rem] h-[1.875rem] flex items-center justify-center">{children()}</div>
+
+            <div>{label}</div>
+        </button>
     }
 }
 
