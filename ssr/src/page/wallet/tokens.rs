@@ -92,10 +92,11 @@ pub fn CoynsTokenView(user_principal: Principal) -> impl IntoView {
                     name: "COYNS".to_string(),
                     description: "".to_string(),
                     symbol: "COYNS".to_string(),
-                    balance: Some(TokenBalanceOrClaiming::new(TokenBalance::new_cdao(
+                    balance: Some(TokenBalanceOrClaiming::new(TokenBalance::new(
                         bal.into(),
+                        0,
                     ))),
-                    fees: TokenBalance::new_cdao(0u32.into()),
+                    fees: TokenBalance::new(0u32.into(), 0),
                     root: None,
                     ledger: Principal::anonymous(),
                     index: Principal::anonymous(),
