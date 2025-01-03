@@ -2,6 +2,7 @@ use candid::Principal;
 use futures::{stream::FuturesOrdered, TryStreamExt};
 use leptos::*;
 use yral_canisters_client::individual_user_template::DeployedCdaoCanisters;
+use yral_canisters_client::individual_user_template::IndividualUserTemplate;
 
 use crate::{
     component::{bullet_loader::BulletLoader, token_confetti_symbol::TokenConfettiSymbol},
@@ -42,6 +43,40 @@ async fn token_metadata(
     .await
 }
 
+async fn process_profile_tokens(
+    user: IndividualUserTemplate<'_>,
+    cans: Canisters<true>,
+    user_principal: Principal,
+) -> Result<Vec<(TokenMetadata, Option<bool>)>, ServerFnError> {
+    let tokens: Vec<_> = user
+        .deployed_cdao_canisters()
+        .await?
+        .into_iter()
+        .map(|deployed_cans| {
+            let cans = cans.clone();
+            async move {
+                let token = token_metadata(&cans, user_principal, deployed_cans).await?;
+                let is_airdrop_claimed = if let (Some(token_owner), Some(root)) =
+                    (token.token_owner.clone(), token.root)
+                {
+                    Some(
+                        cans.get_airdrop_status(token_owner.canister_id, root, user_principal)
+                            .await?,
+                    )
+                } else {
+                    None
+                };
+
+                Ok::<_, ServerFnError>((token, is_airdrop_claimed))
+            }
+        })
+        .collect::<FuturesOrdered<_>>()
+        .try_collect()
+        .await?;
+
+    Ok(tokens)
+}
+
 #[component]
 pub fn ProfileTokens(user_canister: Principal, user_principal: Principal) -> impl IntoView {
     let auth_cans_res = authenticated_canisters();
@@ -50,36 +85,8 @@ pub fn ProfileTokens(user_canister: Principal, user_principal: Principal) -> imp
         move |auth_cans_wire, _| async move {
             let cans = Canisters::from_wire(auth_cans_wire?, expect_context())?;
             let user = cans.individual_user(user_canister).await;
-            let tokens: Vec<_> = user
-                .deployed_cdao_canisters()
-                .await?
-                .into_iter()
-                .map(|deployed_cans| {
-                    let cans = cans.clone();
-                    async move {
-                        let token = token_metadata(&cans, user_principal, deployed_cans).await?;
-                        let is_airdrop_claimed = if let (Some(token_owner), Some(root)) =
-                            (token.token_owner.clone(), token.root)
-                        {
-                            Some(
-                                cans.get_airdrop_status(
-                                    token_owner.canister_id,
-                                    root,
-                                    user_principal,
-                                )
-                                .await?,
-                            )
-                        } else {
-                            None
-                        };
 
-                        Ok::<_, ServerFnError>((token, is_airdrop_claimed))
-                    }
-                })
-                .collect::<FuturesOrdered<_>>()
-                .try_collect()
-                .await?;
-
+            let tokens = process_profile_tokens(user, cans.clone(), user_principal).await?;
             Ok::<_, ServerFnError>((tokens, cans.user_principal() == user_principal))
         },
     );
