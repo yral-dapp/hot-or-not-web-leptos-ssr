@@ -137,3 +137,37 @@
         content: "[=---]";
     }
 }
+
+.fade-in {
+    animation: fade-in var(--duration, 200ms);
+  }
+  
+@keyframes fade-in {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+}
+
+.airdrop-cloud {
+    animation: cloud-bounce 20s infinite;
+}
+
+@keyframes cloud-bounce {
+    0% {
+      opacity: 0;
+      transform: translateX(calc(var(--x, 0) * 3));
+    }
+  
+    50% {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  
+    100% {
+      opacity: 1;
+      transform: translateX(calc(var(--x, 0)));
+    }
+}
