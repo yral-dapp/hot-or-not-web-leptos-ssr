@@ -96,11 +96,13 @@ pub fn ICPumpListing() -> impl IntoView {
                 return cached.clone();
             }
 
-            process_token_list_item(
-                get_paginated_token_list(page as u32).await.unwrap(),
-                curr_principal.unwrap(),
-            )
-            .await
+            let token_list = get_paginated_token_list(page as u32).await.unwrap();
+
+            if token_list.len() < ICPUMP_LISTING_PAGE_SIZE {
+                end_of_list.set(true);
+            }
+
+            process_token_list_item(token_list, curr_principal.unwrap()).await
         },
     );
 
@@ -127,9 +129,6 @@ pub fn ICPumpListing() -> impl IntoView {
                 let _ = act
                     .get()
                     .map(|res| {
-                        if res.len() < ICPUMP_LISTING_PAGE_SIZE {
-                            end_of_list.set(true);
-                        }
                         update!(
                             move |token_list, cache| {
                                 *token_list = res.clone();
