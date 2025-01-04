@@ -9,6 +9,7 @@ use yral_canisters_common::utils::time::current_epoch;
 
 use crate::{
     component::spinner::FullScreenSpinner,
+    page::icpump::pumpndump::PumpNDump,
     utils::{
         host::show_cdao_page,
         ml_feed::{get_coldstart_feed_paginated, get_posts_ml_feed_cache_paginated},
@@ -138,13 +139,6 @@ pub fn YralRootPage() -> impl IntoView {
             }}
 
         </Suspense>
-    }
-}
-
-#[component]
-fn PumpNDump() -> impl IntoView {
-    view! {
-        <div>hello world</div>
     }
 }
 
