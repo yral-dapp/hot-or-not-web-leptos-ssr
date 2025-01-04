@@ -99,16 +99,19 @@ pub fn NavBar() -> impl IntoView {
     let cur_location = use_location();
     let home_path = create_rw_signal("/".to_string());
     let (user_principal, _) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE);
+    // TODO: gotta change this current selection function to take into account whether we are showing nav for icpump or yral
+    // note: i feel this can be much simpler by creating a vec of `(component function, matcher)`.
+    //
+    // will work on this before going live
     let cur_selected = create_memo(move |_| {
         let path = cur_location.pathname.get();
 
         match path.as_str() {
             "/" => 0,
-            // "/leaderboard" => 1,
             "/upload" => 2,
             "/transactions" => 3,
             "/menu" | "/leaderboard" => 4,
-            "/board" => 0,
+            "/board" => 3,
             s if s.starts_with("/hot-or-not") => {
                 home_path.set(path);
                 0
@@ -154,13 +157,33 @@ pub fn NavBar() -> impl IntoView {
                 filled_icon=HomeSymbolFilled
                 cur_selected=cur_selected
             />
-            <NavIcon
-                idx=3
-                href="/wallet"
-                icon=WalletSymbol
-                filled_icon=WalletSymbolFilled
-                cur_selected=cur_selected
-            />
+
+            {
+                move || {
+                    if show_cdao_page() {
+                        view! {
+                            <NavIcon
+                                idx=3
+                                href="/board"
+                                icon=TokenSymbol
+                                filled_icon=TokenSymbolFilled
+                                cur_selected=cur_selected
+                            />
+                        }
+                    } else {
+                        view! {
+                            <NavIcon
+                                idx=3
+                                href="/wallet"
+                                icon=WalletSymbol
+                                filled_icon=WalletSymbolFilled
+                                cur_selected=cur_selected
+                            />
+                        }
+                    }
+                }
+            }
+
             <UploadIcon idx=2 cur_selected />
 
             {
@@ -169,8 +192,9 @@ pub fn NavBar() -> impl IntoView {
                         view! {
                             <NavIcon
                                 idx=5
-                                href="/icpump-ai"
-                                icon=ICPumpAiIcon
+                                href="/wallet"
+                                icon=WalletSymbol
+                                filled_icon=WalletSymbolFilled
                                 cur_selected=cur_selected
                             />
                         }

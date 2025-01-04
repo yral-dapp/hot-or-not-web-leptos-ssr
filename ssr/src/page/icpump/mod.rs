@@ -165,6 +165,7 @@ pub fn ICPumpListing() -> impl IntoView {
 
 #[component]
 pub fn ICPumpLanding() -> impl IntoView {
+    // TODO: add the pump-ai icon here, as shown in the new ui for pnd game
     view! {
         <div class="min-h-screen bg-black text-white  flex flex-col gap-4 px-4 md:px-8 py-6 font-kumbh overflow-y-auto">
             <div class="flex lg:flex-row gap-4 flex-col items-center justify-center relative">

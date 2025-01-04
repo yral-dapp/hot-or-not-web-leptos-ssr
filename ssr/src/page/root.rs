@@ -142,9 +142,16 @@ pub fn YralRootPage() -> impl IntoView {
 }
 
 #[component]
+fn PumpNDump() -> impl IntoView {
+    view! {
+        <div>hello world</div>
+    }
+}
+
+#[component]
 pub fn RootPage() -> impl IntoView {
     if show_cdao_page() {
-        view! { <CreatorDaoRootPage /> }
+        view! { <PumpNDump /> }
     } else {
         view! { <YralRootPage /> }
     }
