@@ -1,6 +1,6 @@
 use leptos::{
     component, create_rw_signal, create_signal, expect_context, provide_context, view, IntoView,
-    Resource, RwSignal, Show, SignalGet, SignalSet, SignalUpdate, WriteSignal,
+    Resource, RwSignal, Show, SignalGet, SignalSet, SignalUpdate, Suspense,
 };
 use leptos_icons::Icon;
 
@@ -116,11 +116,12 @@ fn MockBullBearSlider() -> impl IntoView {
 
 #[component]
 fn DumpButton() -> impl IntoView {
-    let game_state = expect_context::<Resource<(), GameState>>();
+    let running_data = expect_context::<Resource<(), Option<GameRunningData>>>();
     let player_data = expect_context::<Resource<(), PlayerGamesCountAndBalance>>();
     let counter = move || {
-        game_state
+        running_data
             .get()
+            .flatten()
             .map(|value| value.dumps.to_string())
             .unwrap_or_else(|| "-".into())
     };
@@ -133,8 +134,8 @@ fn DumpButton() -> impl IntoView {
             }
         });
 
-        game_state.update(|value| {
-            if let Some(value) = value.as_mut() {
+        running_data.update(|value| {
+            if let Some(Some(value)) = value {
                 value.dumps += 1;
             }
         });
@@ -199,11 +200,12 @@ fn MockDumpButton() -> impl IntoView {
 
 #[component]
 fn PumpButton() -> impl IntoView {
-    let game_state = expect_context::<Resource<(), GameState>>();
+    let game_state = expect_context::<Resource<(), Option<GameRunningData>>>();
     let player_data = expect_context::<Resource<(), PlayerGamesCountAndBalance>>();
     let counter = move || {
         game_state
             .get()
+            .flatten()
             .map(|value| value.pumps.to_string())
             .unwrap_or_else(|| "-".into())
     };
@@ -217,7 +219,7 @@ fn PumpButton() -> impl IntoView {
         });
 
         game_state.update(|value| {
-            if let Some(value) = value.as_mut() {
+            if let Some(Some(value)) = value.as_mut() {
                 value.pumps += 1;
             }
         });
@@ -303,14 +305,45 @@ impl PlayerGamesCountAndBalance {
     }
 }
 
+// this data is kept out of GameState so that mutating pumps and dumps doesn't
+// cause the whole game card to rerender
 #[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
-struct GameState {
+struct GameRunningData {
     pumps: u64,
     dumps: u64,
     winning_pot: u64,
 }
 
+#[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
+enum GameState {
+    Playing,
+    Pending,
+    ResultDeclared(GameResult),
+}
+
+#[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
+enum GameResult {
+    Win { amount: u64 },
+    Loss,
+}
+
 impl GameState {
+    pub fn new() -> Self {
+        Self::Playing
+    }
+
+    #[cfg(any(feature = "local-bin", feature = "local-lib"))]
+    pub async fn load() -> Self {
+        Self::new()
+    }
+
+    #[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
+    pub async fn load() -> Self {
+        unimplemented!("Haven't figured out how to load game state")
+    }
+}
+
+impl GameRunningData {
     pub fn new(pumps: u64, dumps: u64, winning_pot: u64) -> Self {
         Self {
             pumps,
@@ -320,22 +353,19 @@ impl GameState {
     }
 
     #[cfg(any(feature = "local-bin", feature = "local-lib"))]
-    pub async fn load() -> Self {
-        Self::new(0, 0, 100)
+    pub async fn load() -> Option<Self> {
+        Some(Self::new(0, 0, 100))
     }
 
     #[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
-    pub async fn load() -> Self {
+    pub async fn load() -> Option<Self> {
         unimplemented!("Haven't figured out how to load game state")
     }
 }
 
 #[component]
-fn GameCard() -> impl IntoView {
-    provide_context(Resource::new(move || (), |_| GameState::load()));
+fn GameCardInner(#[prop()] game_state: GameState) -> impl IntoView {
     let show_onboarding: RwSignal<ShowOnboarding> = expect_context();
-
-    let winning_pot = 100;
     view! {
         <div
             style="perspective: 500px; transition: transform 0.4s; transform-style: preserve-3d;"
@@ -355,7 +385,7 @@ fn GameCard() -> impl IntoView {
                         <div class="flex items-center gap-1">
                             <div class="text-[#A3A3A3] text-xs">Winning Pot:</div>
                             <img src="/img/gdolr.png" alt="Coin" class="size-5" />
-                            <div class="text-[#E5E5E5] font-bold">{winning_pot} gDOLR</div>
+                            <div class="text-[#E5E5E5] font-bold">10 gDOLR</div>
                         </div>
                         <button
                             on:click=move |_| show_onboarding.set(ShowOnboarding(true))
@@ -385,6 +415,21 @@ fn GameCard() -> impl IntoView {
                 </div>
             </div>
         </div>
+    }
+}
+
+#[component]
+fn GameCard() -> impl IntoView {
+    let running_data = Resource::new(|| (), |_| GameRunningData::load());
+    provide_context(running_data);
+    let game_state = Resource::new(|| (), |_| GameState::load());
+
+    view! {
+        <Suspense>
+            {game_state.get().map(|game_state| view! {
+                <GameCardInner game_state />
+            })}
+        </Suspense>
     }
 }
 
