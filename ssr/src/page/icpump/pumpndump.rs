@@ -329,7 +329,7 @@ enum GameResult {
 
 impl GameState {
     pub fn new() -> Self {
-        Self::Playing
+        Self::Pending
     }
 
     #[cfg(any(feature = "local-bin", feature = "local-lib"))]
@@ -364,8 +364,41 @@ impl GameRunningData {
 }
 
 #[component]
-fn GameCardInner(#[prop()] game_state: GameState) -> impl IntoView {
+fn PendingResult() -> impl IntoView {
+    let running_data: Resource<(), Option<GameRunningData>> = expect_context();
+    let spent = move || {
+        let data = running_data
+            .get()
+            .flatten()
+            .expect("at this point we MUST have the running data");
+        data.pumps.saturating_add(data.dumps)
+    };
+    view! {
+        <div in:fade class="flex items-center gap-8 bg-[#212121] rounded-2xl py-6 px-6">
+            <img src="/img/hourglass.png" alt="Hourglass" class="shrink-0 w-[4.25rem] rotate-12" />
+            <div class="flex flex-col gap-1.5 flex-1">
+                <div class="font-bold text-xl">The Tide has shifted!</div>
+                <div class="text-sm text-[#A3A3A3]">
+                    <span>{"You've used "}</span>
+                    <span class="font-bold text-[#EC55A7]">{spent} gDOLR</span>
+                    <div>{" — results are on the way. Stay tuned! ⏳"}</div>
+                </div>
+            </div>
+        </div>
+    }
+}
+
+#[component]
+fn GameCardPreResult(#[prop(into)] game_state: GameState) -> impl IntoView {
     let show_onboarding: RwSignal<ShowOnboarding> = expect_context();
+    let running_data: Resource<(), Option<GameRunningData>> = expect_context();
+    let winning_pot = move || {
+        running_data
+            .get()
+            .flatten()
+            .map(|value| value.winning_pot.to_string())
+            .unwrap_or_else(|| "-".into())
+    };
     view! {
         <div
             style="perspective: 500px; transition: transform 0.4s; transform-style: preserve-3d;"
@@ -385,7 +418,7 @@ fn GameCardInner(#[prop()] game_state: GameState) -> impl IntoView {
                         <div class="flex items-center gap-1">
                             <div class="text-[#A3A3A3] text-xs">Winning Pot:</div>
                             <img src="/img/gdolr.png" alt="Coin" class="size-5" />
-                            <div class="text-[#E5E5E5] font-bold">10 gDOLR</div>
+                            <div class="text-[#E5E5E5] font-bold">{winning_pot} gDOLR</div>
                         </div>
                         <button
                             on:click=move |_| show_onboarding.set(ShowOnboarding(true))
@@ -404,14 +437,19 @@ fn GameCardInner(#[prop()] game_state: GameState) -> impl IntoView {
                     </div>
                 </div>
                 <div class="flex select-none flex-col gap-4 h-[8.5rem] w-full">
-                    <BullBearSlider />
-                    <div
-                        class="flex relative items-center gap-6 justify-center w-full"
+                    <Show
+                        when=move || matches!(game_state, GameState::Playing)
+                        fallback=move || view!{ <PendingResult /> }
                     >
-                        <DumpButton />
+                        <BullBearSlider />
+                        <div
+                            class="flex relative items-center gap-6 justify-center w-full"
+                        >
+                            <DumpButton />
 
-                        <PumpButton />
-                    </div>
+                            <PumpButton />
+                        </div>
+                    </Show>
                 </div>
             </div>
         </div>
@@ -427,7 +465,9 @@ fn GameCard() -> impl IntoView {
     view! {
         <Suspense>
             {game_state.get().map(|game_state| view! {
-                <GameCardInner game_state />
+                <Show when=move || { matches!(game_state, GameState::Playing | GameState::Pending)}>
+                    <GameCardPreResult game_state />
+                </Show>
             })}
         </Suspense>
     }
