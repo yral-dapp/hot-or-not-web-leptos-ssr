@@ -329,7 +329,7 @@ enum GameResult {
 
 impl GameState {
     pub fn new() -> Self {
-        Self::ResultDeclared(GameResult::Loss)
+        Self::ResultDeclared(GameResult::Win { amount: 100 })
     }
 
     #[cfg(any(feature = "local-bin", feature = "local-lib"))]
@@ -452,6 +452,40 @@ fn GameCardPreResult(#[prop(into)] game_state: GameState) -> impl IntoView {
 }
 
 #[component]
+fn WonCard(#[prop()] result: GameResult) -> impl IntoView {
+    let GameResult::Win { amount } = result else {
+        unreachable!("Won card must only be shown in win condition")
+    };
+    // TODO: add confetti animation
+    view! {
+        <div
+            style="background-size: cover; background-position: center; background-image: url('/img/pnd-onboarding-bg.png');"
+            class="rounded-2xl overflow-hidden flip-card card-flipped absolute inset-0 h-full w-full shrink-0 items-center justify-center flex flex-col gap-7 pt-14 pb-5 px-5"
+        >
+            <img src="/img/trophy.png" alt="Trophy" class="w-32 h-[7.6rem] translate-x-3" />
+            <div class="flex flex-col gap-4 items-center">
+                <div class="font-semibold text-xl">Victory is yours!</div>
+                <div class="text-[#A3A3A3] text-center">
+                    {"Your strategy paid off! The tide shifted to your side, and you've won big. 💰"}
+                </div>
+                <div
+                    class="bg-[#212121] w-full px-4 py-2 rounded-full flex items-center justify-center gap-2"
+                >
+                    <span class="text-[#A3A3A3] text-xs">You have won:</span>
+                    <img src="/img/gdolr.png" alt="Coin" class="w-5 h-5" />
+                    <span class="text-[#E5E5E5] font-bold">{amount} gDOLR</span>
+                </div>
+            </div>
+            <button
+                on:click=move |_| todo!("figure out what to do")
+                class="w-full px-5 py-3 rounded-lg flex items-center transition-all justify-center gap-8 font-kumbh font-bold"
+                style:background="linear-gradient(73deg, #DA539C 0%, #E2017B 33%, #5F0938 100%)"
+            >Start playing again</button>
+        </div>
+    }
+}
+
+#[component]
 fn LostCard() -> impl IntoView {
     view! {
         <div
@@ -484,6 +518,7 @@ fn ResultDeclared(#[prop()] game_state: GameState) -> impl IntoView {
         GameState::ResultDeclared(result) => view! {
             <Show
                 when=move || matches!(result, GameResult::Loss)
+                fallback=move || view! { <WonCard result /> }
             >
                 <LostCard />
             </Show>
