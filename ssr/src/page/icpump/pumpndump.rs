@@ -1,5 +1,6 @@
 use leptos::{
-    component, expect_context, provide_context, view, IntoView, Resource, SignalGet, SignalUpdate,
+    component, create_rw_signal, create_signal, expect_context, provide_context, view, IntoView,
+    Resource, RwSignal, Show, SignalGet, SignalSet, SignalUpdate, WriteSignal,
 };
 use leptos_icons::Icon;
 
@@ -84,6 +85,36 @@ fn BullBearSlider() -> impl IntoView {
 }
 
 #[component]
+fn MockBullBearSlider() -> impl IntoView {
+    view! {
+        <div class="py-5 w-full">
+            <div
+                style="background: linear-gradient(90deg, #3D8EFF 0%, #390059 51.5%, #E2017B 100%);"
+                class="relative ring-4 ring-[#212121] rounded-full w-full h-2"
+            >
+                <div
+                    class="flex absolute inset-0 transition-all duration-700 ease-in-out gap-1 items-center"
+                    style:left="39%"
+                >
+                    <img
+                        style="filter: drop-shadow( -3px 3px 2px rgba(0, 0, 0, .7));"
+                        src="/img/bear.png"
+                        alt="Bear"
+                        class="h-6 push-right shake"
+                    />
+                    <img
+                        style="filter: drop-shadow( 3px 3px 2px rgba(0, 0, 0, .7));"
+                        src="/img/bull.png"
+                        alt="Bull"
+                        class="h-7 push-left shake"
+                    />
+                </div>
+            </div>
+        </div>
+    }
+}
+
+#[component]
 fn DumpButton() -> impl IntoView {
     let game_state = expect_context::<Resource<(), GameState>>();
     let player_data = expect_context::<Resource<(), PlayerGamesCountAndBalance>>();
@@ -139,6 +170,34 @@ fn DumpButton() -> impl IntoView {
 }
 
 #[component]
+fn MockDumpButton() -> impl IntoView {
+    view! {
+        <button
+            aria-label="Vibration"
+            class="dump-button rounded-[28px] transition-all duration-150 ring-4 group text-white ring-white/25 gap-2 min-w-36 p-3 flex flex-col items-center justify-center"
+        >
+            <div class="text-xl font-bold">DUMP</div>
+            <div class="bg-[#4683DC] rounded-full w-12 h-3 relative">
+                <div
+                    class="w-full h-full relative overflow-hidden font-bold text-xs items-center flex justify-center"
+                >
+                        <span
+                            class="absolute inset-0 flex items-center justify-center"
+                        >
+                            0
+                        </span>
+                </div>
+                <img
+                    src="/img/skull.png"
+                    class="absolute w-6 h-6 -left-3 -top-1/2 transition group-active:saturate-150 group-active:scale-110 group-active:rotate-12"
+                    alt="DUMP"
+                />
+            </div>
+        </button>
+    }
+}
+
+#[component]
 fn PumpButton() -> impl IntoView {
     let game_state = expect_context::<Resource<(), GameState>>();
     let player_data = expect_context::<Resource<(), PlayerGamesCountAndBalance>>();
@@ -180,6 +239,33 @@ fn PumpButton() -> impl IntoView {
                         class="absolute inset-0 flex items-center justify-center"
                     >
                         {counter}
+                    </span>
+                </div>
+                <img
+                    src="/img/fire.png"
+                    class="absolute w-6 h-6 -left-3 -top-1/2 transition group-active:saturate-150 group-active:scale-110 group-active:-rotate-12"
+                    alt="PUMP"
+                />
+            </div>
+        </button>
+    }
+}
+#[component]
+fn MockPumpButton() -> impl IntoView {
+    view! {
+        <button
+            aria-label="Vibration"
+            class="pump-button rounded-[28px] transition-all duration-150 ring-4 group text-white ring-white/25 gap-2 min-w-36 p-3 flex flex-col items-center justify-center"
+        >
+            <div class="text-xl font-bold">PUMP</div>
+            <div class="bg-[#E2027B] rounded-full w-12 h-3 relative">
+                <div
+                    class="w-full h-full relative overflow-hidden font-bold text-xs items-center flex justify-center"
+                >
+                    <span
+                        class="absolute inset-0 flex items-center justify-center"
+                    >
+                        0
                     </span>
                 </div>
                 <img
@@ -247,6 +333,7 @@ impl GameState {
 #[component]
 fn GameCard() -> impl IntoView {
     provide_context(Resource::new(move || (), |_| GameState::load()));
+    let show_onboarding: RwSignal<ShowOnboarding> = expect_context();
 
     let winning_pot = 100;
     view! {
@@ -271,7 +358,7 @@ fn GameCard() -> impl IntoView {
                             <div class="text-[#E5E5E5] font-bold">{winning_pot} gDOLR</div>
                         </div>
                         <button
-                            on:click=move |_| unimplemented!("show onboarding card")
+                            on:click=move |_| show_onboarding.set(ShowOnboarding(true))
                             class="bg-black text-[#A3A3A3] hover:bg-black/35 rounded-full text-xl w-7 h-7 flex font-light items-center justify-center leading-none"
                         >
                             ?
@@ -301,6 +388,117 @@ fn GameCard() -> impl IntoView {
     }
 }
 
+#[derive(Copy, Clone, Debug)]
+struct ShowOnboarding(bool);
+
+#[component]
+fn OnboardingPopup() -> impl IntoView {
+    let (step, set_step) = create_signal(0);
+    let show_onboarding = expect_context::<RwSignal<ShowOnboarding>>();
+    view! {
+        <div class="fade-in fixed inset-0 bg-black/50 flex py-16 justify-center z-50 p-4">
+            <div
+                style="background-size: cover; background-position: left; background-image: url('/img/pnd-onboarding-bg.png');"
+                class="rounded-2xl max-w-md flex flex-col h-[33.5rem] justify-center text-white gap-8 items-center pt-8 pb-5 px-8 relative"
+            >
+                <div
+                    class="absolute flex items-center top-4 px-4 inset-x-0"
+                    class=("justify-end", move || step.get() == 0)
+                    class=("justify-between", move || step.get() == 1)
+                >
+                {move || (step.get() == 1).then(|| view! {
+                    <button on:click=move |_| set_step.set(0) class="text-[#525252]">
+                        <Icon class="size-5" icon=icondata::FiChevronLeft />
+                    </button>
+                })}
+                    <button
+                        on:click=move |_| show_onboarding.set(ShowOnboarding(false))
+                        class="p-1 flex items-center justify-center bg-[#525252] rounded-full"
+                    >
+                        <Icon class="size-3" icon=icondata::IoClose />
+                    </button>
+                </div>
+                {move || if step.get() == 0 {
+                    view! {
+                        <img src="/img/pumpndump.png" alt="Logo" class="h-32 pt-8" />
+                        <div class="flex flex-col gap-5 items-center">
+                            <div class="font-bold text-xl">Shape the Future of Tokens!</div>
+                            <div class="text-sm text-center">
+                                Your vote decides the fate of the tokens. Ride the waves of Pump and Dump and vote to
+                                make the tides shift to snatch up with reward pool.
+                            </div>
+                            <div class="flex gap-0.5 text-sm">
+                                <img src="/img/gdolr.png" alt="Coin" class="w-5 h-5" />
+                                <div>1 gDOLR = 1 vote</div>
+                            </div>
+                        </div>
+                        <div class="flex w-full justify-end pt-20 items-center gap-1">
+                            <button
+                                on:click=move |_| set_step.set(1)
+                                class="appearance-none text-xl font-semibold">Next</button
+                            >
+                            <Icon class="size-3" icon=icondata::FiChevronRight />
+                        </div>
+                    }
+                } else {
+                    view! {
+                        <div class="flex flex-col text-sm gap-5 items-center text-center">
+                            <div class="font-bold text-xl">How it works?</div>
+                            <div class="flex gap-2 justify-between items-center">
+                                <div class="flex-1 text-xs text-left">
+                                    <div class="text-white">Step 1</div>
+                                    <div class="text-[#A3A3A3]">
+                                        Vote for the Tide - Pump or Dump. Predict the next shift in momentum.
+                                    </div>
+                                </div>
+                                <div class="flex-1 relative py-12">
+                                    <div class="scale-[0.6] h-full w-full">
+                                        <div class="absolute bottom-0 -left-8 z-[2]">
+                                            <MockPumpButton />
+                                        </div>
+                                        <div class="absolute -top-2 -right-6 z-[1]">
+                                            <MockDumpButton />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex flex-row-reverse gap-2 justify-between items-center">
+                                <div class="flex-1 text-xs text-right">
+                                    <div class="text-white">Step 2</div>
+                                    <div class="text-[#A3A3A3]">
+                                        The battle for dominance begins here, keep voting as each vote influences the tide
+                                    </div>
+                                </div>
+                                <div class="flex-1 relative py-6">
+                                    <div class="scale-[0.8] -translate-x-3 h-full w-full">
+                                        <MockBullBearSlider />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex gap-2 justify-between items-center">
+                                <div class="flex-1 text-xs text-left">
+                                    <div class="text-white">Step 3</div>
+                                    <div class="text-[#A3A3A3]">
+                                        Claim your rewards when the tide turns and overtakes the majority.
+                                    </div>
+                                </div>
+                                <div class="flex-1 flex items-center justify-center relative py-6 pl-8">
+                                    <img src="/img/trophy.png" alt="Trophy" class="h-20 w-[5.5rem]" />
+                                </div>
+                            </div>
+                        </div>
+                        <button
+                            on:click=move |_| show_onboarding.set(ShowOnboarding(false))
+                            class="w-full px-5 py-3 rounded-lg flex items-center transition-all justify-center gap-8 font-kumbh font-bold"
+                            style:background="linear-gradient(73deg, #DA539C 0%, #E2017B 33%, #5F0938 100%)"
+                        >Ok, got it!</button>
+                    }
+                }}
+            </div>
+        </div>
+    }
+}
+
 #[component]
 pub fn PumpNDump() -> impl IntoView {
     provide_context(Resource::new(
@@ -308,12 +506,19 @@ pub fn PumpNDump() -> impl IntoView {
         |_| PlayerGamesCountAndBalance::load(),
     ));
 
+    // TODO: move behind cookie
+    let show_onboarding = create_rw_signal(ShowOnboarding(false));
+    provide_context(show_onboarding);
+
     view! {
         <div class="h-screen w-screen block text-white bg-black">
             <div class="max-w-md flex flex-col relative w-full mx-auto items-center h-full px-4 py-4">
                 <Header />
                 <GameCard />
             </div>
+            <Show when=move || matches!(show_onboarding.get(), ShowOnboarding(true))>
+                <OnboardingPopup />
+            </Show>
         </div>
     }
 }
