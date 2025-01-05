@@ -329,7 +329,7 @@ enum GameResult {
 
 impl GameState {
     pub fn new() -> Self {
-        Self::Pending
+        Self::ResultDeclared(GameResult::Loss)
     }
 
     #[cfg(any(feature = "local-bin", feature = "local-lib"))]
@@ -401,58 +401,93 @@ fn GameCardPreResult(#[prop(into)] game_state: GameState) -> impl IntoView {
     };
     view! {
         <div
-            style="perspective: 500px; transition: transform 0.4s; transform-style: preserve-3d;"
-            class="relative w-full h-[31rem]"
+            class="bg-[#171717] flip-card transition-all absolute inset-0 h-full shrink-0 rounded-2xl items-center flex flex-col gap-4 w-full pt-14 pb-5 px-5 overflow-hidden"
         >
-            <div
-                class="bg-[#171717] flip-card transition-all absolute inset-0 h-full shrink-0 rounded-2xl items-center flex flex-col gap-4 w-full pt-14 pb-5 px-5 overflow-hidden"
-            >
-                <img class="mt-14 w-24 h-24 rounded-[4px]" alt="Avatar" src="/img/gamepad.png" />
-                <a href="#" class="flex items-center gap-1">
-                    <div class="font-bold text-lg">iseng iseng Token</div>
-                </a>
-                <div class="bg-[#212121] shrink-0 rounded-full relative w-full h-11 overflow-hidden">
-                    <div
-                        class="w-full slide-up top-[3.5rem] flex items-center gap-2 justify-between absolute inset-0 py-2 pl-4 pr-2"
-                    >
-                        <div class="flex items-center gap-1">
-                            <div class="text-[#A3A3A3] text-xs">Winning Pot:</div>
-                            <img src="/img/gdolr.png" alt="Coin" class="size-5" />
-                            <div class="text-[#E5E5E5] font-bold">{winning_pot} gDOLR</div>
-                        </div>
-                        <button
-                            on:click=move |_| show_onboarding.set(ShowOnboarding(true))
-                            class="bg-black text-[#A3A3A3] hover:bg-black/35 rounded-full text-xl w-7 h-7 flex font-light items-center justify-center leading-none"
-                        >
-                            ?
-                        </button>
+            <img class="mt-14 w-24 h-24 rounded-[4px]" alt="Avatar" src="/img/gamepad.png" />
+            <a href="#" class="flex items-center gap-1">
+                <div class="font-bold text-lg">iseng iseng Token</div>
+            </a>
+            <div class="bg-[#212121] shrink-0 rounded-full relative w-full h-11 overflow-hidden">
+                <div
+                    class="w-full slide-up top-[3.5rem] flex items-center gap-2 justify-between absolute inset-0 py-2 pl-4 pr-2"
+                >
+                    <div class="flex items-center gap-1">
+                        <div class="text-[#A3A3A3] text-xs">Winning Pot:</div>
+                        <img src="/img/gdolr.png" alt="Coin" class="size-5" />
+                        <div class="text-[#E5E5E5] font-bold">{winning_pot} gDOLR</div>
                     </div>
-                    <div
-                        style="--animation-delay:5s;"
-                        class="w-full top-[3.5rem] slide-up flex items-center gap-1 absolute inset-0 py-2 pl-4 pr-2"
+                    <button
+                        on:click=move |_| show_onboarding.set(ShowOnboarding(true))
+                        class="bg-black text-[#A3A3A3] hover:bg-black/35 rounded-full text-xl w-7 h-7 flex font-light items-center justify-center leading-none"
                     >
-                        <img src="/img/player.png" alt="Coin" class="w-5 h-5" />
-                        <div class="text-[#E5E5E5] font-bold">80</div>
-                        <div class="text-[#A3A3A3] text-xs">players are playing - join the action!</div>
-                    </div>
+                        ?
+                    </button>
                 </div>
-                <div class="flex select-none flex-col gap-4 h-[8.5rem] w-full">
-                    <Show
-                        when=move || matches!(game_state, GameState::Playing)
-                        fallback=move || view!{ <PendingResult /> }
-                    >
-                        <BullBearSlider />
-                        <div
-                            class="flex relative items-center gap-6 justify-center w-full"
-                        >
-                            <DumpButton />
-
-                            <PumpButton />
-                        </div>
-                    </Show>
+                <div
+                    style="--animation-delay:5s;"
+                    class="w-full top-[3.5rem] slide-up flex items-center gap-1 absolute inset-0 py-2 pl-4 pr-2"
+                >
+                    <img src="/img/player.png" alt="Coin" class="w-5 h-5" />
+                    <div class="text-[#E5E5E5] font-bold">80</div>
+                    <div class="text-[#A3A3A3] text-xs">players are playing - join the action!</div>
                 </div>
             </div>
+            <div class="flex select-none flex-col gap-4 h-[8.5rem] w-full">
+                <Show
+                    when=move || matches!(game_state, GameState::Playing)
+                    fallback=move || view!{ <PendingResult /> }
+                >
+                    <BullBearSlider />
+                    <div
+                        class="flex relative items-center gap-6 justify-center w-full"
+                    >
+                        <DumpButton />
+
+                        <PumpButton />
+                    </div>
+                </Show>
+            </div>
         </div>
+    }
+}
+
+#[component]
+fn LostCard() -> impl IntoView {
+    view! {
+        <div
+            style="background: radial-gradient(100% 100% at -14% 74%, rgba(46, 124, 246, 0.16) 0%, rgba(23, 23, 23, 1) 100%);"
+            class="rounded-2xl flip-card card-flipped absolute inset-0 h-full w-full shrink-0 items-center justify-center flex flex-col gap-7 pt-14 pb-5 px-5"
+        >
+            <img src="/img/sadface.png" alt="Sad face emoji" class="h-36 w-36" />
+            <div class="flex flex-col gap-4 items-center">
+                <div class="font-semibold text-xl">The Tide Turned Against You!</div>
+                <div class="text-[#A3A3A3] text-center">
+                    The other side took the lead this time, but every vote brings you closer to your next win.
+                    Stay in the game!
+                </div>
+            </div>
+            <button
+                on:click=move |_| todo!("figure out what to do")
+                class="w-full px-5 py-3 rounded-lg flex items-center transition-all justify-center gap-8 font-kumbh font-bold"
+                style:background="linear-gradient(73deg, #DA539C 0%, #E2017B 33%, #5F0938 100%)"
+            >Keep Playing</button>
+        </div>
+    }
+}
+
+#[component]
+fn ResultDeclared(#[prop()] game_state: GameState) -> impl IntoView {
+    match game_state {
+        GameState::Playing | GameState::Pending => {
+            unreachable!("This screen is not reachable until ResultDeclared state is reached")
+        }
+        GameState::ResultDeclared(result) => view! {
+            <Show
+                when=move || matches!(result, GameResult::Loss)
+            >
+                <LostCard />
+            </Show>
+        },
     }
 }
 
@@ -465,9 +500,17 @@ fn GameCard() -> impl IntoView {
     view! {
         <Suspense>
             {game_state.get().map(|game_state| view! {
-                <Show when=move || { matches!(game_state, GameState::Playing | GameState::Pending)}>
-                    <GameCardPreResult game_state />
-                </Show>
+                <div
+                    style="perspective: 500px; transition: transform 0.4s; transform-style: preserve-3d;"
+                    class="relative w-full h-[31rem]"
+                >
+                    <Show
+                        when=move || { matches!(game_state, GameState::Playing | GameState::Pending)}
+                        fallback=move || view! { <ResultDeclared game_state /> }
+                    >
+                        <GameCardPreResult game_state />
+                    </Show>
+                </div>
             })}
         </Suspense>
     }
