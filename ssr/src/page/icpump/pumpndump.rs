@@ -1,10 +1,11 @@
 use codee::string::FromToStringCodec;
 use leptos::{
-    component, create_effect, create_signal, expect_context, provide_context, view, IntoView,
-    Resource, Show, Signal, SignalGet, SignalSet, SignalUpdate, Suspense, WriteSignal,
+    component, create_effect, create_signal, expect_context, html::Div, provide_context, view, For,
+    IntoView, NodeRef, Resource, Show, Signal, SignalGet, SignalSet, SignalUpdate, Suspense,
+    WriteSignal,
 };
 use leptos_icons::Icon;
-use leptos_use::use_cookie;
+use leptos_use::{use_cookie, use_infinite_scroll_with_options, UseInfiniteScrollOptions};
 
 #[component]
 fn Header() -> impl IntoView {
@@ -574,7 +575,7 @@ fn GameCard() -> impl IntoView {
             {move || game_state.get().map(|game_state| view! {
                 <div
                     style="perspective: 500px; transition: transform 0.4s; transform-style: preserve-3d;"
-                    class="relative w-full h-[31rem]"
+                    class="relative w-full min-h-[31rem] snap-start snap-always"
                 >
                     <Show
                         when=move || { matches!(game_state, GameState::Playing | GameState::Pending)}
@@ -727,11 +728,29 @@ pub fn PumpNDump() -> impl IntoView {
     let show_onboarding = ShowOnboarding(should_show, set_should_show);
     provide_context(show_onboarding);
 
+    let (tokens, set_tokens) = create_signal(vec![1, 2, 3, 4]);
+    let scroll_container = NodeRef::<Div>::new();
+    let _ = use_infinite_scroll_with_options(
+        scroll_container,
+        move |_| async move {
+            // TODO: implement loading from firestore
+            let len = tokens.get().len();
+
+            set_tokens.update(|tokens| {
+                tokens.extend(len..len + 5);
+            });
+        },
+        UseInfiniteScrollOptions::default().distance(400f64),
+    );
     view! {
         <div class="h-screen w-screen block text-white bg-black">
             <div class="max-w-md flex flex-col relative w-full mx-auto items-center h-full px-4 py-4">
                 <Header />
-                <GameCard />
+                <div node_ref=scroll_container class="size-full overflow-scroll flex flex-col gap-4 snap-mandatory snap-y pb-[50vh]">
+                    <For each=move || tokens.get() key=|item| *item let:token>
+                        <GameCard />
+                    </For>
+                </div>
             </div>
             <Show when=move || show_onboarding.should_show()>
                 <OnboardingPopup />
