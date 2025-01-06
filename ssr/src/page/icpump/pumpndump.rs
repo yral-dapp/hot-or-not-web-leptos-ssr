@@ -365,7 +365,7 @@ impl GameRunningData {
 
     #[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
     pub async fn load() -> Option<Self> {
-        unimplemented!("Haven't figured out how to load game state")
+        Some(Self::new(0, 0, 100))
     }
 }
 
