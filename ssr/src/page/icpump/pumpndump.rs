@@ -1,8 +1,10 @@
+use codee::string::FromToStringCodec;
 use leptos::{
-    component, create_effect, create_rw_signal, create_signal, expect_context, provide_context,
-    view, IntoView, Resource, RwSignal, Show, SignalGet, SignalSet, SignalUpdate, Suspense,
+    component, create_effect, create_signal, expect_context, provide_context, view, IntoView,
+    Resource, Show, Signal, SignalGet, SignalSet, SignalUpdate, Suspense, WriteSignal,
 };
 use leptos_icons::Icon;
+use leptos_use::use_cookie;
 
 #[component]
 fn Header() -> impl IntoView {
@@ -390,7 +392,7 @@ fn PendingResult() -> impl IntoView {
 
 #[component]
 fn GameCardPreResult(#[prop(into)] game_state: GameState) -> impl IntoView {
-    let show_onboarding: RwSignal<ShowOnboarding> = expect_context();
+    let show_onboarding: ShowOnboarding = expect_context();
     let running_data: Resource<(), Option<GameRunningData>> = expect_context();
     let winning_pot = move || {
         running_data
@@ -417,7 +419,7 @@ fn GameCardPreResult(#[prop(into)] game_state: GameState) -> impl IntoView {
                         <div class="text-[#E5E5E5] font-bold">{winning_pot} gDOLR</div>
                     </div>
                     <button
-                        on:click=move |_| show_onboarding.set(ShowOnboarding(true))
+                        on:click=move |_| show_onboarding.show()
                         class="bg-black text-[#A3A3A3] hover:bg-black/35 rounded-full text-xl w-7 h-7 flex font-light items-center justify-center leading-none"
                     >
                         ?
@@ -583,12 +585,29 @@ fn GameCard() -> impl IntoView {
 }
 
 #[derive(Copy, Clone, Debug)]
-struct ShowOnboarding(bool);
+struct ShowOnboarding(Signal<Option<bool>>, WriteSignal<Option<bool>>);
+
+impl ShowOnboarding {
+    #[inline]
+    fn show(&self) {
+        self.1.set(Some(true));
+    }
+
+    #[inline]
+    fn hide(&self) {
+        self.1.set(Some(false));
+    }
+
+    #[inline]
+    fn should_show(&self) -> bool {
+        self.0.get().unwrap_or(true)
+    }
+}
 
 #[component]
 fn OnboardingPopup() -> impl IntoView {
     let (step, set_step) = create_signal(0);
-    let show_onboarding = expect_context::<RwSignal<ShowOnboarding>>();
+    let show_onboarding = expect_context::<ShowOnboarding>();
     view! {
         <div class="fade-in fixed inset-0 bg-black/50 flex py-16 justify-center z-50 p-4">
             <div
@@ -606,7 +625,7 @@ fn OnboardingPopup() -> impl IntoView {
                     </button>
                 })}
                     <button
-                        on:click=move |_| show_onboarding.set(ShowOnboarding(false))
+                        on:click=move |_| show_onboarding.hide()
                         class="p-1 flex items-center justify-center bg-[#525252] rounded-full"
                     >
                         <Icon class="size-3" icon=icondata::IoClose />
@@ -682,7 +701,7 @@ fn OnboardingPopup() -> impl IntoView {
                             </div>
                         </div>
                         <button
-                            on:click=move |_| show_onboarding.set(ShowOnboarding(false))
+                            on:click=move |_| show_onboarding.hide()
                             class="w-full px-5 py-3 rounded-lg flex items-center transition-all justify-center gap-8 font-kumbh font-bold"
                             style:background="linear-gradient(73deg, #DA539C 0%, #E2017B 33%, #5F0938 100%)"
                         >Ok, got it!</button>
@@ -700,8 +719,8 @@ pub fn PumpNDump() -> impl IntoView {
         |_| PlayerGamesCountAndBalance::load(),
     ));
 
-    // TODO: move behind cookie
-    let show_onboarding = create_rw_signal(ShowOnboarding(false));
+    let (should_show, set_should_show) = use_cookie::<bool, FromToStringCodec>("show_onboarding");
+    let show_onboarding = ShowOnboarding(should_show, set_should_show);
     provide_context(show_onboarding);
 
     view! {
@@ -710,7 +729,7 @@ pub fn PumpNDump() -> impl IntoView {
                 <Header />
                 <GameCard />
             </div>
-            <Show when=move || matches!(show_onboarding.get(), ShowOnboarding(true))>
+            <Show when=move || show_onboarding.should_show()>
                 <OnboardingPopup />
             </Show>
         </div>
