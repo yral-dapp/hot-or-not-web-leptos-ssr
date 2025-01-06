@@ -8,9 +8,13 @@ use candid::Principal;
 use codee::string::FromToStringCodec;
 use futures::stream::FuturesOrdered;
 use futures::StreamExt;
+use html::Div;
 use leptos::*;
 use leptos_icons::Icon;
 use leptos_use::use_cookie;
+use leptos_use::use_intersection_observer_with_options;
+use leptos_use::UseIntersectionObserverOptions;
+use leptos_use::UseIntersectionObserverReturn;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -84,7 +88,9 @@ async fn process_token_list_item(
 pub fn ICPumpListingFeed() -> impl IntoView {
     let (curr_principal, _) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE);
 
-    let token_list: RwSignal<Vec<ProcessedTokenListResponse>> = create_rw_signal(vec![]);
+    let token_list_upper: RwSignal<Vec<ProcessedTokenListResponse>> = create_rw_signal(vec![]);
+
+    let token_last: RwSignal< Option<ProcessedTokenListResponse>> = create_rw_signal(None);
 
     let new_token_list: RwSignal<VecDeque<ProcessedTokenListResponse>> =
         create_rw_signal(VecDeque::new());
@@ -94,12 +100,14 @@ pub fn ICPumpListingFeed() -> impl IntoView {
         move |curr_principal| async move {
             new_token_list.set(VecDeque::new());
 
-            token_list.set(
-                process_token_list_item(
-                    get_paginated_token_list(0).await.unwrap(),
-                    curr_principal.unwrap(),
-                )
-                .await);
+            let mut token_list = process_token_list_item(
+                get_paginated_token_list(0).await.unwrap(),
+                curr_principal.unwrap(),
+            ).await;
+
+            token_last.set(token_list.pop());
+
+            token_list_upper.set(token_list);
         },
     );
 
@@ -120,13 +128,40 @@ pub fn ICPumpListingFeed() -> impl IntoView {
         });
     });
 
+    let target = NodeRef::<Div>::new();
+    let reached = create_rw_signal(false);
+
+    use_intersection_observer_with_options(
+        target,
+        move |entries, _| {
+
+            let len = entries.len();
+        
+            log::error!("num entries for intersection is {len}");
+            
+            if entries[0].is_intersecting() {
+                log::error!("Setting intersection to true");
+                reached.set(true);
+            } else {
+                log::error!("Setting intersection to false");
+                reached.set(false);
+            }
+           
+        },
+        UseIntersectionObserverOptions::default()
+    );
+
     view! {
         <Suspense fallback=FullScreenSpinner>
             {move || {
                 let _ = token_resource_effect.get();
+                let token_last = token_last.get();
 
                 view! {
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div
+                        class:testing=reached
+                        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 "
+                    >
                         <For
                             each=move || new_token_list.get()
                             key=|t| t.token_details.token_symbol.clone()
@@ -149,7 +184,7 @@ pub fn ICPumpListingFeed() -> impl IntoView {
                         />
 
                         <For
-                            each=move || token_list.get()
+                            each=move || token_list_upper.get()
                             key=|t| t.token_details.token_symbol.clone()
                             children=move |
                                 ProcessedTokenListResponse {
@@ -164,6 +199,21 @@ pub fn ICPumpListingFeed() -> impl IntoView {
                             }
                         />
 
+                        {token_last
+                            .map(|token_last| {
+                                view! {
+                                    <TokenCard
+                                        details=token_last.token_details
+                                        is_airdrop_claimed=token_last.is_airdrop_claimed
+                                        root=token_last.root
+                                    />
+                                }
+                            })}
+
+                    </div>
+
+                    <div node_ref=target class="text-white">
+                        hello world
                     </div>
                 }
             }}
@@ -174,7 +224,7 @@ pub fn ICPumpListingFeed() -> impl IntoView {
 #[component]
 pub fn ICPumpLanding() -> impl IntoView {
     view! {
-        <div class="min-h-screen bg-black text-white  flex flex-col gap-4 px-4 md:px-8 py-6 font-kumbh overflow-y-auto">
+        <div class="min-h-screen bg-black text-white  flex flex-col gap-4 px-4 md:px-8 py-6 font-kumbh">
             <div class="flex lg:flex-row gap-4 flex-col items-center justify-center relative">
                 <div class="lg:absolute lg:left-0 lg:top-0 flex items-center gap-4">
                     <div>Follow us:</div>
@@ -213,6 +263,7 @@ pub fn TokenCard(
     #[prop(optional, default = false)] is_new_token: bool,
     root: Principal,
     is_airdrop_claimed: bool,
+    #[prop(optional)] _ref: NodeRef<html::Div>,
 ) -> impl IntoView {
     let show_nsfw = create_rw_signal(false);
 
@@ -231,6 +282,7 @@ pub fn TokenCard(
 
     view! {
         <div
+            node_ref=_ref
             class:tada=is_new_token
             class="flex flex-col gap-2 py-3 px-3 w-full text-xs rounded-lg transition-colors md:px-4 hover:bg-gradient-to-b group bg-neutral-900/90 font-kumbh hover:from-neutral-600 hover:to-neutral-800"
         >
@@ -281,7 +333,6 @@ pub fn TokenCard(
                     <Icon class="w-full h-full" icon=ArrowLeftRightIcon />
                 </ActionButton>
                 {if is_airdrop_claimed {
-
                     view! {
                         <ActionButtonLink
                             on:click=move |_| {
