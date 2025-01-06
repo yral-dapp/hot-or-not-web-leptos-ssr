@@ -48,13 +48,17 @@ fn Header() -> impl IntoView {
 
 #[component]
 fn BullBearSlider() -> impl IntoView {
-    // TODO: set the position for the bear and bull based on current pump/dump number of parent
-    let ratio = 1f64;
+    let running_data: Resource<(), Option<GameRunningData>> = expect_context();
     let position = move || {
-        if ratio == 1.0 {
+        let ratio = running_data
+            .get()
+            .flatten()
+            .map(|d| (d.dumps as f64 + 1.0) / (d.pumps as f64 + 1.0))
+            .unwrap_or(1f64);
+        if ratio == 1f64 {
             39f64
         } else {
-            78f64.min(0f64.max(ratio / (ratio + 1.0)))
+            78f64.min(0f64.max(ratio * 78f64 / (ratio + 1f64)))
         }
     };
 
