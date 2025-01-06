@@ -1,6 +1,6 @@
 use leptos::{
-    component, create_rw_signal, create_signal, expect_context, provide_context, view, IntoView,
-    Resource, RwSignal, Show, SignalGet, SignalSet, SignalUpdate, Suspense,
+    component, create_effect, create_rw_signal, create_signal, expect_context, provide_context,
+    view, IntoView, Resource, RwSignal, Show, SignalGet, SignalSet, SignalUpdate, Suspense,
 };
 use leptos_icons::Icon;
 
@@ -301,7 +301,7 @@ impl PlayerGamesCountAndBalance {
 
     #[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
     pub async fn load() -> Self {
-        unimplemented!("Haven't figured out how to load games count and wallet balance yet")
+        Self::new(0, 1000)
     }
 }
 
@@ -329,7 +329,7 @@ enum GameResult {
 
 impl GameState {
     pub fn new() -> Self {
-        Self::ResultDeclared(GameResult::Win { amount: 100 })
+        Self::Playing
     }
 
     #[cfg(any(feature = "local-bin", feature = "local-lib"))]
@@ -339,7 +339,7 @@ impl GameState {
 
     #[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
     pub async fn load() -> Self {
-        unimplemented!("Haven't figured out how to load game state")
+        Self::new()
     }
 }
 
@@ -531,10 +531,41 @@ fn GameCard() -> impl IntoView {
     let running_data = Resource::new(|| (), |_| GameRunningData::load());
     provide_context(running_data);
     let game_state = Resource::new(|| (), |_| GameState::load());
+    provide_context(game_state);
+
+    create_effect(move |_| {
+        let result = running_data.get().flatten().as_ref().and_then(|data| {
+            if data.pumps >= 3 {
+                Some(GameResult::Win { amount: 10 })
+            } else if data.dumps >= 3 {
+                Some(GameResult::Loss)
+            } else {
+                None
+            }
+        });
+
+        if let Some(result) = result {
+            game_state.update(|state| {
+                if let Some(state) = state.as_mut() {
+                    *state = GameState::Pending;
+                }
+            });
+
+            wasm_bindgen_futures::spawn_local(async move {
+                gloo::timers::future::TimeoutFuture::new(1000).await;
+
+                game_state.update(|state| {
+                    if let Some(state) = state.as_mut() {
+                        *state = GameState::ResultDeclared(result);
+                    }
+                });
+            })
+        }
+    });
 
     view! {
         <Suspense>
-            {game_state.get().map(|game_state| view! {
+            {move || game_state.get().map(|game_state| view! {
                 <div
                     style="perspective: 500px; transition: transform 0.4s; transform-style: preserve-3d;"
                     class="relative w-full h-[31rem]"
