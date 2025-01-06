@@ -31,7 +31,7 @@ use crate::utils::token::icpump::get_paginated_token_list;
 use crate::utils::token::icpump::TokenListItem;
 
 pub mod ai;
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 struct ProcessedTokenListResponse {
     token_details: TokenListItem,
     root: Principal,
@@ -56,19 +56,20 @@ async fn process_token_list_item(
                     .ok_or(ServerFnError::new("Not root given"))?,
             )?;
 
-            let token_owner_canister_id = cans.get_token_owner(root_principal).await?;
-            let is_airdrop_claimed = if let Some(token_owner) = token_owner_canister_id {
-                cans.get_airdrop_status(token_owner.canister_id, root_principal, key_principal)
-                    .await?
-            } else {
-                true
-            };
+            // let token_owner_canister_id = cans.get_token_owner(root_principal).await?;
+            // let is_airdrop_claimed = if let Some(token_owner) = token_owner_canister_id {
+            //     cans.get_airdrop_status(token_owner.canister_id, root_principal, key_principal)
+            //         .await?
+            // } else {
+            //     true
+            // };
             // let token_owner = cans.individual_user(token_owner_canister_id.unwrap()).await;
             // token_owner_principal_id: token_owner.get_profile_details().await.unwrap().principal_id,
+            
             Ok::<_, ServerFnError>(ProcessedTokenListResponse {
                 token_details: token,
                 root: root_principal,
-                is_airdrop_claimed,
+                is_airdrop_claimed: false,
             })
         });
     }
@@ -77,30 +78,28 @@ async fn process_token_list_item(
         .collect()
         .await
 }
+
+
 #[component]
-pub fn ICPumpListing() -> impl IntoView {
-    let page = create_rw_signal(1);
-    let token_list: RwSignal<Vec<ProcessedTokenListResponse>> = create_rw_signal(vec![]);
-    let end_of_list = create_rw_signal(false);
-    let cache = create_rw_signal(HashMap::<u64, Vec<ProcessedTokenListResponse>>::new());
-    let new_token_list: RwSignal<VecDeque<ProcessedTokenListResponse>> =
-        create_rw_signal(VecDeque::new());
+pub fn ICPumpListingFeed() -> impl IntoView {
     let (curr_principal, _) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE);
 
-    let act = create_resource(
-        move || (page(), curr_principal()),
-        move |(page, curr_principal)| async move {
+    let token_list: RwSignal<Vec<ProcessedTokenListResponse>> = create_rw_signal(vec![]);
+
+    let new_token_list: RwSignal<VecDeque<ProcessedTokenListResponse>> =
+        create_rw_signal(VecDeque::new());
+
+    let token_resource_effect = create_resource(
+        move || (curr_principal()),
+        move |curr_principal| async move {
             new_token_list.set(VecDeque::new());
 
-            if let Some(cached) = cache.with_untracked(|c| c.get(&page).cloned()) {
-                return cached.clone();
-            }
-
-            process_token_list_item(
-                get_paginated_token_list(page as u32).await.unwrap(),
-                curr_principal.unwrap(),
-            )
-            .await
+            token_list.set(
+                process_token_list_item(
+                    get_paginated_token_list(0).await.unwrap(),
+                    curr_principal.unwrap(),
+                )
+                .await);
         },
     );
 
@@ -124,38 +123,47 @@ pub fn ICPumpListing() -> impl IntoView {
     view! {
         <Suspense fallback=FullScreenSpinner>
             {move || {
-                let _ = act
-                    .get()
-                    .map(|res| {
-                        if res.len() < ICPUMP_LISTING_PAGE_SIZE {
-                            end_of_list.set(true);
-                        }
-                        update!(
-                            move |token_list, cache| {
-                                *token_list = res.clone();
-                                cache.insert(page.get_untracked(), res.clone());
-                            }
-                        );
-                    });
+                let _ = token_resource_effect.get();
+
                 view! {
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         <For
                             each=move || new_token_list.get()
                             key=|t| t.token_details.token_symbol.clone()
-                            children=move |ProcessedTokenListResponse { token_details, root, is_airdrop_claimed }| {
-                                view! { <TokenCard is_new_token=true details=token_details is_airdrop_claimed root/> }
+                            children=move |
+                                ProcessedTokenListResponse {
+                                    token_details,
+                                    root,
+                                    is_airdrop_claimed,
+                                }|
+                            {
+                                view! {
+                                    <TokenCard
+                                        is_new_token=true
+                                        details=token_details
+                                        is_airdrop_claimed
+                                        root
+                                    />
+                                }
                             }
                         />
+
                         <For
                             each=move || token_list.get()
                             key=|t| t.token_details.token_symbol.clone()
-                            children=move |ProcessedTokenListResponse { token_details, root, is_airdrop_claimed }| {
-                                view! { <TokenCard details=token_details is_airdrop_claimed root/> }
+                            children=move |
+                                ProcessedTokenListResponse {
+                                    token_details,
+                                    root,
+                                    is_airdrop_claimed,
+                                }|
+                            {
+                                view! {
+                                    <TokenCard details=token_details is_airdrop_claimed root />
+                                }
                             }
                         />
-                    </div>
-                    <div class="flex justify-center">
-                        <PageSelector page=page end_of_list=end_of_list />
+
                     </div>
                 }
             }}
@@ -193,7 +201,7 @@ pub fn ICPumpLanding() -> impl IntoView {
                 </HighlightedLinkButton>
             </div>
             <div class="flex flex-col gap-8 pb-24">
-                <ICPumpListing />
+                <ICPumpListingFeed />
             </div>
         </div>
     }
@@ -272,36 +280,73 @@ pub fn TokenCard(
                 <ActionButton label="Buy/Sell".to_string() href="#".to_string() disabled=true>
                     <Icon class="w-full h-full" icon=ArrowLeftRightIcon />
                 </ActionButton>
-                {
-                    if is_airdrop_claimed{
+                {if is_airdrop_claimed {
 
-                        view! {
-                            <ActionButtonLink on:click=move |_|{pop_up.set(true); share_link.set(format!("/token/info/{}/{}?airdrop_amt=100",root, details.user_id))} label="Airdrop".to_string()>
-                                <Icon class="h-6 w-6" icon=AirdropIcon />
-                            </ActionButtonLink>
-                        }
-                    }else{
-                        view! {
-                            <ActionButton href=format!("/token/info/{}/{}?airdrop_amt=100",root, details.user_id) label="Airdrop".to_string()>
+                    view! {
+                        <ActionButtonLink
+                            on:click=move |_| {
+                                pop_up.set(true);
+                                share_link
+                                    .set(
+                                        format!(
+                                            "/token/info/{}/{}?airdrop_amt=100",
+                                            root,
+                                            details.user_id,
+                                        ),
+                                    )
+                            }
+                            label="Airdrop".to_string()
+                        >
                             <Icon class="h-6 w-6" icon=AirdropIcon />
-                            </ActionButton>
-                        }
+                        </ActionButtonLink>
                     }
-                }
+                } else {
+                    view! {
+                        <ActionButton
+                            href=format!("/token/info/{}/{}?airdrop_amt=100", root, details.user_id)
+                            label="Airdrop".to_string()
+                        >
+                            <Icon class="h-6 w-6" icon=AirdropIcon />
+                        </ActionButton>
+                    }
+                }}
                 <ActionButton label="Share".to_string() href="#".to_string()>
-                    <Icon class="w-full h-full" icon=ShareIcon on:click=move |_| {pop_up.set(true); share_link.set(share_link_coin.clone())}/>
+                    <Icon
+                        class="w-full h-full"
+                        icon=ShareIcon
+                        on:click=move |_| {
+                            pop_up.set(true);
+                            share_link.set(share_link_coin.clone())
+                        }
+                    />
                 </ActionButton>
                 <ActionButton label="Details".to_string() href=details.link>
                     <Icon class="w-full h-full" icon=ChevronRightIcon />
                 </ActionButton>
             </div>
-            <PopupOverlay show=pop_up >
+            <PopupOverlay show=pop_up>
                 <ShareContent
                     share_link=format!("{base_url}{}", share_link())
                     message=share_message()
                     show_popup=pop_up
                 />
             </PopupOverlay>
+        </div>
+    }
+}
+
+pub fn TokenCardLoading() -> impl IntoView {
+    view! {
+        <div class="min-h-screen bg-black text-white  flex flex-col gap-4 px-4 md:px-8 py-6 font-kumbh overflow-y-auto">
+            <div class="flex flex-col gap-2 py-3 px-3 w-full rounded-lg md:px-4 group bg-neutral-900/90">
+                <div class="flex gap-3">
+                    <div class="w-[7rem] h-[7rem] bg-loading rounded-[4px] relative shrink-0"></div>
+
+                    <div class="w-full bg-loading rounded-[4px]"></div>
+                </div>
+
+                <div class="h-[4.125rem] bg-loading rounded-[4px]"></div>
+            </div>
         </div>
     }
 }
@@ -318,15 +363,18 @@ pub fn PageSelector(page: RwSignal<u64>, end_of_list: RwSignal<bool>) -> impl In
                 }
                 disabled=move || page.get() == 1
             >
-                    <Icon class="w-4 h-4 rotate-180" icon=ChevronRightIcon />
+                <Icon class="w-4 h-4 rotate-180" icon=ChevronRightIcon />
             </button>
-            <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white bg-blue-500">{page}</div>
+            <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white bg-blue-500">
+                {page}
+            </div>
             <button
                 class="flex justify-center items-center w-8 h-8 rounded-lg bg-neutral-800"
                 on:click=move |_| {
                     page.update(|page| *page += 1);
                 }
-                disabled=move || end_of_list.get()>
+                disabled=move || end_of_list.get()
+            >
                 <Icon class="w-4 h-4" icon=ChevronRightIcon />
             </button>
         </div>
@@ -344,9 +392,20 @@ pub fn ActionButton(
         <a
             disabled=disabled
             href=href
-            class=move || format!("flex flex-col gap-1 justify-center items-center text-xs transition-colors {}", if !disabled{"group-hover:text-white text-neutral-300"}else{"group-hover:cursor-default text-neutral-600"})
+            class=move || {
+                format!(
+                    "flex flex-col gap-1 justify-center items-center text-xs transition-colors {}",
+                    if !disabled {
+                        "group-hover:text-white text-neutral-300"
+                    } else {
+                        "group-hover:cursor-default text-neutral-600"
+                    },
+                )
+            }
         >
-            <div class="w-[1.875rem] h-[1.875rem] flex items-center justify-center">{children()}</div>
+            <div class="w-[1.875rem] h-[1.875rem] flex items-center justify-center">
+                {children()}
+            </div>
 
             <div>{label}</div>
         </a>
@@ -362,9 +421,20 @@ pub fn ActionButtonLink(
     view! {
         <button
             disabled=disabled
-            class=move || format!("flex flex-col gap-1 justify-center items-center text-xs transition-colors {}", if !disabled{"group-hover:text-white text-neutral-300"}else{"group-hover:cursor-default text-neutral-600"})
+            class=move || {
+                format!(
+                    "flex flex-col gap-1 justify-center items-center text-xs transition-colors {}",
+                    if !disabled {
+                        "group-hover:text-white text-neutral-300"
+                    } else {
+                        "group-hover:cursor-default text-neutral-600"
+                    },
+                )
+            }
         >
-            <div class="w-[1.875rem] h-[1.875rem] flex items-center justify-center">{children()}</div>
+            <div class="w-[1.875rem] h-[1.875rem] flex items-center justify-center">
+                {children()}
+            </div>
 
             <div>{label}</div>
         </button>

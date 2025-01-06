@@ -131,19 +131,23 @@ pub async fn get_paginated_token_list(page: u32) -> Result<Vec<TokenListItem>, S
     {
         use crate::consts::ICPUMP_LISTING_PAGE_SIZE;
         use candid::Principal;
-        let test_user_id = TokenListItem {
-            user_id: Principal::anonymous().to_text(),
-            name: "Test Token".to_string(),
-            token_name: "Test Token".to_string(),
-            token_symbol: "TST".to_string(),
-            logo: "https://picsum.photos/200".to_string(),
-            description: "This is a test token".to_string(),
-            created_at: "69".to_string(),
-            formatted_created_at: "69 mins".to_string(),
-            link: "link".to_string(),
-            is_nsfw: false,
-        };
-        Ok(vec![test_user_id; ICPUMP_LISTING_PAGE_SIZE])
+
+        let data = (0..ICPUMP_LISTING_PAGE_SIZE)
+            .map(|idx| TokenListItem {
+                user_id: Principal::anonymous().to_text(),
+                name: format!("Test token {}", idx + page as usize),
+                token_name: format!("Test token {}", idx + page as usize),
+                token_symbol: "TST".to_string(),
+                logo: "https://picsum.photos/200".to_string(),
+                description: "This is a test token".to_string(),
+                created_at: "69".to_string(),
+                formatted_created_at: "69 mins".to_string(),
+                link: Principal::anonymous().to_text(),
+                is_nsfw: false,
+            })
+            .collect();
+
+        Ok(data)
     }
 }
 
