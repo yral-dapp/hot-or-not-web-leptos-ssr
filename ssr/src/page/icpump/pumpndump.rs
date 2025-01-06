@@ -1,11 +1,13 @@
 use codee::string::FromToStringCodec;
 use leptos::{
-    component, create_effect, create_signal, expect_context, html::Div, provide_context, view, For,
-    IntoView, NodeRef, Resource, Show, Signal, SignalGet, SignalSet, SignalUpdate, Suspense,
-    WriteSignal,
+    component, create_effect, create_rw_signal, create_signal, expect_context, html::Div, logging,
+    provide_context, view, For, IntoView, NodeRef, Resource, Show, Signal, SignalGet,
+    SignalGetUntracked, SignalSet, SignalUpdate, SignalUpdateUntracked, Suspense, WriteSignal,
 };
 use leptos_icons::Icon;
 use leptos_use::{use_cookie, use_infinite_scroll_with_options, UseInfiniteScrollOptions};
+
+use crate::utils::token::icpump::{get_paginated_token_list_with_limit, TokenListItem};
 
 #[component]
 fn Header() -> impl IntoView {
@@ -397,6 +399,7 @@ fn PendingResult() -> impl IntoView {
 
 #[component]
 fn GameCardPreResult(#[prop(into)] game_state: GameState) -> impl IntoView {
+    let token: TokenListItem = expect_context();
     let show_onboarding: ShowOnboarding = expect_context();
     let running_data: Resource<(), Option<GameRunningData>> = expect_context();
     let winning_pot = move || {
@@ -410,9 +413,9 @@ fn GameCardPreResult(#[prop(into)] game_state: GameState) -> impl IntoView {
         <div
             class="bg-[#171717] flip-card transition-all absolute inset-0 h-full shrink-0 rounded-2xl items-center flex flex-col gap-4 w-full pt-14 pb-5 px-5 overflow-hidden"
         >
-            <img class="mt-14 w-24 h-24 rounded-[4px]" alt="Avatar" src="/img/gamepad.png" />
+            <img class="mt-14 w-24 h-24 rounded-[4px]" alt="Avatar" src=token.logo />
             <a href="#" class="flex items-center gap-1">
-                <div class="font-bold text-lg">iseng iseng Token</div>
+                <div class="font-bold text-lg">{token.token_name}</div>
             </a>
             <div class="bg-[#212121] shrink-0 rounded-full relative w-full h-11 overflow-hidden">
                 <div
@@ -534,11 +537,12 @@ fn ResultDeclared(#[prop()] game_state: GameState) -> impl IntoView {
 }
 
 #[component]
-fn GameCard() -> impl IntoView {
+fn GameCard(#[prop()] token: TokenListItem) -> impl IntoView {
     let running_data = Resource::new(|| (), |_| GameRunningData::load());
     provide_context(running_data);
     let game_state = Resource::new(|| (), |_| GameState::load());
     provide_context(game_state);
+    provide_context(token);
 
     create_effect(move |_| {
         let result = running_data.get().flatten().as_ref().and_then(|data| {
@@ -572,7 +576,7 @@ fn GameCard() -> impl IntoView {
 
     view! {
         <Suspense>
-            {move || game_state.get().map(|game_state| view! {
+            {move || game_state.get().map(move |game_state| view! {
                 <div
                     style="perspective: 500px; transition: transform 0.4s; transform-style: preserve-3d;"
                     class="relative w-full min-h-[31rem] snap-start snap-always"
@@ -728,16 +732,29 @@ pub fn PumpNDump() -> impl IntoView {
     let show_onboarding = ShowOnboarding(should_show, set_should_show);
     provide_context(show_onboarding);
 
-    let (tokens, set_tokens) = create_signal(vec![1, 2, 3, 4]);
+    let tokens = Resource::new(
+        || (),
+        |_| async {
+            get_paginated_token_list_with_limit(1, 5)
+                .await
+                .expect("TODO: handle error")
+        },
+    );
     let scroll_container = NodeRef::<Div>::new();
+    let page = create_rw_signal(1);
     let _ = use_infinite_scroll_with_options(
         scroll_container,
         move |_| async move {
-            // TODO: implement loading from firestore
-            let len = tokens.get().len();
-
-            set_tokens.update(|tokens| {
-                tokens.extend(len..len + 5);
+            page.update_untracked(|v| {
+                *v += 1;
+            });
+            let more_tokens = get_paginated_token_list_with_limit(page.get_untracked(), 5)
+                .await
+                .expect("TODO: handle error");
+            tokens.update(|tokens| {
+                if let Some(tokens) = tokens {
+                    tokens.extend_from_slice(&more_tokens);
+                }
             });
         },
         UseInfiniteScrollOptions::default().distance(400f64),
@@ -747,9 +764,13 @@ pub fn PumpNDump() -> impl IntoView {
             <div class="max-w-md flex flex-col relative w-full mx-auto items-center h-full px-4 py-4">
                 <Header />
                 <div node_ref=scroll_container class="size-full overflow-scroll flex flex-col gap-4 snap-mandatory snap-y pb-[50vh]">
-                    <For each=move || tokens.get() key=|item| *item let:_>
-                        <GameCard />
-                    </For>
+                    <Suspense>
+                    {move || tokens.get().map(|_| view! {
+                        <For each=move || tokens.get().unwrap() key=|item| item.user_id.clone() let:token>
+                            <GameCard token />
+                        </For>
+                    })}
+                    </Suspense>
                 </div>
             </div>
             <Show when=move || show_onboarding.should_show()>

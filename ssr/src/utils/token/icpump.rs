@@ -62,13 +62,22 @@ pub async fn get_token_by_id(token_id: String) -> Result<TokenListItemFS, Server
 }
 
 #[server]
+/// page is 1-indexed
 pub async fn get_paginated_token_list(page: u32) -> Result<Vec<TokenListItem>, ServerFnError> {
+    use crate::consts::ICPUMP_LISTING_PAGE_SIZE;
+    get_paginated_token_list_with_limit(page, ICPUMP_LISTING_PAGE_SIZE as u32).await
+}
+
+#[server]
+/// page is 1-indexed
+pub async fn get_paginated_token_list_with_limit(
+    page: u32,
+    limit: u32,
+) -> Result<Vec<TokenListItem>, ServerFnError> {
     #[cfg(feature = "firestore")]
     {
         use firestore::*;
         use speedate::DateTime;
-
-        use crate::consts::ICPUMP_LISTING_PAGE_SIZE;
 
         let firestore_db: firestore::FirestoreDb = expect_context();
 
@@ -82,8 +91,8 @@ pub async fn get_paginated_token_list(page: u32) -> Result<Vec<TokenListItem>, S
                 path!(TokenListItem::created_at),
                 FirestoreQueryDirection::Descending,
             )])
-            .offset((page - 1) * ICPUMP_LISTING_PAGE_SIZE as u32)
-            .limit(ICPUMP_LISTING_PAGE_SIZE as u32)
+            .offset((page - 1) * limit)
+            .limit(limit)
             .obj()
             .stream_query()
             .await
@@ -129,21 +138,23 @@ pub async fn get_paginated_token_list(page: u32) -> Result<Vec<TokenListItem>, S
 
     #[cfg(not(feature = "firestore"))]
     {
-        use crate::consts::ICPUMP_LISTING_PAGE_SIZE;
         use candid::Principal;
-        let test_user_id = TokenListItem {
-            user_id: Principal::anonymous().to_text(),
-            name: "Test Token".to_string(),
-            token_name: "Test Token".to_string(),
-            token_symbol: "TST".to_string(),
-            logo: "https://picsum.photos/200".to_string(),
-            description: "This is a test token".to_string(),
-            created_at: "69".to_string(),
-            formatted_created_at: "69 mins".to_string(),
-            link: "link".to_string(),
-            is_nsfw: false,
-        };
-        Ok(vec![test_user_id; ICPUMP_LISTING_PAGE_SIZE])
+        let start = (page - 1) * limit;
+        let end = start + limit;
+        Ok((start..end)
+            .map(|idx| TokenListItem {
+                user_id: Principal::anonymous().to_text(),
+                token_name: format!("Test Token {idx}"),
+                name: "name".to_string(),
+                token_symbol: "TST".to_string(),
+                logo: format!("https://picsum.photos/seed/{idx}/200"),
+                description: "This is a test token".to_string(),
+                created_at: "69".to_string(),
+                formatted_created_at: "69 mins".to_string(),
+                link: "link".to_string(),
+                is_nsfw: false,
+            })
+            .collect())
     }
 }
 
