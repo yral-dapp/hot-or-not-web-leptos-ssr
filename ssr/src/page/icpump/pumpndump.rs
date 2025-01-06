@@ -747,7 +747,7 @@ pub fn PumpNDump() -> impl IntoView {
             <div class="max-w-md flex flex-col relative w-full mx-auto items-center h-full px-4 py-4">
                 <Header />
                 <div node_ref=scroll_container class="size-full overflow-scroll flex flex-col gap-4 snap-mandatory snap-y pb-[50vh]">
-                    <For each=move || tokens.get() key=|item| *item let:token>
+                    <For each=move || tokens.get() key=|item| *item let:_>
                         <GameCard />
                     </For>
                 </div>
