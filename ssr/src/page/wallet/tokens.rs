@@ -1,8 +1,8 @@
 use candid::Principal;
-use yral_canisters_common::cursored_data::token_roots::TokenRootList;
-use yral_canisters_common::utils::token::balance::{TokenBalance, TokenBalanceOrClaiming};
+use codee::string::FromToStringCodec;
+use leptos_use::use_cookie;
+use yral_canisters_common::cursored_data::token_roots::{TokenListResponse, TokenRootList};
 use yral_canisters_common::utils::token::{RootType, TokenMetadata, TokenOwner};
-use yral_canisters_common::Canisters;
 
 use crate::component::icons::{
     airdrop_icon::AirdropIcon, arrow_left_right_icon::ArrowLeftRightIcon,
@@ -10,8 +10,8 @@ use crate::component::icons::{
 };
 use crate::component::overlay::PopupOverlay;
 use crate::component::share_popup::ShareContent;
+use crate::consts::USER_PRINCIPAL_STORE;
 use crate::page::icpump::{ActionButton, ActionButtonLink};
-use crate::state::canisters::authenticated_canisters;
 use crate::utils::host::get_host;
 use crate::utils::token::icpump::IcpumpTokenInfo;
 use crate::{component::infinite_scroller::InfiniteScroller, state::canisters::unauth_canisters};
@@ -27,102 +27,12 @@ pub fn TokenViewFallback() -> impl IntoView {
 }
 
 #[component]
-pub fn TokenView(
-    user_principal: Principal,
-    token_root: RootType,
-    #[prop(optional)] _ref: NodeRef<html::A>,
-) -> impl IntoView {
-    let info = authenticated_canisters().derive(
-        move || (token_root.clone(), user_principal),
-        move |cans, (token_root, user_principal)| async move {
-            let cans = Canisters::from_wire(cans.unwrap(), expect_context()).unwrap();
-            // TODO: remove these unwraps
-            let meta = cans
-                .token_metadata_by_root_type(
-                    &IcpumpTokenInfo,
-                    Some(user_principal),
-                    token_root.clone(),
-                )
-                .await
-                .unwrap()
-                .unwrap();
-
-            let is_token_viewer_airdrop_claimed = cans
-                .get_airdrop_status(
-                    meta.token_owner.clone().unwrap().canister_id,
-                    Principal::from_text(token_root.to_string()).unwrap(),
-                    cans.user_principal(),
-                )
-                .await
-                .unwrap();
-            (meta.clone(), is_token_viewer_airdrop_claimed)
-        },
-    );
-    view! {
-        <Suspense fallback=TokenViewFallback>
-            {move || {
-                info.map(|(info, is_token_airdrop_claimed)| {
-                    view! { <WalletCard user_principal token_meta_data=info.clone() is_airdrop_claimed=*is_token_airdrop_claimed/> }
-                })
-            }}
-
-        </Suspense>
-    }
-}
-
-#[component]
-pub fn CoynsTokenView(user_principal: Principal) -> impl IntoView {
-    let info = create_resource(
-        move || user_principal,
-        move |user_principal| async move {
-            let cans = unauth_canisters();
-            let user_canister_id = cans
-                .get_individual_canister_by_user_principal(user_principal)
-                .await
-                .unwrap()
-                .unwrap();
-            let user = cans.individual_user(user_canister_id).await;
-
-            let bal = user.get_utility_token_balance().await.unwrap();
-
-            (
-                user_principal,
-                TokenMetadata {
-                    logo_b64: "/img/coyns.png".to_string(),
-                    name: "COYNS".to_string(),
-                    description: "".to_string(),
-                    symbol: "COYNS".to_string(),
-                    balance: Some(TokenBalanceOrClaiming::new(TokenBalance::new(
-                        bal.into(),
-                        0,
-                    ))),
-                    fees: TokenBalance::new(0u32.into(), 0),
-                    root: None,
-                    ledger: Principal::anonymous(),
-                    index: Principal::anonymous(),
-                    decimals: 8,
-                    is_nsfw: false,
-                    token_owner: None,
-                },
-            )
-        },
-    );
-    view! {
-        <Suspense>
-            {move || {
-                info.map(|(user_principal, meta)| view! { <WalletCard user_principal=*user_principal token_meta_data=meta.clone() is_airdrop_claimed=false is_utility_token=true/>})
-            }}
-
-        </Suspense>
-    }
-}
-
-#[component]
 pub fn TokenList(user_principal: Principal, user_canister: Principal) -> impl IntoView {
-    let canisters: yral_canisters_common::Canisters<false> = unauth_canisters();
+    let (viewer_principal, _) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE);
 
     let provider = TokenRootList {
-        canisters,
+        viewer_principal: viewer_principal.get_untracked().unwrap(),
+        canisters: unauth_canisters(),
         user_canister,
         user_principal,
         nsfw_detector: IcpumpTokenInfo,
@@ -130,17 +40,12 @@ pub fn TokenList(user_principal: Principal, user_canister: Principal) -> impl In
 
     view! {
         <div class="flex flex-col w-full gap-2 mb-2 items-center">
-            <CoynsTokenView user_principal/>
             <InfiniteScroller
                 provider
-                fetch_count=10
-                children=move |token_root, _ref| {
+                fetch_count=5
+                children=move |TokenListResponse{token_metadata, airdrop_claimed, root}, _ref| {
                     view! {
-                        <TokenView
-                            user_principal
-                            token_root=token_root
-                            _ref=_ref.unwrap_or_default()
-                        />
+                        <WalletCard user_principal token_meta_data=token_metadata is_airdrop_claimed=airdrop_claimed _ref=_ref.unwrap_or_default() is_utility_token=root == RootType::COYNS/>
                     }
                 }
             />
@@ -164,6 +69,7 @@ pub fn WalletCard(
     token_meta_data: TokenMetadata,
     is_airdrop_claimed: bool,
     #[prop(optional)] is_utility_token: bool,
+    #[prop(optional)] _ref: NodeRef<html::A>,
 ) -> impl IntoView {
     let root: String = token_meta_data
         .root
