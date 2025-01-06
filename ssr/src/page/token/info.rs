@@ -274,6 +274,7 @@ pub fn TokenInfo() -> impl IntoView {
                 _ => None,
             };
 
+            println!("DATA: {:?}", res);
             Ok(res)
         },
     );
@@ -301,7 +302,7 @@ pub fn TokenInfo() -> impl IntoView {
                                     />
                                 }
                             }
-                            _ => view! { <Redirect path="/" /> },
+                            _ => view! { <Redirect path="/wallet" /> },
                         }
                     })
             }}

@@ -12,9 +12,9 @@ describe("wallet page tests", function () {
         browser.element.findByText("1000").assert.enabled();
     })
 
-    it("check ckusdc  loading", async function (browser){
+    it("check usdc  loading", async function (browser){
         browser.url(`${browser.launchUrl}/wallet/34yzw-zrmgu-vg6ms-2uj2a-czql2-7y4bu-mt5so-ckrtz-znelw-yyvr4-2ae`);
 
-        browser.element.findByText('CKUSDC').waitUntil('visible');
+        browser.element.findByText('USDC').waitUntil('visible');
     })
 })
