@@ -1,6 +1,6 @@
 use codee::string::FromToStringCodec;
 use leptos::{
-    component, create_effect, create_rw_signal, create_signal, expect_context, html::Div, logging,
+    component, create_effect, create_rw_signal, create_signal, expect_context, html::Div,
     provide_context, view, For, IntoView, NodeRef, Resource, Show, Signal, SignalGet,
     SignalGetUntracked, SignalSet, SignalUpdate, SignalUpdateUntracked, Suspense, WriteSignal,
 };
