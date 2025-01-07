@@ -6,7 +6,6 @@ use std::collections::VecDeque;
 
 use candid::Principal;
 use codee::string::FromToStringCodec;
-use futures::stream::FuturesOrdered;
 use futures::StreamExt;
 use leptos::*;
 use leptos_icons::Icon;
@@ -35,72 +34,26 @@ pub mod ai;
 struct ProcessedTokenListResponse {
     token_details: TokenListItem,
     root: Principal,
-    is_airdrop_claimed: bool,
 }
 
-async fn process_token_list_item(
-    token_list_item: Vec<TokenListItem>,
-    key_principal: Principal,
-) -> Vec<ProcessedTokenListResponse> {
-    let mut fut = FuturesOrdered::new();
-
-    for token in token_list_item {
-        fut.push_back(async move {
-            let cans = unauth_canisters();
-            let root_principal = Principal::from_text(
-                token
-                    .link
-                    .trim_end_matches('/')
-                    .split('/')
-                    .last()
-                    .ok_or(ServerFnError::new("Not root given"))?,
-            )?;
-
-            let token_owner_canister_id = cans.get_token_owner(root_principal).await?;
-            let is_airdrop_claimed = if let Some(token_owner) = token_owner_canister_id {
-                cans.get_airdrop_status(token_owner.canister_id, root_principal, key_principal)
-                    .await?
-            } else {
-                true
-            };
-            // let token_owner = cans.individual_user(token_owner_canister_id.unwrap()).await;
-            // token_owner_principal_id: token_owner.get_profile_details().await.unwrap().principal_id,
-            Ok::<_, ServerFnError>(ProcessedTokenListResponse {
-                token_details: token,
-                root: root_principal,
-                is_airdrop_claimed,
-            })
-        });
-    }
-
-    fut.filter_map(|result| async move { result.ok() })
-        .collect()
-        .await
-}
 #[component]
 pub fn ICPumpListing() -> impl IntoView {
     let page = create_rw_signal(1);
-    let token_list: RwSignal<Vec<ProcessedTokenListResponse>> = create_rw_signal(vec![]);
+    let token_list: RwSignal<Vec<TokenListItem>> = create_rw_signal(vec![]);
     let end_of_list = create_rw_signal(false);
-    let cache = create_rw_signal(HashMap::<u64, Vec<ProcessedTokenListResponse>>::new());
-    let new_token_list: RwSignal<VecDeque<ProcessedTokenListResponse>> =
-        create_rw_signal(VecDeque::new());
-    let (curr_principal, _) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE);
+    let cache = create_rw_signal(HashMap::<u64, Vec<TokenListItem>>::new());
+    let new_token_list: RwSignal<VecDeque<TokenListItem>> = create_rw_signal(VecDeque::new());
 
     let act = create_resource(
-        move || (page(), curr_principal()),
-        move |(page, curr_principal)| async move {
+        move || page(),
+        move |page| async move {
             new_token_list.set(VecDeque::new());
 
             if let Some(cached) = cache.with_untracked(|c| c.get(&page).cloned()) {
                 return cached.clone();
             }
 
-            process_token_list_item(
-                get_paginated_token_list(page as u32).await.unwrap(),
-                curr_principal.unwrap(),
-            )
-            .await
+            get_paginated_token_list(page as u32).await.unwrap()
         },
     );
 
@@ -108,9 +61,7 @@ pub fn ICPumpListing() -> impl IntoView {
         spawn_local(async move {
             let (_app, firestore) = init_firebase();
             let mut stream = listen_to_documents(&firestore);
-            let curr_principal = curr_principal.get().unwrap();
             while let Some(doc) = stream.next().await {
-                let doc = process_token_list_item(doc, curr_principal).await;
                 // push each item in doc to new_token_list
                 for item in doc {
                     new_token_list.update(move |list| {
@@ -141,16 +92,17 @@ pub fn ICPumpListing() -> impl IntoView {
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         <For
                             each=move || new_token_list.get()
-                            key=|t| t.token_details.token_symbol.clone()
-                            children=move |ProcessedTokenListResponse { token_details, root, is_airdrop_claimed }| {
-                                view! { <TokenCard is_new_token=true details=token_details is_airdrop_claimed root/> }
+                            key=|t| t.token_symbol.clone()
+                            children=move |token| {
+                                view! { <TokenCard is_new_token=true details=token.clone() root=Principal::from_text(token.link.trim_end_matches('/').split('/').last().unwrap(),).unwrap()/> }
                             }
                         />
                         <For
                             each=move || token_list.get()
-                            key=|t| t.token_details.token_symbol.clone()
-                            children=move |ProcessedTokenListResponse { token_details, root, is_airdrop_claimed }| {
-                                view! { <TokenCard details=token_details is_airdrop_claimed root/> }
+                            key=|t| t.token_symbol.clone()
+                            children=move |token| {
+                                view! { <TokenCard is_new_token=true details=token.clone() root=Principal::from_text(token.link.trim_end_matches('/').split('/').last().unwrap(),).unwrap()/> }
+
                             }
                         />
                     </div>
@@ -204,7 +156,6 @@ pub fn TokenCard(
     details: TokenListItem,
     #[prop(optional, default = false)] is_new_token: bool,
     root: Principal,
-    is_airdrop_claimed: bool,
 ) -> impl IntoView {
     let show_nsfw = create_rw_signal(false);
 
@@ -221,6 +172,28 @@ pub fn TokenCard(
     let pop_up = create_rw_signal(false);
     let base_url = get_host();
 
+    let (curr_principal, _) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE);
+    let user_id = details.user_id.clone();
+    let airdrop_suspense: Resource<(Principal, Principal, String), (bool, String)> =
+        create_resource(
+            move || (curr_principal.get().unwrap(), root, details.user_id.clone()),
+            move |(key_principal, root, user_id)| async move {
+                let cans = unauth_canisters();
+                let Ok(Some(token_owner_canister_id)) = cans.get_token_owner(root).await else {
+                    return (true, user_id);
+                };
+                (
+                    cans.get_airdrop_status(
+                        token_owner_canister_id.canister_id,
+                        root,
+                        key_principal,
+                    )
+                    .await
+                    .unwrap_or(true),
+                    user_id,
+                )
+            },
+        );
     view! {
         <div
             class:tada=is_new_token
@@ -259,7 +232,7 @@ pub fn TokenCard(
                         </span>
                     </div>
                     <div class="flex gap-2 justify-between items-center text-sm font-medium group-hover:text-white text-neutral-600">
-                        <span class="line-clamp-1">"Created by" {details.user_id.clone()}</span>
+                        <span class="line-clamp-1">"Created by" {user_id.clone()}</span>
                         <span class="shrink-0">{details.formatted_created_at}</span>
                     </div>
                 </div>
@@ -272,22 +245,28 @@ pub fn TokenCard(
                 <ActionButton label="Buy/Sell".to_string() href="#".to_string() disabled=true>
                     <Icon class="w-full h-full" icon=ArrowLeftRightIcon />
                 </ActionButton>
-                {
-                    if is_airdrop_claimed{
+                <Suspense>
+                    {
+                        move || {
+                            let (is_airdrop_claimed, user_id) = airdrop_suspense.get().unwrap();
 
-                        view! {
-                            <ActionButtonLink on:click=move |_|{pop_up.set(true); share_link.set(format!("/token/info/{}/{}?airdrop_amt=100",root, details.user_id))} label="Airdrop".to_string()>
-                                <Icon class="h-6 w-6" icon=AirdropIcon />
-                            </ActionButtonLink>
-                        }
-                    }else{
-                        view! {
-                            <ActionButton href=format!("/token/info/{}/{}?airdrop_amt=100",root, details.user_id) label="Airdrop".to_string()>
-                            <Icon class="h-6 w-6" icon=AirdropIcon />
-                            </ActionButton>
+                            if is_airdrop_claimed{
+
+                                view! {
+                                    <ActionButtonLink on:click=move |_|{pop_up.set(true); share_link.set(format!("/token/info/{}/{}?airdrop_amt=100",root, user_id))} label="Airdrop".to_string()>
+                                        <Icon class="h-6 w-6" icon=AirdropIcon />
+                                    </ActionButtonLink>
+                                }
+                            }else{
+                                view! {
+                                    <ActionButton href=format!("/token/info/{}/{}?airdrop_amt=100",root, user_id) label="Airdrop".to_string()>
+                                    <Icon class="h-6 w-6" icon=AirdropIcon />
+                                    </ActionButton>
+                                }
+                            }
                         }
                     }
-                }
+                </Suspense>
                 <ActionButton label="Share".to_string() href="#".to_string()>
                     <Icon class="w-full h-full" icon=ShareIcon on:click=move |_| {pop_up.set(true); share_link.set(share_link_coin.clone())}/>
                 </ActionButton>
