@@ -13,7 +13,10 @@ use crate::{
     state::canisters::auth_canisters_store,
     utils::{
         host::show_nsfw_content,
-        ml_feed::{get_coldstart_feed_paginated, get_coldstart_nsfw_feed_paginated, get_posts_ml_feed_cache_paginated},
+        ml_feed::{
+            get_coldstart_feed_paginated, get_coldstart_nsfw_feed_paginated,
+            get_posts_ml_feed_cache_paginated,
+        },
         posts::FetchCursor,
     },
 };
@@ -138,7 +141,6 @@ impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
                     .await
             };
 
-
             let top_posts = match top_posts {
                 Ok(top_posts) => top_posts,
                 Err(e) => {
@@ -213,7 +215,8 @@ impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
         _allow_nsfw: bool,
         _video_queue: Vec<PostDetails>,
     ) -> Result<FetchVideosRes<'a>, ServerFnError> {
-        let top_posts = get_coldstart_nsfw_feed_paginated(self.cursor.start, self.cursor.limit).await;
+        let top_posts =
+            get_coldstart_nsfw_feed_paginated(self.cursor.start, self.cursor.limit).await;
 
         let top_posts = match top_posts {
             Ok(top_posts) => top_posts,
@@ -292,7 +295,6 @@ impl<'a> VideoFetchStream<'a, true> {
         _allow_nsfw: bool,
         video_queue: Vec<PostDetails>,
     ) -> Result<FetchVideosRes<'a>, ServerFnError> {
-
         if show_nsfw_content() {
             let res = self
                 .fetch_post_uids_ml_feed_chunked(chunks, _allow_nsfw, video_queue.clone())
@@ -301,10 +303,15 @@ impl<'a> VideoFetchStream<'a, true> {
             match res {
                 Ok(res) => {
                     return Ok(res);
-                },
+                }
                 Err(_) => {
                     self.cursor.set_limit(15);
-                    return self.fetch_post_uids_ml_feed_nsfw_coldstart_chunked(chunks, _allow_nsfw, video_queue)
+                    return self
+                        .fetch_post_uids_ml_feed_nsfw_coldstart_chunked(
+                            chunks,
+                            _allow_nsfw,
+                            video_queue,
+                        )
                         .await;
                 }
             }

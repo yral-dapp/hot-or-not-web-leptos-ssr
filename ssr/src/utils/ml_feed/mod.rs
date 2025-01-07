@@ -1,6 +1,6 @@
 use std::env;
 
-use crate::consts::{self, ML_FEED_GRPC_URL};
+use crate::consts::ML_FEED_GRPC_URL;
 use candid::Principal;
 use leptos::{server, ServerFnError};
 use serde::{Deserialize, Serialize};

@@ -10,8 +10,11 @@ use yral_canisters_common::utils::time::current_epoch;
 use crate::{
     component::spinner::FullScreenSpinner,
     utils::{
-        host::{show_cdao_page, show_nsfw_content},
-        ml_feed::{get_coldstart_feed_paginated, get_coldstart_nsfw_feed_paginated, get_posts_ml_feed_cache_paginated},
+        host::show_cdao_page,
+        ml_feed::{
+            get_coldstart_feed_paginated, get_coldstart_nsfw_feed_paginated,
+            get_posts_ml_feed_cache_paginated,
+        },
     },
 };
 
@@ -137,6 +140,8 @@ pub fn YralRootPage() -> impl IntoView {
     }
     #[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
     {
+        use crate::utils::host::show_nsfw_content;
+
         if show_nsfw_content() {
             target_post = create_resource(|| (), |_| get_top_post_id_mlfeed_nsfw());
         } else {
