@@ -1,17 +1,18 @@
+use crate::component::infinite_scroller::InfiniteScroller;
 use crate::component::overlay::PopupOverlay;
 use crate::consts::USER_PRINCIPAL_STORE;
 use crate::state::canisters::unauth_canisters;
-use std::collections::HashMap;
-use std::collections::VecDeque;
 
 use candid::Principal;
 use codee::string::FromToStringCodec;
-use futures::StreamExt;
 use leptos::*;
 use leptos_icons::Icon;
 use leptos_use::use_cookie;
 use serde::Deserialize;
 use serde::Serialize;
+use yral_canisters_common::cursored_data::CursoredDataProvider;
+use yral_canisters_common::cursored_data::PageEntry;
+use yral_canisters_common::Error;
 
 use crate::component::buttons::HighlightedLinkButton;
 use crate::component::icons::airdrop_icon::AirdropIcon;
@@ -21,11 +22,8 @@ use crate::component::icons::eye_hide_icon::EyeHiddenIcon;
 use crate::component::icons::send_icon::SendIcon;
 use crate::component::icons::share_icon::ShareIcon;
 use crate::component::share_popup::ShareContent;
-use crate::component::spinner::FullScreenSpinner;
 use crate::consts::ICPUMP_LISTING_PAGE_SIZE;
 use crate::utils::host::get_host;
-use crate::utils::token::firestore::init_firebase;
-use crate::utils::token::firestore::listen_to_documents;
 use crate::utils::token::icpump::get_paginated_token_list;
 use crate::utils::token::icpump::TokenListItem;
 
@@ -35,83 +33,44 @@ struct ProcessedTokenListResponse {
     token_details: TokenListItem,
     root: Principal,
 }
+#[derive(Clone)]
+struct TokenListingPageProvider {}
 
+impl CursoredDataProvider for TokenListingPageProvider {
+    type Data = TokenListItem;
+    type Error = Error;
+
+    async fn get_by_cursor(
+        &self,
+        start: usize,
+        end: usize,
+    ) -> Result<PageEntry<Self::Data>, Self::Error> {
+        let ret = get_paginated_token_list(start as u32, end as u32)
+            .await
+            .unwrap();
+
+        Ok(PageEntry {
+            end: ret.len() < end - start,
+            data: ret,
+        })
+    }
+}
 #[component]
 pub fn ICPumpListing() -> impl IntoView {
-    let page = create_rw_signal(1);
-    let token_list: RwSignal<Vec<TokenListItem>> = create_rw_signal(vec![]);
-    let end_of_list = create_rw_signal(false);
-    let cache = create_rw_signal(HashMap::<u64, Vec<TokenListItem>>::new());
-    let new_token_list: RwSignal<VecDeque<TokenListItem>> = create_rw_signal(VecDeque::new());
-
-    let act = create_resource(
-        move || page.get(),
-        move |page| async move {
-            new_token_list.set(VecDeque::new());
-
-            if let Some(cached) = cache.with_untracked(|c| c.get(&page).cloned()) {
-                return cached.clone();
-            }
-
-            get_paginated_token_list(page as u32).await.unwrap()
-        },
-    );
-
-    create_effect(move |_| {
-        spawn_local(async move {
-            let (_app, firestore) = init_firebase();
-            let mut stream = listen_to_documents(&firestore);
-            while let Some(doc) = stream.next().await {
-                // push each item in doc to new_token_list
-                for item in doc {
-                    new_token_list.update(move |list| {
-                        list.push_front(item.clone());
-                    });
-                }
-            }
-        });
-    });
+    let provider = TokenListingPageProvider {};
 
     view! {
-        <Suspense fallback=FullScreenSpinner>
-            {move || {
-                let _ = act
-                    .get()
-                    .map(|res| {
-                        if res.len() < ICPUMP_LISTING_PAGE_SIZE {
-                            end_of_list.set(true);
-                        }
-                        update!(
-                            move |token_list, cache| {
-                                *token_list = res.clone();
-                                cache.insert(page.get_untracked(), res.clone());
-                            }
-                        );
-                    });
-                view! {
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <For
-                            each=move || new_token_list.get()
-                            key=|t| t.token_symbol.clone()
-                            children=move |token| {
-                                view! { <TokenCard is_new_token=true details=token.clone() root=Principal::from_text(token.link.trim_end_matches('/').split('/').last().unwrap(),).unwrap()/> }
-                            }
-                        />
-                        <For
-                            each=move || token_list.get()
-                            key=|t| t.token_symbol.clone()
-                            children=move |token| {
-                                view! { <TokenCard is_new_token=true details=token.clone() root=Principal::from_text(token.link.trim_end_matches('/').split('/').last().unwrap(),).unwrap()/> }
 
-                            }
-                        />
-                    </div>
-                    <div class="flex justify-center">
-                        <PageSelector page=page end_of_list=end_of_list />
-                    </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <InfiniteScroller
+            provider
+            fetch_count=ICPUMP_LISTING_PAGE_SIZE
+            children=move |token, _ref| {
+                view! {
+                    <TokenCard _ref=_ref.unwrap_or_default() is_new_token=true root=Principal::from_text(token.link.trim_end_matches('/').split('/').last().unwrap(),).unwrap() details=token/>
                 }
-            }}
-        </Suspense>
+            }/>
+        </div>
     }
 }
 
@@ -165,6 +124,7 @@ pub fn TokenCard(
     details: TokenListItem,
     #[prop(optional, default = false)] is_new_token: bool,
     root: Principal,
+    #[prop(optional)] _ref: NodeRef<html::Div>,
 ) -> impl IntoView {
     let show_nsfw = create_rw_signal(false);
 
@@ -205,6 +165,7 @@ pub fn TokenCard(
         );
     view! {
         <div
+            ref=_ref
             class:tada=is_new_token
             class="flex flex-col gap-2 py-3 px-3 w-full text-xs rounded-lg transition-colors md:px-4 hover:bg-gradient-to-b group bg-neutral-900/90 font-kumbh hover:from-neutral-600 hover:to-neutral-800"
         >

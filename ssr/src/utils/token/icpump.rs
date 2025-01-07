@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::env;
+use yral_canisters_common::cursored_data::KeyedData;
 
 use futures::stream::BoxStream;
 use futures::StreamExt;
@@ -27,6 +28,13 @@ pub struct TokenListItem {
     pub link: String,
     #[serde(default)]
     pub is_nsfw: bool,
+}
+
+impl KeyedData for TokenListItem {
+    type Key = String;
+    fn key(&self) -> Self::Key {
+        self.link.clone()
+    }
 }
 
 #[server]
@@ -62,13 +70,16 @@ pub async fn get_token_by_id(token_id: String) -> Result<TokenListItemFS, Server
 }
 
 #[server]
-pub async fn get_paginated_token_list(page: u32) -> Result<Vec<TokenListItem>, ServerFnError> {
+pub async fn get_paginated_token_list(
+    start: u32,
+    end: u32,
+) -> Result<Vec<TokenListItem>, ServerFnError> {
     #[cfg(feature = "firestore")]
     {
         use firestore::*;
         use speedate::DateTime;
 
-        use crate::consts::ICPUMP_LISTING_PAGE_SIZE;
+        let limit = end - start;
 
         let firestore_db: firestore::FirestoreDb = expect_context();
 
@@ -82,12 +93,12 @@ pub async fn get_paginated_token_list(page: u32) -> Result<Vec<TokenListItem>, S
                 path!(TokenListItem::created_at),
                 FirestoreQueryDirection::Descending,
             )])
-            .offset((page - 1) * ICPUMP_LISTING_PAGE_SIZE as u32)
-            .limit(ICPUMP_LISTING_PAGE_SIZE as u32)
+            .offset(start)
+            .limit(limit)
             .obj()
             .stream_query()
             .await
-            .expect("failed to stream");
+            .map_err(|e| ServerFnError::new(format!("Failed to stream query: {}", e)))?;
 
         let as_vec: Vec<TokenListItemFS> = object_stream.collect().await;
 
