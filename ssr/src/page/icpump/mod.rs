@@ -1,4 +1,5 @@
 use crate::component::overlay::PopupOverlay;
+use crate::consts::ICPUMP_LISTING_PAGE_SIZE;
 use crate::consts::USER_PRINCIPAL_STORE;
 use crate::state::canisters::unauth_canisters;
 use std::collections::HashMap;
@@ -67,7 +68,7 @@ async fn process_token_list_item(
             // };
             // let token_owner = cans.individual_user(token_owner_canister_id.unwrap()).await;
             // token_owner_principal_id: token_owner.get_profile_details().await.unwrap().principal_id,
-            
+
             Ok::<_, ServerFnError>(ProcessedTokenListResponse {
                 token_details: token,
                 root: root_principal,
@@ -81,34 +82,46 @@ async fn process_token_list_item(
         .await
 }
 
-
 #[component]
 pub fn ICPumpListingFeed() -> impl IntoView {
+    let page = create_rw_signal(1);
+
+    let loading = create_rw_signal(true);
+
     let (curr_principal, _) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE);
 
-    let token_list_upper: RwSignal<Vec<ProcessedTokenListResponse>> = create_rw_signal(vec![]);
-
-    let token_last: RwSignal<Option<ProcessedTokenListResponse>> = create_rw_signal(None);
+    let token_list: RwSignal<Vec<ProcessedTokenListResponse>> = create_rw_signal(vec![]);
 
     let new_token_list: RwSignal<VecDeque<ProcessedTokenListResponse>> =
         create_rw_signal(VecDeque::new());
 
+    let fetch_res = create_resource(
+        move || (page(), curr_principal()),
+        move |(page, curr_principal)| async move {
+            loading.set(true);
+
+            log::info!("before fetching...");
+
+            let mut fetched_token_list = process_token_list_item(
+                get_paginated_token_list(page).await.unwrap(),
+                curr_principal.unwrap(),
+            )
+            .await;
+
+            log::info!("after fetching...");
+
+            token_list.update(|t| t.append(&mut fetched_token_list));
+
+            log::info!("after updating token_list signal...");
+
+            loading.try_set(false);
+
+            log::info!("after updating loading signal...");
+        },
+    );
+
     create_effect(move |_| {
-        spawn_local(async move {
-            new_token_list.set(VecDeque::new());
-
-            let mut token_list = process_token_list_item(
-                get_paginated_token_list(0).await.unwrap(),
-                curr_principal.get().unwrap(),
-            ).await;
-
-            token_last.set(token_list.pop());
-
-            token_list_upper.set(token_list);
-        });
-    });
-
-    create_effect(move |_| {
+        fetch_res.refetch();
         spawn_local(async move {
             let (_app, firestore) = init_firebase();
             let mut stream = listen_to_documents(&firestore);
@@ -130,11 +143,17 @@ pub fn ICPumpListingFeed() -> impl IntoView {
 
     use_intersection_observer_with_options(
         target,
-        move |entries, _| {
-            match entries.get(0).map(|entry| entry.is_intersecting()) {
-                Some(true) => reached.set(true),
-                _ =>  reached.set(false),
-            }           
+        move |entries, _| match entries.get(0).map(|entry| entry.is_intersecting()) {
+            Some(true) => {
+                if !loading.get() {
+                    page.update(|p| {
+                        *p += ICPUMP_LISTING_PAGE_SIZE as u32;
+                        log::info!("updating page to {}", p);
+                    });
+                    reached.set(true);
+                }
+            }
+            _ => reached.set(false),
         },
         UseIntersectionObserverOptions::default().thresholds(vec![0.1]),
     );
@@ -163,7 +182,7 @@ pub fn ICPumpListingFeed() -> impl IntoView {
                     />
 
                     <For
-                        each=move || token_list_upper.get()
+                        each=token_list
                         key=|t| t.token_details.token_symbol.clone()
                         children=move |t| {
                             view! {
@@ -176,19 +195,14 @@ pub fn ICPumpListingFeed() -> impl IntoView {
                         }
                     />
 
-                    {move || {
-                        token_last
-                            .get()
-                            .map(|token_last| {
-                                view! {
-                                    <TokenCard
-                                        details=token_last.token_details
-                                        is_airdrop_claimed=token_last.is_airdrop_claimed
-                                        root=token_last.root
-                                    />
-                                }
-                            })
-                    }}
+                    <Show when=loading>
+                        <TokenCardLoading />
+                        <TokenCardLoading />
+                        <TokenCardLoading />
+                        <TokenCardLoading />
+                        <TokenCardLoading />
+                        <TokenCardLoading />
+                    </Show>
                 </div>
 
                 <div class="w-full p-4" node_ref=target></div>
@@ -361,18 +375,16 @@ pub fn TokenCard(
     }
 }
 
-pub fn TokenCardLoading() -> impl IntoView {
+fn TokenCardLoading() -> impl IntoView {
     view! {
-        <div class="min-h-screen bg-black text-white  flex flex-col gap-4 px-4 md:px-8 py-6 font-kumbh overflow-y-auto">
-            <div class="flex flex-col gap-2 py-3 px-3 w-full rounded-lg md:px-4 group bg-neutral-900/90">
-                <div class="flex gap-3">
-                    <div class="w-[7rem] h-[7rem] bg-loading rounded-[4px] relative shrink-0"></div>
+        <div class="flex flex-col gap-2 py-3 px-3 w-full rounded-lg md:px-4 group bg-neutral-900/90">
+            <div class="flex gap-3">
+                <div class="w-[7rem] h-[7rem] bg-loading rounded-[4px] relative shrink-0"></div>
 
-                    <div class="w-full bg-loading rounded-[4px]"></div>
-                </div>
-
-                <div class="h-[4.125rem] bg-loading rounded-[4px]"></div>
+                <div class="w-full bg-loading rounded-[4px]"></div>
             </div>
+
+            <div class="h-[4.125rem] bg-loading rounded-[4px]"></div>
         </div>
     }
 }
