@@ -45,7 +45,7 @@ pub fn ICPumpListing() -> impl IntoView {
     let new_token_list: RwSignal<VecDeque<TokenListItem>> = create_rw_signal(VecDeque::new());
 
     let act = create_resource(
-        move || page(),
+        move || page.get(),
         move |page| async move {
             new_token_list.set(VecDeque::new());
 
@@ -152,6 +152,15 @@ pub fn ICPumpLanding() -> impl IntoView {
 }
 
 #[component]
+fn DefaultAirdropFallback() -> impl IntoView {
+    view! {
+        <ActionButtonLink disabled=true label="Airdrop".to_string()>
+            <Icon class="h-6 w-6" icon=AirdropIcon />
+        </ActionButtonLink>
+    }
+}
+
+#[component]
 pub fn TokenCard(
     details: TokenListItem,
     #[prop(optional, default = false)] is_new_token: bool,
@@ -245,7 +254,7 @@ pub fn TokenCard(
                 <ActionButton label="Buy/Sell".to_string() href="#".to_string() disabled=true>
                     <Icon class="w-full h-full" icon=ArrowLeftRightIcon />
                 </ActionButton>
-                <Suspense>
+                <Suspense fallback=DefaultAirdropFallback>
                     {
                         move || {
                             let (is_airdrop_claimed, user_id) = airdrop_suspense.get().unwrap();
