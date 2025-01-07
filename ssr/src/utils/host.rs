@@ -37,7 +37,5 @@ pub fn show_nsfw_content() -> bool {
 }
 
 pub fn show_nsfw_condition(host: String) -> bool {
-    // add this line when hotornot nsfw pipeline is ready
-    // host == "hotornot.wtf" ||
-    host == "127.0.0.1:3000"
+    host == "hotornot.wtf" || host == "127.0.0.1:3000"
 }

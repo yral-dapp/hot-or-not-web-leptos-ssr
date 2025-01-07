@@ -13,7 +13,7 @@ use crate::{
     state::canisters::auth_canisters_store,
     utils::{
         host::show_nsfw_content,
-        ml_feed::{get_coldstart_feed_paginated, get_posts_ml_feed_cache_paginated},
+        ml_feed::{get_coldstart_feed_paginated, get_coldstart_nsfw_feed_paginated, get_posts_ml_feed_cache_paginated},
         posts::FetchCursor,
     },
 };
@@ -138,6 +138,7 @@ impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
                     .await
             };
 
+
             let top_posts = match top_posts {
                 Ok(top_posts) => top_posts,
                 Err(e) => {
@@ -146,6 +147,8 @@ impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
                     ));
                 }
             };
+
+            log::info!("top_posts length: {}", top_posts.len());
 
             let end = false;
             let chunk_stream = top_posts
@@ -179,6 +182,38 @@ impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
         _video_queue: Vec<PostDetails>,
     ) -> Result<FetchVideosRes<'a>, ServerFnError> {
         let top_posts = get_coldstart_feed_paginated(self.cursor.start, self.cursor.limit).await;
+
+        let top_posts = match top_posts {
+            Ok(top_posts) => top_posts,
+            Err(e) => {
+                return Err(ServerFnError::new(
+                    format!("Error fetching ml feed: {e:?}",),
+                ));
+            }
+        };
+
+        let end = false;
+        let chunk_stream = top_posts
+            .into_iter()
+            .map(move |item| self.canisters.get_post_details(item.0, item.1))
+            .collect::<FuturesOrdered<_>>()
+            .filter_map(|res| async { res.transpose() })
+            .chunks(chunks);
+
+        Ok(FetchVideosRes {
+            posts_stream: Box::pin(chunk_stream),
+            end,
+            res_type: FeedResultType::MLFeedColdstart,
+        })
+    }
+
+    pub async fn fetch_post_uids_ml_feed_nsfw_coldstart_chunked(
+        &self,
+        chunks: usize,
+        _allow_nsfw: bool,
+        _video_queue: Vec<PostDetails>,
+    ) -> Result<FetchVideosRes<'a>, ServerFnError> {
+        let top_posts = get_coldstart_nsfw_feed_paginated(self.cursor.start, self.cursor.limit).await;
 
         let top_posts = match top_posts {
             Ok(top_posts) => top_posts,
@@ -257,6 +292,24 @@ impl<'a> VideoFetchStream<'a, true> {
         _allow_nsfw: bool,
         video_queue: Vec<PostDetails>,
     ) -> Result<FetchVideosRes<'a>, ServerFnError> {
+
+        if show_nsfw_content() {
+            let res = self
+                .fetch_post_uids_ml_feed_chunked(chunks, _allow_nsfw, video_queue.clone())
+                .await;
+
+            match res {
+                Ok(res) => {
+                    return Ok(res);
+                },
+                Err(_) => {
+                    self.cursor.set_limit(15);
+                    return self.fetch_post_uids_ml_feed_nsfw_coldstart_chunked(chunks, _allow_nsfw, video_queue)
+                        .await;
+                }
+            }
+        }
+
         if video_queue.len() < 10 {
             self.cursor.set_limit(15);
             self.fetch_post_uids_mlfeed_cache_chunked(chunks, _allow_nsfw, video_queue)

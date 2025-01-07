@@ -270,24 +270,28 @@ pub async fn get_coldstart_feed_paginated(
     get_posts_ml_feed_cache_paginated_impl("global-feed".to_string(), start, limit).await
 }
 
+#[server]
+pub async fn get_coldstart_nsfw_feed_paginated(
+    start: u64,
+    limit: u64,
+) -> Result<Vec<PostId>, ServerFnError> {
+    get_posts_ml_feed_cache_paginated_impl("global-feed-nsfw".to_string(), start, limit).await
+}
+
 pub async fn get_posts_ml_feed_cache_paginated_impl(
     canister_id_str: String,
     start: u64,
     limit: u64,
 ) -> Result<Vec<PostId>, ServerFnError> {
     let client = reqwest::Client::new();
-    let account_id = consts::CLOUDFLARE_ACCOUNT_ID;
-    let namespace_id = consts::CF_KV_ML_CACHE_NAMESPACE_ID;
-    let api_token = env::var("CF_TOKEN").unwrap();
 
     let url = format!(
-        "https://api.cloudflare.com/client/v4/accounts/{}/storage/kv/namespaces/{}/values/{}",
-        account_id, namespace_id, canister_id_str
+        "https://yral-ml-feed-cache.go-bazzinga.workers.dev/feed-cache/{}?start={}&limit={}",
+        canister_id_str, start, limit
     );
 
     let response = client
         .get(&url)
-        .header("Authorization", format!("Bearer {}", api_token))
         .header("Content-Type", "application/json")
         .send()
         .await?;
@@ -300,8 +304,6 @@ pub async fn get_posts_ml_feed_cache_paginated_impl(
 
     Ok(response
         .into_iter()
-        .skip(start as usize)
-        .take(limit as usize)
         .map(|item| {
             (
                 Principal::from_text(&item.canister_id).unwrap(),
@@ -310,3 +312,44 @@ pub async fn get_posts_ml_feed_cache_paginated_impl(
         })
         .collect::<Vec<PostId>>())
 }
+
+// pub async fn get_posts_ml_feed_cache_paginated_impl(
+//     canister_id_str: String,
+//     start: u64,
+//     limit: u64,
+// ) -> Result<Vec<PostId>, ServerFnError> {
+//     let client = reqwest::Client::new();
+//     let account_id = consts::CLOUDFLARE_ACCOUNT_ID;
+//     let namespace_id = consts::CF_KV_ML_CACHE_NAMESPACE_ID;
+//     let api_token = env::var("CF_TOKEN").unwrap();
+
+//     let url = format!(
+//         "https://api.cloudflare.com/client/v4/accounts/{}/storage/kv/namespaces/{}/values/{}",
+//         account_id, namespace_id, canister_id_str
+//     );
+
+//     let response = client
+//         .get(&url)
+//         .header("Authorization", format!("Bearer {}", api_token))
+//         .header("Content-Type", "application/json")
+//         .send()
+//         .await?;
+
+//     if !response.status().is_success() {
+//         return Ok(vec![]);
+//     }
+
+//     let response = response.json::<Vec<CustomMlFeedCacheItem>>().await.unwrap();
+
+//     Ok(response
+//         .into_iter()
+//         .skip(start as usize)
+//         .take(limit as usize)
+//         .map(|item| {
+//             (
+//                 Principal::from_text(&item.canister_id).unwrap(),
+//                 item.post_id,
+//             )
+//         })
+//         .collect::<Vec<PostId>>())
+// }
