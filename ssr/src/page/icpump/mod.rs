@@ -114,7 +114,7 @@ pub fn ICPumpListingFeed() -> impl IntoView {
 
             log::info!("after updating token_list signal...");
 
-            loading.try_set(false);
+            loading.set(false);
 
             log::info!("after updating loading signal...");
         },
@@ -158,56 +158,50 @@ pub fn ICPumpListingFeed() -> impl IntoView {
         UseIntersectionObserverOptions::default().thresholds(vec![0.1]),
     );
 
+
+
     view! {
-        {move || {
+        <div class:testing=reached class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 ">
+            <For
+                each=move || new_token_list.get()
+                key=|t| t.token_details.token_symbol.clone()
+                children=move |t| {
+                    view! {
+                        <TokenCard
+                            is_new_token=true
+                            details=t.token_details
+                            is_airdrop_claimed=t.is_airdrop_claimed
+                            root=t.root
+                        />
+                    }
+                }
+            />
 
-            view! {
-                <div
-                    class:testing=reached
-                    class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 "
-                >
-                    <For
-                        each=move || new_token_list.get()
-                        key=|t| t.token_details.token_symbol.clone()
-                        children=move |t| {
-                            view! {
-                                <TokenCard
-                                    is_new_token=true
-                                    details=t.token_details
-                                    is_airdrop_claimed=t.is_airdrop_claimed
-                                    root=t.root
-                                />
-                            }
-                        }
-                    />
+            <For
+                each=move || token_list.get()
+                key=|t| t.token_details.token_symbol.clone()
+                children=move |t| {
+                    view! {
+                        <TokenCard
+                            details=t.token_details
+                            is_airdrop_claimed=t.is_airdrop_claimed
+                            root=t.root
+                        />
+                    }
+                }
+            />
 
-                    <For
-                        each=token_list
-                        key=|t| t.token_details.token_symbol.clone()
-                        children=move |t| {
-                            view! {
-                                <TokenCard
-                                    details=t.token_details
-                                    is_airdrop_claimed=t.is_airdrop_claimed
-                                    root=t.root
-                                />
-                            }
-                        }
-                    />
+            <Show when=move || loading.get()>
+                <TokenCardLoading />
+                <TokenCardLoading />
+                <TokenCardLoading />
+                <TokenCardLoading />
+                <TokenCardLoading />
+                <TokenCardLoading />
+            </Show>
+        </div>
 
-                    <Show when=loading>
-                        <TokenCardLoading />
-                        <TokenCardLoading />
-                        <TokenCardLoading />
-                        <TokenCardLoading />
-                        <TokenCardLoading />
-                        <TokenCardLoading />
-                    </Show>
-                </div>
-
-                <div class="w-full p-4" node_ref=target></div>
-            }
-        }}
+        <div class="w-full p-4" node_ref=target></div>
     }
 }
 

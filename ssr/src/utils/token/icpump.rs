@@ -137,7 +137,7 @@ pub async fn get_paginated_token_list(page: u32) -> Result<Vec<TokenListItem>, S
                 user_id: Principal::anonymous().to_text(),
                 name: format!("Test token {}", idx + page as usize),
                 token_name: format!("Test token {}", idx + page as usize),
-                token_symbol: "TST".to_string(),
+                token_symbol: format!("TST{}", idx + page as usize),
                 logo: "https://picsum.photos/200".to_string(),
                 description: "This is a test token".to_string(),
                 created_at: "69".to_string(),
