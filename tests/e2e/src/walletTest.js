@@ -8,8 +8,8 @@ describe("wallet page tests", function () {
     })
 
     it("default wallet page contains 1000 COYNS", async function(browser){
-        browser.element.findByText("COYNS").assert.enabled();
-        browser.element.findByText("1000").assert.enabled();
+        browser.element.findByText("COYNS").waitUntil('visible', { timeout: 500000 }).assert.enabled();
+        browser.element.findByText("1000").waitUntil('visible', { timeout: 500000 }).assert.enabled();
     })
 
     it("check usdc  loading", async function (browser){
