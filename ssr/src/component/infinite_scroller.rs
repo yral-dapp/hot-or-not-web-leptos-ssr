@@ -47,7 +47,6 @@ where
                     }
                 }
             };
-            println!("LIST END: {:?}", list_end);
             data.try_update(|t| t.append(&mut fetched));
             end.try_set(list_end);
         }

@@ -98,7 +98,7 @@ pub fn WalletCard(
     });
 
     view! {
-        <div ref=_ref class="flex flex-col gap-4 bg-neutral-900/90 rounded-lg w-full font-kumbh text-white p-4">
+        <div node_ref=_ref class="flex flex-col gap-4 bg-neutral-900/90 rounded-lg w-full font-kumbh text-white p-4">
             <div class="w-full flex items-center justify-between p-3 rounded-[4px] bg-neutral-800/70">
                 <div class="flex items-center gap-2">
                     <img

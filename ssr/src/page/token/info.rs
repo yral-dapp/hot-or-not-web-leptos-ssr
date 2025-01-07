@@ -274,7 +274,6 @@ pub fn TokenInfo() -> impl IntoView {
                 _ => None,
             };
 
-            println!("DATA: {:?}", res);
             Ok(res)
         },
     );
