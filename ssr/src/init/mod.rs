@@ -49,9 +49,10 @@ fn init_cookie_key() -> Key {
 #[cfg(feature = "oauth-ssr")]
 fn init_google_oauth() -> crate::auth::core_clients::CoreClients {
     use crate::auth::core_clients::CoreClients;
-    use crate::consts::google::{GOOGLE_AUTH_URL, GOOGLE_ISSUER_URL, GOOGLE_TOKEN_URL};
+    use crate::consts::google::GOOGLE_ISSUER_URL;
+    use openidconnect::core::CoreProviderMetadata;
     use openidconnect::{
-        core::CoreClient, AuthUrl, ClientId, ClientSecret, IssuerUrl, RedirectUrl, TokenUrl,
+        core::CoreClient, reqwest::http_client, ClientId, ClientSecret, IssuerUrl, RedirectUrl,
     };
 
     let client_id = env::var("GOOGLE_CLIENT_ID").expect("`GOOGLE_CLIENT_ID` is required!");
@@ -59,15 +60,16 @@ fn init_google_oauth() -> crate::auth::core_clients::CoreClients {
         env::var("GOOGLE_CLIENT_SECRET").expect("`GOOGLE_CLIENT_SECRET` is required!");
     let redirect_uri = env::var("GOOGLE_REDIRECT_URL").expect("`GOOGLE_REDIRECT_URL` is required!");
 
-    let google_oauth = CoreClient::new(
+    let google_oauth_metadata = CoreProviderMetadata::discover(
+        &IssuerUrl::new(GOOGLE_ISSUER_URL.to_string()).unwrap(),
+        http_client,
+    )
+    .unwrap();
+
+    let google_oauth = CoreClient::from_provider_metadata(
+        google_oauth_metadata.clone(),
         ClientId::new(client_id),
         Some(ClientSecret::new(client_secret)),
-        IssuerUrl::new(GOOGLE_ISSUER_URL.to_string()).unwrap(),
-        AuthUrl::new(GOOGLE_AUTH_URL.to_string()).unwrap(),
-        Some(TokenUrl::new(GOOGLE_TOKEN_URL.to_string()).unwrap()),
-        None,
-        // We don't validate id_tokens against Google's public keys
-        Default::default(),
     )
     .set_redirect_uri(RedirectUrl::new(redirect_uri).unwrap());
 
@@ -78,15 +80,10 @@ fn init_google_oauth() -> crate::auth::core_clients::CoreClients {
     let redirect_uri = env::var("HOTORNOT_GOOGLE_REDIRECT_URL")
         .expect("`HOTORNOT_GOOGLE_REDIRECT_URL` is required!");
 
-    let hotornot_google_oauth = CoreClient::new(
+    let hotornot_google_oauth = CoreClient::from_provider_metadata(
+        google_oauth_metadata.clone(),
         ClientId::new(client_id),
         Some(ClientSecret::new(client_secret)),
-        IssuerUrl::new(GOOGLE_ISSUER_URL.to_string()).unwrap(),
-        AuthUrl::new(GOOGLE_AUTH_URL.to_string()).unwrap(),
-        Some(TokenUrl::new(GOOGLE_TOKEN_URL.to_string()).unwrap()),
-        None,
-        // We don't validate id_tokens against Google's public keys
-        Default::default(),
     )
     .set_redirect_uri(RedirectUrl::new(redirect_uri).unwrap());
 
@@ -97,15 +94,10 @@ fn init_google_oauth() -> crate::auth::core_clients::CoreClients {
     let redirect_uri = env::var("ICPUMPFUN_GOOGLE_REDIRECT_URL")
         .expect("`ICPUMPFUN_GOOGLE_REDIRECT_URL` is required!");
 
-    let icpump_google_oauth = CoreClient::new(
+    let icpump_google_oauth = CoreClient::from_provider_metadata(
+        google_oauth_metadata.clone(),
         ClientId::new(client_id),
         Some(ClientSecret::new(client_secret)),
-        IssuerUrl::new(GOOGLE_ISSUER_URL.to_string()).unwrap(),
-        AuthUrl::new(GOOGLE_AUTH_URL.to_string()).unwrap(),
-        Some(TokenUrl::new(GOOGLE_TOKEN_URL.to_string()).unwrap()),
-        None,
-        // We don't validate id_tokens against Google's public keys
-        Default::default(),
     )
     .set_redirect_uri(RedirectUrl::new(redirect_uri).unwrap());
 
