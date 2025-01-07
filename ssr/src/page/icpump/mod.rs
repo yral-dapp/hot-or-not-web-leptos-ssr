@@ -14,7 +14,6 @@ use leptos_icons::Icon;
 use leptos_use::use_cookie;
 use leptos_use::use_intersection_observer_with_options;
 use leptos_use::UseIntersectionObserverOptions;
-use leptos_use::UseIntersectionObserverReturn;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -27,7 +26,6 @@ use crate::component::icons::send_icon::SendIcon;
 use crate::component::icons::share_icon::ShareIcon;
 use crate::component::share_popup::ShareContent;
 use crate::component::spinner::FullScreenSpinner;
-use crate::consts::ICPUMP_LISTING_PAGE_SIZE;
 use crate::utils::host::get_host;
 use crate::utils::token::firestore::init_firebase;
 use crate::utils::token::firestore::listen_to_documents;
@@ -90,26 +88,25 @@ pub fn ICPumpListingFeed() -> impl IntoView {
 
     let token_list_upper: RwSignal<Vec<ProcessedTokenListResponse>> = create_rw_signal(vec![]);
 
-    let token_last: RwSignal< Option<ProcessedTokenListResponse>> = create_rw_signal(None);
+    let token_last: RwSignal<Option<ProcessedTokenListResponse>> = create_rw_signal(None);
 
     let new_token_list: RwSignal<VecDeque<ProcessedTokenListResponse>> =
         create_rw_signal(VecDeque::new());
 
-    let token_resource_effect = create_resource(
-        move || (curr_principal()),
-        move |curr_principal| async move {
+    create_effect(move |_| {
+        spawn_local(async move {
             new_token_list.set(VecDeque::new());
 
             let mut token_list = process_token_list_item(
                 get_paginated_token_list(0).await.unwrap(),
-                curr_principal.unwrap(),
+                curr_principal.get().unwrap(),
             ).await;
 
             token_last.set(token_list.pop());
 
             token_list_upper.set(token_list);
-        },
-    );
+        });
+    });
 
     create_effect(move |_| {
         spawn_local(async move {
@@ -134,72 +131,54 @@ pub fn ICPumpListingFeed() -> impl IntoView {
     use_intersection_observer_with_options(
         target,
         move |entries, _| {
-
-            let len = entries.len();
-        
-            log::error!("num entries for intersection is {len}");
-            
-            if entries[0].is_intersecting() {
-                log::error!("Setting intersection to true");
-                reached.set(true);
-            } else {
-                log::error!("Setting intersection to false");
-                reached.set(false);
-            }
-           
+            match entries.get(0).map(|entry| entry.is_intersecting()) {
+                Some(true) => reached.set(true),
+                _ =>  reached.set(false),
+            }           
         },
-        UseIntersectionObserverOptions::default()
+        UseIntersectionObserverOptions::default().thresholds(vec![0.1]),
     );
 
     view! {
-        <Suspense fallback=FullScreenSpinner>
-            {move || {
-                let _ = token_resource_effect.get();
-                let token_last = token_last.get();
+        {move || {
 
-                view! {
-                    <div
-                        class:testing=reached
-                        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 "
-                    >
-                        <For
-                            each=move || new_token_list.get()
-                            key=|t| t.token_details.token_symbol.clone()
-                            children=move |
-                                ProcessedTokenListResponse {
-                                    token_details,
-                                    root,
-                                    is_airdrop_claimed,
-                                }|
-                            {
-                                view! {
-                                    <TokenCard
-                                        is_new_token=true
-                                        details=token_details
-                                        is_airdrop_claimed
-                                        root
-                                    />
-                                }
+            view! {
+                <div
+                    class:testing=reached
+                    class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 "
+                >
+                    <For
+                        each=move || new_token_list.get()
+                        key=|t| t.token_details.token_symbol.clone()
+                        children=move |t| {
+                            view! {
+                                <TokenCard
+                                    is_new_token=true
+                                    details=t.token_details
+                                    is_airdrop_claimed=t.is_airdrop_claimed
+                                    root=t.root
+                                />
                             }
-                        />
+                        }
+                    />
 
-                        <For
-                            each=move || token_list_upper.get()
-                            key=|t| t.token_details.token_symbol.clone()
-                            children=move |
-                                ProcessedTokenListResponse {
-                                    token_details,
-                                    root,
-                                    is_airdrop_claimed,
-                                }|
-                            {
-                                view! {
-                                    <TokenCard details=token_details is_airdrop_claimed root />
-                                }
+                    <For
+                        each=move || token_list_upper.get()
+                        key=|t| t.token_details.token_symbol.clone()
+                        children=move |t| {
+                            view! {
+                                <TokenCard
+                                    details=t.token_details
+                                    is_airdrop_claimed=t.is_airdrop_claimed
+                                    root=t.root
+                                />
                             }
-                        />
+                        }
+                    />
 
-                        {token_last
+                    {move || {
+                        token_last
+                            .get()
                             .map(|token_last| {
                                 view! {
                                     <TokenCard
@@ -208,16 +187,13 @@ pub fn ICPumpListingFeed() -> impl IntoView {
                                         root=token_last.root
                                     />
                                 }
-                            })}
+                            })
+                    }}
+                </div>
 
-                    </div>
-
-                    <div node_ref=target class="text-white">
-                        hello world
-                    </div>
-                }
-            }}
-        </Suspense>
+                <div class="w-full p-4" node_ref=target></div>
+            }
+        }}
     }
 }
 
@@ -225,8 +201,8 @@ pub fn ICPumpListingFeed() -> impl IntoView {
 pub fn ICPumpLanding() -> impl IntoView {
     view! {
         <div class="min-h-screen bg-black text-white  flex flex-col gap-4 px-4 md:px-8 py-6 font-kumbh">
-            <div class="flex lg:flex-row gap-4 flex-col items-center justify-center relative">
-                <div class="lg:absolute lg:left-0 lg:top-0 flex items-center gap-4">
+            <div class="flex lg:flex-row gap-4 flex-col items-center justify-center">
+                <div class="lg:left-0 lg:top-0 flex items-center gap-4">
                     <div>Follow us:</div>
                     <div class="flex items-center gap-4">
                         <XIcon
@@ -253,6 +229,7 @@ pub fn ICPumpLanding() -> impl IntoView {
             <div class="flex flex-col gap-8 pb-24">
                 <ICPumpListingFeed />
             </div>
+
         </div>
     }
 }
@@ -263,7 +240,6 @@ pub fn TokenCard(
     #[prop(optional, default = false)] is_new_token: bool,
     root: Principal,
     is_airdrop_claimed: bool,
-    #[prop(optional)] _ref: NodeRef<html::Div>,
 ) -> impl IntoView {
     let show_nsfw = create_rw_signal(false);
 
@@ -282,7 +258,6 @@ pub fn TokenCard(
 
     view! {
         <div
-            node_ref=_ref
             class:tada=is_new_token
             class="flex flex-col gap-2 py-3 px-3 w-full text-xs rounded-lg transition-colors md:px-4 hover:bg-gradient-to-b group bg-neutral-900/90 font-kumbh hover:from-neutral-600 hover:to-neutral-800"
         >
