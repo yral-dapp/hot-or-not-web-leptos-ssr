@@ -1,19 +1,24 @@
-use candid::Principal;
+use candid::{Nat, Principal};
 use codee::string::FromToStringCodec;
 use leptos::{
     component, create_action, create_effect, create_rw_signal, create_signal, expect_context,
-    html::Div, logging, provide_context, view, For, IntoView, NodeRef, Resource, RwSignal,
-    ServerFnError, Show, Signal, SignalGet, SignalGetUntracked, SignalSet, SignalUpdate,
-    SignalUpdateUntracked, Suspense, WriteSignal,
+    html::Div, provide_context, view, For, IntoView, NodeRef, Resource, RwSignal, Show, Signal,
+    SignalGet, SignalGetUntracked, SignalSet, SignalUpdate, SignalUpdateUntracked, Suspense,
+    WriteSignal,
 };
 use leptos_icons::Icon;
 use leptos_use::{use_cookie, use_infinite_scroll_with_options, UseInfiniteScrollOptions};
+use once_cell::sync::Lazy;
+use reqwest::Url;
 use yral_canisters_common::Canisters;
 
 use crate::{
     state::canisters::authenticated_canisters,
     utils::token::icpump::{get_paginated_token_list_with_limit, TokenListItem},
 };
+
+static PUMP_AND_DUMP_WORKER_URL: Lazy<Url> =
+    Lazy::new(|| Url::parse("http://localhost:8787/").unwrap());
 
 #[component]
 fn Header() -> impl IntoView {
@@ -40,7 +45,7 @@ fn Header() -> impl IntoView {
                 <div
                     class="font-bold absolute top-1 text-sm"
                 >
-                    {move || data.get().map(|d| format!("{}", d.wallet_balance)).unwrap_or_else(|| "----".into())}
+                    {move || data.get().map(|d| d.wallet_balance.to_string().replace("_", "")).unwrap_or_else(|| "----".into())}
                 </div>
                 <div class="h-5 opacity-0"></div>
                 <div class="text-xs text-[#A3A3A3]">gDOLR</div>
@@ -147,7 +152,7 @@ fn DumpButton() -> impl IntoView {
         // TODO: add debouncing
         player_data.update(|value| {
             if let Some(value) = value.as_mut() {
-                value.wallet_balance -= 1;
+                value.wallet_balance -= 1u64;
             }
         });
 
@@ -231,7 +236,7 @@ fn PumpButton() -> impl IntoView {
         // TODO: add debouncing
         player_data.update(|value| {
             if let Some(value) = value.as_mut() {
-                value.wallet_balance -= 1;
+                value.wallet_balance -= 1u64;
             }
         });
 
@@ -297,14 +302,14 @@ fn MockPumpButton() -> impl IntoView {
     }
 }
 
-#[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 struct PlayerGamesCountAndBalance {
     games_count: u64,
-    wallet_balance: u64,
+    wallet_balance: Nat,
 }
 
 impl PlayerGamesCountAndBalance {
-    pub fn new(games_count: u64, wallet_balance: u64) -> Self {
+    pub fn new(games_count: u64, wallet_balance: Nat) -> Self {
         Self {
             games_count,
             wallet_balance,
@@ -312,8 +317,36 @@ impl PlayerGamesCountAndBalance {
     }
 
     #[cfg(any(feature = "local-bin", feature = "local-lib"))]
-    pub async fn load(_user_principal: Principal) -> Option<Self> {
-        Some(Self::new(0, 1000))
+    pub async fn load(user_principal: Principal) -> Result<Self, String> {
+        let balance_url = PUMP_AND_DUMP_WORKER_URL
+            .join(&format!("/balance/{user_principal}"))
+            .expect("Url to be valid");
+        let games_count_url = PUMP_AND_DUMP_WORKER_URL
+            .join(&format!("/game_count/{user_principal}"))
+            .expect("Url to be valid");
+
+        let games_count: u64 = reqwest::get(games_count_url)
+            .await
+            .map_err(|_| "Failed to load games count")?
+            .text()
+            .await
+            .map_err(|_| "failed to read response body".to_string())?
+            .parse()
+            .map_err(|_| "Couldn't parse nat number".to_string())?;
+
+        let wallet_balance: Nat = reqwest::get(balance_url)
+            .await
+            .map_err(|_| "failed to load balance".to_string())?
+            .text()
+            .await
+            .map_err(|_| "failed to read response body".to_string())?
+            .parse()
+            .map_err(|_| "Couldn't parse nat number".to_string())?;
+
+        // backend returns dolr in e8s, and 1dolr = 100gdolr
+        let wallet_balance = wallet_balance * 100u64 / 10u64.pow(8);
+
+        Ok(Self::new(games_count, wallet_balance))
     }
 
     #[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
@@ -743,9 +776,8 @@ pub fn PumpNDump() -> impl IntoView {
             let cans = Canisters::from_wire(cans_wire.clone(), expect_context())
                 .map_err(|_| "Unable to authenticate".to_string())?;
 
-            let data = PlayerGamesCountAndBalance::load(cans.user_principal())
+            let data = PlayerGamesCountAndBalance::load(cans.user_canister())
                 .await
-                .ok_or(|| ()) // ignore
                 .map_err(|_| "Couldn't load player data".to_string())?;
 
             player_games_count_and_balance.set(Some(data));
