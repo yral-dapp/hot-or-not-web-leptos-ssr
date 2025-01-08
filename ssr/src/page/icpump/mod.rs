@@ -137,7 +137,7 @@ pub fn ICPumpListingFeed() -> impl IntoView {
     use_intersection_observer_with_options(
         target,
         move |entries, _| {
-            let is_intersecting = entries.get(0).map(|entry| entry.is_intersecting());
+            let is_intersecting = entries.first().map(|entry| entry.is_intersecting());
 
             let loading = loading.get_untracked();
             let end = end.get_untracked();
