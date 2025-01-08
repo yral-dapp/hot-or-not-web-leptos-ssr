@@ -96,7 +96,11 @@ pub fn ICPumpListingFeed() -> impl IntoView {
     let fetch_res = create_resource(
         move || (page(), curr_principal()),
         move |(page, curr_principal)| async move {
+            log::info!("doing fetch res");
+            
             loading.set(true);
+
+            log::info!("fetching token");
 
             let mut fetched_token_list = process_token_list_item(
                 get_paginated_token_list(page).await.unwrap(),
@@ -104,11 +108,17 @@ pub fn ICPumpListingFeed() -> impl IntoView {
             )
             .await;
 
+            log::info!("setting end {:?}", fetched_token_list);
+
             if fetched_token_list.len() < ICPUMP_LISTING_PAGE_SIZE {
                 end.set(true);
             }
 
+            log::info!("setting token list {:?}", token_list.get_untracked());
+
             token_list.update(|t| t.append(&mut fetched_token_list));
+
+            log::info!("setting loading {:?}", token_list.get_untracked());
 
             loading.set(false);
         },
