@@ -151,20 +151,20 @@ pub fn ICPumpListing() -> impl IntoView {
                     });
                 view! {
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        // <For
-                        //     each=move || new_token_list.get()
-                        //     key=|t| t.token_details.token_symbol.clone()
-                        //     children=move |ProcessedTokenListResponse { token_details, root, is_airdrop_claimed }| {
-                        //         view! { <TokenCard is_new_token=true details=token_details is_airdrop_claimed root/> }
-                        //     }
-                        // />
-                        // <For
-                        //     each=move || token_list.get()
-                        //     key=|t| t.token_details.token_symbol.clone()
-                        //     children=move |ProcessedTokenListResponse { token_details, root, is_airdrop_claimed }| {
-                        //         view! { <TokenCard details=token_details is_airdrop_claimed root/> }
-                        //     }
-                        // />
+                        <For
+                            each=move || new_token_list.get()
+                            key=|t| t.token_details.token_symbol.clone()
+                            children=move |ProcessedTokenListResponse { token_details, root, is_airdrop_claimed }| {
+                                view! { <TokenCard is_new_token=true details=token_details is_airdrop_claimed root/> }
+                            }
+                        />
+                        <For
+                            each=move || token_list.get()
+                            key=|t| t.token_details.token_symbol.clone()
+                            children=move |ProcessedTokenListResponse { token_details, root, is_airdrop_claimed }| {
+                                view! { <TokenCard details=token_details is_airdrop_claimed root/> }
+                            }
+                        />
                     </div>
                     <div class="flex justify-center">
                         <PageSelector page=page end_of_list=end_of_list />
