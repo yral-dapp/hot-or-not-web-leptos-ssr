@@ -1,6 +1,7 @@
 use leptos::*;
 use leptos_router::*;
 use serde::{Deserialize, Serialize};
+use server_fn::codec::Json;
 
 use crate::{component::loading::Loading, utils::route::go_to_root};
 use yral_types::delegated_identity::DelegatedIdentityWire;
@@ -25,7 +26,7 @@ async fn google_auth_redirector() -> Result<(), ServerFnError> {
     Ok(())
 }
 
-#[server]
+#[server(endpoint = "perform_google_auth", input = Json, output = Json)]
 async fn perform_google_auth(oauth: OAuthQuery) -> Result<DelegatedIdentityWire, ServerFnError> {
     use crate::auth::core_clients::CoreClients;
     use crate::auth::server_impl::google::perform_google_auth_impl;
@@ -69,7 +70,7 @@ pub fn IdentitySender(identity_res: GoogleAuthMessage) -> impl IntoView {
 
     view! {
         <div class="h-dvh w-dvw bg-black flex flex-col justify-center items-center gap-10">
-            <img class="h-56 w-56 object-contain animate-pulse" src="/img/logo.webp" />
+            <img class="h-56 w-56 object-contain animate-pulse" src="/img/logo.webp"/>
             <span class="text-2xl text-white/60">Good things come to those who wait...</span>
         </div>
     }
@@ -97,8 +98,7 @@ pub fn GoogleRedirectHandler() -> impl IntoView {
         <Loading text="Logging out...".to_string()>
             <Suspense>
                 {move || {
-                    identity_resource()
-                        .map(|identity_res| view! { <IdentitySender identity_res /> })
+                    identity_resource().map(|identity_res| view! { <IdentitySender identity_res/> })
                 }}
 
             </Suspense>
