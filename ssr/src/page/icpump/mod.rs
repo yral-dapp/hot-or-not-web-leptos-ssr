@@ -214,7 +214,7 @@ pub fn ICPumpLanding() -> impl IntoView {
 #[component]
 pub fn TokenCardFallback() -> impl IntoView {
     view! {
-        <div class="flex flex-col gap-2 py-3 px-3 w-full text-xs rounded-lg bg-neutral-900/90 font-kumbh">
+        <div class="flex flex-col gap-2 pt-3 pb-4 px-3 md:px-4 w-full text-xs rounded-lg bg-neutral-900/90 font-kumbh">
             <div class="flex gap-3 items-stretch">
                 <div class="w-[7rem] h-[7rem] rounded-[4px] shrink-0 bg-white/15 animate-pulse"></div>
                 <div class="flex flex-col justify-between overflow-hidden w-full gap-2">
