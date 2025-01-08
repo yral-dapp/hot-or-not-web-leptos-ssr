@@ -1,7 +1,7 @@
 use codee::string::FromToStringCodec;
 use leptos::{
-    component, create_effect, create_rw_signal, create_signal, expect_context, html::Div,
-    provide_context, view, For, IntoView, NodeRef, Resource, Show, Signal, SignalGet,
+    component, create_action, create_effect, create_rw_signal, create_signal, expect_context,
+    html::Div, provide_context, view, For, IntoView, NodeRef, Resource, Show, Signal, SignalGet,
     SignalGetUntracked, SignalSet, SignalUpdate, SignalUpdateUntracked, Suspense, WriteSignal,
 };
 use leptos_icons::Icon;
@@ -732,30 +732,25 @@ pub fn PumpNDump() -> impl IntoView {
     let show_onboarding = ShowOnboarding(should_show, set_should_show);
     provide_context(show_onboarding);
 
-    let tokens = Resource::new(
-        || (),
-        |_| async {
-            get_paginated_token_list_with_limit(1, 5)
-                .await
-                .expect("TODO: handle error")
-        },
-    );
+    let tokens = create_rw_signal(Vec::<TokenListItem>::new());
+    let page = create_rw_signal(1u32);
     let scroll_container = NodeRef::<Div>::new();
-    let page = create_rw_signal(1);
+    let fetch_more_tokens = create_action(move |&page: &u32| async move {
+        let more_tokens = get_paginated_token_list_with_limit(page, 5)
+            .await
+            .expect("TODO: handle error");
+        tokens.update(|tokens| {
+            tokens.extend_from_slice(&more_tokens);
+        });
+    });
     let _ = use_infinite_scroll_with_options(
         scroll_container,
         move |_| async move {
             page.update_untracked(|v| {
                 *v += 1;
             });
-            let more_tokens = get_paginated_token_list_with_limit(page.get_untracked(), 5)
-                .await
-                .expect("TODO: handle error");
-            tokens.update(|tokens| {
-                if let Some(tokens) = tokens {
-                    tokens.extend_from_slice(&more_tokens);
-                }
-            });
+
+            fetch_more_tokens.dispatch(page.get_untracked());
         },
         UseInfiniteScrollOptions::default().distance(400f64),
     );
@@ -764,13 +759,9 @@ pub fn PumpNDump() -> impl IntoView {
             <div class="max-w-md flex flex-col relative w-full mx-auto items-center h-full px-4 py-4">
                 <Header />
                 <div node_ref=scroll_container class="size-full overflow-scroll flex flex-col gap-4 snap-mandatory snap-y pb-[50vh]">
-                    <Suspense>
-                    {move || tokens.get().map(|_| view! {
-                        <For each=move || tokens.get().unwrap() key=|item| item.user_id.clone() let:token>
-                            <GameCard token />
-                        </For>
-                    })}
-                    </Suspense>
+                    <For each=move || tokens.get() key=|item| item.token_name.clone() let:token>
+                        <GameCard token />
+                    </For>
                 </div>
             </div>
             <Show when=move || show_onboarding.should_show()>
