@@ -118,7 +118,6 @@ pub fn ICPumpListing() -> impl IntoView {
                 let mut stream = listen_to_documents(&firestore);
                 while let Some(doc) = stream.next().await {
                     let doc = process_token_list_item(doc, principal).await;
-                    // push each item in doc to new_token_list
                     for item in doc {
                         new_token_list.update(move |list| {
                             list.push_front(item.clone());
