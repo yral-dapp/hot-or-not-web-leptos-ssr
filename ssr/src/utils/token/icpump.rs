@@ -137,24 +137,28 @@ pub async fn get_mocked_paginated_token_list(page: u32) -> Vec<TokenListItem> {
     use crate::consts::ICPUMP_LISTING_PAGE_SIZE;
     use candid::Principal;
 
-    let page_range = if page >= (ICPUMP_LISTING_PAGE_SIZE as u32) * 20 {
+    let page_range = if page >= 20 {
         0..5
     } else {
         0..ICPUMP_LISTING_PAGE_SIZE
     };
 
     page_range
-        .map(|idx| TokenListItem {
-            user_id: Principal::anonymous().to_text(),
-            name: format!("Test token {}", idx + page as usize),
-            token_name: format!("Test token {}", idx + page as usize),
-            token_symbol: format!("TST{}", idx + page as usize),
-            logo: "https://picsum.photos/200".to_string(),
-            description: "This is a test token".to_string(),
-            created_at: "69".to_string(),
-            formatted_created_at: "69 mins".to_string(),
-            link: Principal::anonymous().to_text(),
-            is_nsfw: false,
+        .map(|idx| {
+            let id = idx + ((page - 1) as usize * ICPUMP_LISTING_PAGE_SIZE);
+
+            TokenListItem {
+                user_id: Principal::anonymous().to_text(),
+                name: format!("Test token {}", id),
+                token_name: format!("Test token {}", id),
+                token_symbol: format!("TST{}", id),
+                logo: "https://picsum.photos/200".to_string(),
+                description: "This is a test token".to_string(),
+                created_at: "69".to_string(),
+                formatted_created_at: "69 mins".to_string(),
+                link: Principal::anonymous().to_text(),
+                is_nsfw: false,
+            }
         })
         .collect()
 }

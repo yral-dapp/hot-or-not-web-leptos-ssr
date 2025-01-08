@@ -144,7 +144,7 @@ pub fn ICPumpListingFeed() -> impl IntoView {
 
             if let (Some(true), false, false) = (is_intersecting, loading, end) {
                 page.update(|p| {
-                    *p += ICPUMP_LISTING_PAGE_SIZE as u32;
+                    *p += 1;
                 });
             }
         },
