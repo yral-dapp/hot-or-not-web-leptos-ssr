@@ -1,5 +1,6 @@
 use crate::component::overlay::PopupOverlay;
 use crate::consts::USER_PRINCIPAL_STORE;
+use crate::state::canisters::authenticated_canisters;
 use crate::state::canisters::unauth_canisters;
 use std::collections::HashMap;
 use std::collections::VecDeque;
@@ -13,6 +14,7 @@ use leptos_icons::Icon;
 use leptos_use::use_cookie;
 use serde::Deserialize;
 use serde::Serialize;
+use yral_canisters_common::Canisters;
 
 use crate::component::buttons::HighlightedLinkButton;
 use crate::component::icons::airdrop_icon::AirdropIcon;
@@ -91,9 +93,10 @@ pub fn ICPumpListing() -> impl IntoView {
         create_rw_signal(VecDeque::new());
     let (curr_principal, _) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE);
 
-    let act = create_resource(
-        move || (page(), curr_principal()),
-        move |(page, curr_principal)| async move {
+    let act = authenticated_canisters().derive(
+        move || page(),
+        move |cans, page| async move {
+            let cans = Canisters::from_wire(cans.unwrap(), expect_context()).unwrap();
             new_token_list.set(VecDeque::new());
 
             if let Some(cached) = cache.with_untracked(|c| c.get(&page).cloned()) {
@@ -102,7 +105,7 @@ pub fn ICPumpListing() -> impl IntoView {
 
             process_token_list_item(
                 get_paginated_token_list(page as u32).await.unwrap(),
-                curr_principal.unwrap(),
+                cans.user_principal(),
             )
             .await
         },
