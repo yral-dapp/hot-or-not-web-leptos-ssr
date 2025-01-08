@@ -360,6 +360,7 @@ pub fn TokenCard(
     }
 }
 
+#[component]
 pub fn TokenCardLoading() -> impl IntoView {
     view! {
         <div class="flex flex-col gap-2 py-3 px-3 w-full rounded-lg md:px-4 group bg-neutral-900/90">
