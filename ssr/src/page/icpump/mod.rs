@@ -1,17 +1,14 @@
 use crate::component::overlay::PopupOverlay;
-use crate::consts::USER_PRINCIPAL_STORE;
 use crate::state::canisters::authenticated_canisters;
 use crate::state::canisters::unauth_canisters;
 use std::collections::HashMap;
 use std::collections::VecDeque;
 
 use candid::Principal;
-use codee::string::FromToStringCodec;
 use futures::stream::FuturesOrdered;
 use futures::StreamExt;
 use leptos::*;
 use leptos_icons::Icon;
-use leptos_use::use_cookie;
 use serde::Deserialize;
 use serde::Serialize;
 use yral_canisters_common::Canisters;
@@ -91,7 +88,6 @@ pub fn ICPumpListing() -> impl IntoView {
     let cache = create_rw_signal(HashMap::<u64, Vec<ProcessedTokenListResponse>>::new());
     let new_token_list: RwSignal<VecDeque<ProcessedTokenListResponse>> =
         create_rw_signal(VecDeque::new());
-    let (curr_principal, _) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE);
 
     let act = authenticated_canisters().derive(
         move || page.get(),
@@ -115,9 +111,9 @@ pub fn ICPumpListing() -> impl IntoView {
         spawn_local(async move {
             let (_app, firestore) = init_firebase();
             let mut stream = listen_to_documents(&firestore);
-            let curr_principal = curr_principal.get().unwrap();
+            let curr_principal = Canisters::from_wire(authenticated_canisters().wait_untracked().await.unwrap(), expect_context()).unwrap();
             while let Some(doc) = stream.next().await {
-                let doc = process_token_list_item(doc, curr_principal).await;
+                let doc = process_token_list_item(doc, curr_principal.user_principal()).await;
                 // push each item in doc to new_token_list
                 for item in doc {
                     new_token_list.update(move |list| {
