@@ -26,7 +26,6 @@ use crate::component::icons::eye_hide_icon::EyeHiddenIcon;
 use crate::component::icons::send_icon::SendIcon;
 use crate::component::icons::share_icon::ShareIcon;
 use crate::component::share_popup::ShareContent;
-use crate::component::spinner::FullScreenSpinner;
 use crate::utils::host::get_host;
 use crate::utils::token::firestore::init_firebase;
 use crate::utils::token::firestore::listen_to_documents;
@@ -59,20 +58,18 @@ async fn process_token_list_item(
                     .ok_or(ServerFnError::new("Not root given"))?,
             )?;
 
-            // let token_owner_canister_id = cans.get_token_owner(root_principal).await?;
-            // let is_airdrop_claimed = if let Some(token_owner) = token_owner_canister_id {
-            //     cans.get_airdrop_status(token_owner.canister_id, root_principal, key_principal)
-            //         .await?
-            // } else {
-            //     true
-            // };
-            // let token_owner = cans.individual_user(token_owner_canister_id.unwrap()).await;
-            // token_owner_principal_id: token_owner.get_profile_details().await.unwrap().principal_id,
+            let token_owner_canister_id = cans.get_token_owner(root_principal).await?;
+            let is_airdrop_claimed = if let Some(token_owner) = token_owner_canister_id {
+                cans.get_airdrop_status(token_owner.canister_id, root_principal, key_principal)
+                    .await?
+            } else {
+                true
+            };
 
             Ok::<_, ServerFnError>(ProcessedTokenListResponse {
                 token_details: token,
                 root: root_principal,
-                is_airdrop_claimed: false,
+                is_airdrop_claimed,
             })
         });
     }
@@ -359,7 +356,7 @@ pub fn TokenCard(
     }
 }
 
-fn TokenCardLoading() -> impl IntoView {
+pub fn TokenCardLoading() -> impl IntoView {
     view! {
         <div class="flex flex-col gap-2 py-3 px-3 w-full rounded-lg md:px-4 group bg-neutral-900/90">
             <div class="flex gap-3">
