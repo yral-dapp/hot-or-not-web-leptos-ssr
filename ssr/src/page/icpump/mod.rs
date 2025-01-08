@@ -2,7 +2,6 @@ use crate::component::overlay::PopupOverlay;
 use crate::consts::ICPUMP_LISTING_PAGE_SIZE;
 use crate::consts::USER_PRINCIPAL_STORE;
 use crate::state::canisters::unauth_canisters;
-use std::collections::HashMap;
 use std::collections::VecDeque;
 
 use candid::Principal;
@@ -73,8 +72,7 @@ async fn process_token_list_item(
             };
             // let token_owner = cans.individual_user(token_owner_canister_id.unwrap()).await;
             // token_owner_principal_id: token_owner.get_profile_details().await.unwrap().principal_id,
-
-            Ok::<_, ServerFnError>(ProcessedTokenListResponse {
+            ProcessedTokenListResponse {
                 token_details: token,
                 root: root_principal,
                 is_airdrop_claimed,
