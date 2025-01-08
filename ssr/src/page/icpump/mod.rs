@@ -10,6 +10,7 @@ use codee::string::FromToStringCodec;
 use futures::stream::FuturesOrdered;
 use futures::StreamExt;
 use leptos::*;
+use leptos_dom::helpers::IntervalHandle;
 use leptos_icons::Icon;
 use leptos_use::use_cookie;
 use serde::Deserialize;
@@ -115,12 +116,31 @@ pub fn ICPumpListing() -> impl IntoView {
         spawn_local(async move {
             let (_app, firestore) = init_firebase();
             let mut stream = listen_to_documents(&firestore);
-            let Some(curr_principal) = curr_principal.get() else {
-                return;
-            };
+
+            // Wait for principal to be available
+            let interval_handle = create_rw_signal(None::<IntervalHandle>);
+
+            let handle = leptos::set_interval_with_handle(
+                move || {
+                    if curr_principal.get().is_some() {
+                        if let Some(handle) = interval_handle.get() {
+                            handle.clear();
+                        }
+                    }
+                },
+                std::time::Duration::from_millis(100),
+            )
+            .unwrap();
+
+            interval_handle.set(Some(handle));
+
             while let Some(doc) = stream.next().await {
-                let doc = process_token_list_item(doc, curr_principal).await;
-                // push each item in doc to new_token_list
+                // Get current principal, continue waiting if not available
+                let Some(principal) = curr_principal.get() else {
+                    continue;
+                };
+
+                let doc = process_token_list_item(doc, principal).await;
                 for item in doc {
                     new_token_list.update(move |list| {
                         list.push_front(item.clone());
