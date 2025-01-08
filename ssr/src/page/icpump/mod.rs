@@ -65,6 +65,8 @@ async fn process_token_list_item(
             } else {
                 true
             };
+            // let token_owner = cans.individual_user(token_owner_canister_id.unwrap()).await;
+            // token_owner_principal_id: token_owner.get_profile_details().await.unwrap().principal_id,
 
             Ok::<_, ServerFnError>(ProcessedTokenListResponse {
                 token_details: token,
