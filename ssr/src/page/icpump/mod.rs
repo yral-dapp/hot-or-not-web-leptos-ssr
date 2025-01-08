@@ -111,7 +111,11 @@ pub fn ICPumpListing() -> impl IntoView {
         spawn_local(async move {
             let (_app, firestore) = init_firebase();
             let mut stream = listen_to_documents(&firestore);
-            let curr_principal = Canisters::from_wire(authenticated_canisters().wait_untracked().await.unwrap(), expect_context()).unwrap();
+            let curr_principal = Canisters::from_wire(
+                authenticated_canisters().wait_untracked().await.unwrap(),
+                expect_context(),
+            )
+            .unwrap();
             while let Some(doc) = stream.next().await {
                 let doc = process_token_list_item(doc, curr_principal.user_principal()).await;
                 // push each item in doc to new_token_list
