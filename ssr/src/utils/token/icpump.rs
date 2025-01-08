@@ -129,26 +129,34 @@ pub async fn get_paginated_token_list(page: u32) -> Result<Vec<TokenListItem>, S
 
     #[cfg(not(feature = "firestore"))]
     {
-        use crate::consts::ICPUMP_LISTING_PAGE_SIZE;
-        use candid::Principal;
-
-        let data = (0..ICPUMP_LISTING_PAGE_SIZE)
-            .map(|idx| TokenListItem {
-                user_id: Principal::anonymous().to_text(),
-                name: format!("Test token {}", idx + page as usize),
-                token_name: format!("Test token {}", idx + page as usize),
-                token_symbol: format!("TST{}", idx + page as usize),
-                logo: "https://picsum.photos/200".to_string(),
-                description: "This is a test token".to_string(),
-                created_at: "69".to_string(),
-                formatted_created_at: "69 mins".to_string(),
-                link: Principal::anonymous().to_text(),
-                is_nsfw: false,
-            })
-            .collect();
-
-        Ok(data)
+        Ok(get_mocked_paginated_token_list(page).await)
     }
+}
+
+pub async fn get_mocked_paginated_token_list(page: u32) -> Vec<TokenListItem> {
+    use crate::consts::ICPUMP_LISTING_PAGE_SIZE;
+    use candid::Principal;
+
+    let page_range = if page >= (ICPUMP_LISTING_PAGE_SIZE as u32) * 20 {
+        0..5
+    } else {
+        0..ICPUMP_LISTING_PAGE_SIZE
+    };
+
+    page_range
+        .map(|idx| TokenListItem {
+            user_id: Principal::anonymous().to_text(),
+            name: format!("Test token {}", idx + page as usize),
+            token_name: format!("Test token {}", idx + page as usize),
+            token_symbol: format!("TST{}", idx + page as usize),
+            logo: "https://picsum.photos/200".to_string(),
+            description: "This is a test token".to_string(),
+            created_at: "69".to_string(),
+            formatted_created_at: "69 mins".to_string(),
+            link: Principal::anonymous().to_text(),
+            is_nsfw: false,
+        })
+        .collect()
 }
 
 #[cfg(feature = "ssr")]

@@ -86,6 +86,8 @@ async fn process_token_list_item(
 pub fn ICPumpListingFeed() -> impl IntoView {
     let page = create_rw_signal(1);
 
+    let end = create_rw_signal(false);
+
     let loading = create_rw_signal(true);
 
     let (curr_principal, _) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE);
@@ -109,6 +111,12 @@ pub fn ICPumpListingFeed() -> impl IntoView {
             .await;
 
             log::info!("after fetching...");
+
+            if fetched_token_list.len() < ICPUMP_LISTING_PAGE_SIZE {
+                log::info!("setting page end {}", fetched_token_list.len());
+
+                end.set(true);
+            }
 
             token_list.update(|t| t.append(&mut fetched_token_list));
 
@@ -139,29 +147,26 @@ pub fn ICPumpListingFeed() -> impl IntoView {
     });
 
     let target = NodeRef::<Div>::new();
-    let reached = create_rw_signal(false);
 
     use_intersection_observer_with_options(
         target,
-        move |entries, _| match entries.get(0).map(|entry| entry.is_intersecting()) {
-            Some(true) => {
-                if !loading.get() {
-                    page.update(|p| {
-                        *p += ICPUMP_LISTING_PAGE_SIZE as u32;
-                        log::info!("updating page to {}", p);
-                    });
-                    reached.set(true);
-                }
+        move |entries, _| {
+            let is_intersecting = entries.get(0).map(|entry| entry.is_intersecting());
+
+            let loading = loading.get_untracked();
+            let end = end.get_untracked();
+
+            if let (Some(true), false, false) = (is_intersecting, loading, end) {
+                page.update(|p| {
+                    *p += ICPUMP_LISTING_PAGE_SIZE as u32;
+                });
             }
-            _ => reached.set(false),
         },
         UseIntersectionObserverOptions::default().thresholds(vec![0.1]),
     );
 
-
-
     view! {
-        <div class:testing=reached class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 ">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 ">
             <For
                 each=move || new_token_list.get()
                 key=|t| t.token_details.token_symbol.clone()
