@@ -97,7 +97,7 @@ pub fn ICPumpListingFeed() -> impl IntoView {
         move || (page(), curr_principal()),
         move |(page, curr_principal)| async move {
             log::info!("doing fetch res");
-            
+
             loading.set(true);
 
             log::info!("fetching token");
