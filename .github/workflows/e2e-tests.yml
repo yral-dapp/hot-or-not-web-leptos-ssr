@@ -28,6 +28,6 @@ jobs:
             npm test
         env: 
             PREVIEW_URL: https://pr-${{github.event.number}}-yral-dapp-hot-or-not-web-leptos-ssr.fly.dev
-            BUILD_NAME: PR-${{github.event.number}}-attempt-${{github.run_attempt}}
+            BUILD_NAME: PR-${{github.event.number}}-commit-${{github.sha}}-attempt-${{github.run_attempt}}
             BROWSERSTACK_USER_NAME: ${{vars.BROWSERSTACK_USER_NAME}}
             BROWSERSTACK_ACCESS_KEY: ${{secrets.BROWSERSTACK_API_KEY}}
