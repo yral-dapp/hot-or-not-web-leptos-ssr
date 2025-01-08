@@ -94,7 +94,7 @@ pub fn ICPumpListing() -> impl IntoView {
     let (curr_principal, _) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE);
 
     let act = authenticated_canisters().derive(
-        move || page(),
+        move || page.get(),
         move |cans, page| async move {
             let cans = Canisters::from_wire(cans.unwrap(), expect_context()).unwrap();
             new_token_list.set(VecDeque::new());
