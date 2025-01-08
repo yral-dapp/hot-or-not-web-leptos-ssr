@@ -31,3 +31,4 @@ jobs:
             BUILD_NAME: PR-${{github.event.number}}-commit-${{github.sha}}-attempt-${{github.run_attempt}}
             BROWSERSTACK_USER_NAME: ${{vars.BROWSERSTACK_USER_NAME}}
             BROWSERSTACK_ACCESS_KEY: ${{secrets.BROWSERSTACK_API_KEY}}
+            PERCY_TOKEN: ${{secrets.PERCY_TOKEN}}
