@@ -26,6 +26,19 @@ async fn google_auth_redirector() -> Result<(), ServerFnError> {
     Ok(())
 }
 
+#[server(endpoint = "google_auth_url", input = Json, output = Json)]
+async fn google_auth_url(host: String) -> Result<String, ServerFnError> {
+    use crate::auth::core_clients::CoreClients;
+    use crate::auth::server_impl::google::google_auth_url_impl;
+
+
+    let oauth_clients: CoreClients = expect_context();
+    let oauth2 = oauth_clients.get_oauth_client(&host);
+    let url = google_auth_url_impl(oauth2).await?;
+
+    Ok(url)
+}
+
 #[server(endpoint = "perform_google_auth", input = Json, output = Json)]
 async fn perform_google_auth(oauth: OAuthQuery) -> Result<DelegatedIdentityWire, ServerFnError> {
     use crate::auth::core_clients::CoreClients;
