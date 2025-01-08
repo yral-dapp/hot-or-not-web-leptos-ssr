@@ -7,9 +7,8 @@ use ic_agent::{identity::Secp256k1Identity, Identity};
 use leptos::{expect_context, ServerFnError};
 use leptos_axum::{extract_with_state, ResponseOptions};
 use openidconnect::{
-    core::{CoreAuthenticationFlow, CoreIdTokenVerifier},
-    reqwest::async_http_client,
-    AuthorizationCode, CsrfToken, Nonce, PkceCodeChallenge, PkceCodeVerifier, Scope,
+    core::CoreAuthenticationFlow, reqwest::async_http_client, AuthorizationCode, CsrfToken, Nonce,
+    PkceCodeChallenge, PkceCodeVerifier, Scope,
 };
 use web_time::Duration;
 
@@ -133,9 +132,7 @@ pub async fn perform_google_auth_impl(
         .request_async(async_http_client)
         .await?;
 
-    // We don't need to use a verifier as exchange takes place over HTTPS and we don't transfer id token over the wire
-    // further explained: https://developers.google.com/identity/openid-connect/openid-connect#obtainuserinfo
-    let id_token_verifier = CoreIdTokenVerifier::new_insecure_without_verification();
+    let id_token_verifier = oauth2.id_token_verifier();
     let id_token = token_res
         .extra_fields()
         .id_token()

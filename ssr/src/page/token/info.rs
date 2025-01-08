@@ -301,7 +301,7 @@ pub fn TokenInfo() -> impl IntoView {
                                     />
                                 }
                             }
-                            _ => view! { <Redirect path="/" /> },
+                            _ => view! { <Redirect path="/wallet" /> },
                         }
                     })
             }}
