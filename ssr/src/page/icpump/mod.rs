@@ -55,13 +55,19 @@ async fn process_token_list_item(
                     .trim_end_matches('/')
                     .split('/')
                     .last()
-                    .ok_or(ServerFnError::new("Not root given"))?,
-            )?;
+                    .ok_or(ServerFnError::new("Not root given"))
+                    .unwrap_or_default(),
+            )
+            .unwrap_or(Principal::anonymous());
 
-            let token_owner_canister_id = cans.get_token_owner(root_principal).await?;
+            let token_owner_canister_id = cans
+                .get_token_owner(root_principal)
+                .await
+                .unwrap_or_default();
             let is_airdrop_claimed = if let Some(token_owner) = token_owner_canister_id {
                 cans.get_airdrop_status(token_owner.canister_id, root_principal, key_principal)
-                    .await?
+                    .await
+                    .unwrap_or(true)
             } else {
                 true
             };
@@ -72,13 +78,11 @@ async fn process_token_list_item(
                 token_details: token,
                 root: root_principal,
                 is_airdrop_claimed,
-            })
+            }
         });
     }
 
-    fut.filter_map(|result| async move { result.ok() })
-        .collect()
-        .await
+    fut.collect().await
 }
 
 #[component]
