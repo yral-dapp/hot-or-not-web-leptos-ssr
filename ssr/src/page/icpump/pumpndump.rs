@@ -1,24 +1,32 @@
+use candid::Principal;
 use codee::string::FromToStringCodec;
 use leptos::{
     component, create_action, create_effect, create_rw_signal, create_signal, expect_context,
-    html::Div, provide_context, view, For, IntoView, NodeRef, Resource, Show, Signal, SignalGet,
-    SignalGetUntracked, SignalSet, SignalUpdate, SignalUpdateUntracked, Suspense, WriteSignal,
+    html::Div, logging, provide_context, view, For, IntoView, NodeRef, Resource, RwSignal,
+    ServerFnError, Show, Signal, SignalGet, SignalGetUntracked, SignalSet, SignalUpdate,
+    SignalUpdateUntracked, Suspense, WriteSignal,
 };
 use leptos_icons::Icon;
 use leptos_use::{use_cookie, use_infinite_scroll_with_options, UseInfiniteScrollOptions};
+use yral_canisters_common::Canisters;
 
-use crate::utils::token::icpump::{get_paginated_token_list_with_limit, TokenListItem};
+use crate::{
+    state::canisters::authenticated_canisters,
+    utils::token::icpump::{get_paginated_token_list_with_limit, TokenListItem},
+};
 
 #[component]
 fn Header() -> impl IntoView {
-    let data = expect_context::<Resource<(), PlayerGamesCountAndBalance>>();
+    let data = expect_context::<RwSignal<Option<PlayerGamesCountAndBalance>>>();
     view! {
         <div class="flex items-center w-full justify-between py-2 gap-8">
             <a
                 href="/pump-dump/profile"
                 class="flex flex-col text-right text-sm ml-8 relative bg-[#171717] rounded-lg pt-1 pb-1.5 pr-3 pl-8"
             >
-                <div class="font-bold text-sm">{move || data.get().map(|d| format!("{}", d.games_count)).unwrap_or_else(|| "----".into())}</div>
+                <div class="font-bold text-sm">
+                    {move || data.get().map(|d| format!("{}", d.games_count)).unwrap_or_else(|| "----".into())}
+                </div>
                 <div class="text-xs text-[#A3A3A3] uppercase">Games</div>
                 <img
                     src="/img/gamepad.png"
@@ -126,7 +134,7 @@ fn MockBullBearSlider() -> impl IntoView {
 #[component]
 fn DumpButton() -> impl IntoView {
     let running_data = expect_context::<Resource<(), Option<GameRunningData>>>();
-    let player_data = expect_context::<Resource<(), PlayerGamesCountAndBalance>>();
+    let player_data = expect_context::<RwSignal<Option<PlayerGamesCountAndBalance>>>();
     let counter = move || {
         running_data
             .get()
@@ -210,7 +218,7 @@ fn MockDumpButton() -> impl IntoView {
 #[component]
 fn PumpButton() -> impl IntoView {
     let game_state = expect_context::<Resource<(), Option<GameRunningData>>>();
-    let player_data = expect_context::<Resource<(), PlayerGamesCountAndBalance>>();
+    let player_data = expect_context::<RwSignal<Option<PlayerGamesCountAndBalance>>>();
     let counter = move || {
         game_state
             .get()
@@ -304,13 +312,13 @@ impl PlayerGamesCountAndBalance {
     }
 
     #[cfg(any(feature = "local-bin", feature = "local-lib"))]
-    pub async fn load() -> Self {
-        Self::new(0, 1000)
+    pub async fn load(_user_principal: Principal) -> Option<Self> {
+        Some(Self::new(0, 1000))
     }
 
     #[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
-    pub async fn load() -> Self {
-        Self::new(0, 1000)
+    pub async fn load(_user_principal: Principal) -> Option<Self> {
+        Some(Self::new(0, 1000))
     }
 }
 
@@ -723,10 +731,36 @@ fn OnboardingPopup() -> impl IntoView {
 
 #[component]
 pub fn PumpNDump() -> impl IntoView {
-    provide_context(Resource::new(
-        move || (),
-        |_| PlayerGamesCountAndBalance::load(),
-    ));
+    let player_games_count_and_balance = create_rw_signal(None::<PlayerGamesCountAndBalance>);
+    let cans_wire_res = authenticated_canisters();
+    let fetch_user_principal = create_action(move |&()| {
+        let cans_wire_res = cans_wire_res.clone();
+        async move {
+            let cans_wire = cans_wire_res
+                .wait_untracked()
+                .await
+                .map_err(|e| e.to_string())?;
+            let cans = Canisters::from_wire(cans_wire.clone(), expect_context())
+                .map_err(|_| "Unable to authenticate".to_string())?;
+
+            let data = PlayerGamesCountAndBalance::load(cans.user_principal())
+                .await
+                .ok_or(|| ()) // ignore
+                .map_err(|_| "Couldn't load player data".to_string())?;
+
+            player_games_count_and_balance.set(Some(data));
+
+            Ok::<(), String>(())
+        }
+    });
+
+    create_effect(move |_| {
+        if player_games_count_and_balance.get_untracked().is_none() {
+            fetch_user_principal.dispatch(());
+        }
+    });
+
+    provide_context(player_games_count_and_balance);
 
     let (should_show, set_should_show) = use_cookie::<bool, FromToStringCodec>("show_onboarding");
     let show_onboarding = ShowOnboarding(should_show, set_should_show);
@@ -736,7 +770,11 @@ pub fn PumpNDump() -> impl IntoView {
     let page = create_rw_signal(1u32);
     let scroll_container = NodeRef::<Div>::new();
     let fetch_more_tokens = create_action(move |&page: &u32| async move {
-        let more_tokens = get_paginated_token_list_with_limit(page, 5)
+        let limit = match page {
+            1..5 => 1,
+            _ => 5,
+        };
+        let more_tokens = get_paginated_token_list_with_limit(page, limit)
             .await
             .expect("TODO: handle error");
         tokens.update(|tokens| {
