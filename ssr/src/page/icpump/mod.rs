@@ -85,15 +85,10 @@ async fn process_token_list_item(
 #[component]
 pub fn ICPumpListingFeed() -> impl IntoView {
     let page = create_rw_signal(1);
-
     let end = create_rw_signal(false);
-
     let loading = create_rw_signal(true);
-
     let (curr_principal, _) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE);
-
     let token_list: RwSignal<Vec<ProcessedTokenListResponse>> = create_rw_signal(vec![]);
-
     let new_token_list: RwSignal<VecDeque<ProcessedTokenListResponse>> =
         create_rw_signal(VecDeque::new());
 
@@ -102,29 +97,19 @@ pub fn ICPumpListingFeed() -> impl IntoView {
         move |(page, curr_principal)| async move {
             loading.set(true);
 
-            log::info!("before fetching...");
-
             let mut fetched_token_list = process_token_list_item(
                 get_paginated_token_list(page).await.unwrap(),
                 curr_principal.unwrap(),
             )
             .await;
 
-            log::info!("after fetching...");
-
             if fetched_token_list.len() < ICPUMP_LISTING_PAGE_SIZE {
-                log::info!("setting page end {}", fetched_token_list.len());
-
                 end.set(true);
             }
 
             token_list.update(|t| t.append(&mut fetched_token_list));
 
-            log::info!("after updating token_list signal...");
-
             loading.set(false);
-
-            log::info!("after updating loading signal...");
         },
     );
 
