@@ -1,10 +1,11 @@
 use candid::{Nat, Principal};
 use codee::string::{FromToStringCodec, JsonSerdeCodec};
+use futures::StreamExt;
 use leptos::{
     component, create_action, create_effect, create_rw_signal, create_signal, expect_context,
-    html::Div, logging, provide_context, view, For, IntoView, NodeRef, RwSignal, Show, Signal,
-    SignalGet, SignalGetUntracked, SignalSet, SignalUpdate, SignalUpdateUntracked, Suspense,
-    WriteSignal,
+    html::Div, logging, provide_context, spawn_local, view, For, IntoView, NodeRef, RwSignal, Show,
+    Signal, SignalGet, SignalGetUntracked, SignalSet, SignalStream, SignalUpdate,
+    SignalUpdateUntracked, Suspense, WriteSignal,
 };
 use leptos_icons::Icon;
 use leptos_use::{
@@ -17,8 +18,16 @@ use std::rc::Rc;
 use yral_canisters_common::Canisters;
 use yral_pump_n_dump_common::{
     rest::UserBetsResponse,
-    ws::{websocket_connection_url, WsRequest, WsResponse},
+    ws::{websocket_connection_url, WsMessage, WsRequest, WsResp},
+    GameDirection,
 };
+
+use serde::{Deserialize, Serialize};
+#[derive(Serialize, Deserialize, Clone)]
+pub struct WsResponse {
+    pub request_id: uuid::Uuid,
+    pub response: WsResp,
+}
 
 use crate::{
     page::icpump::{process_token_list_item, ProcessedTokenListResponse},
@@ -267,9 +276,12 @@ fn PumpButton() -> impl IntoView {
     };
     let onclick = move |_| {
         // TODO: add debouncing
+        if let Some(websocket) = websocket.get().as_ref() {
+            websocket.send(&WsRequest {
+                request_id: uuid::Uuid::new_v4(),
+                msg: WsMessage::Bet(GameDirection::Pump),
+            });
 
-        if websocket.get().as_ref().is_some() {
-            logging::log!("can has websocket");
             player_data.update(|value| {
                 if let Some(value) = value.as_mut() {
                     value.wallet_balance -= 1u64;
@@ -281,8 +293,6 @@ fn PumpButton() -> impl IntoView {
                     value.pumps += 1;
                 }
             });
-        } else {
-            logging::log!("can't has websocket");
         }
 
         // debounceResistanceAnimation();
@@ -708,6 +718,21 @@ fn GameCard(#[prop()] token: ProcessedTokenListResponse) -> impl IntoView {
             websocket.update(|ws| *ws = Some(context));
         }
         Ok::<(), String>(())
+    });
+
+    create_effect(move |_| {
+        if let Some(websocket) = websocket.get() {
+            spawn_local(async move {
+                let mut messages = websocket.message.to_stream();
+
+                while let Some(message) = messages.next().await.flatten() {
+                    logging::log!(
+                        "{}",
+                        serde_json::to_string_pretty(&message).expect("to be serialized")
+                    )
+                }
+            });
+        }
     });
 
     let load_game_state = create_action(move |&()| async move {
