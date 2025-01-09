@@ -42,6 +42,37 @@ pub struct ProcessedTokenListResponse {
     is_airdrop_claimed: bool,
 }
 
+#[cfg(any(feature = "local-bin", feature = "local-lib"))]
+pub async fn process_token_list_item(
+    token_list_item: Vec<TokenListItem>,
+    key_principal: Principal,
+) -> Vec<ProcessedTokenListResponse> {
+    token_list_item
+        .into_iter()
+        .map(|item| {
+            let root_principal = Principal::from_text(
+                item.link
+                    .trim_end_matches('/')
+                    .split('/')
+                    .last()
+                    .ok_or(ServerFnError::new("Not root given"))
+                    .unwrap_or_default(),
+            )
+            .unwrap_or(Principal::anonymous());
+            ProcessedTokenListResponse {
+                token_details: item,
+                root: root_principal,
+                token_owner: Some(TokenOwner {
+                    principal_id: key_principal,
+                    canister_id: Principal::anonymous(),
+                }),
+                is_airdrop_claimed: false,
+            }
+        })
+        .collect()
+}
+
+#[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
 pub async fn process_token_list_item(
     token_list_item: Vec<TokenListItem>,
     key_principal: Principal,

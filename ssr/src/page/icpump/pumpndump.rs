@@ -1,6 +1,5 @@
 use candid::{Nat, Principal};
 use codee::string::FromToStringCodec;
-use futures::{stream, StreamExt, TryStreamExt};
 use leptos::{
     component, create_action, create_effect, create_rw_signal, create_signal, expect_context,
     html::Div, logging, provide_context, view, For, IntoView, NodeRef, Resource, RwSignal, Show,
@@ -374,22 +373,32 @@ enum GameResult {
 }
 
 impl GameState {
-    pub fn new() -> Self {
-        Self::Playing
-    }
-
-    #[cfg(any(feature = "local-bin", feature = "local-lib"))]
-    // pub async fn load(owner_principal: Principal, root_principal: Principal) -> Self {
-    pub async fn load() -> Self {
+    pub async fn load(
+        owner_principal: Principal,
+        root_principal: Principal,
+    ) -> Result<Self, String> {
         // hit /status/:owner_principal/:root_principal
         // if ready => Playing
         // otherwise => Pending
-        Self::new()
-    }
 
-    #[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
-    pub async fn load() -> Self {
-        Self::new()
+        let status_url = PUMP_AND_DUMP_WORKER_URL
+            .join(&format!("/status/{owner_principal}/{root_principal}"))
+            .expect("url to be valid");
+
+        let status_res = reqwest::get(status_url)
+            .await
+            .map_err(|err| format!("Couldn't get status for the game: {err}"))?
+            .text()
+            .await
+            .map_err(|err| format!("couldn't read response body: {err}"))?;
+
+        if status_res == "ready" {
+            return Ok(Self::Playing);
+        }
+
+        logging::warn!("game status response: {status_res}");
+
+        Ok(Self::Pending)
     }
 }
 
@@ -579,12 +588,45 @@ fn ResultDeclared(#[prop()] game_state: GameState) -> impl IntoView {
 
 #[component]
 fn GameCard(#[prop()] token: ProcessedTokenListResponse) -> impl IntoView {
+    let owner_canister_id = token.token_owner.as_ref().unwrap().canister_id;
+    let token_root = token.root;
+
     let running_data = Resource::new(|| (), |_| GameRunningData::load());
+    // switch to action + create_rw_signal::<Option<GameRunningData>>(None) combo
     provide_context(running_data);
-    let game_state = Resource::new(|| (), |_| GameState::load());
+    let game_state = create_rw_signal(None::<GameState>);
     provide_context(game_state);
     provide_context(token);
 
+    let load_game_state = create_action(move |&()| async move {
+        let state = GameState::load(owner_canister_id, token_root)
+            .await
+            .inspect_err(|err| {
+                logging::error!("couldn't load game state: {err}");
+            })
+            .ok();
+
+        game_state.update(|s| *s = state);
+
+        Ok::<(), String>(())
+    });
+
+    create_effect(move |_| {
+        // might dispatch multiple times, need a way to ensure game state is
+        // loaded only once
+        if game_state.get().is_none() {
+            load_game_state.dispatch(());
+        }
+    });
+
+    // let identity: Canisters<true> = expect_context();
+    // let load_game_state = create_action(|&()| async move {});
+
+    // create websocket
+    // listen for changes related to state
+    // if ok, no change
+    // if error(what?) => cooldown/pending
+    // if Result(direction, )
     create_effect(move |_| {
         let result = running_data.get().flatten().as_ref().and_then(|data| {
             if data.pumps >= 3 {
@@ -825,42 +867,12 @@ pub fn PumpNDump() -> impl IntoView {
             let more_tokens = get_paginated_token_list_with_limit(page, limit)
                 .await
                 .expect("TODO: handle error");
-            let processed = process_token_list_item(more_tokens.clone(), user_principal).await;
-            logging::log!("processed: {processed:?}");
+            let more_tokens = process_token_list_item(more_tokens.clone(), user_principal).await;
 
-            let more_tokens = stream::iter(more_tokens)
-                .then(move |item| {
-                    let cans = cans.clone();
-                    async move {
-                        let root_principal = Principal::from_text(
-                            item.link
-                                .trim_end_matches('/')
-                                .split('/')
-                                .last()
-                                .ok_or("no root given")
-                                .map_err(|err| format!("Couldn't get the token root: {err}"))?,
-                        )
-                        .map_err(|err| format!("Couldn't get token root: {err}"))?;
+            logging::log!("{more_tokens:?}");
 
-                        let owner = cans
-                            .get_token_owner(root_principal)
-                            .await
-                            .inspect_err(|err| {
-                                logging::error!("owner error: {err}");
-                            })
-                            .map_err(|err| format!("Couldn't get the owner: {err}"))?;
-
-                        logging::log!("{owner:?}");
-
-                        Ok::<_, String>(())
-                    }
-                })
-                .try_collect::<Vec<_>>()
-                .await
-                .map_err(|err| format!("Couldn't process tokens: {err}"))?;
-            logging::log!("{:?}", more_tokens);
-            tokens.update(|_tokens| {
-                // tokens.extend_from_slice(&more_tokens);
+            tokens.update(|tokens| {
+                tokens.extend_from_slice(&more_tokens);
             });
 
             // identity.update_untracked(move |p| *p = Some(cans));
