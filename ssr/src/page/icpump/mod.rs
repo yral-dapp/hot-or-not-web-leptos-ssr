@@ -1,5 +1,6 @@
 use crate::component::overlay::PopupOverlay;
 use crate::consts::USER_PRINCIPAL_STORE;
+use crate::state::canisters::authenticated_canisters;
 use crate::state::canisters::unauth_canisters;
 use std::collections::HashMap;
 use std::collections::VecDeque;
@@ -13,6 +14,7 @@ use leptos_icons::Icon;
 use leptos_use::use_cookie;
 use serde::Deserialize;
 use serde::Serialize;
+use yral_canisters_common::Canisters;
 
 use crate::component::buttons::HighlightedLinkButton;
 use crate::component::icons::airdrop_icon::AirdropIcon;
@@ -22,7 +24,6 @@ use crate::component::icons::eye_hide_icon::EyeHiddenIcon;
 use crate::component::icons::send_icon::SendIcon;
 use crate::component::icons::share_icon::ShareIcon;
 use crate::component::share_popup::ShareContent;
-use crate::component::spinner::FullScreenSpinner;
 use crate::consts::ICPUMP_LISTING_PAGE_SIZE;
 use crate::utils::host::get_host;
 use crate::utils::token::firestore::init_firebase;
@@ -91,9 +92,10 @@ pub fn ICPumpListing() -> impl IntoView {
         create_rw_signal(VecDeque::new());
     let (curr_principal, _) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE);
 
-    let act = create_resource(
-        move || (page(), curr_principal()),
-        move |(page, curr_principal)| async move {
+    let act = authenticated_canisters().derive(
+        move || page.get(),
+        move |cans, page| async move {
+            let cans = Canisters::from_wire(cans.unwrap(), expect_context()).unwrap();
             new_token_list.set(VecDeque::new());
 
             if let Some(cached) = cache.with_untracked(|c| c.get(&page).cloned()) {
@@ -102,31 +104,37 @@ pub fn ICPumpListing() -> impl IntoView {
 
             process_token_list_item(
                 get_paginated_token_list(page as u32).await.unwrap(),
-                curr_principal.unwrap(),
+                cans.user_principal(),
             )
             .await
         },
     );
 
     create_effect(move |_| {
-        spawn_local(async move {
-            let (_app, firestore) = init_firebase();
-            let mut stream = listen_to_documents(&firestore);
-            let curr_principal = curr_principal.get().unwrap();
-            while let Some(doc) = stream.next().await {
-                let doc = process_token_list_item(doc, curr_principal).await;
-                // push each item in doc to new_token_list
-                for item in doc {
-                    new_token_list.update(move |list| {
-                        list.push_front(item.clone());
-                    });
+        if let Some(principal) = curr_principal.get() {
+            spawn_local(async move {
+                let (_app, firestore) = init_firebase();
+                let mut stream = listen_to_documents(&firestore);
+                while let Some(doc) = stream.next().await {
+                    let doc = process_token_list_item(doc, principal).await;
+                    for item in doc {
+                        new_token_list.try_update(move |list| {
+                            list.push_front(item.clone());
+                        });
+                    }
                 }
-            }
-        });
+            })
+        }
     });
 
     view! {
-        <Suspense fallback=FullScreenSpinner>
+        <Suspense fallback=|| view! {
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <For each=move || 0..ICPUMP_LISTING_PAGE_SIZE key=|i| i.to_string() children=move |_| view! {
+                    <TokenCardFallback/>
+                }/>
+            </div>
+        }>
             {move || {
                 let _ = act
                     .get()
@@ -198,6 +206,52 @@ pub fn ICPumpLanding() -> impl IntoView {
             </div>
             <div class="flex flex-col gap-8 pb-24">
                 <ICPumpListing />
+            </div>
+        </div>
+    }
+}
+
+#[component]
+pub fn TokenCardFallback() -> impl IntoView {
+    view! {
+        <div class="flex flex-col gap-2 pt-3 pb-4 px-3 md:px-4 w-full text-xs rounded-lg bg-neutral-900/90 font-kumbh">
+            <div class="flex gap-3 items-stretch">
+                <div class="w-[7rem] h-[7rem] rounded-[4px] shrink-0 bg-white/15 animate-pulse"></div>
+                <div class="flex flex-col justify-between overflow-hidden w-full gap-2">
+                    <div class="flex flex-col gap-2">
+                        <div class="flex gap-4 justify-between items-center w-full">
+                            <div class="h-7 w-32 bg-white/15 animate-pulse rounded"></div>
+                            <div class="h-7 w-16 bg-white/15 animate-pulse rounded"></div>
+                        </div>
+                        <div class="h-12 w-full bg-white/15 animate-pulse rounded"></div>
+                    </div>
+                    <div class="flex gap-2 justify-between items-center">
+                        <div class="h-5 w-48 bg-white/15 animate-pulse rounded"></div>
+                        <div class="h-5 w-24 bg-white/15 animate-pulse rounded"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex gap-4 justify-between items-center p-2">
+                <div class="flex flex-col items-center gap-1">
+                    <div class="w-[1.875rem] h-[1.875rem] bg-white/15 animate-pulse rounded"></div>
+                    <div class="w-10 h-3 bg-white/15 animate-pulse rounded"></div>
+                </div>
+                <div class="flex flex-col items-center gap-1">
+                    <div class="w-[1.875rem] h-[1.875rem] bg-white/15 animate-pulse rounded"></div>
+                    <div class="w-14 h-3 bg-white/15 animate-pulse rounded"></div>
+                </div>
+                <div class="flex flex-col items-center gap-1">
+                    <div class="w-[1.875rem] h-[1.875rem] bg-white/15 animate-pulse rounded"></div>
+                    <div class="w-12 h-3 bg-white/15 animate-pulse rounded"></div>
+                </div>
+                <div class="flex flex-col items-center gap-1">
+                    <div class="w-[1.875rem] h-[1.875rem] bg-white/15 animate-pulse rounded"></div>
+                    <div class="w-10 h-3 bg-white/15 animate-pulse rounded"></div>
+                </div>
+                <div class="flex flex-col items-center gap-1">
+                    <div class="w-[1.875rem] h-[1.875rem] bg-white/15 animate-pulse rounded"></div>
+                    <div class="w-12 h-3 bg-white/15 animate-pulse rounded"></div>
+                </div>
             </div>
         </div>
     }
