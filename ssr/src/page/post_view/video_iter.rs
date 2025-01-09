@@ -150,8 +150,6 @@ impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
                 }
             };
 
-            log::info!("top_posts length: {}", top_posts.len());
-
             let end = false;
             let chunk_stream = top_posts
                 .into_iter()
