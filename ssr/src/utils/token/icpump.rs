@@ -151,7 +151,7 @@ pub async fn get_paginated_token_list_with_limit(
                 description: "This is a test token".to_string(),
                 created_at: "69".to_string(),
                 formatted_created_at: "69 mins".to_string(),
-                link: "link".to_string(),
+                link: "https://icpump.fun/token/info/hen7x-7yaaa-aaaal-qqgxa-cai".to_string(),
                 is_nsfw: false,
             })
             .collect())

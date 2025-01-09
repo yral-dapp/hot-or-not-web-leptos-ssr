@@ -13,6 +13,7 @@ use leptos_icons::Icon;
 use leptos_use::use_cookie;
 use serde::Deserialize;
 use serde::Serialize;
+use yral_canisters_common::utils::token::TokenOwner;
 
 use crate::component::buttons::HighlightedLinkButton;
 use crate::component::icons::airdrop_icon::AirdropIcon;
@@ -33,14 +34,15 @@ use crate::utils::token::icpump::TokenListItem;
 pub mod ai;
 pub mod pumpndump;
 
-#[derive(Serialize, Deserialize, Clone)]
-struct ProcessedTokenListResponse {
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct ProcessedTokenListResponse {
     token_details: TokenListItem,
     root: Principal,
+    token_owner: Option<TokenOwner>,
     is_airdrop_claimed: bool,
 }
 
-async fn process_token_list_item(
+pub async fn process_token_list_item(
     token_list_item: Vec<TokenListItem>,
     key_principal: Principal,
 ) -> Vec<ProcessedTokenListResponse> {
@@ -59,7 +61,7 @@ async fn process_token_list_item(
             )?;
 
             let token_owner_canister_id = cans.get_token_owner(root_principal).await?;
-            let is_airdrop_claimed = if let Some(token_owner) = token_owner_canister_id {
+            let is_airdrop_claimed = if let Some(token_owner) = &token_owner_canister_id {
                 cans.get_airdrop_status(token_owner.canister_id, root_principal, key_principal)
                     .await?
             } else {
@@ -71,13 +73,19 @@ async fn process_token_list_item(
                 token_details: token,
                 root: root_principal,
                 is_airdrop_claimed,
+                token_owner: token_owner_canister_id,
             })
         });
     }
 
-    fut.filter_map(|result| async move { result.ok() })
-        .collect()
-        .await
+    fut.inspect(|item| {
+        let _ = item.as_ref().inspect_err(|err| {
+            logging::error!("{err}");
+        });
+    })
+    .filter_map(|result| async move { result.ok() })
+    .collect()
+    .await
 }
 #[component]
 pub fn ICPumpListing() -> impl IntoView {
@@ -144,14 +152,14 @@ pub fn ICPumpListing() -> impl IntoView {
                         <For
                             each=move || new_token_list.get()
                             key=|t| t.token_details.token_symbol.clone()
-                            children=move |ProcessedTokenListResponse { token_details, root, is_airdrop_claimed }| {
+                            children=move |ProcessedTokenListResponse { token_details, root, is_airdrop_claimed, .. }| {
                                 view! { <TokenCard is_new_token=true details=token_details is_airdrop_claimed root/> }
                             }
                         />
                         <For
                             each=move || token_list.get()
                             key=|t| t.token_details.token_symbol.clone()
-                            children=move |ProcessedTokenListResponse { token_details, root, is_airdrop_claimed }| {
+                            children=move |ProcessedTokenListResponse { token_details, root, is_airdrop_claimed, .. }| {
                                 view! { <TokenCard details=token_details is_airdrop_claimed root/> }
                             }
                         />

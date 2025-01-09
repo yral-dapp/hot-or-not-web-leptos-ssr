@@ -1,10 +1,11 @@
 use candid::{Nat, Principal};
 use codee::string::FromToStringCodec;
+use futures::{stream, StreamExt, TryStreamExt};
 use leptos::{
     component, create_action, create_effect, create_rw_signal, create_signal, expect_context,
-    html::Div, provide_context, view, For, IntoView, NodeRef, Resource, RwSignal, Show, Signal,
-    SignalGet, SignalGetUntracked, SignalSet, SignalUpdate, SignalUpdateUntracked, Suspense,
-    WriteSignal,
+    html::Div, logging, provide_context, view, For, IntoView, NodeRef, Resource, RwSignal, Show,
+    Signal, SignalGet, SignalGetUntracked, SignalSet, SignalUpdate, SignalUpdateUntracked,
+    Suspense, WriteSignal,
 };
 use leptos_icons::Icon;
 use leptos_use::{use_cookie, use_infinite_scroll_with_options, UseInfiniteScrollOptions};
@@ -13,12 +14,13 @@ use reqwest::Url;
 use yral_canisters_common::Canisters;
 
 use crate::{
+    page::icpump::{process_token_list_item, ProcessedTokenListResponse},
     state::canisters::authenticated_canisters,
-    utils::token::icpump::{get_paginated_token_list_with_limit, TokenListItem},
+    utils::token::icpump::get_paginated_token_list_with_limit,
 };
 
 static PUMP_AND_DUMP_WORKER_URL: Lazy<Url> =
-    Lazy::new(|| Url::parse("http://localhost:8787/").unwrap());
+    Lazy::new(|| Url::parse("https://yral-pump-n-dump.tushar-23b.workers.dev/").unwrap());
 
 #[component]
 fn Header() -> impl IntoView {
@@ -440,7 +442,7 @@ fn PendingResult() -> impl IntoView {
 
 #[component]
 fn GameCardPreResult(#[prop(into)] game_state: GameState) -> impl IntoView {
-    let token: TokenListItem = expect_context();
+    let token: ProcessedTokenListResponse = expect_context();
     let show_onboarding: ShowOnboarding = expect_context();
     let running_data: Resource<(), Option<GameRunningData>> = expect_context();
     let winning_pot = move || {
@@ -454,9 +456,9 @@ fn GameCardPreResult(#[prop(into)] game_state: GameState) -> impl IntoView {
         <div
             class="bg-[#171717] flip-card transition-all absolute inset-0 h-full shrink-0 rounded-2xl items-center flex flex-col gap-4 w-full pt-14 pb-5 px-5 overflow-hidden"
         >
-            <img class="mt-14 w-24 h-24 rounded-[4px]" alt="Avatar" src=token.logo />
+            <img class="mt-14 w-24 h-24 rounded-[4px]" alt="Avatar" src=token.token_details.logo />
             <a href="#" class="flex items-center gap-1">
-                <div class="font-bold text-lg">{token.token_name}</div>
+                <div class="font-bold text-lg">{token.token_details.token_name}</div>
             </a>
             <div class="bg-[#212121] shrink-0 rounded-full relative w-full h-11 overflow-hidden">
                 <div
@@ -578,7 +580,7 @@ fn ResultDeclared(#[prop()] game_state: GameState) -> impl IntoView {
 }
 
 #[component]
-fn GameCard(#[prop()] token: TokenListItem) -> impl IntoView {
+fn GameCard(#[prop()] token: ProcessedTokenListResponse) -> impl IntoView {
     let running_data = Resource::new(|| (), |_| GameRunningData::load());
     provide_context(running_data);
     let game_state = Resource::new(|| (), |_| GameState::load());
@@ -766,8 +768,13 @@ fn OnboardingPopup() -> impl IntoView {
 pub fn PumpNDump() -> impl IntoView {
     let player_games_count_and_balance = create_rw_signal(None::<PlayerGamesCountAndBalance>);
     let cans_wire_res = authenticated_canisters();
+    // i wonder if we remove this excessive cloning somehow
+    let cans_wire_res_for_tokens = cans_wire_res.clone();
+    let cans_wire_res_for_game_data = cans_wire_res.clone();
+    let identity = create_rw_signal::<Option<Canisters<true>>>(None);
+    provide_context(identity);
     let fetch_user_principal = create_action(move |&()| {
-        let cans_wire_res = cans_wire_res.clone();
+        let cans_wire_res = cans_wire_res_for_game_data.clone();
         async move {
             let cans_wire = cans_wire_res
                 .wait_untracked()
@@ -798,20 +805,69 @@ pub fn PumpNDump() -> impl IntoView {
     let show_onboarding = ShowOnboarding(should_show, set_should_show);
     provide_context(show_onboarding);
 
-    let tokens = create_rw_signal(Vec::<TokenListItem>::new());
+    let tokens = create_rw_signal(Vec::<ProcessedTokenListResponse>::new());
     let page = create_rw_signal(1u32);
     let scroll_container = NodeRef::<Div>::new();
-    let fetch_more_tokens = create_action(move |&page: &u32| async move {
-        let limit = match page {
-            1..5 => 1,
-            _ => 5,
-        };
-        let more_tokens = get_paginated_token_list_with_limit(page, limit)
-            .await
-            .expect("TODO: handle error");
-        tokens.update(|tokens| {
-            tokens.extend_from_slice(&more_tokens);
-        });
+    let fetch_more_tokens = create_action(move |&page: &u32| {
+        let cans_wire_res = cans_wire_res_for_tokens.clone();
+        async move {
+            let cans_wire = cans_wire_res
+                .wait_untracked()
+                .await
+                .map_err(|_| "Couldn't get cans_wire")?;
+            let cans = Canisters::from_wire(cans_wire.clone(), expect_context())
+                .map_err(|_| "Unable to authenticate".to_string())?;
+
+            let user_principal = cans.user_principal();
+            let limit = match page {
+                1..5 => 1,
+                _ => 5,
+            };
+
+            let more_tokens = get_paginated_token_list_with_limit(page, limit)
+                .await
+                .expect("TODO: handle error");
+            let processed = process_token_list_item(more_tokens.clone(), user_principal).await;
+            logging::log!("processed: {processed:?}");
+
+            let more_tokens = stream::iter(more_tokens)
+                .then(move |item| {
+                    let cans = cans.clone();
+                    async move {
+                        let root_principal = Principal::from_text(
+                            item.link
+                                .trim_end_matches('/')
+                                .split('/')
+                                .last()
+                                .ok_or("no root given")
+                                .map_err(|err| format!("Couldn't get the token root: {err}"))?,
+                        )
+                        .map_err(|err| format!("Couldn't get token root: {err}"))?;
+
+                        let owner = cans
+                            .get_token_owner(root_principal)
+                            .await
+                            .inspect_err(|err| {
+                                logging::error!("owner error: {err}");
+                            })
+                            .map_err(|err| format!("Couldn't get the owner: {err}"))?;
+
+                        logging::log!("{owner:?}");
+
+                        Ok::<_, String>(())
+                    }
+                })
+                .try_collect::<Vec<_>>()
+                .await
+                .map_err(|err| format!("Couldn't process tokens: {err}"))?;
+            logging::log!("{:?}", more_tokens);
+            tokens.update(|_tokens| {
+                // tokens.extend_from_slice(&more_tokens);
+            });
+
+            // identity.update_untracked(move |p| *p = Some(cans));
+            Ok::<_, String>(())
+        }
     });
     let _ = use_infinite_scroll_with_options(
         scroll_container,
@@ -829,7 +885,7 @@ pub fn PumpNDump() -> impl IntoView {
             <div class="max-w-md flex flex-col relative w-full mx-auto items-center h-full px-4 py-4">
                 <Header />
                 <div node_ref=scroll_container class="size-full overflow-scroll flex flex-col gap-4 snap-mandatory snap-y pb-[50vh]">
-                    <For each=move || tokens.get() key=|item| item.token_name.clone() let:token>
+                    <For each=move || tokens.get() key=|item| item.token_details.token_name.clone() let:token>
                         <GameCard token />
                     </For>
                 </div>
