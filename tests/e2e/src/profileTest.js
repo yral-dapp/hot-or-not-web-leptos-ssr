@@ -1,5 +1,3 @@
-
-
 describe('Profile page tests', function () {
 
     before(function () {

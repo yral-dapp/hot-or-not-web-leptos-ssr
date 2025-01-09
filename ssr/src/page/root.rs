@@ -11,7 +11,10 @@ use crate::{
     component::spinner::FullScreenSpinner,
     utils::{
         host::show_cdao_page,
-        ml_feed::{get_coldstart_feed_paginated, get_posts_ml_feed_cache_paginated},
+        ml_feed::{
+            get_coldstart_feed_paginated, get_coldstart_nsfw_feed_paginated,
+            get_posts_ml_feed_cache_paginated,
+        },
     },
 };
 
@@ -98,6 +101,26 @@ async fn get_top_post_id_mlfeed() -> Result<Option<(Principal, u64)>, ServerFnEr
     Ok(Some((top_item.0, top_item.1)))
 }
 
+#[server]
+async fn get_top_post_id_mlfeed_nsfw() -> Result<Option<(Principal, u64)>, ServerFnError> {
+    let top_posts_fut = get_coldstart_nsfw_feed_paginated(0, 50);
+
+    let top_items = match top_posts_fut.await {
+        Ok(top_posts) => top_posts,
+        Err(e) => {
+            log::error!("failed to fetch top post ml feed nsfw: {:?}", e);
+            return Err(ServerFnError::ServerError(
+                "failed to fetch top post ml feed nsfw".to_string(),
+            ));
+        }
+    };
+    let mut rand_gen = ChaCha8Rng::seed_from_u64(current_epoch().as_nanos() as u64);
+    let rand_num = rand_gen.next_u32() as usize % top_items.len();
+    let top_item = top_items[rand_num];
+
+    Ok(Some((top_item.0, top_item.1)))
+}
+
 #[component]
 pub fn CreatorDaoRootPage() -> impl IntoView {
     view! {
@@ -117,7 +140,13 @@ pub fn YralRootPage() -> impl IntoView {
     }
     #[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
     {
-        target_post = create_resource(|| (), |_| get_top_post_id_mlcache());
+        use crate::utils::host::show_nsfw_content;
+
+        if show_nsfw_content() {
+            target_post = create_resource(|| (), |_| get_top_post_id_mlfeed_nsfw());
+        } else {
+            target_post = create_resource(|| (), |_| get_top_post_id_mlfeed());
+        }
     }
 
     view! {
