@@ -185,7 +185,7 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
                 }}
             </Suspense>
             <div class="h-full w-full">
-            <div class="flex flex-col items-center justify-center max-w-md mx-auto px-4 mt-4">
+            <div class="flex flex-col items-center justify-center max-w-md mx-auto px-4 mt-4 pb-6">
                 <div class="font-kumbh self-start pb-4 font-bold text-xl text-white">All Tokens</div>
                 <Suspense>
                     {move || {
