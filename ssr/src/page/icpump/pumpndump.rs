@@ -13,7 +13,7 @@ use leptos_use::{
 };
 use once_cell::sync::Lazy;
 use reqwest::Url;
-use std::sync::{Arc, Mutex};
+use std::rc::Rc;
 use yral_canisters_common::Canisters;
 use yral_pump_n_dump_common::{
     rest::UserBetsResponse,
@@ -31,7 +31,7 @@ static PUMP_AND_DUMP_WORKER_URL: Lazy<Url> =
 
 type GameRunningDataSignal = RwSignal<Option<GameRunningData>>;
 
-type Sendfn = Arc<Mutex<dyn Fn(&WsRequest)>>;
+type Sendfn = Rc<dyn Fn(&WsRequest)>;
 
 // based on https://leptos-use.rs/network/use_websocket.html#usage-with-provide_context
 #[derive(Clone)]
@@ -52,8 +52,7 @@ impl WebsocketContext {
     #[inline(always)]
     pub fn send(&self, message: &WsRequest) {
         // i wanna get rid of this lock
-        let sendfn = self.sendfn.lock().unwrap();
-        sendfn(message);
+        (self.sendfn)(message);
     }
 }
 
@@ -692,10 +691,19 @@ fn GameCard(#[prop()] token: ProcessedTokenListResponse) -> impl IntoView {
                 websocket_connection_url(ws_url, value.identity(), owner_canister_id, token_root)
                     .map_err(|err| format!("Coulnd't create ws connection url: {err}"))?;
 
-            let UseWebSocketReturn { message, send, .. } =
-                use_websocket::<WsRequest, WsResponse, JsonSerdeCodec>(websocket_url.as_str());
+            let UseWebSocketReturn {
+                message,
+                send: sendfn,
+                ..
+            } = use_websocket::<WsRequest, WsResponse, JsonSerdeCodec>(websocket_url.as_str());
 
-            let context = WebsocketContext::new(message, Arc::new(Mutex::new(send)));
+            // erase type, because sendfn is not send/sync
+            let context = WebsocketContext::new(
+                message,
+                Rc::new(move |message: &WsRequest| {
+                    sendfn(message);
+                }),
+            );
 
             websocket.update(|ws| *ws = Some(context));
         }
