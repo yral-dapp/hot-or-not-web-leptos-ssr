@@ -1,6 +1,6 @@
 describe("Menu page test", function () {
-    before(async function () {
-        await browser.url(`${browser.launchUrl}/menu`)
+    before(function () {
+        browser.url(`${browser.launchUrl}/menu`)
     });
 
 
