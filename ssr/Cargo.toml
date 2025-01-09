@@ -23,7 +23,7 @@ tokio = { version = "1", optional = true, features = [
 ] }
 tower = { version = "0.4", optional = true }
 tower-http = { version = "0.5", features = ["fs"], optional = true }
-wasm-bindgen = "=0.2.93"
+wasm-bindgen = "=0.2.99"
 thiserror = "1.0"
 tracing = { version = "0.1.37", optional = true }
 http = "1.1.0"
@@ -34,8 +34,8 @@ ic-base-types = { git = "https://github.com/dfinity/ic", rev = "tags/release-202
 icp-ledger = { git = "https://github.com/dfinity/ic", rev = "tags/release-2024-10-17_03-07-base" }
 serde-wasm-bindgen = "0.6.5"
 futures = "0.3.30"
-leptos-use = "0.12.0"
-codee = { version = "0.1.2", features = ["json_serde"] }
+leptos-use = "0.13.13"
+codee = { version = "0.2", features = ["json_serde"] }
 reqwest = { version = "0.12", default-features = false, features = [
     "json",
     "http2",
@@ -117,6 +117,7 @@ ic-certification = "2.6.0"
 ciborium = "0.2.2"
 yral-metadata-client = { git = "https://github.com/yral-dapp/yral-metadata", rev = "56e3f1f1f5f452673bee17739520c800c1264295", optional = true }
 yral-metadata-types = { git = "https://github.com/yral-dapp/yral-metadata", rev = "56e3f1f1f5f452673bee17739520c800c1264295", optional = true }
+yral-pump-n-dump-common = { git = "https://github.com/yral-dapp/yral-common", branch = "rupansh/p-and-d", version = "0.1.0", features = ["client"] }
 
 [build-dependencies]
 tonic-build = { version = "0.12.0", default-features = false, features = [

@@ -1,5 +1,5 @@
 use candid::{Nat, Principal};
-use codee::string::FromToStringCodec;
+use codee::string::{FromToStringCodec, JsonSerdeCodec};
 use leptos::{
     component, create_action, create_effect, create_rw_signal, create_signal, expect_context,
     html::Div, logging, provide_context, view, For, IntoView, NodeRef, RwSignal, Show, Signal,
@@ -7,10 +7,18 @@ use leptos::{
     WriteSignal,
 };
 use leptos_icons::Icon;
-use leptos_use::{use_cookie, use_infinite_scroll_with_options, UseInfiniteScrollOptions};
+use leptos_use::{
+    use_cookie, use_infinite_scroll_with_options, use_websocket, UseInfiniteScrollOptions,
+    UseWebSocketReturn,
+};
 use once_cell::sync::Lazy;
 use reqwest::Url;
+use std::sync::{Arc, RwLock};
 use yral_canisters_common::Canisters;
+use yral_pump_n_dump_common::{
+    rest::UserBetsResponse,
+    ws::{websocket_connection_url, WsRequest, WsResponse},
+};
 
 use crate::{
     page::icpump::{process_token_list_item, ProcessedTokenListResponse},
@@ -22,6 +30,31 @@ static PUMP_AND_DUMP_WORKER_URL: Lazy<Url> =
     Lazy::new(|| Url::parse("https://yral-pump-n-dump.tushar-23b.workers.dev/").unwrap());
 
 type GameRunningDataSignal = RwSignal<Option<GameRunningData>>;
+
+type Sendfn = Arc<RwLock<dyn Fn(&WsRequest)>>;
+
+// based on https://leptos-use.rs/network/use_websocket.html#usage-with-provide_context
+#[derive(Clone)]
+pub struct WebsocketContext {
+    pub message: Signal<Option<WsResponse>>,
+    sendfn: Sendfn, // use Arc to make it easily cloneable
+}
+
+impl WebsocketContext {
+    pub fn new(message: Signal<Option<WsResponse>>, send: Sendfn) -> Self {
+        Self {
+            message,
+            sendfn: send,
+        }
+    }
+
+    // create a method to avoid having to use parantheses around the field
+    #[inline(always)]
+    pub fn send(&self, message: &WsRequest) {
+        let sendfn = self.sendfn.read().expect("sendfn will never be written to");
+        sendfn(message);
+    }
+}
 
 #[component]
 fn Header() -> impl IntoView {
@@ -225,6 +258,7 @@ fn MockDumpButton() -> impl IntoView {
 fn PumpButton() -> impl IntoView {
     let game_state: GameRunningDataSignal = expect_context();
     let player_data = expect_context::<RwSignal<Option<PlayerGamesCountAndBalance>>>();
+    let websocket: RwSignal<Option<WebsocketContext>> = expect_context();
     let counter = move || {
         game_state
             .get()
@@ -232,19 +266,24 @@ fn PumpButton() -> impl IntoView {
             .unwrap_or_else(|| "-".into())
     };
     let onclick = move |_| {
-        // TODO: write an async action to send event over ws, be optimisitic about the state
         // TODO: add debouncing
-        player_data.update(|value| {
-            if let Some(value) = value.as_mut() {
-                value.wallet_balance -= 1u64;
-            }
-        });
 
-        game_state.update(|value| {
-            if let Some(value) = value.as_mut() {
-                value.pumps += 1;
-            }
-        });
+        if websocket.get().as_ref().is_some() {
+            logging::log!("can has websocket");
+            player_data.update(|value| {
+                if let Some(value) = value.as_mut() {
+                    value.wallet_balance -= 1u64;
+                }
+            });
+
+            game_state.update(|value| {
+                if let Some(value) = value.as_mut() {
+                    value.pumps += 1;
+                }
+            });
+        } else {
+            logging::log!("can't has websocket");
+        }
 
         // debounceResistanceAnimation();
     };
@@ -419,39 +458,31 @@ impl GameRunningData {
         }
     }
 
-    #[cfg(any(feature = "local-bin", feature = "local-lib"))]
-    pub async fn load(
-        _owner: Principal,
-        _token_root: Principal,
-        _user_canister: Principal,
-    ) -> Result<Self, String> {
-        Ok(Self::new(0, 0, 100))
-    }
+    // #[cfg(any(feature = "local-bin", feature = "local-lib"))]
+    // pub async fn load(
+    //     _owner: Principal,
+    //     _token_root: Principal,
+    //     _user_canister: Principal,
+    // ) -> Result<Self, String> {
+    //     Ok(Self::new(0, 0, 100))
+    // }
 
-    #[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
+    // #[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
     pub async fn load(
         owner: Principal,
         token_root: Principal,
         user_canister: Principal,
     ) -> Result<Self, String> {
-        use serde::{Deserialize, Serialize};
         let bets_url = PUMP_AND_DUMP_WORKER_URL
             .join(&format!("/bets/{owner}/{token_root}/{user_canister}"))
             .expect("url to be valid");
-
-        // TODO: use the pump-n-dump-common crate instead
-        #[derive(Serialize, Deserialize, Clone, Copy)]
-        pub struct UserBetsResponse {
-            pub pumps: u64,
-            pub dumps: u64,
-        }
 
         let bets: UserBetsResponse = reqwest::get(bets_url)
             .await
             .map_err(|err| format!("Coulnd't load bets: {err}"))?
             .json()
             .await
-            .map_err(|err| format!("Couldn't parse bets out of repsonse"))?;
+            .map_err(|err| format!("Couldn't parse bets out of repsonse: {err}"))?;
 
         Ok(Self::new(bets.pumps, bets.dumps, 100))
     }
@@ -625,6 +656,8 @@ fn GameCard(#[prop()] token: ProcessedTokenListResponse) -> impl IntoView {
     let owner_canister_id = token.token_owner.as_ref().unwrap().canister_id;
     let token_root = token.root;
 
+    let websocket = create_rw_signal(None::<WebsocketContext>);
+    provide_context(websocket);
     let running_data = create_rw_signal(None::<GameRunningData>);
     provide_context(running_data);
     let game_state = create_rw_signal(None::<GameState>);
@@ -647,6 +680,25 @@ fn GameCard(#[prop()] token: ProcessedTokenListResponse) -> impl IntoView {
         if ident.as_ref().is_some() && running_data.get_untracked().is_none() {
             load_running_data.dispatch(ident.unwrap().user_canister());
         }
+    });
+    // start websocket connection
+    create_effect(move |_| {
+        let ident = identity.get();
+        if let Some(value) = &ident {
+            let mut ws_url = PUMP_AND_DUMP_WORKER_URL.clone();
+            ws_url.set_scheme("wss").expect("schema to valid");
+            let websocket_url =
+                websocket_connection_url(ws_url, value.identity(), owner_canister_id, token_root)
+                    .map_err(|err| format!("Coulnd't create ws connection url: {err}"))?;
+
+            let UseWebSocketReturn { message, send, .. } =
+                use_websocket::<WsRequest, WsResponse, JsonSerdeCodec>(websocket_url.as_str());
+
+            let context = WebsocketContext::new(message, Arc::new(RwLock::new(send)));
+
+            websocket.update(|ws| *ws = Some(context));
+        }
+        Ok::<(), String>(())
     });
 
     let load_game_state = create_action(move |&()| async move {
@@ -707,6 +759,10 @@ fn GameCard(#[prop()] token: ProcessedTokenListResponse) -> impl IntoView {
             })
         }
     });
+
+    //
+    // open up the websocket connection
+    //
 
     view! {
         <Suspense>
@@ -931,8 +987,9 @@ pub fn PumpNDump() -> impl IntoView {
                 .map_err(|_| "Unable to authenticate".to_string())?;
 
             let user_principal = cans.user_principal();
+            // to reduce the tokens loaded on initial load
             let limit = match page {
-                1..5 => 1,
+                1..10 => 1, // this number is based on what produced least token in preview
                 _ => 5,
             };
 
