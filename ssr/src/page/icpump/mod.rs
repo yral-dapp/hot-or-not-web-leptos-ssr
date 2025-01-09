@@ -1,13 +1,11 @@
 use crate::component::overlay::PopupOverlay;
 use crate::consts::USER_PRINCIPAL_STORE;
 use crate::state::canisters::authenticated_canisters;
-use crate::state::canisters::unauth_canisters;
 use std::collections::HashMap;
 use std::collections::VecDeque;
 
 use candid::Principal;
 use codee::string::FromToStringCodec;
-use futures::stream::FuturesOrdered;
 use futures::StreamExt;
 use leptos::*;
 use leptos_icons::Icon;
@@ -78,6 +76,9 @@ pub async fn process_token_list_item(
     token_list_item: Vec<TokenListItem>,
     key_principal: Principal,
 ) -> Vec<ProcessedTokenListResponse> {
+    use crate::state::canisters::unauth_canisters;
+    use futures::stream::FuturesOrdered;
+
     let mut fut = FuturesOrdered::new();
 
     for token in token_list_item {
