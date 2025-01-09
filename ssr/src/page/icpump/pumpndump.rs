@@ -318,7 +318,6 @@ impl PlayerGamesCountAndBalance {
         }
     }
 
-    #[cfg(any(feature = "local-bin", feature = "local-lib"))]
     pub async fn load(user_principal: Principal) -> Result<Self, String> {
         let balance_url = PUMP_AND_DUMP_WORKER_URL
             .join(&format!("/balance/{user_principal}"))
@@ -350,11 +349,6 @@ impl PlayerGamesCountAndBalance {
 
         Ok(Self::new(games_count, wallet_balance))
     }
-
-    #[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
-    pub async fn load(_user_principal: Principal) -> Option<Self> {
-        Some(Self::new(0, 1000))
-    }
 }
 
 // this data is kept out of GameState so that mutating pumps and dumps doesn't
@@ -385,7 +379,11 @@ impl GameState {
     }
 
     #[cfg(any(feature = "local-bin", feature = "local-lib"))]
+    // pub async fn load(owner_principal: Principal, root_principal: Principal) -> Self {
     pub async fn load() -> Self {
+        // hit /status/:owner_principal/:root_principal
+        // if ready => Playing
+        // otherwise => Pending
         Self::new()
     }
 
