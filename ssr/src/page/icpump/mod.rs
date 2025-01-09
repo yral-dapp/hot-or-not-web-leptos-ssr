@@ -116,7 +116,11 @@ pub fn ICPumpListingFeed() -> impl IntoView {
 
             log::info!("setting token list {:?}", token_list.get_untracked());
 
-            token_list.update(|t| t.append(&mut fetched_token_list));
+            token_list.update(|t| {
+                t.append(&mut fetched_token_list);
+
+                t.dedup_by_key(|t| t.token_details.link.clone());
+            });
 
             log::info!("setting loading {:?}", token_list.get_untracked());
 

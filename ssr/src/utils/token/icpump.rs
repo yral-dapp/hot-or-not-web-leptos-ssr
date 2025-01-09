@@ -156,7 +156,7 @@ pub async fn get_mocked_paginated_token_list(page: u32) -> Vec<TokenListItem> {
                 description: "This is a test token".to_string(),
                 created_at: "69".to_string(),
                 formatted_created_at: "69 mins".to_string(),
-                link: Principal::anonymous().to_text(),
+                link: format!("{} {}", Principal::anonymous().to_text(), id),
                 is_nsfw: false,
             }
         })
