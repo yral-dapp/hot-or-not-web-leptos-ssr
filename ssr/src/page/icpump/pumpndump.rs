@@ -13,7 +13,7 @@ use leptos_use::{
 };
 use once_cell::sync::Lazy;
 use reqwest::Url;
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc, Mutex};
 use yral_canisters_common::Canisters;
 use yral_pump_n_dump_common::{
     rest::UserBetsResponse,
@@ -31,7 +31,7 @@ static PUMP_AND_DUMP_WORKER_URL: Lazy<Url> =
 
 type GameRunningDataSignal = RwSignal<Option<GameRunningData>>;
 
-type Sendfn = Arc<RwLock<dyn Fn(&WsRequest)>>;
+type Sendfn = Arc<Mutex<dyn Fn(&WsRequest)>>;
 
 // based on https://leptos-use.rs/network/use_websocket.html#usage-with-provide_context
 #[derive(Clone)]
@@ -51,7 +51,8 @@ impl WebsocketContext {
     // create a method to avoid having to use parantheses around the field
     #[inline(always)]
     pub fn send(&self, message: &WsRequest) {
-        let sendfn = self.sendfn.read().expect("sendfn will never be written to");
+        // i wanna get rid of this lock
+        let sendfn = self.sendfn.lock().unwrap();
         sendfn(message);
     }
 }
@@ -694,7 +695,7 @@ fn GameCard(#[prop()] token: ProcessedTokenListResponse) -> impl IntoView {
             let UseWebSocketReturn { message, send, .. } =
                 use_websocket::<WsRequest, WsResponse, JsonSerdeCodec>(websocket_url.as_str());
 
-            let context = WebsocketContext::new(message, Arc::new(RwLock::new(send)));
+            let context = WebsocketContext::new(message, Arc::new(Mutex::new(send)));
 
             websocket.update(|ws| *ws = Some(context));
         }
