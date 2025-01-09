@@ -11,6 +11,8 @@
 //             __/ |
 //            |___/
 
+const percy = require('@percy/nightwatch');
+
 module.exports = {
   // An array of folders (excluding subfolders) where your tests are located;
   // if this is not specified, the test source must be passed as the second argument to the test runner.
@@ -20,12 +22,13 @@ module.exports = {
   // page_objects_path: ['nightwatch/page-objects'],
 
   // See https://nightwatchjs.org/guide/extending-nightwatch/adding-custom-commands.html
-  // custom_commands_path: ['nightwatch/custom-commands'],
+  custom_commands_path: [percy.path],
 
   // See https://nightwatchjs.org/guide/extending-nightwatch/adding-custom-assertions.html
   // custom_assertions_path: ['nightwatch/custom-assertions'],
 
   // See https://nightwatchjs.org/guide/extending-nightwatch/adding-plugins.html
+  plugins: ['@percy/nightwatch'],
 
   // See https://nightwatchjs.org/guide/concepts/test-globals.html
   globals_path: '',
@@ -80,7 +83,8 @@ module.exports = {
         'bstack:options': {
           userName: '${BROWSERSTACK_USER_NAME}',
           accessKey: '${BROWSERSTACK_ACCESS_KEY}',
-          buildName: '${BUILD_NAME}'
+          buildName: '${BUILD_NAME}',
+          projectName: 'hot-or-not-web-leptos-ssr'
         }
       },
 
