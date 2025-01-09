@@ -111,7 +111,7 @@ pub fn ICPumpListing() -> impl IntoView {
     );
 
     create_effect(move |_| {
-        if let Some(principal) = curr_principal.get() {
+        if let Some(principal) = curr_principal.try_get() {
             spawn_local(async move {
                 let (_app, firestore) = init_firebase();
                 let mut stream = listen_to_documents(&firestore);
