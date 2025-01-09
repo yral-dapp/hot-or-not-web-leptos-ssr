@@ -178,7 +178,7 @@ pub fn ICPumpListingFeed() -> impl IntoView {
             />
 
             <For
-                each=move || token_list.get()
+                each=token_list
                 key=|t| t.token_details.token_symbol.clone()
                 children=move |t| {
                     view! {
