@@ -93,7 +93,7 @@ pub fn ICPumpListingFeed() -> impl IntoView {
     let new_token_list: RwSignal<VecDeque<ProcessedTokenListResponse>> =
         create_rw_signal(VecDeque::new());
 
-    let fetch_res = create_resource(
+    let _ = create_local_resource(
         move || (page(), curr_principal()),
         move |(page, curr_principal)| async move {
             log::info!("doing fetch res");
@@ -125,7 +125,6 @@ pub fn ICPumpListingFeed() -> impl IntoView {
     );
 
     create_effect(move |_| {
-        fetch_res.refetch();
         spawn_local(async move {
             let (_app, firestore) = init_firebase();
             let mut stream = listen_to_documents(&firestore);
