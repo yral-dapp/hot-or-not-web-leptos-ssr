@@ -2,9 +2,9 @@ use candid::{Nat, Principal};
 use codee::string::FromToStringCodec;
 use leptos::{
     component, create_action, create_effect, create_rw_signal, create_signal, expect_context,
-    html::Div, logging, provide_context, view, For, IntoView, NodeRef, Resource, RwSignal, Show,
-    Signal, SignalGet, SignalGetUntracked, SignalSet, SignalUpdate, SignalUpdateUntracked,
-    Suspense, WriteSignal,
+    html::Div, logging, provide_context, view, For, IntoView, NodeRef, RwSignal, Show, Signal,
+    SignalGet, SignalGetUntracked, SignalSet, SignalUpdate, SignalUpdateUntracked, Suspense,
+    WriteSignal,
 };
 use leptos_icons::Icon;
 use leptos_use::{use_cookie, use_infinite_scroll_with_options, UseInfiniteScrollOptions};
@@ -20,6 +20,8 @@ use crate::{
 
 static PUMP_AND_DUMP_WORKER_URL: Lazy<Url> =
     Lazy::new(|| Url::parse("https://yral-pump-n-dump.tushar-23b.workers.dev/").unwrap());
+
+type GameRunningDataSignal = RwSignal<Option<GameRunningData>>;
 
 #[component]
 fn Header() -> impl IntoView {
@@ -65,11 +67,10 @@ fn Header() -> impl IntoView {
 
 #[component]
 fn BullBearSlider() -> impl IntoView {
-    let running_data: Resource<(), Option<GameRunningData>> = expect_context();
+    let running_data: GameRunningDataSignal = expect_context();
     let position = move || {
         let ratio = running_data
             .get()
-            .flatten()
             .map(|d| (d.dumps as f64 + 1.0) / (d.pumps as f64 + 1.0))
             .unwrap_or(1f64);
         if ratio == 1f64 {
@@ -139,12 +140,11 @@ fn MockBullBearSlider() -> impl IntoView {
 
 #[component]
 fn DumpButton() -> impl IntoView {
-    let running_data = expect_context::<Resource<(), Option<GameRunningData>>>();
+    let running_data: GameRunningDataSignal = expect_context();
     let player_data = expect_context::<RwSignal<Option<PlayerGamesCountAndBalance>>>();
     let counter = move || {
         running_data
             .get()
-            .flatten()
             .map(|value| value.dumps.to_string())
             .unwrap_or_else(|| "-".into())
     };
@@ -158,7 +158,7 @@ fn DumpButton() -> impl IntoView {
         });
 
         running_data.update(|value| {
-            if let Some(Some(value)) = value {
+            if let Some(value) = value {
                 value.dumps += 1;
             }
         });
@@ -223,12 +223,11 @@ fn MockDumpButton() -> impl IntoView {
 
 #[component]
 fn PumpButton() -> impl IntoView {
-    let game_state = expect_context::<Resource<(), Option<GameRunningData>>>();
+    let game_state: GameRunningDataSignal = expect_context();
     let player_data = expect_context::<RwSignal<Option<PlayerGamesCountAndBalance>>>();
     let counter = move || {
         game_state
             .get()
-            .flatten()
             .map(|value| value.pumps.to_string())
             .unwrap_or_else(|| "-".into())
     };
@@ -242,7 +241,7 @@ fn PumpButton() -> impl IntoView {
         });
 
         game_state.update(|value| {
-            if let Some(Some(value)) = value.as_mut() {
+            if let Some(value) = value.as_mut() {
                 value.pumps += 1;
             }
         });
@@ -373,6 +372,15 @@ enum GameResult {
 }
 
 impl GameState {
+    #[cfg(any(feature = "local-bin", feature = "local-lib"))]
+    pub async fn load(
+        _owner_principal: Principal,
+        _root_principal: Principal,
+    ) -> Result<Self, String> {
+        Ok(Self::Playing)
+    }
+
+    #[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
     pub async fn load(
         owner_principal: Principal,
         root_principal: Principal,
@@ -412,23 +420,49 @@ impl GameRunningData {
     }
 
     #[cfg(any(feature = "local-bin", feature = "local-lib"))]
-    pub async fn load() -> Option<Self> {
-        Some(Self::new(0, 0, 100))
+    pub async fn load(
+        _owner: Principal,
+        _token_root: Principal,
+        _user_canister: Principal,
+    ) -> Result<Self, String> {
+        Ok(Self::new(0, 0, 100))
     }
 
     #[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
-    pub async fn load() -> Option<Self> {
-        Some(Self::new(0, 0, 100))
+    pub async fn load(
+        owner: Principal,
+        token_root: Principal,
+        user_canister: Principal,
+    ) -> Result<Self, String> {
+        use serde::{Deserialize, Serialize};
+        let bets_url = PUMP_AND_DUMP_WORKER_URL
+            .join(&format!("/bets/{owner}/{token_root}/{user_canister}"))
+            .expect("url to be valid");
+
+        // TODO: use the pump-n-dump-common crate instead
+        #[derive(Serialize, Deserialize, Clone, Copy)]
+        pub struct UserBetsResponse {
+            pub pumps: u64,
+            pub dumps: u64,
+        }
+
+        let bets: UserBetsResponse = reqwest::get(bets_url)
+            .await
+            .map_err(|err| format!("Coulnd't load bets: {err}"))?
+            .json()
+            .await
+            .map_err(|err| format!("Couldn't parse bets out of repsonse"))?;
+
+        Ok(Self::new(bets.pumps, bets.dumps, 100))
     }
 }
 
 #[component]
 fn PendingResult() -> impl IntoView {
-    let running_data: Resource<(), Option<GameRunningData>> = expect_context();
+    let running_data: GameRunningDataSignal = expect_context();
     let spent = move || {
         let data = running_data
             .get()
-            .flatten()
             .expect("at this point we MUST have the running data");
         data.pumps.saturating_add(data.dumps)
     };
@@ -451,11 +485,11 @@ fn PendingResult() -> impl IntoView {
 fn GameCardPreResult(#[prop(into)] game_state: GameState) -> impl IntoView {
     let token: ProcessedTokenListResponse = expect_context();
     let show_onboarding: ShowOnboarding = expect_context();
-    let running_data: Resource<(), Option<GameRunningData>> = expect_context();
+    let running_data: GameRunningDataSignal = expect_context();
+    // let running_data: RwSignal<Option<GameRunningData>> = expect_context();
     let winning_pot = move || {
         running_data
             .get()
-            .flatten()
             .map(|value| value.winning_pot.to_string())
             .unwrap_or_else(|| "-".into())
     };
@@ -591,12 +625,29 @@ fn GameCard(#[prop()] token: ProcessedTokenListResponse) -> impl IntoView {
     let owner_canister_id = token.token_owner.as_ref().unwrap().canister_id;
     let token_root = token.root;
 
-    let running_data = Resource::new(|| (), |_| GameRunningData::load());
-    // switch to action + create_rw_signal::<Option<GameRunningData>>(None) combo
+    let running_data = create_rw_signal(None::<GameRunningData>);
     provide_context(running_data);
     let game_state = create_rw_signal(None::<GameState>);
     provide_context(game_state);
     provide_context(token);
+
+    let identity: RwSignal<Option<Canisters<true>>> = expect_context();
+    let load_running_data = create_action(move |&user_canister| async move {
+        let data = GameRunningData::load(owner_canister_id, token_root, user_canister)
+            .await
+            .inspect_err(|err| {
+                logging::warn!("couldn't load running data: {err}");
+            })
+            .ok();
+
+        running_data.update(|d| *d = data);
+    });
+    create_effect(move |_| {
+        let ident = identity.get();
+        if ident.as_ref().is_some() && running_data.get_untracked().is_none() {
+            load_running_data.dispatch(ident.unwrap().user_canister());
+        }
+    });
 
     let load_game_state = create_action(move |&()| async move {
         let state = GameState::load(owner_canister_id, token_root)
@@ -619,8 +670,8 @@ fn GameCard(#[prop()] token: ProcessedTokenListResponse) -> impl IntoView {
         }
     });
 
-    // let identity: Canisters<true> = expect_context();
-    // let load_game_state = create_action(|&()| async move {});
+    // create action to calling and game runnnig data
+    // create effect to listen for changes in identity, load game running data
 
     // create websocket
     // listen for changes related to state
@@ -628,7 +679,7 @@ fn GameCard(#[prop()] token: ProcessedTokenListResponse) -> impl IntoView {
     // if error(what?) => cooldown/pending
     // if Result(direction, )
     create_effect(move |_| {
-        let result = running_data.get().flatten().as_ref().and_then(|data| {
+        let result = running_data.get().as_ref().and_then(|data| {
             if data.pumps >= 3 {
                 Some(GameResult::Win { amount: 10 })
             } else if data.dumps >= 3 {
@@ -813,6 +864,27 @@ pub fn PumpNDump() -> impl IntoView {
     let cans_wire_res_for_game_data = cans_wire_res.clone();
     let identity = create_rw_signal::<Option<Canisters<true>>>(None);
     provide_context(identity);
+    let fetch_identity = create_action(move |&()| {
+        let cans_wire_res = cans_wire_res.clone();
+        async move {
+            let cans_wire = cans_wire_res
+                .wait_untracked()
+                .await
+                .map_err(|e| e.to_string())?;
+            let cans = Canisters::from_wire(cans_wire.clone(), expect_context())
+                .map_err(|_| "Unable to authenticate".to_string())?;
+
+            identity.update(|i| *i = Some(cans));
+
+            Ok::<_, String>(())
+        }
+    });
+    create_effect(move |_| {
+        if identity.get_untracked().is_none() {
+            fetch_identity.dispatch(());
+        }
+    });
+
     let fetch_user_principal = create_action(move |&()| {
         let cans_wire_res = cans_wire_res_for_game_data.clone();
         async move {
@@ -867,7 +939,10 @@ pub fn PumpNDump() -> impl IntoView {
             let more_tokens = get_paginated_token_list_with_limit(page, limit)
                 .await
                 .expect("TODO: handle error");
-            let more_tokens = process_token_list_item(more_tokens.clone(), user_principal).await;
+            let mut more_tokens =
+                process_token_list_item(more_tokens.clone(), user_principal).await;
+            // ignore tokens with no owners
+            more_tokens.retain(|item| item.token_owner.is_some());
 
             logging::log!("{more_tokens:?}");
 
@@ -875,7 +950,6 @@ pub fn PumpNDump() -> impl IntoView {
                 tokens.extend_from_slice(&more_tokens);
             });
 
-            // identity.update_untracked(move |p| *p = Some(cans));
             Ok::<_, String>(())
         }
     });
