@@ -165,7 +165,7 @@ pub fn App() -> impl IntoView {
                         <Route path="/token/info/:token_root/:key_principal" view=TokenInfo/>
                         <Route path="/token/info/:token_root" view=TokenInfo/>
                         <Route path="/token/transfer/:token_root" view=TokenTransfer/>
-                        <Route path="/board" view=ICPumpLanding ssr=SsrMode::InOrder/>
+                        <Route path="/board" view=ICPumpLanding ssr=SsrMode::PartiallyBlocked/>
                         <Route path="/icpump-ai" view=ICPumpAi/>
                     // <Route path="/test" view=TestIndex/>
                     </Route>
