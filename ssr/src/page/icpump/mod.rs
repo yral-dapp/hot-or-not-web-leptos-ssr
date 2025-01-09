@@ -111,14 +111,14 @@ pub fn ICPumpListing() -> impl IntoView {
     );
 
     create_effect(move |_| {
-        if let Some(Some(principal)) = curr_principal.try_get() {
+        if let Some(principal) = curr_principal.get() {
             spawn_local(async move {
                 let (_app, firestore) = init_firebase();
                 let mut stream = listen_to_documents(&firestore);
                 while let Some(doc) = stream.next().await {
                     let doc = process_token_list_item(doc, principal).await;
                     for item in doc {
-                        new_token_list.update(move |list| {
+                        new_token_list.try_update(move |list| {
                             list.push_front(item.clone());
                         });
                     }
