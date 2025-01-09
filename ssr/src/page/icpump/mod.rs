@@ -181,19 +181,21 @@ pub fn ICPumpListingFeed() -> impl IntoView {
                 }
             />
 
-            <For
-                each=token_list
-                key=|t| t.token_details.token_symbol.clone()
-                children=move |t| {
-                    view! {
-                        <TokenCard
-                            details=t.token_details
-                            is_airdrop_claimed=t.is_airdrop_claimed
-                            root=t.root
-                        />
-                    }
-                }
-            />
+            {move || {
+                token_list
+                    .get()
+                    .iter()
+                    .map(|t| {
+                        view! {
+                            <TokenCard
+                                details=t.token_details.clone()
+                                is_airdrop_claimed=t.is_airdrop_claimed
+                                root=t.root
+                            />
+                        }
+                    })
+                    .collect_view()
+            }}
 
             <Show when=move || loading.get()>
                 <TokenCardLoading />
