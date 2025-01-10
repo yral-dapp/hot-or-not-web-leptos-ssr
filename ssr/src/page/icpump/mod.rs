@@ -1,6 +1,7 @@
 use crate::component::overlay::PopupOverlay;
 use crate::consts::ICPUMP_LISTING_PAGE_SIZE;
 use crate::consts::USER_PRINCIPAL_STORE;
+use crate::state::canisters::authenticated_canisters;
 use crate::state::canisters::unauth_canisters;
 use std::collections::VecDeque;
 
@@ -16,6 +17,7 @@ use leptos_use::use_intersection_observer_with_options;
 use leptos_use::UseIntersectionObserverOptions;
 use serde::Deserialize;
 use serde::Serialize;
+use yral_canisters_common::Canisters;
 
 use crate::component::buttons::HighlightedLinkButton;
 use crate::component::icons::airdrop_icon::AirdropIcon;
@@ -25,6 +27,7 @@ use crate::component::icons::eye_hide_icon::EyeHiddenIcon;
 use crate::component::icons::send_icon::SendIcon;
 use crate::component::icons::share_icon::ShareIcon;
 use crate::component::share_popup::ShareContent;
+use crate::consts::ICPUMP_LISTING_PAGE_SIZE;
 use crate::utils::host::get_host;
 use crate::utils::token::firestore::init_firebase;
 use crate::utils::token::firestore::listen_to_documents;
@@ -117,20 +120,20 @@ pub fn ICPumpListingFeed() -> impl IntoView {
     );
 
     create_effect(move |_| {
-        spawn_local(async move {
-            let (_app, firestore) = init_firebase();
-            let mut stream = listen_to_documents(&firestore);
-            let curr_principal = curr_principal.get().unwrap();
-            while let Some(doc) = stream.next().await {
-                let doc = process_token_list_item(doc, curr_principal).await;
-                // push each item in doc to new_token_list
-                for item in doc {
-                    new_token_list.update(move |list| {
-                        list.push_front(item.clone());
-                    });
+        if let Some(principal) = curr_principal.get() {
+            spawn_local(async move {
+                let (_app, firestore) = init_firebase();
+                let mut stream = listen_to_documents(&firestore);
+                while let Some(doc) = stream.next().await {
+                    let doc = process_token_list_item(doc, principal).await;
+                    for item in doc {
+                        new_token_list.try_update(move |list| {
+                            list.push_front(item.clone());
+                        });
+                    }
                 }
-            }
-        });
+            })
+        }
     });
 
     let target = NodeRef::<Div>::new();
@@ -168,7 +171,6 @@ pub fn ICPumpListingFeed() -> impl IntoView {
                     }
                 }
             />
-
             {move || {
                 token_list
                     .get()

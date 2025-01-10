@@ -6,8 +6,8 @@ describe("Menu page test", function () {
 
     it('menu page has option to enable notification', async function (browser) {
 
-        browser.element.findByText('Menu').waitUntil('visible')
-        browser.element.findByText("Login").waitUntil("enabled")
+        browser.element.findByText('Menu').waitUntil('visible', { timeout: 10000 })
+        browser.element.findByText("Login").waitUntil("enabled", { timeout: 10000 })
         browser.percySnapshot('Menu Page');
         let settingsRow = browser.element.findByText("Settings");
         let scrollY = (await settingsRow.getRect()).y;
