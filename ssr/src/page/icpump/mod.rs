@@ -14,6 +14,7 @@ use leptos::*;
 use leptos_icons::Icon;
 use leptos_use::use_cookie;
 use leptos_use::use_intersection_observer_with_options;
+use leptos_use::use_media_query;
 use leptos_use::UseIntersectionObserverOptions;
 use serde::Deserialize;
 use serde::Serialize;
@@ -365,9 +366,24 @@ pub fn TokenCard(
 
 #[component]
 pub fn TokenCardLoadingFeed() -> impl IntoView {
-    (0..6)
-        .map(|_| view! { <TokenCardLoading /> })
-        .collect_view()
+    let is_lg_screen = use_media_query("(min-width: 1024px)");
+    let is_md_screen = use_media_query("(min-width: 768px)");
+
+    let num_cards = create_rw_signal(6);
+
+    create_effect(move |_| {
+        num_cards.set(match (is_lg_screen.get(), is_md_screen.get()) {
+            (true, _) => 6,
+            (_, true) => 4,
+            _ => 2,
+        });
+    });
+
+    move || {
+        (0..num_cards())
+            .map(|_| view! { <TokenCardLoading /> })
+            .collect_view()
+    }
 }
 
 #[component]
