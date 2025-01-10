@@ -365,7 +365,9 @@ pub fn TokenCard(
 
 #[component]
 pub fn TokenCardLoadingFeed() -> impl IntoView {
-    view! { {(0..12).map(|_| view! { <TokenCardLoading /> }).collect_view()} }
+    (0..6)
+        .map(|_| view! { <TokenCardLoading /> })
+        .collect_view()
 }
 
 #[component]
