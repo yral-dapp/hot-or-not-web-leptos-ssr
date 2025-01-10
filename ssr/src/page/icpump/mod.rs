@@ -27,7 +27,6 @@ use crate::component::icons::eye_hide_icon::EyeHiddenIcon;
 use crate::component::icons::send_icon::SendIcon;
 use crate::component::icons::share_icon::ShareIcon;
 use crate::component::share_popup::ShareContent;
-use crate::consts::ICPUMP_LISTING_PAGE_SIZE;
 use crate::utils::host::get_host;
 use crate::utils::token::firestore::init_firebase;
 use crate::utils::token::firestore::listen_to_documents;
@@ -96,14 +95,17 @@ pub fn ICPumpListingFeed() -> impl IntoView {
     let new_token_list: RwSignal<VecDeque<ProcessedTokenListResponse>> =
         create_rw_signal(VecDeque::new());
 
-    let _ = create_local_resource(
-        move || (page(), curr_principal()),
-        move |(page, curr_principal)| async move {
+    let fetch_res = authenticated_canisters().derive(
+        move || page.get(),
+        move |cans, page| async move {
+            let cans = Canisters::from_wire(cans.unwrap(), expect_context()).unwrap();
+            new_token_list.set(VecDeque::new());
+
             loading.set(true);
 
             let mut fetched_token_list = process_token_list_item(
                 get_paginated_token_list(page).await.unwrap(),
-                curr_principal.unwrap(),
+                cans.user_principal(),
             )
             .await;
 
@@ -120,6 +122,7 @@ pub fn ICPumpListingFeed() -> impl IntoView {
     );
 
     create_effect(move |_| {
+        fetch_res.refetch();
         if let Some(principal) = curr_principal.get() {
             spawn_local(async move {
                 let (_app, firestore) = init_firebase();
@@ -192,7 +195,7 @@ pub fn ICPumpListingFeed() -> impl IntoView {
             </Show>
         </div>
 
-        <div class="w-full h-0" node_ref=target></div>
+        <div class="w-full p-4" node_ref=target></div>
     }
 }
 
