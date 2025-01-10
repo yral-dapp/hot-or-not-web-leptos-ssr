@@ -18,7 +18,7 @@ describe('GRPC API Test', function() {
 
     const protoDescriptor = grpc.loadPackageDefinition(packageDefinition);
     // Replace with your service name and endpoint
-    client = new protoDescriptor.search.SearchService('prod-yral-icpump-search.fly.dev:443', grpc.credentials.createSsl());
+    client = new protoDescriptor.search.SearchService('prod-yral-icpumpsearch.fly.dev:443', grpc.credentials.createSsl());
   });
 
   it('should successfully make a GRPC API call to check pumpai', function(browser) {
