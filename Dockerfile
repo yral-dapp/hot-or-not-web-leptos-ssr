@@ -2,7 +2,7 @@ FROM scratch
 
 WORKDIR /app
 
-COPY ./ssr/target/x86_64-unknown-linux-musl/release/hash.txt ./hash.txt
+COPY ./target/x86_64-unknown-linux-musl/release/hash.txt ./hash.txt
 COPY ./target/x86_64-unknown-linux-musl/release/hot-or-not-web-leptos-ssr .
 
 COPY ./target/site ./site
