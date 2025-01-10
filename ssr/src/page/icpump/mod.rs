@@ -153,7 +153,7 @@ pub fn ICPumpListingFeed() -> impl IntoView {
     );
 
     view! {
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 ">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <For
                 each=move || new_token_list.get()
                 key=|t| t.token_details.token_symbol.clone()
@@ -186,16 +186,11 @@ pub fn ICPumpListingFeed() -> impl IntoView {
             }}
 
             <Show when=move || loading.get()>
-                <TokenCardLoading />
-                <TokenCardLoading />
-                <TokenCardLoading />
-                <TokenCardLoading />
-                <TokenCardLoading />
-                <TokenCardLoading />
+                <TokenCardLoadingFeed />
             </Show>
         </div>
 
-        <div class="w-full p-4" node_ref=target></div>
+        <div class="w-full h-0" node_ref=target></div>
     }
 }
 
@@ -361,6 +356,11 @@ pub fn TokenCard(
             </PopupOverlay>
         </div>
     }
+}
+
+#[component]
+pub fn TokenCardLoadingFeed() -> impl IntoView {
+    view! { {(0..12).map(|_| view! { <TokenCardLoading /> }).collect_view()} }
 }
 
 #[component]

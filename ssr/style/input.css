@@ -163,7 +163,7 @@
 }
 
 .bg-loading {
-    animation: bg-loading 1s infinite;
+    animation: bg-loading 2s infinite;
 }
 
 @keyframes bg-loading {
