@@ -206,7 +206,7 @@ fn DumpButton() -> impl IntoView {
 
             player_data.update(|value| {
                 if let Some(value) = value.as_mut() {
-                    value.wallet_balance -= 1u64;
+                    value.wallet_balance -= 1;
                 }
             });
 
@@ -297,7 +297,7 @@ fn PumpButton() -> impl IntoView {
 
             player_data.update(|value| {
                 if let Some(value) = value.as_mut() {
-                    value.wallet_balance -= 1u64;
+                    value.wallet_balance -= 1;
                 }
             });
 
@@ -367,11 +367,11 @@ fn MockPumpButton() -> impl IntoView {
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 struct PlayerData {
     games_count: u64,
-    wallet_balance: Nat,
+    wallet_balance: u128,
 }
 
 impl PlayerData {
-    pub fn new(games_count: u64, wallet_balance: Nat) -> Self {
+    pub fn new(games_count: u64, wallet_balance: u128) -> Self {
         Self {
             games_count,
             wallet_balance,
@@ -404,11 +404,19 @@ impl PlayerData {
             .parse()
             .map_err(|_| "Couldn't parse nat number".to_string())?;
 
-        // backend returns dolr in e8s, and 1dolr = 100gdolr
-        let wallet_balance = wallet_balance * 100u64 / 10u64.pow(8);
+        let wallet_balance = convert_e8s_to_gdolr(wallet_balance);
 
         Ok(Self::new(games_count, wallet_balance))
     }
+}
+
+/// Convert e8s to gdolr
+/// backend returns dolr in e8s, and 1dolr = 100gdolr
+fn convert_e8s_to_gdolr(num: Nat) -> u128 {
+    (num * 100u64 / 10u64.pow(8))
+        .0
+        .try_into()
+        .expect("gdolr, scoped at individual player, to be small enough to fit in a u128")
 }
 
 // this data is kept out of GameState so that mutating pumps and dumps doesn't
@@ -429,7 +437,7 @@ enum GameState {
 
 #[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
 enum GameResult {
-    Win { amount: u64 },
+    Win { amount: u128 },
     Loss,
 }
 
@@ -682,10 +690,10 @@ fn compute_game_result(
         return GameResult::Win { amount: 0 };
     }
 
-    let user_direction = if running_data.pumps > running_data.dumps {
-        GameDirection::Pump
+    let (user_direction, user_bet_count) = if running_data.pumps > running_data.dumps {
+        (GameDirection::Pump, running_data.pumps)
     } else {
-        GameDirection::Dump
+        (GameDirection::Dump, running_data.dumps)
     };
 
     // TODO: impl eq on GameDirection in yral-common
@@ -696,7 +704,8 @@ fn compute_game_result(
     if m(user_direction) != m(raw_result.direction) {
         GameResult::Loss
     } else {
-        let amount = 0;
+        let amount = (user_bet_count / raw_result.bet_count) * raw_result.reward_pool;
+        let amount = convert_e8s_to_gdolr(amount);
         GameResult::Win { amount }
     }
 }
