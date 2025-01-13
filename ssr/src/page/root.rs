@@ -137,7 +137,7 @@ pub fn YralRootPage() -> impl IntoView {
             }}
 
         </Suspense>
-    }
+    }.into_any()
 }
 
 #[component]
@@ -146,5 +146,5 @@ pub fn RootPage() -> impl IntoView {
         Either::Left(view! { <CreatorDaoRootPage /> })
     } else {
         Either::Right(view! { <YralRootPage /> })
-    }
+    }.into_any()
 }

@@ -338,5 +338,5 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
                 Continue Browsing
             </button>
         </div>
-    }
+    }.into_any()
 }

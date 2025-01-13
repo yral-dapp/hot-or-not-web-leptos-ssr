@@ -18,5 +18,5 @@ pub fn Modal(#[prop(into)] show: RwSignal<bool>, children: ChildrenFn) -> impl I
                 <div class="py-4 w-full">{children()}</div>
             </div>
         </ShadowOverlay>
-    }
+    }.into_any()
 }

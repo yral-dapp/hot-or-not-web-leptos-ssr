@@ -492,5 +492,5 @@ pub fn HNGameOverlay(post: PostDetails) -> impl IntoView {
                 )
             })}
         </Suspense>
-    }
+    }.into_any()
 }

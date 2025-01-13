@@ -280,5 +280,5 @@ pub fn Menu() -> impl IntoView {
             </div>
             <MenuFooter />
         </div>
-    }
+    }.into_any()
 }

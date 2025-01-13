@@ -221,5 +221,5 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
                 </div>
             </div>
         </div>
-    }
+    }.into_any()
 }

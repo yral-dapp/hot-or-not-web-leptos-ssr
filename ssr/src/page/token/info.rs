@@ -262,5 +262,5 @@ pub fn TokenInfo() -> impl IntoView {
                 }
             })}
         </Suspense>
-    }
+    }.into_any()
 }

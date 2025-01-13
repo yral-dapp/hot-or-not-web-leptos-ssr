@@ -123,7 +123,7 @@ pub fn TokenTile(user_principal: Principal, token_meta_data: TokenMetadata) -> i
             </div>
 
         </div>
-    }
+    }.into_any()
 }
 
 #[component]

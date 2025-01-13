@@ -499,7 +499,7 @@ pub fn CreateToken() -> impl IntoView {
             />
 
         </div>
-    }
+    }.into_any()
 }
 
 #[component]
@@ -706,5 +706,5 @@ pub fn CreateTokenSettings() -> impl IntoView {
                 Reset to default
             </button>
         </div>
-    }
+    }.into_any()
 }

@@ -334,7 +334,7 @@ pub fn PostView() -> impl IntoView {
                 { Some(view! { <PostViewWithUpdatesMLFeed initial_post /> }) }
             })}
         </Suspense>
-    }
+    }.into_any()
 }
 
 // #[component]

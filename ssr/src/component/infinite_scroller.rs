@@ -26,7 +26,7 @@ pub(crate) fn InfiniteScroller<Prov, EF, N, RootNode>(
 ) -> impl IntoView
 where
     RootNode: ElementType + Clone + 'static,
-    NodeRef<RootNode>: IntoElementsMaybeSignal<web_sys::Element, SignalVecMarker>,
+    NodeRef<RootNode>: IntoElementsMaybeSignal<leptos::web_sys::Element, SignalVecMarker>,
     Prov: CursoredDataProvider + Clone + 'static + Send + Sync,
     <Prov as CursoredDataProvider>::Data: Send + Sync,
     EF: Fn(InferData<Prov>, Option<NodeRef<RootNode>>) -> N + Clone + 'static + Send + Sync,
@@ -96,5 +96,5 @@ where
         <Show when=move || {
             !data_loading() && data.with(|d| d.is_empty())
         }>{empty_content.run()}</Show>
-    }
+    }.into_any()
 }

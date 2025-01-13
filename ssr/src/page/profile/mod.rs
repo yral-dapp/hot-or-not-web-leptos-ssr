@@ -158,7 +158,7 @@ fn ProfileViewInner(user: ProfileDetails, user_canister: Principal) -> impl Into
                 <ListSwitcher1 user_canister user_principal=user.principal />
             </div>
         </div>
-    }
+    }.into_any()
 }
 #[component]
 pub fn ProfileView() -> impl IntoView {
@@ -241,7 +241,7 @@ pub fn ProfileView() -> impl IntoView {
                 }
             })}
         </Suspense>
-    }
+    }.into_any()
 }
 
 #[component]

@@ -99,7 +99,7 @@ pub fn BgView(
             {move || post().map(|post| view! { <VideoDetailsOverlay post /> })}
             {children()}
         </div>
-    }
+    }.into_any()
 }
 
 #[component]

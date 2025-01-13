@@ -288,7 +288,7 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
                 </button>
             </div>
         </Modal>
-    }
+    }.into_any()
 }
 
 #[component]
