@@ -27,17 +27,24 @@ const CSRF_TOKEN_COOKIE: &str = "google-csrf-token";
 
 pub async fn google_auth_url_impl(
     oauth2: openidconnect::core::CoreClient,
+    ios_redirect_uri: Option<String>,
 ) -> Result<String, ServerFnError> {
     let (pkce_challenge, pkce_verifier) = PkceCodeChallenge::new_random_sha256();
-    let (auth_url, csrf_token, _) = oauth2
+    let mut oauth2_request = oauth2
         .authorize_url(
             CoreAuthenticationFlow::AuthorizationCode,
             CsrfToken::new_random,
             Nonce::new_random,
         )
         .add_scope(Scope::new("openid".into()))
-        .set_pkce_challenge(pkce_challenge)
-        .url();
+        .set_pkce_challenge(pkce_challenge);
+
+    if ios_redirect_uri.is_some() {
+        oauth2_request =
+            oauth2_request.add_extra_param("ios_redirect_uri", ios_redirect_uri.unwrap());
+    }
+
+    let (auth_url, csrf_token, _) = oauth2_request.url();
 
     let key: Key = expect_context();
     let mut jar: PrivateCookieJar = extract_with_state(&key).await?;
