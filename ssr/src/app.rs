@@ -6,7 +6,6 @@ use crate::{
     component::{base_route::BaseRoute, nav::NavBar},
     error_template::{AppError, ErrorTemplate},
     page::{
-        account_transfer::AccountTransfer,
         err::ServerErrorPage,
         leaderboard::Leaderboard,
         logout::Logout,
