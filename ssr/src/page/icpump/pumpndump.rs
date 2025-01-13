@@ -1,11 +1,10 @@
 use candid::{Nat, Principal};
 use codee::string::{FromToStringCodec, JsonSerdeCodec};
-use futures::StreamExt;
 use leptos::{
     component, create_action, create_effect, create_rw_signal, create_signal, expect_context,
-    html::Div, logging, provide_context, spawn_local, view, For, IntoView, NodeRef, RwSignal, Show,
-    Signal, SignalGet, SignalGetUntracked, SignalSet, SignalStream, SignalUpdate,
-    SignalUpdateUntracked, Suspense, WriteSignal,
+    html::Div, logging, provide_context, view, For, IntoView, NodeRef, RwSignal, Show, Signal,
+    SignalGet, SignalGetUntracked, SignalSet, SignalUpdate, SignalUpdateUntracked, Suspense,
+    WriteSignal,
 };
 use leptos_icons::Icon;
 use leptos_use::{
@@ -44,6 +43,8 @@ static PUMP_AND_DUMP_WORKER_URL: Lazy<Url> =
     Lazy::new(|| Url::parse("http://localhost:8787/").unwrap());
 
 type GameRunningDataSignal = RwSignal<Option<GameRunningData>>;
+type PlayerDataSignal = RwSignal<Option<PlayerData>>;
+type GameStateSignal = RwSignal<Option<GameState>>;
 
 type Sendfn = Rc<dyn Fn(&WsRequest)>;
 
@@ -71,7 +72,7 @@ impl WebsocketContext {
 
 #[component]
 fn Header() -> impl IntoView {
-    let data = expect_context::<RwSignal<Option<PlayerGamesCountAndBalance>>>();
+    let data = expect_context::<RwSignal<Option<PlayerData>>>();
     view! {
         <div class="flex items-center w-full justify-between py-2 gap-8">
             <a
@@ -187,7 +188,8 @@ fn MockBullBearSlider() -> impl IntoView {
 #[component]
 fn DumpButton() -> impl IntoView {
     let running_data: GameRunningDataSignal = expect_context();
-    let player_data = expect_context::<RwSignal<Option<PlayerGamesCountAndBalance>>>();
+    let player_data = expect_context::<PlayerDataSignal>();
+    let websocket: RwSignal<Option<WebsocketContext>> = expect_context();
     let counter = move || {
         running_data
             .get()
@@ -195,19 +197,25 @@ fn DumpButton() -> impl IntoView {
             .unwrap_or_else(|| "-".into())
     };
     let onclick = move |_| {
-        // TODO: write an async action to send event over ws, be optimisitic about the state
-        // TODO: add debouncing
-        player_data.update(|value| {
-            if let Some(value) = value.as_mut() {
-                value.wallet_balance -= 1u64;
-            }
-        });
+        if let Some(websocket) = websocket.get().as_ref() {
+            logging::log!("can has websocket");
+            websocket.send(&WsRequest {
+                request_id: uuid::Uuid::new_v4(),
+                msg: WsMessage::Bet(GameDirection::Dump),
+            });
 
-        running_data.update(|value| {
-            if let Some(value) = value {
-                value.dumps += 1;
-            }
-        });
+            player_data.update(|value| {
+                if let Some(value) = value.as_mut() {
+                    value.wallet_balance -= 1u64;
+                }
+            });
+
+            running_data.update(|value| {
+                if let Some(value) = value {
+                    value.dumps += 1;
+                }
+            });
+        }
 
         // debounceResistanceAnimation();
     };
@@ -269,11 +277,11 @@ fn MockDumpButton() -> impl IntoView {
 
 #[component]
 fn PumpButton() -> impl IntoView {
-    let game_state: GameRunningDataSignal = expect_context();
-    let player_data = expect_context::<RwSignal<Option<PlayerGamesCountAndBalance>>>();
+    let running_data: GameRunningDataSignal = expect_context();
+    let player_data = expect_context::<RwSignal<Option<PlayerData>>>();
     let websocket: RwSignal<Option<WebsocketContext>> = expect_context();
     let counter = move || {
-        game_state
+        running_data
             .get()
             .map(|value| value.pumps.to_string())
             .unwrap_or_else(|| "-".into())
@@ -293,7 +301,7 @@ fn PumpButton() -> impl IntoView {
                 }
             });
 
-            game_state.update(|value| {
+            running_data.update(|value| {
                 if let Some(value) = value.as_mut() {
                     value.pumps += 1;
                 }
@@ -357,12 +365,12 @@ fn MockPumpButton() -> impl IntoView {
 }
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-struct PlayerGamesCountAndBalance {
+struct PlayerData {
     games_count: u64,
     wallet_balance: Nat,
 }
 
-impl PlayerGamesCountAndBalance {
+impl PlayerData {
     pub fn new(games_count: u64, wallet_balance: Nat) -> Self {
         Self {
             games_count,
@@ -409,7 +417,7 @@ impl PlayerGamesCountAndBalance {
 struct GameRunningData {
     pumps: u64,
     dumps: u64,
-    winning_pot: u64,
+    winning_pot: Option<u64>,
 }
 
 #[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
@@ -426,15 +434,6 @@ enum GameResult {
 }
 
 impl GameState {
-    #[cfg(any(feature = "local-bin", feature = "local-lib"))]
-    pub async fn load(
-        _owner_principal: Principal,
-        _root_principal: Principal,
-    ) -> Result<Self, String> {
-        Ok(Self::Playing)
-    }
-
-    #[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
     pub async fn load(
         owner_principal: Principal,
         root_principal: Principal,
@@ -465,22 +464,13 @@ impl GameState {
 }
 
 impl GameRunningData {
-    pub fn new(pumps: u64, dumps: u64, winning_pot: u64) -> Self {
+    pub fn new(pumps: u64, dumps: u64, winning_pot: Option<u64>) -> Self {
         Self {
             pumps,
             dumps,
             winning_pot,
         }
     }
-
-    // #[cfg(any(feature = "local-bin", feature = "local-lib"))]
-    // pub async fn load(
-    //     _owner: Principal,
-    //     _token_root: Principal,
-    //     _user_canister: Principal,
-    // ) -> Result<Self, String> {
-    //     Ok(Self::new(0, 0, 100))
-    // }
 
     // #[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
     pub async fn load(
@@ -499,7 +489,8 @@ impl GameRunningData {
             .await
             .map_err(|err| format!("Couldn't parse bets out of repsonse: {err}"))?;
 
-        Ok(Self::new(bets.pumps, bets.dumps, 100))
+        // Maybe we should also load winning pot as part of game running data
+        Ok(Self::new(bets.pumps, bets.dumps, None))
     }
 }
 
@@ -536,8 +527,9 @@ fn GameCardPreResult(#[prop(into)] game_state: GameState) -> impl IntoView {
     let winning_pot = move || {
         running_data
             .get()
-            .map(|value| value.winning_pot.to_string())
-            .unwrap_or_else(|| "-".into())
+            .and_then(|data| data.winning_pot)
+            .map(|value| value.to_string())
+            .unwrap_or_else(|| "--".into())
     };
     view! {
         <div
@@ -596,6 +588,14 @@ fn WonCard(#[prop()] result: GameResult) -> impl IntoView {
     let GameResult::Win { amount } = result else {
         unreachable!("Won card must only be shown in win condition")
     };
+
+    let game_state: GameStateSignal = expect_context();
+    let running_data: GameRunningDataSignal = expect_context();
+
+    let on_click = move |_| {
+        game_state.update(|s| *s = Some(GameState::Playing));
+        running_data.update(|s| *s = Some(GameRunningData::new(0, 0, None)));
+    };
     // TODO: add confetti animation
     view! {
         <div
@@ -617,7 +617,7 @@ fn WonCard(#[prop()] result: GameResult) -> impl IntoView {
                 </div>
             </div>
             <button
-                on:click=move |_| todo!("figure out what to do")
+                on:click=on_click
                 class="w-full px-5 py-3 rounded-lg flex items-center transition-all justify-center gap-8 font-kumbh font-bold"
                 style:background="linear-gradient(73deg, #DA539C 0%, #E2017B 33%, #5F0938 100%)"
             >Start playing again</button>
@@ -627,6 +627,14 @@ fn WonCard(#[prop()] result: GameResult) -> impl IntoView {
 
 #[component]
 fn LostCard() -> impl IntoView {
+    let game_state: GameStateSignal = expect_context();
+    let running_data: GameRunningDataSignal = expect_context();
+
+    let on_click = move |_| {
+        game_state.update(|s| *s = Some(GameState::Playing));
+        running_data.update(|s| *s = Some(GameRunningData::new(0, 0, None)));
+    };
+
     view! {
         <div
             style="background: radial-gradient(100% 100% at -14% 74%, rgba(46, 124, 246, 0.16) 0%, rgba(23, 23, 23, 1) 100%);"
@@ -641,7 +649,7 @@ fn LostCard() -> impl IntoView {
                 </div>
             </div>
             <button
-                on:click=move |_| todo!("figure out what to do")
+                on:click=on_click
                 class="w-full px-5 py-3 rounded-lg flex items-center transition-all justify-center gap-8 font-kumbh font-bold"
                 style:background="linear-gradient(73deg, #DA539C 0%, #E2017B 33%, #5F0938 100%)"
             >Keep Playing</button>
@@ -666,11 +674,37 @@ fn ResultDeclared(#[prop()] game_state: GameState) -> impl IntoView {
     }
 }
 
+fn compute_game_result(
+    running_data: GameRunningData,
+    raw_result: yral_pump_n_dump_common::ws::GameResult,
+) -> GameResult {
+    if running_data.pumps == running_data.dumps {
+        return GameResult::Win { amount: 0 };
+    }
+
+    let user_direction = if running_data.pumps > running_data.dumps {
+        GameDirection::Pump
+    } else {
+        GameDirection::Dump
+    };
+
+    // TODO: impl eq on GameDirection in yral-common
+    let m = |direction: GameDirection| match direction {
+        GameDirection::Pump => 0,
+        GameDirection::Dump => 1,
+    };
+    if m(user_direction) != m(raw_result.direction) {
+        GameResult::Loss
+    } else {
+        let amount = 0;
+        GameResult::Win { amount }
+    }
+}
+
 #[component]
 fn GameCard(#[prop()] token: ProcessedTokenListResponse) -> impl IntoView {
     let owner_canister_id = token.token_owner.as_ref().unwrap().canister_id;
     let token_root = token.root;
-    let toke_name = token.token_details.token_name.clone();
 
     let websocket = create_rw_signal(None::<WebsocketContext>);
     provide_context(websocket);
@@ -679,6 +713,8 @@ fn GameCard(#[prop()] token: ProcessedTokenListResponse) -> impl IntoView {
     let game_state = create_rw_signal(None::<GameState>);
     provide_context(game_state);
     provide_context(token);
+
+    let player_data = expect_context::<RwSignal<Option<PlayerData>>>();
 
     let identity: RwSignal<Option<Canisters<true>>> = expect_context();
     let load_running_data = create_action(move |&user_canister| async move {
@@ -733,17 +769,46 @@ fn GameCard(#[prop()] token: ProcessedTokenListResponse) -> impl IntoView {
 
     create_effect(move |_| {
         if let Some(websocket) = websocket.get() {
-            logging::log!("starting up websocket message listener for {}", toke_name);
-            spawn_local(async move {
-                let mut messages = websocket.message.to_stream();
+            if let Some(message) = websocket.message.get() {
+                match message.response {
+                    WsResp::Ok => {
+                        logging::log!("ws: received ok");
+                    }
+                    WsResp::Error(message) => {
+                        // TODO: handle this error
+                        logging::error!("ws: received error: {message}");
+                    }
+                    WsResp::GameResultEvent(result) => {
+                        logging::log!("ws: received result: winning direction = {}, bet_count = {}, reward_pool = {}", match result.direction {
+                             GameDirection::Pump => "pump",
+                             GameDirection::Dump => "dump",
+                        }, result.bet_count, result.reward_pool);
+                        let running_data = running_data
+                            .get()
+                            .expect("running data to exist if we have recieved results");
+                        let result = compute_game_result(running_data, result);
 
-                while let Some(message) = messages.next().await.flatten() {
-                    logging::log!(
-                        "{}",
-                        serde_json::to_string_pretty(&message).expect("to be serialized")
-                    )
+                        game_state.update(|s| *s = Some(GameState::ResultDeclared(result)));
+                        match result {
+                            GameResult::Win { amount } => {
+                                player_data.update(|data| {
+                                    if let Some(data) = data {
+                                        data.wallet_balance += amount;
+                                    }
+                                });
+                            }
+                            GameResult::Loss => {
+                                // noop
+                            }
+                        }
+                    }
+                    WsResp::WinningPoolEvent(pot) => {
+                        if let Some(data) = running_data.get().as_mut() {
+                            data.winning_pot = Some(pot);
+                        }
+                    }
                 }
-            });
+            }
         }
     });
 
@@ -917,7 +982,7 @@ fn OnboardingPopup() -> impl IntoView {
 
 #[component]
 pub fn PumpNDump() -> impl IntoView {
-    let player_games_count_and_balance = create_rw_signal(None::<PlayerGamesCountAndBalance>);
+    let player_games_count_and_balance = create_rw_signal(None::<PlayerData>);
     let cans_wire_res = authenticated_canisters();
     // i wonder if we remove this excessive cloning somehow
     let cans_wire_res_for_tokens = cans_wire_res.clone();
@@ -955,7 +1020,7 @@ pub fn PumpNDump() -> impl IntoView {
             let cans = Canisters::from_wire(cans_wire.clone(), expect_context())
                 .map_err(|_| "Unable to authenticate".to_string())?;
 
-            let data = PlayerGamesCountAndBalance::load(cans.user_canister())
+            let data = PlayerData::load(cans.user_canister())
                 .await
                 .map_err(|_| "Couldn't load player data".to_string())?;
 
