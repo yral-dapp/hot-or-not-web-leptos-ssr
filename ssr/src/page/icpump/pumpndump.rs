@@ -35,8 +35,13 @@ use crate::{
     utils::token::icpump::get_paginated_token_list_with_limit,
 };
 
+#[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
 static PUMP_AND_DUMP_WORKER_URL: Lazy<Url> =
     Lazy::new(|| Url::parse("https://yral-pump-n-dump.tushar-23b.workers.dev/").unwrap());
+
+#[cfg(any(feature = "local-bin", feature = "local-lib"))]
+static PUMP_AND_DUMP_WORKER_URL: Lazy<Url> =
+    Lazy::new(|| Url::parse("http://localhost:8787/").unwrap());
 
 type GameRunningDataSignal = RwSignal<Option<GameRunningData>>;
 
@@ -277,6 +282,7 @@ fn PumpButton() -> impl IntoView {
     let onclick = move |_| {
         // TODO: add debouncing
         if let Some(websocket) = websocket.get().as_ref() {
+            logging::log!("can has websocket");
             websocket.send(&WsRequest {
                 request_id: uuid::Uuid::new_v4(),
                 msg: WsMessage::Bet(GameDirection::Pump),
@@ -696,7 +702,12 @@ fn GameCard(#[prop()] token: ProcessedTokenListResponse) -> impl IntoView {
         let ident = identity.get();
         if let Some(value) = &ident {
             let mut ws_url = PUMP_AND_DUMP_WORKER_URL.clone();
+            #[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
             ws_url.set_scheme("wss").expect("schema to valid");
+
+            #[cfg(any(feature = "local-bin", feature = "local-lib"))]
+            ws_url.set_scheme("ws").expect("schema to valid");
+
             let websocket_url =
                 websocket_connection_url(ws_url, value.identity(), owner_canister_id, token_root)
                     .map_err(|err| format!("Coulnd't create ws connection url: {err}"))?;
@@ -1034,8 +1045,6 @@ pub fn PumpNDump() -> impl IntoView {
                 process_token_list_item(more_tokens.clone(), user_principal).await;
             // ignore tokens with no owners
             more_tokens.retain(|item| item.token_owner.is_some());
-
-            logging::log!("{more_tokens:?}");
 
             tokens.update(|tokens| {
                 tokens.extend_from_slice(&more_tokens);
