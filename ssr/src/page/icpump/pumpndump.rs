@@ -65,7 +65,6 @@ impl WebsocketContext {
     // create a method to avoid having to use parantheses around the field
     #[inline(always)]
     pub fn send(&self, message: &WsRequest) {
-        // i wanna get rid of this lock
         (self.sendfn)(message);
     }
 }
@@ -671,6 +670,7 @@ fn ResultDeclared(#[prop()] game_state: GameState) -> impl IntoView {
 fn GameCard(#[prop()] token: ProcessedTokenListResponse) -> impl IntoView {
     let owner_canister_id = token.token_owner.as_ref().unwrap().canister_id;
     let token_root = token.root;
+    let toke_name = token.token_details.token_name.clone();
 
     let websocket = create_rw_signal(None::<WebsocketContext>);
     provide_context(websocket);
@@ -733,6 +733,7 @@ fn GameCard(#[prop()] token: ProcessedTokenListResponse) -> impl IntoView {
 
     create_effect(move |_| {
         if let Some(websocket) = websocket.get() {
+            logging::log!("starting up websocket message listener for {}", toke_name);
             spawn_local(async move {
                 let mut messages = websocket.message.to_stream();
 
@@ -766,48 +767,6 @@ fn GameCard(#[prop()] token: ProcessedTokenListResponse) -> impl IntoView {
             load_game_state.dispatch(());
         }
     });
-
-    // create action to calling and game runnnig data
-    // create effect to listen for changes in identity, load game running data
-
-    // create websocket
-    // listen for changes related to state
-    // if ok, no change
-    // if error(what?) => cooldown/pending
-    // if Result(direction, )
-    create_effect(move |_| {
-        let result = running_data.get().as_ref().and_then(|data| {
-            if data.pumps >= 3 {
-                Some(GameResult::Win { amount: 10 })
-            } else if data.dumps >= 3 {
-                Some(GameResult::Loss)
-            } else {
-                None
-            }
-        });
-
-        if let Some(result) = result {
-            game_state.update(|state| {
-                if let Some(state) = state.as_mut() {
-                    *state = GameState::Pending;
-                }
-            });
-
-            wasm_bindgen_futures::spawn_local(async move {
-                gloo::timers::future::TimeoutFuture::new(1000).await;
-
-                game_state.update(|state| {
-                    if let Some(state) = state.as_mut() {
-                        *state = GameState::ResultDeclared(result);
-                    }
-                });
-            })
-        }
-    });
-
-    //
-    // open up the websocket connection
-    //
 
     view! {
         <Suspense>
