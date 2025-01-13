@@ -27,7 +27,7 @@ async fn google_auth_redirector() -> Result<(), ServerFnError> {
 }
 
 #[server(endpoint = "google_auth_url", input = GetUrl, output = Json)]
-async fn google_auth_url(ios_redirect_uri: String) -> Result<(), ServerFnError> {
+async fn google_auth_url(ios_redirect_uri: String) -> Result<String, ServerFnError> {
     use crate::auth::core_clients::CoreClients;
     use crate::auth::server_impl::google::google_auth_url_impl;
     use http::header::HeaderMap;
