@@ -110,7 +110,7 @@ async fn handle_oauth_query_for_external_client(
         NavigateOptions {
             resolve: false,
             ..Default::default()
-        }
+        },
     );
     Ok(())
 }
