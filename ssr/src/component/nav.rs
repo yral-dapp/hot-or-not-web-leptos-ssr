@@ -1,4 +1,9 @@
-use crate::{consts::USER_PRINCIPAL_STORE, utils::host::show_cdao_page};
+use std::rc::Rc;
+
+use crate::{
+    consts::USER_PRINCIPAL_STORE,
+    utils::host::{show_cdao_page, show_pnd_page},
+};
 
 use super::nav_icons::*;
 use candid::Principal;
@@ -8,18 +13,272 @@ use leptos_icons::*;
 use leptos_router::*;
 use leptos_use::use_cookie;
 
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+enum SiteHost {
+    #[default]
+    Yral,
+    Pumpdump,
+    Icpump,
+}
+
+impl SiteHost {
+    /// Figures out what site are we are hosting from
+    fn decide() -> Self {
+        if show_cdao_page() {
+            Self::Icpump
+        } else if show_pnd_page() {
+            Self::Pumpdump
+        } else {
+            Self::default()
+        }
+    }
+}
+
+#[derive(Clone)]
+struct NavItem {
+    render_data: NavItemRenderData,
+    matcher: Rc<dyn Fn() -> bool>,
+}
+
+impl NavItem {
+    fn key(&self) -> String {
+        match &self.render_data {
+            NavItemRenderData::Icon { href, .. } => href.get(),
+            NavItemRenderData::Upload => "upload".into(),
+        }
+    }
+
+    fn is_selected(&self) -> bool {
+        (self.matcher)()
+    }
+
+    fn is_upload(&self) -> bool {
+        match self.render_data {
+            NavItemRenderData::Upload => true,
+            _ => false,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+enum NavItemRenderData {
+    Icon {
+        icon: icondata_core::Icon,
+        filled_icon: Option<icondata_core::Icon>,
+        href: MaybeSignal<String>,
+    },
+    Upload,
+}
+
+fn pnd_nav_items() -> Vec<NavItem> {
+    let cur_location = use_location();
+    let path = cur_location.pathname;
+    let (user_principal, _) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE);
+    let home_path = create_rw_signal("/".to_string());
+    vec![
+        NavItem {
+            render_data: NavItemRenderData::Icon {
+                icon: HomeSymbol,
+                filled_icon: Some(HomeSymbolFilled),
+                href: home_path.into(),
+            },
+            matcher: Rc::new(move || matches!(path.get().as_str(), "/")),
+        },
+        NavItem {
+            render_data: NavItemRenderData::Icon {
+                icon: TokenSymbol,
+                filled_icon: Some(TokenSymbolFilled),
+                href: "/board".into(),
+            },
+            matcher: Rc::new(move || matches!(path.get().as_str(), "/board")),
+        },
+        NavItem {
+            render_data: NavItemRenderData::Upload,
+            matcher: Rc::new(move || matches!(path.get().as_str(), "/token/create")),
+        },
+        NavItem {
+            render_data: NavItemRenderData::Icon {
+                icon: WalletSymbol,
+                filled_icon: Some(WalletSymbolFilled),
+                href: "/wallet".into(),
+            },
+            matcher: Rc::new(move || {
+                // is selected only if the user is viewing their own wallet
+                let Some(user_principal) = user_principal.get() else {
+                    return false;
+                };
+                path.get().starts_with(&format!("/wallet/{user_principal}"))
+            }),
+        },
+        NavItem {
+            render_data: NavItemRenderData::Icon {
+                icon: MenuSymbol,
+                filled_icon: None,
+                href: "/menu".into(),
+            },
+            matcher: Rc::new(move || matches!(path.get().as_str(), "/menu")),
+        },
+    ]
+}
+
+fn yral_nav_items() -> Vec<NavItem> {
+    let cur_location = use_location();
+    let path = cur_location.pathname;
+    let (user_principal, _) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE);
+    let home_path = create_rw_signal("/".to_string());
+    vec![
+        NavItem {
+            render_data: NavItemRenderData::Icon {
+                icon: HomeSymbol,
+                filled_icon: Some(HomeSymbolFilled),
+                href: home_path.into(),
+            },
+            matcher: Rc::new(move || matches!(path.get().as_str(), "/")),
+        },
+        NavItem {
+            render_data: NavItemRenderData::Icon {
+                icon: WalletSymbol,
+                filled_icon: Some(WalletSymbolFilled),
+                href: "/wallet".into(),
+            },
+            matcher: Rc::new(move || {
+                // is selected only if the user is viewing their own wallet
+                let Some(user_principal) = user_principal.get() else {
+                    return false;
+                };
+                path.get().starts_with(&format!("/wallet/{user_principal}"))
+            }),
+        },
+        NavItem {
+            render_data: NavItemRenderData::Upload,
+            matcher: Rc::new(move || matches!(path.get().as_str(), "/token/create")),
+        },
+        NavItem {
+            render_data: NavItemRenderData::Icon {
+                icon: ProfileIcon,
+                filled_icon: Some(ProfileIconFilled),
+                href: "/profile/token".into(),
+            },
+            matcher: Rc::new(move || {
+                // is selected only if the user is viewing their own profile
+                let Some(user_principal) = user_principal.get() else {
+                    return false;
+                };
+                path.get()
+                    .starts_with(&format!("/profile/{user_principal}"))
+            }),
+        },
+        NavItem {
+            render_data: NavItemRenderData::Icon {
+                icon: MenuSymbol,
+                filled_icon: None,
+                href: "/menu".into(),
+            },
+            matcher: Rc::new(move || matches!(path.get().as_str(), "/menu")),
+        },
+    ]
+}
+
+fn icpump_nav_items() -> Vec<NavItem> {
+    let cur_location = use_location();
+    let path = cur_location.pathname;
+    let (user_principal, _) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE);
+    let home_path = create_rw_signal("/".to_string());
+    vec![
+        NavItem {
+            render_data: NavItemRenderData::Icon {
+                icon: HomeSymbol,
+                filled_icon: Some(HomeSymbolFilled),
+                href: home_path.into(),
+            },
+            matcher: Rc::new(move || matches!(path.get().as_str(), "/")),
+        },
+        NavItem {
+            render_data: NavItemRenderData::Icon {
+                icon: WalletSymbol,
+                filled_icon: Some(WalletSymbolFilled),
+                href: "/wallet".into(),
+            },
+            matcher: Rc::new(move || {
+                // is selected only if the user is viewing their own wallet
+                let Some(user_principal) = user_principal.get() else {
+                    return false;
+                };
+                path.get().starts_with(&format!("/wallet/{user_principal}"))
+            }),
+        },
+        NavItem {
+            render_data: NavItemRenderData::Upload,
+            matcher: Rc::new(move || matches!(path.get().as_str(), "/token/create")),
+        },
+        NavItem {
+            render_data: NavItemRenderData::Icon {
+                icon: ProfileIcon,
+                filled_icon: Some(ProfileIconFilled),
+                href: "/icpump-ai".into(),
+            },
+            matcher: Rc::new(move || matches!(path.get().as_str(), "/icpump-ai")),
+        },
+        NavItem {
+            render_data: NavItemRenderData::Icon {
+                icon: MenuSymbol,
+                filled_icon: None,
+                href: "/menu".into(),
+            },
+            matcher: Rc::new(move || matches!(path.get().as_str(), "/menu")),
+        },
+    ]
+}
+
+fn get_nav_items() -> Vec<NavItem> {
+    match SiteHost::decide() {
+        SiteHost::Yral => yral_nav_items(),
+        SiteHost::Pumpdump => pnd_nav_items(),
+        SiteHost::Icpump => pnd_nav_items(),
+    }
+}
+
+#[component]
+pub fn NavBar() -> impl IntoView {
+    let items = get_nav_items();
+
+    let (items, _) = create_signal(items);
+    view! {
+        <Suspense>
+            <div class="flex fixed bottom-0 left-0 z-50 flex-row justify-between items-center px-6 w-full bg-black/80">
+                <For each=move || (0..items.get().len()) key=|item| *item let:item>
+                    <Show
+                        when=move || items.get()[item].is_upload()
+                        fallback=move || {
+                            let ref item = items.get()[item];
+                            let cur_selected = item.is_selected();
+                            let NavItemRenderData::Icon { href, icon, filled_icon } = item.render_data.clone() else {
+                                unreachable!("as of now, there's no other type available")
+                            };
+                            view! {
+                                <NavIcon href icon filled_icon cur_selected />
+                            }
+                        }
+                    >
+                        <UploadIcon cur_selected=items.get().get(item).unwrap().is_selected() />
+                    </Show>
+                </For>
+            </div>
+        </Suspense>
+    }
+}
+
 #[component]
 fn NavIcon(
-    idx: usize,
     #[prop(into)] href: MaybeSignal<String>,
     #[prop(into)] icon: icondata_core::Icon,
-    #[prop(optional)] filled_icon: Option<icondata_core::Icon>,
-    cur_selected: Memo<usize>,
+    #[prop(into)] filled_icon: Option<icondata_core::Icon>,
+    #[prop(into)] cur_selected: bool,
 ) -> impl IntoView {
     view! {
         <a href=href class="flex justify-center items-center">
             <Show
-                when=move || cur_selected() == idx
+                when=move || cur_selected
                 fallback=move || {
                     view! {
                         <div class="py-5">
@@ -34,6 +293,34 @@ fn NavIcon(
                         icon=filled_icon.unwrap_or(icon)
                         class="text-2xl text-white md:text-3xl aspect-square"
                     />
+                </div>
+            </Show>
+        </a>
+    }
+}
+
+#[component]
+fn UploadIcon(#[prop(into)] cur_selected: bool) -> impl IntoView {
+    view! {
+        <a href="/upload" class="flex justify-center items-center text-white rounded-full">
+            <Show
+                when=move || cur_selected
+                fallback=move || {
+                    view! {
+                        <Icon
+                            icon=icondata::AiPlusOutlined
+                            class="p-2 w-10 h-10 bg-transparent rounded-full border-2"
+                        />
+                    }
+                }
+            >
+
+                <div class="border-t-2 border-transparent">
+                    <Icon
+                        icon=icondata::AiPlusOutlined
+                        class="p-2 w-10 h-10 rounded-full bg-primary-600 aspect-square"
+                    />
+                    <div class="absolute bottom-0 w-10 bg-primary-600 blur-md"></div>
                 </div>
             </Show>
         </a>
@@ -65,156 +352,3 @@ fn NavIcon(
 //         </a>
 //     }
 // }
-
-#[component]
-fn UploadIcon(idx: usize, cur_selected: Memo<usize>) -> impl IntoView {
-    view! {
-        <a href="/upload" class="flex justify-center items-center text-white rounded-full">
-            <Show
-                when=move || cur_selected() == idx
-                fallback=move || {
-                    view! {
-                        <Icon
-                            icon=icondata::AiPlusOutlined
-                            class="p-2 w-10 h-10 bg-transparent rounded-full border-2"
-                        />
-                    }
-                }
-            >
-
-                <div class="border-t-2 border-transparent">
-                    <Icon
-                        icon=icondata::AiPlusOutlined
-                        class="p-2 w-10 h-10 rounded-full bg-primary-600 aspect-square"
-                    />
-                    <div class="absolute bottom-0 w-10 bg-primary-600 blur-md"></div>
-                </div>
-            </Show>
-        </a>
-    }
-}
-
-#[component]
-pub fn NavBar() -> impl IntoView {
-    let cur_location = use_location();
-    let home_path = create_rw_signal("/".to_string());
-    let (user_principal, _) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE);
-    // TODO: gotta change this current selection function to take into account whether we are showing nav for icpump or yral
-    // note: i feel this can be much simpler by creating a vec of `(component function, matcher)`.
-    //
-    // will work on this before going live
-    let cur_selected = create_memo(move |_| {
-        let path = cur_location.pathname.get();
-
-        match path.as_str() {
-            "/" => 0,
-            "/upload" => 2,
-            "/transactions" => 3,
-            "/menu" | "/leaderboard" => 4,
-            "/board" => 3,
-            s if s.starts_with("/hot-or-not") => {
-                home_path.set(path);
-                0
-            }
-            s if s.starts_with("/profile/") => match user_principal.get() {
-                Some(user_principal) => {
-                    if s.starts_with(&format!("/profile/{}", user_principal)) {
-                        5
-                    } else {
-                        6 // having a number out of range to not highlight anything
-                    }
-                }
-                None => 0,
-            },
-            s if s.starts_with("/wallet/") => match user_principal.get() {
-                Some(user_principal) => {
-                    if s.starts_with(&format!("/wallet/{}", user_principal)) {
-                        3
-                    } else {
-                        6 // having a number out of range to not highlight anything
-                    }
-                }
-                None => 0,
-            },
-            s if s.starts_with("/profile") => 5,
-            s if s.starts_with("/wallet") => 3, // highlights during redirects
-            s if s.starts_with("/token/info") => 3,
-            s if s.starts_with("/token/create") => 2,
-            s if s.starts_with("/icpump-ai") => 5,
-            _ => 4,
-        }
-    });
-
-    let show_cdao_icon = show_cdao_page();
-
-    view! {
-    <Suspense>
-        <div class="flex fixed bottom-0 left-0 z-50 flex-row justify-between items-center px-6 w-full bg-black/80">
-            <NavIcon
-                idx=0
-                href=home_path
-                icon=HomeSymbol
-                filled_icon=HomeSymbolFilled
-                cur_selected=cur_selected
-            />
-
-            {
-                move || {
-                    if show_cdao_page() {
-                        view! {
-                            <NavIcon
-                                idx=3
-                                href="/board"
-                                icon=TokenSymbol
-                                filled_icon=TokenSymbolFilled
-                                cur_selected=cur_selected
-                            />
-                        }
-                    } else {
-                        view! {
-                            <NavIcon
-                                idx=3
-                                href="/wallet"
-                                icon=WalletSymbol
-                                filled_icon=WalletSymbolFilled
-                                cur_selected=cur_selected
-                            />
-                        }
-                    }
-                }
-            }
-
-            <UploadIcon idx=2 cur_selected />
-
-            {
-                move || {
-                    if show_cdao_icon {
-                        view! {
-                            <NavIcon
-                                idx=5
-                                href="/wallet"
-                                icon=WalletSymbol
-                                filled_icon=WalletSymbolFilled
-                                cur_selected=cur_selected
-                            />
-                        }
-                    } else {
-                        view! {
-                            <NavIcon
-                                idx=5
-                                href="/profile/tokens"
-                                icon=ProfileIcon
-                                filled_icon=ProfileIconFilled
-                                cur_selected=cur_selected
-                            />
-                        }
-                    }
-                }
-            }
-
-            <NavIcon idx=4 href="/menu" icon=MenuSymbol cur_selected=cur_selected />
-        </div>
-
-    </Suspense>
-    }
-}
