@@ -92,7 +92,7 @@ pub fn WalletCard(
     let base_url = get_host();
 
     provide_context(WalletCardOptionsContext {
-        is_airdrop_claimed: is_airdrop_claimed.clone(),
+        is_airdrop_claimed: is_airdrop_claimed,
         is_utility_token,
         root,
         token_owner: token_meta_data.token_owner,
