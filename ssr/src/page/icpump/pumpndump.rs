@@ -426,6 +426,7 @@ struct GameRunningData {
     pumps: u64,
     dumps: u64,
     winning_pot: Option<u64>,
+    player_count: u64,
 }
 
 #[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
@@ -472,10 +473,11 @@ impl GameState {
 }
 
 impl GameRunningData {
-    pub fn new(pumps: u64, dumps: u64, winning_pot: Option<u64>) -> Self {
+    pub fn new(pumps: u64, dumps: u64, player_count: u64, winning_pot: Option<u64>) -> Self {
         Self {
             pumps,
             dumps,
+            player_count,
             winning_pot,
         }
     }
@@ -490,6 +492,10 @@ impl GameRunningData {
             .join(&format!("/bets/{owner}/{token_root}/{user_canister}"))
             .expect("url to be valid");
 
+        let player_count_url = PUMP_AND_DUMP_WORKER_URL
+            .join(&format!("/player_count/{owner}/{token_root}"))
+            .expect("url to be valid");
+
         let bets: UserBetsResponse = reqwest::get(bets_url)
             .await
             .map_err(|err| format!("Coulnd't load bets: {err}"))?
@@ -497,8 +503,17 @@ impl GameRunningData {
             .await
             .map_err(|err| format!("Couldn't parse bets out of repsonse: {err}"))?;
 
+        let player_count: u64 = reqwest::get(player_count_url)
+            .await
+            .map_err(|err| format!("Coulnd't load player count: {err}"))?
+            .text()
+            .await
+            .map_err(|err| format!("Couldn't read response for player count: {err}"))?
+            .parse()
+            .map_err(|err| format!("Couldn't parse player count from response: {err}"))?;
+
         // Maybe we should also load winning pot as part of game running data
-        Ok(Self::new(bets.pumps, bets.dumps, None))
+        Ok(Self::new(bets.pumps, bets.dumps, player_count, None))
     }
 }
 
@@ -539,6 +554,14 @@ fn GameCardPreResult(#[prop(into)] game_state: GameState) -> impl IntoView {
             .map(|value| value.to_string())
             .unwrap_or_else(|| "--".into())
     };
+
+    let player_count = move || {
+        running_data
+            .get()
+            .map(|data| data.player_count)
+            .map(|value| value.to_string())
+            .unwrap_or_else(|| "--".into())
+    };
     view! {
         <div
             class="bg-[#171717] flip-card transition-all absolute inset-0 h-full shrink-0 rounded-2xl items-center flex flex-col gap-4 w-full pt-14 pb-5 px-5 overflow-hidden"
@@ -568,7 +591,7 @@ fn GameCardPreResult(#[prop(into)] game_state: GameState) -> impl IntoView {
                     class="w-full top-[3.5rem] slide-up flex items-center gap-1 absolute inset-0 py-2 pl-4 pr-2"
                 >
                     <img src="/img/player.png" alt="Coin" class="w-5 h-5" />
-                    <div class="text-[#E5E5E5] font-bold">80</div>
+                    <div class="text-[#E5E5E5] font-bold">{player_count}</div>
                     <div class="text-[#A3A3A3] text-xs">players are playing - join the action!</div>
                 </div>
             </div>
@@ -602,7 +625,9 @@ fn WonCard(#[prop()] result: GameResult) -> impl IntoView {
 
     let on_click = move |_| {
         game_state.update(|s| *s = Some(GameState::Playing));
-        running_data.update(|s| *s = Some(GameRunningData::new(0, 0, None)));
+        // player count of zero doesn't make sense
+        // dispatch another load call after this update
+        running_data.update(|s| *s = Some(GameRunningData::new(0, 0, 0, None)));
     };
     // TODO: add confetti animation
     view! {
@@ -640,7 +665,8 @@ fn LostCard() -> impl IntoView {
 
     let on_click = move |_| {
         game_state.update(|s| *s = Some(GameState::Playing));
-        running_data.update(|s| *s = Some(GameRunningData::new(0, 0, None)));
+        // dispatch another load call after this update
+        running_data.update(|s| *s = Some(GameRunningData::new(0, 0, 0, None)));
     };
 
     view! {
