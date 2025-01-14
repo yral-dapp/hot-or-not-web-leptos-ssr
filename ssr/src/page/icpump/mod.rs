@@ -5,6 +5,7 @@ use crate::state::canisters::unauth_canisters;
 use std::collections::HashMap;
 use std::collections::VecDeque;
 
+use candid::Nat;
 use candid::Principal;
 use codee::string::FromToStringCodec;
 use futures::stream::FuturesOrdered;
@@ -37,6 +38,7 @@ struct ProcessedTokenListResponse {
     token_details: TokenListItem,
     root: Principal,
     is_airdrop_claimed: bool,
+    token_owner: Option<TokenOwner>,
 }
 
 async fn process_token_list_item(
@@ -53,7 +55,7 @@ async fn process_token_list_item(
                     .link
                     .trim_end_matches('/')
                     .split('/')
-                    .last()
+                    .next_back()
                     .ok_or(ServerFnError::new("Not root given"))
                     .unwrap_or_default(),
             )
@@ -63,7 +65,7 @@ async fn process_token_list_item(
                 .get_token_owner(root_principal)
                 .await
                 .unwrap_or_default();
-            let is_airdrop_claimed = if let Some(token_owner) = token_owner_canister_id {
+            let is_airdrop_claimed = if let Some(token_owner) = &token_owner_canister_id {
                 cans.get_airdrop_status(token_owner.canister_id, root_principal, key_principal)
                     .await
                     .unwrap_or(true)
@@ -76,12 +78,14 @@ async fn process_token_list_item(
                 token_details: token,
                 root: root_principal,
                 is_airdrop_claimed,
+                token_owner: token_owner_canister_id,
             }
         });
     }
 
     fut.collect().await
 }
+
 #[component]
 pub fn ICPumpListing() -> impl IntoView {
     let page = create_rw_signal(1);
@@ -154,15 +158,15 @@ pub fn ICPumpListing() -> impl IntoView {
                         <For
                             each=move || new_token_list.get()
                             key=|t| t.token_details.token_symbol.clone()
-                            children=move |ProcessedTokenListResponse { token_details, root, is_airdrop_claimed }| {
-                                view! { <TokenCard is_new_token=true details=token_details is_airdrop_claimed root/> }
+                            children=move |ProcessedTokenListResponse { token_details, root, is_airdrop_claimed, token_owner }| {
+                                view! { <TokenCard is_new_token=true details=token_details is_airdrop_claimed root token_owner/> }
                             }
                         />
                         <For
                             each=move || token_list.get()
                             key=|t| t.token_details.token_symbol.clone()
-                            children=move |ProcessedTokenListResponse { token_details, root, is_airdrop_claimed }| {
-                                view! { <TokenCard details=token_details is_airdrop_claimed root/> }
+                            children=move |ProcessedTokenListResponse { token_details, root, is_airdrop_claimed, token_owner }| {
+                                view! { <TokenCard details=token_details is_airdrop_claimed root token_owner/> }
                             }
                         />
                     </div>
@@ -257,12 +261,16 @@ pub fn TokenCardFallback() -> impl IntoView {
     }
 }
 
+use crate::page::wallet::airdrop::AirdropPopup;
+use yral_canisters_common::utils::token::TokenOwner;
+
 #[component]
 pub fn TokenCard(
     details: TokenListItem,
     #[prop(optional, default = false)] is_new_token: bool,
     root: Principal,
     is_airdrop_claimed: bool,
+    token_owner: Option<TokenOwner>,
 ) -> impl IntoView {
     let show_nsfw = create_rw_signal(false);
 
@@ -277,7 +285,40 @@ pub fn TokenCard(
     )
     };
     let pop_up = create_rw_signal(false);
+    let airdrop_pop_up = create_rw_signal(false);
     let base_url = get_host();
+
+    let claimed = create_rw_signal(is_airdrop_claimed);
+    let buffer_signal = create_rw_signal(false);
+
+    let airdrop_action = create_action(move |&()| {
+        let token_owner_cans_id = token_owner.clone().unwrap().canister_id;
+        async move {
+            let cans_wire = authenticated_canisters().wait_untracked().await?;
+            if claimed.get() && !buffer_signal.get() {
+                return Ok(());
+            }
+            buffer_signal.set(true);
+            let cans = Canisters::from_wire(cans_wire, expect_context())?;
+            let token_owner = cans.individual_user(token_owner_cans_id).await;
+
+            token_owner
+                .request_airdrop(
+                    root,
+                    None,
+                    Into::<Nat>::into(100u64) * 10u64.pow(8),
+                    cans.user_canister(),
+                )
+                .await?;
+
+            let user = cans.individual_user(cans.user_canister()).await;
+            user.add_token(root).await?;
+
+            buffer_signal.set(false);
+            claimed.set(true);
+            Ok::<_, ServerFnError>(())
+        }
+    });
 
     view! {
         <div
@@ -309,11 +350,11 @@ pub fn TokenCard(
                 <div class="flex flex-col justify-between overflow-hidden w-full">
                     <div class="flex flex-col gap-2">
                         <div class="flex gap-4 justify-between items-center w-full text-lg">
-                            <span class="font-medium shrink line-clamp-1">{details.name}</span>
+                            <span class="font-medium shrink line-clamp-1">{details.name.clone()}</span>
                             <span class="font-bold shrink-0">{symbol}</span>
                         </div>
                         <span class="text-sm line-clamp-2 text-neutral-400">
-                            {details.description}
+                            {details.description.clone()}
                         </span>
                     </div>
                     <div class="flex gap-2 justify-between items-center text-sm font-medium group-hover:text-white text-neutral-600">
@@ -331,23 +372,14 @@ pub fn TokenCard(
                     <Icon class="w-full h-full" icon=ArrowLeftRightIcon />
                 </ActionButton>
                 {
-                    if is_airdrop_claimed{
-
-                        view! {
-                            <ActionButtonLink on:click=move |_|{pop_up.set(true); share_link.set(format!("/token/info/{}/{}?airdrop_amt=100",root, details.user_id))} label="Airdrop".to_string()>
-                                <Icon class="h-6 w-6" icon=AirdropIcon />
-                            </ActionButtonLink>
-                        }
-                    }else{
-                        view! {
-                            <ActionButton href=format!("/token/info/{}/{}?airdrop_amt=100",root, details.user_id) label="Airdrop".to_string()>
+                    view! {
+                        <ActionButtonLink on:click=move |_|{airdrop_action.dispatch(());airdrop_pop_up.set(true);} disabled=is_airdrop_claimed label="Airdrop".to_string()>
                             <Icon class="h-6 w-6" icon=AirdropIcon />
-                            </ActionButton>
-                        }
+                        </ActionButtonLink>
                     }
                 }
                 <ActionButton label="Share".to_string() href="#".to_string()>
-                    <Icon class="w-full h-full" icon=ShareIcon on:click=move |_| {pop_up.set(true); share_link.set(share_link_coin.clone())}/>
+                    <Icon class="w-full h-full" icon=ShareIcon on:click=move |_| {pop_up.set(true); buffer_signal.set(true); share_link.set(share_link_coin.clone())}/>
                 </ActionButton>
                 <ActionButton label="Details".to_string() href=details.link>
                     <Icon class="w-full h-full" icon=ChevronRightIcon />
@@ -359,6 +391,16 @@ pub fn TokenCard(
                     message=share_message()
                     show_popup=pop_up
                 />
+            </PopupOverlay>
+            <PopupOverlay show=airdrop_pop_up >
+                <div class="w-[343px] h-[400px] absolute top-[144px] left-[16px]">
+                    <AirdropPopup
+                        name=details.name.clone()
+                        logo=details.logo.clone()
+                        buffer_signal
+                        claimed
+                    />
+                </div>
             </PopupOverlay>
         </div>
     }

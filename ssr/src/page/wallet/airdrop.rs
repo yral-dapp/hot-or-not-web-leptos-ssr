@@ -33,8 +33,17 @@ pub fn AirdropPage(meta: TokenMetadata, airdrop_amount: u64) -> impl IntoView {
                 class="absolute inset-0 z-[1] fade-in w-full h-full object-cover"
             />
 
-            {move || view!{<AirdropAnimation claimed=claimed.get() logo=meta.logo_b64.clone()/>}}
-            <AirdropButton claimed airdrop_amount name=meta.name buffer_signal token_owner=meta.token_owner root=meta.root/>
+            {move || {
+                view! { <AirdropAnimation claimed=claimed.get() logo=meta.logo_b64.clone() /> }
+            }}
+            <AirdropButton
+                claimed
+                airdrop_amount
+                name=meta.name
+                buffer_signal
+                token_owner=meta.token_owner
+                root=meta.root
+            />
         </div>
     }
 }
@@ -84,58 +93,155 @@ fn AirdropButton(
             style="--duration:1500ms"
             class="fade-in flex text-xl font-bold z-[2] w-full flex-col gap-4 items-center justify-center px-8"
         >
-            {move || {if claimed.get() {
-                view! {
-                    <div class="text-center">
-                        {format!("{} {}", airdrop_amount, name)} <br />
-                        <span class="font-normal">"added to wallet"</span>
-                    </div>
-            }
-        } else {
-            view! {
-                <div class="text-center">
-                    {format!("{} {} Airdrop received", airdrop_amount, name)}
-                </div>
-            }
-        }}}
-        {move || {
-            if buffer_signal.get() {
-                view! {
-                    <HighlightedButton
-                    classes="max-w-96 mx-auto py-[16px] px-[20px]".to_string()
-                    alt_style=false
-                    disabled=true
-                    on_click=move || {}
-                    >
-                        <div class="max-w-90"><SpinnerCircle /></div>
-                    </HighlightedButton>
-                }.into_view()
-            } else if claimed.get() {
-                view! {
-                    <HighlightedLinkButton
-                        alt_style=true
-                        disabled=false
-                        classes="max-w-96 mx-auto py-[12px] px-[20px]".to_string()
-                        href="/wallet".to_string()
-                    >
-                        "Go to wallet"
-                    </HighlightedLinkButton>
-                }.into_view()
-            } else {
-                view! {
-                    <HighlightedButton
-                        classes="max-w-96 mx-auto py-[12px] px-[20px] w-full".to_string()
-                        alt_style=false
-                        disabled=false
-                        on_click=move || { airdrop_action.dispatch(()); }
-                    >
-                        "Claim Now"
-                    </HighlightedButton>
+            {move || {
+                if claimed.get() {
+                    view! {
+                        <div class="text-center">
+                            {format!("{} {}", airdrop_amount, name)} <br />
+                            <span class="font-normal">"added to wallet"</span>
+                        </div>
+                    }
+                } else {
+                    view! {
+                        <div class="text-center">
+                            {format!("{} {} Airdrop received", airdrop_amount, name)}
+                        </div>
+                    }
+                }
+            }}
+            {move || {
+                if buffer_signal.get() {
+                    view! {
+                        <HighlightedButton
+                            classes="max-w-96 mx-auto py-[16px] px-[20px]".to_string()
+                            alt_style=false
+                            disabled=true
+                            on_click=move || {}
+                        >
+                            <div class="max-w-90">
+                                <SpinnerCircle />
+                            </div>
+                        </HighlightedButton>
+                    }
+                        .into_view()
+                } else if claimed.get() {
+                    view! {
+                        <HighlightedLinkButton
+                            alt_style=true
+                            disabled=false
+                            classes="max-w-96 mx-auto py-[12px] px-[20px]".to_string()
+                            href="/wallet".to_string()
+                        >
+                            "Go to wallet"
+                        </HighlightedLinkButton>
+                    }
+                        .into_view()
+                } else {
+                    view! {
+                        <HighlightedButton
+                            classes="max-w-96 mx-auto py-[12px] px-[20px] w-full".to_string()
+                            alt_style=false
+                            disabled=false
+                            on_click=move || {
+                                airdrop_action.dispatch(());
+                            }
+                        >
+                            "Claim Now"
+                        </HighlightedButton>
+                    }
+                        .into_view()
+                }
+            }}
+        </div>
+    }
+}
 
-                }.into_view()
-            }
-        }}
-    </div>
+#[component]
+fn AirdropPopUpButton(
+    claimed: RwSignal<bool>,
+    airdrop_amount: u64,
+    name: String,
+    buffer_signal: RwSignal<bool>,
+) -> impl IntoView {
+    view! {
+        <div
+            style="--duration:1500ms"
+            class="fade-in flex text-xl font-bold z-[2] w-full flex-col gap-4 items-center justify-center px-8"
+        >
+            {move || {
+                if claimed.get() {
+                    view! {
+                        <div class="text-center">
+                            {format!("{} {}", airdrop_amount, name)} <br />
+                            <span class="font-normal">"added to wallet"</span>
+                        </div>
+                    }
+                } else {
+                    view! {
+                        <div class="text-center">
+                            {format!("{} {} Airdrop received", airdrop_amount, name)}
+                        </div>
+                    }
+                }
+            }}
+            {move || {
+                if buffer_signal.get() {
+                    Some(view! {
+                        <div class="max-w-100">
+                            <SpinnerCircle />
+                        </div>
+                    }
+                        .into_view())
+                } else if claimed.get() {
+                    Some(view! {
+                        <HighlightedLinkButton
+                            alt_style=true
+                            disabled=false
+                            classes="max-w-96 mx-auto py-[12px] px-[20px]".to_string()
+                            href="/wallet".to_string()
+                        >
+                            "Go to wallet"
+                        </HighlightedLinkButton>
+                    }
+                        .into_view())
+                } else {
+                    None
+                }
+            }}
+        </div>
+    }
+}
+
+#[component]
+pub fn AirdropPopup(
+    name: String,
+    logo: String,
+    buffer_signal: RwSignal<bool>,
+    claimed: RwSignal<bool>,
+) -> impl IntoView {
+    view! {
+        <div
+            style="background: radial-gradient(circle, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 75%, rgba(50,0,28,0.5) 100%);"
+            class="h-screen w-screen relative items-center justify-center text-white font-kumbh flex flex-col overflow-hidden gap-4"
+        >
+            <div class="absolute z-40 right-5 top-10 scale-[1.75]">
+                <BackButton fallback="/wallet" />
+            </div>
+            <img
+                alt="bg"
+                src="/img/airdrop/bg.webp"
+                class="absolute inset-0 z-[1] fade-in w-full h-full object-cover"
+            />
+            {move || {
+                view! { <AirdropAnimation claimed=claimed.get() logo=logo.clone()/> }
+            }}
+            <AirdropPopUpButton
+                claimed
+                airdrop_amount=100
+                name
+                buffer_signal
+            />
+        </div>
     }
 }
 
@@ -148,7 +254,11 @@ fn AirdropAnimation(claimed: bool, logo: String) -> impl IntoView {
                     style="--y: 50px"
                     class="flex flex-col items-center justify-center airdrop-parachute"
                 >
-                    <img alt="Parachute" src="/img/airdrop/parachute.webp" class="h-auto max-h-72" />
+                    <img
+                        alt="Parachute"
+                        src="/img/airdrop/parachute.webp"
+                        class="h-auto max-h-72"
+                    />
 
                     <div
                         style="background: radial-gradient(circle, rgb(244 141 199) 0%, rgb(255 255 255) 100%); box-shadow: 0px 0px 3.43px 0px #FFFFFF29;"
