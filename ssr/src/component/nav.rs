@@ -41,22 +41,12 @@ struct NavItem {
 }
 
 impl NavItem {
-    fn key(&self) -> String {
-        match &self.render_data {
-            NavItemRenderData::Icon { href, .. } => href.get(),
-            NavItemRenderData::Upload => "upload".into(),
-        }
-    }
-
     fn is_selected(&self) -> bool {
         (self.matcher)()
     }
 
     fn is_upload(&self) -> bool {
-        match self.render_data {
-            NavItemRenderData::Upload => true,
-            _ => false,
-        }
+        matches!(self.render_data, NavItemRenderData::Upload)
     }
 }
 
@@ -234,7 +224,7 @@ fn get_nav_items() -> Vec<NavItem> {
     match SiteHost::decide() {
         SiteHost::Yral => yral_nav_items(),
         SiteHost::Pumpdump => pnd_nav_items(),
-        SiteHost::Icpump => pnd_nav_items(),
+        SiteHost::Icpump => icpump_nav_items(),
     }
 }
 
@@ -250,7 +240,7 @@ pub fn NavBar() -> impl IntoView {
                     <Show
                         when=move || items.get()[item].is_upload()
                         fallback=move || {
-                            let ref item = items.get()[item];
+                            let item = &items.get()[item];
                             let cur_selected = item.is_selected();
                             let NavItemRenderData::Icon { href, icon, filled_icon } = item.render_data.clone() else {
                                 unreachable!("as of now, there's no other type available")
