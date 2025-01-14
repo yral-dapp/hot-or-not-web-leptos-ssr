@@ -27,7 +27,7 @@ async fn google_auth_redirector() -> Result<(), ServerFnError> {
 }
 
 #[server(endpoint = "google_auth_url", input = GetUrl, output = Json)]
-async fn google_auth_url(ios_redirect_uri: String) -> Result<String, ServerFnError> {
+async fn google_auth_url(client_redirect_uri: String) -> Result<String, ServerFnError> {
     use crate::auth::core_clients::CoreClients;
     use crate::auth::server_impl::google::google_auth_url_impl;
     use http::header::HeaderMap;
@@ -38,7 +38,7 @@ async fn google_auth_url(ios_redirect_uri: String) -> Result<String, ServerFnErr
     let host = headers.get("Host").unwrap().to_str().unwrap();
     let oauth_clients: CoreClients = expect_context();
     let oauth2 = oauth_clients.get_oauth_client(host);
-    let url = google_auth_url_impl(oauth2, Some(ios_redirect_uri)).await?;
+    let url = google_auth_url_impl(oauth2, Some(client_redirect_uri)).await?;
 
     Ok(url)
 }
@@ -63,7 +63,7 @@ async fn perform_google_auth(oauth: OAuthQuery) -> Result<DelegatedIdentityWire,
 struct OAuthQuery {
     pub code: String,
     pub state: String,
-    pub ios_redirect_uri: Option<String>,
+    pub client_redirect_uri: Option<String>,
 }
 
 #[component]
@@ -102,11 +102,11 @@ async fn handle_oauth_query(oauth_query: OAuthQuery) -> GoogleAuthMessage {
 }
 
 async fn handle_oauth_query_for_external_client(
-    ios_redirect_uri: String,
+    client_redirect_uri: String,
     auth_code: String,
 ) -> Result<(), String> {
     use_navigate()(
-        &format!("{}?authCode={}", ios_redirect_uri, auth_code),
+        &format!("{}?authCode={}", client_redirect_uri, auth_code),
         NavigateOptions {
             resolve: false,
             ..Default::default()
@@ -129,9 +129,9 @@ pub fn GoogleRedirectHandler() -> impl IntoView {
             return RedirectHandlerReturnType::Identity(Err("Invalid query".to_string()));
         };
 
-        if oauth_query.ios_redirect_uri.is_some() {
+        if oauth_query.client_redirect_uri.is_some() {
             let res = handle_oauth_query_for_external_client(
-                oauth_query.ios_redirect_uri.unwrap(),
+                oauth_query.client_redirect_uri.unwrap(),
                 oauth_query.code,
             )
             .await;
