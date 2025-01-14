@@ -812,9 +812,12 @@ fn GameCard(#[prop()] token: ProcessedTokenListResponse) -> impl IntoView {
                         }
                     }
                     WsResp::WinningPoolEvent(pot) => {
-                        if let Some(data) = running_data.get().as_mut() {
-                            data.winning_pot = Some(pot);
-                        }
+                        logging::log!("ws: received new winning pot: {pot}");
+                        running_data.update(|data| {
+                            if let Some(data) = data {
+                                data.winning_pot = Some(pot);
+                            }
+                        })
                     }
                 }
             }
