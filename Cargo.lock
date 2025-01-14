@@ -8059,7 +8059,7 @@ dependencies = [
 [[package]]
 name = "yral-pump-n-dump-common"
 version = "0.1.0"
-source = "git+https://github.com/yral-dapp/yral-common.git?rev=fe5bc2aa9517405d50d5107df069505782b57498#fe5bc2aa9517405d50d5107df069505782b57498"
+source = "git+https://github.com/yral-dapp/yral-common?branch=rupansh/p-and-d#7acbb8c78122316f5c098009b709ebe2b4327eb9"
 dependencies = [
  "candid",
  "ic-agent",

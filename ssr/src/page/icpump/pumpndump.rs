@@ -17,7 +17,7 @@ use std::rc::Rc;
 use yral_canisters_common::Canisters;
 use yral_pump_n_dump_common::{
     rest::UserBetsResponse,
-    ws::{websocket_connection_url, WsMessage, WsRequest, WsResp},
+    ws::{websocket_connection_url, WsError, WsMessage, WsRequest, WsResp},
     GameDirection,
 };
 
@@ -783,9 +783,20 @@ fn GameCard(#[prop()] token: ProcessedTokenListResponse) -> impl IntoView {
                     WsResp::Ok => {
                         logging::log!("ws: received ok");
                     }
-                    WsResp::Error(message) => {
+                    WsResp::Error(err) => {
                         // TODO: handle this error
-                        logging::error!("ws: received error: {message}");
+                        logging::error!("ws: received error: {err:?}");
+
+                        if let WsError::BetFailure { direction, .. } = err {
+                            running_data.update(move |data| {
+                                if let Some(data) = data {
+                                    match direction {
+                                        GameDirection::Pump => data.pumps -= 1,
+                                        GameDirection::Dump => data.dumps -= 1,
+                                    }
+                                }
+                            });
+                        }
                     }
                     WsResp::GameResultEvent(result) => {
                         logging::log!("ws: received result: winning direction = {}, bet_count = {}, reward_pool = {}", match result.direction {

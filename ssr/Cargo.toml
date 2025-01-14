@@ -117,9 +117,7 @@ ic-certification = "2.6.0"
 ciborium = "0.2.2"
 yral-metadata-client = { git = "https://github.com/yral-dapp/yral-metadata", rev = "56e3f1f1f5f452673bee17739520c800c1264295", optional = true }
 yral-metadata-types = { git = "https://github.com/yral-dapp/yral-metadata", rev = "56e3f1f1f5f452673bee17739520c800c1264295", optional = true }
-yral-pump-n-dump-common = { git = "https://github.com/yral-dapp/yral-common", rev = "fe5bc2aa9517405d50d5107df069505782b57498", features = [
-    "client",
-] }
+yral-pump-n-dump-common = { git = "https://github.com/yral-dapp/yral-common", features = ["client"], branch = "rupansh/p-and-d", version = "0.1.0" }
 uuid = { version = "1.11.0", features = ["serde", "v4"] }
 
 [build-dependencies]

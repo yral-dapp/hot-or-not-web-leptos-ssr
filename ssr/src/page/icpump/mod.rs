@@ -2,8 +2,6 @@ use crate::component::overlay::PopupOverlay;
 use crate::consts::ICPUMP_LISTING_PAGE_SIZE;
 use crate::consts::USER_PRINCIPAL_STORE;
 use crate::state::canisters::authenticated_canisters;
-use crate::state::canisters::unauth_canisters;
-use std::collections::HashMap;
 use std::collections::VecDeque;
 
 use candid::Principal;
