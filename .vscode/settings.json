@@ -19,5 +19,4 @@
         "strings": true
     },
     "css.validate": false,
-    "rust-analyzer.diagnostics.disabled": ["macro-error"]
 }
