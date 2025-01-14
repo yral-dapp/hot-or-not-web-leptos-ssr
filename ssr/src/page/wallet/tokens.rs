@@ -149,7 +149,13 @@ pub fn WalletCard(
 }
 
 #[component]
-fn WalletCardOptions(pop_up: WriteSignal<bool>, share_link: WriteSignal<String>, airdrop_popup: RwSignal<bool>, buffer_signal: RwSignal<bool>, claimed: RwSignal<bool>) -> impl IntoView {
+fn WalletCardOptions(
+    pop_up: WriteSignal<bool>,
+    share_link: WriteSignal<String>,
+    airdrop_popup: RwSignal<bool>,
+    buffer_signal: RwSignal<bool>,
+    claimed: RwSignal<bool>,
+) -> impl IntoView {
     use_context().map(|WalletCardOptionsContext { is_airdrop_claimed, is_utility_token, root, token_owner, user_principal }|{
         let share_link_coin = format!("/token/info/{root}/{user_principal}");
         let token_owner_c = token_owner.clone();
@@ -169,7 +175,6 @@ fn WalletCardOptions(pop_up: WriteSignal<bool>, share_link: WriteSignal<String>,
                 let cans_wire = cans_res.wait_untracked().await?;
                 let cans = Canisters::from_wire(cans_wire, expect_context())?;
                 let token_owner = cans.individual_user(token_owner_cans_id).await;
-    
                 token_owner
                     .request_airdrop(
                         root,
@@ -178,10 +183,8 @@ fn WalletCardOptions(pop_up: WriteSignal<bool>, share_link: WriteSignal<String>,
                         cans.user_canister(),
                     )
                     .await?;
-    
                 let user = cans.individual_user(cans.user_canister()).await;
                 user.add_token(root).await?;
-    
                 buffer_signal.set(false);
                 claimed.set(true);
                 Ok::<_, ServerFnError>(())
