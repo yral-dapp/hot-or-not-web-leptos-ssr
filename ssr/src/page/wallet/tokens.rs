@@ -1,8 +1,9 @@
-use candid::Principal;
+use candid::{Nat, Principal};
 use codee::string::FromToStringCodec;
 use leptos_use::use_cookie;
 use yral_canisters_common::cursored_data::token_roots::{TokenListResponse, TokenRootList};
 use yral_canisters_common::utils::token::{RootType, TokenMetadata, TokenOwner};
+use yral_canisters_common::Canisters;
 
 use crate::component::icons::{
     airdrop_icon::AirdropIcon, arrow_left_right_icon::ArrowLeftRightIcon,
@@ -12,6 +13,7 @@ use crate::component::overlay::PopupOverlay;
 use crate::component::share_popup::ShareContent;
 use crate::consts::USER_PRINCIPAL_STORE;
 use crate::page::icpump::{ActionButton, ActionButtonLink};
+use crate::state::canisters::authenticated_canisters;
 use crate::utils::host::get_host;
 use crate::utils::token::icpump::IcpumpTokenInfo;
 use crate::{component::infinite_scroller::InfiniteScroller, state::canisters::unauth_canisters};
@@ -62,7 +64,7 @@ struct WalletCardOptionsContext {
     token_owner: Option<TokenOwner>,
     user_principal: Principal,
 }
-
+use crate::page::wallet::airdrop::AirdropPopup;
 #[component]
 pub fn WalletCard(
     user_principal: Principal,
@@ -90,23 +92,27 @@ pub fn WalletCard(
     let base_url = get_host();
 
     provide_context(WalletCardOptionsContext {
-        is_airdrop_claimed,
+        is_airdrop_claimed: is_airdrop_claimed.clone(),
         is_utility_token,
         root,
         token_owner: token_meta_data.token_owner,
         user_principal,
     });
 
+    let airdrop_popup = create_rw_signal(false);
+    let buffer_signal = create_rw_signal(false);
+    let claimed = create_rw_signal(is_airdrop_claimed);
     view! {
         <div node_ref=_ref class="flex flex-col gap-4 bg-neutral-900/90 rounded-lg w-full font-kumbh text-white p-4">
             <div class="w-full flex items-center justify-between p-3 rounded-[4px] bg-neutral-800/70">
                 <div class="flex items-center gap-2">
                     <img
-                        src=token_meta_data.logo_b64
+                        clone:token_meta_data
+                        src=token_meta_data.logo_b64.clone()
                         alt=token_meta_data.name.clone()
                         class="w-8 h-8 rounded-full object-cover"
                     />
-                    <div class="text-sm font-medium uppercase truncate">{token_meta_data.name}</div>
+                    <div class="text-sm font-medium uppercase truncate">{token_meta_data.name.clone()}</div>
                 </div>
                 <div class="flex flex-col items-end">
                     {
@@ -118,7 +124,7 @@ pub fn WalletCard(
                 </div>
             </div>
 
-            <WalletCardOptions pop_up=pop_up.write_only() share_link=share_link.write_only()/>
+            <WalletCardOptions pop_up=pop_up.write_only() share_link=share_link.write_only() airdrop_popup buffer_signal claimed/>
 
             <PopupOverlay show=pop_up >
                 <ShareContent
@@ -127,14 +133,62 @@ pub fn WalletCard(
                     show_popup=pop_up
                 />
             </PopupOverlay>
+
+            <PopupOverlay show=airdrop_popup >
+                <div class="w-[343px] h-[400px] absolute top-0 right-0 left-0 bottom-0">
+                    <AirdropPopup
+                        name=token_meta_data.name.clone()
+                        logo=token_meta_data.logo_b64.clone()
+                        buffer_signal
+                        claimed
+                    />
+                </div>
+        </PopupOverlay>
         </div>
     }
 }
 
 #[component]
-fn WalletCardOptions(pop_up: WriteSignal<bool>, share_link: WriteSignal<String>) -> impl IntoView {
+fn WalletCardOptions(pop_up: WriteSignal<bool>, share_link: WriteSignal<String>, airdrop_popup: RwSignal<bool>, buffer_signal: RwSignal<bool>, claimed: RwSignal<bool>) -> impl IntoView {
     use_context().map(|WalletCardOptionsContext { is_airdrop_claimed, is_utility_token, root, token_owner, user_principal }|{
         let share_link_coin = format!("/token/info/{root}/{user_principal}");
+        let token_owner_c = token_owner.clone();
+        let root_c = root.clone();
+        let cans_res = authenticated_canisters();
+        let airdrop_action = create_action(move |&()| {
+            let cans_res = cans_res.clone();
+            let token_owner_cans_id = token_owner_c.clone().unwrap().canister_id;
+            airdrop_popup.set(true);
+            let root = Principal::from_text(root_c.clone()).unwrap();
+
+            async move {
+                if claimed.get() && !buffer_signal.get() {
+                    return Ok(());
+                }
+                buffer_signal.set(true);
+                let cans_wire = cans_res.wait_untracked().await?;
+                let cans = Canisters::from_wire(cans_wire, expect_context())?;
+                let token_owner = cans.individual_user(token_owner_cans_id).await;
+    
+                token_owner
+                    .request_airdrop(
+                        root,
+                        None,
+                        Into::<Nat>::into(100u64) * 10u64.pow(8),
+                        cans.user_canister(),
+                    )
+                    .await?;
+    
+                let user = cans.individual_user(cans.user_canister()).await;
+                user.add_token(root).await?;
+    
+                buffer_signal.set(false);
+                claimed.set(true);
+                Ok::<_, ServerFnError>(())
+            }
+        });
+
+
         view! {
             <div class="flex items-center justify-around">
             <ActionButton disabled=is_utility_token href=format!("/token/transfer/{root}") label="Send".to_string()>
@@ -143,33 +197,10 @@ fn WalletCardOptions(pop_up: WriteSignal<bool>, share_link: WriteSignal<String>)
             <ActionButton disabled=true href="#".to_string() label="Buy/Sell".to_string()>
                 <Icon class="h-6 w-6" icon=ArrowLeftRightIcon />
             </ActionButton>
-            {
-                match token_owner{
-                    Some(token_owner) => {
-                        if is_airdrop_claimed{
-                            let root = root.clone();
-                            view! {
-                                <ActionButtonLink on:click=move |_|{pop_up.set(true); share_link.set(format!("/token/info/{}/{}?airdrop_amt=100",root, token_owner.principal_id))} label="Airdrop".to_string()>
-                                    <Icon class="h-6 w-6" icon=AirdropIcon />
-                                </ActionButtonLink>
-                            }
-                        }else{
-                            view! {
-                                <ActionButton href=format!("/token/info/{}/{}?airdrop_amt=100",root, token_owner.principal_id) label="Airdrop".to_string()>
-                                    <Icon class="h-6 w-6" icon=AirdropIcon />
-                                </ActionButton>
-                            }
-                        }
-                    },
-                    None => {
-                        view! {
-                            <ActionButton href="#".to_string() label="Airdrop".to_string() disabled=true>
-                                <Icon class="h-6 w-6" icon=AirdropIcon />
-                            </ActionButton>
-                        }
-                    }
-                }
-            }
+            <ActionButtonLink disabled=token_owner.is_some() && is_airdrop_claimed || token_owner.is_none() on:click=move |_|{airdrop_action.dispatch(());} label="Airdrop".to_string()>
+                <Icon class="h-6 w-6" icon=AirdropIcon />
+            </ActionButtonLink>
+
             <ActionButton disabled=is_utility_token href="#".to_string() label="Share".to_string()>
                 <Icon class="h-6 w-6" icon=ShareIcon on:click=move |_| {pop_up.set(true); share_link.set(share_link_coin.clone())}/>
             </ActionButton>

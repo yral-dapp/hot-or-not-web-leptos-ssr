@@ -285,20 +285,23 @@ pub fn TokenCard(
     )
     };
     let pop_up = create_rw_signal(false);
-    let airdrop_pop_up = create_rw_signal(false);
+    let airdrop_popup = create_rw_signal(false);
     let base_url = get_host();
 
     let claimed = create_rw_signal(is_airdrop_claimed);
     let buffer_signal = create_rw_signal(false);
-
+    let cans_res = authenticated_canisters();
+    let token_owner_c = token_owner.clone();
     let airdrop_action = create_action(move |&()| {
-        let token_owner_cans_id = token_owner.clone().unwrap().canister_id;
+        let cans_res = cans_res.clone();
+        let token_owner_cans_id = token_owner_c.clone().unwrap().canister_id;
+        airdrop_popup.set(true);
         async move {
-            let cans_wire = authenticated_canisters().wait_untracked().await?;
             if claimed.get() && !buffer_signal.get() {
                 return Ok(());
             }
             buffer_signal.set(true);
+            let cans_wire = cans_res.wait_untracked().await?;
             let cans = Canisters::from_wire(cans_wire, expect_context())?;
             let token_owner = cans.individual_user(token_owner_cans_id).await;
 
@@ -319,7 +322,6 @@ pub fn TokenCard(
             Ok::<_, ServerFnError>(())
         }
     });
-
     view! {
         <div
             class:tada=is_new_token
@@ -371,15 +373,11 @@ pub fn TokenCard(
                 <ActionButton label="Buy/Sell".to_string() href="#".to_string() disabled=true>
                     <Icon class="w-full h-full" icon=ArrowLeftRightIcon />
                 </ActionButton>
-                {
-                    view! {
-                        <ActionButtonLink on:click=move |_|{airdrop_action.dispatch(());airdrop_pop_up.set(true);} disabled=is_airdrop_claimed label="Airdrop".to_string()>
-                            <Icon class="h-6 w-6" icon=AirdropIcon />
-                        </ActionButtonLink>
-                    }
-                }
+                <ActionButtonLink disabled=token_owner.is_some() && is_airdrop_claimed || token_owner.is_none() on:click=move |_|{airdrop_action.dispatch(());} label="Airdrop".to_string()>
+                    <Icon class="h-6 w-6" icon=AirdropIcon />
+                </ActionButtonLink>
                 <ActionButton label="Share".to_string() href="#".to_string()>
-                    <Icon class="w-full h-full" icon=ShareIcon on:click=move |_| {pop_up.set(true); buffer_signal.set(true); share_link.set(share_link_coin.clone())}/>
+                    <Icon class="w-full h-full" icon=ShareIcon on:click=move |_| {pop_up.set(true); share_link.set(share_link_coin.clone())}/>
                 </ActionButton>
                 <ActionButton label="Details".to_string() href=details.link>
                     <Icon class="w-full h-full" icon=ChevronRightIcon />
@@ -392,8 +390,8 @@ pub fn TokenCard(
                     show_popup=pop_up
                 />
             </PopupOverlay>
-            <PopupOverlay show=airdrop_pop_up >
-                <div class="w-[343px] h-[400px] absolute top-[144px] left-[16px]">
+            <PopupOverlay show=airdrop_popup >
+                <div class="w-[343px] h-[400px] absolute top-0 right-0 left-0 bottom-0">
                     <AirdropPopup
                         name=details.name.clone()
                         logo=details.logo.clone()
