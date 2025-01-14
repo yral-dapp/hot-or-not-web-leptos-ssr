@@ -76,4 +76,7 @@ jobs:
     needs: preview
     uses: ./.github/workflows/e2e-tests.yml
     secrets: inherit
+    env:
+      PREVIEW_URL: https://pr-${{github.event.number}}-yral-dapp-hot-or-not-web-leptos-ssr.fly.dev
+      BUILD_NAME: PR-${{github.event.number}}-commit-${{github.sha}}-attempt-${{github.run_attempt}}
 
