@@ -802,12 +802,17 @@ fn GameCard(#[prop()] token: ProcessedTokenListResponse) -> impl IntoView {
                             GameResult::Win { amount } => {
                                 player_data.update(|data| {
                                     if let Some(data) = data {
+                                        data.games_count += 1;
                                         data.wallet_balance += amount;
                                     }
                                 });
                             }
                             GameResult::Loss => {
-                                // noop
+                                player_data.update(|data| {
+                                    if let Some(data) = data {
+                                        data.games_count += 1;
+                                    }
+                                });
                             }
                         }
                     }
