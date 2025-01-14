@@ -107,7 +107,10 @@ async fn handle_oauth_query_for_external_client(
 ) -> Result<(), String> {
     use_navigate()(
         &format!("{}?authCode={}", ios_redirect_uri, auth_code),
-        Default::default(),
+        NavigateOptions {
+            resolve: false,
+            ..Default::default()
+        }
     );
     Ok(())
 }
