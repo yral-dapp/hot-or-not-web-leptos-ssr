@@ -253,11 +253,6 @@ pub fn Menu() -> impl IntoView {
             <div class="flex flex-col py-12 px-8 gap-8 w-full text-lg">
                 // add later when NSFW toggle is needed
                 // <NsfwToggle />
-                <MenuItem
-                    href="/account-transfer"
-                    text="HotorNot Account Transfer"
-                    icon=icondata::FaMoneyBillTransferSolid
-                />
                 <MenuItem href="/refer-earn" text="Refer & Earn" icon=icondata::AiGiftFilled />
                 <MenuItem href="/leaderboard" text="Leaderboard" icon=icondata::ChTrophy />
                 <MenuItem

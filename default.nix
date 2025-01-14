@@ -10,14 +10,26 @@ pkgs.mkShell {
     binaryen
     flyctl
     leptosfmt
-    nodejs_21
+    nodejs_22
     nodePackages_latest.tailwindcss
     cargo-leptos
     rustup
     openssl
+    git
     protobuf_21
   ] ++ (if pkgs.stdenv.isDarwin then [
       darwin.apple_sdk.frameworks.Foundation
+      darwin.apple_sdk.frameworks.Security
       pkgs.darwin.libiconv
     ] else []);
+  shellHook = ''
+    export LLVM_PATH=/opt/homebrew/opt/llvm/
+    export RUSTC_WRAPPER=""
+    export CC_wasm32_unknown_unknown=$LLVM_PATH/bin/clang
+    export CXX_wasm32_unknown_unknown=$LLVM_PATH/bin/clang++
+    export AS_wasm32_unknown_unknown=$LLVM_PATH/bin/llvm-as
+    export AR_wasm32_unknown_unknown=$LLVM_PATH/bin/llvm-ar
+    export STRIP_wasm32_unknown_unknown=$LLVM_PATH/bin/llvm-strip
+  '';
+  
 }
