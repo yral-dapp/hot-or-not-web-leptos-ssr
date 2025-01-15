@@ -1077,10 +1077,12 @@ pub fn PumpNDump() -> impl IntoView {
 
     let tokens = create_rw_signal(Vec::<ProcessedTokenListResponse>::new());
     let page = create_rw_signal(1u32);
-    let scroll_container = NodeRef::<Div>::new();
+    let should_load_more = create_rw_signal(true);
     let fetch_more_tokens = create_action(move |&page: &u32| {
         let cans_wire_res = cans_wire_res_for_tokens.clone();
         async move {
+            // since we are starting a load job, no more load jobs should be start
+            should_load_more.set(false);
             let cans_wire = cans_wire_res
                 .wait_untracked()
                 .await
@@ -1089,27 +1091,40 @@ pub fn PumpNDump() -> impl IntoView {
                 .map_err(|_| "Unable to authenticate".to_string())?;
 
             let user_principal = cans.user_principal();
-            // to reduce the tokens loaded on initial load
+
             let limit = 5;
 
             let more_tokens = get_paginated_token_list_with_limit(page, limit)
                 .await
                 .expect("TODO: handle error");
-            let mut more_tokens =
-                process_token_list_item(more_tokens.clone(), user_principal).await;
+            let had_tokens = !more_tokens.is_empty();
+
+            let mut processed_token = process_token_list_item(more_tokens, user_principal).await;
+
             // ignore tokens with no owners
-            more_tokens.retain(|item| item.token_owner.is_some());
+            processed_token.retain(|item| item.token_owner.is_some());
 
             tokens.update(|tokens| {
-                tokens.extend_from_slice(&more_tokens);
+                tokens.extend_from_slice(&processed_token);
             });
+
+            if had_tokens {
+                // since there were tokens loaded
+                // assume we have more tokens to load
+                // so, allow token loading
+                should_load_more.set(true)
+            }
 
             Ok::<_, String>(())
         }
     });
+    let scroll_container = NodeRef::<Div>::new();
     let _ = use_infinite_scroll_with_options(
         scroll_container,
         move |_| async move {
+            if !should_load_more.get() {
+                return;
+            }
             page.update_untracked(|v| {
                 *v += 1;
             });
