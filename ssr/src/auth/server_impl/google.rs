@@ -11,7 +11,6 @@ use openidconnect::{
     PkceCodeChallenge, PkceCodeVerifier, Scope,
 };
 use serde::{Deserialize, Serialize};
-use serde_bytes::serialize;
 use web_time::Duration;
 
 use crate::auth::{
