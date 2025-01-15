@@ -400,9 +400,9 @@ pub fn TokenCard(
                 <ActionButton label="Buy/Sell".to_string() href="#".to_string() disabled=true>
                     <Icon class="w-full h-full" icon=ArrowLeftRightIcon />
                 </ActionButton>
-                <ActionButtonLink disabled=token_owner.is_some() && is_airdrop_claimed || token_owner.is_none() on:click=move |_|{airdrop_action.dispatch(());} label="Airdrop".to_string()>
+                {move || view!{<ActionButtonLink disabled=token_owner.is_some() && claimed.get() || token_owner.is_none() on:click=move |_|{airdrop_action.dispatch(());} label="Airdrop".to_string()>
                     <Icon class="h-6 w-6" icon=AirdropIcon />
-                </ActionButtonLink>
+                </ActionButtonLink>}}
                 <ActionButton label="Share".to_string() href="#".to_string()>
                     <Icon
                         class="w-full h-full"

@@ -58,7 +58,6 @@ pub fn TokenList(user_principal: Principal, user_canister: Principal) -> impl In
 
 #[derive(Clone)]
 struct WalletCardOptionsContext {
-    is_airdrop_claimed: bool,
     is_utility_token: bool,
     root: String,
     token_owner: Option<TokenOwner>,
@@ -92,7 +91,6 @@ pub fn WalletCard(
     let base_url = get_host();
 
     provide_context(WalletCardOptionsContext {
-        is_airdrop_claimed,
         is_utility_token,
         root,
         token_owner: token_meta_data.token_owner,
@@ -183,7 +181,7 @@ fn WalletCardOptions(
     buffer_signal: RwSignal<bool>,
     claimed: RwSignal<bool>,
 ) -> impl IntoView {
-    use_context().map(|WalletCardOptionsContext { is_airdrop_claimed, is_utility_token, root, token_owner, user_principal }|{
+    use_context().map(|WalletCardOptionsContext { is_utility_token, root, token_owner, user_principal, .. }|{
         let share_link_coin = format!("/token/info/{root}/{user_principal}");
         let token_owner_c = token_owner.clone();
         let root_c = root.clone();
@@ -227,9 +225,9 @@ fn WalletCardOptions(
             <ActionButton disabled=true href="#".to_string() label="Buy/Sell".to_string()>
                 <Icon class="h-6 w-6" icon=ArrowLeftRightIcon />
             </ActionButton>
-            <ActionButtonLink disabled=token_owner.is_some() && is_airdrop_claimed || token_owner.is_none() on:click=move |_|{airdrop_action.dispatch(());} label="Airdrop".to_string()>
+            {move ||view!{<ActionButtonLink disabled=token_owner.is_some() && claimed.get() || token_owner.is_none() on:click=move |_|{airdrop_action.dispatch(());} label="Airdrop".to_string()>
                 <Icon class="h-6 w-6" icon=AirdropIcon />
-            </ActionButtonLink>
+            </ActionButtonLink>}}
 
             <ActionButton disabled=is_utility_token href="#".to_string() label="Share".to_string()>
                 <Icon class="h-6 w-6" icon=ShareIcon on:click=move |_| {pop_up.set(true); share_link.set(share_link_coin.clone())}/>
