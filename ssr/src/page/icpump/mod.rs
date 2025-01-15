@@ -175,6 +175,7 @@ pub fn ICPumpListingFeed() -> impl IntoView {
                             details=t.token_details
                             is_airdrop_claimed=t.is_airdrop_claimed
                             root=t.root
+                            token_owner=t.token_owner
                         />
                     }
                 }
@@ -189,6 +190,7 @@ pub fn ICPumpListingFeed() -> impl IntoView {
                                 details=t.token_details.clone()
                                 is_airdrop_claimed=t.is_airdrop_claimed
                                 root=t.root
+                                token_owner=t.token_owner.clone()
                             />
                         }
                     })
@@ -436,43 +438,6 @@ pub fn TokenCard(
                     </div>
                 </div>
             </Show>
-        </div>
-    }
-}
-
-#[component]
-pub fn TokenCardLoadingFeed() -> impl IntoView {
-    let is_lg_screen = use_media_query("(min-width: 1024px)");
-    let is_md_screen = use_media_query("(min-width: 768px)");
-
-    let num_cards = create_rw_signal(6);
-
-    create_effect(move |_| {
-        num_cards.set(match (is_lg_screen.get(), is_md_screen.get()) {
-            (true, _) => 6,
-            (_, true) => 4,
-            _ => 2,
-        });
-    });
-
-    move || {
-        (0..num_cards())
-            .map(|_| view! { <TokenCardLoading /> })
-            .collect_view()
-    }
-}
-
-#[component]
-pub fn TokenCardLoading() -> impl IntoView {
-    view! {
-        <div class="flex flex-col gap-2 py-3 px-3 w-full rounded-lg md:px-4 group bg-neutral-900/90">
-            <div class="flex gap-3">
-                <div class="w-[7rem] h-[7rem] bg-loading rounded-[4px] relative shrink-0"></div>
-
-                <div class="w-full bg-loading rounded-[4px]"></div>
-            </div>
-
-            <div class="h-[4.125rem] bg-loading rounded-[4px]"></div>
         </div>
     }
 }
