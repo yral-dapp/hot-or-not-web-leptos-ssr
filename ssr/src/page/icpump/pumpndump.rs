@@ -447,28 +447,7 @@ impl GameState {
         owner_principal: Principal,
         root_principal: Principal,
     ) -> Result<Self, String> {
-        // hit /status/:owner_principal/:root_principal
-        // if ready => Playing
-        // otherwise => Pending
-
-        let status_url = PUMP_AND_DUMP_WORKER_URL
-            .join(&format!("/status/{owner_principal}/{root_principal}"))
-            .expect("url to be valid");
-
-        let status_res = reqwest::get(status_url)
-            .await
-            .map_err(|err| format!("Couldn't get status for the game: {err}"))?
-            .text()
-            .await
-            .map_err(|err| format!("couldn't read response body: {err}"))?;
-
-        if status_res == "ready" {
-            return Ok(Self::Playing);
-        }
-
-        logging::warn!("game status response: {status_res}");
-
-        Ok(Self::Pending)
+        Ok(Self::Playing)
     }
 }
 
