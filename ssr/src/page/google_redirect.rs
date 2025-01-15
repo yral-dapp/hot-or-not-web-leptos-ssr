@@ -105,13 +105,7 @@ async fn handle_oauth_query_for_external_client(
     client_redirect_uri: String,
     auth_code: String,
 ) -> Result<(), String> {
-    use_navigate()(
-        &format!("{}?authCode={}", client_redirect_uri, auth_code),
-        NavigateOptions {
-            resolve: false,
-            ..Default::default()
-        },
-    );
+    leptos_axum::redirect(&format!("{}?authCode={}", client_redirect_uri, auth_code));
     Ok(())
 }
 
