@@ -426,7 +426,7 @@ pub fn TokenCard(
             </PopupOverlay>
             <Show when=airdrop_popup >
                 <div class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 max-w-[560px] max-h-[634px] min-w-[343px] min-h-[480px] backdrop-blur-lg rounded-lg">
-                    <div class="rounded-lg z-[200]">
+                    <div class="rounded-lg z-[500]">
                         <AirdropPopup
                             name=details.name.clone()
                             logo=details.logo.clone()
