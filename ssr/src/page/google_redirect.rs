@@ -1,10 +1,11 @@
 use leptos::*;
 use leptos_router::*;
+use openidconnect::CsrfToken;
 use serde::{Deserialize, Serialize};
 use server_fn::codec::{GetUrl, Json};
 
 use crate::{
-    auth::server_impl::google::OAuthState, component::loading::Loading, utils::route::go_to_root,
+    component::loading::Loading, utils::route::go_to_root,
 };
 use yral_types::delegated_identity::DelegatedIdentityWire;
 
@@ -120,6 +121,12 @@ async fn handle_oauth_query_for_external_client(
 enum RedirectHandlerReturnType {
     Identity(GoogleAuthMessage),
     ExternalClient(Result<(), String>),
+}
+
+#[derive(Serialize, Deserialize)]
+struct OAuthState {
+    pub csrf_token: CsrfToken,
+    pub client_redirect_uri: Option<String>,
 }
 
 #[component]

@@ -27,7 +27,7 @@ const PKCE_VERIFIER_COOKIE: &str = "google-pkce-verifier";
 const CSRF_TOKEN_COOKIE: &str = "google-csrf-token";
 
 #[derive(Serialize, Deserialize)]
-pub struct OAuthState {
+struct OAuthState {
     pub csrf_token: CsrfToken,
     pub client_redirect_uri: Option<String>,
 }
