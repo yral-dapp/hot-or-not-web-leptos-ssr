@@ -3,7 +3,9 @@ use leptos_router::*;
 use serde::{Deserialize, Serialize};
 use server_fn::codec::{GetUrl, Json};
 
-use crate::{component::loading::Loading, utils::route::go_to_root};
+use crate::{
+    auth::server_impl::google::OAuthState, component::loading::Loading, utils::route::go_to_root,
+};
 use yral_types::delegated_identity::DelegatedIdentityWire;
 
 pub type GoogleAuthMessage = Result<DelegatedIdentityWire, String>;
@@ -63,7 +65,6 @@ async fn perform_google_auth(oauth: OAuthQuery) -> Result<DelegatedIdentityWire,
 struct OAuthQuery {
     pub code: String,
     pub state: String,
-    pub client_redirect_uri: Option<String>,
 }
 
 #[component]
@@ -129,9 +130,13 @@ pub fn GoogleRedirectHandler() -> impl IntoView {
             return RedirectHandlerReturnType::Identity(Err("Invalid query".to_string()));
         };
 
-        if oauth_query.client_redirect_uri.is_some() {
+        let Ok(oauth_state) = serde_json::from_str::<OAuthState>(&oauth_query.state) else {
+            return RedirectHandlerReturnType::Identity(Err("Invalid OAuth State".to_string()));
+        };
+
+        if oauth_state.client_redirect_uri.is_some() {
             let res = handle_oauth_query_for_external_client(
-                oauth_query.client_redirect_uri.unwrap(),
+                oauth_state.client_redirect_uri.unwrap(),
                 oauth_query.code,
             )
             .await;
