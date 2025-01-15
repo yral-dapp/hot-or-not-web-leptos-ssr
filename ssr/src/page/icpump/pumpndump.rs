@@ -871,7 +871,7 @@ fn GameCard(#[prop()] token: ProcessedTokenListResponse) -> impl IntoView {
             {move || game_state.get().map(move |game_state| view! {
                 <div
                     style="perspective: 500px; transition: transform 0.4s; transform-style: preserve-3d;"
-                    class="relative w-full min-h-[31rem] snap-start snap-always"
+                    class="relative w-full min-h-[31rem] snap-start snap-always touch-none"
                 >
                     <Show
                         when=move || { matches!(game_state, GameState::Playing | GameState::Pending)}
@@ -1119,7 +1119,10 @@ pub fn PumpNDump() -> impl IntoView {
 
             fetch_more_tokens.dispatch(page.get_untracked());
         },
-        UseInfiniteScrollOptions::default().distance(400f64),
+        // start loading early, throttled at 3s per load
+        UseInfiniteScrollOptions::default()
+            .distance(400f64)
+            .interval(3000f64),
     );
     view! {
         <div class="h-screen w-screen block text-white bg-black">
