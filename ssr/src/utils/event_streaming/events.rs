@@ -791,9 +791,9 @@ impl TokenCreationCompleted {
             let link = format!("/token/info/{token_root}");
 
             // token_creation_completed - analytics
-            send_event_ssr(
-                "token_creation_completed",
-                &json!({
+            let _ = send_event_ssr(
+                "token_creation_completed".to_string(),
+                json!({
                     "user_id": user_id,
                     "canister_id": canister_id,
                     "token_name": sns_init_payload.token_name,
@@ -829,9 +829,9 @@ impl TokenCreationFailed {
             let user_id = profile_details.principal;
 
             // token_creation_failed - analytics
-            send_event_ssr(
-                "token_creation_failed",
-                &json!({
+            let _ = send_event_ssr(
+                "token_creation_failed".to_string(),
+                json!({
                     "user_id": user_id,
                     "canister_id": canister_id,
                     "token_name": sns_init_payload.token_name,
