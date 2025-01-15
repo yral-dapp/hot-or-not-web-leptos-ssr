@@ -224,7 +224,7 @@ fn DumpButton() -> impl IntoView {
         <button
             aria-label="Vibration"
             on:click=onclick
-            class="dump-button rounded-[28px] transition-all duration-150 ring-4 group text-white ring-white/25 gap-2 min-w-36 p-3 flex flex-col items-center justify-center"
+            class="dump-button rounded-[28px] transition-all duration-150 ring-4 group text-white ring-white/25 gap-2 min-w-36 p-3 flex flex-col items-center justify-center touch-none"
         >
             <div class="text-xl font-bold">DUMP</div>
             <div class="bg-[#4683DC] rounded-full w-12 h-3 relative">
@@ -314,7 +314,7 @@ fn PumpButton() -> impl IntoView {
         <button
             aria-label="Vibration"
             on:click=onclick
-            class="pump-button rounded-[28px] transition-all duration-150 ring-4 group text-white ring-white/25 gap-2 min-w-36 p-3 flex flex-col items-center justify-center"
+            class="pump-button rounded-[28px] transition-all duration-150 ring-4 group text-white ring-white/25 gap-2 min-w-36 p-3 flex flex-col items-center justify-center touch-none"
         >
             <div class="text-xl font-bold">PUMP</div>
             <div class="bg-[#E2027B] rounded-full w-12 h-3 relative">
@@ -871,7 +871,7 @@ fn GameCard(#[prop()] token: ProcessedTokenListResponse) -> impl IntoView {
             {move || game_state.get().map(move |game_state| view! {
                 <div
                     style="perspective: 500px; transition: transform 0.4s; transform-style: preserve-3d;"
-                    class="relative w-full min-h-[31rem] snap-start snap-always touch-none"
+                    class="relative w-full min-h-[31rem] snap-start snap-always"
                 >
                     <Show
                         when=move || { matches!(game_state, GameState::Playing | GameState::Pending)}
@@ -1090,10 +1090,7 @@ pub fn PumpNDump() -> impl IntoView {
 
             let user_principal = cans.user_principal();
             // to reduce the tokens loaded on initial load
-            let limit = match page {
-                1..10 => 1, // this number is based on what produced least token in preview
-                _ => 5,
-            };
+            let limit = 5;
 
             let more_tokens = get_paginated_token_list_with_limit(page, limit)
                 .await
@@ -1122,7 +1119,7 @@ pub fn PumpNDump() -> impl IntoView {
         // start loading early, throttled at 3s per load
         UseInfiniteScrollOptions::default()
             .distance(400f64)
-            .interval(3000f64),
+            .interval(2000f64),
     );
     view! {
         <div class="h-screen w-screen block text-white bg-black">
