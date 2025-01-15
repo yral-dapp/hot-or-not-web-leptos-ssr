@@ -5,10 +5,12 @@ use crate::{
         spinner::{SpinnerCircle, SpinnerCircleStyled},
     },
     state::canisters::authenticated_canisters,
+    utils::host::get_host,
 };
 use candid::{Nat, Principal};
 use leptos::*;
 use leptos_icons::Icon;
+use leptos_router::use_location;
 use yral_canisters_common::{
     utils::token::{TokenMetadata, TokenOwner},
     Canisters,
@@ -163,6 +165,8 @@ fn AirdropPopUpButton(
     name: String,
     buffer_signal: RwSignal<bool>,
 ) -> impl IntoView {
+    let host = get_host();
+    let pathname = use_location();
     view! {
         <div
             style="--duration:1500ms"
@@ -191,6 +195,7 @@ fn AirdropPopUpButton(
                     }
                         .into_view())
                 } else if claimed.get() {
+                    let host = host.clone();
                     Some(view! {
                         <div class="mt-10 mb-16">
                             <HighlightedLinkButton
@@ -199,7 +204,21 @@ fn AirdropPopUpButton(
                             classes="max-w-96 mx-auto py-[12px] px-[20px]".to_string()
                             href="/wallet".to_string()
                             >
-                                Explore more Tokens
+                                {move ||{
+                                    if host.clone().contains("icpump"){
+                                        if pathname.pathname.get().starts_with("/wallet") || pathname.pathname.get().starts_with("/profile"){
+                                            "Explore more Tokens"
+                                        }else{
+                                            "View Wallet"
+                                        }
+                                    }else if host.contains("pumpdump"){
+                                        "Continue Playing"
+                                    }else if host.contains("yral"){
+                                        "Watch more Videos"
+                                    }else{
+                                        "View Wallet"
+                                    }
+                                }}
                             </HighlightedLinkButton>
                         </div>
 
