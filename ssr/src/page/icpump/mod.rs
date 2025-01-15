@@ -1,18 +1,24 @@
 use crate::component::overlay::PopupOverlay;
+use crate::consts::ICPUMP_LISTING_PAGE_SIZE;
 use crate::consts::USER_PRINCIPAL_STORE;
+use crate::state::canisters::authenticated_canisters;
 use crate::state::canisters::unauth_canisters;
-use std::collections::HashMap;
 use std::collections::VecDeque;
 
 use candid::Principal;
 use codee::string::FromToStringCodec;
 use futures::stream::FuturesOrdered;
 use futures::StreamExt;
+use html::Div;
 use leptos::*;
 use leptos_icons::Icon;
 use leptos_use::use_cookie;
+use leptos_use::use_intersection_observer_with_options;
+use leptos_use::use_media_query;
+use leptos_use::UseIntersectionObserverOptions;
 use serde::Deserialize;
 use serde::Serialize;
+use yral_canisters_common::Canisters;
 
 use crate::component::buttons::HighlightedLinkButton;
 use crate::component::icons::airdrop_icon::AirdropIcon;
@@ -22,8 +28,6 @@ use crate::component::icons::eye_hide_icon::EyeHiddenIcon;
 use crate::component::icons::send_icon::SendIcon;
 use crate::component::icons::share_icon::ShareIcon;
 use crate::component::share_popup::ShareContent;
-use crate::component::spinner::FullScreenSpinner;
-use crate::consts::ICPUMP_LISTING_PAGE_SIZE;
 use crate::utils::host::get_host;
 use crate::utils::token::firestore::init_firebase;
 use crate::utils::token::firestore::listen_to_documents;
@@ -31,7 +35,7 @@ use crate::utils::token::icpump::get_paginated_token_list;
 use crate::utils::token::icpump::TokenListItem;
 
 pub mod ai;
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 struct ProcessedTokenListResponse {
     token_details: TokenListItem,
     root: Principal,
@@ -81,98 +85,127 @@ async fn process_token_list_item(
 
     fut.collect().await
 }
+
 #[component]
-pub fn ICPumpListing() -> impl IntoView {
+pub fn ICPumpListingFeed() -> impl IntoView {
     let page = create_rw_signal(1);
+    let end = create_rw_signal(false);
+    let loading = create_rw_signal(true);
+    let (curr_principal, _) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE);
     let token_list: RwSignal<Vec<ProcessedTokenListResponse>> = create_rw_signal(vec![]);
-    let end_of_list = create_rw_signal(false);
-    let cache = create_rw_signal(HashMap::<u64, Vec<ProcessedTokenListResponse>>::new());
     let new_token_list: RwSignal<VecDeque<ProcessedTokenListResponse>> =
         create_rw_signal(VecDeque::new());
-    let (curr_principal, _) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE);
 
-    let act = create_resource(
-        move || (page(), curr_principal()),
-        move |(page, curr_principal)| async move {
+    let fetch_res = authenticated_canisters().derive(
+        move || page.get(),
+        move |cans, page| async move {
+            let cans = Canisters::from_wire(cans.unwrap(), expect_context()).unwrap();
             new_token_list.set(VecDeque::new());
 
-            if let Some(cached) = cache.with_untracked(|c| c.get(&page).cloned()) {
-                return cached.clone();
+            loading.set(true);
+
+            let mut fetched_token_list = process_token_list_item(
+                get_paginated_token_list(page).await.unwrap(),
+                cans.user_principal(),
+            )
+            .await;
+
+            if fetched_token_list.len() < ICPUMP_LISTING_PAGE_SIZE {
+                end.set(true);
             }
 
-            process_token_list_item(
-                get_paginated_token_list(page as u32).await.unwrap(),
-                curr_principal.unwrap(),
-            )
-            .await
+            token_list.update(|t| {
+                t.append(&mut fetched_token_list);
+            });
+
+            loading.set(false);
         },
     );
 
     create_effect(move |_| {
-        spawn_local(async move {
-            let (_app, firestore) = init_firebase();
-            let mut stream = listen_to_documents(&firestore);
-            let curr_principal = curr_principal.get().unwrap();
-            while let Some(doc) = stream.next().await {
-                let doc = process_token_list_item(doc, curr_principal).await;
-                // push each item in doc to new_token_list
-                for item in doc {
-                    new_token_list.update(move |list| {
-                        list.push_front(item.clone());
-                    });
+        fetch_res.refetch();
+        if let Some(principal) = curr_principal.get() {
+            spawn_local(async move {
+                let (_app, firestore) = init_firebase();
+                let mut stream = listen_to_documents(&firestore);
+                while let Some(doc) = stream.next().await {
+                    let doc = process_token_list_item(doc, principal).await;
+                    for item in doc {
+                        new_token_list.try_update(move |list| {
+                            list.push_front(item.clone());
+                        });
+                    }
                 }
-            }
-        });
+            })
+        }
     });
 
+    let target = NodeRef::<Div>::new();
+
+    use_intersection_observer_with_options(
+        target,
+        move |entries, _| {
+            let is_intersecting = entries.first().map(|entry| entry.is_intersecting());
+
+            let loading = loading.get_untracked();
+            let end = end.get_untracked();
+
+            if let (Some(true), false, false) = (is_intersecting, loading, end) {
+                page.update(|p| {
+                    *p += 1;
+                });
+            }
+        },
+        UseIntersectionObserverOptions::default().thresholds(vec![0.1]),
+    );
+
     view! {
-        <Suspense fallback=FullScreenSpinner>
-            {move || {
-                let _ = act
-                    .get()
-                    .map(|res| {
-                        if res.len() < ICPUMP_LISTING_PAGE_SIZE {
-                            end_of_list.set(true);
-                        }
-                        update!(
-                            move |token_list, cache| {
-                                *token_list = res.clone();
-                                cache.insert(page.get_untracked(), res.clone());
-                            }
-                        );
-                    });
-                view! {
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <For
-                            each=move || new_token_list.get()
-                            key=|t| t.token_details.token_symbol.clone()
-                            children=move |ProcessedTokenListResponse { token_details, root, is_airdrop_claimed }| {
-                                view! { <TokenCard is_new_token=true details=token_details is_airdrop_claimed root/> }
-                            }
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <For
+                each=move || new_token_list.get()
+                key=|t| t.token_details.token_symbol.clone()
+                children=move |t| {
+                    view! {
+                        <TokenCard
+                            is_new_token=true
+                            details=t.token_details
+                            is_airdrop_claimed=t.is_airdrop_claimed
+                            root=t.root
                         />
-                        <For
-                            each=move || token_list.get()
-                            key=|t| t.token_details.token_symbol.clone()
-                            children=move |ProcessedTokenListResponse { token_details, root, is_airdrop_claimed }| {
-                                view! { <TokenCard details=token_details is_airdrop_claimed root/> }
-                            }
-                        />
-                    </div>
-                    <div class="flex justify-center">
-                        <PageSelector page=page end_of_list=end_of_list />
-                    </div>
+                    }
                 }
+            />
+            {move || {
+                token_list
+                    .get()
+                    .iter()
+                    .map(|t| {
+                        view! {
+                            <TokenCard
+                                details=t.token_details.clone()
+                                is_airdrop_claimed=t.is_airdrop_claimed
+                                root=t.root
+                            />
+                        }
+                    })
+                    .collect_view()
             }}
-        </Suspense>
+
+            <Show when=move || loading.get()>
+                <TokenCardLoadingFeed />
+            </Show>
+        </div>
+
+        <div class="w-full p-4" node_ref=target></div>
     }
 }
 
 #[component]
 pub fn ICPumpLanding() -> impl IntoView {
     view! {
-        <div class="min-h-screen bg-black text-white  flex flex-col gap-4 px-4 md:px-8 py-6 font-kumbh overflow-y-auto">
-            <div class="flex lg:flex-row gap-4 flex-col items-center justify-center relative">
-                <div class="lg:absolute lg:left-0 lg:top-0 flex items-center gap-4">
+        <div class="min-h-screen bg-black text-white  flex flex-col gap-4 px-4 md:px-8 py-6 font-kumbh">
+            <div class="flex lg:flex-row gap-4 flex-col items-center justify-center">
+                <div class="lg:left-0 lg:top-0 flex items-center gap-4">
                     <div>Follow us:</div>
                     <div class="flex items-center gap-4">
                         <XIcon
@@ -197,8 +230,9 @@ pub fn ICPumpLanding() -> impl IntoView {
                 </HighlightedLinkButton>
             </div>
             <div class="flex flex-col gap-8 pb-24">
-                <ICPumpListing />
+                <ICPumpListingFeed />
             </div>
+
         </div>
     }
 }
@@ -276,36 +310,93 @@ pub fn TokenCard(
                 <ActionButton label="Buy/Sell".to_string() href="#".to_string() disabled=true>
                     <Icon class="w-full h-full" icon=ArrowLeftRightIcon />
                 </ActionButton>
-                {
-                    if is_airdrop_claimed{
-
-                        view! {
-                            <ActionButtonLink on:click=move |_|{pop_up.set(true); share_link.set(format!("/token/info/{}/{}?airdrop_amt=100",root, details.user_id))} label="Airdrop".to_string()>
-                                <Icon class="h-6 w-6" icon=AirdropIcon />
-                            </ActionButtonLink>
-                        }
-                    }else{
-                        view! {
-                            <ActionButton href=format!("/token/info/{}/{}?airdrop_amt=100",root, details.user_id) label="Airdrop".to_string()>
+                {if is_airdrop_claimed {
+                    view! {
+                        <ActionButtonLink
+                            on:click=move |_| {
+                                pop_up.set(true);
+                                share_link
+                                    .set(
+                                        format!(
+                                            "/token/info/{}/{}?airdrop_amt=100",
+                                            root,
+                                            details.user_id,
+                                        ),
+                                    )
+                            }
+                            label="Airdrop".to_string()
+                        >
                             <Icon class="h-6 w-6" icon=AirdropIcon />
-                            </ActionButton>
-                        }
+                        </ActionButtonLink>
                     }
-                }
+                } else {
+                    view! {
+                        <ActionButton
+                            href=format!("/token/info/{}/{}?airdrop_amt=100", root, details.user_id)
+                            label="Airdrop".to_string()
+                        >
+                            <Icon class="h-6 w-6" icon=AirdropIcon />
+                        </ActionButton>
+                    }
+                }}
                 <ActionButton label="Share".to_string() href="#".to_string()>
-                    <Icon class="w-full h-full" icon=ShareIcon on:click=move |_| {pop_up.set(true); share_link.set(share_link_coin.clone())}/>
+                    <Icon
+                        class="w-full h-full"
+                        icon=ShareIcon
+                        on:click=move |_| {
+                            pop_up.set(true);
+                            share_link.set(share_link_coin.clone())
+                        }
+                    />
                 </ActionButton>
                 <ActionButton label="Details".to_string() href=details.link>
                     <Icon class="w-full h-full" icon=ChevronRightIcon />
                 </ActionButton>
             </div>
-            <PopupOverlay show=pop_up >
+            <PopupOverlay show=pop_up>
                 <ShareContent
                     share_link=format!("{base_url}{}", share_link())
                     message=share_message()
                     show_popup=pop_up
                 />
             </PopupOverlay>
+        </div>
+    }
+}
+
+#[component]
+pub fn TokenCardLoadingFeed() -> impl IntoView {
+    let is_lg_screen = use_media_query("(min-width: 1024px)");
+    let is_md_screen = use_media_query("(min-width: 768px)");
+
+    let num_cards = create_rw_signal(6);
+
+    create_effect(move |_| {
+        num_cards.set(match (is_lg_screen.get(), is_md_screen.get()) {
+            (true, _) => 6,
+            (_, true) => 4,
+            _ => 2,
+        });
+    });
+
+    move || {
+        (0..num_cards())
+            .map(|_| view! { <TokenCardLoading /> })
+            .collect_view()
+    }
+}
+
+#[component]
+pub fn TokenCardLoading() -> impl IntoView {
+    view! {
+        <div class="flex flex-col gap-2 py-3 px-3 w-full rounded-lg md:px-4 group bg-neutral-900/90">
+            <div class="flex gap-3">
+                <div class="w-[7rem] h-[7rem] bg-loading rounded-[4px] relative shrink-0"></div>
+
+                <div class="w-full bg-loading rounded-[4px]"></div>
+            </div>
+
+            <div class="h-[4.125rem] bg-loading rounded-[4px]"></div>
         </div>
     }
 }
@@ -322,15 +413,18 @@ pub fn PageSelector(page: RwSignal<u64>, end_of_list: RwSignal<bool>) -> impl In
                 }
                 disabled=move || page.get() == 1
             >
-                    <Icon class="w-4 h-4 rotate-180" icon=ChevronRightIcon />
+                <Icon class="w-4 h-4 rotate-180" icon=ChevronRightIcon />
             </button>
-            <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white bg-blue-500">{page}</div>
+            <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white bg-blue-500">
+                {page}
+            </div>
             <button
                 class="flex justify-center items-center w-8 h-8 rounded-lg bg-neutral-800"
                 on:click=move |_| {
                     page.update(|page| *page += 1);
                 }
-                disabled=move || end_of_list.get()>
+                disabled=move || end_of_list.get()
+            >
                 <Icon class="w-4 h-4" icon=ChevronRightIcon />
             </button>
         </div>
@@ -348,9 +442,20 @@ pub fn ActionButton(
         <a
             disabled=disabled
             href=href
-            class=move || format!("flex flex-col gap-1 justify-center items-center text-xs transition-colors {}", if !disabled{"group-hover:text-white text-neutral-300"}else{"group-hover:cursor-default text-neutral-600"})
+            class=move || {
+                format!(
+                    "flex flex-col gap-1 justify-center items-center text-xs transition-colors {}",
+                    if !disabled {
+                        "group-hover:text-white text-neutral-300"
+                    } else {
+                        "group-hover:cursor-default text-neutral-600"
+                    },
+                )
+            }
         >
-            <div class="w-[1.875rem] h-[1.875rem] flex items-center justify-center">{children()}</div>
+            <div class="w-[1.875rem] h-[1.875rem] flex items-center justify-center">
+                {children()}
+            </div>
 
             <div>{label}</div>
         </a>
@@ -366,9 +471,20 @@ pub fn ActionButtonLink(
     view! {
         <button
             disabled=disabled
-            class=move || format!("flex flex-col gap-1 justify-center items-center text-xs transition-colors {}", if !disabled{"group-hover:text-white text-neutral-300"}else{"group-hover:cursor-default text-neutral-600"})
+            class=move || {
+                format!(
+                    "flex flex-col gap-1 justify-center items-center text-xs transition-colors {}",
+                    if !disabled {
+                        "group-hover:text-white text-neutral-300"
+                    } else {
+                        "group-hover:cursor-default text-neutral-600"
+                    },
+                )
+            }
         >
-            <div class="w-[1.875rem] h-[1.875rem] flex items-center justify-center">{children()}</div>
+            <div class="w-[1.875rem] h-[1.875rem] flex items-center justify-center">
+                {children()}
+            </div>
 
             <div>{label}</div>
         </button>

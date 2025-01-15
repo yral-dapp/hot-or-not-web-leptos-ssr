@@ -8,8 +8,8 @@ describe("wallet page tests", function () {
     })
     
     it("default wallet page contains 1000 COYNS", async function(browser){
-        browser.element.findByText("COYNS", {timeout: 10000}).waitUntil('enabled')
-        browser.element.findByText("1000", {timeout: 10000}).waitUntil('enabled');
+        browser.element.findByText("COYNS", {timeout: 10000}).waitUntil('enabled', { timeout: 10000 });
+        browser.element.findByText("1000", {timeout: 10000}).waitUntil('enabled', { timeout: 10000 });
     })
     it("default wallet page contains 1000 COYNS", function(browser) {
         browser.waitForElementVisible('body', 10000);
@@ -17,8 +17,8 @@ describe("wallet page tests", function () {
         browser.pause(10000);
     
     
-        browser.element.findByText("COYNS", { timeout: 10000 }).waitUntil('visible').assert.enabled();
-        browser.element.findByText("1000", { timeout: 10000 }).waitUntil('visible').assert.enabled();
+        browser.element.findByText("COYNS", { timeout: 10000 }).waitUntil('visible', { timeout: 10000 }).assert.enabled();
+        browser.element.findByText("1000", { timeout: 10000 }).waitUntil('visible', { timeout: 10000 }).assert.enabled();
     
     });
 
