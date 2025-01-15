@@ -15,7 +15,7 @@ use crate::state::canisters::auth_canisters_store;
 use crate::state::history::HistoryCtx;
 #[cfg(feature = "ga4")]
 use crate::utils::event_streaming::{
-    send_event_ssr, send_event_ssr_spawn, send_event_warehouse, send_user_id,
+    send_event_ssr, send_event_ssr_spawn, send_event_warehouse_ssr_spawn, send_user_id,
 };
 use crate::utils::token::nsfw::NSFWInfo;
 use crate::utils::user::{user_details_can_store_or_ret, user_details_or_ret};
@@ -86,9 +86,9 @@ impl VideoWatched {
 
                 // send bigquery event when video is watched > 95%
                 if current_time >= 0.95 * duration && !full_video_watched.get() {
-                    send_event_warehouse(
-                        "video_duration_watched",
-                        &json!({
+                    send_event_warehouse_ssr_spawn(
+                        "video_duration_watched".to_string(),
+                        json!({
                             "publisher_user_id": post.map(|p| p.poster_principal),
                             "user_id": user.details.principal,
                             "is_loggedIn": is_connected(),
@@ -163,9 +163,9 @@ impl VideoWatched {
 
                 let percentage_watched = (current_time / duration) * 100.0;
 
-                send_event_warehouse(
-                    "video_duration_watched",
-                    &json!({
+                send_event_warehouse_ssr_spawn(
+                    "video_duration_watched".to_string(),
+                    json!({
                         "publisher_user_id": post.map(|p| p.poster_principal),
                         "user_id": user.details.principal,
                         "is_loggedIn": is_connected(),
