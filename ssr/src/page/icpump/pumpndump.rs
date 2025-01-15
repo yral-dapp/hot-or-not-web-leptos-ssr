@@ -444,8 +444,8 @@ enum GameResult {
 
 impl GameState {
     pub async fn load(
-        owner_principal: Principal,
-        root_principal: Principal,
+        _owner_principal: Principal,
+        _root_principal: Principal,
     ) -> Result<Self, String> {
         Ok(Self::Playing)
     }
