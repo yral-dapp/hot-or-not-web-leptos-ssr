@@ -36,7 +36,7 @@ use crate::{
 
 #[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
 static PUMP_AND_DUMP_WORKER_URL: Lazy<Url> =
-    Lazy::new(|| Url::parse("https://yral-pump-n-dump.tushar-23b.workers.dev/").unwrap());
+    Lazy::new(|| Url::parse("https://yral-pump-n-dump.rupansh.workers.dev/").unwrap());
 
 #[cfg(any(feature = "local-bin", feature = "local-lib"))]
 static PUMP_AND_DUMP_WORKER_URL: Lazy<Url> =
