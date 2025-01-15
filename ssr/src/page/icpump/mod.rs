@@ -89,7 +89,6 @@ async fn process_token_list_item(
     fut.collect().await
 }
 
-
 #[component]
 pub fn ICPumpListingFeed() -> impl IntoView {
     let page = create_rw_signal(1);
