@@ -390,16 +390,19 @@ pub fn TokenCard(
                     show_popup=pop_up
                 />
             </PopupOverlay>
-            <PopupOverlay show=airdrop_popup >
-                <div class="w-[343px] h-[400px] absolute top-0 right-0 left-0 bottom-0">
-                    <AirdropPopup
-                        name=details.name.clone()
-                        logo=details.logo.clone()
-                        buffer_signal
-                        claimed
-                    />
+            <Show when=airdrop_popup >
+                <div class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 max-w-[560px] max-h-[634px] min-w-[343px] min-h-[480px] backdrop-blur-lg rounded-lg">
+                    <div class="rounded-lg z-50">
+                        <AirdropPopup
+                            name=details.name.clone()
+                            logo=details.logo.clone()
+                            buffer_signal
+                            claimed
+                            airdrop_popup
+                        />
+                    </div>
                 </div>
-            </PopupOverlay>
+            </Show>
         </div>
     }
 }

@@ -134,17 +134,44 @@ pub fn WalletCard(
                 />
             </PopupOverlay>
 
-            <PopupOverlay show=airdrop_popup >
-                <div class="w-[343px] h-[400px] absolute top-0 right-0 left-0 bottom-0">
+            <Show when=airdrop_popup>
+                <div class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 max-w-[560px] max-h-[634px] min-w-[343px] min-h-[480px] backdrop-blur-lg rounded-lg">
+                    <div class="rounded-lg z-50">
+                        <AirdropPopup
+                            name=token_meta_data.name.clone()
+                            logo=token_meta_data.logo_b64.clone()
+                            buffer_signal
+                            claimed
+                            airdrop_popup
+                        />
+                    </div>
+                </div>
+            </Show>
+        </div>
+    }
+}
+
+#[component]
+pub fn Test() -> impl IntoView {
+    let buffer_signal = create_rw_signal(true);
+    let claimed = create_rw_signal(false);
+    let airdrop_popup = create_rw_signal(false);
+    view! {
+        <div class="w-screen h-screen">
+        <Show when=move || true>
+            <div class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 max-w-[560px] max-h-[634px] min-w-[343px] min-h-[480px] backdrop-blur-lg rounded-lg">
+                <div class="rounded-lg z-50">
                     <AirdropPopup
-                        name=token_meta_data.name.clone()
-                        logo=token_meta_data.logo_b64.clone()
+                        name="SHIT".to_string()
+                        logo="".to_string()
                         buffer_signal
                         claimed
+                        airdrop_popup
                     />
                 </div>
-        </PopupOverlay>
-        </div>
+            </div>
+        </Show>
+    </div>
     }
 }
 

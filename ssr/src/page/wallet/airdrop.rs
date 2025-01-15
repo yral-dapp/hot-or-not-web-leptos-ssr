@@ -2,12 +2,13 @@ use crate::{
     component::{
         back_btn::BackButton,
         buttons::{HighlightedButton, HighlightedLinkButton},
-        spinner::SpinnerCircle,
+        spinner::{SpinnerCircle, SpinnerCircleStyled},
     },
     state::canisters::authenticated_canisters,
 };
 use candid::{Nat, Principal};
 use leptos::*;
+use leptos_icons::Icon;
 use yral_canisters_common::{
     utils::token::{TokenMetadata, TokenOwner},
     Canisters,
@@ -159,7 +160,6 @@ fn AirdropButton(
 #[component]
 fn AirdropPopUpButton(
     claimed: RwSignal<bool>,
-    airdrop_amount: u64,
     name: String,
     buffer_signal: RwSignal<bool>,
 ) -> impl IntoView {
@@ -172,36 +172,37 @@ fn AirdropPopUpButton(
                 if claimed.get() {
                     view! {
                         <div class="text-center">
-                            {format!("{} {}", airdrop_amount, name)} <br />
-                            <span class="font-normal">"added to wallet"</span>
+                            {format!("100 {}", name)} <br />
+                            <span class="text-center font-normal">Claim for <span class="font-semibold">100 {name.clone()}</span> is being processed</span>
                         </div>
                     }
                 } else {
                     view! {
-                        <div class="text-center">
-                            {format!("{} {} Airdrop received", airdrop_amount, name)}
-                        </div>
+                        <div class="text-center font-normal"><span class="font-semibold">100 {name.clone()}</span> successfully claimed and added to your wallet!</div>
                     }
                 }
             }}
             {move || {
                 if buffer_signal.get() {
                     Some(view! {
-                        <div class="max-w-100">
-                            <SpinnerCircle />
+                        <div class="max-w-100 mt-10 mb-16 scale-[4] ">
+                            <SpinnerCircleStyled/>
                         </div>
                     }
                         .into_view())
                 } else if claimed.get() {
                     Some(view! {
-                        <HighlightedLinkButton
+                        <div class="mt-10 mb-16">
+                            <HighlightedLinkButton
                             alt_style=true
                             disabled=false
                             classes="max-w-96 mx-auto py-[12px] px-[20px]".to_string()
                             href="/wallet".to_string()
-                        >
-                            "Go to wallet"
-                        </HighlightedLinkButton>
+                            >
+                                Explore more Tokens
+                            </HighlightedLinkButton>
+                        </div>
+
                     }
                         .into_view())
                 } else {
@@ -218,15 +219,20 @@ pub fn AirdropPopup(
     logo: String,
     buffer_signal: RwSignal<bool>,
     claimed: RwSignal<bool>,
+    airdrop_popup: RwSignal<bool>,
 ) -> impl IntoView {
     view! {
         <div
             style="background: radial-gradient(circle, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 75%, rgba(50,0,28,0.5) 100%);"
-            class="h-screen w-screen relative items-center justify-center text-white font-kumbh flex flex-col overflow-hidden gap-4"
+            class="h-full w-full relative items-center justify-center text-white font-kumbh flex flex-col overflow-hidden gap-4 rounded-lg"
         >
-            <div class="absolute z-40 right-5 top-10 scale-[1.75]">
-                <BackButton fallback="/wallet" />
-            </div>
+            <button on:click=move |_| {
+                if !buffer_signal.get(){
+                    airdrop_popup.set(false);
+                }
+            } class="absolute z-40 right-5 top-5 scale-125 p-2 rounded-full bg-neutral-800">
+                <Icon icon=icondata::TbX />
+            </button>
             <img
                 alt="bg"
                 src="/img/airdrop/bg.webp"
@@ -237,7 +243,6 @@ pub fn AirdropPopup(
             }}
             <AirdropPopUpButton
                 claimed
-                airdrop_amount=100
                 name
                 buffer_signal
             />
@@ -275,20 +280,20 @@ fn AirdropAnimation(claimed: bool, logo: String) -> impl IntoView {
                     alt="Cloud"
                     src="/img/airdrop/cloud.webp"
                     style="--x: -50px"
-                    class="w-12 absolute -top-10 left-0 airdrop-cloud"
+                    class="max-w-12 absolute -top-10 left-0 airdrop-cloud"
                 />
                 <img
                     alt="Cloud"
                     src="/img/airdrop/cloud.webp"
                     style="--x: 50px"
-                    class="w-16 absolute bottom-10 right-10 airdrop-cloud"
+                    class="max-w-16 absolute bottom-10 right-10 airdrop-cloud"
                 />
             </div>
         }
     } else {
         view! {
             <div class="h-[30vh] max-h-96 w-full flex items-center justify-center z-[2]">
-                <div class="h-[25vh] w-[25vh] relative">
+                <div class="h-[25vh] w-[25vh] relative mt-12 gap-12">
                     <AnimatedTick />
                     <div
                         style="--duration:1500ms; background: radial-gradient(circle, rgba(27,0,15,1) 0%, rgba(0,0,0,1) 100%); box-shadow: 0px 0px 3.43px 0px #FFFFFF29;"
