@@ -4,9 +4,7 @@ use openidconnect::CsrfToken;
 use serde::{Deserialize, Serialize};
 use server_fn::codec::{GetUrl, Json};
 
-use crate::{
-    component::loading::Loading, utils::route::go_to_root,
-};
+use crate::{component::loading::Loading, utils::route::go_to_root};
 use yral_types::delegated_identity::DelegatedIdentityWire;
 
 pub type GoogleAuthMessage = Result<DelegatedIdentityWire, String>;
