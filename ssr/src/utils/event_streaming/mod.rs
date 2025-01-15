@@ -40,25 +40,6 @@ pub struct EventHistory {
 }
 
 #[cfg(feature = "ga4")]
-pub fn send_event(event_name: &str, params: &serde_json::Value) {
-    use super::host::get_host;
-
-    let event_history: EventHistory = expect_context();
-
-    event_history.event_name.set(event_name.to_string());
-
-    let host_str = get_host();
-    let mut params = params.clone();
-    params["host"] = json!(host_str);
-
-    // Warehouse
-    send_event_warehouse(event_name, &params);
-
-    // gtag GA4
-    gtag("event", event_name, &JsValue::from_serde(&params).unwrap());
-}
-
-#[cfg(feature = "ga4")]
 #[server]
 pub async fn send_event_ssr(
     event_name: String,
@@ -83,6 +64,13 @@ pub async fn send_event_ssr(
     }
 
     Ok(())
+}
+
+#[cfg(feature = "ga4")]
+pub fn send_event_ssr_spawn(event_name: String, params: serde_json::Value) {
+    spawn_local(async move {
+        let _ = send_event_ssr(event_name, params).await;
+    });
 }
 
 #[cfg(feature = "ga4")]

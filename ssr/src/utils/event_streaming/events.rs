@@ -15,7 +15,7 @@ use crate::state::canisters::auth_canisters_store;
 use crate::state::history::HistoryCtx;
 #[cfg(feature = "ga4")]
 use crate::utils::event_streaming::{
-    send_event, send_event_ssr, send_event_warehouse, send_user_id,
+    send_event_ssr, send_event_ssr_spawn, send_event_warehouse, send_user_id,
 };
 use crate::utils::token::nsfw::NSFWInfo;
 use crate::utils::user::{user_details_can_store_or_ret, user_details_or_ret};
@@ -120,9 +120,9 @@ impl VideoWatched {
                 }
 
                 if current_time >= 3.0 {
-                    send_event(
-                        "video_viewed",
-                        &json!({
+                    send_event_ssr_spawn(
+                        "video_viewed".to_string(),
+                        json!({
                             "publisher_user_id": post.map(|p| p.poster_principal),
                             "user_id": user.details.principal,
                             "is_loggedIn": is_connected(),
@@ -219,9 +219,9 @@ impl LikeVideo {
 
             let user = user_details_can_store_or_ret!(cans_store);
 
-            send_event(
-                "like_video",
-                &json!({
+            send_event_ssr_spawn(
+                "like_video".to_string(),
+                json!({
                     "publisher_user_id":publisher_user_id,
                     "user_id": user.details.principal,
                     "is_loggedIn": is_connected(),
@@ -269,9 +269,9 @@ impl ShareVideo {
             let user = user_details_can_store_or_ret!(cans_store);
 
             // share_video - analytics
-            send_event(
-                "share_video",
-                &json!({
+            send_event_ssr_spawn(
+                "share_video".to_string(),
+                json!({
                     "publisher_user_id":publisher_user_id,
                     "user_id": user.details.principal,
                     "is_loggedIn": is_connected.get(),
@@ -302,9 +302,9 @@ impl VideoUploadInitiated {
         {
             // video_upload_initiated - analytics
             let user = user_details_or_ret!();
-            send_event(
-                "video_upload_initiated",
-                &json!({
+            send_event_ssr_spawn(
+                "video_upload_initiated".to_string(),
+                json!({
                     "user_id": user.details.principal,
                     "display_name": user.details.display_name,
                     "canister_id": user.canister_id,
@@ -342,9 +342,9 @@ impl VideoUploadUploadButtonClicked {
                 .unwrap_or_default();
 
             create_effect(move |_| {
-                send_event(
-                    "video_upload_upload_button_clicked",
-                    &json!({
+                send_event_ssr_spawn(
+                    "video_upload_upload_button_clicked".to_string(),
+                    json!({
                         "user_id": user.details.principal,
                         "display_name": user.details.display_name.clone().unwrap_or_default(),
                         "canister_id": user.canister_id,
@@ -369,15 +369,15 @@ impl VideoUploadVideoSelected {
             // video_upload_video_selected - analytics
             let user = user_details_can_store_or_ret!(cans_store);
 
-            send_event(
-                "video_upload_video_selected",
-                &json!({
+            send_event_ssr_spawn(
+                "video_upload_video_selected".to_string(),
+                json!({
                     "user_id": user.details.principal,
                     "display_name": user.details.display_name.unwrap_or_default(),
                     "canister_id": user.canister_id,
                     "creator_category": "NA",
                 }),
-            )
+            );
         }
     }
 }
@@ -400,9 +400,9 @@ impl VideoUploadUnsuccessful {
             // video_upload_unsuccessful - analytics
             let user = user_details_can_store_or_ret!(cans_store);
 
-            send_event(
-                "video_upload_unsuccessful",
-                &json!({
+            send_event_ssr_spawn(
+                "video_upload_unsuccessful".to_string(),
+                json!({
                     "user_id": user.details.principal,
                     "display_name": user.details.display_name.unwrap_or_default(),
                     "canister_id": user.canister_id,
@@ -434,9 +434,9 @@ impl VideoUploadSuccessful {
         {
             // video_upload_successful - analytics
             let user = user_details_can_store_or_ret!(cans_store);
-            send_event(
-                "video_upload_successful",
-                &json!({
+            send_event_ssr_spawn(
+                "video_upload_successful".to_string(),
+                json!({
                     "user_id": user.details.principal,
                     "publisher_user_id": user.details.principal,
                     "display_name": user.details.display_name,
@@ -473,9 +473,9 @@ impl Refer {
             let prev_site = history_ctx.prev_url_untracked();
 
             // refer - analytics
-            send_event(
-                "refer",
-                &json!({
+            send_event_ssr_spawn(
+                "refer".to_string(),
+                json!({
                     "user_id":user_id,
                     "is_loggedIn": logged_in.get_untracked(),
                     "display_name": display_name,
@@ -510,9 +510,9 @@ impl ReferShareLink {
             let prev_site = history_ctx.prev_url_untracked();
 
             // refer_share_link - analytics
-            send_event(
-                "refer_share_link",
-                &json!({
+            send_event_ssr_spawn(
+                "refer_share_link".to_string(),
+                json!({
                     "user_id":user_id,
                     "is_loggedIn": logged_in.get_untracked(),
                     "display_name": display_name,
@@ -539,9 +539,9 @@ impl LoginSuccessful {
             send_user_id(user_id.to_string());
 
             // login_successful - analytics
-            send_event(
-                "login_successful",
-                &json!({
+            send_event_ssr_spawn(
+                "login_successful".to_string(),
+                json!({
                     "login_method": "google", // TODO: change this when more providers are added
                     "user_id": user_id.to_string(),
                     "canister_id": canister_id.to_string(),
@@ -560,9 +560,9 @@ impl LoginMethodSelected {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
         {
             // login_method_selected - analytics
-            send_event(
-                "login_method_selected",
-                &json!({
+            send_event_ssr_spawn(
+                "login_method_selected".to_string(),
+                json!({
                     "login_method": match prov {
                         #[cfg(feature = "local-auth")]
                         ProviderKind::LocalStorage => "local_storage",
@@ -589,9 +589,9 @@ impl LoginJoinOverlayViewed {
 
             let user_id = user.details.principal;
 
-            send_event(
-                "login_join_overlay_viewed",
-                &json!({
+            send_event_ssr_spawn(
+                "login_join_overlay_viewed".to_string(),
+                json!({
                     "user_id_viewer": user_id,
                     "previous_event": event_history.event_name.get_untracked(),
                 }),
@@ -613,9 +613,9 @@ impl LoginCta {
 
             let event_history: EventHistory = expect_context();
 
-            send_event(
-                "login_cta",
-                &json!({
+            send_event_ssr_spawn(
+                "login_cta".to_string(),
+                json!({
                     "previous_event": event_history.event_name.get_untracked(),
                     "cta_location": cta_location,
                 }),
@@ -639,9 +639,9 @@ impl LogoutClicked {
             let display_name = details.display_name;
             let canister_id = user.canister_id;
 
-            send_event(
-                "logout_clicked",
-                &json!({
+            send_event_ssr_spawn(
+                "logout_clicked".to_string(),
+                json!({
                     "user_id_viewer": user_id,
                     "display_name": display_name,
                     "canister_id": canister_id,
@@ -666,9 +666,9 @@ impl LogoutConfirmation {
             let canister_id = user.canister_id;
             // logout_confirmation - analytics
 
-            send_event(
-                "logout_confirmation",
-                &json!({
+            send_event_ssr_spawn(
+                "logout_confirmation".to_string(),
+                json!({
                     "user_id_viewer": user_id,
                     "display_name": display_name,
                     "canister_id": canister_id,
@@ -693,9 +693,9 @@ impl ErrorEvent {
             let canister_id = user.canister_id;
 
             // error_event - analytics
-            send_event(
-                "error_event",
-                &json!({
+            send_event_ssr_spawn(
+                "error_event".to_string(),
+                json!({
                     "user_id": user_id,
                     "canister_id": canister_id,
                     "description": error_str,
@@ -724,9 +724,9 @@ impl ProfileViewVideo {
 
             let user = user_details_can_store_or_ret!(cans_store);
 
-            send_event(
-                "profile_view_video",
-                &json!({
+            send_event_ssr_spawn(
+                "profile_view_video".to_string(),
+                json!({
                     "publisher_user_id":publisher_user_id,
                     "user_id": user.details.principal,
                     "is_loggedIn": is_connected(),
@@ -758,9 +758,9 @@ impl TokenCreationStarted {
             let canister_id = user.canister_id;
 
             // token_creation_started - analytics
-            send_event(
-                "token_creation_started",
-                &json!({
+            send_event_ssr_spawn(
+                "token_creation_started".to_string(),
+                json!({
                     "user_id": user_id,
                     "canister_id": canister_id,
                     "token_name": sns_init_payload.token_name,
@@ -859,9 +859,9 @@ impl TokensClaimedFromNeuron {
             let canister_id = cans_store.user_canister();
 
             // tokens_claimed_from_neuron - analytics
-            send_event(
-                "tokens_claimed_from_neuron",
-                &json!({
+            send_event_ssr_spawn(
+                "tokens_claimed_from_neuron".to_string(),
+                json!({
                     "user_id": user_id,
                     "canister_id": canister_id,
                     "amount": amount
@@ -884,9 +884,9 @@ impl TokensTransferred {
             let canister_id = cans_store.user_canister();
 
             // tokens_transferred - analytics
-            send_event(
-                "tokens_transferred",
-                &json!({
+            send_event_ssr_spawn(
+                "tokens_transferred".to_string(),
+                json!({
                     "user_id": user_id,
                     "canister_id": canister_id,
                     "amount": amount,
