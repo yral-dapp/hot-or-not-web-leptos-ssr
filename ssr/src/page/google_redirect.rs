@@ -101,24 +101,21 @@ async fn handle_oauth_query(oauth_query: OAuthQuery) -> GoogleAuthMessage {
     Ok(delegated)
 }
 
+#[server]
 async fn handle_oauth_query_for_external_client(
     client_redirect_uri: String,
     auth_code: String,
-) -> Result<(), String> {
-    use_navigate()(
-        &format!("{}?authCode={}", client_redirect_uri, auth_code),
-        NavigateOptions {
-            resolve: false,
-            ..Default::default()
-        },
-    );
+) -> Result<(), ServerFnError> {
+    use leptos_axum::redirect;
+
+    redirect(&format!("{}?authCode={}", client_redirect_uri, auth_code));
     Ok(())
 }
 
 #[derive(Serialize, Deserialize, Clone)]
 enum RedirectHandlerReturnType {
     Identity(GoogleAuthMessage),
-    ExternalClient(Result<(), String>),
+    ExternalClient(Result<(), ServerFnError>),
 }
 
 #[derive(Serialize, Deserialize)]
@@ -130,7 +127,7 @@ struct OAuthState {
 #[component]
 pub fn GoogleRedirectHandler() -> impl IntoView {
     let query = use_query::<OAuthQuery>();
-    let identity_resource = create_local_resource(query, |query_res| async move {
+    let identity_resource = create_blocking_resource(query, |query_res| async move {
         let Ok(oauth_query) = query_res else {
             return RedirectHandlerReturnType::Identity(Err("Invalid query".to_string()));
         };
