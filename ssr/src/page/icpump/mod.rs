@@ -373,7 +373,7 @@ pub fn TokenCard(
                     <img
                         alt=details.token_name.clone()
                         src=details.logo.clone()
-                        class="w-full h-full"
+                        class="w-full h-full z-0"
                     />
                 </div>
                 <div class="flex flex-col justify-between overflow-hidden w-full">
