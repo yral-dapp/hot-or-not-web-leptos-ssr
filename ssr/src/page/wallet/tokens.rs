@@ -63,7 +63,10 @@ struct WalletCardOptionsContext {
     token_owner: Option<TokenOwner>,
     user_principal: Principal,
 }
+
+use crate::component::overlay::ShadowOverlay;
 use crate::page::wallet::airdrop::AirdropPopup;
+
 #[component]
 pub fn WalletCard(
     user_principal: Principal,
@@ -132,7 +135,7 @@ pub fn WalletCard(
                 />
             </PopupOverlay>
 
-            <Show when=airdrop_popup>
+            <ShadowOverlay show=airdrop_popup >
                 <div class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 max-w-[560px] max-h-[634px] min-w-[343px] min-h-[480px] backdrop-blur-lg rounded-lg">
                     <div class="rounded-lg z-[500]">
                         <AirdropPopup
@@ -144,7 +147,7 @@ pub fn WalletCard(
                         />
                     </div>
                 </div>
-            </Show>
+            </ShadowOverlay>
         </div>
     }
 }

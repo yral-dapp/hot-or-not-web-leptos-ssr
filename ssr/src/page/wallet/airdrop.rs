@@ -245,9 +245,7 @@ pub fn AirdropPopup(
             style="background: radial-gradient(circle, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 75%, rgba(50,0,28,0.5) 100%);"
             class="h-full w-full relative items-center justify-center text-white font-kumbh flex flex-col overflow-hidden gap-4 rounded-lg"
         >
-            <button on:click=move |_| {
-                airdrop_popup.set(false)
-            } class="absolute z-40 right-5 top-5 scale-125 p-2 rounded-full bg-neutral-800">
+            <button on:click=move |_| airdrop_popup.set(false) class="absolute z-40 right-5 top-5 scale-125 p-2 rounded-full bg-neutral-800">
                 <Icon icon=icondata::TbX />
             </button>
             <img
@@ -309,8 +307,8 @@ fn AirdropAnimation(claimed: bool, logo: String) -> impl IntoView {
         }
     } else {
         view! {
-            <div class="h-[30vh] max-h-96 w-full flex items-center justify-center z-[2]">
-                <div class="h-[25vh] w-[25vh] relative mt-12 gap-12">
+            <div class="h-[30vh] max-h-96 w-full flex items-center justify-center z-[2] lg:mb-8 mt-12">
+                <div class="h-[22vh] w-[22vh] lg:h-[27vh] lg:w-[27vh] relative gap-12">
                     <AnimatedTick />
                     <div
                         style="--duration:1500ms; background: radial-gradient(circle, rgba(27,0,15,1) 0%, rgba(0,0,0,1) 100%); box-shadow: 0px 0px 3.43px 0px #FFFFFF29;"
