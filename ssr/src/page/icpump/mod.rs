@@ -288,6 +288,7 @@ pub fn TokenCardFallback() -> impl IntoView {
     }
 }
 
+use crate::component::overlay::ShadowOverlay;
 use crate::page::wallet::airdrop::AirdropPopup;
 use yral_canisters_common::utils::token::TokenOwner;
 
@@ -373,7 +374,7 @@ pub fn TokenCard(
                     <img
                         alt=details.token_name.clone()
                         src=details.logo.clone()
-                        class="w-full h-full z-0"
+                        class="w-full h-full"
                     />
                 </div>
                 <div class="flex flex-col justify-between overflow-hidden w-full">
@@ -424,7 +425,7 @@ pub fn TokenCard(
                     show_popup=pop_up
                 />
             </PopupOverlay>
-            <Show when=airdrop_popup >
+            <ShadowOverlay show=true >
                 <div class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 max-w-[560px] max-h-[634px] min-w-[343px] min-h-[480px] backdrop-blur-lg rounded-lg">
                     <div class="rounded-lg z-[500]">
                         <AirdropPopup
@@ -436,7 +437,7 @@ pub fn TokenCard(
                         />
                     </div>
                 </div>
-            </Show>
+            </ShadowOverlay>
         </div>
     }
 }
