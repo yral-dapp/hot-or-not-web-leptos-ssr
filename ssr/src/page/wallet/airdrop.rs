@@ -246,9 +246,7 @@ pub fn AirdropPopup(
             class="h-full w-full relative items-center justify-center text-white font-kumbh flex flex-col overflow-hidden gap-4 rounded-lg"
         >
             <button on:click=move |_| {
-                if !buffer_signal.get(){
-                    airdrop_popup.set(false);
-                }
+                airdrop_popup.set(false)
             } class="absolute z-40 right-5 top-5 scale-125 p-2 rounded-full bg-neutral-800">
                 <Icon icon=icondata::TbX />
             </button>
