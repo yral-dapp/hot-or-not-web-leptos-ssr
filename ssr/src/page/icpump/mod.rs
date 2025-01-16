@@ -38,10 +38,10 @@ pub mod pumpndump;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ProcessedTokenListResponse {
-    token_details: TokenListItem,
-    root: Principal,
-    token_owner: Option<TokenOwner>,
-    is_airdrop_claimed: bool,
+    pub token_details: TokenListItem,
+    pub root: Principal,
+    pub token_owner: Option<TokenOwner>,
+    pub is_airdrop_claimed: bool,
 }
 
 #[cfg(any(feature = "local-bin", feature = "local-lib"))]

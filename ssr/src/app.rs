@@ -1,6 +1,7 @@
 use crate::page::icpump::ai::ICPumpAi;
 use crate::page::icpump::ICPumpLanding;
 
+use crate::page::pnd_profile::PndProfilePage;
 // use crate::page::wallet::TestIndex;
 use crate::{
     component::{base_route::BaseRoute, nav::NavBar},
@@ -144,6 +145,7 @@ pub fn App() -> impl IntoView {
                         <Route path="/hot-or-not/:canister_id/:post_id" view=PostView/>
                         <Route path="/post/:canister_id/:post_id" view=SinglePost/>
                         <Route path="/profile/:canister_id/post/:post_id" view=ProfilePost/>
+                        <Route path="/pnd/profile" view=PndProfilePage/>
                         <Route path="/upload" view=UploadPostPage/>
                         <Route path="/error" view=ServerErrorPage/>
                         <Route path="/menu" view=Menu/>

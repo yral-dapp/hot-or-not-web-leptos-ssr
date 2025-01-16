@@ -76,7 +76,7 @@ fn Header() -> impl IntoView {
     view! {
         <div class="flex items-center w-full justify-between py-2 gap-8">
             <a
-                href="/pump-dump/profile"
+                href="/pnd/profile"
                 class="flex flex-col text-right text-sm ml-8 relative bg-[#171717] rounded-lg pt-1 pb-1.5 pr-3 pl-8"
             >
                 <div class="font-bold text-sm">
@@ -429,15 +429,36 @@ struct GameRunningData {
     player_count: u64,
 }
 
-#[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
-enum GameState {
+#[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq)]
+pub enum GameState {
     Playing,
     Pending,
     ResultDeclared(GameResult),
 }
 
-#[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
-enum GameResult {
+impl GameState {
+    pub fn winnings(&self) -> Option<u128> {
+        match self {
+            GameState::ResultDeclared(GameResult::Win { amount }) => Some(*amount),
+            _ => None,
+        }
+    }
+
+    pub fn has_lost(&self) -> bool {
+        matches!(self, GameState::ResultDeclared(GameResult::Loss))
+    }
+
+    pub fn has_won(&self) -> bool {
+        matches!(self, GameState::ResultDeclared(GameResult::Win { .. }))
+    }
+
+    pub fn is_running(&self) -> bool {
+        matches!(self, GameState::Playing)
+    }
+}
+
+#[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq)]
+pub enum GameResult {
     Win { amount: u128 },
     Loss,
 }

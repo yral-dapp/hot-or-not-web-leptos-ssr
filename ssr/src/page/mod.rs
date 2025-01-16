@@ -9,6 +9,7 @@ pub mod leaderboard;
 pub mod logout;
 pub mod menu;
 pub mod notifs;
+pub mod pnd_profile;
 pub mod post_view;
 pub mod privacy;
 pub mod profile;
