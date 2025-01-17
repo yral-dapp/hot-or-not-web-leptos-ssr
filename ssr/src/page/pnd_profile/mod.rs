@@ -7,7 +7,6 @@ use yral_canisters_common::utils::{profile::ProfileDetails, token::TokenOwner};
 
 use crate::{
     component::{back_btn::BackButton, title::Title},
-    page::icpump::pumpndump::GameResult,
     state::canisters::authenticated_canisters,
     utils::token::icpump::TokenListItem,
 };
