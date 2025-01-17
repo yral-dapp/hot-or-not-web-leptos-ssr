@@ -109,7 +109,8 @@ impl VideoWatched {
                             "video_duration": duration,
                             "post_id": post.map(|p| p.post_id),
                             "publisher_canister_id": post.map(|p| p.canister_id),
-                        }),
+                        })
+                        .to_string(),
                     );
 
                     set_full_video_watched.set(true);
@@ -140,7 +141,8 @@ impl VideoWatched {
                             "share_count": 0,
                             "post_id": post.map(|p| p.post_id),
                             "publisher_canister_id": post.map(|p| p.canister_id),
-                        }),
+                        })
+                        .to_string(),
                     );
                     set_video_watched.set(true);
                 }
@@ -186,7 +188,8 @@ impl VideoWatched {
                         "video_duration": duration,
                         "post_id": post.map(|p| p.post_id),
                         "publisher_canister_id": post.map(|p| p.canister_id),
-                    }),
+                    })
+                    .to_string(),
                 );
             });
         }
@@ -239,7 +242,8 @@ impl LikeVideo {
                     "share_count": 0,
                     "post_id": post_id,
                     "publisher_canister_id": publisher_canister_id,
-                }),
+                })
+                .to_string(),
             );
         }
     }
@@ -287,7 +291,8 @@ impl ShareVideo {
                     "view_count": view_count,
                     "like_count": like_count,
                     "share_count": 0,
-                }),
+                })
+                .to_string(),
             );
         }
     }
@@ -309,7 +314,8 @@ impl VideoUploadInitiated {
                     "display_name": user.details.display_name,
                     "canister_id": user.canister_id,
                     "creator_category": "NA",
-                }),
+                })
+                .to_string(),
             );
         }
     }
@@ -352,7 +358,8 @@ impl VideoUploadUploadButtonClicked {
                         "hashtag_count": hashtag_count,
                         "is_NSFW": is_nsfw_val,
                         "is_hotorNot": is_hotornot_val,
-                    }),
+                    })
+                    .to_string(),
                 );
             });
         }
@@ -376,7 +383,8 @@ impl VideoUploadVideoSelected {
                     "display_name": user.details.display_name.unwrap_or_default(),
                     "canister_id": user.canister_id,
                     "creator_category": "NA",
-                }),
+                })
+                .to_string(),
             );
         }
     }
@@ -411,7 +419,8 @@ impl VideoUploadUnsuccessful {
                     "is_NSFW": is_nsfw,
                     "is_hotorNot": enable_hot_or_not,
                     "fail_reason": error,
-                }),
+                })
+                .to_string(),
             );
         }
     }
@@ -448,7 +457,8 @@ impl VideoUploadSuccessful {
                     "is_filter_used": false,
                     "video_id": video_id,
                     "post_id": post_id,
-                }),
+                })
+                .to_string(),
             );
         }
     }
@@ -481,7 +491,8 @@ impl Refer {
                     "display_name": display_name,
                     "canister_id": canister_id,
                     "refer_location": prev_site,
-                }),
+                })
+                .to_string(),
             );
         }
     }
@@ -518,7 +529,8 @@ impl ReferShareLink {
                     "display_name": display_name,
                     "canister_id": canister_id,
                     "refer_location": prev_site,
-                }),
+                })
+                .to_string(),
             );
         }
     }
@@ -546,7 +558,8 @@ impl LoginSuccessful {
                     "user_id": user_id.to_string(),
                     "canister_id": canister_id.to_string(),
                     "is_new_user": false,                   // TODO: add this info
-                }),
+                })
+                .to_string(),
             );
         }
     }
@@ -570,7 +583,8 @@ impl LoginMethodSelected {
                         ProviderKind::Google => "google",
                     },
                     "attempt_count": 1,
-                }),
+                })
+                .to_string(),
             );
         }
     }
@@ -594,7 +608,8 @@ impl LoginJoinOverlayViewed {
                 json!({
                     "user_id_viewer": user_id,
                     "previous_event": event_history.event_name.get_untracked(),
-                }),
+                })
+                .to_string(),
             );
 
             send_user_id(user_id.to_string());
@@ -618,7 +633,8 @@ impl LoginCta {
                 json!({
                     "previous_event": event_history.event_name.get_untracked(),
                     "cta_location": cta_location,
-                }),
+                })
+                .to_string(),
             );
         }
     }
@@ -645,7 +661,8 @@ impl LogoutClicked {
                     "user_id_viewer": user_id,
                     "display_name": display_name,
                     "canister_id": canister_id,
-                }),
+                })
+                .to_string(),
             );
         }
     }
@@ -672,7 +689,8 @@ impl LogoutConfirmation {
                     "user_id_viewer": user_id,
                     "display_name": display_name,
                     "canister_id": canister_id,
-                }),
+                })
+                .to_string(),
             );
         }
     }
@@ -700,7 +718,8 @@ impl ErrorEvent {
                     "canister_id": canister_id,
                     "description": error_str,
                     "previous_event": event_history.event_name.get_untracked(),
-                }),
+                })
+                .to_string(),
             );
         }
     }
@@ -734,7 +753,8 @@ impl ProfileViewVideo {
                     "canister_id": user.canister_id,
                     "video_id": video_id,
                     "profile_feed": "main",
-                }),
+                })
+                .to_string(),
             );
         }
     }
@@ -766,7 +786,8 @@ impl TokenCreationStarted {
                     "token_name": sns_init_payload.token_name,
                     "token_symbol": sns_init_payload.token_symbol,
                     "name": sns_init_payload.name
-                }),
+                })
+                .to_string(),
             );
         }
     }
@@ -806,7 +827,8 @@ impl TokenCreationCompleted {
                     "nsfw_ec": nsfw_info.nsfw_ec,
                     "nsfw_gore": nsfw_info.nsfw_gore,
                     "csam_detected": nsfw_info.csam_detected,
-                }),
+                })
+                .to_string(),
             )
             .await;
         }
@@ -839,7 +861,8 @@ impl TokenCreationFailed {
                     "name": sns_init_payload.name,
                     "description": sns_init_payload.description,
                     "error": error_str
-                }),
+                })
+                .to_string(),
             )
             .await;
         }
@@ -865,7 +888,8 @@ impl TokensClaimedFromNeuron {
                     "user_id": user_id,
                     "canister_id": canister_id,
                     "amount": amount
-                }),
+                })
+                .to_string(),
             );
         }
     }
@@ -891,7 +915,8 @@ impl TokensTransferred {
                     "canister_id": canister_id,
                     "amount": amount,
                     "to": to
-                }),
+                })
+                .to_string(),
             );
         }
     }

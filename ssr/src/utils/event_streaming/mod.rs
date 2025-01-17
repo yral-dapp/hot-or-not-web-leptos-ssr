@@ -41,11 +41,10 @@ pub struct EventHistory {
 
 #[cfg(feature = "ga4")]
 #[server]
-pub async fn send_event_ssr(
-    event_name: String,
-    params: serde_json::Value,
-) -> Result<(), ServerFnError> {
+pub async fn send_event_ssr(event_name: String, params: String) -> Result<(), ServerFnError> {
     use super::host::get_host;
+
+    let params = serde_json::from_str::<serde_json::Value>(&params).unwrap();
 
     let host_str = get_host();
     let mut params = params.clone();
@@ -57,7 +56,7 @@ pub async fn send_event_ssr(
     // GA4
     // get client_id as user_id from params
     let user_id = params["user_id"].as_str().unwrap_or("0");
-    let res = send_event_ga4_ssr(user_id, &event_name, &params).await;
+    let res = send_event_ga4(user_id, &event_name, &params).await;
 
     if let Err(e) = res {
         log::error!("Error sending event to GA4: {:?}", e);
@@ -67,7 +66,7 @@ pub async fn send_event_ssr(
 }
 
 #[cfg(feature = "ga4")]
-pub fn send_event_ssr_spawn(event_name: String, params: serde_json::Value) {
+pub fn send_event_ssr_spawn(event_name: String, params: String) {
     spawn_local(async move {
         let _ = send_event_ssr(event_name, params).await;
     });
@@ -87,7 +86,7 @@ pub fn send_user_id(user_id: String) {
     );
 }
 
-#[cfg(feature = "ga4")]
+#[cfg(all(feature = "ga4", feature = "ssr"))]
 pub async fn send_event_warehouse(event_name: &str, params: &serde_json::Value) {
     use super::host::get_host;
 
@@ -99,9 +98,7 @@ pub async fn send_event_warehouse(event_name: &str, params: &serde_json::Value) 
         params["host"] = json!(host_str);
     }
 
-    let params_str = params.to_string();
-
-    let res = stream_to_offchain_agent(event_name, params_str).await;
+    let res = stream_to_offchain_agent(event_name, &params).await;
     if let Err(e) = res {
         log::error!("Error sending event to warehouse: {:?}", e);
     }
@@ -111,23 +108,26 @@ pub async fn send_event_warehouse(event_name: &str, params: &serde_json::Value) 
 #[server]
 pub async fn send_event_warehouse_ssr(
     event_name: String,
-    params: serde_json::Value,
+    params: String,
 ) -> Result<(), ServerFnError> {
+    let params = serde_json::from_str::<serde_json::Value>(&params).unwrap();
     send_event_warehouse(&event_name, &params).await;
 
     Ok(())
 }
 
 #[cfg(feature = "ga4")]
-pub fn send_event_warehouse_ssr_spawn(event_name: String, params: serde_json::Value) {
+pub fn send_event_warehouse_ssr_spawn(event_name: String, params: String) {
     spawn_local(async move {
         let _ = send_event_warehouse_ssr(event_name, params).await;
     });
 }
 
-#[cfg(feature = "ga4")]
-#[server]
-pub async fn stream_to_offchain_agent(event: String, params: String) -> Result<(), ServerFnError> {
+#[cfg(all(feature = "ga4", feature = "ssr"))]
+pub async fn stream_to_offchain_agent(
+    event: String,
+    params: &serde_json::Value,
+) -> Result<(), ServerFnError> {
     use tonic::metadata::MetadataValue;
     use tonic::transport::Channel;
     use tonic::Request;
@@ -149,6 +149,7 @@ pub async fn stream_to_offchain_agent(event: String, params: String) -> Result<(
             },
         );
 
+    let params = params.to_string();
     let request = tonic::Request::new(warehouse_events::WarehouseEvent { event, params });
 
     client.send_event(request).await?;
@@ -156,8 +157,8 @@ pub async fn stream_to_offchain_agent(event: String, params: String) -> Result<(
     Ok(())
 }
 
-#[cfg(feature = "ga4")]
-pub async fn send_event_ga4_ssr(
+#[cfg(all(feature = "ga4", feature = "ssr"))]
+pub async fn send_event_ga4(
     user_id: &str,
     event_name: &str,
     params: &serde_json::Value,
