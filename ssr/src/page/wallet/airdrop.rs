@@ -202,15 +202,25 @@ fn AirdropPopUpButton(
                             alt_style=true
                             disabled=false
                             classes="max-w-96 mx-auto py-[12px] px-[20px]".to_string()
-                            href="/wallet".to_string()
+                            href={
+                                if pathname.pathname.get().starts_with("/board"){
+                                    "/wallet".to_string()
+                                }else if host.contains("icpump"){
+                                    "/".to_string()
+                                }else if host.contains("pumpdump"){
+                                    "/play".to_string()
+                                }else if host.contains("yral"){
+                                    "/".to_string()
+                                }else{
+                                    "/wallet".to_string()
+                                }
+                            }
                             >
                                 {move ||{
-                                    if host.clone().contains("icpump"){
-                                        if pathname.pathname.get().starts_with("/wallet") || pathname.pathname.get().starts_with("/profile"){
-                                            "Explore more Tokens"
-                                        }else{
-                                            "View Wallet"
-                                        }
+                                    if pathname.pathname.get().starts_with("/board"){
+                                        "View Wallet"
+                                    }else if host.contains("icpump"){
+                                        "Explore more Tokens"
                                     }else if host.contains("pumpdump"){
                                         "Continue Playing"
                                     }else if host.contains("yral"){
