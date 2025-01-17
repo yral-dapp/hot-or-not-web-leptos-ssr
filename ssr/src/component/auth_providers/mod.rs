@@ -135,6 +135,9 @@ pub fn LoginProviders(show_modal: RwSignal<bool>, lock_closing: RwSignal<bool>) 
 
             LoginSuccessful.send_event(canisters);
 
+            let user_principal = canisters.user_principal();
+            use_navigate()(&format!("/profile/{}", user_principal), Default::default());
+
             Ok::<_, ServerFnError>(())
         },
     );
