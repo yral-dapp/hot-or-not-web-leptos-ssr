@@ -1,17 +1,22 @@
 use candid::Principal;
 use leptos::{
-    component, create_action, create_effect, create_rw_signal, view, For, IntoView, RwSignal, Show,
-    SignalGet, SignalGetUntracked, SignalSet,
+    component, create_action, create_effect, create_rw_signal, expect_context, html::Div, logging,
+    view, For, IntoView, NodeRef, RwSignal, Show, SignalGet, SignalGetUntracked, SignalSet,
+    SignalUpdate, SignalUpdateUntracked,
 };
-use yral_canisters_common::utils::{profile::ProfileDetails, token::TokenOwner};
+use leptos_use::{use_infinite_scroll_with_options, UseInfiniteScrollOptions};
+use yral_canisters_common::{
+    utils::{profile::ProfileDetails, token::RootType},
+    Canisters,
+};
 
 use crate::{
     component::{back_btn::BackButton, title::Title},
     state::canisters::authenticated_canisters,
-    utils::token::icpump::TokenListItem,
+    utils::token::icpump::IcpumpTokenInfo,
 };
 
-use super::icpump::{pumpndump::GameState, ProcessedTokenListResponse};
+use super::icpump::pumpndump::GameState;
 
 #[derive(Debug, Clone)]
 struct ProfileData {
@@ -25,7 +30,8 @@ type ProfileDataSignal = RwSignal<Option<ProfileData>>;
 
 #[derive(Debug, Clone)]
 struct GameplayHistoryItem {
-    token: ProcessedTokenListResponse,
+    logo: String,
+    owner_principal: Principal,
     state: GameState,
 }
 
@@ -90,9 +96,9 @@ fn GameplayHistoryCard(#[prop(into)] details: GameplayHistoryItem) -> impl IntoV
             <div class="absolute z-1 inset-x-0 h-1/3 bg-gradient-to-b from-black/50 to-transparent"></div>
             <div class="absolute z-[2] flex top-2 items-center gap-1 px-2">
                 <img src="/img/gdolr.png" alt="Profile name" class="w-4 h-4 shrink-0 object-cover rounded-full" />
-                <span class="text-xs font-medium line-clamp-1">{details.token.token_owner.as_ref().unwrap().principal_id.to_string()}</span>
+                <span class="text-xs font-medium line-clamp-1">{details.owner_principal.to_string()}</span>
             </div>
-            <img src=details.token.token_details.logo class="w-full bg-white/5 h-28 object-cover" alt="Coin title" />
+            <img src=details.logo class="w-full bg-white/5 h-28 object-cover" alt="Coin title" />
             <Show
                 when=move || !state.is_running()
                 fallback=move || view! {
@@ -127,48 +133,47 @@ pub fn PndProfilePage() -> impl IntoView {
     let profile_data: ProfileDataSignal = create_rw_signal(None);
     // TODO: write the create_effect and action combo for profile data
 
-    let gameplay_history: GameplayHistorySignal = create_rw_signal(vec![
-        GameplayHistoryItem {
-            token: ProcessedTokenListResponse {
-                token_details: TokenListItem {
-                    user_id: "user_id".into(),
-                    name: "Name".into(),
-                    token_name: "MY Dolr".into(),
-                    token_symbol: "DOLR".into(),
-                    logo: "https://picsum.photos/200".into(),
-                    description: "i dont care".into(),
-                    created_at: "10hrs".into(),
-                    formatted_created_at: "10hrs ago".into(),
-                    link: "https://example.com/token".into(),
-                    is_nsfw: false
-                },
-                root: Principal::anonymous(),
-                token_owner: Some(TokenOwner {
-                    principal_id: Principal::anonymous(),
-                    canister_id: Principal::anonymous()
-                }),
-                is_airdrop_claimed: false
-            },
-            state: GameState::Playing
-        };
-        20
-    ]);
+    let gameplay_history: GameplayHistorySignal = create_rw_signal(Default::default());
 
     let auth_cans = authenticated_canisters();
+    let auth_cans_for_profile = auth_cans.clone();
     let load_profile_data = create_action(move |&()| {
-        let value = auth_cans.clone();
+        let value = auth_cans_for_profile.clone();
         async move {
+            use yral_canisters_client::individual_user_template::PumpsAndDumps;
             let cans_wire = value.wait_untracked().await.map_err(|e| e.to_string())?;
 
             let user = cans_wire.profile_details.clone();
+            let canisters = Canisters::from_wire(cans_wire.clone(), expect_context())
+                .map_err(|e| e.to_string())?;
 
-            // TODO: load pnd related details
+            let ind_user = canisters.individual_user(canisters.user_canister()).await;
+
+            let PumpsAndDumps { pumps, dumps } = ind_user
+                .pumps_and_dumps()
+                .await
+                .inspect_err(|err| {
+                    logging::error!("couldn't load pump dump count: {err}");
+                })
+                .map_err(|e| e.to_string())?;
 
             profile_data.set(Some(ProfileData {
                 user,
                 earnings: 0,
-                pumps: 0,
-                dumps: 0,
+                pumps: pumps
+                    .0
+                    .try_into()
+                    .inspect_err(|err| {
+                        logging::error!("This dude pumped too hard: {err}");
+                    })
+                    .unwrap(),
+                dumps: dumps
+                    .0
+                    .try_into()
+                    .inspect_err(|err| {
+                        logging::error!("This dude dumped too hard: {err}");
+                    })
+                    .unwrap(),
             }));
 
             Ok::<_, String>(())
@@ -180,6 +185,92 @@ pub fn PndProfilePage() -> impl IntoView {
             load_profile_data.dispatch(());
         }
     });
+
+    let auth_can_for_history = auth_cans.clone();
+    let page = create_rw_signal(0);
+    let should_load_more = create_rw_signal(true);
+    let load_gameplay_history = create_action(move |&page| {
+        let cans_wire_res = auth_can_for_history.clone();
+        async move {
+            // since we are starting a load job, no more load jobs should be start
+            should_load_more.set(false);
+            let cans_wire = cans_wire_res
+                .wait_untracked()
+                .await
+                .map_err(|_| "Couldn't get cans_wire")?;
+            let cans = Canisters::from_wire(cans_wire.clone(), expect_context())
+                .map_err(|_| "Unable to authenticate".to_string())?;
+
+            let limit = 25;
+            let start_index = page * limit;
+            let items = cans
+                .individual_user(cans.user_canister())
+                .await
+                .played_game_info_with_pagination_cursor(start_index, limit)
+                .await
+                .map_err(|err| format!("Couldn't load gameplay history: {err}"))?;
+            let items = match items {
+                yral_canisters_client::individual_user_template::Result21::Ok(res) => res,
+                yral_canisters_client::individual_user_template::Result21::Err(err) => {
+                    return Err(format!("Couldn't load played games: {err}"));
+                }
+            };
+            let had_items = !items.is_empty();
+
+            let mut processed_items = Vec::with_capacity(items.len());
+            for item in items {
+                let meta = cans
+                    .token_metadata_by_root_type(
+                        &IcpumpTokenInfo,
+                        Some(cans.user_principal()),
+                        RootType::Other(item.token_root),
+                    )
+                    .await
+                    .ok()
+                    .flatten()
+                    .expect("backend to return a token that exists");
+
+                processed_items.push(GameplayHistoryItem {
+                    logo: meta.logo_b64,
+                    owner_principal: meta
+                        .token_owner
+                        .expect("owner to exist if backend returns it")
+                        .principal_id,
+                    state: todo!("Figure out how to compute pending state from item"),
+                })
+            }
+
+            gameplay_history.update(|list| {
+                list.extend(processed_items);
+            });
+
+            if had_items {
+                // since there were tokens loaded
+                // assume we have more tokens to load
+                // so, allow token loading
+                should_load_more.set(true)
+            }
+
+            Ok::<_, String>(())
+        }
+    });
+
+    let scroll_container = NodeRef::<Div>::new();
+    let _ = use_infinite_scroll_with_options(
+        scroll_container,
+        move |_| async move {
+            if !should_load_more.get() {
+                return;
+            }
+            load_gameplay_history.dispatch(page.get_untracked());
+            page.update_untracked(|v| {
+                *v += 1;
+            });
+        },
+        UseInfiniteScrollOptions::default()
+            .distance(400f64)
+            .interval(2000f64),
+    );
 
     view! {
         <div class="min-h-screen w-full flex flex-col text-white pt-2 pb-12 bg-black items-center">
@@ -196,7 +287,7 @@ pub fn PndProfilePage() -> impl IntoView {
                 <ProfileDataSection profile_data=profile_data.get().unwrap() />
             </Show>
             <div class="w-11/12 flex justify-center">
-                <div class="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4 pt-8 pb-16">
+                <div ref=scroll_container class="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4 pt-8 pb-16">
                     <For each=move || gameplay_history.get().into_iter().enumerate() key=|(idx, _)| *idx let:item>
                         <GameplayHistoryCard details=item.1 />
                     </For>
