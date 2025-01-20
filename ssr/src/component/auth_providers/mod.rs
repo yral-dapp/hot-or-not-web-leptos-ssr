@@ -19,6 +19,7 @@ use crate::{
     },
 };
 use yral_canisters_common::Canisters;
+use leptos_router::use_navigate;
 
 #[server]
 async fn issue_referral_rewards(referee_canister: Principal) -> Result<(), ServerFnError> {
@@ -123,23 +124,13 @@ pub fn LoginProviders(show_modal: RwSignal<bool>, lock_closing: RwSignal<bool>) 
                 return Ok(());
             };
 
-            let (referrer_store, _, _) = use_referrer_store();
-            let referrer = referrer_store.get_untracked();
-
-            // This is some redundant work, but saves us 100+ lines of resource handling
             let canisters = Canisters::authenticate_with_network(identity, referrer).await?;
-
-            if let Err(e) = handle_user_login(canisters.clone(), referrer).await {
-                log::warn!("failed to handle user login, err {e}. skipping");
-            }
-
-            LoginSuccessful.send_event(canisters);
-
             let user_principal = canisters.user_principal();
-            use_navigate()(&format!("/profile/{}", user_principal), Default::default());
-
-            Ok::<_, ServerFnError>(())
-        },
+            set_user_principal(Some(user_principal));
+            use_navigate()(&format!("/profile/{}/posts", user_principal), Default::default());
+            LoginSuccessful.send_event(canisters);
+            Ok(())
+        }
     );
 
     let ctx = LoginProvCtx {
@@ -180,6 +171,17 @@ pub fn LoginProviders(show_modal: RwSignal<bool>, lock_closing: RwSignal<bool>) 
             </div>
         </div>
     }
+}
+
+#[component]
+fn CtxProvider(temp_identity: Option<JwkEcKey>, children: ChildrenFn) -> impl IntoView {
+    create_effect(move |_| {
+        if new_identity_issued {
+            set_user_principal(None);
+            set_logged_in(false);
+            set_user_canister_id(None);
+        }
+    });
 }
 
 #[cfg(feature = "ssr")]
