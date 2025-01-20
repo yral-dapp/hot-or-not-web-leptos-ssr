@@ -144,6 +144,29 @@ pub fn NavBar() -> impl IntoView {
 
     let show_cdao_icon = show_cdao_page();
 
+    let current_path = use_location().pathname;
+
+    let active_tab = match current_path.as_str() {
+        "/" => 0,
+        "/upload" => 2,
+        "/transactions" => 3,
+        "/menu" | "/leaderboard" => 4,
+        "/profile" | "/profile/:id" => 5,
+        "/wallet" => 6,
+        "/token/info" => 7,
+        "/token/create" => 8,
+        s if s.starts_with("/hot-or-not") => 0,
+        s if s.starts_with("/profile/") => {
+            if s.starts_with(&format!("/profile/{}", user_principal.get().unwrap())) {
+                5
+            } else {
+                6
+            }
+        }
+        s if s.starts_with("/wallet/") => 6,
+        _ => 0,
+    };
+
     view! {
     <Suspense>
         <div class="flex fixed bottom-0 left-0 z-50 flex-row justify-between items-center px-6 w-full bg-black/80">

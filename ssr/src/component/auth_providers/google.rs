@@ -73,6 +73,9 @@ pub fn GoogleAuthProvider() -> impl IntoView {
             done_guard.set(true);
             _ = target_c.close();
             ctx.login_complete.set(res);
+
+            let user_principal = canisters.user_principal();
+            use_navigate()(&format!("/profile/{}", user_principal), Default::default());
         });
     };
 
