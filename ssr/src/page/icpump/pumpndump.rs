@@ -444,8 +444,15 @@ impl GameState {
         }
     }
 
+    pub fn lossings(&self) -> Option<u128> {
+        match self {
+            GameState::ResultDeclared(GameResult::Loss { amount }) => Some(*amount),
+            _ => None,
+        }
+    }
+
     pub fn has_lost(&self) -> bool {
-        matches!(self, GameState::ResultDeclared(GameResult::Loss))
+        matches!(self, GameState::ResultDeclared(GameResult::Loss { .. }))
     }
 
     pub fn has_won(&self) -> bool {
@@ -460,7 +467,7 @@ impl GameState {
 #[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq)]
 pub enum GameResult {
     Win { amount: u128 },
-    Loss,
+    Loss { amount: u128 },
 }
 
 impl GameState {
@@ -699,7 +706,7 @@ fn ResultDeclared(#[prop()] game_state: GameState) -> impl IntoView {
         }
         GameState::ResultDeclared(result) => view! {
             <Show
-                when=move || matches!(result, GameResult::Loss)
+                when=move || matches!(result, GameResult::Loss { .. })
                 fallback=move || view! { <WonCard result /> }
             >
                 <LostCard />
@@ -728,7 +735,9 @@ fn compute_game_result(
         GameDirection::Dump => 1,
     };
     if m(user_direction) != m(raw_result.direction) {
-        GameResult::Loss
+        GameResult::Loss {
+            amount: running_data.pumps as u128 + running_data.dumps as u128,
+        }
     } else {
         let amount = (user_bet_count / raw_result.bet_count) * raw_result.reward_pool;
         let amount = convert_e8s_to_gdolr(amount);
@@ -844,7 +853,7 @@ fn GameCard(#[prop()] token: ProcessedTokenListResponse) -> impl IntoView {
                                     }
                                 });
                             }
-                            GameResult::Loss => {
+                            GameResult::Loss { .. } => {
                                 player_data.update(|data| {
                                     if let Some(data) = data {
                                         data.games_count += 1;
