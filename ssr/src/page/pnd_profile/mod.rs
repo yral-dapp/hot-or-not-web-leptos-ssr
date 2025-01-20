@@ -1,4 +1,5 @@
 use candid::Principal;
+use futures::TryFutureExt;
 use leptos::{
     component, create_action, create_effect, create_rw_signal, expect_context, html::Div, logging,
     view, For, IntoView, NodeRef, RwSignal, Show, SignalGet, SignalGetUntracked, SignalSet,
@@ -156,10 +157,21 @@ pub fn PndProfilePage() -> impl IntoView {
                     logging::error!("couldn't load pump dump count: {err}");
                 })
                 .map_err(|e| e.to_string())?;
+            let earnings = ind_user
+                .net_earnings()
+                .await
+                .map_err(|err| format!("Couldn't load net earnings for the user: {err}"))?;
 
+            // TODO: send telemetry or something for these errors
             profile_data.set(Some(ProfileData {
                 user,
-                earnings: 0,
+                earnings: earnings
+                    .0
+                    .try_into()
+                    .inspect_err(|err| {
+                        logging::error!("That's a lot of money: {err}");
+                    })
+                    .unwrap(),
                 pumps: pumps
                     .0
                     .try_into()
