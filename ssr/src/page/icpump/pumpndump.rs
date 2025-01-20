@@ -2,8 +2,8 @@ use candid::{Nat, Principal};
 use codee::string::{FromToStringCodec, JsonSerdeCodec};
 use leptos::{
     component, create_action, create_effect, create_rw_signal, create_signal, expect_context,
-    html::Div, logging, provide_context, view, For, IntoView, NodeRef, Params, RwSignal, Show,
-    Signal, SignalGet, SignalGetUntracked, SignalSet, SignalSetUntracked, SignalUpdate,
+    html::Div, logging, provide_context, view, Action, For, IntoView, NodeRef, Params, RwSignal,
+    Show, Signal, SignalGet, SignalGetUntracked, SignalSet, SignalSetUntracked, SignalUpdate,
     SignalUpdateUntracked, Suspense, WriteSignal,
 };
 use leptos_icons::Icon;
@@ -50,6 +50,7 @@ type ShowSelectedCardSignal = RwSignal<ShowSelectedCard>;
 type GameRunningDataSignal = RwSignal<Option<GameRunningData>>;
 type PlayerDataSignal = RwSignal<Option<PlayerData>>;
 type GameStateSignal = RwSignal<Option<GameState>>;
+type LoadRunningDataAction = Action<(Principal, bool), ()>;
 
 type Sendfn = Rc<dyn Fn(&WsRequest)>;
 
@@ -631,15 +632,15 @@ fn WonCard(#[prop()] result: GameResult) -> impl IntoView {
     let GameResult::Win { amount } = result else {
         unreachable!("Won card must only be shown in win condition")
     };
-
-    let game_state: GameStateSignal = expect_context();
-    let running_data: GameRunningDataSignal = expect_context();
+    let identity: RwSignal<Option<Canisters<true>>> = expect_context();
+    let load_running_data: LoadRunningDataAction = expect_context();
 
     let on_click = move |_| {
-        game_state.update(|s| *s = Some(GameState::Playing));
-        // player count of zero doesn't make sense
-        // dispatch another load call after this update
-        running_data.update(|s| *s = Some(GameRunningData::new(0, 0, 0, None)));
+        let user_canister = identity
+            .get()
+            .expect("User Canister to exist at this point")
+            .user_canister();
+        load_running_data.dispatch((user_canister, true));
     };
     // TODO: add confetti animation
     view! {
@@ -665,20 +666,28 @@ fn WonCard(#[prop()] result: GameResult) -> impl IntoView {
                 on:click=on_click
                 class="w-full px-5 py-3 rounded-lg flex items-center transition-all justify-center gap-8 font-kumbh font-bold"
                 style:background="linear-gradient(73deg, #DA539C 0%, #E2017B 33%, #5F0938 100%)"
-            >Start playing again</button>
+            >
+                {move || if load_running_data.pending().get() {
+                    "Start playing again"
+                } else {
+                    "Starting another round..."
+                }}
+            </button>
         </div>
     }
 }
 
 #[component]
 fn LostCard() -> impl IntoView {
-    let game_state: GameStateSignal = expect_context();
-    let running_data: GameRunningDataSignal = expect_context();
+    let identity: RwSignal<Option<Canisters<true>>> = expect_context();
+    let load_running_data: LoadRunningDataAction = expect_context();
 
     let on_click = move |_| {
-        game_state.update(|s| *s = Some(GameState::Playing));
-        // dispatch another load call after this update
-        running_data.update(|s| *s = Some(GameRunningData::new(0, 0, 0, None)));
+        let user_canister = identity
+            .get()
+            .expect("User Canister to exist at this point")
+            .user_canister();
+        load_running_data.dispatch((user_canister, true));
     };
 
     view! {
@@ -698,7 +707,13 @@ fn LostCard() -> impl IntoView {
                 on:click=on_click
                 class="w-full px-5 py-3 rounded-lg flex items-center transition-all justify-center gap-8 font-kumbh font-bold"
                 style:background="linear-gradient(73deg, #DA539C 0%, #E2017B 33%, #5F0938 100%)"
-            >Keep Playing</button>
+            >
+                {move || if load_running_data.pending().get() {
+                    "Keep Playing"
+                } else {
+                    "Starting another round..."
+                }}
+            </button>
         </div>
     }
 }
@@ -768,20 +783,26 @@ fn GameCard(#[prop()] token: ProcessedTokenListResponse) -> impl IntoView {
     let player_data = expect_context::<RwSignal<Option<PlayerData>>>();
 
     let identity: RwSignal<Option<Canisters<true>>> = expect_context();
-    let load_running_data = create_action(move |&user_canister| async move {
-        let data = GameRunningData::load(owner_canister_id, token_root, user_canister)
-            .await
-            .inspect_err(|err| {
-                logging::warn!("couldn't load running data: {err}");
-            })
-            .ok();
+    let load_running_data: LoadRunningDataAction =
+        create_action(move |&(user_canister, reload_game_state)| async move {
+            let data = GameRunningData::load(owner_canister_id, token_root, user_canister)
+                .await
+                .inspect_err(|err| {
+                    logging::warn!("couldn't load running data: {err}");
+                })
+                .ok();
 
-        running_data.update(|d| *d = data);
-    });
+            if data.is_some() && reload_game_state {
+                game_state.update(|s| *s = Some(GameState::Playing));
+            }
+
+            running_data.update(|d| *d = data);
+        });
+    provide_context(load_running_data);
     create_effect(move |_| {
         let ident = identity.get();
         if ident.as_ref().is_some() && running_data.get_untracked().is_none() {
-            load_running_data.dispatch(ident.unwrap().user_canister());
+            load_running_data.dispatch((ident.unwrap().user_canister(), false));
         }
     });
     // start websocket connection
