@@ -157,6 +157,27 @@ pub async fn stream_to_offchain_agent(
     Ok(())
 }
 
+fn convert_leaf_values_to_string(value: serde_json::Value) -> serde_json::Value {
+    match value {
+        serde_json::Value::Object(mut obj) => {
+            for (_, val) in obj.iter_mut() {
+                *val = convert_leaf_values_to_string(val.clone());
+            }
+            serde_json::Value::Object(obj)
+        }
+        serde_json::Value::Array(mut arr) => {
+            for item in arr.iter_mut() {
+                *item = convert_leaf_values_to_string(item.clone());
+            }
+            serde_json::Value::Array(arr)
+        }
+        serde_json::Value::Number(n) => serde_json::Value::String(n.to_string()),
+        serde_json::Value::Null => serde_json::Value::String("".to_string()),
+        serde_json::Value::Bool(value) => serde_json::Value::String(value.to_string()),
+        serde_json::Value::String(value) => serde_json::Value::String(value),
+    }
+}
+
 #[cfg(all(feature = "ga4", feature = "ssr"))]
 pub async fn send_event_ga4(
     user_id: &str,
@@ -173,6 +194,8 @@ pub async fn send_event_ga4(
         "https://www.google-analytics.com/mp/collect?measurement_id={}&api_secret={}",
         measurement_id, api_secret
     );
+
+    let params = convert_leaf_values_to_string(params.clone());
 
     let payload = GA4Event {
         client_id: "12345".to_string(), // Should be some unique id
