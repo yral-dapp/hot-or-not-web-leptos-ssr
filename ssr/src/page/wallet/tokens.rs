@@ -10,9 +10,11 @@ use crate::component::icons::{
     chevron_right_icon::ChevronRightIcon, send_icon::SendIcon, share_icon::ShareIcon,
 };
 use crate::component::overlay::PopupOverlay;
+use crate::component::overlay::ShadowOverlay;
 use crate::component::share_popup::ShareContent;
 use crate::consts::USER_PRINCIPAL_STORE;
 use crate::page::icpump::{ActionButton, ActionButtonLink};
+use crate::page::wallet::airdrop::AirdropPopup;
 use crate::state::canisters::authenticated_canisters;
 use crate::utils::host::get_host;
 use crate::utils::token::icpump::IcpumpTokenInfo;
@@ -63,9 +65,6 @@ struct WalletCardOptionsContext {
     token_owner: Option<TokenOwner>,
     user_principal: Principal,
 }
-
-use crate::component::overlay::ShadowOverlay;
-use crate::page::wallet::airdrop::AirdropPopup;
 
 #[component]
 pub fn WalletCard(
@@ -151,30 +150,6 @@ pub fn WalletCard(
         </div>
     }
 }
-
-// #[component]
-// pub fn Test() -> impl IntoView {
-//     let buffer_signal = create_rw_signal(true);
-//     let claimed = create_rw_signal(false);
-//     let airdrop_popup = create_rw_signal(false);
-//     view! {
-//         <div class="w-screen h-screen">
-//         <Show when=move || true>
-//             <div class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 max-w-[560px] max-h-[634px] min-w-[343px] min-h-[480px] backdrop-blur-lg rounded-lg">
-//                 <div class="rounded-lg z-50">
-//                     <AirdropPopup
-//                         name="SHIT".to_string()
-//                         logo="".to_string()
-//                         buffer_signal
-//                         claimed
-//                         airdrop_popup
-//                     />
-//                 </div>
-//             </div>
-//         </Show>
-//     </div>
-//     }
-// }
 
 #[component]
 fn WalletCardOptions(

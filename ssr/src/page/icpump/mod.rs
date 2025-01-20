@@ -35,6 +35,10 @@ use crate::utils::token::firestore::listen_to_documents;
 use crate::utils::token::icpump::get_paginated_token_list;
 use crate::utils::token::icpump::TokenListItem;
 
+use crate::component::overlay::ShadowOverlay;
+use crate::page::wallet::airdrop::AirdropPopup;
+use yral_canisters_common::utils::token::TokenOwner;
+
 pub mod ai;
 #[derive(Serialize, Deserialize, Clone, Debug)]
 struct ProcessedTokenListResponse {
@@ -287,10 +291,6 @@ pub fn TokenCardFallback() -> impl IntoView {
         </div>
     }
 }
-
-use crate::component::overlay::ShadowOverlay;
-use crate::page::wallet::airdrop::AirdropPopup;
-use yral_canisters_common::utils::token::TokenOwner;
 
 #[component]
 pub fn TokenCard(
