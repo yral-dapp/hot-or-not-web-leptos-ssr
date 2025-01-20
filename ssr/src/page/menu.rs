@@ -175,7 +175,6 @@ pub fn Menu() -> impl IntoView {
     let is_authorized_to_seed_content: AuthorizedUserToSeedContent = expect_context();
 
     create_effect(move |_| {
-        //check whether query param is right if right set the show_modal_content as true.
         let query_params = query_map.get();
         let url = query_params.0.get("text")?;
         if !url.is_empty() && is_connected.get() {
@@ -221,11 +220,6 @@ pub fn Menu() -> impl IntoView {
         },
     );
     view! {
-        // <WithAuthCans with=authorized_fetch let:authorized>
-        //     {is_authorized_to_seed_content
-        //         .0
-        //         .set(Some((authorized.1, authorized.0.user_principal())))}
-        // </WithAuthCans>
         <Suspense fallback=Spinner>
             {
                 move ||{

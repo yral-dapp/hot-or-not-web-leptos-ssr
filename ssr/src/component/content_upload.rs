@@ -4,6 +4,7 @@ use crate::{
     page::menu::AuthorizedUserToSeedContent,
     state::{canisters::authenticated_canisters, content_seed_client::ContentSeedClient},
 };
+use candid::Principal;
 use leptos::*;
 use yral_canisters_common::Canisters;
 
@@ -76,7 +77,7 @@ fn YoutubeUploadInner(#[prop(optional)] url: String) -> impl IntoView {
         </div>
     }
 }
-use candid::Principal;
+
 #[component]
 pub fn YoutubeUpload(#[prop(optional)] url: String, user_principal: Principal) -> impl IntoView {
     let url_s = store_value(url);
