@@ -2,11 +2,12 @@ use candid::{Nat, Principal};
 use codee::string::{FromToStringCodec, JsonSerdeCodec};
 use leptos::{
     component, create_action, create_effect, create_rw_signal, create_signal, expect_context,
-    html::Div, logging, provide_context, view, For, IntoView, NodeRef, RwSignal, Show, Signal,
-    SignalGet, SignalGetUntracked, SignalSet, SignalUpdate, SignalUpdateUntracked, Suspense,
-    WriteSignal,
+    html::Div, logging, provide_context, view, For, IntoView, NodeRef, Params, RwSignal, Show,
+    Signal, SignalGet, SignalGetUntracked, SignalSet, SignalSetUntracked, SignalUpdate,
+    SignalUpdateUntracked, Suspense, WriteSignal,
 };
 use leptos_icons::Icon;
+use leptos_router::{use_query, Params};
 use leptos_use::{
     use_cookie, use_infinite_scroll_with_options, use_websocket, UseInfiniteScrollOptions,
     UseWebSocketReturn,
@@ -14,7 +15,7 @@ use leptos_use::{
 use once_cell::sync::Lazy;
 use reqwest::Url;
 use std::rc::Rc;
-use yral_canisters_common::Canisters;
+use yral_canisters_common::{utils::token::RootType, Canisters};
 use yral_pump_n_dump_common::{
     rest::UserBetsResponse,
     ws::{websocket_connection_url, WsError, WsMessage, WsRequest, WsResp},
@@ -31,7 +32,7 @@ pub struct WsResponse {
 use crate::{
     page::icpump::{process_token_list_item, ProcessedTokenListResponse},
     state::canisters::authenticated_canisters,
-    utils::token::icpump::get_paginated_token_list_with_limit,
+    utils::token::icpump::{get_paginated_token_list_with_limit, IcpumpTokenInfo, TokenListItem},
 };
 
 #[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
@@ -42,6 +43,10 @@ static PUMP_AND_DUMP_WORKER_URL: Lazy<Url> =
 static PUMP_AND_DUMP_WORKER_URL: Lazy<Url> =
     Lazy::new(|| Url::parse("http://localhost:8787/").unwrap());
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct ShowSelectedCard(bool);
+
+type ShowSelectedCardSignal = RwSignal<ShowSelectedCard>;
 type GameRunningDataSignal = RwSignal<Option<GameRunningData>>;
 type PlayerDataSignal = RwSignal<Option<PlayerData>>;
 type GameStateSignal = RwSignal<Option<GameState>>;
@@ -747,6 +752,8 @@ fn compute_game_result(
 
 #[component]
 fn GameCard(#[prop()] token: ProcessedTokenListResponse) -> impl IntoView {
+    let show_selected_card: ShowSelectedCardSignal = expect_context();
+    let card_query = use_query::<CardQuery>().get().ok();
     let owner_canister_id = token.token_owner.as_ref().unwrap().canister_id;
     let token_root = token.root;
 
@@ -875,17 +882,30 @@ fn GameCard(#[prop()] token: ProcessedTokenListResponse) -> impl IntoView {
         }
     });
 
-    let load_game_state = create_action(move |&()| async move {
-        let state = GameState::load(owner_canister_id, token_root)
-            .await
-            .inspect_err(|err| {
-                logging::error!("couldn't load game state: {err}");
-            })
-            .ok();
+    let load_game_state = create_action(move |&()| {
+        let card_query = card_query.clone();
+        async move {
+            logging::log!("{:?}", show_selected_card.get());
+            let state = match (
+                show_selected_card.get(),
+                card_query.and_then(|c| c.details()),
+            ) {
+                (ShowSelectedCard(true), Some((root, result))) if root == token_root => {
+                    show_selected_card.set_untracked(ShowSelectedCard(false));
+                    Some(GameState::ResultDeclared(result))
+                }
+                _ => GameState::load(owner_canister_id, token_root)
+                    .await
+                    .inspect_err(|err| {
+                        logging::error!("couldn't load game state: {err}");
+                    })
+                    .ok(),
+            };
 
-        game_state.update(|s| *s = state);
+            game_state.update(|s| *s = state);
 
-        Ok::<(), String>(())
+            Ok::<(), String>(())
+        }
     });
 
     create_effect(move |_| {
@@ -1043,8 +1063,101 @@ fn OnboardingPopup() -> impl IntoView {
     }
 }
 
+#[derive(Debug, Params, PartialEq, Clone)]
+struct CardQuery {
+    root: Option<Principal>,
+    state: Option<String>,
+    amount: Option<u128>,
+}
+
+impl CardQuery {
+    fn is_valid(&self) -> bool {
+        let Self {
+            root,
+            state,
+            amount,
+        } = self;
+        matches!(
+            (root, state.as_ref().map(|s| s.as_str()), amount),
+            (Some(_), Some("win" | "loss"), Some(_))
+        )
+    }
+
+    fn details(&self) -> Option<(Principal, GameResult)> {
+        let Self {
+            root,
+            state,
+            amount,
+        } = self;
+        match (root, state.as_ref().map(|s| s.as_str()), amount) {
+            (Some(root), Some("win"), Some(amount)) => {
+                Some((*root, GameResult::Win { amount: *amount }))
+            }
+            (Some(root), Some("loss"), Some(amount)) => {
+                Some((*root, GameResult::Loss { amount: *amount }))
+            }
+            _ => None,
+        }
+    }
+}
+
+async fn load_selected_card(
+    cans: &Canisters<true>,
+    card_query: CardQuery,
+) -> Result<ProcessedTokenListResponse, String> {
+    let CardQuery {
+        root,
+        state,
+        amount,
+    } = card_query;
+    let root = match (root, state, amount) {
+        (Some(root), Some(_), Some(_)) => root,
+        _ => {
+            logging::warn!("For the selected card to show, the following query params are needed: root, state, amount");
+            return Err("Not enough data".into());
+        }
+    };
+
+    let meta = cans
+        .token_metadata_by_root_type(
+            &IcpumpTokenInfo,
+            Some(cans.user_principal()),
+            RootType::Other(root),
+        )
+        .await
+        .map_err(|err| format!("Couldn't load token's meta info: {err}"))?
+        .ok_or("The token doesn't exist".to_string())?;
+
+    // REFACTOR: create struct with only the information that's actually needed
+    Ok(ProcessedTokenListResponse {
+        token_details: TokenListItem {
+            user_id: "notneeded".into(),
+            name: meta.name.clone(),
+            token_name: meta.name,
+            token_symbol: meta.symbol,
+            logo: meta.logo_b64,
+            description: meta.description,
+            created_at: "notneeded".into(),
+            formatted_created_at: "notneeded".into(),
+            link: "notneeded".into(),
+            is_nsfw: meta.is_nsfw,
+        },
+        root,
+        token_owner: meta.token_owner,
+        is_airdrop_claimed: false, // not needed
+    })
+}
+
 #[component]
 pub fn PumpNDump() -> impl IntoView {
+    let card_query = use_query::<CardQuery>().get().ok();
+    let s: ShowSelectedCardSignal = create_rw_signal(ShowSelectedCard(
+        card_query.as_ref().is_some_and(|q| q.is_valid()),
+    ));
+    provide_context(s);
+
+    let show_selected_card = create_rw_signal(card_query);
+
     let player_games_count_and_balance = create_rw_signal(None::<PlayerData>);
     let cans_wire_res = authenticated_canisters();
     // i wonder if we remove this excessive cloning somehow
@@ -1120,6 +1233,19 @@ pub fn PumpNDump() -> impl IntoView {
             let cans = Canisters::from_wire(cans_wire.clone(), expect_context())
                 .map_err(|_| "Unable to authenticate".to_string())?;
 
+            let selected_card = show_selected_card.get().take();
+            show_selected_card.update(|item| *item = None);
+
+            let selected_card = match selected_card {
+                Some(q) => load_selected_card(&cans, q)
+                    .await
+                    .inspect_err(|err| {
+                        logging::error!("Couldn't load selected card: {err}");
+                    })
+                    .ok(),
+                None => Default::default(),
+            };
+
             let user_principal = cans.user_principal();
 
             let limit = 5;
@@ -1129,7 +1255,13 @@ pub fn PumpNDump() -> impl IntoView {
                 .expect("TODO: handle error");
             let had_tokens = !more_tokens.is_empty();
 
-            let mut processed_token = process_token_list_item(more_tokens, user_principal).await;
+            let mut processed_token = match selected_card {
+                Some(t) => vec![t],
+                None => Default::default(),
+            };
+
+            processed_token
+                .extend_from_slice(&process_token_list_item(more_tokens, user_principal).await);
 
             // ignore tokens with no owners
             processed_token.retain(|item| item.token_owner.is_some());
