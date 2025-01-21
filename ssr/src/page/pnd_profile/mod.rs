@@ -19,7 +19,7 @@ use yral_canisters_client::individual_user_template::{GameDirection, Participate
 
 use super::icpump::pumpndump::GameState;
 #[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
-use super::icpump::pumpndump::{GameResult, GameState};
+use super::icpump::pumpndump::GameResult;
 
 #[derive(Debug, Clone)]
 struct ProfileData {
