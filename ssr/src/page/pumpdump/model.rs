@@ -1,4 +1,6 @@
 use candid::{Nat, Principal};
+use leptos::Params;
+use leptos_router::Params;
 use yral_pump_n_dump_common::rest::UserBetsResponse;
 
 use crate::consts::PUMP_AND_DUMP_WORKER_URL;
@@ -160,5 +162,43 @@ impl PlayerData {
         let wallet_balance = convert_e8s_to_gdolr(wallet_balance);
 
         Ok(Self::new(games_count, wallet_balance))
+    }
+}
+
+#[derive(Debug, Params, PartialEq, Clone)]
+pub(super) struct CardQuery {
+    pub(super) root: Option<Principal>,
+    pub(super) state: Option<String>,
+    pub(super) amount: Option<u128>,
+}
+
+impl CardQuery {
+    pub(super) fn is_valid(&self) -> bool {
+        let Self {
+            root,
+            state,
+            amount,
+        } = self;
+        matches!(
+            (root, state.as_ref().map(|s| s.as_str()), amount),
+            (Some(_), Some("win" | "loss"), Some(_))
+        )
+    }
+
+    pub(super) fn details(&self) -> Option<(Principal, GameResult)> {
+        let Self {
+            root,
+            state,
+            amount,
+        } = self;
+        match (root, state.as_ref().map(|s| s.as_str()), amount) {
+            (Some(root), Some("win"), Some(amount)) => {
+                Some((*root, GameResult::Win { amount: *amount }))
+            }
+            (Some(root), Some("loss"), Some(amount)) => {
+                Some((*root, GameResult::Loss { amount: *amount }))
+            }
+            _ => None,
+        }
     }
 }

@@ -3,6 +3,7 @@ use std::rc::Rc;
 use candid::Principal;
 use leptos::{Action, RwSignal, Signal, SignalGet, SignalSet, WriteSignal};
 use serde::{Deserialize, Serialize};
+use yral_canisters_common::Canisters;
 use yral_pump_n_dump_common::ws::{WsRequest, WsResp};
 
 use super::model::{GameRunningData, PlayerData};
@@ -37,6 +38,8 @@ pub(super) type ShowSelectedCardSignal = RwSignal<ShowSelectedCard>;
 pub(super) type GameRunningDataSignal = RwSignal<Option<GameRunningData>>;
 pub(super) type PlayerDataSignal = RwSignal<Option<PlayerData>>;
 pub(super) type LoadRunningDataAction = Action<(Principal, bool), ()>;
+pub(super) type WebsocketContextSignal = RwSignal<Option<WebsocketContext>>;
+pub(super) type IdentitySignal = RwSignal<Option<Canisters<true>>>;
 
 pub(super) type Sendfn = Rc<dyn Fn(&WsRequest)>;
 
