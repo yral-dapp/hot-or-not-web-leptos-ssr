@@ -194,7 +194,7 @@ fn WalletCardOptions(
             }
         });
 
-
+        let airdrop_disabled = Signal::derive(move || token_owner.is_some() && claimed.get() || token_owner.is_none());
         view! {
             <div class="flex items-center justify-around">
             <ActionButton disabled=is_utility_token href=format!("/token/transfer/{root}") label="Send".to_string()>
@@ -203,9 +203,9 @@ fn WalletCardOptions(
             <ActionButton disabled=true href="#".to_string() label="Buy/Sell".to_string()>
                 <Icon class="h-6 w-6" icon=ArrowLeftRightIcon />
             </ActionButton>
-            {move ||view!{<ActionButtonLink disabled=token_owner.is_some() && claimed.get() || token_owner.is_none() on:click=move |_|{airdrop_action.dispatch(());} label="Airdrop".to_string()>
+            <ActionButtonLink disabled=airdrop_disabled on:click=move |_|{airdrop_action.dispatch(());} label="Airdrop".to_string()>
                 <Icon class="h-6 w-6" icon=AirdropIcon />
-            </ActionButtonLink>}}
+            </ActionButtonLink>
 
             <ActionButton disabled=is_utility_token href="#".to_string() label="Share".to_string()>
                 <Icon class="h-6 w-6" icon=ShareIcon on:click=move |_| {pop_up.set(true); share_link.set(share_link_coin.clone())}/>

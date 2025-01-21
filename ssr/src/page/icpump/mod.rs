@@ -350,6 +350,9 @@ pub fn TokenCard(
             Ok::<_, ServerFnError>(())
         }
     });
+
+    let airdrop_disabled =
+        Signal::derive(move || token_owner.is_some() && claimed.get() || token_owner.is_none());
     view! {
         <div
             class:tada=is_new_token
@@ -401,9 +404,9 @@ pub fn TokenCard(
                 <ActionButton label="Buy/Sell".to_string() href="#".to_string() disabled=true>
                     <Icon class="w-full h-full" icon=ArrowLeftRightIcon />
                 </ActionButton>
-                {move || view!{<ActionButtonLink disabled=token_owner.is_some() && claimed.get() || token_owner.is_none() on:click=move |_|{airdrop_action.dispatch(());} label="Airdrop".to_string()>
+                <ActionButtonLink disabled=airdrop_disabled on:click=move |_|{airdrop_action.dispatch(());} label="Airdrop".to_string()>
                     <Icon class="h-6 w-6" icon=AirdropIcon />
-                </ActionButtonLink>}}
+                </ActionButtonLink>
                 <ActionButton label="Share".to_string() href="#".to_string()>
                     <Icon
                         class="w-full h-full"
@@ -549,16 +552,7 @@ pub fn ActionButtonLink(
     view! {
         <button
             disabled=disabled
-            class=move || {
-                format!(
-                    "flex flex-col gap-1 justify-center items-center text-xs transition-colors {}",
-                    if !disabled.get() {
-                        "group-hover:text-white text-neutral-300"
-                    } else {
-                        "group-hover:cursor-default text-neutral-600"
-                    },
-                )
-            }
+            class="flex flex-col gap-1 justify-center items-center text-xs transition-colors disabled:group-hover:text-white disabled:text-neutral-300 enabled:group-hover:cursor-default enabled:text-neutral-600"
         >
             <div class="w-[1.875rem] h-[1.875rem] flex items-center justify-center">
                 {children()}
