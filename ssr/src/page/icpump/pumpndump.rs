@@ -1,3 +1,4 @@
+use crate::consts::PUMP_AND_DUMP_WORKER_URL;
 use candid::{Nat, Principal};
 use codee::string::{FromToStringCodec, JsonSerdeCodec};
 use leptos::{
@@ -12,8 +13,6 @@ use leptos_use::{
     use_cookie, use_infinite_scroll_with_options, use_websocket, UseInfiniteScrollOptions,
     UseWebSocketReturn,
 };
-use once_cell::sync::Lazy;
-use reqwest::Url;
 use std::rc::Rc;
 use yral_canisters_common::{utils::token::RootType, Canisters};
 use yral_pump_n_dump_common::{
@@ -35,21 +34,12 @@ use crate::{
     utils::token::icpump::{get_paginated_token_list_with_limit, IcpumpTokenInfo, TokenListItem},
 };
 
-#[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
-static PUMP_AND_DUMP_WORKER_URL: Lazy<Url> =
-    Lazy::new(|| Url::parse("https://yral-pump-n-dump.rupansh.workers.dev/").unwrap());
-
-#[cfg(any(feature = "local-bin", feature = "local-lib"))]
-static PUMP_AND_DUMP_WORKER_URL: Lazy<Url> =
-    Lazy::new(|| Url::parse("http://localhost:8787/").unwrap());
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct ShowSelectedCard(bool);
 
 type ShowSelectedCardSignal = RwSignal<ShowSelectedCard>;
 type GameRunningDataSignal = RwSignal<Option<GameRunningData>>;
 type PlayerDataSignal = RwSignal<Option<PlayerData>>;
-// type GameStateSignal = RwSignal<Option<GameState>>;
 type LoadRunningDataAction = Action<(Principal, bool), ()>;
 
 type Sendfn = Rc<dyn Fn(&WsRequest)>;
