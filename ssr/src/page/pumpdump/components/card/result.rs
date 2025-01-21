@@ -13,31 +13,7 @@ use crate::page::{
 };
 
 #[component]
-fn PendingResult() -> impl IntoView {
-    let running_data: GameRunningDataSignal = expect_context();
-    let spent = move || {
-        let data = running_data
-            .get()
-            .expect("at this point we MUST have the running data");
-        data.pumps.saturating_add(data.dumps)
-    };
-    view! {
-        <div in:fade class="flex items-center gap-8 bg-[#212121] rounded-2xl py-6 px-6">
-            <img src="/img/hourglass.png" alt="Hourglass" class="shrink-0 w-[4.25rem] rotate-12" />
-            <div class="flex flex-col gap-1.5 flex-1">
-                <div class="font-bold text-xl">The Tide has shifted!</div>
-                <div class="text-sm text-[#A3A3A3]">
-                    <span>{"You've used "}</span>
-                    <span class="font-bold text-[#EC55A7]">{spent} gDOLR</span>
-                    <div>{" — results are on the way. Stay tuned! ⏳"}</div>
-                </div>
-            </div>
-        </div>
-    }
-}
-
-#[component]
-pub fn GameCardPreResult(#[prop(into)] game_state: GameState) -> impl IntoView {
+pub fn PlayingCard() -> impl IntoView {
     let token: ProcessedTokenListResponse = expect_context();
     let show_onboarding: ShowOnboarding = expect_context();
     let running_data: GameRunningDataSignal = expect_context();
@@ -91,19 +67,14 @@ pub fn GameCardPreResult(#[prop(into)] game_state: GameState) -> impl IntoView {
                 </div>
             </div>
             <div class="flex select-none flex-col gap-4 h-[8.5rem] w-full">
-                <Show
-                    when=move || matches!(game_state, GameState::Playing)
-                    fallback=move || view!{ <PendingResult /> }
+                <BullBearSlider />
+                <div
+                    class="flex relative items-center gap-6 justify-center w-full"
                 >
-                    <BullBearSlider />
-                    <div
-                        class="flex relative items-center gap-6 justify-center w-full"
-                    >
-                        <DumpButton />
+                    <DumpButton />
 
-                        <PumpButton />
-                    </div>
-                </Show>
+                    <PumpButton />
+                </div>
             </div>
         </div>
     }
@@ -201,9 +172,9 @@ fn LostCard() -> impl IntoView {
 }
 
 #[component]
-pub fn ResultDeclared(#[prop()] game_state: GameState) -> impl IntoView {
+pub fn ResultDeclaredCard(#[prop()] game_state: GameState) -> impl IntoView {
     match game_state {
-        GameState::Playing | GameState::Pending => {
+        GameState::Playing => {
             unreachable!("This screen is not reachable until ResultDeclared state is reached")
         }
         GameState::ResultDeclared(result) => view! {

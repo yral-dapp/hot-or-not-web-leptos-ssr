@@ -234,10 +234,10 @@ pub fn GameCard(#[prop()] token: ProcessedTokenListResponse) -> impl IntoView {
                     class="relative w-full min-h-[31rem] snap-start snap-always"
                 >
                     <Show
-                        when=move || { matches!(game_state, GameState::Playing | GameState::Pending)}
-                        fallback=move || view! { <ResultDeclared game_state /> }
+                        when=move || { matches!(game_state, GameState::Playing)}
+                        fallback=move || view! { <ResultDeclaredCard game_state /> }
                     >
-                        <GameCardPreResult game_state />
+                        <PlayingCard />
                     </Show>
                 </div>
             })}

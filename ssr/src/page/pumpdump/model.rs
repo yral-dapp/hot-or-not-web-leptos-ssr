@@ -27,7 +27,6 @@ pub(super) struct GameRunningData {
 #[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq)]
 pub(super) enum GameState {
     Playing,
-    Pending,
     ResultDeclared(GameResult),
 }
 
