@@ -17,9 +17,9 @@ use crate::{
 #[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
 use yral_canisters_client::individual_user_template::{GameDirection, ParticipatedGameInfo};
 
-use super::icpump::pumpndump::GameState;
 #[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
 use super::icpump::pumpndump::GameResult;
+use super::icpump::pumpndump::GameState;
 
 #[derive(Debug, Clone)]
 struct ProfileData {
