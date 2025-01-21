@@ -159,6 +159,40 @@ fn AirdropButton(
     }
 }
 
+struct PopUpButtonTextRedirection {
+    href: String,
+    text: String,
+}
+
+fn pop_up_button_href(host: String, pathname: String) -> PopUpButtonTextRedirection {
+    if pathname.starts_with("/board") {
+        PopUpButtonTextRedirection {
+            href: "/wallet".to_string(),
+            text: "View Wallet".to_string(),
+        }
+    } else if host.contains("icpump") {
+        PopUpButtonTextRedirection {
+            href: "/".to_string(),
+            text: "Explore more Tokens".to_string(),
+        }
+    } else if host.contains("pumpdump") {
+        PopUpButtonTextRedirection {
+            href: "/play".to_string(),
+            text: "Continue Playing".to_string(),
+        }
+    } else if host.contains("yral") {
+        PopUpButtonTextRedirection {
+            href: "/".to_string(),
+            text: "Watch more Videos".to_string(),
+        }
+    } else {
+        PopUpButtonTextRedirection {
+            href: "/wallet".to_string(),
+            text: "View Wallet".to_string(),
+        }
+    }
+}
+
 #[component]
 fn AirdropPopUpButton(
     claimed: RwSignal<bool>,
@@ -192,39 +226,16 @@ fn AirdropPopUpButton(
                         .into_view())
                 } else if claimed.get() {
                     let host = host.clone();
+                    let PopUpButtonTextRedirection { href, text } = pop_up_button_href(host, pathname.pathname.get());
                     Some(view! {
                         <div class="mt-10 mb-16">
                             <HighlightedLinkButton
-                            alt_style=true
-                            disabled=false
-                            classes="max-w-96 mx-auto py-[12px] px-[20px]".to_string()
-                            href={
-                                if pathname.pathname.get().starts_with("/board"){
-                                    "/wallet".to_string()
-                                }else if host.contains("icpump"){
-                                    "/".to_string()
-                                }else if host.contains("pumpdump"){
-                                    "/play".to_string()
-                                }else if host.contains("yral"){
-                                    "/".to_string()
-                                }else{
-                                    "/wallet".to_string()
-                                }
-                            }
+                                alt_style=true
+                                disabled=false
+                                classes="max-w-96 mx-auto py-[12px] px-[20px] w-full".to_string()
+                                href=href
                             >
-                                {move ||{
-                                    if pathname.pathname.get().starts_with("/board"){
-                                        "View Wallet"
-                                    }else if host.contains("icpump"){
-                                        "Explore more Tokens"
-                                    }else if host.contains("pumpdump"){
-                                        "Continue Playing"
-                                    }else if host.contains("yral"){
-                                        "Watch more Videos"
-                                    }else{
-                                        "View Wallet"
-                                    }
-                                }}
+                                {text}
                             </HighlightedLinkButton>
                         </div>
 
