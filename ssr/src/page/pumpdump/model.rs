@@ -6,7 +6,7 @@ use yral_pump_n_dump_common::rest::UserBetsResponse;
 use crate::consts::PUMP_AND_DUMP_WORKER_URL;
 
 /// Convert e8s to gdolr
-/// backend returns dolr in e8s, and 1dolr = 100gdolr
+/// Backend returns dolr in e8s, and 1dolr = 100gdolr
 pub(super) fn convert_e8s_to_gdolr(num: Nat) -> u128 {
     (num * 100u64 / 10u64.pow(8))
         .0
@@ -14,8 +14,10 @@ pub(super) fn convert_e8s_to_gdolr(num: Nat) -> u128 {
         .expect("gdolr, scoped at individual player, to be small enough to fit in a u128")
 }
 
-// this data is kept out of GameState so that mutating pumps and dumps doesn't
-// cause the whole game card to rerender
+/// The data that is required when game is being played by the user
+///
+/// This data is kept out of GameState so that mutating pumps and dumps doesn't
+/// cause the whole game card to rerender
 #[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
 pub(super) struct GameRunningData {
     pub(super) pumps: u64,
@@ -24,6 +26,7 @@ pub(super) struct GameRunningData {
     pub(super) player_count: u64,
 }
 
+/// The current state of the game
 #[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq)]
 pub(super) enum GameState {
     Playing,
@@ -31,6 +34,7 @@ pub(super) enum GameState {
 }
 
 impl GameState {
+    /// Get the winnings if the game result is declared to be a win
     pub(super) fn winnings(&self) -> Option<u128> {
         match self {
             GameState::ResultDeclared(GameResult::Win { amount }) => Some(*amount),
@@ -38,6 +42,7 @@ impl GameState {
         }
     }
 
+    /// Get the amount the user lost if the game result is declared to be loss
     pub(super) fn lossings(&self) -> Option<u128> {
         match self {
             GameState::ResultDeclared(GameResult::Loss { amount }) => Some(*amount),
@@ -45,19 +50,23 @@ impl GameState {
         }
     }
 
+    /// Has the player lost
     pub(super) fn has_lost(&self) -> bool {
         matches!(self, GameState::ResultDeclared(GameResult::Loss { .. }))
     }
 
+    /// Has the player won
     pub(super) fn has_won(&self) -> bool {
         matches!(self, GameState::ResultDeclared(GameResult::Win { .. }))
     }
 
+    /// Is the game running
     pub(super) fn is_running(&self) -> bool {
         matches!(self, GameState::Playing)
     }
 }
 
+/// The result of the game, can never be draw
 #[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq)]
 pub(super) enum GameResult {
     Win { amount: u128 },
@@ -65,6 +74,7 @@ pub(super) enum GameResult {
 }
 
 impl GameState {
+    /// Load the current game state for the given token root and owner
     pub(super) async fn load(
         _owner_canister: Principal,
         _root_principal: Principal,
@@ -83,7 +93,7 @@ impl GameRunningData {
         }
     }
 
-    // #[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
+    /// Load the game running data from the server
     pub(super) async fn load(
         owner: Principal,
         token_root: Principal,
@@ -118,6 +128,7 @@ impl GameRunningData {
     }
 }
 
+/// The player's overarching stats
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub(super) struct PlayerData {
     pub(super) games_count: u64,
@@ -132,6 +143,7 @@ impl PlayerData {
         }
     }
 
+    /// Load the user's stats from the server
     pub(super) async fn load(user_principal: Principal) -> Result<Self, String> {
         let balance_url = PUMP_AND_DUMP_WORKER_URL
             .join(&format!("/balance/{user_principal}"))
@@ -164,39 +176,32 @@ impl PlayerData {
     }
 }
 
+/// Query parameters for when user click on the card in profile section
 #[derive(Debug, Params, PartialEq, Clone)]
 pub(super) struct CardQuery {
-    pub(super) root: Option<Principal>,
-    pub(super) state: Option<String>,
-    pub(super) amount: Option<u128>,
+    pub(super) root: Principal,
+    pub(super) state: String,
+    pub(super) amount: u128,
 }
 
 impl CardQuery {
+    /// Check whether the query parameters are coherent
     pub(super) fn is_valid(&self) -> bool {
-        let Self {
-            root,
-            state,
-            amount,
-        } = self;
-        matches!(
-            (root, state.as_ref().map(|s| s.as_str()), amount),
-            (Some(_), Some("win" | "loss"), Some(_))
-        )
+        let Self { state, .. } = self;
+        // only win and loss states are allowed currently
+        matches!(state.as_str(), "win" | "loss")
     }
 
+    /// Parses out the details necessary for showing game card
     pub(super) fn details(&self) -> Option<(Principal, GameResult)> {
         let Self {
             root,
             state,
             amount,
         } = self;
-        match (root, state.as_ref().map(|s| s.as_str()), amount) {
-            (Some(root), Some("win"), Some(amount)) => {
-                Some((*root, GameResult::Win { amount: *amount }))
-            }
-            (Some(root), Some("loss"), Some(amount)) => {
-                Some((*root, GameResult::Loss { amount: *amount }))
-            }
+        match state.as_str() {
+            "win" => Some((*root, GameResult::Win { amount: *amount })),
+            "loss" => Some((*root, GameResult::Loss { amount: *amount })),
             _ => None,
         }
     }

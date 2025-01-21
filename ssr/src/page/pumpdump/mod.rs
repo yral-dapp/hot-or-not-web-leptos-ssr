@@ -31,18 +31,7 @@ async fn load_selected_card(
     cans: &Canisters<true>,
     card_query: CardQuery,
 ) -> Result<ProcessedTokenListResponse, String> {
-    let CardQuery {
-        root,
-        state,
-        amount,
-    } = card_query;
-    let root = match (root, state, amount) {
-        (Some(root), Some(_), Some(_)) => root,
-        _ => {
-            logging::warn!("For the selected card to show, the following query params are needed: root, state, amount");
-            return Err("Not enough data".into());
-        }
-    };
+    let CardQuery { root, .. } = card_query;
 
     let meta = cans
         .token_metadata_by_root_type(
