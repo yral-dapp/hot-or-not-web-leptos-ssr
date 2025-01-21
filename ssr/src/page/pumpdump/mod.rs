@@ -1,11 +1,11 @@
 use crate::consts::PUMP_AND_DUMP_WORKER_URL;
-use candid::{Nat, Principal};
+use candid::Principal;
 use codee::string::{FromToStringCodec, JsonSerdeCodec};
 use leptos::{
     component, create_action, create_effect, create_rw_signal, create_signal, expect_context,
-    html::Div, logging, provide_context, view, Action, For, IntoView, NodeRef, Params, RwSignal,
-    Show, Signal, SignalGet, SignalGetUntracked, SignalSet, SignalSetUntracked, SignalUpdate,
-    SignalUpdateUntracked, Suspense, WriteSignal,
+    html::Div, logging, provide_context, view, For, IntoView, NodeRef, Params, RwSignal, Show,
+    SignalGet, SignalGetUntracked, SignalSet, SignalSetUntracked, SignalUpdate,
+    SignalUpdateUntracked, Suspense,
 };
 use leptos_icons::Icon;
 use leptos_router::{use_query, Params};
@@ -16,17 +16,9 @@ use leptos_use::{
 use std::rc::Rc;
 use yral_canisters_common::{utils::token::RootType, Canisters};
 use yral_pump_n_dump_common::{
-    rest::UserBetsResponse,
     ws::{websocket_connection_url, WsError, WsMessage, WsRequest, WsResp},
     GameDirection,
 };
-
-use serde::{Deserialize, Serialize};
-#[derive(Serialize, Deserialize, Clone)]
-pub struct WsResponse {
-    pub request_id: uuid::Uuid,
-    pub response: WsResp,
-}
 
 use crate::{
     page::icpump::{process_token_list_item, ProcessedTokenListResponse},
@@ -37,37 +29,11 @@ use crate::{
 pub mod profile;
 pub use profile::*;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-struct ShowSelectedCard(bool);
+mod model;
+use model::*;
 
-type ShowSelectedCardSignal = RwSignal<ShowSelectedCard>;
-type GameRunningDataSignal = RwSignal<Option<GameRunningData>>;
-type PlayerDataSignal = RwSignal<Option<PlayerData>>;
-type LoadRunningDataAction = Action<(Principal, bool), ()>;
-
-type Sendfn = Rc<dyn Fn(&WsRequest)>;
-
-// based on https://leptos-use.rs/network/use_websocket.html#usage-with-provide_context
-#[derive(Clone)]
-pub struct WebsocketContext {
-    pub message: Signal<Option<WsResponse>>,
-    sendfn: Sendfn, // use Arc to make it easily cloneable
-}
-
-impl WebsocketContext {
-    pub fn new(message: Signal<Option<WsResponse>>, send: Sendfn) -> Self {
-        Self {
-            message,
-            sendfn: send,
-        }
-    }
-
-    // create a method to avoid having to use parantheses around the field
-    #[inline(always)]
-    pub fn send(&self, message: &WsRequest) {
-        (self.sendfn)(message);
-    }
-}
+mod context;
+use context::*;
 
 #[component]
 fn Header() -> impl IntoView {
@@ -360,166 +326,6 @@ fn MockPumpButton() -> impl IntoView {
                 />
             </div>
         </button>
-    }
-}
-
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-struct PlayerData {
-    games_count: u64,
-    wallet_balance: u128,
-}
-
-impl PlayerData {
-    pub fn new(games_count: u64, wallet_balance: u128) -> Self {
-        Self {
-            games_count,
-            wallet_balance,
-        }
-    }
-
-    pub async fn load(user_principal: Principal) -> Result<Self, String> {
-        let balance_url = PUMP_AND_DUMP_WORKER_URL
-            .join(&format!("/balance/{user_principal}"))
-            .expect("Url to be valid");
-        let games_count_url = PUMP_AND_DUMP_WORKER_URL
-            .join(&format!("/game_count/{user_principal}"))
-            .expect("Url to be valid");
-
-        let games_count: u64 = reqwest::get(games_count_url)
-            .await
-            .map_err(|_| "Failed to load games count")?
-            .text()
-            .await
-            .map_err(|_| "failed to read response body".to_string())?
-            .parse()
-            .map_err(|_| "Couldn't parse nat number".to_string())?;
-
-        let wallet_balance: Nat = reqwest::get(balance_url)
-            .await
-            .map_err(|_| "failed to load balance".to_string())?
-            .text()
-            .await
-            .map_err(|_| "failed to read response body".to_string())?
-            .parse()
-            .map_err(|_| "Couldn't parse nat number".to_string())?;
-
-        let wallet_balance = convert_e8s_to_gdolr(wallet_balance);
-
-        Ok(Self::new(games_count, wallet_balance))
-    }
-}
-
-/// Convert e8s to gdolr
-/// backend returns dolr in e8s, and 1dolr = 100gdolr
-fn convert_e8s_to_gdolr(num: Nat) -> u128 {
-    (num * 100u64 / 10u64.pow(8))
-        .0
-        .try_into()
-        .expect("gdolr, scoped at individual player, to be small enough to fit in a u128")
-}
-
-// this data is kept out of GameState so that mutating pumps and dumps doesn't
-// cause the whole game card to rerender
-#[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
-struct GameRunningData {
-    pumps: u64,
-    dumps: u64,
-    winning_pot: Option<u64>,
-    player_count: u64,
-}
-
-#[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq)]
-pub enum GameState {
-    Playing,
-    Pending,
-    ResultDeclared(GameResult),
-}
-
-impl GameState {
-    pub fn winnings(&self) -> Option<u128> {
-        match self {
-            GameState::ResultDeclared(GameResult::Win { amount }) => Some(*amount),
-            _ => None,
-        }
-    }
-
-    pub fn lossings(&self) -> Option<u128> {
-        match self {
-            GameState::ResultDeclared(GameResult::Loss { amount }) => Some(*amount),
-            _ => None,
-        }
-    }
-
-    pub fn has_lost(&self) -> bool {
-        matches!(self, GameState::ResultDeclared(GameResult::Loss { .. }))
-    }
-
-    pub fn has_won(&self) -> bool {
-        matches!(self, GameState::ResultDeclared(GameResult::Win { .. }))
-    }
-
-    pub fn is_running(&self) -> bool {
-        matches!(self, GameState::Playing)
-    }
-}
-
-#[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq)]
-pub enum GameResult {
-    Win { amount: u128 },
-    Loss { amount: u128 },
-}
-
-impl GameState {
-    pub async fn load(
-        _owner_canister: Principal,
-        _root_principal: Principal,
-    ) -> Result<Self, String> {
-        Ok(Self::Playing)
-    }
-}
-
-impl GameRunningData {
-    pub fn new(pumps: u64, dumps: u64, player_count: u64, winning_pot: Option<u64>) -> Self {
-        Self {
-            pumps,
-            dumps,
-            player_count,
-            winning_pot,
-        }
-    }
-
-    // #[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
-    pub async fn load(
-        owner: Principal,
-        token_root: Principal,
-        user_canister: Principal,
-    ) -> Result<Self, String> {
-        let bets_url = PUMP_AND_DUMP_WORKER_URL
-            .join(&format!("/bets/{owner}/{token_root}/{user_canister}"))
-            .expect("url to be valid");
-
-        let player_count_url = PUMP_AND_DUMP_WORKER_URL
-            .join(&format!("/player_count/{owner}/{token_root}"))
-            .expect("url to be valid");
-
-        let bets: UserBetsResponse = reqwest::get(bets_url)
-            .await
-            .map_err(|err| format!("Coulnd't load bets: {err}"))?
-            .json()
-            .await
-            .map_err(|err| format!("Couldn't parse bets out of repsonse: {err}"))?;
-
-        let player_count: u64 = reqwest::get(player_count_url)
-            .await
-            .map_err(|err| format!("Coulnd't load player count: {err}"))?
-            .text()
-            .await
-            .map_err(|err| format!("Couldn't read response for player count: {err}"))?
-            .parse()
-            .map_err(|err| format!("Couldn't parse player count from response: {err}"))?;
-
-        // Maybe we should also load winning pot as part of game running data
-        Ok(Self::new(bets.pumps, bets.dumps, player_count, None))
     }
 }
 
@@ -946,26 +752,6 @@ fn GameCard(#[prop()] token: ProcessedTokenListResponse) -> impl IntoView {
                 </div>
             })}
         </Suspense>
-    }
-}
-
-#[derive(Copy, Clone, Debug)]
-struct ShowOnboarding(Signal<Option<bool>>, WriteSignal<Option<bool>>);
-
-impl ShowOnboarding {
-    #[inline]
-    fn show(&self) {
-        self.1.set(Some(true));
-    }
-
-    #[inline]
-    fn hide(&self) {
-        self.1.set(Some(false));
-    }
-
-    #[inline]
-    fn should_show(&self) -> bool {
-        self.0.get().unwrap_or(true)
     }
 }
 
