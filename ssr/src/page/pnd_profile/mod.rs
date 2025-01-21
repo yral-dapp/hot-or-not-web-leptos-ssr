@@ -109,7 +109,13 @@ fn compute_result(info: ParticipatedGameInfo) -> GameResult {
         std::cmp::Ordering::Equal => return GameResult::Win { amount: 0 },
     };
 
-    if user_direction == info.game_direction {
+    // TODO: make game direction comparable
+    let m = |d: GameDirection| match d {
+        GameDirection::Pump => 0,
+        GameDirection::Dump => 1,
+    };
+
+    if m(user_direction) == m(info.game_direction) {
         GameResult::Win {
             amount: info.reward.0.try_into().unwrap(),
         }
@@ -182,8 +188,8 @@ async fn load_history(cans: Canisters<true>, page: u64) -> Result<(GameplayHisto
                 .token_owner
                 .expect("owner to exist if backend returns it")
                 .principal_id,
+            root: item.token_root,
             state: GameState::ResultDeclared(compute_result(item)),
-            root: item.token_root.clone(),
         })
     }
 
