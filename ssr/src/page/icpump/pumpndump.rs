@@ -49,7 +49,7 @@ struct ShowSelectedCard(bool);
 type ShowSelectedCardSignal = RwSignal<ShowSelectedCard>;
 type GameRunningDataSignal = RwSignal<Option<GameRunningData>>;
 type PlayerDataSignal = RwSignal<Option<PlayerData>>;
-type GameStateSignal = RwSignal<Option<GameState>>;
+// type GameStateSignal = RwSignal<Option<GameState>>;
 type LoadRunningDataAction = Action<(Principal, bool), ()>;
 
 type Sendfn = Rc<dyn Fn(&WsRequest)>;
