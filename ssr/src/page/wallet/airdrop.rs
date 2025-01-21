@@ -37,7 +37,7 @@ pub fn AirdropPage(meta: TokenMetadata, airdrop_amount: u64) -> impl IntoView {
             />
 
             {move || {
-                view! { <AirdropAnimation claimed=claimed.get() logo=meta.logo_b64.clone() /> }
+                view! { <AirdropAnimation claimed=claimed.into() logo=meta.logo_b64.clone() /> }
             }}
             <AirdropButton
                 claimed
@@ -201,21 +201,21 @@ fn AirdropPopUpButton(
 ) -> impl IntoView {
     let host = get_host();
     let pathname = use_location();
+    let name_c = name.clone();
+    let name_c2 = name.clone();
     view! {
         <div
             style="--duration:1500ms"
             class="fade-in flex text-xl font-bold z-[2] w-full flex-col gap-4 items-center justify-center px-8"
         >
-            <Show when=claimed children=view! {
+            <Show when=claimed fallback=move || view! {
+                <div class="text-center font-normal"><span class="font-semibold">100 {name_c.clone()}</span> successfully claimed and added to your wallet!</div>
+            }.into_view()>
                 <div class="text-center">
-                    {format!("100 {}", name)} <br />
-                    <span class="text-center font-normal">Claim for <span class="font-semibold">100 {name.clone()}</span> is being processed</span>
+                    {format!("100 {}", name_c2.clone())} <br />
+                    <span class="text-center font-normal">Claim for <span class="font-semibold">100 {name_c2.clone()}</span> is being processed</span>
                 </div>
-            } fallback=view! {
-                <div class="text-center font-normal"><span class="font-semibold">100 {name.clone()}</span> successfully claimed and added to your wallet!</div>
-            }/>
-
-
+            </Show>
             {move || {
                 if buffer_signal.get() {
                     Some(view! {
@@ -270,7 +270,7 @@ pub fn AirdropPopup(
                 src="/img/airdrop/bg.webp"
                 class="absolute inset-0 z-[1] fade-in w-full h-full object-cover"
             />
-            <AirdropAnimation claimed=claimed logo=logo.clone()/>
+            <AirdropAnimation claimed=claimed.into() logo=logo.clone()/>
             <AirdropPopUpButton
                 claimed
                 name
@@ -282,44 +282,9 @@ pub fn AirdropPopup(
 
 #[component]
 fn AirdropAnimation(claimed: MaybeSignal<bool>, logo: String) -> impl IntoView {
+    let logo_c = logo.clone();
     view! {
-        <Show when=claimed children=view! {
-            <div class="relative h-[50vh] max-h-96 z-[2]">
-                <div
-                    style="--y: 50px"
-                    class="flex flex-col items-center justify-center airdrop-parachute"
-                >
-                    <img
-                        alt="Parachute"
-                        src="/img/airdrop/parachute.webp"
-                        class="h-auto max-h-72"
-                    />
-
-                    <div
-                        style="background: radial-gradient(circle, rgb(244 141 199) 0%, rgb(255 255 255) 100%); box-shadow: 0px 0px 3.43px 0px #FFFFFF29;"
-                        class="p-[1px] w-16 h-16 -translate-y-8 rounded-md"
-                    >
-                        <img
-                            alt="Airdrop"
-                            src=logo
-                            class="w-full fade-in rounded-md h-full object-cover"
-                        />
-                    </div>
-                </div>
-                <img
-                    alt="Cloud"
-                    src="/img/airdrop/cloud.webp"
-                    style="--x: -50px"
-                    class="max-w-12 absolute -top-10 left-0 airdrop-cloud"
-                />
-                <img
-                    alt="Cloud"
-                    src="/img/airdrop/cloud.webp"
-                    style="--x: 50px"
-                    class="max-w-16 absolute bottom-10 right-10 airdrop-cloud"
-                />
-            </div>
-        } fallback=view! {
+        <Show when=claimed fallback=move || view! {
             <div class="h-[30vh] max-h-96 w-full flex items-center justify-center z-[2] lg:mb-8 mt-12">
                 <div class="h-[22vh] w-[22vh] lg:h-[27vh] lg:w-[27vh] relative gap-12">
                     <AnimatedTick />
@@ -329,13 +294,49 @@ fn AirdropAnimation(claimed: MaybeSignal<bool>, logo: String) -> impl IntoView {
                     >
                         <img
                             alt="Airdrop"
-                            src=logo
+                            src=logo_c.clone()
                             class="w-full fade-in rounded-md h-full object-cover"
                         />
                     </div>
                 </div>
             </div>
-        }/>
+        }>
+        <div class="relative h-[50vh] max-h-96 z-[2]">
+        <div
+            style="--y: 50px"
+            class="flex flex-col items-center justify-center airdrop-parachute"
+        >
+            <img
+                alt="Parachute"
+                src="/img/airdrop/parachute.webp"
+                class="h-auto max-h-72"
+            />
+
+            <div
+                style="background: radial-gradient(circle, rgb(244 141 199) 0%, rgb(255 255 255) 100%); box-shadow: 0px 0px 3.43px 0px #FFFFFF29;"
+                class="p-[1px] w-16 h-16 -translate-y-8 rounded-md"
+            >
+                <img
+                    alt="Airdrop"
+                    src=logo.clone()
+                    class="w-full fade-in rounded-md h-full object-cover"
+                />
+            </div>
+        </div>
+        <img
+            alt="Cloud"
+            src="/img/airdrop/cloud.webp"
+            style="--x: -50px"
+            class="max-w-12 absolute -top-10 left-0 airdrop-cloud"
+        />
+        <img
+            alt="Cloud"
+            src="/img/airdrop/cloud.webp"
+            style="--x: 50px"
+            class="max-w-16 absolute bottom-10 right-10 airdrop-cloud"
+        />
+    </div>
+        </Show>
     }
 }
 

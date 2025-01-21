@@ -398,10 +398,10 @@ pub fn TokenCard(
                 <ActionButton label="Send".to_string() href=format!("/token/transfer/{root}")>
                     <Icon class="w-full h-full" icon=SendIcon />
                 </ActionButton>
-                <ActionButton label="Buy/Sell".to_string() href="#".to_string() disabled=true>
+                <ActionButton label="Buy/Sell".to_string() href="#".to_string() disabled=leptos::MaybeSignal::Static(true)>
                     <Icon class="w-full h-full" icon=ArrowLeftRightIcon />
                 </ActionButton>
-                {move || view!{<ActionButtonLink disabled=token_owner.is_some() && claimed.get() || token_owner.is_none() on:click=move |_|{airdrop_action.dispatch(());} label="Airdrop".to_string()>
+                {move || view!{<ActionButtonLink disabled=leptos::MaybeSignal::Static(token_owner.is_some() && claimed.get() || token_owner.is_none()) on:click=move |_|{airdrop_action.dispatch(());} label="Airdrop".to_string()>
                     <Icon class="h-6 w-6" icon=AirdropIcon />
                 </ActionButtonLink>}}
                 <ActionButton label="Share".to_string() href="#".to_string()>
@@ -514,7 +514,7 @@ pub fn ActionButton(
     href: String,
     label: String,
     children: Children,
-    #[prop(optional, default = false)] disabled: MaybeSignal<bool>,
+    #[prop(optional, default = false.into())] disabled: MaybeSignal<bool>,
 ) -> impl IntoView {
     view! {
         <a
@@ -523,7 +523,7 @@ pub fn ActionButton(
             class=move || {
                 format!(
                     "flex flex-col gap-1 justify-center items-center text-xs transition-colors {}",
-                    if !disabled {
+                    if !disabled.get() {
                         "group-hover:text-white text-neutral-300"
                     } else {
                         "group-hover:cursor-default text-neutral-600"
@@ -544,7 +544,7 @@ pub fn ActionButton(
 pub fn ActionButtonLink(
     label: String,
     children: Children,
-    #[prop(optional, default = false)] disabled: MaybeSignal<bool>,
+    #[prop(optional, default = false.into())] disabled: MaybeSignal<bool>,
 ) -> impl IntoView {
     view! {
         <button
@@ -552,7 +552,7 @@ pub fn ActionButtonLink(
             class=move || {
                 format!(
                     "flex flex-col gap-1 justify-center items-center text-xs transition-colors {}",
-                    if !disabled {
+                    if !disabled.get() {
                         "group-hover:text-white text-neutral-300"
                     } else {
                         "group-hover:cursor-default text-neutral-600"
