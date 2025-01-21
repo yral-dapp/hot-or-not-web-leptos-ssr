@@ -91,27 +91,23 @@ fn AirdropButton(
         }
     });
 
+    let name_c = name.clone();
     view! {
         <div
             style="--duration:1500ms"
             class="fade-in flex text-xl font-bold z-[2] w-full flex-col gap-4 items-center justify-center px-8"
         >
-            {move || {
-                if claimed.get() {
-                    view! {
-                        <div class="text-center">
-                            {format!("{} {}", airdrop_amount, name)} <br />
-                            <span class="font-normal">"added to wallet"</span>
-                        </div>
-                    }
-                } else {
-                    view! {
-                        <div class="text-center">
-                            {format!("{} {} Airdrop received", airdrop_amount, name)}
-                        </div>
-                    }
-                }
-            }}
+            <Show clone:name_c when=claimed fallback=move ||view! {
+                    <div class="text-center">
+                        {format!("{} {} Airdrop received", airdrop_amount, name.clone())}
+                    </div>
+                }>
+                    <div class="text-center">
+                        {format!("{} {}", airdrop_amount, name_c.clone())} <br />
+                        <span class="font-normal">"added to wallet"</span>
+                    </div>
+            </Show>
+
             {move || {
                 if buffer_signal.get() {
                     view! {
