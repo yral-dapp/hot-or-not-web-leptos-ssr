@@ -514,7 +514,7 @@ pub fn ActionButton(
     href: String,
     label: String,
     children: Children,
-    #[prop(optional, default = false)] disabled: bool,
+    #[prop(optional, default = false)] disabled: MaybeSignal<bool>,
 ) -> impl IntoView {
     view! {
         <a
@@ -544,7 +544,7 @@ pub fn ActionButton(
 pub fn ActionButtonLink(
     label: String,
     children: Children,
-    #[prop(optional, default = false)] disabled: bool,
+    #[prop(optional, default = false)] disabled: MaybeSignal<bool>,
 ) -> impl IntoView {
     view! {
         <button

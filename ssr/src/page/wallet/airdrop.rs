@@ -172,20 +172,16 @@ fn AirdropPopUpButton(
             style="--duration:1500ms"
             class="fade-in flex text-xl font-bold z-[2] w-full flex-col gap-4 items-center justify-center px-8"
         >
-            {move || {
-                if claimed.get() {
-                    view! {
-                        <div class="text-center">
-                            {format!("100 {}", name)} <br />
-                            <span class="text-center font-normal">Claim for <span class="font-semibold">100 {name.clone()}</span> is being processed</span>
-                        </div>
-                    }
-                } else {
-                    view! {
-                        <div class="text-center font-normal"><span class="font-semibold">100 {name.clone()}</span> successfully claimed and added to your wallet!</div>
-                    }
-                }
-            }}
+            <Show when=claimed children=view! {
+                <div class="text-center">
+                    {format!("100 {}", name)} <br />
+                    <span class="text-center font-normal">Claim for <span class="font-semibold">100 {name.clone()}</span> is being processed</span>
+                </div>
+            } fallback=view! {
+                <div class="text-center font-normal"><span class="font-semibold">100 {name.clone()}</span> successfully claimed and added to your wallet!</div>
+            }/>
+
+
             {move || {
                 if buffer_signal.get() {
                     Some(view! {
@@ -263,9 +259,7 @@ pub fn AirdropPopup(
                 src="/img/airdrop/bg.webp"
                 class="absolute inset-0 z-[1] fade-in w-full h-full object-cover"
             />
-            {move || {
-                view! { <AirdropAnimation claimed=claimed.get() logo=logo.clone()/> }
-            }}
+            <AirdropAnimation claimed=claimed logo=logo.clone()/>
             <AirdropPopUpButton
                 claimed
                 name
@@ -276,9 +270,9 @@ pub fn AirdropPopup(
 }
 
 #[component]
-fn AirdropAnimation(claimed: bool, logo: String) -> impl IntoView {
-    if !claimed {
-        view! {
+fn AirdropAnimation(claimed: MaybeSignal<bool>, logo: String) -> impl IntoView {
+    view! {
+        <Show when=claimed children=view! {
             <div class="relative h-[50vh] max-h-96 z-[2]">
                 <div
                     style="--y: 50px"
@@ -314,9 +308,7 @@ fn AirdropAnimation(claimed: bool, logo: String) -> impl IntoView {
                     class="max-w-16 absolute bottom-10 right-10 airdrop-cloud"
                 />
             </div>
-        }
-    } else {
-        view! {
+        } fallback=view! {
             <div class="h-[30vh] max-h-96 w-full flex items-center justify-center z-[2] lg:mb-8 mt-12">
                 <div class="h-[22vh] w-[22vh] lg:h-[27vh] lg:w-[27vh] relative gap-12">
                     <AnimatedTick />
@@ -332,7 +324,7 @@ fn AirdropAnimation(claimed: bool, logo: String) -> impl IntoView {
                     </div>
                 </div>
             </div>
-        }
+        }/>
     }
 }
 
