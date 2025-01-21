@@ -1,7 +1,7 @@
 use crate::page::icpump::ai::ICPumpAi;
 use crate::page::icpump::ICPumpLanding;
 
-use crate::page::pnd_profile::PndProfilePage;
+use crate::page::pumpdump::PndProfilePage;
 // use crate::page::wallet::TestIndex;
 use crate::{
     component::{base_route::BaseRoute, nav::NavBar},

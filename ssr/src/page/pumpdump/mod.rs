@@ -34,6 +34,9 @@ use crate::{
     utils::token::icpump::{get_paginated_token_list_with_limit, IcpumpTokenInfo, TokenListItem},
 };
 
+pub mod profile;
+pub use profile::*;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct ShowSelectedCard(bool);
 

@@ -34,7 +34,6 @@ use crate::utils::token::icpump::get_paginated_token_list;
 use crate::utils::token::icpump::TokenListItem;
 
 pub mod ai;
-pub mod pumpndump;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ProcessedTokenListResponse {

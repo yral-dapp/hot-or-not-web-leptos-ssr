@@ -10,14 +10,14 @@ use yral_canisters_common::{utils::profile::ProfileDetails, Canisters};
 
 use crate::{
     component::{back_btn::BackButton, title::Title},
-    page::icpump::pumpndump::GameResult,
+    page::pumpdump::GameResult,
     state::canisters::authenticated_canisters,
 };
 
 #[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
 use yral_canisters_client::individual_user_template::{GameDirection, ParticipatedGameInfo};
 
-use super::icpump::pumpndump::GameState;
+use super::GameState;
 
 #[derive(Debug, Clone)]
 struct ProfileData {
@@ -129,8 +129,7 @@ async fn load_history(
     _cans: Canisters<true>,
     page: u64,
 ) -> Result<(GameplayHistory, bool), String> {
-    use super::icpump::pumpndump::GameState;
-    use crate::page::icpump::pumpndump::GameResult;
+    use super::{GameResult, GameState};
 
     let limit = 25;
     let start_idx = page * 25;

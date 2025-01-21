@@ -9,7 +9,7 @@ use yral_canisters_common::utils::time::current_epoch;
 
 use crate::{
     component::spinner::FullScreenSpinner,
-    page::icpump::pumpndump::PumpNDump,
+    page::pumpdump::PumpNDump,
     utils::{
         host::{show_cdao_page, show_pnd_page},
         ml_feed::{
