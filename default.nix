@@ -23,7 +23,11 @@ pkgs.mkShell {
       pkgs.darwin.libiconv
     ] else []);
   shellHook = ''
-    export LLVM_PATH=/opt/homebrew/opt/llvm/
+    if [ -d "/opt/homebrew/opt/llvm" ]; then
+      export LLVM_PATH="/opt/homebrew/opt/llvm"
+    else
+      export LLVM_PATH="$(which llvm)"
+    fi
     export RUSTC_WRAPPER=""
     export CC_wasm32_unknown_unknown=$LLVM_PATH/bin/clang
     export CXX_wasm32_unknown_unknown=$LLVM_PATH/bin/clang++
