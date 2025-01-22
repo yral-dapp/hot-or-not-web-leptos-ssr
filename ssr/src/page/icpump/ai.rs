@@ -279,7 +279,7 @@ pub fn ICPumpAiTokenListing(tokens: Vec<TokenListItem>) -> impl IntoView {
 
     let tokens_view = create_memo(move |_| {
         if tokens_len != 0 {
-            view! {
+            Some(view! {
                 {tokens_view_list}
                 <div class="w-full flex items-center justify-center">
                     <button
@@ -300,9 +300,9 @@ pub fn ICPumpAiTokenListing(tokens: Vec<TokenListItem>) -> impl IntoView {
                     </button>
                 </div>
             }
-            .into_view()
+            .into_view())
         } else {
-            view! {<></>}.into_view()
+            None
         }
     });
 
@@ -490,26 +490,24 @@ pub fn ICPumpAi() -> impl IntoView {
                 move || {
                     match page_no.get() {
                         1 => {
-                            view! {
+                            Some(view! {
                                 <ICPumpAiPage1 query={query} page_no={page_no} search_action={search_action}/>
-                            }.into_view()
+                            }.into_view())
                         }
                         2 => {
-                            view! {
+                            Some(view! {
                                 <ICPumpAiPage2 query={query} page_no={page_no}
                                     search_action={search_action} reset_state={reset_state}/>
-                            }.into_view()
+                            }.into_view())
                         }
                         3 => {
-                            view! {
+                            Some(view! {
                                 <ICPumpAiPage3 query={query} chat={chat} page_no={page_no}
                                     search_action={search_action} reset_state={reset_state}/>
-                            }.into_view()
+                            }.into_view())
                         }
                         _ => {
-                            view! {
-                                <></>
-                            }.into_view()
+                            None
                         }
                     }
                 }

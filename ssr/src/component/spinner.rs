@@ -38,8 +38,30 @@ icon_gen!(
 "###
 );
 #[component]
-pub fn SpinnerCircle() -> impl IntoView {
+pub fn SpinnerCircle(#[prop(optional, default = "")] class: &'static str) -> impl IntoView {
     view! {
-        <Icon icon=SpinnerCircleIcon class="animate-spin w-full h-full"/>
+        <Icon icon=SpinnerCircleIcon class=format!("animate-spin w-full h-full {}", class)/>
     }
 }
+#[component]
+pub fn SpinnerCircleStyled(#[prop(optional, default = "")] class: &'static str) -> impl IntoView {
+    view! {
+        <Icon icon=SpinnerCircleStyledIcon class=format!("animate-spin w-full h-full {}", class)/>
+    }
+}
+icon_gen!(
+    SpinnerCircleStyledIcon,
+    view_box = "0 0 49 48",
+    r###"
+<path opacity="0.38" d="M48.5 24C48.5 37.2548 37.7548 48 24.5 48C11.2452 48 0.5 37.2548 0.5 24C0.5 10.7452 11.2452 0 24.5 0C37.7548 0 48.5 10.7452 48.5 24ZM7.98361 24C7.98361 33.1218 15.3782 40.5164 24.5 40.5164C33.6218 40.5164 41.0164 33.1218 41.0164 24C41.0164 14.8782 33.6218 7.48361 24.5 7.48361C15.3782 7.48361 7.98361 14.8782 7.98361 24Z" fill="#EC55A7"/>
+<path d="M44.7582 24C46.8247 24 48.5298 22.3148 48.2089 20.2733C47.9151 18.4041 47.4006 16.5718 46.6731 14.8156C45.467 11.9038 43.6992 9.25804 41.4706 7.02944C39.242 4.80083 36.5962 3.033 33.6844 1.82689C31.9282 1.09944 30.0959 0.584918 28.2267 0.291103C26.1852 -0.0297888 24.5 1.67526 24.5 3.7418C24.5 5.80834 26.1962 7.44147 28.2099 7.90566C29.0997 8.11075 29.973 8.38977 30.8205 8.74084C32.8244 9.57087 34.6452 10.7875 36.1789 12.3211C37.7125 13.8548 38.9291 15.6756 39.7592 17.6794C40.1102 18.527 40.3892 19.4003 40.5943 20.2901C41.0585 22.3038 42.6917 24 44.7582 24Z" fill="url(#paint0_linear_134_12800)"/>
+<defs>
+<linearGradient id="paint0_linear_134_12800" x1="45.8334" y1="6.33333" x2="17.1668" y2="42.6668" gradientUnits="userSpaceOnUse">
+<stop stop-color="#FF78C1"/>
+<stop offset="0.509385" stop-color="#E2017B"/>
+<stop offset="1" stop-color="#5F0938"/>
+</linearGradient>
+</defs>
+
+    "###
+);
