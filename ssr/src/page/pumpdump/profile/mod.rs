@@ -12,7 +12,7 @@ use yral_canisters_common::{utils::profile::ProfileDetails, Canisters};
 
 use crate::{
     component::{back_btn::BackButton, title::Title},
-    page::pumpdump::GameResult,
+    page::pumpdump::{convert_e8s_to_gdolr, GameResult},
     state::canisters::authenticated_canisters,
 };
 
@@ -47,13 +47,7 @@ impl ProfileData {
 
         Ok(Self {
             user,
-            earnings: earnings
-                .0
-                .try_into()
-                .inspect_err(|err| {
-                    logging::error!("That's a lot of money: {err}");
-                })
-                .unwrap(),
+            earnings: convert_e8s_to_gdolr(earnings),
             pumps: pumps
                 .0
                 .try_into()
