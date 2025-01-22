@@ -3,7 +3,7 @@ use crate::page::icpump::ICPumpLanding;
 
 // use crate::page::wallet::TestIndex;
 use crate::{
-    component::{base_route::BaseRoute, nav::NavBar},
+    component::{base_route::BaseRoute},
     error_template::{AppError, ErrorTemplate},
     page::{
         account_transfer::AccountTransfer,
@@ -30,6 +30,8 @@ use crate::{
     state::{audio_state::AudioState, content_seed_client::ContentSeedClient, history::HistoryCtx},
     utils::event_streaming::EventHistory,
 };
+use candid::Principal;
+use leptos_use::use_cookie;
 use yral_canisters_common::Canisters;
 
 use leptos::*;
@@ -70,6 +72,34 @@ fn GoogleAuthRedirectorRoute() -> impl IntoView {
         view! { <Route path view=NotFound/> }
     }
 }
+
+// #[component]
+// pub fn MainNavBar() -> impl IntoView {
+//     let cur_location = use_location();
+//     let home_path = create_rw_signal("/".to_string());
+//     let (user_principal, _) = use_cookie::<Principal, FromToStringCodec>(crate::consts::USER_PRINCIPAL_STORE);
+    
+//     // Update the tab selection logic
+//     let cur_selected = create_memo(move |_| {
+//         let path = cur_location.pathname.get();
+
+//         match path.as_str() {
+//             s if s.starts_with("/profile") => {
+//                 match user_principal.get() {
+//                     Some(principal) => {
+//                         if s.contains(&principal.to_string()) {
+//                             5  
+//                         } else {
+//                             5 
+//                         }
+//                     }
+//                     None => 5 
+//                 }
+//             }
+//             _ => 0 
+//         }
+//     });
+// }
 
 #[component]
 pub fn App() -> impl IntoView {
@@ -173,7 +203,6 @@ pub fn App() -> impl IntoView {
 
             </main>
             <nav>
-                <NavBar/>
             </nav>
         </Router>
     }

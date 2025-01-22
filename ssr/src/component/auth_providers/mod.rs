@@ -7,6 +7,7 @@ use candid::Principal;
 use codee::string::FromToStringCodec;
 use ic_agent::Identity;
 use leptos::*;
+use leptos_router::{use_location, use_navigate, NavigateOptions};
 use leptos_use::storage::use_local_storage;
 use yral_types::delegated_identity::DelegatedIdentityWire;
 
@@ -108,6 +109,7 @@ fn LoginProvButton<Cb: Fn(ev::MouseEvent) + 'static>(
 
 #[component]
 pub fn LoginProviders(show_modal: RwSignal<bool>, lock_closing: RwSignal<bool>) -> impl IntoView {
+    let location = use_location();
     let (_, write_account_connected, _) =
         use_local_storage::<bool, FromToStringCodec>(ACCOUNT_CONNECTED_STORE);
     let auth = auth_state();
@@ -129,8 +131,13 @@ pub fn LoginProviders(show_modal: RwSignal<bool>, lock_closing: RwSignal<bool>) 
             // This is some redundant work, but saves us 100+ lines of resource handling
             let canisters = Canisters::authenticate_with_network(identity, referrer).await?;
 
-            if let Err(e) = handle_user_login(canisters.clone(), referrer).await {
-                log::warn!("failed to handle user login, err {e}. skipping");
+            if let Ok(_) = handle_user_login(canisters.clone(), referrer).await {
+                let user_principal = canisters.identity().sender().unwrap();
+                
+                if location.pathname.get().starts_with("/profile") {
+                    let navigate = use_navigate();
+                    navigate(&format!("/profile/{}", user_principal), NavigateOptions::default());
+                }
             }
 
             LoginSuccessful.send_event(canisters);

@@ -176,8 +176,9 @@ pub fn ProfileView() -> impl IntoView {
 
     let auth_cans = authenticated_canisters();
 
-    let profile_info_res =
-        auth_cans.derive(param_principal, move |cans_wire, principal| async move {
+    let profile_info_res = auth_cans.derive(
+        param_principal, 
+        move |cans_wire, principal| async move {
             let cans_wire = cans_wire?;
             let canisters = Canisters::from_wire(cans_wire.clone(), expect_context())?;
             let user_principal = canisters.user_principal();
@@ -193,17 +194,20 @@ pub fn ProfileView() -> impl IntoView {
                 let user_canister = canisters.user_canister();
                 return Ok((Some((details, user_canister)), None));
             }
-            let canisters = unauth_canisters();
-            let Some(user_canister) = canisters
-                .get_individual_canister_by_user_principal(principal)
-                .await?
-            else {
-                return Err(ServerFnError::new("Failed to get user canister"));
-            };
-            let user = canisters.individual_user(user_canister).await;
-            let user_details = user.get_profile_details().await?;
-            Ok((Some((user_details.into(), user_canister)), None))
-        });
+
+            match canisters.get_individual_canister_by_user_principal(principal).await {
+                Ok(Some(user_canister)) => {
+                    let user = canisters.individual_user(user_canister).await;
+                    let user_details = user.get_profile_details().await?;
+                    Ok((Some((user_details.into(), user_canister)), None))
+                }
+                Ok(None) => {
+                    return Ok((None, Some(user_principal)));
+                }
+                _ => Err(ServerFnError::ServerError("Failed to fetch user details".into()))
+            }
+        }
+    );
 
     view! {
         <Suspense>
