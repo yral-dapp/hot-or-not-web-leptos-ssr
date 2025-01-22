@@ -352,7 +352,7 @@ pub fn TokenCard(
     });
 
     let airdrop_disabled =
-        Signal::derive(move || (token_owner.is_some() && claimed.get() || token_owner.is_none()));
+        Signal::derive(move || token_owner.is_some() && claimed.get() || token_owner.is_none());
     view! {
         <div
             class:tada=is_new_token
