@@ -194,7 +194,7 @@ fn WalletCardOptions(
             }
         });
 
-        let airdrop_disabled = Signal::derive(move || !(token_owner.is_some() && claimed.get() || token_owner.is_none()));
+        let airdrop_disabled = Signal::derive(move || (token_owner.is_some() && claimed.get() || token_owner.is_none()));
         view! {
             <div class="flex items-center justify-around">
             <ActionButton disabled=is_utility_token href=format!("/token/transfer/{root}") label="Send".to_string()>

@@ -352,7 +352,7 @@ pub fn TokenCard(
     });
 
     let airdrop_disabled =
-        Signal::derive(move || !(token_owner.is_some() && claimed.get() || token_owner.is_none()));
+        Signal::derive(move || (token_owner.is_some() && claimed.get() || token_owner.is_none()));
     view! {
         <div
             class:tada=is_new_token
@@ -552,7 +552,7 @@ pub fn ActionButtonLink(
     view! {
         <button
             disabled=disabled
-            class="flex flex-col gap-1 justify-center items-center text-xs transition-colors disabled:group-hover:text-white disabled:text-neutral-300 enabled:group-hover:cursor-default enabled:text-neutral-600"
+            class="flex flex-col gap-1 justify-center items-center text-xs transition-colors enabled:group-hover:text-white enabled:text-neutral-300 disabled:group-hover:cursor-default disabled:text-neutral-600"
         >
             <div class="w-[1.875rem] h-[1.875rem] flex items-center justify-center">
                 {children()}
