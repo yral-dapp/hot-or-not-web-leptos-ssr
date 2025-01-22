@@ -15,7 +15,7 @@ use crate::{
     component::connect::ConnectLogin,
     state::{
         auth::account_connected_reader,
-        canisters::{authenticated_canisters, unauth_canisters},
+        canisters::{authenticated_canisters},
     },
 };
 
@@ -204,7 +204,7 @@ pub fn ProfileView() -> impl IntoView {
                     Ok((Some((user_details.into(), user_canister)), None))
                 }
                 Ok(None) => {
-                    return Ok((None, Some(user_principal)));
+                    Ok((None, Some(user_principal)))
                 }
                 _ => Err(ServerFnError::ServerError(
                     "Failed to fetch user details".into(),

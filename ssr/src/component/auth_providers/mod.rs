@@ -131,7 +131,7 @@ pub fn LoginProviders(show_modal: RwSignal<bool>, lock_closing: RwSignal<bool>) 
             // This is some redundant work, but saves us 100+ lines of resource handling
             let canisters = Canisters::authenticate_with_network(identity, referrer).await?;
 
-            if let Ok(_) = handle_user_login(canisters.clone(), referrer).await {
+            if (handle_user_login(canisters.clone(), referrer).await).is_ok() {
                 let user_principal = canisters.identity().sender().unwrap();
 
                 if location.pathname.get().starts_with("/profile") {

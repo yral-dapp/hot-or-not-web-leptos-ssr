@@ -30,8 +30,8 @@ use crate::{
     state::{audio_state::AudioState, content_seed_client::ContentSeedClient, history::HistoryCtx},
     utils::event_streaming::EventHistory,
 };
-use candid::Principal;
-use leptos_use::use_cookie;
+// use candid::Principal;
+// use leptos_use::use_cookie;
 use yral_canisters_common::Canisters;
 
 use leptos::*;
