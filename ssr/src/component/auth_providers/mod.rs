@@ -133,10 +133,13 @@ pub fn LoginProviders(show_modal: RwSignal<bool>, lock_closing: RwSignal<bool>) 
 
             if let Ok(_) = handle_user_login(canisters.clone(), referrer).await {
                 let user_principal = canisters.identity().sender().unwrap();
-                
+
                 if location.pathname.get().starts_with("/profile") {
                     let navigate = use_navigate();
-                    navigate(&format!("/profile/{}", user_principal), NavigateOptions::default());
+                    navigate(
+                        &format!("/profile/{}", user_principal),
+                        NavigateOptions::default(),
+                    );
                 }
             }
 

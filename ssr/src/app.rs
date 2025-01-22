@@ -3,7 +3,7 @@ use crate::page::icpump::ICPumpLanding;
 
 // use crate::page::wallet::TestIndex;
 use crate::{
-    component::{base_route::BaseRoute},
+    component::base_route::BaseRoute,
     error_template::{AppError, ErrorTemplate},
     page::{
         account_transfer::AccountTransfer,
@@ -78,7 +78,7 @@ fn GoogleAuthRedirectorRoute() -> impl IntoView {
 //     let cur_location = use_location();
 //     let home_path = create_rw_signal("/".to_string());
 //     let (user_principal, _) = use_cookie::<Principal, FromToStringCodec>(crate::consts::USER_PRINCIPAL_STORE);
-    
+
 //     // Update the tab selection logic
 //     let cur_selected = create_memo(move |_| {
 //         let path = cur_location.pathname.get();
@@ -88,15 +88,15 @@ fn GoogleAuthRedirectorRoute() -> impl IntoView {
 //                 match user_principal.get() {
 //                     Some(principal) => {
 //                         if s.contains(&principal.to_string()) {
-//                             5  
+//                             5
 //                         } else {
-//                             5 
+//                             5
 //                         }
 //                     }
-//                     None => 5 
+//                     None => 5
 //                 }
 //             }
-//             _ => 0 
+//             _ => 0
 //         }
 //     });
 // }
