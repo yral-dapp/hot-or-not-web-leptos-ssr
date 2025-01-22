@@ -1,6 +1,7 @@
 use crate::page::icpump::ai::ICPumpAi;
 use crate::page::icpump::ICPumpLanding;
 
+use crate::page::pumpdump::test::PndTest;
 use crate::page::pumpdump::PndProfilePage;
 // use crate::page::wallet::TestIndex;
 use crate::{
@@ -167,6 +168,7 @@ pub fn App() -> impl IntoView {
                         <Route path="/token/transfer/:token_root" view=TokenTransfer/>
                         <Route path="/board" view=ICPumpLanding/>
                         <Route path="/icpump-ai" view=ICPumpAi/>
+                        <Route path="/pnd/test/:token_root" view=PndTest />
                     // <Route path="/test" view=TestIndex/>
                     </Route>
                 </Routes>

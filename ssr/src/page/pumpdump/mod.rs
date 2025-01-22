@@ -16,6 +16,8 @@ use crate::{
 
 pub mod profile;
 pub use profile::*;
+pub mod test;
+pub use test::*;
 
 pub(super) mod model;
 use model::*;

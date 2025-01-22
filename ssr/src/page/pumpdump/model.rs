@@ -144,12 +144,12 @@ impl PlayerData {
     }
 
     /// Load the user's stats from the server
-    pub(super) async fn load(user_principal: Principal) -> Result<Self, String> {
+    pub(super) async fn load(user_canister: Principal) -> Result<Self, String> {
         let balance_url = PUMP_AND_DUMP_WORKER_URL
-            .join(&format!("/balance/{user_principal}"))
+            .join(&format!("/balance/{user_canister}"))
             .expect("Url to be valid");
         let games_count_url = PUMP_AND_DUMP_WORKER_URL
-            .join(&format!("/game_count/{user_principal}"))
+            .join(&format!("/game_count/{user_canister}"))
             .expect("Url to be valid");
 
         let games_count: u64 = reqwest::get(games_count_url)

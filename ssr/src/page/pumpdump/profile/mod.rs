@@ -5,7 +5,9 @@ use leptos::{
     SignalUpdateUntracked,
 };
 use leptos_use::{use_infinite_scroll_with_options, UseInfiniteScrollOptions};
-use yral_canisters_client::individual_user_template::IndividualUserTemplate;
+use yral_canisters_client::individual_user_template::{
+    GameDirection, IndividualUserTemplate, ParticipatedGameInfo,
+};
 use yral_canisters_common::{utils::profile::ProfileDetails, Canisters};
 
 use crate::{
@@ -14,35 +16,18 @@ use crate::{
     state::canisters::authenticated_canisters,
 };
 
-#[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
-use yral_canisters_client::individual_user_template::{GameDirection, ParticipatedGameInfo};
-
 use super::GameState;
 
 #[derive(Debug, Clone)]
-struct ProfileData {
-    user: ProfileDetails,
-    earnings: u128,
-    pumps: u64,
-    dumps: u64,
+pub(super) struct ProfileData {
+    pub(super) user: ProfileDetails,
+    pub(super) earnings: u128,
+    pub(super) pumps: u64,
+    pub(super) dumps: u64,
 }
 
 impl ProfileData {
-    #[cfg(any(feature = "local-bin", feature = "local-lib"))]
-    async fn load(
-        user: ProfileDetails,
-        _ind_user: IndividualUserTemplate<'_>,
-    ) -> Result<Self, String> {
-        Ok(Self {
-            user,
-            earnings: 0,
-            pumps: 0,
-            dumps: 0,
-        })
-    }
-
-    #[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
-    async fn load(
+    pub(super) async fn load(
         user: ProfileDetails,
         ind_user: IndividualUserTemplate<'_>,
     ) -> Result<Self, String> {
@@ -99,7 +84,6 @@ struct GameplayHistoryItem {
 
 type GameplayHistory = Vec<GameplayHistoryItem>;
 
-#[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
 fn compute_result(info: ParticipatedGameInfo) -> GameResult {
     let user_direction = match info.pumps.cmp(&info.dumps) {
         std::cmp::Ordering::Greater => GameDirection::Pump,
@@ -124,28 +108,6 @@ fn compute_result(info: ParticipatedGameInfo) -> GameResult {
     }
 }
 
-#[cfg(any(feature = "local-bin", feature = "local-lib"))]
-async fn load_history(
-    _cans: Canisters<true>,
-    page: u64,
-) -> Result<(GameplayHistory, bool), String> {
-    use super::{GameResult, GameState};
-
-    let limit = 25;
-    let start_idx = page * 25;
-    let items: Vec<_> = (start_idx..limit)
-        .map(|idx| GameplayHistoryItem {
-            logo: format!("https://picsum.photos/seed/{idx}/200/300"),
-            owner_principal: Principal::anonymous(),
-            state: GameState::ResultDeclared(GameResult::Win { amount: 100 }),
-            root: Principal::anonymous(),
-        })
-        .collect();
-
-    Ok((items, page < 3))
-}
-
-#[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
 async fn load_history(cans: Canisters<true>, page: u64) -> Result<(GameplayHistory, bool), String> {
     use crate::utils::token::icpump::IcpumpTokenInfo;
     use yral_canisters_common::utils::token::RootType;
@@ -171,7 +133,7 @@ async fn load_history(cans: Canisters<true>, page: u64) -> Result<(GameplayHisto
         let meta = cans
             .token_metadata_by_root_type(
                 &IcpumpTokenInfo,
-                Some(cans.user_principal()),
+                Some(cans.user_canister()),
                 RootType::Other(item.token_root),
             )
             .await
