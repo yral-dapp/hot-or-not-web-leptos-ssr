@@ -27,6 +27,28 @@ async fn google_auth_redirector() -> Result<(), ServerFnError> {
     Ok(())
 }
 
+#[server]
+async fn preview_google_auth_redirector() -> Result<(), ServerFnError> {
+    use http::header::HeaderMap;
+    use leptos_axum::extract;
+
+    let headers: HeaderMap = extract().await?;
+    let host = headers.get("Host").unwrap().to_str().unwrap();
+    let client_redirect_uri = format!("{}/auth/google_redirect", host);
+
+    let client = reqwest::Client::new();
+    let url = format!(
+        "https://yral.com/api/google_auth_url?client_redirect_uri={}",
+        client_redirect_uri
+    );
+
+    let redirect_url: String = client.get(url).send().await?.json().await?;
+
+    leptos_axum::redirect(&redirect_url);
+
+    Ok(())
+}
+
 #[server(endpoint = "google_auth_url", input = GetUrl, output = Json)]
 async fn google_auth_url(client_redirect_uri: String) -> Result<String, ServerFnError> {
     use crate::auth::core_clients::CoreClients;
@@ -102,11 +124,29 @@ async fn handle_oauth_query(oauth_query: OAuthQuery) -> GoogleAuthMessage {
 }
 
 #[server]
+async fn preview_handle_oauth_query(
+    oauth_query: OAuthQuery,
+) -> Result<DelegatedIdentityWire, ServerFnError> {
+    let client = reqwest::Client::new();
+
+    let yral_url = "https://yral.com/api/perform_google_auth".to_string();
+
+    let response = client.post(yral_url).json(&oauth_query).send().await?;
+
+    let result: DelegatedIdentityWire = response.json().await?;
+    Ok(result)
+}
+
+#[server]
 async fn handle_oauth_query_for_external_client(
     client_redirect_uri: String,
-    auth_code: String,
+    oauth_query: OAuthQuery,
 ) -> Result<(), ServerFnError> {
-    leptos_axum::redirect(&format!("{}?authCode={}", client_redirect_uri, auth_code));
+    leptos_axum::redirect(&format!(
+        "{}?oauth={}",
+        client_redirect_uri,
+        serde_json::to_string(&oauth_query).unwrap()
+    ));
     Ok(())
 }
 
@@ -120,6 +160,31 @@ enum RedirectHandlerReturnType {
 struct OAuthState {
     pub csrf_token: CsrfToken,
     pub client_redirect_uri: Option<String>,
+}
+
+#[component]
+pub fn PreviewGoogleRedirectHandler() -> impl IntoView {
+    let query = use_query::<OAuthQuery>();
+    let identity_resource = create_blocking_resource(query, |query_res| async move {
+        let Ok(oauth_query) = query_res else {
+            return Err("Invalid Params".to_string());
+        };
+
+        preview_handle_oauth_query(oauth_query)
+            .await
+            .map_err(|e| e.to_string())
+    });
+
+    view! {
+        <Loading text="Logging out...".to_string()>
+            <Suspense>
+                {move || {
+                    identity_resource().map(|identity_res| view! { <IdentitySender identity_res/> })
+                }}
+
+            </Suspense>
+        </Loading>
+    }
 }
 
 #[component]
@@ -137,7 +202,7 @@ pub fn GoogleRedirectHandler() -> impl IntoView {
         if oauth_state.client_redirect_uri.is_some() {
             let res = handle_oauth_query_for_external_client(
                 oauth_state.client_redirect_uri.unwrap(),
-                oauth_query.code,
+                oauth_query,
             )
             .await
             .map_err(|e| e.to_string());
@@ -163,6 +228,31 @@ pub fn GoogleRedirectHandler() -> impl IntoView {
 
             </Suspense>
         </Loading>
+    }
+}
+
+#[component]
+pub fn PreviewGoogleRedirector() -> impl IntoView {
+    let google_redirect = create_blocking_resource(|| {}, |_| preview_google_auth_redirector());
+    let do_close = create_rw_signal(false);
+    create_effect(move |_| {
+        if !do_close() {
+            return;
+        }
+        let window = window();
+        _ = window.close();
+    });
+
+    view! {
+        <Suspense>
+            {move || {
+                if let Some(Err(_)) = google_redirect() {
+                    do_close.set(true);
+                }
+                None::<()>
+            }}
+
+        </Suspense>
     }
 }
 
