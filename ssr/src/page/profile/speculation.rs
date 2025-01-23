@@ -7,7 +7,7 @@ use web_time::Duration;
 
 use super::ic::ProfileStream;
 use crate::{
-    component::{canisters_prov::AuthCansProvider, profile_placeholders::NoMoreBetsGraphic},
+    component::profile_placeholders::NoMoreBetsGraphic,
     state::canisters::unauth_canisters,
     utils::{bg_url, time::to_hh_mm_ss},
 };
