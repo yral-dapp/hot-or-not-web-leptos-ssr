@@ -7,19 +7,18 @@ describe("wallet page tests", function () {
         browser.element.findByText('Login to claim your COYNs', {timeout: 10000}).waitUntil('enabled');
     })
     
-    it("default wallet page contains 1000 COYNS", async function(browser){
-        browser.element.findByText("COYNS", {timeout: 10000}).waitUntil('enabled', { timeout: 10000 });
-        browser.element.findByText("1000", {timeout: 10000}).waitUntil('enabled', { timeout: 10000 });
-    })
-    it("default wallet page contains 1000 COYNS", function(browser) {
+    it("default wallet page contains 1000 COYNS or 100 GDOLR", function(browser) {
         browser.waitForElementVisible('body', 10000);
     
         browser.pause(10000);
-    
-    
-        browser.element.findByText("COYNS", { timeout: 10000 }).waitUntil('visible', { timeout: 10000 }).assert.enabled();
-        browser.element.findByText("1000", { timeout: 10000 }).waitUntil('visible', { timeout: 10000 }).assert.enabled();
-    
+        
+        const coynIsPresent = browser.element.findByText("COYNS", { timeout: 10000 }).waitUntil('visible', { timeout: 10000 }).isPresent();
+        const gdolrIsPresent = browser.element.findByText("GDOLR", { timeout: 10000 }).waitUntil('visible', { timeout: 10000 }).isPresent();
+
+        const coynValue = browser.element.findByText("1000", { timeout: 10000 }).waitUntil('visible', { timeout: 10000 }).isPresent();
+        const gdolrValue = browser.element.findByText("100", { timeout: 10000 }).waitUntil('visible', { timeout: 10000 }).isPresent();
+
+        browser.assert.equals((coynIsPresent && coynValue) || (gdolrIsPresent && gdolrValue), true);
     });
 
     it('wallet page snapshot test', function(browser) {
