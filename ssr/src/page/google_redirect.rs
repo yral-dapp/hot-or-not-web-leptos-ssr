@@ -101,10 +101,11 @@ async fn handle_oauth_query(oauth_query: OAuthQuery) -> GoogleAuthMessage {
     Ok(delegated)
 }
 
+#[server]
 async fn handle_oauth_query_for_external_client(
     client_redirect_uri: String,
     auth_code: String,
-) -> Result<(), String> {
+) -> Result<(), ServerFnError> {
     leptos_axum::redirect(&format!("{}?authCode={}", client_redirect_uri, auth_code));
     Ok(())
 }
@@ -138,7 +139,8 @@ pub fn GoogleRedirectHandler() -> impl IntoView {
                 oauth_state.client_redirect_uri.unwrap(),
                 oauth_query.code,
             )
-            .await;
+            .await
+            .map_err(|e| e.to_string());
             RedirectHandlerReturnType::ExternalClient(res)
         } else {
             let res = handle_oauth_query(oauth_query).await;
@@ -150,10 +152,13 @@ pub fn GoogleRedirectHandler() -> impl IntoView {
         <Loading text="Logging out...".to_string()>
             <Suspense>
                 {move || {
-                    identity_resource().map(|identity_res: RedirectHandlerReturnType| match identity_res {
-                        RedirectHandlerReturnType::Identity(identity_res) => view! {<IdentitySender identity_res/> }.into_view(),
-                        RedirectHandlerReturnType::ExternalClient(_) => view! {}.into_view()
-                    })
+                    identity_resource()
+                        .map(|identity_res: RedirectHandlerReturnType| match identity_res {
+                            RedirectHandlerReturnType::Identity(identity_res) => {
+                                view! { <IdentitySender identity_res/> }.into_view()
+                            }
+                            RedirectHandlerReturnType::ExternalClient(_) => view! {}.into_view(),
+                        })
                 }}
 
             </Suspense>
