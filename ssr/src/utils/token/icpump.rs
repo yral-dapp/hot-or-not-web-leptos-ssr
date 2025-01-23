@@ -141,20 +141,23 @@ pub async fn get_paginated_token_list_with_limit(
         use candid::Principal;
         let start = (page - 1) * limit;
         let end = start + limit;
-        Ok((start..end)
-            .map(|idx| TokenListItem {
+        logging::log!("page {page}");
+        if page == 1 {
+            Ok(vec![TokenListItem {
                 user_id: Principal::anonymous().to_text(),
-                token_name: format!("Test Token {idx}"),
+                token_name: format!("Test Token"),
                 name: "name".to_string(),
                 token_symbol: "TST".to_string(),
-                logo: format!("https://picsum.photos/seed/{idx}/200"),
+                logo: format!("https://picsum.photos/200"),
                 description: "This is a test token".to_string(),
                 created_at: "69".to_string(),
                 formatted_created_at: "69 mins".to_string(),
-                link: "https://icpump.fun/token/info/hen7x-7yaaa-aaaal-qqgxa-cai".to_string(),
+                link: "http://localhost:3000/token/info/53fza-eeaaa-aaaaa-qacda-cai/".to_string(),
                 is_nsfw: false,
-            })
-            .collect())
+            }])
+        } else {
+            Ok(vec![])
+        }
     }
 }
 

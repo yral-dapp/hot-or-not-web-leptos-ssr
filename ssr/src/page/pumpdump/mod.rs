@@ -136,7 +136,7 @@ pub fn PumpNDump() -> impl IntoView {
     provide_context(show_onboarding);
 
     let tokens = create_rw_signal(Vec::<ProcessedTokenListResponse>::new());
-    let page = create_rw_signal(1u32);
+    let page = create_rw_signal(0u32);
     let should_load_more = create_rw_signal(true);
     let fetch_more_tokens = create_action(move |&page: &u32| {
         let cans_wire_res = cans_wire_res_for_tokens.clone();
@@ -163,8 +163,6 @@ pub fn PumpNDump() -> impl IntoView {
                 None => Default::default(),
             };
 
-            let user_principal = cans.user_principal();
-
             let limit = 5;
 
             let more_tokens = get_paginated_token_list_with_limit(page, limit)
@@ -172,14 +170,24 @@ pub fn PumpNDump() -> impl IntoView {
                 .expect("TODO: handle error");
             let had_tokens = !more_tokens.is_empty();
 
+            logging::log!("more {more_tokens:?}");
+
             let mut processed_token = match selected_card {
                 Some(t) => vec![t],
                 None => Default::default(),
             };
 
-            processed_token
-                .extend_from_slice(&process_token_list_item(more_tokens, user_principal).await);
+            #[cfg(any(feature = "local-bin", feature = "local-lib"))]
+            processed_token.extend_from_slice(
+                &process_token_list_item(more_tokens, cans.user_canister()).await,
+            );
 
+            #[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
+            processed_token.extend_from_slice(
+                &process_token_list_item(more_tokens, cans.user_principal()).await,
+            );
+
+            logging::log!("processed {processed_token:?}");
             // ignore tokens with no owners
             processed_token.retain(|item| item.token_owner.is_some());
 

@@ -65,7 +65,7 @@ pub async fn process_token_list_item(
                 root: root_principal,
                 token_owner: Some(TokenOwner {
                     principal_id: key_principal,
-                    canister_id: Principal::anonymous(),
+                    canister_id: key_principal,
                 }),
                 is_airdrop_claimed: false,
             }

@@ -93,7 +93,7 @@ fn compute_result(info: ParticipatedGameInfo) -> GameResult {
 
     if m(user_direction) == m(info.game_direction) {
         GameResult::Win {
-            amount: info.reward.0.try_into().unwrap(),
+            amount: convert_e8s_to_gdolr(info.reward),
         }
     } else {
         GameResult::Loss {
