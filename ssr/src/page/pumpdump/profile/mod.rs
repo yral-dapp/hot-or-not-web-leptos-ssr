@@ -73,6 +73,7 @@ struct GameplayHistoryItem {
     logo: String,
     root: Principal,
     owner_principal: Principal,
+    owner_pfp: String,
     state: GameState,
 }
 
@@ -135,8 +136,23 @@ async fn load_history(cans: Canisters<true>, page: u64) -> Result<(GameplayHisto
             .flatten()
             .expect("backend to return a token that exists");
 
+        let pfp = cans
+            .individual_user(
+                meta.token_owner
+                    .as_ref()
+                    .expect("owner to exist")
+                    .canister_id,
+            )
+            .await
+            .get_profile_details()
+            .await
+            .map(Into::<ProfileDetails>::into)
+            .map_err(|err| format!("Couldn't load owner profile details: {err}"))?
+            .profile_pic_or_random();
+
         processed_items.push(GameplayHistoryItem {
             logo: meta.logo_b64,
+            owner_pfp: pfp,
             owner_principal: meta
                 .token_owner
                 .expect("owner to exist if backend returns it")
@@ -220,7 +236,7 @@ fn GameplayHistoryCard(#[prop(into)] details: GameplayHistoryItem) -> impl IntoV
             <div class="rounded-md overflow-hidden relative w-32 h-40">
                 <div class="absolute z-1 inset-x-0 h-1/3 bg-gradient-to-b from-black/50 to-transparent"></div>
                 <div class="absolute z-[2] flex top-2 items-center gap-1 px-2">
-                    <img src="/img/gdolr.png" alt="Profile name" class="w-4 h-4 shrink-0 object-cover rounded-full" />
+                    <img src=details.owner_pfp alt="Profile name" class="w-4 h-4 shrink-0 object-cover rounded-full" />
                     <span class="text-xs font-medium line-clamp-1">{details.owner_principal.to_string()}</span>
                 </div>
                 <img src=details.logo class="w-full bg-white/5 h-28 object-cover" alt="Coin title" />
