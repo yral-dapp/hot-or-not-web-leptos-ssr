@@ -87,6 +87,7 @@ fn WonCard(#[prop()] result: GameResult) -> impl IntoView {
     };
     let identity: IdentitySignal = expect_context();
     let load_running_data: LoadRunningDataAction = expect_context();
+    let pending = load_running_data.pending();
 
     let on_click = move |_| {
         let user_canister = identity
@@ -116,6 +117,7 @@ fn WonCard(#[prop()] result: GameResult) -> impl IntoView {
                 </div>
             </div>
             <button
+                disabled=move || pending.get()
                 on:click=on_click
                 class="w-full px-5 py-3 rounded-lg flex items-center transition-all justify-center gap-8 font-kumbh font-bold"
                 style:background="linear-gradient(73deg, #DA539C 0%, #E2017B 33%, #5F0938 100%)"
@@ -134,6 +136,7 @@ fn WonCard(#[prop()] result: GameResult) -> impl IntoView {
 fn LostCard() -> impl IntoView {
     let identity: IdentitySignal = expect_context();
     let load_running_data: LoadRunningDataAction = expect_context();
+    let pending = load_running_data.pending();
 
     let on_click = move |_| {
         let user_canister = identity
@@ -157,6 +160,7 @@ fn LostCard() -> impl IntoView {
                 </div>
             </div>
             <button
+                disabled=move || pending.get()
                 on:click=on_click
                 class="w-full px-5 py-3 rounded-lg flex items-center transition-all justify-center gap-8 font-kumbh font-bold"
                 style:background="linear-gradient(73deg, #DA539C 0%, #E2017B 33%, #5F0938 100%)"
