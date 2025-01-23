@@ -14,6 +14,15 @@ pub(super) fn convert_e8s_to_gdolr(num: Nat) -> u128 {
         .expect("gdolr, scoped at individual player, to be small enough to fit in a u128")
 }
 
+/// Estimates the player count based on the count returned by the server
+///
+/// Logarithimically inflates the count
+fn estimate_player_count(num: u64) -> u64 {
+    let x = num as f64;
+    let res = x + 4.0 + 20.0 * ((x.sqrt() + 2.).log10());
+    res.round() as u64
+}
+
 /// The data that is required when game is being played by the user
 ///
 /// This data is kept out of GameState so that mutating pumps and dumps doesn't
@@ -122,6 +131,7 @@ impl GameRunningData {
             .map_err(|err| format!("Couldn't read response for player count: {err}"))?
             .parse()
             .map_err(|err| format!("Couldn't parse player count from response: {err}"))?;
+        let player_count = estimate_player_count(player_count);
 
         // Maybe we should also load winning pot as part of game running data
         Ok(Self::new(bets.pumps, bets.dumps, player_count, None))
