@@ -129,8 +129,38 @@ pub async fn get_paginated_token_list(page: u32) -> Result<Vec<TokenListItem>, S
 
     #[cfg(not(feature = "firestore"))]
     {
-        Ok(vec![])
+        Ok(get_mocked_paginated_token_list(page).await)
     }
+}
+
+pub async fn get_mocked_paginated_token_list(page: u32) -> Vec<TokenListItem> {
+    use crate::consts::ICPUMP_LISTING_PAGE_SIZE;
+    use candid::Principal;
+
+    let page_range = if page == 21 {
+        0..5
+    } else {
+        0..ICPUMP_LISTING_PAGE_SIZE
+    };
+
+    page_range
+        .map(|idx| {
+            let id = idx + ((page - 1) as usize * ICPUMP_LISTING_PAGE_SIZE);
+
+            TokenListItem {
+                user_id: Principal::anonymous().to_text(),
+                name: format!("Test token {}", id),
+                token_name: format!("Test token {}", id),
+                token_symbol: format!("TST{}", id),
+                logo: "https://picsum.photos/200".to_string(),
+                description: "This is a test token".to_string(),
+                created_at: "69".to_string(),
+                formatted_created_at: "69 mins".to_string(),
+                link: format!("{} {}", Principal::anonymous().to_text(), id),
+                is_nsfw: false,
+            }
+        })
+        .collect()
 }
 
 #[cfg(feature = "ssr")]

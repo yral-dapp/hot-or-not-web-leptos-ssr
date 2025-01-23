@@ -6,7 +6,6 @@ use crate::{
     component::base_route::BaseRoute,
     error_template::{AppError, ErrorTemplate},
     page::{
-        account_transfer::AccountTransfer,
         err::ServerErrorPage,
         leaderboard::Leaderboard,
         logout::Logout,
@@ -187,7 +186,6 @@ pub fn App() -> impl IntoView {
                         <Route path="/wallet/:id" view=Wallet/>
                         <Route path="/wallet" view=Wallet/>
                         <Route path="/leaderboard" view=Leaderboard/>
-                        <Route path="/account-transfer" view=AccountTransfer/>
                         <Route path="/logout" view=Logout/>
                         <Route path="/token/create" view=CreateToken/>
                         <Route path="/token/create/settings" view=CreateTokenSettings/>
@@ -197,7 +195,6 @@ pub fn App() -> impl IntoView {
                         <Route path="/token/transfer/:token_root" view=TokenTransfer/>
                         <Route path="/board" view=ICPumpLanding/>
                         <Route path="/icpump-ai" view=ICPumpAi/>
-                    // <Route path="/test" view=TestIndex/>
                     </Route>
                 </Routes>
 

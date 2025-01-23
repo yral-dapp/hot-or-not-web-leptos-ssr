@@ -1,8 +1,22 @@
 use candid::Principal;
 use leptos::*;
 use leptos_router::*;
+use rand_chacha::{
+    rand_core::{RngCore, SeedableRng},
+    ChaCha8Rng,
+};
+use yral_canisters_common::utils::time::current_epoch;
 
-use crate::{component::spinner::FullScreenSpinner, utils::host::show_cdao_page};
+use crate::{
+    component::spinner::FullScreenSpinner,
+    utils::{
+        host::show_cdao_page,
+        ml_feed::{
+            get_coldstart_feed_paginated, get_coldstart_nsfw_feed_paginated,
+            get_posts_ml_feed_cache_paginated,
+        },
+    },
+};
 
 #[server]
 async fn get_top_post_id() -> Result<Option<(Principal, u64)>, ServerFnError> {
@@ -58,28 +72,18 @@ async fn get_top_post_id_mlcache() -> Result<Option<(Principal, u64)>, ServerFnE
         return get_top_post_id_mlfeed().await;
     }
 
-    let user_canister = canisters.individual_user(user_canister_id.unwrap()).await;
-
-    let top_items = user_canister
-        .get_ml_feed_cache_paginated(0, 1)
-        .await
-        .unwrap();
-    if top_items.is_empty() {
-        return get_top_post_id_mlfeed().await;
+    let posts = get_posts_ml_feed_cache_paginated(user_canister_id.unwrap(), 0, 1).await;
+    if let Ok(posts) = posts {
+        if !posts.is_empty() {
+            return Ok(Some((posts[0].0, posts[0].1)));
+        }
     }
-
-    let Some(top_item) = top_items.first() else {
-        return Ok(None);
-    };
-
-    Ok(Some((top_item.canister_id, top_item.post_id)))
+    get_top_post_id_mlfeed().await
 }
 
 #[server]
 async fn get_top_post_id_mlfeed() -> Result<Option<(Principal, u64)>, ServerFnError> {
-    use crate::utils::ml_feed::ml_feed_grpc::get_coldstart_feed;
-
-    let top_posts_fut = get_coldstart_feed();
+    let top_posts_fut = get_coldstart_feed_paginated(0, 50);
 
     let top_items = match top_posts_fut.await {
         Ok(top_posts) => top_posts,
@@ -90,9 +94,29 @@ async fn get_top_post_id_mlfeed() -> Result<Option<(Principal, u64)>, ServerFnEr
             ));
         }
     };
-    let Some(top_item) = top_items.first() else {
-        return Ok(None);
+    let mut rand_gen = ChaCha8Rng::seed_from_u64(current_epoch().as_nanos() as u64);
+    let rand_num = rand_gen.next_u32() as usize % top_items.len();
+    let top_item = top_items[rand_num];
+
+    Ok(Some((top_item.0, top_item.1)))
+}
+
+#[server]
+async fn get_top_post_id_mlfeed_nsfw() -> Result<Option<(Principal, u64)>, ServerFnError> {
+    let top_posts_fut = get_coldstart_nsfw_feed_paginated(0, 50);
+
+    let top_items = match top_posts_fut.await {
+        Ok(top_posts) => top_posts,
+        Err(e) => {
+            log::error!("failed to fetch top post ml feed nsfw: {:?}", e);
+            return Err(ServerFnError::ServerError(
+                "failed to fetch top post ml feed nsfw".to_string(),
+            ));
+        }
     };
+    let mut rand_gen = ChaCha8Rng::seed_from_u64(current_epoch().as_nanos() as u64);
+    let rand_num = rand_gen.next_u32() as usize % top_items.len();
+    let top_item = top_items[rand_num];
 
     Ok(Some((top_item.0, top_item.1)))
 }
@@ -116,7 +140,13 @@ pub fn YralRootPage() -> impl IntoView {
     }
     #[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
     {
-        target_post = create_resource(|| (), |_| get_top_post_id_mlcache());
+        use crate::utils::host::show_nsfw_content;
+
+        if show_nsfw_content() {
+            target_post = create_resource(|| (), |_| get_top_post_id_mlfeed_nsfw());
+        } else {
+            target_post = create_resource(|| (), |_| get_top_post_id_mlfeed());
+        }
     }
 
     view! {
