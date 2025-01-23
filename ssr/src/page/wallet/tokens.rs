@@ -12,7 +12,7 @@ use crate::component::overlay::PopupOverlay;
 use crate::component::share_popup::ShareContent;
 use crate::consts::USER_PRINCIPAL_STORE;
 use crate::page::icpump::{ActionButton, ActionButtonLink};
-use crate::utils::host::get_host;
+use crate::utils::host::{get_host, show_pnd_page};
 use crate::utils::token::icpump::IcpumpTokenInfo;
 use crate::{component::infinite_scroller::InfiniteScroller, state::canisters::unauth_canisters};
 
@@ -36,6 +36,11 @@ pub fn TokenList(user_principal: Principal, user_canister: Principal) -> impl In
         user_canister,
         user_principal,
         nsfw_detector: IcpumpTokenInfo,
+        exclude: if show_pnd_page() {
+            vec![RootType::COYNS]
+        } else {
+            vec![RootType::GDOLR]
+        },
     };
 
     view! {
@@ -45,7 +50,7 @@ pub fn TokenList(user_principal: Principal, user_canister: Principal) -> impl In
                 fetch_count=5
                 children=move |TokenListResponse{token_metadata, airdrop_claimed, root}, _ref| {
                     view! {
-                        <WalletCard user_principal token_meta_data=token_metadata is_airdrop_claimed=airdrop_claimed _ref=_ref.unwrap_or_default() is_utility_token=root == RootType::COYNS/>
+                        <WalletCard user_principal token_meta_data=token_metadata is_airdrop_claimed=airdrop_claimed _ref=_ref.unwrap_or_default() is_utility_token=matches!(root, RootType::COYNS | RootType::GDOLR)/>
                     }
                 }
             />
