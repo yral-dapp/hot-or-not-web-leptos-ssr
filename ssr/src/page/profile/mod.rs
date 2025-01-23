@@ -102,7 +102,7 @@ fn ListSwitcher1(user_canister: Principal, user_principal: Principal) -> impl In
                 <ProfilePosts user_canister />
             </Show>
             <Show when=move || current_tab() == 1>
-                <ProfileSpeculations user_canister />
+                <ProfileSpeculations user_canister user_principal />
             </Show>
             <Show when=move || current_tab() == 2>
                 <ProfileTokens user_canister user_principal />
