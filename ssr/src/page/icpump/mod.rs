@@ -4,6 +4,7 @@ use crate::consts::USER_PRINCIPAL_STORE;
 use crate::state::canisters::authenticated_canisters;
 use std::collections::VecDeque;
 
+use candid::Nat;
 use candid::Principal;
 use codee::string::FromToStringCodec;
 use futures::StreamExt;
@@ -33,6 +34,9 @@ use crate::utils::token::firestore::listen_to_documents;
 use crate::utils::token::icpump::get_paginated_token_list;
 use crate::utils::token::icpump::TokenListItem;
 
+use crate::component::overlay::ShadowOverlay;
+use crate::page::wallet::airdrop::AirdropPopup;
+
 pub mod ai;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -48,6 +52,7 @@ pub async fn process_token_list_item(
     token_list_item: Vec<TokenListItem>,
     key_principal: Principal,
 ) -> Vec<ProcessedTokenListResponse> {
+    use yral_canisters_common::utils::token::TokenOwner;
     token_list_item
         .into_iter()
         .map(|item| {
@@ -91,7 +96,7 @@ pub async fn process_token_list_item(
                     .link
                     .trim_end_matches('/')
                     .split('/')
-                    .last()
+                    .next_back()
                     .ok_or(ServerFnError::new("Not root given"))
                     .unwrap_or_default(),
             )
@@ -207,6 +212,7 @@ pub fn ICPumpListingFeed() -> impl IntoView {
                             details=t.token_details
                             is_airdrop_claimed=t.is_airdrop_claimed
                             root=t.root
+                            token_owner=t.token_owner
                         />
                     }
                 }
@@ -221,6 +227,7 @@ pub fn ICPumpListingFeed() -> impl IntoView {
                                 details=t.token_details.clone()
                                 is_airdrop_claimed=t.is_airdrop_claimed
                                 root=t.root
+                                token_owner=t.token_owner.clone()
                             />
                         }
                     })
@@ -275,11 +282,58 @@ pub fn ICPumpLanding() -> impl IntoView {
 }
 
 #[component]
+pub fn TokenCardFallback() -> impl IntoView {
+    view! {
+        <div class="flex flex-col gap-2 pt-3 pb-4 px-3 md:px-4 w-full text-xs rounded-lg bg-neutral-900/90 font-kumbh">
+            <div class="flex gap-3 items-stretch">
+                <div class="w-[7rem] h-[7rem] rounded-[4px] shrink-0 bg-white/15 animate-pulse"></div>
+                <div class="flex flex-col justify-between overflow-hidden w-full gap-2">
+                    <div class="flex flex-col gap-2">
+                        <div class="flex gap-4 justify-between items-center w-full">
+                            <div class="h-7 w-32 bg-white/15 animate-pulse rounded"></div>
+                            <div class="h-7 w-16 bg-white/15 animate-pulse rounded"></div>
+                        </div>
+                        <div class="h-12 w-full bg-white/15 animate-pulse rounded"></div>
+                    </div>
+                    <div class="flex gap-2 justify-between items-center">
+                        <div class="h-5 w-48 bg-white/15 animate-pulse rounded"></div>
+                        <div class="h-5 w-24 bg-white/15 animate-pulse rounded"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex gap-4 justify-between items-center p-2">
+                <div class="flex flex-col items-center gap-1">
+                    <div class="w-[1.875rem] h-[1.875rem] bg-white/15 animate-pulse rounded"></div>
+                    <div class="w-10 h-3 bg-white/15 animate-pulse rounded"></div>
+                </div>
+                <div class="flex flex-col items-center gap-1">
+                    <div class="w-[1.875rem] h-[1.875rem] bg-white/15 animate-pulse rounded"></div>
+                    <div class="w-14 h-3 bg-white/15 animate-pulse rounded"></div>
+                </div>
+                <div class="flex flex-col items-center gap-1">
+                    <div class="w-[1.875rem] h-[1.875rem] bg-white/15 animate-pulse rounded"></div>
+                    <div class="w-12 h-3 bg-white/15 animate-pulse rounded"></div>
+                </div>
+                <div class="flex flex-col items-center gap-1">
+                    <div class="w-[1.875rem] h-[1.875rem] bg-white/15 animate-pulse rounded"></div>
+                    <div class="w-10 h-3 bg-white/15 animate-pulse rounded"></div>
+                </div>
+                <div class="flex flex-col items-center gap-1">
+                    <div class="w-[1.875rem] h-[1.875rem] bg-white/15 animate-pulse rounded"></div>
+                    <div class="w-12 h-3 bg-white/15 animate-pulse rounded"></div>
+                </div>
+            </div>
+        </div>
+    }
+}
+
+#[component]
 pub fn TokenCard(
     details: TokenListItem,
     #[prop(optional, default = false)] is_new_token: bool,
     root: Principal,
     is_airdrop_claimed: bool,
+    token_owner: Option<TokenOwner>,
 ) -> impl IntoView {
     let show_nsfw = create_rw_signal(false);
 
@@ -294,8 +348,46 @@ pub fn TokenCard(
     )
     };
     let pop_up = create_rw_signal(false);
+    let airdrop_popup = create_rw_signal(false);
     let base_url = get_host();
 
+    let claimed = create_rw_signal(is_airdrop_claimed);
+    let buffer_signal = create_rw_signal(false);
+    let cans_res = authenticated_canisters();
+    let token_owner_c = token_owner.clone();
+    let airdrop_action = create_action(move |&()| {
+        let cans_res = cans_res.clone();
+        let token_owner_cans_id = token_owner_c.clone().unwrap().canister_id;
+        airdrop_popup.set(true);
+        async move {
+            if claimed.get() && !buffer_signal.get() {
+                return Ok(());
+            }
+            buffer_signal.set(true);
+            let cans_wire = cans_res.wait_untracked().await?;
+            let cans = Canisters::from_wire(cans_wire, expect_context())?;
+            let token_owner = cans.individual_user(token_owner_cans_id).await;
+
+            token_owner
+                .request_airdrop(
+                    root,
+                    None,
+                    Into::<Nat>::into(100u64) * 10u64.pow(8),
+                    cans.user_canister(),
+                )
+                .await?;
+
+            let user = cans.individual_user(cans.user_canister()).await;
+            user.add_token(root).await?;
+
+            buffer_signal.set(false);
+            claimed.set(true);
+            Ok::<_, ServerFnError>(())
+        }
+    });
+
+    let airdrop_disabled =
+        Signal::derive(move || token_owner.is_some() && claimed.get() || token_owner.is_none());
     view! {
         <div
             class:tada=is_new_token
@@ -320,17 +412,17 @@ pub fn TokenCard(
                     <img
                         alt=details.token_name.clone()
                         src=details.logo.clone()
-                        class="w-full h-full object-cover"
+                        class="w-full h-full"
                     />
                 </div>
                 <div class="flex flex-col justify-between overflow-hidden w-full">
                     <div class="flex flex-col gap-2">
                         <div class="flex gap-4 justify-between items-center w-full text-lg">
-                            <span class="font-medium shrink line-clamp-1">{details.name}</span>
+                            <span class="font-medium shrink line-clamp-1">{details.name.clone()}</span>
                             <span class="font-bold shrink-0">{symbol}</span>
                         </div>
                         <span class="text-sm line-clamp-2 text-neutral-400">
-                            {details.description}
+                            {details.description.clone()}
                         </span>
                     </div>
                     <div class="flex gap-2 justify-between items-center text-sm font-medium group-hover:text-white text-neutral-600">
@@ -347,35 +439,9 @@ pub fn TokenCard(
                 <ActionButton label="Buy/Sell".to_string() href="#".to_string() disabled=true>
                     <Icon class="w-full h-full" icon=ArrowLeftRightIcon />
                 </ActionButton>
-                {if is_airdrop_claimed {
-                    view! {
-                        <ActionButtonLink
-                            on:click=move |_| {
-                                pop_up.set(true);
-                                share_link
-                                    .set(
-                                        format!(
-                                            "/token/info/{}/{}?airdrop_amt=100",
-                                            root,
-                                            details.user_id,
-                                        ),
-                                    )
-                            }
-                            label="Airdrop".to_string()
-                        >
-                            <Icon class="h-6 w-6" icon=AirdropIcon />
-                        </ActionButtonLink>
-                    }
-                } else {
-                    view! {
-                        <ActionButton
-                            href=format!("/token/info/{}/{}?airdrop_amt=100", root, details.user_id)
-                            label="Airdrop".to_string()
-                        >
-                            <Icon class="h-6 w-6" icon=AirdropIcon />
-                        </ActionButton>
-                    }
-                }}
+                <ActionButtonLink disabled=airdrop_disabled on:click=move |_|{airdrop_action.dispatch(());} label="Airdrop".to_string()>
+                    <Icon class="h-6 w-6" icon=AirdropIcon />
+                </ActionButtonLink>
                 <ActionButton label="Share".to_string() href="#".to_string()>
                     <Icon
                         class="w-full h-full"
@@ -397,6 +463,19 @@ pub fn TokenCard(
                     show_popup=pop_up
                 />
             </PopupOverlay>
+            <ShadowOverlay show=airdrop_popup >
+                <div class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 max-w-[560px] max-h-[634px] min-w-[343px] min-h-[480px] backdrop-blur-lg rounded-lg">
+                    <div class="rounded-lg z-[500]">
+                        <AirdropPopup
+                            name=details.name.clone()
+                            logo=details.logo.clone()
+                            buffer_signal
+                            claimed
+                            airdrop_popup
+                        />
+                    </div>
+                </div>
+            </ShadowOverlay>
         </div>
     }
 }
@@ -473,7 +552,7 @@ pub fn ActionButton(
     href: String,
     label: String,
     children: Children,
-    #[prop(optional, default = false)] disabled: bool,
+    #[prop(optional, into)] disabled: MaybeSignal<bool>,
 ) -> impl IntoView {
     view! {
         <a
@@ -482,7 +561,7 @@ pub fn ActionButton(
             class=move || {
                 format!(
                     "flex flex-col gap-1 justify-center items-center text-xs transition-colors {}",
-                    if !disabled {
+                    if !disabled.get() {
                         "group-hover:text-white text-neutral-300"
                     } else {
                         "group-hover:cursor-default text-neutral-600"
@@ -503,21 +582,12 @@ pub fn ActionButton(
 pub fn ActionButtonLink(
     label: String,
     children: Children,
-    #[prop(optional, default = false)] disabled: bool,
+    #[prop(optional, into)] disabled: MaybeSignal<bool>,
 ) -> impl IntoView {
     view! {
         <button
             disabled=disabled
-            class=move || {
-                format!(
-                    "flex flex-col gap-1 justify-center items-center text-xs transition-colors {}",
-                    if !disabled {
-                        "group-hover:text-white text-neutral-300"
-                    } else {
-                        "group-hover:cursor-default text-neutral-600"
-                    },
-                )
-            }
+            class="flex flex-col gap-1 justify-center items-center text-xs transition-colors enabled:group-hover:text-white enabled:text-neutral-300 disabled:group-hover:cursor-default disabled:text-neutral-600"
         >
             <div class="w-[1.875rem] h-[1.875rem] flex items-center justify-center">
                 {children()}

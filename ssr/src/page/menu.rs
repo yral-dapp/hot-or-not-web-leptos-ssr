@@ -1,5 +1,3 @@
-use crate::component::canisters_prov::with_cans;
-use crate::component::canisters_prov::{AuthCansProvider, WithAuthCans};
 use crate::component::content_upload::YoutubeUpload;
 use crate::component::modal::Modal;
 use crate::component::spinner::Spinner;
@@ -7,6 +5,7 @@ use crate::component::title::Title;
 use crate::component::{connect::ConnectLogin, social::*, toggle::Toggle};
 use crate::consts::{social, NSFW_TOGGLE_STORE};
 use crate::state::auth::account_connected_reader;
+use crate::state::canisters::authenticated_canisters;
 use crate::state::content_seed_client::ContentSeedClient;
 use crate::utils::notifications::get_token_for_principal;
 use candid::Principal;
@@ -14,10 +13,11 @@ use codee::string::FromToStringCodec;
 use leptos::html::Input;
 use leptos::*;
 use leptos_icons::*;
-use leptos_router::use_query_map;
+use leptos_router::{use_query_map, Redirect};
 use leptos_use::storage::use_local_storage;
 use leptos_use::use_event_listener;
 use yral_canisters_common::utils::profile::ProfileDetails;
+use yral_canisters_common::Canisters;
 
 #[derive(Default, Clone, Copy)]
 pub struct AuthorizedUserToSeedContent(pub RwSignal<Option<(bool, Principal)>>);
@@ -107,11 +107,9 @@ fn ProfileLoaded(user_details: ProfileDetails) -> impl IntoView {
 }
 
 #[component]
-fn ProfileInfo() -> impl IntoView {
+fn ProfileInfo(profile_details: ProfileDetails) -> impl IntoView {
     view! {
-        <AuthCansProvider fallback=ProfileLoading let:canisters>
-            <ProfileLoaded user_details=canisters.profile_details() />
-        </AuthCansProvider>
+        <ProfileLoaded user_details=profile_details />
     }
 }
 
@@ -177,7 +175,6 @@ pub fn Menu() -> impl IntoView {
     let is_authorized_to_seed_content: AuthorizedUserToSeedContent = expect_context();
 
     create_effect(move |_| {
-        //check whether query param is right if right set the show_modal_content as true.
         let query_params = query_map.get();
         let url = query_params.0.get("text")?;
         if !url.is_empty() && is_connected.get() {
@@ -186,34 +183,61 @@ pub fn Menu() -> impl IntoView {
         Some(())
     });
 
-    let authorized_fetch = with_cans(move |cans| async move {
-        let user_principal = cans.user_principal();
-        match is_authorized_to_seed_content.0.get_untracked() {
-            Some((auth, principal)) if principal == user_principal => return auth,
-            _ => (),
-        }
+    let authorized_fetch_res = authenticated_canisters().derive(
+        move || {},
+        move |cans, _| async move {
+            let Ok(cans) = cans else {
+                is_authorized_to_seed_content.0.set(None);
+                return None;
+            };
+            let Ok(cans_wire) = Canisters::from_wire(cans, expect_context()) else {
+                is_authorized_to_seed_content.0.set(None);
+                return None;
+            };
 
-        let content_seed_client: ContentSeedClient = expect_context();
+            let user_principal = cans_wire.user_principal();
 
-        content_seed_client
-            .check_if_authorized(user_principal)
-            .await
-            .unwrap_or_default()
-    });
+            match is_authorized_to_seed_content.0.get_untracked() {
+                Some((auth, principal)) if principal == user_principal => {
+                    is_authorized_to_seed_content
+                        .0
+                        .set(Some((auth, user_principal)))
+                }
+                _ => (),
+            }
 
-    view! {
-        <WithAuthCans with=authorized_fetch let:authorized>
-            {is_authorized_to_seed_content
+            let content_seed_client: ContentSeedClient = expect_context();
+
+            let res = content_seed_client
+                .check_if_authorized(user_principal)
+                .await
+                .unwrap_or_default();
+
+            is_authorized_to_seed_content
                 .0
-                .set(Some((authorized.1, authorized.0.user_principal())))}
-        </WithAuthCans>
-        <Modal show=show_content_modal>
-            <AuthCansProvider fallback=Spinner let:canisters>
-                <YoutubeUpload
-                    canisters
-                    url=query_map.get().0.get("text").cloned().unwrap_or_default()
-                />
-            </AuthCansProvider>
+                .set(Some((res, user_principal)));
+            Some(cans_wire.profile_details())
+        },
+    );
+    view! {
+        <Suspense fallback=Spinner>
+            {
+                move ||{
+                    authorized_fetch_res.get().map(|profile_details|{
+                        let Some(profile_details) = profile_details else{
+                            return view! {
+                                <Redirect path="/" />
+                            }.into_view();
+                        };
+                        view! {
+                            <Modal show=show_content_modal>
+                { move ||{
+                    is_authorized_to_seed_content.0.get().map(|(_, principal)|{
+                        view! {
+                            <YoutubeUpload url=query_map.get().0.get("text").cloned().unwrap_or_default() user_principal=principal />
+                        }
+                    })
+                }}
         </Modal>
         <div class="min-h-screen w-full flex flex-col text-white pt-2 pb-12 bg-black items-center divide-y divide-white/10">
             <div class="flex flex-col items-center w-full gap-20 pb-16">
@@ -224,7 +248,7 @@ pub fn Menu() -> impl IntoView {
                 </Title>
                 <div class="flex flex-col items-center w-full gap-4">
                     <div class="flex flex-row w-full max-w-lg justify-center gap-4 items-center px-4">
-                        <ProfileInfo />
+                        <ProfileInfo profile_details=profile_details />
                     </div>
                     <Show when=move || !is_connected()>
                         <div class="w-full px-8 md:w-4/12 xl:w-2/12">
@@ -271,5 +295,10 @@ pub fn Menu() -> impl IntoView {
             </div>
             <MenuFooter />
         </div>
+                        }.into_view()
+                    })
+                }
+            }
+        </Suspense>
     }
 }
