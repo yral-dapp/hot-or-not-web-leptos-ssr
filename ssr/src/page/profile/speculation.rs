@@ -223,32 +223,26 @@ pub fn Speculation(details: VoteDetails, _ref: NodeRef<html::Div>) -> impl IntoV
 }
 
 #[component]
-pub fn ProfileSpeculations(user_canister: Principal) -> impl IntoView {
+pub fn ProfileSpeculations(user_canister: Principal, user_principal: Principal) -> impl IntoView {
+    let provider = VotesProvider::new(unauth_canisters(), user_canister);
+    let location = use_location();
+    let empty_text = if location
+        .pathname
+        .get_untracked()
+        .starts_with(&format!("/profile/{}", user_principal))
+    {
+        "You haven't placed any votes yet!"
+    } else {
+        "Not played any games yet!"
+    };
     view! {
-        <AuthCansProvider let:canister>
-            {
-                let provider = VotesProvider::new(unauth_canisters(), user_canister);
-                let location = use_location();
-                let empty_text = if location
-                    .pathname
-                    .get_untracked()
-                    .starts_with(&format!("/profile/{}", canister.user_principal()))
-                {
-                    "You haven't placed any votes yet!"
-                } else {
-                    "Not played any games yet!"
-                };
-                view! {
-                    <ProfileStream
-                        provider
-                        empty_graphic=NoMoreBetsGraphic
-                        empty_text
-                        children=move |details, _ref| {
-                            view! { <Speculation details _ref=_ref.unwrap_or_default() /> }
-                        }
-                    />
-                }
+        <ProfileStream
+            provider
+            empty_graphic=NoMoreBetsGraphic
+            empty_text
+            children=move |details, _ref| {
+                view! { <Speculation details _ref=_ref.unwrap_or_default() /> }
             }
-        </AuthCansProvider>
+        />
     }
 }
