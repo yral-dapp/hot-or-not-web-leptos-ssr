@@ -28,7 +28,7 @@ pub fn show_cdao_condition(host: String) -> bool {
     host == "icpump.fun"
     // || host == "localhost:3000"
     // || host == "hot-or-not-web-leptos-ssr-staging.fly.dev"
-    || host.contains("yral-dapp-hot-or-not-web-leptos-ssr.fly.dev") // Use this when testing icpump changes
+    // || host.contains("yral-dapp-hot-or-not-web-leptos-ssr.fly.dev") // Use this when testing icpump changes
 }
 
 pub fn show_pnd_page() -> bool {
