@@ -935,7 +935,6 @@ impl PageVisit {
             let user_id = canisters.profile_details().principal;
             let (is_connected, _) = account_connected_reader();
             let is_connected = is_connected.get_untracked();
-          
 
             let UseTimeoutFnReturn { start, .. } = use_timeout_fn(
                 move |_| {
@@ -948,9 +947,9 @@ impl PageVisit {
                         .to_string(),
                     );
                 },
-                10000.0
+                10000.0,
             );
-            
+
             start(());
         }
     }
