@@ -7,18 +7,18 @@ describe("wallet page tests", function () {
         browser.element.findByText('Login to claim', {timeout: 10000}).waitUntil('enabled');
     })
     
+    // TODO: update this test so that either 1000 COYNS are present or a 100 GDOLR, never both
     it("default wallet page contains 1000 COYNS or 100 GDOLR", function(browser) {
         browser.waitForElementVisible('body', 10000);
     
         browser.pause(10000);
         
         const coynIsVisible = browser.element.findByText("GDOLR", { timeout: 10000 }).isPresent();
-        console.log({coynIsVisible})
         if (!coynIsVisible) {
-            browser.element.findByText("1000", { timeout: 10000 }).waitUntil('visible', { timeout: 10000 }).assert.enabled();
-        } else {
-            browser.element.findByText("GDOLR", { timeout: 10000 }).waitUntil('visible', { timeout: 10000 }).assert.enabled();
             browser.element.findByText("100", { timeout: 10000 }).waitUntil('visible', { timeout: 10000 }).assert.enabled();
+        } else {
+            browser.element.findByText("COYNS", { timeout: 10000 }).waitUntil('visible', { timeout: 10000 }).assert.enabled();
+            browser.element.findByText("1000", { timeout: 10000 }).waitUntil('visible', { timeout: 10000 }).assert.enabled();
         }
     });
 
