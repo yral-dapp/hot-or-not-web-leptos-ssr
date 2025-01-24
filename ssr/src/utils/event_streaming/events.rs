@@ -927,11 +927,9 @@ impl TokensTransferred {
 pub struct PageVisit;
 
 impl PageVisit {
-    pub fn send_event(&self, canisters: Canisters<true>) {
+    pub fn send_event(&self, canisters: Canisters<true>, pathname: String) {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
         {
-            log::info!("Sending page visit event");
-
             let user_id = canisters.profile_details().principal;
             let (is_connected, _) = account_connected_reader();
             let is_connected = is_connected.get_untracked();
@@ -943,6 +941,7 @@ impl PageVisit {
                         json!({
                             "user_id": user_id,
                             "is_loggedIn": is_connected,
+                            "pathname": pathname,
                         })
                         .to_string(),
                     );

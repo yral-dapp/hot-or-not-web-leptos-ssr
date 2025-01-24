@@ -2,6 +2,7 @@ use candid::Principal;
 use ic_agent::identity::Secp256k1Identity;
 use k256::elliptic_curve::JwkEcKey;
 use leptos::*;
+use leptos_dom::helpers::location;
 use leptos_router::*;
 use leptos_use::use_cookie;
 
@@ -110,6 +111,8 @@ fn CtxProvider(temp_identity: Option<JwkEcKey>, children: ChildrenFn) -> impl In
     ));
     provide_context(canisters_res.clone());
 
+    let location = leptos_router::use_location();
+
     view! {
         {children}
         <Suspense>
@@ -125,8 +128,12 @@ fn CtxProvider(temp_identity: Option<JwkEcKey>, children: ChildrenFn) -> impl In
                             set_user_canister_id(Some(user_canister));
                             set_user_principal(Some(user_principal));
                         });
-                        PageVisit.send_event(cans.clone());
-                        canisters_store.set(Some(cans));
+                        canisters_store.set(Some(cans.clone()));
+                        create_effect(move |_| {
+                            let pathname = location.pathname.get();
+                            let cans = cans.clone();
+                            PageVisit.send_event(cans, pathname);
+                        });
                     })
             }}
 
