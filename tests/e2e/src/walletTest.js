@@ -12,8 +12,9 @@ describe("wallet page tests", function () {
     
         browser.pause(10000);
         
-        const coynIsPresent = browser.element.findByText("COYNS", { timeout: 10000 }).isPresent();
-        if (coynIsPresent) {
+        const coynIsVisible = browser.element.findByText("COYNS", { timeout: 10000 }).isVisible();
+        console.log({coynIsVisible})
+        if (coynIsVisible) {
             browser.element.findByText("1000", { timeout: 10000 }).waitUntil('visible', { timeout: 10000 }).assert.enabled();
         } else {
             browser.element.findByText("GDOLR", { timeout: 10000 }).waitUntil('visible', { timeout: 10000 }).assert.enabled();
