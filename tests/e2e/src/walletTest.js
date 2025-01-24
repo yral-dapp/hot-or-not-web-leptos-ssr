@@ -13,12 +13,12 @@ describe("wallet page tests", function () {
         browser.pause(10000);
         
         const coynIsPresent = browser.element.findByText("COYNS", { timeout: 10000 }).isPresent();
-        const gdolrIsPresent = browser.element.findByText("GDOLR", { timeout: 10000 }).isPresent();
-
-        const coynValue = browser.element.findByText("1000", { timeout: 10000 }).isPresent();
-        const gdolrValue = browser.element.findByText("100", { timeout: 10000 }).isPresent();
-
-        browser.assert.equals((coynIsPresent && coynValue) || (gdolrIsPresent && gdolrValue), true);
+        if (coynIsPresent) {
+            browser.element.findByText("1000", { timeout: 10000 }).waitUntil('visible', { timeout: 10000 }).assert.enabled();
+        } else {
+            browser.element.findByText("GDOLR", { timeout: 10000 }).waitUntil('visible', { timeout: 10000 }).assert.enabled();
+            browser.element.findByText("100", { timeout: 10000 }).waitUntil('visible', { timeout: 10000 }).assert.enabled();
+        }
     });
 
     it('wallet page snapshot test', function(browser) {
