@@ -3,8 +3,9 @@ use wasm_bindgen_futures::JsFuture;
 
 pub mod device_id;
 
-#[wasm_bindgen(module = "/src/utils/notifications/setup-firebase-messaging.js")]
+#[wasm_bindgen(module = "/src/utils/notifications/setup-firebase-messaging-inline.js")]
 extern "C" {
+    #[wasm_bindgen(js_name = default)]
     fn get_token() -> js_sys::Promise;
 }
 

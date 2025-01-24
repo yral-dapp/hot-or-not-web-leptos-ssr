@@ -15,7 +15,7 @@ mod build_common {
             .build_client(true)
             .build_server(false)
             .out_dir(out_dir.clone())
-            .compile(
+            .compile_protos(
                 &[ml_feed_proto, icpump_search_proto, nsfw_proto],
                 &["proto"],
             )?;
@@ -27,7 +27,7 @@ mod build_common {
             .build_client(true)
             .build_server(false)
             .out_dir(out_dir)
-            .compile(&[ml_feed_proto], &["proto"])?;
+            .compile_protos(&[ml_feed_proto], &["proto"])?;
 
         Ok(())
     }
@@ -54,7 +54,7 @@ mod build_ssr {
             .build_client(true)
             .build_server(false)
             .out_dir(out_dir)
-            .compile(&[warehouse_events_proto, off_chain_proto], &["proto"])?;
+            .compile_protos(&[warehouse_events_proto, off_chain_proto], &["proto"])?;
         Ok(())
     }
 
