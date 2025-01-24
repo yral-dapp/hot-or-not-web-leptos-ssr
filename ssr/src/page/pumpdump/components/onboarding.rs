@@ -17,7 +17,7 @@ pub fn OnboardingPopup() -> impl IntoView {
         <div class="fade-in fixed inset-0 bg-black/50 flex py-16 justify-center z-50 p-4">
             <div
                 style="background-size: cover; background-position: left; background-image: url('/img/pnd-onboarding-bg.png');"
-                class="rounded-2xl max-w-md flex flex-col h-[33.5rem] justify-center text-white gap-8 items-center pt-8 pb-5 px-8 relative"
+                class="rounded-2xl max-w-md flex flex-col h-[33.5rem] justify-center text-white gap-8 items-center pt-8 pb-5 px-8 absolute top-1/2 -translate-y-1/2"
             >
                 <div
                     class="absolute flex items-center top-4 px-4 inset-x-0"
@@ -25,7 +25,7 @@ pub fn OnboardingPopup() -> impl IntoView {
                     class=("justify-between", move || step.get() == 1)
                 >
                 {move || (step.get() == 1).then(|| view! {
-                    <button on:click=move |_| set_step.set(0) class="text-[#525252]">
+                    <button on:click=move |_| set_step.set(0) class="text-neutral-400">
                         <Icon class="size-5" icon=icondata::FiChevronLeft />
                     </button>
                 })}
@@ -41,7 +41,7 @@ pub fn OnboardingPopup() -> impl IntoView {
                         <img src="/img/pumpndump.png" alt="Logo" class="h-32 pt-8" />
                         <div class="flex flex-col gap-5 items-center">
                             <div class="font-bold text-xl">Shape the Future of Tokens!</div>
-                            <div class="text-sm text-center">
+                            <div class="text-base text-center">
                                 Your vote decides the fate of the tokens. Ride the waves of Pump and Dump and vote to
                                 make the tides shift to snatch up with reward pool.
                             </div>
@@ -55,7 +55,7 @@ pub fn OnboardingPopup() -> impl IntoView {
                                 on:click=move |_| set_step.set(1)
                                 class="appearance-none text-xl font-semibold">Next</button
                             >
-                            <Icon class="size-3" icon=icondata::FiChevronRight />
+                            <Icon class="size-6 -mb-0.5" icon=icondata::FiChevronRight />
                         </div>
                     }
                 } else {

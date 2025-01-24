@@ -7,7 +7,7 @@ use crate::page::pumpdump::PlayerDataSignal;
 pub fn Header() -> impl IntoView {
     let data: PlayerDataSignal = expect_context();
     view! {
-        <div class="flex items-center w-full justify-between py-2 gap-8">
+        <div class="flex items-center w-full justify-between pt-2 pb-3.5 gap-8">
             <a
                 href="/pnd/profile"
                 class="flex flex-col text-right text-sm ml-8 relative bg-[#171717] rounded-lg pt-1 pb-1.5 pr-3 pl-8"

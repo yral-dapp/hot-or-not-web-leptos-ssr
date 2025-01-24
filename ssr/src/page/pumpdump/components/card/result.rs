@@ -35,35 +35,37 @@ pub fn PlayingCard() -> impl IntoView {
     };
     view! {
         <div
-            class="bg-[#171717] flip-card transition-all absolute inset-0 h-full shrink-0 rounded-2xl items-center flex flex-col gap-4 w-full pt-14 pb-5 px-5 overflow-hidden"
+            class="bg-[#171717] flip-card transition-all absolute inset-0 h-full shrink-0 rounded-2xl flex flex-col gap-4 pt-14 pb-5 px-5 overflow-hidden"
         >
-            <img class="mt-14 w-24 h-24 rounded-[4px]" alt="Avatar" src=token.token_details.logo />
-            <a href="#" class="flex items-center gap-1">
-                <div class="font-bold text-lg">{token.token_details.token_name}</div>
-            </a>
-            <div class="bg-[#212121] shrink-0 rounded-full relative w-full h-11 overflow-hidden">
-                <div
-                    class="w-full slide-up top-[3.5rem] flex items-center gap-2 justify-between absolute inset-0 py-2 pl-4 pr-2"
-                >
-                    <div class="flex items-center gap-1">
-                        <div class="text-[#A3A3A3] text-xs">Winning Pot:</div>
-                        <img src="/img/gdolr.png" alt="Coin" class="size-5" />
-                        <div class="text-[#E5E5E5] font-bold">{winning_pot} gDOLR</div>
-                    </div>
-                    <button
-                        on:click=move |_| show_onboarding.show()
-                        class="bg-black text-[#A3A3A3] hover:bg-black/35 rounded-full text-xl w-7 h-7 flex font-light items-center justify-center leading-none"
+            <div class="flex flex-col gap-6 w-full items-center">
+                <img class="size-32 rounded-[4px]" alt="Avatar" src=token.token_details.logo />
+                <a href="#" class="flex items-center gap-1">
+                    <div class="font-bold text-lg">{token.token_details.token_name}</div>
+                </a>
+                <div class="bg-[#212121] shrink-0 rounded-full relative w-full h-11 overflow-hidden">
+                    <div
+                        class="w-full slide-up top-[3.5rem] flex items-center gap-2 justify-between absolute inset-0 py-2 pl-4 pr-2"
                     >
-                        ?
-                    </button>
-                </div>
-                <div
-                    style="--animation-delay:5s;"
-                    class="w-full top-[3.5rem] slide-up flex items-center gap-1 absolute inset-0 py-2 pl-4 pr-2"
-                >
-                    <img src="/img/player.png" alt="Coin" class="w-5 h-5" />
-                    <div class="text-[#E5E5E5] font-bold">{player_count}</div>
-                    <div class="text-[#A3A3A3] text-xs">players are playing - join the action!</div>
+                        <div class="flex items-center gap-1">
+                            <div class="text-[#A3A3A3] text-xs">Winning Pot:</div>
+                            <img src="/img/gdolr.png" alt="Coin" class="size-5" />
+                            <div class="text-[#E5E5E5] font-bold">{winning_pot} gDOLR</div>
+                        </div>
+                        <button
+                            on:click=move |_| show_onboarding.show()
+                            class="bg-black text-neutral-400 font-bold hover:bg-black/35 rounded-full text-xl w-7 h-7 flex items-center justify-center leading-none"
+                        >
+                            ?
+                        </button>
+                    </div>
+                    <div
+                        style="--animation-delay:5s;"
+                        class="w-full top-[3.5rem] slide-up flex items-center gap-1 absolute inset-0 py-2 pl-4 pr-2"
+                    >
+                        <img src="/img/player.png" alt="Coin" class="w-5 h-5" />
+                        <div class="text-[#E5E5E5] font-bold">{player_count}</div>
+                        <div class="text-[#A3A3A3] text-xs">players are playing - join the action!</div>
+                    </div>
                 </div>
             </div>
             <div class="flex select-none flex-col gap-4 h-[8.5rem] w-full">
