@@ -13,10 +13,7 @@ use leptos_router::*;
 
 use crate::{
     component::connect::ConnectLogin,
-    state::{
-        auth::account_connected_reader,
-        canisters::{authenticated_canisters, unauth_canisters},
-    },
+    state::{auth::account_connected_reader, canisters::authenticated_canisters},
 };
 
 use posts::ProfilePosts;
@@ -193,16 +190,20 @@ pub fn ProfileView() -> impl IntoView {
                 let user_canister = canisters.user_canister();
                 return Ok((Some((details, user_canister)), None));
             }
-            let canisters = unauth_canisters();
-            let Some(user_canister) = canisters
+            match canisters
                 .get_individual_canister_by_user_principal(principal)
-                .await?
-            else {
-                return Err(ServerFnError::new("Failed to get user canister"));
-            };
-            let user = canisters.individual_user(user_canister).await;
-            let user_details = user.get_profile_details().await?;
-            Ok((Some((user_details.into(), user_canister)), None))
+                .await
+            {
+                Ok(Some(user_canister)) => {
+                    let user = canisters.individual_user(user_canister).await;
+                    let user_details = user.get_profile_details().await?;
+                    Ok((Some((user_details.into(), user_canister)), None))
+                }
+                Ok(None) => Ok((None, Some(user_principal))),
+                _ => Err(ServerFnError::ServerError(
+                    "Failed to fetch user details".into(),
+                )),
+            }
         });
 
     view! {
