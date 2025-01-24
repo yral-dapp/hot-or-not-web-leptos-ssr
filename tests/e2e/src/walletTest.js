@@ -12,7 +12,7 @@ describe("wallet page tests", function () {
     
         browser.pause(10000);
         
-        const coynIsVisible = browser.element.findByText("COYNS", { timeout: 10000 }).isVisible();
+        const coynIsVisible = browser.element.findByText("COYNS", { timeout: 10000 }).isPresent();
         console.log({coynIsVisible})
         if (coynIsVisible) {
             browser.element.findByText("1000", { timeout: 10000 }).waitUntil('visible', { timeout: 10000 }).assert.enabled();
