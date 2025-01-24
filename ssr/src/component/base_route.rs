@@ -2,7 +2,6 @@ use candid::Principal;
 use ic_agent::identity::Secp256k1Identity;
 use k256::elliptic_curve::JwkEcKey;
 use leptos::*;
-use leptos_dom::helpers::location;
 use leptos_router::*;
 use leptos_use::use_cookie;
 
