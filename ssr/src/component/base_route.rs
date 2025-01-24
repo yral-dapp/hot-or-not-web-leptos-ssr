@@ -7,6 +7,7 @@ use leptos_use::use_cookie;
 
 use crate::auth::delegate_identity;
 use crate::consts::{ACCOUNT_CONNECTED_STORE, USER_CANISTER_ID_STORE, USER_PRINCIPAL_STORE};
+use crate::utils::event_streaming::events::PageVisit;
 use crate::utils::ParentResource;
 use crate::{
     auth::{
@@ -124,6 +125,7 @@ fn CtxProvider(temp_identity: Option<JwkEcKey>, children: ChildrenFn) -> impl In
                             set_user_canister_id(Some(user_canister));
                             set_user_principal(Some(user_principal));
                         });
+                        PageVisit.send_event(cans.clone());
                         canisters_store.set(Some(cans));
                     })
             }}

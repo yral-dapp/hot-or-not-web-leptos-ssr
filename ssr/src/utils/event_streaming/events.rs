@@ -3,7 +3,7 @@ use ic_agent::Identity;
 use leptos::html::Input;
 use leptos::{create_effect, MaybeSignal, ReadSignal, RwSignal, SignalGetUntracked};
 use leptos::{create_signal, ev, expect_context, html::Video, NodeRef, SignalGet, SignalSet};
-use leptos_use::use_event_listener;
+use leptos_use::{use_event_listener, use_timeout_fn, UseTimeoutFnReturn};
 use serde_json::json;
 use sns_validation::pbs::sns_pb::SnsInitPayload;
 use wasm_bindgen::JsCast;
@@ -48,6 +48,7 @@ pub enum AnalyticsEvent {
     TokenCreationFailed(TokenCreationFailed),
     TokensClaimedFromNeuron(TokensClaimedFromNeuron),
     TokensTransferred(TokensTransferred),
+    PageVisit(PageVisit),
 }
 
 #[derive(Default)]
@@ -918,6 +919,39 @@ impl TokensTransferred {
                 })
                 .to_string(),
             );
+        }
+    }
+}
+
+#[derive(Default)]
+pub struct PageVisit;
+
+impl PageVisit {
+    pub fn send_event(&self, canisters: Canisters<true>) {
+        #[cfg(all(feature = "hydrate", feature = "ga4"))]
+        {
+            log::info!("Sending page visit event");
+
+            let user_id = canisters.profile_details().principal;
+            let (is_connected, _) = account_connected_reader();
+            let is_connected = is_connected.get_untracked();
+          
+
+            let UseTimeoutFnReturn { start, .. } = use_timeout_fn(
+                move |_| {
+                    send_event_ssr_spawn(
+                        "yral_page_visit".to_string(),
+                        json!({
+                            "user_id": user_id,
+                            "is_loggedIn": is_connected,
+                        })
+                        .to_string(),
+                    );
+                },
+                10000.0
+            );
+            
+            start(());
         }
     }
 }
