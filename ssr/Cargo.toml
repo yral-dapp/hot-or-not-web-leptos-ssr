@@ -196,6 +196,7 @@ release-lib = [
     "cloudflare",
     "redis-kv",
     "backend-admin",
+    "dep:openidconnect",
     "oauth-hydrate",
     "ga4",
 ]
