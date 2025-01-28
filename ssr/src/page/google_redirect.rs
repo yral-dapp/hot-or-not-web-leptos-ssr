@@ -49,6 +49,12 @@ async fn preview_google_auth_redirector() -> Result<(), ServerFnError> {
     Ok(())
 }
 
+fn is_valid_redirect_uri(client_redirect_uri: &str) -> bool {
+    let valid_client_redirect_uris = vec!["yralmobile://", "yral.com", "yral-dapp-hot-or-not-web-leptos-ssr.fly.dev"];
+
+    valid_client_redirect_uris.iter().any(|val| client_redirect_uri.contains(*val))
+}
+
 #[server(endpoint = "google_auth_url", input = GetUrl, output = Json)]
 async fn google_auth_url(client_redirect_uri: String) -> Result<String, ServerFnError> {
     use crate::auth::core_clients::CoreClients;
@@ -57,6 +63,11 @@ async fn google_auth_url(client_redirect_uri: String) -> Result<String, ServerFn
     use leptos_axum::extract;
 
     let headers: HeaderMap = extract().await?;
+
+
+    if !is_valid_redirect_uri(&client_redirect_uri) {
+        return Err(ServerFnError::new("Invalid client redirect uri"));
+    }
 
     let host = headers.get("Host").unwrap().to_str().unwrap();
     let oauth_clients: CoreClients = expect_context();
