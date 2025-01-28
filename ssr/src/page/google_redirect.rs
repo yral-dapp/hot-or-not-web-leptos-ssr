@@ -49,16 +49,32 @@ async fn preview_google_auth_redirector() -> Result<(), ServerFnError> {
     Ok(())
 }
 
-fn is_valid_redirect_uri(client_redirect_uri: &str) -> bool {
-    let valid_client_redirect_uris = [
-        "yralmobile://",
-        "yral.com",
-        "yral-dapp-hot-or-not-web-leptos-ssr.fly.dev",
-    ];
+#[cfg(feature = "ssr")]
+fn is_valid_redirect_uri_inner(client_redirect_uri: &str) -> Option<()> {
+    use regex::Regex;
+    use std::sync::LazyLock;
 
-    valid_client_redirect_uris
-        .iter()
-        .any(|val| client_redirect_uri.contains(*val))
+    let parsed_uri = http::Uri::try_from(client_redirect_uri).ok()?;
+
+    if parsed_uri.scheme_str() == Some("yralmobile://") {
+        return Some(());
+    }
+
+    let host = parsed_uri.host()?;
+    if host == "yral.com" {
+        return Some(());
+    }
+
+    static PR_PREVIEW_PATTERN: LazyLock<Regex> = LazyLock::new(|| {
+        Regex::new(r"^pr-\d*-yral-dapp-hot-or-not-web-leptos-ssr\.fly\.dev$").unwrap()
+    });
+
+    PR_PREVIEW_PATTERN.is_match_at(host, 0).then_some(())
+}
+
+#[cfg(feature = "ssr")]
+fn is_valid_redirect_uri(client_redirect_uri: &str) -> bool {
+    is_valid_redirect_uri_inner(client_redirect_uri).is_some()
 }
 
 #[server(endpoint = "google_auth_url", input = GetUrl, output = Json)]
