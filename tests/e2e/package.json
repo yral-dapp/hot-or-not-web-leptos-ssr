@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "percy exec -- nightwatch --env browserstack.chrome"
+    "test": "percy exec -- nightwatch --env browserstack.chrome",
+    "test:local": "percy exec -- nightwatch"
   },
   "keywords": [],
   "author": "Ravi Sawlani",
