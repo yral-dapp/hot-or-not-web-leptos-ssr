@@ -43,7 +43,7 @@ pub static FALLBACK_USER_INDEX: Lazy<Principal> =
 
 #[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
 pub static PUMP_AND_DUMP_WORKER_URL: Lazy<Url> =
-    Lazy::new(|| Url::parse("https://yral-pump-n-dump.rupansh.workers.dev/").unwrap());
+    Lazy::new(|| Url::parse("https://yral-pump-n-dump.go-bazzinga.workers.dev/").unwrap());
 
 #[cfg(any(feature = "local-bin", feature = "local-lib"))]
 pub static PUMP_AND_DUMP_WORKER_URL: Lazy<Url> =
