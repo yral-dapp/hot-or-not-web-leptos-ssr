@@ -34,7 +34,7 @@ async fn preview_google_auth_redirector() -> Result<(), ServerFnError> {
 
     let headers: HeaderMap = extract().await?;
     let host = headers.get("Host").unwrap().to_str().unwrap();
-    let client_redirect_uri = format!("{}/auth/google_redirect", host);
+    let client_redirect_uri = format!("https://{}/auth/google_redirect", host);
 
     let client = reqwest::Client::new();
     let url = format!(
