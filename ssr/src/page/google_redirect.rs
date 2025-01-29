@@ -208,9 +208,11 @@ struct OAuthState {
 pub fn PreviewGoogleRedirectHandler() -> impl IntoView {
     let query = use_query::<OAuthQuery>();
     let identity_resource = create_blocking_resource(query, |query_res| async move {
-        let Ok(oauth_query) = query_res else {
-            return Err("Invalid Params".to_string());
-        };
+        if let Err(e) = query_res {
+            return Err(format!("Invalid Params {}", e));
+        }
+
+        let oauth_query = query_res.unwrap();
 
         preview_handle_oauth_query(oauth_query)
             .await
