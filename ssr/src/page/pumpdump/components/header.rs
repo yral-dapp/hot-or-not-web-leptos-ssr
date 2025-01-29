@@ -22,7 +22,8 @@ pub fn Header() -> impl IntoView {
                     class="absolute select-none -left-1/4 bottom-0 h-12 w-12 -rotate-1"
                 />
             </a>
-            <div
+            <a
+                href="/wallet"
                 class="flex flex-col text-left overf mr-8 relative bg-[#171717] rounded-lg pt-1 pb-1.5 pl-4 pr-8"
             >
                 <div
@@ -40,7 +41,7 @@ pub fn Header() -> impl IntoView {
                 <div class="absolute rounded-sm bg-[#212121] text-[#525252] p-0.5 size-5 -left-2 top-4">
                     <Icon class="size-full" icon=icondata::FiPlus />
                 </div>
-            </div>
+            </a>
         </div>
     }
 }

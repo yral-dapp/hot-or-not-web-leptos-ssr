@@ -24,14 +24,13 @@ use crate::{
     utils::token::icpump::IcpumpTokenInfo,
 };
 
-use super::{GameRunningData, PlayerData, ProfileData};
+use super::{GameRunningData, PlayerData};
 
 #[derive(Debug, Clone)]
 struct TestData {
     owner: TokenOwner,
     root: Principal,
     user_canister: Principal,
-    profile_data: ProfileData,
     player_data: PlayerData,
     running_data: GameRunningData,
 }
@@ -99,14 +98,6 @@ fn PresentDetails(#[prop(into)] data: TestData) -> impl IntoView {
     view! {
         <div class="grid grid-cols-3 gap-4">
             <fieldset class="border">
-                <legend>Profile Data</legend>
-                <pre class="whitespace-pre-line">
-                    total pumps: {move || data.profile_data.pumps}
-                    total dumps: {move || data.profile_data.dumps}
-                    total earnings: {move || data.profile_data.earnings}
-                </pre>
-            </fieldset>
-            <fieldset class="border">
                 <legend>Player Data</legend>
                 <pre class="whitespace-pre-line">
                     game count: {move || data.player_data.games_count}
@@ -169,12 +160,6 @@ pub fn PndTest() -> impl IntoView {
                 owner: meta.token_owner.clone().unwrap(),
                 root: token_root,
                 user_canister: cans.user_canister(),
-                profile_data: ProfileData::load(
-                    cans_wire.profile_details.clone(),
-                    cans.individual_user(cans.user_canister()).await,
-                )
-                .await
-                .unwrap(),
                 player_data: PlayerData::load(cans.user_canister()).await.unwrap(),
                 running_data: GameRunningData::load(
                     meta.token_owner.unwrap().canister_id,

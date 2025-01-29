@@ -21,48 +21,14 @@ use super::GameState;
 #[derive(Debug, Clone)]
 pub(super) struct ProfileData {
     pub(super) user: ProfileDetails,
-    pub(super) earnings: u128,
-    pub(super) pumps: u64,
-    pub(super) dumps: u64,
 }
 
 impl ProfileData {
     pub(super) async fn load(
         user: ProfileDetails,
-        ind_user: IndividualUserTemplate<'_>,
+        _ind_user: IndividualUserTemplate<'_>,
     ) -> Result<Self, String> {
-        use leptos::logging;
-        use yral_canisters_client::individual_user_template::PumpsAndDumps;
-        let PumpsAndDumps { pumps, dumps } = ind_user
-            .pumps_and_dumps()
-            .await
-            .inspect_err(|err| {
-                logging::error!("couldn't load pump dump count: {err}");
-            })
-            .map_err(|e| e.to_string())?;
-        let earnings = ind_user
-            .net_earnings()
-            .await
-            .map_err(|err| format!("Couldn't load net earnings for the user: {err}"))?;
-
-        Ok(Self {
-            user,
-            earnings: convert_e8s_to_gdolr(earnings),
-            pumps: pumps
-                .0
-                .try_into()
-                .inspect_err(|err| {
-                    logging::error!("This dude pumped too hard: {err}");
-                })
-                .unwrap(),
-            dumps: dumps
-                .0
-                .try_into()
-                .inspect_err(|err| {
-                    logging::error!("This dude dumped too hard: {err}");
-                })
-                .unwrap(),
-        })
+        Ok(Self { user })
     }
 }
 
@@ -198,19 +164,8 @@ fn ProfileDataSection(#[prop(into)] profile_data: ProfileData) -> impl IntoView 
                         >
                             {display_name}
                         </span>
-                        <div
-                            class="bg-neutral-900 shrink-0 rounded-full relative w-56 h-11 flex items-center justify-center gap-1"
-                        >
-                            <span class="text-xs text-neutral-400">Earnings:</span>
-                            <img src="/img/gdolr.png" alt="coin" class="w-5 h-5" />
-                            <span class="font-bold">{profile_data.earnings} gDOLR</span>
-                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="flex justify-around text-center rounded-full divide-x-2 divide-white/20 bg-white/10 py-3 px-14 w-11/12">
-                <Stat stat=profile_data.pumps info="PUMPS" />
-                <Stat stat=profile_data.dumps info="DUMPS" />
             </div>
         </div>
     }
