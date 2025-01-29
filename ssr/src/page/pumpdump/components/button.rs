@@ -26,7 +26,7 @@ pub fn DumpButton() -> impl IntoView {
 
             player_data.update(|value| {
                 if let Some(value) = value.as_mut() {
-                    value.wallet_balance -= 1;
+                    value.wallet_balance = value.wallet_balance.saturating_sub(1);
                 }
             });
 
@@ -116,7 +116,7 @@ pub fn PumpButton() -> impl IntoView {
 
             player_data.update(|value| {
                 if let Some(value) = value.as_mut() {
-                    value.wallet_balance -= 1;
+                    value.wallet_balance = value.wallet_balance.saturating_sub(1);
                 }
             });
 
