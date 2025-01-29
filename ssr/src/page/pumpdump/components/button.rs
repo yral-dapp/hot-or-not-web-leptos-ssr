@@ -4,13 +4,16 @@ use yral_pump_n_dump_common::{
     GameDirection,
 };
 
-use crate::page::pumpdump::{GameRunningDataSignal, PlayerDataSignal, WebsocketContextSignal};
+use crate::page::pumpdump::{
+    CurrentRoundSignal, GameRunningDataSignal, PlayerDataSignal, WebsocketContextSignal,
+};
 
 #[component]
 pub fn DumpButton() -> impl IntoView {
     let running_data: GameRunningDataSignal = expect_context();
     let player_data: PlayerDataSignal = expect_context();
     let websocket: WebsocketContextSignal = expect_context();
+    let current_round: CurrentRoundSignal = expect_context();
     let counter = move || {
         running_data
             .get()
@@ -18,10 +21,13 @@ pub fn DumpButton() -> impl IntoView {
             .unwrap_or_else(|| "-".into())
     };
     let onclick = move |_| {
-        if let Some(websocket) = websocket.get().as_ref() {
+        if let (Some(websocket), Some(round)) = (websocket.get().as_ref(), current_round.get()) {
             websocket.send(&WsRequest {
                 request_id: uuid::Uuid::new_v4(),
-                msg: WsMessage::Bet(GameDirection::Dump),
+                msg: WsMessage::Bet {
+                    direction: GameDirection::Dump,
+                    round: round.0,
+                },
             });
 
             player_data.update(|value| {
@@ -100,6 +106,7 @@ pub fn PumpButton() -> impl IntoView {
     let running_data: GameRunningDataSignal = expect_context();
     let player_data: PlayerDataSignal = expect_context();
     let websocket: WebsocketContextSignal = expect_context();
+    let current_round: CurrentRoundSignal = expect_context();
     let counter = move || {
         running_data
             .get()
@@ -108,10 +115,13 @@ pub fn PumpButton() -> impl IntoView {
     };
     let onclick = move |_| {
         // TODO: add debouncing
-        if let Some(websocket) = websocket.get().as_ref() {
+        if let (Some(websocket), Some(round)) = (websocket.get().as_ref(), current_round.get()) {
             websocket.send(&WsRequest {
                 request_id: uuid::Uuid::new_v4(),
-                msg: WsMessage::Bet(GameDirection::Pump),
+                msg: WsMessage::Bet {
+                    direction: GameDirection::Pump,
+                    round: round.0,
+                },
             });
 
             player_data.update(|value| {

@@ -34,7 +34,11 @@ impl ShowOnboarding {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(super) struct ShowSelectedCard(pub(super) bool);
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(super) struct CurrentRound(pub(super) u64);
+
 pub(super) type ShowSelectedCardSignal = RwSignal<ShowSelectedCard>;
+pub(super) type CurrentRoundSignal = RwSignal<Option<CurrentRound>>;
 pub(super) type GameRunningDataSignal = RwSignal<Option<GameRunningData>>;
 pub(super) type PlayerDataSignal = RwSignal<Option<PlayerData>>;
 pub(super) type LoadRunningDataAction = Action<(Principal, bool), ()>;

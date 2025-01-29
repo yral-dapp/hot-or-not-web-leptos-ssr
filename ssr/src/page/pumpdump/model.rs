@@ -97,7 +97,7 @@ impl GameRunningData {
         Self {
             pumps,
             dumps,
-            player_count,
+            player_count: estimate_player_count(player_count),
             winning_pot,
         }
     }
@@ -131,7 +131,6 @@ impl GameRunningData {
             .map_err(|err| format!("Couldn't read response for player count: {err}"))?
             .parse()
             .map_err(|err| format!("Couldn't parse player count from response: {err}"))?;
-        let player_count = estimate_player_count(player_count);
 
         // Maybe we should also load winning pot as part of game running data
         Ok(Self::new(bets.pumps, bets.dumps, player_count, None))

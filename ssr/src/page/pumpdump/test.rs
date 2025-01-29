@@ -3,8 +3,8 @@ use std::rc::Rc;
 use candid::Principal;
 use codee::string::JsonSerdeCodec;
 use leptos::{
-    component, create_action, create_effect, create_rw_signal, expect_context, logging, view, For,
-    IntoView, RwSignal, Show, SignalGet, SignalSet, SignalUpdate,
+    component, create_action, create_effect, create_node_ref, create_rw_signal, expect_context,
+    html::Input, logging, view, For, IntoView, RwSignal, Show, SignalGet, SignalSet, SignalUpdate,
 };
 use leptos_router::use_params_map;
 use leptos_use::{use_websocket, UseWebSocketReturn};
@@ -38,7 +38,7 @@ struct TestData {
 type TestDataSignal = RwSignal<Option<TestData>>;
 
 #[component]
-fn WebsocketLogs(#[prop(into)] websocket: WebsocketContext) -> impl IntoView {
+fn WebsocketLogs(#[prop(into)] websocket: WebsocketContext, #[prop()] round: u64) -> impl IntoView {
     let received = create_rw_signal(Vec::new());
     let sent = create_rw_signal(Vec::new());
     let message = websocket.message;
@@ -46,7 +46,10 @@ fn WebsocketLogs(#[prop(into)] websocket: WebsocketContext) -> impl IntoView {
     let send_pump = move || {
         let message = WsRequest {
             request_id: uuid::Uuid::new_v4(),
-            msg: WsMessage::Bet(GameDirection::Pump),
+            msg: WsMessage::Bet {
+                direction: GameDirection::Pump,
+                round,
+            },
         };
         pump_socket.send(&message);
         sent.update(move |d| d.push(serde_json::to_string_pretty(&message).unwrap()));
@@ -54,7 +57,10 @@ fn WebsocketLogs(#[prop(into)] websocket: WebsocketContext) -> impl IntoView {
     let send_dump = move || {
         let message = WsRequest {
             request_id: uuid::Uuid::new_v4(),
-            msg: WsMessage::Bet(GameDirection::Dump),
+            msg: WsMessage::Bet {
+                direction: GameDirection::Dump,
+                round,
+            },
         };
         websocket.send(&message);
         sent.update(move |d| d.push(serde_json::to_string_pretty(&message).unwrap()));
@@ -74,7 +80,7 @@ fn WebsocketLogs(#[prop(into)] websocket: WebsocketContext) -> impl IntoView {
             <div class="flex">
                 <div class="flex-1">
                     <h1>Sent</h1>
-                    <For each=move || sent.get() key=|item| item.clone() let:item>
+                    <For each=move || sent.get().into_iter().rev() key=|item| item.clone() let:item>
                         <pre>
                             {item}
                         </pre>
@@ -82,7 +88,7 @@ fn WebsocketLogs(#[prop(into)] websocket: WebsocketContext) -> impl IntoView {
                 </div>
                 <div class="flex-1">
                     <h1>Received</h1>
-                    <For each=move || received.get() key=|item| item.clone() let:item>
+                    <For each=move || received.get().into_iter().rev() key=|item| item.clone() let:item>
                         <pre>
                             {item}
                         </pre>
@@ -133,6 +139,7 @@ pub fn PndTest() -> impl IntoView {
     let token_root = Principal::from_text(token_root).expect("token root to be valid");
 
     let data: TestDataSignal = create_rw_signal(None);
+    let round = create_rw_signal(0u64);
 
     let cans_wire = authenticated_canisters();
     let fetch_test_data = create_action(move |&()| {
@@ -234,12 +241,21 @@ pub fn PndTest() -> impl IntoView {
         }
     });
 
+    let input_ref = create_node_ref::<Input>();
+    let change_round = move |_: leptos::ev::Event| {
+        if let Some(input) = input_ref.get() {
+            let value = input.value().parse().unwrap_or_default();
+            round.set(value);
+        }
+    };
+
     view! {
         <Show when=move || data.get().is_some()>
             <PresentDetails data=data.get().unwrap() />
         </Show>
+        <input ref=input_ref type="number" on:input=change_round placeholder="round" />
         <Show when=move || websocket.get().is_some()>
-            <WebsocketLogs websocket=websocket.get().unwrap() />
+            <WebsocketLogs round=round.get() websocket=websocket.get().unwrap() />
         </Show>
     }
 }

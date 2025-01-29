@@ -20,7 +20,7 @@ use crate::{
     page::{
         icpump::ProcessedTokenListResponse,
         pumpdump::{
-            convert_e8s_to_gdolr, CardQuery, GameResult, GameRunningData, GameState,
+            convert_e8s_to_gdolr, CardQuery, CurrentRound, GameResult, GameRunningData, GameState,
             IdentitySignal, LoadRunningDataAction, PlayerDataSignal, ShowSelectedCard,
             ShowSelectedCardSignal, WebsocketContext, WsResponse,
         },
@@ -63,6 +63,8 @@ pub fn GameCard(#[prop()] token: ProcessedTokenListResponse) -> impl IntoView {
 
     let websocket = create_rw_signal(None::<WebsocketContext>);
     provide_context(websocket);
+    let current_round = create_rw_signal(None::<CurrentRound>);
+    provide_context(current_round);
     let running_data = create_rw_signal(None::<GameRunningData>);
     provide_context(running_data);
     let game_state = create_rw_signal(None::<GameState>);
@@ -88,12 +90,6 @@ pub fn GameCard(#[prop()] token: ProcessedTokenListResponse) -> impl IntoView {
             running_data.update(|d| *d = data);
         });
     provide_context(load_running_data);
-    create_effect(move |_| {
-        let ident = identity.get();
-        if ident.as_ref().is_some() && running_data.get_untracked().is_none() {
-            load_running_data.dispatch((ident.unwrap().user_canister(), false));
-        }
-    });
     // start websocket connection
     create_effect(move |_| {
         let ident = identity.get();
@@ -132,8 +128,27 @@ pub fn GameCard(#[prop()] token: ProcessedTokenListResponse) -> impl IntoView {
         if let Some(websocket) = websocket.get() {
             if let Some(message) = websocket.message.get() {
                 match message.response {
-                    WsResp::Ok => {
-                        logging::log!("ws: received ok");
+                    WsResp::WelcomeEvent {
+                        round,
+                        pool,
+                        player_count,
+                        user_bets,
+                    } => {
+                        current_round.set_untracked(Some(CurrentRound(round)));
+                        running_data.update(move |data| {
+                            *data = Some(GameRunningData::new(
+                                user_bets.pumps,
+                                user_bets.dumps,
+                                player_count,
+                                Some(pool),
+                            ))
+                        });
+                    }
+                    WsResp::BetSuccesful { round } => {
+                        logging::log!(
+                            "ws: bet successful for round: {round}. (note: current round: {:?})",
+                            current_round.get_untracked()
+                        );
                     }
                     WsResp::Error(err) => {
                         // TODO: handle this error
@@ -158,9 +173,14 @@ pub fn GameCard(#[prop()] token: ProcessedTokenListResponse) -> impl IntoView {
                         let running_data = running_data
                             .get()
                             .expect("running data to exist if we have recieved results");
+                        current_round.set_untracked(Some(CurrentRound(result.new_round)));
                         let result = compute_game_result(running_data, result);
 
                         game_state.update(|s| *s = Some(GameState::ResultDeclared(result)));
+                        logging::log!(
+                            "after game state update: {:?}",
+                            current_round.get_untracked()
+                        );
                         match result {
                             GameResult::Win { amount } => {
                                 player_data.update(|data| {
@@ -179,11 +199,11 @@ pub fn GameCard(#[prop()] token: ProcessedTokenListResponse) -> impl IntoView {
                             }
                         }
                     }
-                    WsResp::WinningPoolEvent(pot) => {
-                        logging::log!("ws: received new winning pot: {pot}");
+                    WsResp::WinningPoolEvent { new_pool, round } => {
+                        logging::log!("ws: received new winning pot: {new_pool} for round: {round}. (note, current round: {:?})", current_round.get_untracked());
                         running_data.update(|data| {
                             if let Some(data) = data {
-                                data.winning_pot = Some(pot);
+                                data.winning_pot = Some(new_pool);
                             }
                         })
                     }
@@ -222,6 +242,7 @@ pub fn GameCard(#[prop()] token: ProcessedTokenListResponse) -> impl IntoView {
         // might dispatch multiple times, need a way to ensure game state is
         // loaded only once
         if game_state.get().is_none() {
+            logging::log!("loading game state");
             load_game_state.dispatch(());
         }
     });
