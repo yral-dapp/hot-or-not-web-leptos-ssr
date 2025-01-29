@@ -155,6 +155,11 @@ async fn handle_oauth_query(oauth_query: OAuthQuery) -> GoogleAuthMessage {
     Ok(delegated)
 }
 
+#[derive(Serialize, Deserialize)]
+struct GoogleAuthRequestBody {
+    oauth: OAuthQuery,
+}
+
 #[server]
 async fn preview_handle_oauth_query(
     oauth_query: OAuthQuery,
@@ -163,7 +168,13 @@ async fn preview_handle_oauth_query(
 
     let yral_url = "https://yral.com/api/perform_google_auth".to_string();
 
-    let response = client.post(yral_url).json(&oauth_query).send().await?;
+    let oauth_request_body = GoogleAuthRequestBody { oauth: oauth_query };
+
+    let response = client
+        .post(yral_url)
+        .json(&oauth_request_body)
+        .send()
+        .await?;
 
     if response.status().is_success() {
         let delegated_identity: DelegatedIdentityWire = response.json().await?;
