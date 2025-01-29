@@ -13,7 +13,7 @@ use crate::{
     auth::{
         extract_identity, generate_anonymous_identity_if_required, set_anonymous_identity_cookie,
     },
-    component::spinner::FullScreenSpinner,
+    component::shared::assets::spinner::FullScreenSpinner,
     state::{
         auth::AuthState,
         canisters::{do_canister_auth, AuthCansResource},

@@ -2,14 +2,14 @@ use leptos::*;
 use leptos_icons::*;
 
 use crate::{
-    component::overlay::*,
+    component::shared::assets::overlay::*,
     utils::{
         host::get_host,
         web::{copy_to_clipboard, share_url},
     },
 };
 
-use crate::component::icons::share_icon::ShareIcon;
+use crate::component::shared::assets::icons::share_icon::ShareIcon;
 #[component]
 pub fn ShareContent(
     share_link: String,

@@ -1,6 +1,6 @@
 use crate::{consts::USER_PRINCIPAL_STORE, utils::host::show_cdao_page};
 
-use super::nav_icons::*;
+use crate::component::shared::assets::nav_icons::*;
 use candid::Principal;
 use codee::string::FromToStringCodec;
 use leptos::*;

@@ -1,4 +1,4 @@
-use super::ic_symbol::IcSymbol;
+use crate::component::shared::assets::ic_symbol::IcSymbol;
 use leptos::*;
 use leptos_icons::*;
 

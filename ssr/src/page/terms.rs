@@ -1,6 +1,7 @@
 use leptos::*;
 
-use crate::component::{back_btn::BackButton, title::Title};
+// use crate::component::{back_btn::BackButton, title::Title};
+
 
 #[component]
 pub fn TermsOfService() -> impl IntoView {
