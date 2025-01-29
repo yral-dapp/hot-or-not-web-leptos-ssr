@@ -34,7 +34,7 @@ async fn preview_google_auth_redirector() -> Result<(), ServerFnError> {
 
     let headers: HeaderMap = extract().await?;
     let host = headers.get("Host").unwrap().to_str().unwrap();
-    let client_redirect_uri = format!("{}/auth/google_redirect", host);
+    let client_redirect_uri = format!("https://{}/auth/google_redirect", host);
 
     let client = reqwest::Client::new();
     let url = format!(
@@ -175,9 +175,8 @@ async fn handle_oauth_query_for_external_client(
     oauth_query: OAuthQuery,
 ) -> Result<(), ServerFnError> {
     leptos_axum::redirect(&format!(
-        "{}?oauth={}",
-        client_redirect_uri,
-        serde_json::to_string(&oauth_query).unwrap()
+        "{}?code={}&state={}",
+        client_redirect_uri, oauth_query.code, oauth_query.state
     ));
     Ok(())
 }
@@ -198,9 +197,11 @@ struct OAuthState {
 pub fn PreviewGoogleRedirectHandler() -> impl IntoView {
     let query = use_query::<OAuthQuery>();
     let identity_resource = create_blocking_resource(query, |query_res| async move {
-        let Ok(oauth_query) = query_res else {
-            return Err("Invalid Params".to_string());
-        };
+        if let Err(e) = query_res {
+            return Err(format!("Invalid Params {}", e));
+        }
+
+        let oauth_query = query_res.unwrap();
 
         preview_handle_oauth_query(oauth_query)
             .await
