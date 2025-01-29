@@ -1,6 +1,7 @@
 use crate::page::icpump::ai::ICPumpAi;
 use crate::page::icpump::ICPumpLanding;
 
+use crate::utils::host::show_preview_component;
 // use crate::page::wallet::TestIndex;
 use crate::{
     component::{base_route::BaseRoute, nav::NavBar},
@@ -47,8 +48,13 @@ fn GoogleAuthRedirectHandlerRoute() -> impl IntoView {
     let path = "/auth/google_redirect";
     #[cfg(any(feature = "oauth-ssr", feature = "oauth-hydrate"))]
     {
-        use crate::page::google_redirect::GoogleRedirectHandler;
-        view! { <Route path view=GoogleRedirectHandler/> }
+        if show_preview_component() {
+            use crate::page::google_redirect::PreviewGoogleRedirectHandler;
+            view! { <Route path view=PreviewGoogleRedirectHandler/> }
+        } else {
+            use crate::page::google_redirect::GoogleRedirectHandler;
+            view! { <Route path view=GoogleRedirectHandler/> }
+        }
     }
     #[cfg(not(any(feature = "oauth-ssr", feature = "oauth-hydrate")))]
     {
@@ -61,8 +67,13 @@ fn GoogleAuthRedirectorRoute() -> impl IntoView {
     let path = "/auth/perform_google_redirect";
     #[cfg(any(feature = "oauth-ssr", feature = "oauth-hydrate"))]
     {
-        use crate::page::google_redirect::GoogleRedirector;
-        view! { <Route path view=GoogleRedirector/> }
+        if show_preview_component() {
+            use crate::page::google_redirect::PreviewGoogleRedirector;
+            view! { <Route path view=PreviewGoogleRedirector/> }
+        } else {
+            use crate::page::google_redirect::GoogleRedirector;
+            view! { <Route path view=GoogleRedirector/> }
+        }
     }
     #[cfg(not(any(feature = "oauth-ssr", feature = "oauth-hydrate")))]
     {

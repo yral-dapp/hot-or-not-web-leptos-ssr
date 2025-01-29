@@ -10,6 +10,7 @@ use openidconnect::{
     core::CoreAuthenticationFlow, reqwest::async_http_client, AuthorizationCode, CsrfToken, Nonce,
     PkceCodeChallenge, PkceCodeVerifier, Scope,
 };
+use serde::{Deserialize, Serialize};
 use web_time::Duration;
 
 use crate::auth::{
@@ -25,19 +26,33 @@ use super::{set_cookies, store::KVStoreImpl};
 const PKCE_VERIFIER_COOKIE: &str = "google-pkce-verifier";
 const CSRF_TOKEN_COOKIE: &str = "google-csrf-token";
 
+#[derive(Serialize, Deserialize)]
+struct OAuthState {
+    pub csrf_token: CsrfToken,
+    pub client_redirect_uri: Option<String>,
+}
+
 pub async fn google_auth_url_impl(
     oauth2: openidconnect::core::CoreClient,
+    client_redirect_uri: Option<String>,
 ) -> Result<String, ServerFnError> {
     let (pkce_challenge, pkce_verifier) = PkceCodeChallenge::new_random_sha256();
-    let (auth_url, csrf_token, _) = oauth2
+
+    let oauth_state = OAuthState {
+        csrf_token: CsrfToken::new_random(),
+        client_redirect_uri,
+    };
+
+    let oauth2_request = oauth2
         .authorize_url(
             CoreAuthenticationFlow::AuthorizationCode,
-            CsrfToken::new_random,
+            move || CsrfToken::new(serde_json::to_string(&oauth_state).unwrap()),
             Nonce::new_random,
         )
         .add_scope(Scope::new("openid".into()))
-        .set_pkce_challenge(pkce_challenge)
-        .url();
+        .set_pkce_challenge(pkce_challenge);
+
+    let (auth_url, oauth_csrf_token, _) = oauth2_request.url();
 
     let key: Key = expect_context();
     let mut jar: PrivateCookieJar = extract_with_state(&key).await?;
@@ -49,7 +64,8 @@ pub async fn google_auth_url_impl(
         .max_age(cookie_life)
         .build();
     jar = jar.add(pkce_cookie);
-    let csrf_cookie = Cookie::build((CSRF_TOKEN_COOKIE, csrf_token.secret().clone()))
+
+    let csrf_cookie = Cookie::build((CSRF_TOKEN_COOKIE, oauth_csrf_token.secret().clone()))
         .same_site(SameSite::None)
         .path("/")
         .max_age(cookie_life)
