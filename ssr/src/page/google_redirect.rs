@@ -165,8 +165,13 @@ async fn preview_handle_oauth_query(
 
     let response = client.post(yral_url).json(&oauth_query).send().await?;
 
-    let result: DelegatedIdentityWire = response.json().await?;
-    Ok(result)
+    if response.status().is_success() {
+        let delegated_identity: DelegatedIdentityWire = response.json().await?;
+        Ok(delegated_identity)
+    } else {
+        let error_response: ServerFnError = response.json().await?;
+        Err(error_response)
+    }
 }
 
 #[server]
