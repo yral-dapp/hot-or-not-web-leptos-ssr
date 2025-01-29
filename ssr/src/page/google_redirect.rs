@@ -176,12 +176,9 @@ async fn preview_handle_oauth_query(
         .send()
         .await?;
 
-    if response.status().is_success() {
-        let delegated_identity: DelegatedIdentityWire = response.json().await?;
-        Ok(delegated_identity)
-    } else {
-        Err(ServerFnError::new("Error yral did not return a valid response"))
-    }
+    let delegated_identity_res: Result<DelegatedIdentityWire, ServerFnError> =
+        response.json().await?;
+    delegated_identity_res
 }
 
 #[server]
