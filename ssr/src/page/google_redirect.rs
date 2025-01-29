@@ -1,7 +1,7 @@
 use leptos::*;
 use leptos_router::*;
 use openidconnect::CsrfToken;
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Serialize};
 use server_fn::codec::{GetUrl, Json};
 
 use crate::{component::loading::Loading, utils::route::go_to_root};
@@ -114,19 +114,9 @@ async fn perform_google_auth(oauth: OAuthQuery) -> Result<DelegatedIdentityWire,
     perform_google_auth_impl(oauth.state, oauth.code, oauth2).await
 }
 
-// Custom deserialization function for state to prevent it from being parsed as JSON
-fn deserialize_as_string<'de, D>(deserializer: D) -> Result<String, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let s: String = Deserialize::deserialize(deserializer)?;
-    Ok(s)
-}
-
 #[derive(Params, Debug, PartialEq, Clone, Serialize, Deserialize)]
 struct OAuthQuery {
     pub code: String,
-    #[serde(deserialize_with = "deserialize_as_string")]
     pub state: String,
 }
 
@@ -185,9 +175,8 @@ async fn handle_oauth_query_for_external_client(
     oauth_query: OAuthQuery,
 ) -> Result<(), ServerFnError> {
     leptos_axum::redirect(&format!(
-        "{}?oauth={}",
-        client_redirect_uri,
-        serde_json::to_string(&oauth_query).unwrap()
+        "{}?code={}&state={}",
+        client_redirect_uri, oauth_query.code, oauth_query.state
     ));
     Ok(())
 }
