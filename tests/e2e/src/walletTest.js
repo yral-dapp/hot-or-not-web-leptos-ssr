@@ -13,9 +13,9 @@ describe("wallet page tests", function () {
     
         browser.pause(10000);
         
-        const coynIsVisible = browser.element.findByText("GDOLR", { timeout: 10000 }).isPresent();
-        if (!coynIsVisible) {
-            browser.element.findByText("100", { timeout: 10000 }).waitUntil('visible', { timeout: 10000 }).assert.enabled();
+        const gdolrIsPresent = browser.element.findByText("GDOLR", { timeout: 10000 }).isPresent();
+        if (gdolrIsPresent) {
+            browser.element.findByText("1000", { timeout: 10000 }).waitUntil('visible', { timeout: 10000 }).assert.enabled();
         } else {
             browser.element.findByText("COYNS", { timeout: 10000 }).waitUntil('visible', { timeout: 10000 }).assert.enabled();
             browser.element.findByText("1000", { timeout: 10000 }).waitUntil('visible', { timeout: 10000 }).assert.enabled();
