@@ -48,7 +48,7 @@ fn compute_game_result(running_data: GameRunningData, raw_result: RawGameResult)
             amount: running_data.pumps as u128 + running_data.dumps as u128,
         }
     } else {
-        let amount = (user_bet_count / raw_result.bet_count) * raw_result.reward_pool;
+        let amount = (user_bet_count * raw_result.reward_pool) / raw_result.bet_count;
         let amount = convert_e8s_to_gdolr(amount);
         GameResult::Win { amount }
     }
