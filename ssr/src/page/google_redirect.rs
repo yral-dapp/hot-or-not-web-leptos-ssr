@@ -276,12 +276,15 @@ pub fn GoogleRedirectHandler() -> impl IntoView {
 
 #[component]
 pub fn PreviewGoogleRedirector() -> impl IntoView {
+    let host = get_host();
     let google_redirect = create_local_resource(
         || {},
-        |_| async {
-            let host = get_host();
+        move |_| {
+            let host = host.clone();
+            async move {
             let google_auth_url = get_google_auth_url(host).await?;
             preview_google_auth_redirector(google_auth_url).await
+            }
         },
     );
     let do_close = create_rw_signal(false);
