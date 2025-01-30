@@ -5,11 +5,14 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use axum::{routing::get, Router};
-use hot_or_not_web_leptos_ssr::fallback::file_and_error_handler;
 use hot_or_not_web_leptos_ssr::{app::App, init::AppStateBuilder, state::server::AppState};
+use hot_or_not_web_leptos_ssr::{
+    fallback::file_and_error_handler, utils::host::is_host_a_preview_link,
+};
 use leptos::{get_configuration, logging::log, provide_context};
 use leptos_axum::handle_server_fns_with_context;
 use leptos_axum::{generate_route_list, LeptosRoutes};
+use tower_http::cors::{AllowOrigin, CorsLayer};
 
 pub async fn server_fn_handler(
     State(app_state): State<AppState>,
@@ -138,6 +141,15 @@ async fn main() {
         .route(
             "/api/*fn_name",
             get(server_fn_handler).post(server_fn_handler),
+        )
+        .layer(
+            CorsLayer::new().allow_origin(AllowOrigin::predicate(|origin, _| {
+                if let Ok(host) = origin.to_str() {
+                    is_host_a_preview_link(host)
+                } else {
+                    false
+                }
+            })),
         )
         .leptos_routes_with_handler(routes, get(leptos_routes_handler))
         .fallback(file_and_error_handler)
