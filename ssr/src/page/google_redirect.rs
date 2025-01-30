@@ -299,8 +299,9 @@ pub fn PreviewGoogleRedirector() -> impl IntoView {
     view! {
         <Suspense>
             {move || {
-                if let Some(Err(_)) = google_redirect() {
-                    do_close.set(true);
+                if let Some(Err(err)) = google_redirect() {
+                    log::info!("Error Redirecting {}", err)
+
                 }
                 None::<()>
             }}
@@ -324,8 +325,9 @@ pub fn GoogleRedirector() -> impl IntoView {
     view! {
         <Suspense>
             {move || {
-                if let Some(Err(e)) = google_redirect() {
-                    log::info!("error: {}", e)
+                if let Some(Err(_)) = google_redirect() {
+                    do_close.set(true)
+
                 }
                 None::<()>
             }}
