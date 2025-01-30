@@ -3,7 +3,7 @@ use leptos::{use_context, RwSignal, SignalGetUntracked};
 
 use yral_canisters_common::{utils::profile::ProfileDetails, Canisters};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct UserDetails {
     pub details: ProfileDetails,
     pub canister_id: Principal,

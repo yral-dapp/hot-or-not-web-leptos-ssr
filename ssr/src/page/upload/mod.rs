@@ -7,7 +7,7 @@ use crate::{
     state::canisters::auth_canisters_store,
     utils::{
         event_streaming::events::{VideoUploadInitiated, VideoUploadUploadButtonClicked},
-        host::show_cdao_page,
+        host::{show_cdao_page, show_pnd_page},
         web::FileWithUrl,
     },
 };
@@ -189,7 +189,7 @@ pub fn YralUploadPostPage() -> impl IntoView {
 
 #[component]
 pub fn UploadPostPage() -> impl IntoView {
-    if show_cdao_page() {
+    if show_cdao_page() || show_pnd_page() {
         view! { <CreatorDaoCreatePage /> }
     } else {
         view! { <YralUploadPostPage /> }

@@ -22,6 +22,13 @@ pub struct NSFWInfo {
     pub csam_detected: bool,
 }
 
+#[cfg(feature = "local-bin")]
+#[server]
+pub async fn get_nsfw_info(_base64_image: String) -> Result<NSFWInfo, ServerFnError> {
+    Ok(Default::default())
+}
+
+#[cfg(not(feature = "local-bin"))]
 #[server]
 pub async fn get_nsfw_info(base64_image: String) -> Result<NSFWInfo, ServerFnError> {
     use tonic::metadata::MetadataValue;
