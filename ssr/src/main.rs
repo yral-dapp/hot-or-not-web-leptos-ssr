@@ -145,7 +145,7 @@ async fn main() {
         .layer(
             CorsLayer::new().allow_origin(AllowOrigin::predicate(|origin, _| {
                 if let Ok(host) = origin.to_str() {
-                    is_host_a_preview_link(host)
+                    is_host_a_preview_link(host) || host == "yral.com"
                 } else {
                     false
                 }
