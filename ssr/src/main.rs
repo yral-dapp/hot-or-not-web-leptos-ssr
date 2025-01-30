@@ -76,7 +76,6 @@ pub async fn leptos_routes_handler(
 
             provide_context(app_state.grpc_icpump_search_channel.clone());
             provide_context(app_state.grpc_nsfw_channel.clone());
-            provide_context(app_state.http_client.clone());
         },
         App,
     );

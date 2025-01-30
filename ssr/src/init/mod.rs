@@ -10,7 +10,6 @@ use std::{
 use axum_extra::extract::cookie::Key;
 use leptos::LeptosOptions;
 use leptos_router::RouteListing;
-use reqwest::Client;
 
 use crate::{
     auth::server_impl::store::KVStoreImpl,
@@ -107,10 +106,6 @@ fn init_google_oauth() -> crate::auth::core_clients::CoreClients {
         hotornot_google_oauth,
         icpump_google_oauth,
     }
-}
-
-fn init_http_client() -> reqwest::Client {
-    Client::new()
 }
 
 #[cfg(feature = "firestore")]
@@ -301,7 +296,6 @@ impl AppStateBuilder {
             qstash: init_qstash_client(),
             grpc_icpump_search_channel: init_grpc_icpump_search_channel().await,
             grpc_nsfw_channel: init_grpc_nsfw_channel().await,
-            http_client: init_http_client(),
         };
 
         AppStateRes {
