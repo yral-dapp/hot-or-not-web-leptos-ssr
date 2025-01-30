@@ -42,11 +42,6 @@ pub fn is_host_a_preview_link(host: &str) -> bool {
     PR_PREVIEW_PATTERN.is_match_at(host, 0)
 }
 
-pub fn show_preview_component() -> bool {
-    let host = get_host();
-    host.contains("yral-dapp-hot-or-not-web-leptos-ssr.fly.dev")
-}
-
 pub fn show_cdao_condition(host: String) -> bool {
     host == "icpump.fun"
     // || host == "localhost:3000"

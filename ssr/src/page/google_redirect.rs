@@ -1,7 +1,6 @@
 use leptos::*;
 use leptos_router::*;
 use openidconnect::CsrfToken;
-use openidconnect::CsrfToken;
 use serde::{Deserialize, Serialize};
 use server_fn::codec::{GetUrl, Json};
 
@@ -190,7 +189,6 @@ struct OAuthState {
 }
 
 #[component]
-pub fn PreviewGoogleRedirectHandler() -> impl IntoView {
 pub fn PreviewGoogleRedirectHandler() -> impl IntoView {
     let query = use_query::<OAuthQuery>();
     let identity_resource = create_blocking_resource(query, |query_res| async move {
