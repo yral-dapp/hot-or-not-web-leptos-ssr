@@ -171,7 +171,7 @@ pub fn GameCard(#[prop()] token: ProcessedTokenListResponse) -> impl IntoView {
                              GameDirection::Dump => "dump",
                         }, result.bet_count, result.reward_pool);
                         let running_data = running_data
-                            .get()
+                            .get_untracked()
                             .expect("running data to exist if we have recieved results");
                         current_round.set_untracked(Some(CurrentRound(result.new_round)));
                         let result = compute_game_result(running_data, result);
