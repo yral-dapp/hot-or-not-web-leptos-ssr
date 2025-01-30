@@ -1,3 +1,5 @@
+use std::sync::LazyLock;
+
 pub fn get_host() -> String {
     #[cfg(feature = "hydrate")]
     {
@@ -22,6 +24,17 @@ pub fn get_host() -> String {
 pub fn show_cdao_page() -> bool {
     let host = get_host();
     show_cdao_condition(host)
+}
+
+#[cfg(feature = "ssr")]
+pub fn is_host_a_preview_link(host: &str) -> bool {
+    use regex::Regex;
+
+    static PR_PREVIEW_PATTERN: LazyLock<Regex> = LazyLock::new(|| {
+        Regex::new(r"^pr-\d*-yral-dapp-hot-or-not-web-leptos-ssr\.fly\.dev$").unwrap()
+    });
+
+    PR_PREVIEW_PATTERN.is_match_at(host, 0)
 }
 
 pub fn show_preview_component() -> bool {
