@@ -282,8 +282,8 @@ pub fn PreviewGoogleRedirector() -> impl IntoView {
         move |_| {
             let host = host.clone();
             async move {
-            let google_auth_url = get_google_auth_url(host).await?;
-            preview_google_auth_redirector(google_auth_url).await
+                let google_auth_url = get_google_auth_url(host).await?;
+                preview_google_auth_redirector(google_auth_url).await
             }
         },
     );
