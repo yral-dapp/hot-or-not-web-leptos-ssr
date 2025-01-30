@@ -111,7 +111,7 @@ fn init_google_oauth() -> crate::auth::core_clients::CoreClients {
 
 fn init_http_client() -> reqwest::Client {
     Client::new()
- }
+}
 
 #[cfg(feature = "firestore")]
 async fn init_firestoredb() -> firestore::FirestoreDb {
