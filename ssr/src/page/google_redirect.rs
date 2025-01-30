@@ -36,7 +36,7 @@ async fn preview_google_auth_redirector() -> Result<(), ServerFnError> {
     let host = headers.get("Host").unwrap().to_str().unwrap();
     let client_redirect_uri = format!("https://{}/auth/google_redirect", host);
 
-    let client = reqwest::Client::new();
+    let client: reqwest::Client = expect_context();
     let url = format!(
         "https://yral.com/api/google_auth_url?client_redirect_uri={}",
         client_redirect_uri
@@ -164,7 +164,7 @@ struct GoogleAuthRequestBody {
 async fn preview_handle_oauth_query(
     oauth_query: OAuthQuery,
 ) -> Result<DelegatedIdentityWire, ServerFnError> {
-    let client = reqwest::Client::new();
+    let client: reqwest::Client = expect_context();
 
     let yral_url = "https://yral.com/api/perform_google_auth".to_string();
 

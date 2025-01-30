@@ -17,6 +17,7 @@ pub mod server {
     use axum_extra::extract::cookie::Key;
     use leptos::LeptosOptions;
     use leptos_router::RouteListing;
+    use reqwest::Client;
     use yral_canisters_common::Canisters;
 
     #[derive(FromRef, Clone)]
@@ -40,5 +41,6 @@ pub mod server {
         pub qstash: crate::utils::qstash::QStashClient,
         pub grpc_icpump_search_channel: ICPumpSearchGrpcChannel,
         pub grpc_nsfw_channel: ICPumpNSFWGrpcChannel,
+        pub http_client: Client,
     }
 }
