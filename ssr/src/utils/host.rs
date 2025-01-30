@@ -26,6 +26,11 @@ pub fn show_cdao_page() -> bool {
     show_cdao_condition(host)
 }
 
+pub fn show_preview_component() -> bool {
+    let host = get_host();
+    host.contains("yral-dapp-hot-or-not-web-leptos-ssr.fly.dev")
+}
+
 #[cfg(feature = "ssr")]
 pub fn is_host_a_preview_link(host: &str) -> bool {
     use regex::Regex;
