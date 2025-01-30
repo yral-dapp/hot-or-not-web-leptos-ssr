@@ -117,7 +117,7 @@ ic-certification = "2.6.0"
 ciborium = "0.2.2"
 yral-metadata-client = { git = "https://github.com/yral-dapp/yral-metadata", rev = "56e3f1f1f5f452673bee17739520c800c1264295", optional = true }
 yral-metadata-types = { git = "https://github.com/yral-dapp/yral-metadata", rev = "56e3f1f1f5f452673bee17739520c800c1264295", optional = true }
-regex = { version = "1.11.1" }
+regex = { version = "1.11.1", optional = true  }
 
 [build-dependencies]
 tonic-build = { version = "0.12.0", default-features = false, features = [
@@ -165,6 +165,7 @@ ssr = [
     "tonic/transport",
     "tonic-build/transport",
     "speedate",
+    "dep:regex",
 ]
 # Fetch mock referral history instead of history via canister
 mock-referral-history = ["dep:rand_chacha", "k256/arithmetic"]
