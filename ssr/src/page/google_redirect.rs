@@ -163,11 +163,20 @@ async fn preview_handle_oauth_query(
 
     let oauth_request_body = GoogleAuthRequestBody { oauth: oauth_query };
 
-    let response = client
-        .post(yral_url)
-        .json(&oauth_request_body)
-        .send()
-        .await?;
+    let mut request = client.post(yral_url).json(&oauth_request_body);
+
+    request = {
+        #[cfg(target_arch = "wasm32")]
+        {
+            request.fetch_credentials_include()
+        }
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            request
+        }
+    };
+
+    let response = request.send().await?;
 
     if response.status().is_success() {
         let identity_wire: DelegatedIdentityWire = response.json().await?;
@@ -300,7 +309,6 @@ pub fn PreviewGoogleRedirector() -> impl IntoView {
             {move || {
                 if let Some(Err(err)) = google_redirect() {
                     log::info!("Error Redirecting {}", err)
-
                 }
                 None::<()>
             }}
@@ -326,7 +334,6 @@ pub fn GoogleRedirector() -> impl IntoView {
             {move || {
                 if let Some(Err(_)) = google_redirect() {
                     do_close.set(true)
-
                 }
                 None::<()>
             }}
