@@ -50,8 +50,7 @@ async fn preview_google_auth_redirector(redirect_url: String) -> Result<(), Serv
 
 #[cfg(feature = "ssr")]
 fn is_valid_redirect_uri_inner(client_redirect_uri: &str) -> Option<()> {
-    use regex::Regex;
-    use std::sync::LazyLock;
+    use crate::utils::host::is_host_a_preview_link;
 
     let parsed_uri = http::Uri::try_from(client_redirect_uri).ok()?;
 
@@ -64,11 +63,7 @@ fn is_valid_redirect_uri_inner(client_redirect_uri: &str) -> Option<()> {
         return Some(());
     }
 
-    static PR_PREVIEW_PATTERN: LazyLock<Regex> = LazyLock::new(|| {
-        Regex::new(r"^pr-\d*-yral-dapp-hot-or-not-web-leptos-ssr\.fly\.dev$").unwrap()
-    });
-
-    PR_PREVIEW_PATTERN.is_match_at(host, 0).then_some(())
+    is_host_a_preview_link(host).then_some(())
 }
 
 #[cfg(feature = "ssr")]
