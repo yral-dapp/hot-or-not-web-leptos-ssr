@@ -10,10 +10,11 @@ use hot_or_not_web_leptos_ssr::{
     app::App, init::AppStateBuilder, state::server::AppState,
     utils::host::is_host_or_origin_from_preview_domain,
 };
+use http::{header, Method};
 use leptos::{get_configuration, logging::log, provide_context};
 use leptos_axum::handle_server_fns_with_context;
 use leptos_axum::{generate_route_list, LeptosRoutes};
-use tower_http::cors::{AllowOrigin, Any, CorsLayer};
+use tower_http::cors::{AllowOrigin, CorsLayer};
 
 pub async fn server_fn_handler(
     State(app_state): State<AppState>,
@@ -145,8 +146,9 @@ async fn main() {
         )
         .layer(
             CorsLayer::new()
-                .allow_headers(Any)
-                .allow_methods(Any)
+                .allow_credentials(true)
+                .allow_headers([header::AUTHORIZATION, header::CONTENT_TYPE, header::ACCEPT])
+                .allow_methods([Method::POST, Method::GET, Method::PUT, Method::OPTIONS])
                 .allow_origin(AllowOrigin::predicate(|origin, _| {
                     if let Ok(host) = origin.to_str() {
                         is_host_or_origin_from_preview_domain(host) || host == "yral.com"
