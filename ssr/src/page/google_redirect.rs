@@ -4,7 +4,10 @@ use openidconnect::CsrfToken;
 use serde::{Deserialize, Serialize};
 use server_fn::codec::{GetUrl, Json};
 
-use crate::{component::loading::Loading, utils::route::go_to_root};
+use crate::{
+    component::loading::Loading,
+    utils::{host::get_host, route::go_to_root},
+};
 use yral_types::delegated_identity::DelegatedIdentityWire;
 
 pub type GoogleAuthMessage = Result<DelegatedIdentityWire, String>;
@@ -27,25 +30,21 @@ async fn google_auth_redirector() -> Result<(), ServerFnError> {
     Ok(())
 }
 
-#[server]
-async fn preview_google_auth_redirector() -> Result<(), ServerFnError> {
-    use http::header::HeaderMap;
-    use leptos_axum::extract;
-
-    let headers: HeaderMap = extract().await?;
-    let host = headers.get("Host").unwrap().to_str().unwrap();
+async fn get_google_auth_url(host: String) -> Result<String, ServerFnError> {
     let client_redirect_uri = format!("https://{}/auth/google_redirect", host);
-
-    let client = reqwest::Client::new();
     let url = format!(
         "https://yral.com/api/google_auth_url?client_redirect_uri={}",
         client_redirect_uri
     );
 
-    let redirect_url: String = client.get(url).send().await?.json().await?;
+    let redirect_url: String = reqwest::get(url).await?.json().await?;
 
+    Ok(redirect_url)
+}
+
+#[server]
+async fn preview_google_auth_redirector(redirect_url: String) -> Result<(), ServerFnError> {
     leptos_axum::redirect(&redirect_url);
-
     Ok(())
 }
 
@@ -150,18 +149,42 @@ async fn handle_oauth_query(oauth_query: OAuthQuery) -> GoogleAuthMessage {
     Ok(delegated)
 }
 
-#[server]
+#[derive(Serialize, Deserialize)]
+struct GoogleAuthRequestBody {
+    oauth: OAuthQuery,
+}
+
 async fn preview_handle_oauth_query(
     oauth_query: OAuthQuery,
 ) -> Result<DelegatedIdentityWire, ServerFnError> {
-    let client = reqwest::Client::new();
+    let client: reqwest::Client = reqwest::Client::new();
 
     let yral_url = "https://yral.com/api/perform_google_auth".to_string();
 
-    let response = client.post(yral_url).json(&oauth_query).send().await?;
+    let oauth_request_body = GoogleAuthRequestBody { oauth: oauth_query };
 
-    let result: DelegatedIdentityWire = response.json().await?;
-    Ok(result)
+    let mut request = client.post(yral_url).json(&oauth_request_body);
+
+    request = {
+        #[cfg(target_arch = "wasm32")]
+        {
+            request.fetch_credentials_include()
+        }
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            request
+        }
+    };
+
+    let response = request.send().await?;
+
+    if response.status().is_success() {
+        let identity_wire: DelegatedIdentityWire = response.json().await?;
+        Ok(identity_wire)
+    } else {
+        let err: ServerFnError = response.json().await?;
+        Err(err)
+    }
 }
 
 #[server]
@@ -191,7 +214,7 @@ struct OAuthState {
 #[component]
 pub fn PreviewGoogleRedirectHandler() -> impl IntoView {
     let query = use_query::<OAuthQuery>();
-    let identity_resource = create_blocking_resource(query, |query_res| async move {
+    let identity_resource = create_local_resource(query, |query_res| async move {
         if let Err(e) = query_res {
             return Err(format!("Invalid Params {}", e));
         }
@@ -261,7 +284,17 @@ pub fn GoogleRedirectHandler() -> impl IntoView {
 
 #[component]
 pub fn PreviewGoogleRedirector() -> impl IntoView {
-    let google_redirect = create_blocking_resource(|| {}, |_| preview_google_auth_redirector());
+    let host = get_host();
+    let google_redirect = create_local_resource(
+        || {},
+        move |_| {
+            let host = host.clone();
+            async move {
+                let google_auth_url = get_google_auth_url(host).await?;
+                preview_google_auth_redirector(google_auth_url).await
+            }
+        },
+    );
     let do_close = create_rw_signal(false);
     create_effect(move |_| {
         if !do_close() {
@@ -274,8 +307,8 @@ pub fn PreviewGoogleRedirector() -> impl IntoView {
     view! {
         <Suspense>
             {move || {
-                if let Some(Err(_)) = google_redirect() {
-                    do_close.set(true);
+                if let Some(Err(err)) = google_redirect() {
+                    log::info!("Error Redirecting {}", err)
                 }
                 None::<()>
             }}
@@ -300,7 +333,7 @@ pub fn GoogleRedirector() -> impl IntoView {
         <Suspense>
             {move || {
                 if let Some(Err(_)) = google_redirect() {
-                    do_close.set(true);
+                    do_close.set(true)
                 }
                 None::<()>
             }}
