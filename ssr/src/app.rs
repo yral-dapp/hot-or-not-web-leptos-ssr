@@ -1,26 +1,21 @@
+use crate::component::app_config::{AppState, AppType};
 use crate::page::icpump::ai::ICPumpAi;
 use crate::page::icpump::ICPumpLanding;
 
-use crate::utils::host::show_preview_component;
+use crate::utils::host::{get_host, show_preview_component};
 // use crate::page::wallet::TestIndex;
 use crate::{
     component::{base_route::BaseRoute, nav::NavBar},
     error_template::{AppError, ErrorTemplate},
     page::{
-        err::ServerErrorPage,
         leaderboard::Leaderboard,
-        logout::Logout,
         menu::{AuthorizedUserToSeedContent, Menu},
         post_view::{single_post::SinglePost, PostView, PostViewCtx},
-        privacy::PrivacyPolicy,
-        profile::{profile_post::ProfilePost, ProfilePostsContext, ProfileView},
-        refer_earn::ReferEarn,
+        profile::{ProfilePostsContext, ProfileView},
         root::RootPage,
         settings::Settings,
-        terms::TermsOfService,
         token::{
-            create::{CreateToken, CreateTokenCtx, CreateTokenSettings},
-            create_token_faq::CreateTokenFAQ,
+            create::{CreateToken, CreateTokenCtx},
             info::TokenInfo,
             transfer::TokenTransfer,
         },
@@ -83,8 +78,12 @@ fn GoogleAuthRedirectorRoute() -> impl IntoView {
 
 #[component]
 pub fn App() -> impl IntoView {
-    // Provides context that manages stylesheets, titles, meta tags, etc.
     provide_meta_context();
+    let host = get_host();
+    let app_state = AppState::from_host(&host);
+    provide_context(app_state.clone());
+
+    // Existing context providers
     provide_context(Canisters::default());
     provide_context(ContentSeedClient::default());
     provide_context(PostViewCtx::default());
@@ -107,7 +106,7 @@ pub fn App() -> impl IntoView {
         history_ctx.push(&loc.pathname.get());
     });
 
-    // Analytics
+    // Analytics setup
     let enable_ga4_script = create_rw_signal(false);
     #[cfg(feature = "ga4")]
     {
@@ -117,14 +116,11 @@ pub fn App() -> impl IntoView {
 
     view! {
         <Stylesheet id="leptos" href="/pkg/hot-or-not-leptos-ssr.css"/>
+        <Title text=app_state.name/>
+        <Link rel="manifest" href=app_state.manifest_path/>
+        <meta name="theme-color" content=app_state.theme_color/>
 
-        // sets the document title
-        <Title text="Yral"/>
-
-        <Link rel="manifest" href="/app.webmanifest"/>
-
-        // GA4 Global Site Tag (gtag.js) - Google Analytics
-        // G-6W5Q2MRX0E to test locally | G-PLNNETMSLM
+        // GA4 setup
         <Show when=enable_ga4_script>
             <Script
                 async_="true"
@@ -140,45 +136,41 @@ pub fn App() -> impl IntoView {
             </Script>
         </Show>
 
-        // <Script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js"></Script>
-        // <Script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js"></Script>
-
-        // content for this welcome page
         <Router fallback=|| view! { <NotFound/> }.into_view()>
             <main>
                 <Routes>
-                    // auth redirect routes exist outside main context
                     <GoogleAuthRedirectHandlerRoute/>
                     <GoogleAuthRedirectorRoute/>
-                    <Route path="" view=BaseRoute>
-                        <Route path="/" view=RootPage/>
-                        <Route path="/hot-or-not/:canister_id/:post_id" view=PostView/>
-                        <Route path="/post/:canister_id/:post_id" view=SinglePost/>
-                        <Route path="/profile/:canister_id/post/:post_id" view=ProfilePost/>
-                        <Route path="/upload" view=UploadPostPage/>
-                        <Route path="/error" view=ServerErrorPage/>
-                        <Route path="/menu" view=Menu/>
-                        <Route path="/settings" view=Settings/>
-                        <Route path="/refer-earn" view=ReferEarn/>
-                        <Route path="/profile/:id/:tab" view=ProfileView/>
-                        <Route path="/profile/:tab" view=ProfileView/>
-                        <Route path="/terms-of-service" view=TermsOfService/>
-                        <Route path="/privacy-policy" view=PrivacyPolicy/>
-                        <Route path="/wallet/:id" view=Wallet/>
-                        <Route path="/wallet" view=Wallet/>
-                        <Route path="/leaderboard" view=Leaderboard/>
-                        <Route path="/logout" view=Logout/>
-                        <Route path="/token/create" view=CreateToken/>
-                        <Route path="/token/create/settings" view=CreateTokenSettings/>
-                        <Route path="/token/create/faq" view=CreateTokenFAQ/>
-                        <Route path="/token/info/:token_root/:key_principal" view=TokenInfo/>
-                        <Route path="/token/info/:token_root" view=TokenInfo/>
-                        <Route path="/token/transfer/:token_root" view=TokenTransfer/>
-                        <Route path="/board" view=ICPumpLanding/>
-                        <Route path="/icpump-ai" view=ICPumpAi/>
-                    </Route>
-                </Routes>
 
+                    {move || match app_state.app_type {
+                        AppType::HotOrNot => view! {
+                            <Route path="" view=BaseRoute>
+                                <Route path="/hot-or-not/:canister_id/:post_id" view=PostView/>
+                                <Route path="/post/:canister_id/:post_id" view=SinglePost/>
+                            </Route>
+                        },
+                        AppType::ICPump => view! {
+                            <Route path="" view=BaseRoute>
+                                <Route path="/board" view=ICPumpLanding/>
+                                <Route path="/icpump-ai" view=ICPumpAi/>
+                                <Route path="/token/create" view=CreateToken/>
+                                <Route path="/token/info/:token_root/:key_principal" view=TokenInfo/>
+                                <Route path="/token/transfer/:token_root" view=TokenTransfer/>
+                            </Route>
+                        },
+                        AppType::YRAL => view! {
+                            <Route path="" view=BaseRoute>
+                                <Route path="/" view=RootPage/>
+                                <Route path="/upload" view=UploadPostPage/>
+                                <Route path="/profile/:id/:tab" view=ProfileView/>
+                                <Route path="/wallet/:id" view=Wallet/>
+                                <Route path="/menu" view=Menu/>
+                                <Route path="/settings" view=Settings/>
+                                <Route path="/leaderboard" view=Leaderboard/>
+                            </Route>
+                        }
+                    }}
+                </Routes>
             </main>
             <nav>
                 <NavBar/>

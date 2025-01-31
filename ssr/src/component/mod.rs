@@ -1,4 +1,5 @@
 pub mod airdrop_logo;
+pub mod app_config;
 pub mod auth_providers;
 pub mod back_btn;
 pub mod base_route;
@@ -10,6 +11,7 @@ pub mod connect;
 pub mod content_upload;
 pub mod dashbox;
 pub mod feed_popup;
+pub mod head;
 pub mod hn_icons;
 pub mod ic_symbol;
 pub mod icons;
