@@ -147,7 +147,7 @@ async fn main() {
         .layer(
             CorsLayer::new()
                 .allow_credentials(true)
-                .allow_headers([header::AUTHORIZATION, header::CONTENT_TYPE,  header::ACCEPT])
+                .allow_headers([header::AUTHORIZATION, header::CONTENT_TYPE, header::ACCEPT])
                 .allow_methods([Method::POST, Method::GET, Method::PUT])
                 .allow_origin(AllowOrigin::predicate(|origin, _| {
                     if let Ok(host) = origin.to_str() {
