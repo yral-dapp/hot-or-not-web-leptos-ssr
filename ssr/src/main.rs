@@ -13,7 +13,7 @@ use hot_or_not_web_leptos_ssr::{
 use leptos::{get_configuration, logging::log, provide_context};
 use leptos_axum::handle_server_fns_with_context;
 use leptos_axum::{generate_route_list, LeptosRoutes};
-use tower_http::cors::{AllowOrigin, CorsLayer};
+use tower_http::cors::{AllowOrigin, Any, CorsLayer};
 
 pub async fn server_fn_handler(
     State(app_state): State<AppState>,
@@ -144,13 +144,16 @@ async fn main() {
             get(server_fn_handler).post(server_fn_handler),
         )
         .layer(
-            CorsLayer::new().allow_origin(AllowOrigin::predicate(|origin, _| {
-                if let Ok(host) = origin.to_str() {
-                    is_host_or_origin_from_preview_domain(host) || host == "yral.com"
-                } else {
-                    false
-                }
-            })),
+            CorsLayer::new()
+                .allow_headers(Any)
+                .allow_methods(Any)
+                .allow_origin(AllowOrigin::predicate(|origin, _| {
+                    if let Ok(host) = origin.to_str() {
+                        is_host_or_origin_from_preview_domain(host) || host == "yral.com"
+                    } else {
+                        false
+                    }
+                })),
         )
         .leptos_routes_with_handler(routes, get(leptos_routes_handler))
         .fallback(file_and_error_handler)
