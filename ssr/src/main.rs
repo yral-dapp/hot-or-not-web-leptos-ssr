@@ -145,6 +145,7 @@ async fn main() {
         )
         .layer(
             CorsLayer::new()
+                .allow_credentials(true)
                 .allow_headers(Any)
                 .allow_methods(Any)
                 .allow_origin(AllowOrigin::predicate(|origin, _| {
