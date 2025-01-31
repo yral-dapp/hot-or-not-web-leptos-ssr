@@ -31,7 +31,7 @@ pub fn is_host_or_origin_from_preview_domain(uri: &str) -> bool {
     use regex::Regex;
 
     static PR_PREVIEW_PATTERN: LazyLock<Regex> = LazyLock::new(|| {
-        Regex::new(r"^https://pr-\d*-yral-dapp-hot-or-not-web-leptos-ssr\.fly\.dev$|^pr-\d*-yral-dapp-hot-or-not-web-leptos-ssr\.fly\.dev$").unwrap()
+        Regex::new(r"^(https:\/\/)?pr-\d*-yral-dapp-hot-or-not-web-leptos-ssr\.fly\.dev$").unwrap()
     });
 
     PR_PREVIEW_PATTERN.is_match_at(uri, 0)
