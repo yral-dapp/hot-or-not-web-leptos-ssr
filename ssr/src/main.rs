@@ -144,15 +144,6 @@ async fn main() {
             get(server_fn_handler).post(server_fn_handler),
         )
         .layer(
-<<<<<<< Updated upstream
-            CorsLayer::new().allow_origin(AllowOrigin::predicate(|origin, _| {
-                if let Ok(host) = origin.to_str() {
-                    is_host_or_origin_from_preview_domain(host) || host == "yral.com"
-                } else {
-                    false
-                }
-            })),
-=======
             CorsLayer::new()
                 .allow_headers(Any)
                 .allow_origin(AllowOrigin::predicate(|origin, _| {
@@ -162,7 +153,6 @@ async fn main() {
                         false
                     }
                 })),
->>>>>>> Stashed changes
         )
         .leptos_routes_with_handler(routes, get(leptos_routes_handler))
         .fallback(file_and_error_handler)
