@@ -37,7 +37,22 @@ async fn get_google_auth_url(host: String) -> Result<String, ServerFnError> {
         client_redirect_uri
     );
 
-    let redirect_url: String = reqwest::get(url).await?.json().await?;
+    let client = reqwest::Client::new();
+
+    let mut request = client.get(url);
+
+    request = {
+        #[cfg(target_arch = "wasm32")]
+        {
+            request.fetch_credentials_include()
+        }
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            request
+        }
+    };
+
+    let redirect_url: String = request.send().await?.json().await?;
 
     Ok(redirect_url)
 }
