@@ -1,10 +1,13 @@
 use candid::{Nat, Principal};
 use codee::string::FromToStringCodec;
+use leptos::Show;
 use leptos_use::use_cookie;
 use yral_canisters_common::cursored_data::token_roots::{TokenListResponse, TokenRootList};
 use yral_canisters_common::utils::token::{RootType, TokenMetadata, TokenOwner};
 use yral_canisters_common::Canisters;
+use yral_canisters_common::GDOLR_TOKEN_NAME;
 
+use crate::component::icons::padlock_icon::{PadlockClose, PadlockOpen};
 use crate::component::icons::{
     airdrop_icon::AirdropIcon, arrow_left_right_icon::ArrowLeftRightIcon,
     chevron_right_icon::ChevronRightIcon, send_icon::SendIcon, share_icon::ShareIcon,
@@ -54,7 +57,7 @@ pub fn TokenList(user_principal: Principal, user_canister: Principal) -> impl In
                 fetch_count=5
                 children=move |TokenListResponse{token_metadata, airdrop_claimed, root}, _ref| {
                     view! {
-                        <WalletCard user_principal token_meta_data=token_metadata is_airdrop_claimed=airdrop_claimed _ref=_ref.unwrap_or_default() is_utility_token=matches!(root, RootType::COYNS | RootType::GDOLR)/>
+                        <WalletCard user_principal token_metadata=token_metadata is_airdrop_claimed=airdrop_claimed _ref=_ref.unwrap_or_default() is_utility_token=matches!(root, RootType::COYNS | RootType::GDOLR)/>
                     }
                 }
             />
@@ -74,23 +77,25 @@ struct WalletCardOptionsContext {
 #[component]
 pub fn WalletCard(
     user_principal: Principal,
-    token_meta_data: TokenMetadata,
+    token_metadata: TokenMetadata,
     is_airdrop_claimed: bool,
     #[prop(optional)] is_utility_token: bool,
     #[prop(optional)] _ref: NodeRef<html::Div>,
 ) -> impl IntoView {
-    let root: String = token_meta_data
+    let root: String = token_metadata
         .root
         .map(|r| r.to_text())
-        .unwrap_or(token_meta_data.name.to_lowercase());
+        .unwrap_or(token_metadata.name.to_lowercase());
+
+    let is_gdolr = token_metadata.name == GDOLR_TOKEN_NAME;
 
     let share_link = create_rw_signal("".to_string());
 
-    let symbol = token_meta_data.symbol.clone();
+    let symbol = token_metadata.symbol.clone();
     let share_message = move || {
         format!(
         "Hey! Check out the token: {} I created on YRAL 👇 {}. I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter",
-        token_meta_data.symbol.clone(),
+        token_metadata.symbol.clone(),
         share_link.get(),
     )
     };
@@ -100,7 +105,7 @@ pub fn WalletCard(
     provide_context(WalletCardOptionsContext {
         is_utility_token,
         root,
-        token_owner: token_meta_data.token_owner,
+        token_owner: token_metadata.token_owner,
         user_principal,
     });
 
@@ -109,24 +114,47 @@ pub fn WalletCard(
     let claimed = create_rw_signal(is_airdrop_claimed);
     view! {
         <div node_ref=_ref class="flex flex-col gap-4 bg-neutral-900/90 rounded-lg w-full font-kumbh text-white p-4">
-            <div class="w-full flex items-center justify-between p-3 rounded-[4px] bg-neutral-800/70">
-                <div class="flex items-center gap-2">
-                    <img
-                        clone:token_meta_data
-                        src=token_meta_data.logo_b64.clone()
-                        alt=token_meta_data.name.clone()
-                        class="w-8 h-8 rounded-full object-cover"
-                    />
-                    <div class="text-sm font-medium uppercase truncate">{token_meta_data.name.clone()}</div>
+            <div class="flex flex-col gap-4 p-3 rounded-[4px] bg-neutral-800/70">
+                <div class="w-full flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <img
+                            clone:token_meta_data
+                            src=token_metadata.logo_b64.clone()
+                            alt=token_metadata.name.clone()
+                            class="w-8 h-8 rounded-full object-cover"
+                        />
+                        <div class="text-sm font-medium uppercase truncate">{token_metadata.name.clone()}</div>
+                    </div>
+                    <div class="flex flex-col items-end">
+                        {
+                            token_metadata.balance.map(|b| view! {
+                                <div class="text-lg font-medium">{b.humanize_float_truncate_to_dp(2)}</div>
+                            })
+                        }
+                        <div class="text-xs">{symbol}</div>
+                    </div>
                 </div>
-                <div class="flex flex-col items-end">
-                    {
-                        token_meta_data.balance.map(|b| view! {
-                            <div class="text-lg font-medium">{b.humanize_float_truncate_to_dp(2)}</div>
-                        })
-                    }
-                    <div class="text-xs">{symbol}</div>
-                </div>
+                <Show when=move || is_gdolr>
+                    <div class="border-t border-neutral-700 flex flex-col pt-4 gap-2">
+                        <div class="flex items-center">
+                            <Icon class="text-neutral-300" icon=token_metadata.withdrawable_balance.as_ref().map(|_| PadlockOpen).unwrap_or(PadlockClose) />
+                            <span class="text-neutral-400 text-xs flex-1 mx-2">{match token_metadata.withdrawable_balance.as_ref() {
+                                Some(_) => Some("gDOLRs you can withdraw".to_string()),
+                                None => Some("Earn 400 gDOLRs more to unlock.".into()),
+                            }}</span>
+                            <span class="ml-auto">{token_metadata.withdrawable_balance.as_ref().map(|b| b.humanize())}</span>
+                        </div>
+                        <a
+                            class="rounded-lg px-5 py-2 text-sm text-center font-bold"
+                            class=(["pointer-events-none", "text-[#F6B0D6]"], token_metadata.withdrawable_balance.is_none())
+                            class=(["text-neutral-50"], token_metadata.withdrawable_balance.is_some())
+                            style:background=token_metadata.withdrawable_balance.as_ref().map(|_| "linear-gradient(218.27deg, #FF78C1 9.83%, #E2017B 44.79%, #5F0938 78.48%)").unwrap_or("linear-gradient(237.35deg, #DE98BE 19.96%, #C45D95 45.4%, #81546D 98.22%)")
+                            href="/pnd/withdraw"
+                        >
+                            Withdraw
+                        </a>
+                    </div>
+                </Show>
             </div>
 
             <WalletCardOptions pop_up=pop_up.write_only() share_link=share_link.write_only() airdrop_popup buffer_signal claimed/>
@@ -143,8 +171,8 @@ pub fn WalletCard(
                 <div class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 max-w-[560px] max-h-[634px] min-w-[343px] min-h-[480px] backdrop-blur-lg rounded-lg">
                     <div class="rounded-lg z-[500]">
                         <AirdropPopup
-                            name=token_meta_data.name.clone()
-                            logo=token_meta_data.logo_b64.clone()
+                            name=token_metadata.name.clone()
+                            logo=token_metadata.logo_b64.clone()
                             buffer_signal
                             claimed
                             airdrop_popup

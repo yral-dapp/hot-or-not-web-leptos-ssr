@@ -90,8 +90,8 @@ hmac = { version = "0.12.1", optional = true }
 wasm-bindgen-futures = { version = "0.4.42" }
 testcontainers = { version = "0.20.0", optional = true }
 yral-testcontainers = { git = "https://github.com/yral-dapp/yral-testcontainers", rev = "7438ba7cb281e7f195cf81f2a8532f63ce005771", optional = true }
-sns-validation = { git = "https://github.com/yral-dapp/yral-common.git", rev = "ade8d78fa7cd76f594494005f4667617b680dd4f" }
-yral-grpc-traits = { git = "https://github.com/yral-dapp/yral-common.git", rev = "ade8d78fa7cd76f594494005f4667617b680dd4f" }
+sns-validation = { git = "https://github.com/yral-dapp/yral-common.git", rev = "6ed7d3a0c0a0fdee2be10088a06929a24c3b0f8b" }
+yral-grpc-traits = { git = "https://github.com/yral-dapp/yral-common.git", rev = "6ed7d3a0c0a0fdee2be10088a06929a24c3b0f8b" }
 js-sys = "0.3.69"
 tonic-web-wasm-client = { version = "0.6" }
 tonic = { version = "0.12.0", default-features = false, features = [
@@ -106,18 +106,18 @@ firestore = { version = "0.43.1", default-features = false, features = [
 ], optional = true }
 speedate = { version = "0.14.4", optional = true }
 urlencoding = "2.1.3"
-yral-types = { git = "https://github.com/yral-dapp/yral-common.git", rev = "ade8d78fa7cd76f594494005f4667617b680dd4f" }
-yral-qstash-types = { git = "https://github.com/yral-dapp/yral-common.git", rev = "ade8d78fa7cd76f594494005f4667617b680dd4f" }
-yral-canisters-client = { git = "https://github.com/yral-dapp/yral-common.git", rev = "ade8d78fa7cd76f594494005f4667617b680dd4f", features = [
+yral-types = { git = "https://github.com/yral-dapp/yral-common.git", rev = "6ed7d3a0c0a0fdee2be10088a06929a24c3b0f8b" }
+yral-qstash-types = { git = "https://github.com/yral-dapp/yral-common.git", rev = "6ed7d3a0c0a0fdee2be10088a06929a24c3b0f8b" }
+yral-canisters-client = { git = "https://github.com/yral-dapp/yral-common.git", rev = "6ed7d3a0c0a0fdee2be10088a06929a24c3b0f8b", features = [
     "full",
 ] }
-yral-canisters-common = { git = "https://github.com/yral-dapp/yral-common.git", rev = "ade8d78fa7cd76f594494005f4667617b680dd4f" }
+yral-canisters-common = { git = "https://github.com/yral-dapp/yral-common.git", rev = "6ed7d3a0c0a0fdee2be10088a06929a24c3b0f8b" }
 pulldown-cmark = "0.12.1"
 ic-certification = "2.6.0"
 ciborium = "0.2.2"
 yral-metadata-client = { git = "https://github.com/yral-dapp/yral-metadata", rev = "56e3f1f1f5f452673bee17739520c800c1264295", optional = true }
 yral-metadata-types = { git = "https://github.com/yral-dapp/yral-metadata", rev = "56e3f1f1f5f452673bee17739520c800c1264295", optional = true }
-yral-pump-n-dump-common = { git = "https://github.com/yral-dapp/yral-common", features = ["client"], rev = "ade8d78fa7cd76f594494005f4667617b680dd4f", version = "0.1.0" }
+yral-pump-n-dump-common = { git = "https://github.com/yral-dapp/yral-common", features = ["client"], rev = "6ed7d3a0c0a0fdee2be10088a06929a24c3b0f8b", version = "0.1.0" }
 uuid = { version = "1.11.0", features = ["serde", "v4"] }
 regex = { version = "1.11.1", optional = true  }
 
