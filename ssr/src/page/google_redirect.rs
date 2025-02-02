@@ -320,7 +320,6 @@ pub fn PreviewGoogleRedirector() -> impl IntoView {
         Ok::<(), ServerFnError>(())
     });
 
-
     let do_close = create_rw_signal(false);
     create_effect(move |_| {
         if !do_close() {
