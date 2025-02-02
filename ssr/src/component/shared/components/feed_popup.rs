@@ -1,7 +1,5 @@
 use leptos::{ev::MouseEvent, *};
 
-use crate::component::connect::ConnectLogin;
-
 #[component]
 pub fn FeedPopUp<F: Fn(MouseEvent) + 'static>(
     on_click: F,

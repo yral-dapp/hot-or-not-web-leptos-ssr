@@ -1,4 +1,4 @@
-use super::spinner::Spinner;
+use crate::component::shared::assets::spinner::Spinner;
 use crate::{
     auth::delegate_short_lived_identity,
     page::menu::AuthorizedUserToSeedContent,

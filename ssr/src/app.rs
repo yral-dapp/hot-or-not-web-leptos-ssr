@@ -4,7 +4,7 @@ use crate::page::icpump::ICPumpLanding;
 use crate::utils::host::show_preview_component;
 // use crate::page::wallet::TestIndex;
 use crate::{
-    component::{base_route::BaseRoute, nav::NavBar},
+    component::shared::components::{base_route::BaseRoute, nav::NavBar},
     error_template::{AppError, ErrorTemplate},
     page::{
         err::ServerErrorPage,

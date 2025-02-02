@@ -1,7 +1,5 @@
-use super::{
-    auth_providers::LoginProviders,
-    overlay::{ShadowOverlay, ShowOverlay},
-};
+use super::auth_providers::LoginProviders;
+use crate::component::shared::assets::overlay::{ShadowOverlay, ShowOverlay};
 use leptos::*;
 
 #[component]

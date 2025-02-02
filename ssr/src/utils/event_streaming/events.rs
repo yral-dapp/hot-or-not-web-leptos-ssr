@@ -9,7 +9,7 @@ use sns_validation::pbs::sns_pb::SnsInitPayload;
 use wasm_bindgen::JsCast;
 
 use super::EventHistory;
-use crate::component::auth_providers::ProviderKind;
+use crate::component::shared::components::auth_providers::ProviderKind;
 use crate::state::auth::account_connected_reader;
 use crate::state::canisters::auth_canisters_store;
 use crate::state::history::HistoryCtx;

@@ -1,4 +1,3 @@
-use super::bullet_loader::BulletLoader;
 use leptos::{html::ElementDescriptor, *};
 use leptos_use::{use_intersection_observer_with_options, UseIntersectionObserverOptions};
 use std::marker::PhantomData;
