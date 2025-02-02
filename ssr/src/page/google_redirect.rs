@@ -197,8 +197,8 @@ async fn preview_handle_oauth_query(
         let identity_wire: DelegatedIdentityWire = response.json().await?;
         Ok(identity_wire)
     } else {
-        let err: ServerFnError = response.json().await?;
-        Err(err)
+        let err = response.text().await?;
+        Err(ServerFnError::new(err))
     }
 }
 
