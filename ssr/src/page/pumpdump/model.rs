@@ -23,6 +23,7 @@ fn estimate_player_count(num: u64) -> u64 {
     res.round() as u64
 }
 
+// TODO: use leptos::slice to achieve the same effect
 /// The data that is required when game is being played by the user
 ///
 /// This data is kept out of GameState so that mutating pumps and dumps doesn't
