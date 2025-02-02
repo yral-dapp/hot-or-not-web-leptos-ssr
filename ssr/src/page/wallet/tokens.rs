@@ -7,6 +7,7 @@ use yral_canisters_common::utils::token::{RootType, TokenMetadata, TokenOwner};
 use yral_canisters_common::Canisters;
 use yral_canisters_common::GDOLR_TOKEN_NAME;
 
+use crate::component::icons::information_icon::Information;
 use crate::component::icons::padlock_icon::{PadlockClose, PadlockOpen};
 use crate::component::icons::{
     airdrop_icon::AirdropIcon, arrow_left_right_icon::ArrowLeftRightIcon,
@@ -15,6 +16,7 @@ use crate::component::icons::{
 use crate::component::overlay::PopupOverlay;
 use crate::component::overlay::ShadowOverlay;
 use crate::component::share_popup::ShareContent;
+use crate::component::tooltip::Tooltip;
 use crate::consts::USER_PRINCIPAL_STORE;
 use crate::page::icpump::{ActionButton, ActionButtonLink};
 use crate::page::wallet::airdrop::AirdropPopup;
@@ -138,10 +140,11 @@ pub fn WalletCard(
                     <div class="border-t border-neutral-700 flex flex-col pt-4 gap-2">
                         <div class="flex items-center">
                             <Icon class="text-neutral-300" icon=token_metadata.withdrawable_balance.as_ref().map(|_| PadlockOpen).unwrap_or(PadlockClose) />
-                            <span class="text-neutral-400 text-xs flex-1 mx-2">{match token_metadata.withdrawable_balance.as_ref() {
+                            <span class="text-neutral-400 text-xs mx-2">{match token_metadata.withdrawable_balance.as_ref() {
                                 Some(_) => Some("gDOLRs you can withdraw".to_string()),
                                 None => Some("Earn 400 gDOLRs more to unlock.".into()),
                             }}</span>
+                            <Tooltip icon=Information title="Withdrawal Tokens" description="Only gDOLRs earned above your airdrop amount can be withdrawn." />
                             <span class="ml-auto">{token_metadata.withdrawable_balance.as_ref().map(|b| b.humanize())}</span>
                         </div>
                         <a
