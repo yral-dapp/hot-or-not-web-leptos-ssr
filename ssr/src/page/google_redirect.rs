@@ -305,11 +305,22 @@ pub fn PreviewGoogleRedirector() -> impl IntoView {
         move |_| {
             let host = host.clone();
             async move {
-                let google_auth_url = get_google_auth_url(host).await?;
-                preview_google_auth_redirector(google_auth_url).await
+                let url = get_google_auth_url(host).await?;
+                Ok::<String, ServerFnError>(url)
             }
         },
     );
+
+    create_local_resource(google_redirect, |url_res| async {
+        let url_res = url_res.transpose()?;
+        if let Some(redirect_url) = url_res {
+            preview_google_auth_redirector(redirect_url).await?;
+            return Ok(());
+        }
+        Ok::<(), ServerFnError>(())
+    });
+
+
     let do_close = create_rw_signal(false);
     create_effect(move |_| {
         if !do_close() {
