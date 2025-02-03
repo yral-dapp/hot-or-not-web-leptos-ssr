@@ -18,6 +18,10 @@ module.exports = {
           950: "rgb(var(--color-primary-950))",
         },
       },
+      backgroundImage: {
+        "brand-gradient": "var(--color-brand-gradient)",
+        "brand-gradient-disabled": "var(--color-brand-gradient-disabled)",
+      },
       keyframes: {
         "blink-colors": {
           "0%": { color: "red" },

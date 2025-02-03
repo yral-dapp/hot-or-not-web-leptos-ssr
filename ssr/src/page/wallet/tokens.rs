@@ -149,9 +149,8 @@ pub fn WalletCard(
                         </div>
                         <a
                             class="rounded-lg px-5 py-2 text-sm text-center font-bold"
-                            class=(["pointer-events-none", "text-[#F6B0D6]"], token_metadata.withdrawable_balance.is_none())
-                            class=(["text-neutral-50"], token_metadata.withdrawable_balance.is_some())
-                            style:background=token_metadata.withdrawable_balance.as_ref().map(|_| "linear-gradient(218.27deg, #FF78C1 9.83%, #E2017B 44.79%, #5F0938 78.48%)").unwrap_or("linear-gradient(237.35deg, #DE98BE 19.96%, #C45D95 45.4%, #81546D 98.22%)")
+                            class=(["pointer-events-none", "text-[#F6B0D6]", "bg-brand-gradient-disabled"], token_metadata.withdrawable_balance.is_none())
+                            class=(["text-neutral-50", "bg-brand-gradient"], token_metadata.withdrawable_balance.is_some())
                             href="/pnd/withdraw"
                         >
                             Withdraw

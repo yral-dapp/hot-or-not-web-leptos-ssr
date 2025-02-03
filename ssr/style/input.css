@@ -15,6 +15,9 @@
         --color-primary-800: 165 3 90;
         --color-primary-900: 115 2 62;
         --color-primary-950: 80 1 43;
+
+        --color-brand-gradient: linear-gradient(218.27deg, #FF78C1 9.83%, #E2017B 44.79%, #5F0938 78.48%);
+        --color-brand-grandient-disabled: linear-gradient(237.35deg, #DE98BE 19.96%, #C45D95 45.4%, #81546D 98.22%);
     }
 }
 
