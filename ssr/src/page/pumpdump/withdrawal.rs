@@ -7,6 +7,8 @@ use crate::component::{
     tooltip::Tooltip,
 };
 
+pub mod result;
+
 #[component]
 pub fn PndWithdrawal() -> impl IntoView {
     view! {

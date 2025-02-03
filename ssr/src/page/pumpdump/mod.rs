@@ -16,9 +16,8 @@ use crate::{
 
 pub mod profile;
 pub use profile::*;
-pub mod withdrawal;
-pub use withdrawal::*;
 pub mod test;
+pub mod withdrawal;
 pub use test::*;
 
 pub(super) mod model;

@@ -1,7 +1,7 @@
 use crate::page::icpump::ai::ICPumpAi;
 use crate::page::icpump::ICPumpLanding;
 
-use crate::page::pumpdump::{test::PndTest, PndProfilePage, PndWithdrawal};
+use crate::page::pumpdump::{test::PndTest, withdrawal, PndProfilePage};
 use crate::utils::host::show_preview_component;
 // use crate::page::wallet::TestIndex;
 use crate::{
@@ -179,7 +179,9 @@ pub fn App() -> impl IntoView {
                         <Route path="/board" view=ICPumpLanding/>
                         <Route path="/icpump-ai" view=ICPumpAi/>
                         <Route path="/pnd/test/:token_root" view=PndTest />
-                        <Route path="/pnd/withdraw" view=PndWithdrawal />
+                        <Route path="/pnd/withdraw" view=withdrawal::PndWithdrawal />
+                        <Route path="/pnd/withdraw/success" view=withdrawal::result::Success />
+                        <Route path="/pnd/withdraw/failure" view=withdrawal::result::Failure />
                     // <Route path="/test" view=TestIndex/>
                     </Route>
                 </Routes>
