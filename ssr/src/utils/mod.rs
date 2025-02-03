@@ -108,7 +108,8 @@ pub fn stream_url(uid: impl Display) -> String {
 }
 
 pub fn mp4_url(uid: impl Display) -> String {
-    format!("{CF_STREAM_BASE}/{uid}/downloads/default.mp4")
+    // dont worry about the key in the url below, it will be destroyed automatically in a couple days
+    format!("https://link.storjshare.io/raw/jv43kl3kcxrap5srqqbapeuhqo4a/test-bucket/{uid}.mp4")
 }
 
 #[cfg(all(feature = "ga4", feature = "ssr"))]
