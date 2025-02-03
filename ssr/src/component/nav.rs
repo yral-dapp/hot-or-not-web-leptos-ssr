@@ -93,6 +93,9 @@ fn pnd_nav_items() -> Vec<NavItem> {
                 href: "/wallet".into(),
             },
             matcher: Rc::new(move || {
+                if path.get().starts_with("/pnd/withdraw") {
+                    return true;
+                }
                 // is selected only if the user is viewing their own wallet
                 let Some(user_principal) = user_principal.get() else {
                     return false;
