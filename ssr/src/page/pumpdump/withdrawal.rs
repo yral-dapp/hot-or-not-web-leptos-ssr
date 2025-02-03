@@ -12,7 +12,7 @@ pub mod result;
 #[component]
 pub fn PndWithdrawal() -> impl IntoView {
     view! {
-        <div class="min-h-screen w-full flex flex-col text-white pt-2 pb-12 bg-black items-center">
+        <div class="min-h-screen w-full flex flex-col text-white pt-2 pb-12 bg-black items-center overflow-x-hidden">
             <div id="back-nav" class="flex flex-col items-center w-full gap-20 pb-16">
                 <Title justify_center=false>
                     <div class="flex flex-row justify-between">

@@ -155,7 +155,7 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
         },
     );
     view! {
-        <div class="flex flex-col gap-4 pt-4 pb-12 bg-black min-h-dvh font-kumbh">
+        <div class="flex flex-col gap-4 pt-4 pb-12 bg-black min-h-dvh font-kumbh overflow-x-hidden">
 
                 <Suspense>
                     {move || {
