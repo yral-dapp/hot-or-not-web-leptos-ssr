@@ -4,7 +4,6 @@ use k256::elliptic_curve::JwkEcKey;
 use leptos::*;
 use leptos_router::*;
 use leptos_use::use_cookie;
-use serde::{Deserialize, Serialize};
 use yral_types::delegated_identity::DelegatedIdentityWire;
 
 use crate::auth::delegate_identity;
@@ -34,15 +33,14 @@ struct Referrer {
     user_refer: String,
 }
 
-#[derive(Serialize, Deserialize)]
-struct ExtractIdentity;
-
 pub async fn extract_identity_from_yral_auth(
 ) -> Result<Option<DelegatedIdentityWire>, ServerFnError> {
     let client = reqwest::Client::new();
     let yral_url = "https://yral.com/api/extract_identity";
 
-    let mut request = client.post(yral_url).json(&ExtractIdentity {});
+    let req_body = serde_json::json!({});
+
+    let mut request = client.post(yral_url).json(&req_body);
 
     request = {
         #[cfg(target_arch = "wasm32")]
