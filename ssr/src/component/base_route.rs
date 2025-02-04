@@ -33,12 +33,14 @@ struct Referrer {
     user_refer: String,
 }
 
+struct ExtractIdentity;
+
 pub async fn extract_identity_from_yral_auth(
 ) -> Result<Option<DelegatedIdentityWire>, ServerFnError> {
     let client = reqwest::Client::new();
     let yral_url = "https://yral.com/api/extract_identity";
 
-    let mut request = client.post(yral_url).json(&());
+    let mut request = client.post(yral_url).json(&ExtractIdentity {});
 
     request = {
         #[cfg(target_arch = "wasm32")]
