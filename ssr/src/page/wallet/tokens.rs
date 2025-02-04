@@ -129,7 +129,7 @@ pub fn WalletCard(
             WithdrawalState::Value(_) => "gDORLs you can withdraw".to_string(),
             WithdrawalState::NeedMoreEarnings(more) => format!(
                 "Earn {} gDORLs more to unlock",
-                TokenBalance::new(more.clone() * 100usize, 8).humanize()
+                TokenBalance::new(more.clone() * 100usize, 8).humanize_float_truncate_to_dp(2)
             ),
         });
     let withdraw_message = create_rw_signal(withdraw_message);
@@ -138,7 +138,7 @@ pub fn WalletCard(
         .as_ref()
         .and_then(|state| match state {
             WithdrawalState::Value(bal) => {
-                Some(TokenBalance::new(bal.clone() * 100usize, 8).humanize())
+                Some(TokenBalance::new(bal.clone() * 100usize, 8).humanize_float_truncate_to_dp(2))
             }
             WithdrawalState::NeedMoreEarnings(..) => None,
         });
