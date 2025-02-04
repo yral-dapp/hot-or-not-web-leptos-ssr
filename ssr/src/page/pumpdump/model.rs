@@ -1,7 +1,7 @@
 use candid::{Nat, Principal};
 use leptos::Params;
 use leptos_router::Params;
-use yral_pump_n_dump_common::rest::UserBetsResponse;
+use yral_pump_n_dump_common::rest::{BalanceInfoResponse, UserBetsResponse};
 
 use crate::consts::PUMP_AND_DUMP_WORKER_URL;
 
@@ -171,14 +171,13 @@ impl PlayerData {
             .parse()
             .map_err(|_| "Couldn't parse nat number".to_string())?;
 
-        let wallet_balance: Nat = reqwest::get(balance_url)
+        let wallet_balance: BalanceInfoResponse = reqwest::get(balance_url)
             .await
             .map_err(|_| "failed to load balance".to_string())?
-            .text()
+            .json()
             .await
-            .map_err(|_| "failed to read response body".to_string())?
-            .parse()
-            .map_err(|_| "Couldn't parse nat number".to_string())?;
+            .map_err(|_| "failed to read response body".to_string())?;
+        let wallet_balance = wallet_balance.balance;
 
         let wallet_balance = convert_e8s_to_gdolr(wallet_balance);
 
