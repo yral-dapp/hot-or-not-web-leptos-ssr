@@ -4,6 +4,7 @@ use k256::elliptic_curve::JwkEcKey;
 use leptos::*;
 use leptos_router::*;
 use leptos_use::use_cookie;
+use serde::{Deserialize, Serialize};
 use yral_types::delegated_identity::DelegatedIdentityWire;
 
 use crate::auth::delegate_identity;
@@ -33,6 +34,7 @@ struct Referrer {
     user_refer: String,
 }
 
+#[derive(Serialize, Deserialize)]
 struct ExtractIdentity;
 
 pub async fn extract_identity_from_yral_auth(
