@@ -25,6 +25,7 @@ pub mod overlay;
 pub mod profile_placeholders;
 pub mod scrolling_post_view;
 pub mod share_popup;
+pub mod skeleton;
 pub mod social;
 pub mod spinner;
 pub mod title;
