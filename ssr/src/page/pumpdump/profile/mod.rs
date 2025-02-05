@@ -11,7 +11,7 @@ use yral_canisters_client::individual_user_template::{
 use yral_canisters_common::{utils::profile::ProfileDetails, Canisters};
 
 use crate::{
-    component::{back_btn::BackButton, title::Title},
+    component::{back_btn::BackButton, skeleton::Skeleton, title::Title},
     page::pumpdump::{convert_e8s_to_gdolr, GameResult},
     state::canisters::authenticated_canisters,
 };
@@ -172,6 +172,13 @@ fn ProfileDataSection(#[prop(into)] profile_data: ProfileData) -> impl IntoView 
 }
 
 #[component]
+fn GameplayHistorySkeleton() -> impl IntoView {
+    view! {
+        <Skeleton class="text-neutral-800 [--shimmer:#363636] w-32 h-40 rounded-md" />
+    }
+}
+
+#[component]
 fn GameplayHistoryCard(#[prop(into)] details: GameplayHistoryItem) -> impl IntoView {
     let state = details.state;
     let href = {
@@ -290,7 +297,7 @@ pub fn PndProfilePage() -> impl IntoView {
     });
 
     let scroll_container = NodeRef::<Div>::new();
-    let _ = use_infinite_scroll_with_options(
+    let is_loading = use_infinite_scroll_with_options(
         scroll_container,
         move |_| async move {
             if !should_load_more.get() {
@@ -325,6 +332,11 @@ pub fn PndProfilePage() -> impl IntoView {
                     <For each=move || gameplay_history.get().into_iter().enumerate() key=|(idx, _)| *idx let:item>
                         <GameplayHistoryCard details=item.1 />
                     </For>
+                    <Show when=move || is_loading() && should_load_more.get_untracked()>
+                        <For each=move || 0..6 key=|&idx| idx let:_>
+                            <GameplayHistorySkeleton />
+                        </For>
+                    </Show>
                 </div>
             </div>
         </div>
