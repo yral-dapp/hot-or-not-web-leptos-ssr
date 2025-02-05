@@ -14,15 +14,15 @@ jobs:
       publish-artifact: true
 
   destroy_preview:
-  if: ${{github.event.pull_request.state == 'closed'}}
-  environment:
-    name: pr-${{ github.event.number }}
-    url: ${{ steps.deploy.outputs.url }}
+    if: ${{github.event.pull_request.state == 'closed'}}
+    environment:
+      name: pr-${{ github.event.number }}
+      url: ${{ steps.deploy.outputs.url }}
 
-  steps:
-    - name: Deploy
-      id: destroy
-      uses: superfly/fly-pr-review-apps@1.2.1
+    steps:
+      - name: Deploy
+        id: destroy
+        uses: superfly/fly-pr-review-apps@1.2.1
 
   preview:
     if: ${{ github.event.pull_request.state == 'open'}}
