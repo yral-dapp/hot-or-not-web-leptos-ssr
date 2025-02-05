@@ -15,6 +15,7 @@ jobs:
 
   destroy_preview:
     if: ${{github.event.pull_request.state == 'closed'}}
+    runs-on: ubuntu-latest
     environment:
       name: pr-${{ github.event.number }}
       url: ${{ steps.deploy.outputs.url }}
