@@ -28,7 +28,10 @@ use context::*;
 
 pub(super) mod components;
 use components::header::Header;
-use components::{card::GameCard, onboarding::OnboardingPopup};
+use components::{
+    card::{CardSkeleton, GameCard},
+    onboarding::OnboardingPopup,
+};
 
 async fn load_selected_card(
     cans: &Canisters<true>,
@@ -207,7 +210,7 @@ pub fn PumpNDump() -> impl IntoView {
         }
     });
     let scroll_container = NodeRef::<Div>::new();
-    let _ = use_infinite_scroll_with_options(
+    let is_loading = use_infinite_scroll_with_options(
         scroll_container,
         move |_| async move {
             if !should_load_more.get() {
@@ -232,6 +235,9 @@ pub fn PumpNDump() -> impl IntoView {
                     <For each=move || tokens.get() key=|item| item.token_details.token_name.clone() let:token>
                         <GameCard token />
                     </For>
+                    <Show when=move || is_loading.get()>
+                        <CardSkeleton />
+                    </Show>
                 </div>
             </div>
             <Show when=move || show_onboarding.should_show()>
