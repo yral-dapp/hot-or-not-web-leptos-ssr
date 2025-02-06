@@ -19,7 +19,7 @@ impl AppState {
                 name: "Hot Or Not",
                 description: "Vote on the hottest content and earn rewards",
                 theme_color: "#FF4500",
-                manifest_path: "/manifest/hotornot.webmanifest",
+                manifest_path: "hotornot.json",
             },
             AppType::ICPump => Self {
                 app_type: AppType::ICPump,
@@ -27,7 +27,7 @@ impl AppState {
                 name: "ICPump Token Platform",
                 description: "Create and trade tokens on the Internet Computer",
                 theme_color: "#4CAF50",
-                manifest_path: "/manifest/icpump.webmanifest",
+                manifest_path: "icpump.json",
             },
             AppType::YRAL => Self {
                 app_type: AppType::YRAL,
@@ -35,7 +35,7 @@ impl AppState {
                 name: "YRAL Platform",
                 description: "The First App to Host Creative Short Video Challenges",
                 theme_color: "#E20479",
-                manifest_path: "/manifest/yral.webmanifest",
+                manifest_path: "yral.json",
             },
         }
     }
