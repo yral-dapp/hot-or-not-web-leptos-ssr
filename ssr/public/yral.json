@@ -1,0 +1,23 @@
+{
+    "short_name": "Yral",
+    "name": "Yral Platform",
+    "description": "The First App to Host Creative Short Video Challenges - Participate, Speculate, Gain Fame, Earn In Cryptocurrency",
+    "icons": [
+      {
+        "src": "/img/yral/android-chrome-192x192.png",
+        "sizes": "192x192",
+        "type": "image/png"
+      },
+      {
+        "src": "/img/yral/android-chrome-384x384.png",
+        "sizes": "384x384",
+        "type": "image/png"
+      }
+    ],
+    "theme_color": "#E20479",
+    "background_color": "#000",
+    "start_url": "/",
+    "display": "standalone",
+    "orientation": "portrait",
+    "scope": "/"
+  }

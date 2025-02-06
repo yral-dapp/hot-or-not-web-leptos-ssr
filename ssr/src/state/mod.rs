@@ -1,5 +1,7 @@
 #[cfg(feature = "backend-admin")]
 pub mod admin_canisters;
+pub mod app_state;
+pub mod app_type;
 pub mod audio_state;
 pub mod auth;
 pub mod canisters;
