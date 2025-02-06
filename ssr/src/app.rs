@@ -140,7 +140,6 @@ pub fn App() -> impl IntoView {
             <Stylesheet id="leptos" href="/pkg/hot-or-not-leptos-ssr.css"/>
             <Title text=app_state.name/>
             <Link rel="manifest" href=app_state.manifest_config()/>
-            <meta name="theme-color" content=app_state.theme_color/>
 
             // GA4 Global Site Tag (gtag.js) - Google Analytics
             // G-6W5Q2MRX0E to test locally | G-PLNNETMSLM
