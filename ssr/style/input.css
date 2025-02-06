@@ -15,6 +15,9 @@
         --color-primary-800: 165 3 90;
         --color-primary-900: 115 2 62;
         --color-primary-950: 80 1 43;
+
+        --color-brand-gradient: linear-gradient(218.27deg, #FF78C1 9.83%, #E2017B 44.79%, #5F0938 78.48%);
+        --color-brand-gradient-disabled: linear-gradient(237.35deg, #DE98BE 19.96%, #C45D95 45.4%, #81546D 98.22%);
     }
 }
 
@@ -72,6 +75,31 @@
     to {
         transform: scale3d(1, 1, 1);
     }
+}
+
+/* Used by skelton component, not intended to be reused */
+.skeleton-shimmer-animation {
+  background: linear-gradient(-45deg, currentColor 40%, var(--shimmer, #FFFFFF) 50%, currentColor 60%);
+  background-size: 300%;
+  background-attachment: fixed;
+  animation-name: shimmer;
+  animation-duration: 1200ms;
+  animation-timing-function: linear;
+  animation-delay: 0;
+  animation-iteration-count: infinite;
+  animation-direction: normal;
+  animation-fill-mode: none;
+  animation-play-state: running;  
+}
+
+@keyframes shimmer {
+  0% {
+    background-position-x: 100%;
+  }
+
+  100% {
+    background-position-x: 0%;
+  }
 }
 
 .thinking:before {
@@ -160,6 +188,79 @@
         opacity: 1;
         transform: translateX(calc(var(--x, 0)));
     }
+}
+
+.slide-up {
+		animation: slide-up 10s ease-in-out infinite;
+		animation-delay: var(--animation-delay, 0s);
+}
+
+@keyframes slide-up {
+		0% {
+			opacity: 1;
+			transform: translateY(0%);
+		}
+		10% {
+			opacity: 1;
+			transform: translateY(-260%);
+		}
+		50% {
+			opacity: 1;
+			transform: translateY(-260%);
+		}
+		55% {
+			opacity: 1;
+			transform: translateY(-500%);
+		}
+		59% {
+			opacity: 0;
+			transform: translateY(-500%);
+		}
+		60% {
+			opacity: 0;
+			transform: translateY(0%);
+		}
+		100% {
+			opacity: 0;
+			transform: translateY(0%);
+		}
+}
+
+.pump-button {
+		background: radial-gradient(circle, #da60a2 0%, #e2017b 100%);
+		box-shadow:
+			0px 2px 1px 0px #ffffff40 inset,
+			0px -4px 2px 0px #00000040 inset,
+			0px 0px 1px 4px #ffffff1a,
+			0px 0px 100px 0px #e2017b80,
+			0px 0px 100px 0px #e2017b80;
+}
+
+.pump-button:active {
+		background: radial-gradient(circle, #da60a2 0%, #a6015a 100%);
+		box-shadow:
+			0px 2px 1px 0px #ffffff40 inset,
+			0px -4px 2px 0px #00000040 inset,
+			0px 0px 1px 4px #ffffff1a,
+			0px 0px 100px 0px #e2017b80;
+}
+
+.dump-button {
+		background: radial-gradient(circle, #7da9ee 0%, #2e7cf6 100%);
+		box-shadow:
+			0px 2px 1px 0px #ffffff40 inset,
+			0px -4px 2px 0px #00000040 inset,
+			0px 0px 1px 4px #ffffff1a,
+			0px 0px 100px 0px #2e7cf680;
+}
+
+.dump-button:active {
+		background: radial-gradient(circle, #7da9ee 0%, #0644a4 100%);
+		box-shadow:
+			0px 2px 1px 0px #ffffff40 inset,
+			0px -4px 2px 0px #00000040 inset,
+			0px 0px 1px 4px #ffffff1a,
+			0px 0px 100px 0px #2e7cf680;
 }
 
 .bg-loading {

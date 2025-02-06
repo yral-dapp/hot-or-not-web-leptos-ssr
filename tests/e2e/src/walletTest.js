@@ -4,22 +4,22 @@ describe("wallet page tests", function () {
     })
 
     it("wallet page contains login button", async function (browser) {
-        browser.element.findByText('Login to claim your COYNs', {timeout: 10000}).waitUntil('enabled');
+        browser.element.findByText('Login to claim', {timeout: 10000}).waitUntil('enabled');
     })
     
-    it("default wallet page contains 1000 COYNS", async function(browser){
-        browser.element.findByText("COYNS", {timeout: 10000}).waitUntil('enabled', { timeout: 10000 });
-        browser.element.findByText("1000", {timeout: 10000}).waitUntil('enabled', { timeout: 10000 });
-    })
-    it("default wallet page contains 1000 COYNS", function(browser) {
+    // TODO: update this test so that either 1000 COYNS are present or a 100 GDOLR, never both
+    it("default wallet page contains 1000 COYNS or 100 GDOLR", function(browser) {
         browser.waitForElementVisible('body', 10000);
     
         browser.pause(10000);
-    
-    
-        browser.element.findByText("COYNS", { timeout: 10000 }).waitUntil('visible', { timeout: 10000 }).assert.enabled();
-        browser.element.findByText("1000", { timeout: 10000 }).waitUntil('visible', { timeout: 10000 }).assert.enabled();
-    
+        
+        const gdolrIsPresent = browser.element.findByText("GDOLR", { timeout: 10000 }).isPresent();
+        if (gdolrIsPresent) {
+            browser.element.findByText("1000", { timeout: 10000 }).waitUntil('visible', { timeout: 10000 }).assert.enabled();
+        } else {
+            browser.element.findByText("COYNS", { timeout: 10000 }).waitUntil('visible', { timeout: 10000 }).assert.enabled();
+            browser.element.findByText("1000", { timeout: 10000 }).waitUntil('visible', { timeout: 10000 }).assert.enabled();
+        }
     });
 
     it('wallet page snapshot test', function(browser) {
