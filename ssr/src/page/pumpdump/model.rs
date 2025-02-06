@@ -5,6 +5,14 @@ use yral_pump_n_dump_common::rest::{BalanceInfoResponse, UserBetsResponse};
 
 use crate::consts::PUMP_AND_DUMP_WORKER_URL;
 
+/// utility macro to quickly format gdolrs
+#[macro_export]
+macro_rules! format_gdolr {
+    ($num:expr) => {
+        TokenBalance::new($num, 6).humanize_float_truncate_to_dp(2)
+    };
+}
+
 /// Convert e8s to gdolr
 /// Backend returns dolr in e8s, and 1dolr = 100gdolr
 pub(super) fn convert_e8s_to_gdolr(num: Nat) -> u128 {

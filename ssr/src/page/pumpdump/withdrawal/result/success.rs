@@ -1,5 +1,7 @@
+use candid::Nat;
 use leptos::{component, view, IntoView, Params, SignalGetUntracked};
 use leptos_router::{use_query, Params};
+use yral_canisters_common::utils::token::balance::TokenBalance;
 
 use crate::{
     component::{back_btn::BackButton, title::Title},
@@ -9,13 +11,14 @@ use crate::{
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Params)]
 struct SuccessParams {
     gdolr: u64,
-    dolr: u64,
 }
 
 #[component]
 pub fn Success() -> impl IntoView {
     let params = use_query::<SuccessParams>();
-    let SuccessParams { gdolr, dolr } = try_or_redirect_opt!(params.get_untracked());
+    let SuccessParams { gdolr } = try_or_redirect_opt!(params.get_untracked());
+    let formatted_dolr =
+        TokenBalance::new(Nat::from(gdolr) * 1e6 as usize, 8).humanize_float_truncate_to_dp(2);
 
     Some(view! {
         <div
@@ -36,7 +39,7 @@ pub fn Success() -> impl IntoView {
                         <div class="flex flex-col gap-8 w-full px-5">
                             <div class="flex flex-col gap-2 items-center">
                                 <span class="font-bold text-lg">{format!("You've successfully claimed {gdolr} gDORLs.")}</span>
-                                <span class="text-neutral-300">Your wallet has been updated with {dolr} DOLR.</span>
+                                <span class="text-neutral-300">Your wallet has been updated with {formatted_dolr} DOLR.</span>
                             </div>
                             <a class="rounded-lg px-5 py-2 text-center font-bold bg-white" href="/">
                                 <span class="bg-brand-gradient text-transparent bg-clip-text">Continue Playing</span>
