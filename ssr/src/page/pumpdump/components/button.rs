@@ -1,4 +1,4 @@
-use leptos::{component, expect_context, view, IntoView, SignalGet, SignalUpdate};
+use leptos::{component, expect_context, logging, view, IntoView, SignalGet, SignalUpdate};
 use yral_pump_n_dump_common::{
     ws::{WsMessage, WsRequest},
     GameDirection,
@@ -7,6 +7,34 @@ use yral_pump_n_dump_common::{
 use crate::page::pumpdump::{
     CurrentRoundSignal, GameRunningDataSignal, PlayerDataSignal, WebsocketContextSignal,
 };
+
+#[cfg(not(feature = "hydrate"))]
+fn non_visual_feedback() {}
+
+#[cfg(feature = "hydrate")]
+fn non_visual_feedback() {
+    use leptos_use::use_window;
+    use wasm_bindgen::JsValue;
+    use web_sys::HtmlAudioElement;
+    let navigator = use_window().navigator();
+    match navigator {
+        Some(navigator) => {
+            if js_sys::Reflect::has(&navigator, &JsValue::from_str("vibrate")).unwrap_or(false) {
+                navigator.vibrate_with_duration(5);
+            } else {
+                logging::warn!("Browser doesn't support vibrate api");
+            }
+        }
+        None => logging::warn!("Couldn't get navigator for vibration"),
+    }
+
+    if let Err(err) = HtmlAudioElement::new_with_src("/pnd-tap.mp3").and_then(|d| {
+        d.set_volume(0.5);
+        d.play()
+    }) {
+        web_sys::console::warn_2(&JsValue::from_str("error playing tap audio"), &err);
+    }
+}
 
 #[component]
 pub fn DumpButton() -> impl IntoView {
@@ -42,6 +70,7 @@ pub fn DumpButton() -> impl IntoView {
                 }
             });
         }
+        non_visual_feedback();
 
         // debounceResistanceAnimation();
     };
@@ -137,6 +166,7 @@ pub fn PumpButton() -> impl IntoView {
             });
         }
 
+        non_visual_feedback();
         // debounceResistanceAnimation();
     };
     view! {
