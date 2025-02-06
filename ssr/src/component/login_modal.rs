@@ -4,6 +4,7 @@ use super::{
 };
 use leptos::*;
 use leptos_router::{use_navigate, NavigateOptions};
+use web_sys::window;
 use yral_canisters_common::Canisters;
 
 #[component]
@@ -22,10 +23,16 @@ pub fn LoginModal(#[prop(into)] show: RwSignal<bool>) -> impl IntoView {
                         .and_then(|s| s.get_untracked())
                     {
                         let user_principal = canisters.user_principal();
-                        value(
-                            &format!("/profile/{}/tokens", user_principal),
-                            NavigateOptions::default(),
-                        );
+                        if let Some(window) = window() {
+                            let _ = window.location().set_href(
+                                &format!("/profile/{}/tokens", user_principal)
+                            );
+                        } else {
+                            value(
+                                &format!("/profile/{}/tokens", user_principal),
+                                NavigateOptions::default(),
+                            );
+                        }
                     }
                 },
                 std::time::Duration::from_millis(100),
