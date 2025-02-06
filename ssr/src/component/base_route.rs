@@ -4,12 +4,10 @@ use k256::elliptic_curve::JwkEcKey;
 use leptos::*;
 use leptos_router::*;
 use leptos_use::use_cookie;
-use yral_types::delegated_identity::DelegatedIdentityWire;
 
 use crate::auth::delegate_identity;
 use crate::consts::{ACCOUNT_CONNECTED_STORE, USER_CANISTER_ID_STORE, USER_PRINCIPAL_STORE};
 use crate::utils::event_streaming::events::PageVisit;
-use crate::utils::host::show_preview_component;
 use crate::utils::ParentResource;
 use crate::{
     auth::{
@@ -31,37 +29,6 @@ use yral_canisters_common::Canisters;
 #[derive(Params, PartialEq, Clone)]
 struct Referrer {
     user_refer: String,
-}
-
-pub async fn extract_identity_from_yral_auth(
-) -> Result<Option<DelegatedIdentityWire>, ServerFnError> {
-    let client = reqwest::Client::new();
-    let yral_url = "https://yral.com/api/extract_identity";
-
-    let req_body = serde_json::json!({});
-
-    let mut request = client.post(yral_url).json(&req_body);
-
-    request = {
-        #[cfg(target_arch = "wasm32")]
-        {
-            request.fetch_credentials_include()
-        }
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            request
-        }
-    };
-
-    let response = request.send().await?;
-
-    if response.status().is_success() {
-        let id_wire: Option<DelegatedIdentityWire> = response.json().await?;
-        Ok(id_wire)
-    } else {
-        let err: String = response.text().await?;
-        Err(ServerFnError::new(err))
-    }
 }
 
 #[component]
@@ -117,7 +84,7 @@ fn CtxProvider(temp_identity: Option<JwkEcKey>, children: ChildrenFn) -> impl In
         }
     });
 
-    let canisters_res: AuthCansResource = ParentResource(create_local_resource(
+    let canisters_res: AuthCansResource = ParentResource(create_blocking_resource(
         move || MockPartialEq(auth()),
         move |auth_id| {
             let temp_identity = temp_identity.clone();
@@ -129,15 +96,8 @@ fn CtxProvider(temp_identity: Option<JwkEcKey>, children: ChildrenFn) -> impl In
                 }
 
                 let Some(jwk_key) = temp_identity else {
-                    if show_preview_component() {
-                        let id_wire = extract_identity_from_yral_auth()
-                            .await?
-                            .expect("No refresh cookie set");
-                        return do_canister_auth(id_wire, ref_principal).await;
-                    } else {
-                        let id_wire = extract_identity().await?.expect("No refresh cookie set?!");
-                        return do_canister_auth(id_wire, ref_principal).await;
-                    }
+                    let id_wire = extract_identity().await?.expect("No refresh cookie set?!");
+                    return do_canister_auth(id_wire, ref_principal).await;
                 };
 
                 let key = k256::SecretKey::from_jwk(&jwk_key)?;

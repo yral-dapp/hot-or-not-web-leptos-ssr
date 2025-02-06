@@ -1,4 +1,7 @@
+use axum_extra::extract::{cookie::Key, SignedCookieJar};
+use ic_agent::identity::DelegatedIdentity;
 use leptos::*;
+use leptos_axum::{extract_with_state, ResponseOptions};
 use leptos_router::*;
 use openidconnect::CsrfToken;
 use serde::{Deserialize, Serialize};
@@ -203,6 +206,22 @@ async fn preview_handle_oauth_query(
 }
 
 #[server]
+async fn preview_server_set_refersh_token_cookie(
+    delegated_identity_wire: DelegatedIdentityWire,
+) -> Result<(), ServerFnError> {
+    use crate::auth::server_impl::update_user_identity;
+
+    let key: Key = expect_context();
+    let jar: SignedCookieJar = extract_with_state(&key).await?;
+    let response_options: ResponseOptions = expect_context();
+
+    let delegated_identity: DelegatedIdentity =
+        DelegatedIdentity::try_from(delegated_identity_wire)?;
+
+    update_user_identity(&response_options, jar, &delegated_identity)
+}
+
+#[server]
 async fn handle_oauth_query_for_external_client(
     client_redirect_uri: String,
     oauth_query: OAuthQuery,
@@ -236,9 +255,13 @@ pub fn PreviewGoogleRedirectHandler() -> impl IntoView {
 
         let oauth_query = query_res.unwrap();
 
-        preview_handle_oauth_query(oauth_query)
+        let delegated_identity_wire = preview_handle_oauth_query(oauth_query)
             .await
-            .map_err(|e| e.to_string())
+            .map_err(|e| e.to_string())?;
+        preview_server_set_refersh_token_cookie(delegated_identity_wire.clone())
+            .await
+            .map_err(|e| e.to_string())?;
+        Ok(delegated_identity_wire)
     });
 
     view! {
