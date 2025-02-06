@@ -24,9 +24,9 @@ pub fn LoginModal(#[prop(into)] show: RwSignal<bool>) -> impl IntoView {
                     {
                         let user_principal = canisters.user_principal();
                         if let Some(window) = window() {
-                            let _ = window.location().set_href(
-                                &format!("/profile/{}/tokens", user_principal)
-                            );
+                            let _ = window
+                                .location()
+                                .set_href(&format!("/profile/{}/tokens", user_principal));
                         } else {
                             value(
                                 &format!("/profile/{}/tokens", user_principal),
