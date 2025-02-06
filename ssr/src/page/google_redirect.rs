@@ -1,7 +1,5 @@
-use axum_extra::extract::{cookie::Key, SignedCookieJar};
 use ic_agent::identity::DelegatedIdentity;
 use leptos::*;
-use leptos_axum::{extract_with_state, ResponseOptions};
 use leptos_router::*;
 use openidconnect::CsrfToken;
 use serde::{Deserialize, Serialize};
@@ -210,6 +208,8 @@ async fn preview_server_set_refersh_token_cookie(
     delegated_identity_wire: DelegatedIdentityWire,
 ) -> Result<(), ServerFnError> {
     use crate::auth::server_impl::update_user_identity;
+    use axum_extra::extract::{cookie::Key, SignedCookieJar};
+    use leptos_axum::{extract_with_state, ResponseOptions};
 
     let key: Key = expect_context();
     let jar: SignedCookieJar = extract_with_state(&key).await?;
