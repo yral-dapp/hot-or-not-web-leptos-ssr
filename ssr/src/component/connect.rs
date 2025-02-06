@@ -1,4 +1,5 @@
 use leptos::*;
+use leptos_router::use_location;
 
 use crate::utils::event_streaming::events::{LoginCta, LoginJoinOverlayViewed};
 
@@ -10,11 +11,12 @@ pub fn ConnectLogin(
     #[prop(optional, default = "menu")] cta_location: &'static str,
 ) -> impl IntoView {
     let show_login = create_rw_signal(false);
+    let location = use_location();
 
     LoginJoinOverlayViewed.send_event();
 
     let login_click_action = create_action(move |()| async move {
-        LoginCta.send_event(cta_location.to_string());
+        LoginCta.send_event(format!("{}-{}", cta_location, location.pathname.get()));
     });
 
     view! {

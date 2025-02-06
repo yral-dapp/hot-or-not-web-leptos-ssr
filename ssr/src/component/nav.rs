@@ -113,15 +113,15 @@ pub fn NavBar() -> impl IntoView {
                 home_path.set(path);
                 0
             }
-            s if s.starts_with("/profile/") => match user_principal.get() {
+            s if s.starts_with("/profile") => match user_principal.get() {
                 Some(user_principal) => {
-                    if s.starts_with(&format!("/profile/{}", user_principal)) {
+                    if s.contains(&user_principal.to_string()) {
                         5
                     } else {
-                        6 // having a number out of range to not highlight anything
+                        6
                     }
                 }
-                None => 0,
+                None => 5,
             },
             s if s.starts_with("/wallet/") => match user_principal.get() {
                 Some(user_principal) => {
