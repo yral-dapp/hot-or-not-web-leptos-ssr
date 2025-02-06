@@ -84,7 +84,7 @@ fn CtxProvider(temp_identity: Option<JwkEcKey>, children: ChildrenFn) -> impl In
         }
     });
 
-    let canisters_res: AuthCansResource = ParentResource(create_resource(
+    let canisters_res: AuthCansResource = ParentResource(create_blocking_resource(
         move || MockPartialEq(auth()),
         move |auth_id| {
             let temp_identity = temp_identity.clone();
@@ -158,7 +158,7 @@ pub fn BaseRoute() -> impl IntoView {
                     .map(|temp_identity| {
                         view! {
                             <CtxProvider temp_identity>
-                                <Outlet />
+                                <Outlet/>
                             </CtxProvider>
                         }
                     })

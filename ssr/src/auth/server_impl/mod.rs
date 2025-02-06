@@ -95,7 +95,7 @@ fn identity_from_jwk(id: &JwkEcKey) -> Result<Secp256k1Identity, ServerFnError> 
     Ok(base_identity)
 }
 
-fn update_user_identity(
+pub fn update_user_identity(
     response_opts: &ResponseOptions,
     mut jar: SignedCookieJar,
     identity: &impl Identity,
