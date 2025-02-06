@@ -42,17 +42,7 @@
 @keyframes tada {
     from {
         transform: scale3d(1, 1, 1);
-        background: linear-gradient(
-            90deg,
-            red,
-            orange,
-            yellow,
-            green,
-            blue,
-            indigo,
-            violet,
-            black
-        );
+        background: linear-gradient(90deg, red, orange, yellow, green, blue, indigo, violet, black);
         background-size: 1000% 100%;
         background-position: 0% 25%;
     }
@@ -140,14 +130,14 @@
 
 .fade-in {
     animation: fade-in var(--duration, 200ms);
-  }
-  
+}
+
 @keyframes fade-in {
     0% {
-      opacity: 0;
+        opacity: 0;
     }
     100% {
-      opacity: 1;
+        opacity: 1;
     }
 }
 
@@ -157,17 +147,33 @@
 
 @keyframes cloud-bounce {
     0% {
-      opacity: 0;
-      transform: translateX(calc(var(--x, 0) * 3));
+        opacity: 0;
+        transform: translateX(calc(var(--x, 0) * 3));
     }
-  
+
     50% {
-      opacity: 1;
-      transform: translateX(0);
+        opacity: 1;
+        transform: translateX(0);
     }
-  
+
     100% {
-      opacity: 1;
-      transform: translateX(calc(var(--x, 0)));
+        opacity: 1;
+        transform: translateX(calc(var(--x, 0)));
+    }
+}
+
+.bg-loading {
+    animation: bg-loading 2s infinite;
+}
+
+@keyframes bg-loading {
+    0% {
+        background: rgb(64 64 64 / var(--tw-bg-opacity, 1));
+    }
+    50% {
+        background: rgb(38 38 38 / var(--tw-bg-opacity, 1));
+    }
+    100% {
+        background: rgb(64 64 64 / var(--tw-bg-opacity, 1));
     }
 }

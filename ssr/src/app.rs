@@ -1,12 +1,12 @@
 use crate::page::icpump::ai::ICPumpAi;
 use crate::page::icpump::ICPumpLanding;
 
+use crate::utils::host::show_preview_component;
 // use crate::page::wallet::TestIndex;
 use crate::{
     component::{base_route::BaseRoute, nav::NavBar},
     error_template::{AppError, ErrorTemplate},
     page::{
-        account_transfer::AccountTransfer,
         err::ServerErrorPage,
         leaderboard::Leaderboard,
         logout::Logout,
@@ -48,8 +48,13 @@ fn GoogleAuthRedirectHandlerRoute() -> impl IntoView {
     let path = "/auth/google_redirect";
     #[cfg(any(feature = "oauth-ssr", feature = "oauth-hydrate"))]
     {
-        use crate::page::google_redirect::GoogleRedirectHandler;
-        view! { <Route path view=GoogleRedirectHandler/> }
+        if show_preview_component() {
+            use crate::page::google_redirect::PreviewGoogleRedirectHandler;
+            view! { <Route path view=PreviewGoogleRedirectHandler/> }
+        } else {
+            use crate::page::google_redirect::GoogleRedirectHandler;
+            view! { <Route path view=GoogleRedirectHandler/> }
+        }
     }
     #[cfg(not(any(feature = "oauth-ssr", feature = "oauth-hydrate")))]
     {
@@ -62,8 +67,13 @@ fn GoogleAuthRedirectorRoute() -> impl IntoView {
     let path = "/auth/perform_google_redirect";
     #[cfg(any(feature = "oauth-ssr", feature = "oauth-hydrate"))]
     {
-        use crate::page::google_redirect::GoogleRedirector;
-        view! { <Route path view=GoogleRedirector/> }
+        if show_preview_component() {
+            use crate::page::google_redirect::PreviewGoogleRedirector;
+            view! { <Route path view=PreviewGoogleRedirector/> }
+        } else {
+            use crate::page::google_redirect::GoogleRedirector;
+            view! { <Route path view=GoogleRedirector/> }
+        }
     }
     #[cfg(not(any(feature = "oauth-ssr", feature = "oauth-hydrate")))]
     {
@@ -157,7 +167,6 @@ pub fn App() -> impl IntoView {
                         <Route path="/wallet/:id" view=Wallet/>
                         <Route path="/wallet" view=Wallet/>
                         <Route path="/leaderboard" view=Leaderboard/>
-                        <Route path="/account-transfer" view=AccountTransfer/>
                         <Route path="/logout" view=Logout/>
                         <Route path="/token/create" view=CreateToken/>
                         <Route path="/token/create/settings" view=CreateTokenSettings/>
@@ -167,7 +176,6 @@ pub fn App() -> impl IntoView {
                         <Route path="/token/transfer/:token_root" view=TokenTransfer/>
                         <Route path="/board" view=ICPumpLanding/>
                         <Route path="/icpump-ai" view=ICPumpAi/>
-                    // <Route path="/test" view=TestIndex/>
                     </Route>
                 </Routes>
 

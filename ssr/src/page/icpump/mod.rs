@@ -1,18 +1,25 @@
 use crate::component::overlay::PopupOverlay;
+use crate::consts::ICPUMP_LISTING_PAGE_SIZE;
 use crate::consts::USER_PRINCIPAL_STORE;
+use crate::state::canisters::authenticated_canisters;
 use crate::state::canisters::unauth_canisters;
-use std::collections::HashMap;
 use std::collections::VecDeque;
 
+use candid::Nat;
 use candid::Principal;
 use codee::string::FromToStringCodec;
 use futures::stream::FuturesOrdered;
 use futures::StreamExt;
+use html::Div;
 use leptos::*;
 use leptos_icons::Icon;
 use leptos_use::use_cookie;
+use leptos_use::use_intersection_observer_with_options;
+use leptos_use::use_media_query;
+use leptos_use::UseIntersectionObserverOptions;
 use serde::Deserialize;
 use serde::Serialize;
+use yral_canisters_common::Canisters;
 
 use crate::component::buttons::HighlightedLinkButton;
 use crate::component::icons::airdrop_icon::AirdropIcon;
@@ -22,20 +29,23 @@ use crate::component::icons::eye_hide_icon::EyeHiddenIcon;
 use crate::component::icons::send_icon::SendIcon;
 use crate::component::icons::share_icon::ShareIcon;
 use crate::component::share_popup::ShareContent;
-use crate::component::spinner::FullScreenSpinner;
-use crate::consts::ICPUMP_LISTING_PAGE_SIZE;
 use crate::utils::host::get_host;
 use crate::utils::token::firestore::init_firebase;
 use crate::utils::token::firestore::listen_to_documents;
 use crate::utils::token::icpump::get_paginated_token_list;
 use crate::utils::token::icpump::TokenListItem;
 
+use crate::component::overlay::ShadowOverlay;
+use crate::page::wallet::airdrop::AirdropPopup;
+use yral_canisters_common::utils::token::TokenOwner;
+
 pub mod ai;
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 struct ProcessedTokenListResponse {
     token_details: TokenListItem,
     root: Principal,
     is_airdrop_claimed: bool,
+    token_owner: Option<TokenOwner>,
 }
 
 async fn process_token_list_item(
@@ -52,7 +62,7 @@ async fn process_token_list_item(
                     .link
                     .trim_end_matches('/')
                     .split('/')
-                    .last()
+                    .next_back()
                     .ok_or(ServerFnError::new("Not root given"))
                     .unwrap_or_default(),
             )
@@ -62,7 +72,7 @@ async fn process_token_list_item(
                 .get_token_owner(root_principal)
                 .await
                 .unwrap_or_default();
-            let is_airdrop_claimed = if let Some(token_owner) = token_owner_canister_id {
+            let is_airdrop_claimed = if let Some(token_owner) = &token_owner_canister_id {
                 cans.get_airdrop_status(token_owner.canister_id, root_principal, key_principal)
                     .await
                     .unwrap_or(true)
@@ -75,104 +85,136 @@ async fn process_token_list_item(
                 token_details: token,
                 root: root_principal,
                 is_airdrop_claimed,
+                token_owner: token_owner_canister_id,
             }
         });
     }
 
     fut.collect().await
 }
+
 #[component]
-pub fn ICPumpListing() -> impl IntoView {
+pub fn ICPumpListingFeed() -> impl IntoView {
     let page = create_rw_signal(1);
+    let end = create_rw_signal(false);
+    let loading = create_rw_signal(true);
+    let (curr_principal, _) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE);
     let token_list: RwSignal<Vec<ProcessedTokenListResponse>> = create_rw_signal(vec![]);
-    let end_of_list = create_rw_signal(false);
-    let cache = create_rw_signal(HashMap::<u64, Vec<ProcessedTokenListResponse>>::new());
     let new_token_list: RwSignal<VecDeque<ProcessedTokenListResponse>> =
         create_rw_signal(VecDeque::new());
-    let (curr_principal, _) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE);
 
-    let act = create_resource(
-        move || (page(), curr_principal()),
-        move |(page, curr_principal)| async move {
+    let fetch_res = authenticated_canisters().derive(
+        move || page.get(),
+        move |cans, page| async move {
+            let cans = Canisters::from_wire(cans.unwrap(), expect_context()).unwrap();
             new_token_list.set(VecDeque::new());
 
-            if let Some(cached) = cache.with_untracked(|c| c.get(&page).cloned()) {
-                return cached.clone();
+            loading.set(true);
+
+            let mut fetched_token_list = process_token_list_item(
+                get_paginated_token_list(page).await.unwrap(),
+                cans.user_principal(),
+            )
+            .await;
+
+            if fetched_token_list.len() < ICPUMP_LISTING_PAGE_SIZE {
+                end.set(true);
             }
 
-            process_token_list_item(
-                get_paginated_token_list(page as u32).await.unwrap(),
-                curr_principal.unwrap(),
-            )
-            .await
+            token_list.update(|t| {
+                t.append(&mut fetched_token_list);
+            });
+
+            loading.set(false);
         },
     );
 
     create_effect(move |_| {
-        spawn_local(async move {
-            let (_app, firestore) = init_firebase();
-            let mut stream = listen_to_documents(&firestore);
-            let curr_principal = curr_principal.get().unwrap();
-            while let Some(doc) = stream.next().await {
-                let doc = process_token_list_item(doc, curr_principal).await;
-                // push each item in doc to new_token_list
-                for item in doc {
-                    new_token_list.update(move |list| {
-                        list.push_front(item.clone());
-                    });
+        fetch_res.refetch();
+        if let Some(principal) = curr_principal.get() {
+            spawn_local(async move {
+                let (_app, firestore) = init_firebase();
+                let mut stream = listen_to_documents(&firestore);
+                while let Some(doc) = stream.next().await {
+                    let doc = process_token_list_item(doc, principal).await;
+                    for item in doc {
+                        new_token_list.try_update(move |list| {
+                            list.push_front(item.clone());
+                        });
+                    }
                 }
-            }
-        });
+            })
+        }
     });
 
+    let target = NodeRef::<Div>::new();
+
+    use_intersection_observer_with_options(
+        target,
+        move |entries, _| {
+            let is_intersecting = entries.first().map(|entry| entry.is_intersecting());
+
+            let loading = loading.get_untracked();
+            let end = end.get_untracked();
+
+            if let (Some(true), false, false) = (is_intersecting, loading, end) {
+                page.update(|p| {
+                    *p += 1;
+                });
+            }
+        },
+        UseIntersectionObserverOptions::default().thresholds(vec![0.1]),
+    );
+
     view! {
-        <Suspense fallback=FullScreenSpinner>
-            {move || {
-                let _ = act
-                    .get()
-                    .map(|res| {
-                        if res.len() < ICPUMP_LISTING_PAGE_SIZE {
-                            end_of_list.set(true);
-                        }
-                        update!(
-                            move |token_list, cache| {
-                                *token_list = res.clone();
-                                cache.insert(page.get_untracked(), res.clone());
-                            }
-                        );
-                    });
-                view! {
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <For
-                            each=move || new_token_list.get()
-                            key=|t| t.token_details.token_symbol.clone()
-                            children=move |ProcessedTokenListResponse { token_details, root, is_airdrop_claimed }| {
-                                view! { <TokenCard is_new_token=true details=token_details is_airdrop_claimed root/> }
-                            }
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <For
+                each=move || new_token_list.get()
+                key=|t| t.token_details.token_symbol.clone()
+                children=move |t| {
+                    view! {
+                        <TokenCard
+                            is_new_token=true
+                            details=t.token_details
+                            is_airdrop_claimed=t.is_airdrop_claimed
+                            root=t.root
+                            token_owner=t.token_owner
                         />
-                        <For
-                            each=move || token_list.get()
-                            key=|t| t.token_details.token_symbol.clone()
-                            children=move |ProcessedTokenListResponse { token_details, root, is_airdrop_claimed }| {
-                                view! { <TokenCard details=token_details is_airdrop_claimed root/> }
-                            }
-                        />
-                    </div>
-                    <div class="flex justify-center">
-                        <PageSelector page=page end_of_list=end_of_list />
-                    </div>
+                    }
                 }
+            />
+            {move || {
+                token_list
+                    .get()
+                    .iter()
+                    .map(|t| {
+                        view! {
+                            <TokenCard
+                                details=t.token_details.clone()
+                                is_airdrop_claimed=t.is_airdrop_claimed
+                                root=t.root
+                                token_owner=t.token_owner.clone()
+                            />
+                        }
+                    })
+                    .collect_view()
             }}
-        </Suspense>
+
+            <Show when=move || loading.get()>
+                <TokenCardLoadingFeed />
+            </Show>
+        </div>
+
+        <div class="w-full p-4" node_ref=target></div>
     }
 }
 
 #[component]
 pub fn ICPumpLanding() -> impl IntoView {
     view! {
-        <div class="min-h-screen bg-black text-white  flex flex-col gap-4 px-4 md:px-8 py-6 font-kumbh overflow-y-auto">
-            <div class="flex lg:flex-row gap-4 flex-col items-center justify-center relative">
-                <div class="lg:absolute lg:left-0 lg:top-0 flex items-center gap-4">
+        <div class="min-h-screen bg-black text-white  flex flex-col gap-4 px-4 md:px-8 py-6 font-kumbh">
+            <div class="flex lg:flex-row gap-4 flex-col items-center justify-center">
+                <div class="lg:left-0 lg:top-0 flex items-center gap-4">
                     <div>Follow us:</div>
                     <div class="flex items-center gap-4">
                         <XIcon
@@ -197,7 +239,54 @@ pub fn ICPumpLanding() -> impl IntoView {
                 </HighlightedLinkButton>
             </div>
             <div class="flex flex-col gap-8 pb-24">
-                <ICPumpListing />
+                <ICPumpListingFeed />
+            </div>
+
+        </div>
+    }
+}
+
+#[component]
+pub fn TokenCardFallback() -> impl IntoView {
+    view! {
+        <div class="flex flex-col gap-2 pt-3 pb-4 px-3 md:px-4 w-full text-xs rounded-lg bg-neutral-900/90 font-kumbh">
+            <div class="flex gap-3 items-stretch">
+                <div class="w-[7rem] h-[7rem] rounded-[4px] shrink-0 bg-white/15 animate-pulse"></div>
+                <div class="flex flex-col justify-between overflow-hidden w-full gap-2">
+                    <div class="flex flex-col gap-2">
+                        <div class="flex gap-4 justify-between items-center w-full">
+                            <div class="h-7 w-32 bg-white/15 animate-pulse rounded"></div>
+                            <div class="h-7 w-16 bg-white/15 animate-pulse rounded"></div>
+                        </div>
+                        <div class="h-12 w-full bg-white/15 animate-pulse rounded"></div>
+                    </div>
+                    <div class="flex gap-2 justify-between items-center">
+                        <div class="h-5 w-48 bg-white/15 animate-pulse rounded"></div>
+                        <div class="h-5 w-24 bg-white/15 animate-pulse rounded"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex gap-4 justify-between items-center p-2">
+                <div class="flex flex-col items-center gap-1">
+                    <div class="w-[1.875rem] h-[1.875rem] bg-white/15 animate-pulse rounded"></div>
+                    <div class="w-10 h-3 bg-white/15 animate-pulse rounded"></div>
+                </div>
+                <div class="flex flex-col items-center gap-1">
+                    <div class="w-[1.875rem] h-[1.875rem] bg-white/15 animate-pulse rounded"></div>
+                    <div class="w-14 h-3 bg-white/15 animate-pulse rounded"></div>
+                </div>
+                <div class="flex flex-col items-center gap-1">
+                    <div class="w-[1.875rem] h-[1.875rem] bg-white/15 animate-pulse rounded"></div>
+                    <div class="w-12 h-3 bg-white/15 animate-pulse rounded"></div>
+                </div>
+                <div class="flex flex-col items-center gap-1">
+                    <div class="w-[1.875rem] h-[1.875rem] bg-white/15 animate-pulse rounded"></div>
+                    <div class="w-10 h-3 bg-white/15 animate-pulse rounded"></div>
+                </div>
+                <div class="flex flex-col items-center gap-1">
+                    <div class="w-[1.875rem] h-[1.875rem] bg-white/15 animate-pulse rounded"></div>
+                    <div class="w-12 h-3 bg-white/15 animate-pulse rounded"></div>
+                </div>
             </div>
         </div>
     }
@@ -209,6 +298,7 @@ pub fn TokenCard(
     #[prop(optional, default = false)] is_new_token: bool,
     root: Principal,
     is_airdrop_claimed: bool,
+    token_owner: Option<TokenOwner>,
 ) -> impl IntoView {
     let show_nsfw = create_rw_signal(false);
 
@@ -223,8 +313,46 @@ pub fn TokenCard(
     )
     };
     let pop_up = create_rw_signal(false);
+    let airdrop_popup = create_rw_signal(false);
     let base_url = get_host();
 
+    let claimed = create_rw_signal(is_airdrop_claimed);
+    let buffer_signal = create_rw_signal(false);
+    let cans_res = authenticated_canisters();
+    let token_owner_c = token_owner.clone();
+    let airdrop_action = create_action(move |&()| {
+        let cans_res = cans_res.clone();
+        let token_owner_cans_id = token_owner_c.clone().unwrap().canister_id;
+        airdrop_popup.set(true);
+        async move {
+            if claimed.get() && !buffer_signal.get() {
+                return Ok(());
+            }
+            buffer_signal.set(true);
+            let cans_wire = cans_res.wait_untracked().await?;
+            let cans = Canisters::from_wire(cans_wire, expect_context())?;
+            let token_owner = cans.individual_user(token_owner_cans_id).await;
+
+            token_owner
+                .request_airdrop(
+                    root,
+                    None,
+                    Into::<Nat>::into(100u64) * 10u64.pow(8),
+                    cans.user_canister(),
+                )
+                .await?;
+
+            let user = cans.individual_user(cans.user_canister()).await;
+            user.add_token(root).await?;
+
+            buffer_signal.set(false);
+            claimed.set(true);
+            Ok::<_, ServerFnError>(())
+        }
+    });
+
+    let airdrop_disabled =
+        Signal::derive(move || token_owner.is_some() && claimed.get() || token_owner.is_none());
     view! {
         <div
             class:tada=is_new_token
@@ -249,17 +377,17 @@ pub fn TokenCard(
                     <img
                         alt=details.token_name.clone()
                         src=details.logo.clone()
-                        class="w-full h-full object-cover"
+                        class="w-full h-full"
                     />
                 </div>
                 <div class="flex flex-col justify-between overflow-hidden w-full">
                     <div class="flex flex-col gap-2">
                         <div class="flex gap-4 justify-between items-center w-full text-lg">
-                            <span class="font-medium shrink line-clamp-1">{details.name}</span>
+                            <span class="font-medium shrink line-clamp-1">{details.name.clone()}</span>
                             <span class="font-bold shrink-0">{symbol}</span>
                         </div>
                         <span class="text-sm line-clamp-2 text-neutral-400">
-                            {details.description}
+                            {details.description.clone()}
                         </span>
                     </div>
                     <div class="flex gap-2 justify-between items-center text-sm font-medium group-hover:text-white text-neutral-600">
@@ -276,36 +404,80 @@ pub fn TokenCard(
                 <ActionButton label="Buy/Sell".to_string() href="#".to_string() disabled=true>
                     <Icon class="w-full h-full" icon=ArrowLeftRightIcon />
                 </ActionButton>
-                {
-                    if is_airdrop_claimed{
-
-                        view! {
-                            <ActionButtonLink on:click=move |_|{pop_up.set(true); share_link.set(format!("/token/info/{}/{}?airdrop_amt=100",root, details.user_id))} label="Airdrop".to_string()>
-                                <Icon class="h-6 w-6" icon=AirdropIcon />
-                            </ActionButtonLink>
-                        }
-                    }else{
-                        view! {
-                            <ActionButton href=format!("/token/info/{}/{}?airdrop_amt=100",root, details.user_id) label="Airdrop".to_string()>
-                            <Icon class="h-6 w-6" icon=AirdropIcon />
-                            </ActionButton>
-                        }
-                    }
-                }
+                <ActionButtonLink disabled=airdrop_disabled on:click=move |_|{airdrop_action.dispatch(());} label="Airdrop".to_string()>
+                    <Icon class="h-6 w-6" icon=AirdropIcon />
+                </ActionButtonLink>
                 <ActionButton label="Share".to_string() href="#".to_string()>
-                    <Icon class="w-full h-full" icon=ShareIcon on:click=move |_| {pop_up.set(true); share_link.set(share_link_coin.clone())}/>
+                    <Icon
+                        class="w-full h-full"
+                        icon=ShareIcon
+                        on:click=move |_| {
+                            pop_up.set(true);
+                            share_link.set(share_link_coin.clone())
+                        }
+                    />
                 </ActionButton>
                 <ActionButton label="Details".to_string() href=details.link>
                     <Icon class="w-full h-full" icon=ChevronRightIcon />
                 </ActionButton>
             </div>
-            <PopupOverlay show=pop_up >
+            <PopupOverlay show=pop_up>
                 <ShareContent
                     share_link=format!("{base_url}{}", share_link())
                     message=share_message()
                     show_popup=pop_up
                 />
             </PopupOverlay>
+            <ShadowOverlay show=airdrop_popup >
+                <div class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 max-w-[560px] max-h-[634px] min-w-[343px] min-h-[480px] backdrop-blur-lg rounded-lg">
+                    <div class="rounded-lg z-[500]">
+                        <AirdropPopup
+                            name=details.name.clone()
+                            logo=details.logo.clone()
+                            buffer_signal
+                            claimed
+                            airdrop_popup
+                        />
+                    </div>
+                </div>
+            </ShadowOverlay>
+        </div>
+    }
+}
+
+#[component]
+pub fn TokenCardLoadingFeed() -> impl IntoView {
+    let is_lg_screen = use_media_query("(min-width: 1024px)");
+    let is_md_screen = use_media_query("(min-width: 768px)");
+
+    let num_cards = create_rw_signal(6);
+
+    create_effect(move |_| {
+        num_cards.set(match (is_lg_screen.get(), is_md_screen.get()) {
+            (true, _) => 6,
+            (_, true) => 4,
+            _ => 2,
+        });
+    });
+
+    move || {
+        (0..num_cards())
+            .map(|_| view! { <TokenCardLoading /> })
+            .collect_view()
+    }
+}
+
+#[component]
+pub fn TokenCardLoading() -> impl IntoView {
+    view! {
+        <div class="flex flex-col gap-2 py-3 px-3 w-full rounded-lg md:px-4 group bg-neutral-900/90">
+            <div class="flex gap-3">
+                <div class="w-[7rem] h-[7rem] bg-loading rounded-[4px] relative shrink-0"></div>
+
+                <div class="w-full bg-loading rounded-[4px]"></div>
+            </div>
+
+            <div class="h-[4.125rem] bg-loading rounded-[4px]"></div>
         </div>
     }
 }
@@ -322,15 +494,18 @@ pub fn PageSelector(page: RwSignal<u64>, end_of_list: RwSignal<bool>) -> impl In
                 }
                 disabled=move || page.get() == 1
             >
-                    <Icon class="w-4 h-4 rotate-180" icon=ChevronRightIcon />
+                <Icon class="w-4 h-4 rotate-180" icon=ChevronRightIcon />
             </button>
-            <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white bg-blue-500">{page}</div>
+            <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white bg-blue-500">
+                {page}
+            </div>
             <button
                 class="flex justify-center items-center w-8 h-8 rounded-lg bg-neutral-800"
                 on:click=move |_| {
                     page.update(|page| *page += 1);
                 }
-                disabled=move || end_of_list.get()>
+                disabled=move || end_of_list.get()
+            >
                 <Icon class="w-4 h-4" icon=ChevronRightIcon />
             </button>
         </div>
@@ -342,15 +517,26 @@ pub fn ActionButton(
     href: String,
     label: String,
     children: Children,
-    #[prop(optional, default = false)] disabled: bool,
+    #[prop(optional, into)] disabled: MaybeSignal<bool>,
 ) -> impl IntoView {
     view! {
         <a
             disabled=disabled
             href=href
-            class=move || format!("flex flex-col gap-1 justify-center items-center text-xs transition-colors {}", if !disabled{"group-hover:text-white text-neutral-300"}else{"group-hover:cursor-default text-neutral-600"})
+            class=move || {
+                format!(
+                    "flex flex-col gap-1 justify-center items-center text-xs transition-colors {}",
+                    if !disabled.get() {
+                        "group-hover:text-white text-neutral-300"
+                    } else {
+                        "group-hover:cursor-default text-neutral-600"
+                    },
+                )
+            }
         >
-            <div class="w-[1.875rem] h-[1.875rem] flex items-center justify-center">{children()}</div>
+            <div class="w-[1.875rem] h-[1.875rem] flex items-center justify-center">
+                {children()}
+            </div>
 
             <div>{label}</div>
         </a>
@@ -361,14 +547,16 @@ pub fn ActionButton(
 pub fn ActionButtonLink(
     label: String,
     children: Children,
-    #[prop(optional, default = false)] disabled: bool,
+    #[prop(optional, into)] disabled: MaybeSignal<bool>,
 ) -> impl IntoView {
     view! {
         <button
             disabled=disabled
-            class=move || format!("flex flex-col gap-1 justify-center items-center text-xs transition-colors {}", if !disabled{"group-hover:text-white text-neutral-300"}else{"group-hover:cursor-default text-neutral-600"})
+            class="flex flex-col gap-1 justify-center items-center text-xs transition-colors enabled:group-hover:text-white enabled:text-neutral-300 disabled:group-hover:cursor-default disabled:text-neutral-600"
         >
-            <div class="w-[1.875rem] h-[1.875rem] flex items-center justify-center">{children()}</div>
+            <div class="w-[1.875rem] h-[1.875rem] flex items-center justify-center">
+                {children()}
+            </div>
 
             <div>{label}</div>
         </button>
