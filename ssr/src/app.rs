@@ -1,9 +1,10 @@
 use crate::page::icpump::ai::ICPumpAi;
 use crate::page::icpump::ICPumpLanding;
-
 use crate::page::pumpdump::{test::PndTest, withdrawal, PndProfilePage};
+use crate::state::app_type::AppType;
 use crate::utils::host::show_preview_component;
 // use crate::page::wallet::TestIndex;
+use crate::state::app_state::AppState;
 use crate::{
     component::{base_route::BaseRoute, nav::NavBar},
     error_template::{AppError, ErrorTemplate},
@@ -82,10 +83,30 @@ fn GoogleAuthRedirectorRoute() -> impl IntoView {
     }
 }
 
+fn get_app_type() -> AppType {
+    #[cfg(feature = "hydrate")]
+    {
+        let hostname = window().location().hostname().unwrap_or_default();
+        AppType::from_host(&hostname)
+    }
+
+    #[cfg(not(feature = "hydrate"))]
+    {
+        use crate::utils::host::get_host;
+        let host = get_host();
+        AppType::from_host(&host)
+    }
+}
+
 #[component]
 pub fn App() -> impl IntoView {
-    // Provides context that manages stylesheets, titles, meta tags, etc.
     provide_meta_context();
+
+    let app_type = get_app_type();
+    let app_state = AppState::from_type(&app_type);
+    provide_context(app_state.clone());
+
+    // Existing context providers
     provide_context(Canisters::default());
     provide_context(ContentSeedClient::default());
     provide_context(PostViewCtx::default());
@@ -117,35 +138,32 @@ pub fn App() -> impl IntoView {
     }
 
     view! {
-        <Stylesheet id="leptos" href="/pkg/hot-or-not-leptos-ssr.css"/>
+            <Stylesheet id="leptos" href="/pkg/hot-or-not-leptos-ssr.css"/>
+            <Title text=app_state.name/>
+            <Link rel="manifest" href=app_state.manifest_config()/>
 
-        // sets the document title
-        <Title text="Yral"/>
-
-        <Link rel="manifest" href="/app.webmanifest"/>
-
-        // GA4 Global Site Tag (gtag.js) - Google Analytics
-        // G-6W5Q2MRX0E to test locally | G-PLNNETMSLM
-        <Show when=enable_ga4_script>
-            <Script
-                async_="true"
-                src=concat!("https://www.googletagmanager.com/gtag/js?id=", "G-PLNNETMSLM")
-            />
-            <Script>
-                {r#"
+            // GA4 Global Site Tag (gtag.js) - Google Analytics
+            // G-6W5Q2MRX0E to test locally | G-PLNNETMSLM
+            <Show when=enable_ga4_script>
+                <Script
+                    async_="true"
+                    src=concat!("https://www.googletagmanager.com/gtag/js?id=", "G-PLNNETMSLM")
+                />
+                <Script>
+                    {r#"
                 window.dataLayer = window.dataLayer || [];
                 function gtag(){dataLayer.push(arguments);}
                 gtag('js', new Date());
                 gtag('config', 'G-PLNNETMSLM');
                 "#}
-            </Script>
-        </Show>
+                </Script>
+            </Show>
 
-        // <Script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js"></Script>
-        // <Script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js"></Script>
+            // <Script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js"></Script>
+            // <Script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js"></Script>
 
-        // content for this welcome page
-        <Router fallback=|| view! { <NotFound/> }.into_view()>
+            // content for this welcome page
+            <Router fallback=|| view! { <NotFound/> }.into_view()>
             <main>
                 <Routes>
                     // auth redirect routes exist outside main context

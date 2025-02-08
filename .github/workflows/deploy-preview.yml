@@ -14,6 +14,7 @@ jobs:
       publish-artifact: true
 
   preview:
+    if: ${{ github.event.pull_request.merged == false}}
     needs: build_check
     runs-on: ubuntu-latest
 
@@ -31,6 +32,7 @@ jobs:
       - uses: actions/checkout@v3
       - name: Download build
         uses: actions/download-artifact@v4
+        if: ${{ github.event.pull_request.state == 'open'}}
         with:
           name: build-musl
       - run: chmod +x target/x86_64-unknown-linux-musl/release/hot-or-not-web-leptos-ssr
@@ -41,7 +43,7 @@ jobs:
 
       - uses: superfly/flyctl-actions/setup-flyctl@master
       - name: Set secret tokens
-        if: ${{ github.event.pull_request.merged == false}}
+        if: ${{ github.event.pull_request.state == 'open'}}
         run: |
           APP_NAME="pr-${{github.event.number}}-yral-dapp-hot-or-not-web-leptos-ssr"
           flyctl secrets set CF_TOKEN="$CF_TOKEN" --app "$APP_NAME" --stage
@@ -71,12 +73,12 @@ jobs:
           QSTASH_TOKEN: ${{ secrets.QSTASH_TOKEN }}
           GA4_API_SECRET: ${{ secrets.GOOGLE_ANALYTICS_MEASUREMENT_PROTOCOL_API_SECRET }}
           NSFW_GRPC_TOKEN: ${{ secrets.TOKEN_TO_SIGN_OUTGOING_CALLS_TO_NSFW_DETECT_SERVICE }}
-  
-  e2e-tests: 
+
+  e2e-tests:
     needs: preview
     uses: ./.github/workflows/e2e-tests.yml
+    if: ${{ github.event.pull_request.state == 'open'}}
     secrets: inherit
     with:
       preview_url: https://pr-${{github.event.number}}-yral-dapp-hot-or-not-web-leptos-ssr.fly.dev
       build_name: PR-${{github.event.number}}-commit-${{github.sha}}-attempt-${{github.run_attempt}}
-
