@@ -3,6 +3,7 @@ pub enum AppType {
     YRAL,
     HotOrNot,
     ICPump,
+    Pumpdump,
 }
 
 impl AppType {
@@ -11,6 +12,8 @@ impl AppType {
             AppType::HotOrNot
         } else if host.contains("icpump") {
             AppType::ICPump
+        } else if host.contains("pumpdump") {
+            AppType::Pumpdump
         } else {
             AppType::YRAL
         }
