@@ -49,7 +49,7 @@ fn GoogleAuthRedirectHandlerRoute() -> impl IntoView {
     #[cfg(any(feature = "oauth-ssr", feature = "oauth-hydrate"))]
     {
         if show_preview_component() {
-            use crate::page::google_redirect::PreviewGoogleRedirectHandler;
+            use crate::page::preview_google_redirect::PreviewGoogleRedirectHandler;
             view! { <Route path view=PreviewGoogleRedirectHandler/> }
         } else {
             use crate::page::google_redirect::GoogleRedirectHandler;
@@ -68,7 +68,7 @@ fn GoogleAuthRedirectorRoute() -> impl IntoView {
     #[cfg(any(feature = "oauth-ssr", feature = "oauth-hydrate"))]
     {
         if show_preview_component() {
-            use crate::page::google_redirect::PreviewGoogleRedirector;
+            use crate::page::preview_google_redirect::PreviewGoogleRedirector;
             view! { <Route path view=PreviewGoogleRedirector/> }
         } else {
             use crate::page::google_redirect::GoogleRedirector;
