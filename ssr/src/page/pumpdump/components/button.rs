@@ -49,6 +49,7 @@ pub fn DumpButton() -> impl IntoView {
             .unwrap_or_else(|| "-".into())
     };
     let onclick = move |_| {
+        non_visual_feedback();
         if let (Some(websocket), Some(round)) = (websocket.get().as_ref(), current_round.get()) {
             websocket.send(&WsRequest {
                 request_id: uuid::Uuid::new_v4(),
@@ -70,7 +71,6 @@ pub fn DumpButton() -> impl IntoView {
                 }
             });
         }
-        non_visual_feedback();
 
         // debounceResistanceAnimation();
     };
@@ -143,7 +143,7 @@ pub fn PumpButton() -> impl IntoView {
             .unwrap_or_else(|| "-".into())
     };
     let onclick = move |_| {
-        // TODO: add debouncing
+        non_visual_feedback();
         if let (Some(websocket), Some(round)) = (websocket.get().as_ref(), current_round.get()) {
             websocket.send(&WsRequest {
                 request_id: uuid::Uuid::new_v4(),
@@ -165,9 +165,6 @@ pub fn PumpButton() -> impl IntoView {
                 }
             });
         }
-
-        non_visual_feedback();
-        // debounceResistanceAnimation();
     };
     view! {
         <button
