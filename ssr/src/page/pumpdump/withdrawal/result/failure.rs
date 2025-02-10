@@ -25,7 +25,7 @@ pub fn Failure() -> impl IntoView {
                         <div class="flex flex-col gap-8 w-full px-5">
                             <div class="flex flex-col gap-2 items-center">
                                 <span class="font-bold text-lg">OOPS!</span>
-                                <span class="text-neutral-300">Failed to claim {gdolr} gDORLs!</span>
+                                <span class="text-neutral-300">Failed to claim {gdolr} gDOLR!</span>
                             </div>
                             <a class="rounded-lg px-5 py-2 text-center font-bold bg-brand-gradient text-white" href="/pnd/withdraw">
                                 Try Again

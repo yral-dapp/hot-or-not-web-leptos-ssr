@@ -220,7 +220,7 @@ fn TokenTransferInner(cans: Canisters<true>, root: RootType, info: TokenMetadata
                     .await?;
                 }
                 RootType::COYNS => return Err(ServerFnError::new("Coyns cannot be transferred")),
-                RootType::GDOLR => return Err(ServerFnError::new("gDOLRs cannot be transferred")),
+                RootType::GDOLR => return Err(ServerFnError::new("gDOLR cannot be transferred")),
             }
             TokensTransferred.send_event(amt.e8s.to_string(), destination, cans.clone());
 

@@ -126,9 +126,9 @@ pub fn WalletCard(
         .withdrawable_state
         .as_ref()
         .map(|state| match state {
-            WithdrawalState::Value(_) => "gDORLs you can withdraw".to_string(),
+            WithdrawalState::Value(_) => "gDOLR you can withdraw".to_string(),
             WithdrawalState::NeedMoreEarnings(more) => format!(
-                "Earn {} gDORLs more to unlock",
+                "Earn {} gDOLR more to unlock",
                 TokenBalance::new(more.clone() * 100usize, 8).humanize_float_truncate_to_dp(2)
             ),
         });
@@ -170,7 +170,7 @@ pub fn WalletCard(
                         <div class="flex items-center">
                             <Icon class="text-neutral-300" icon=if is_withdrawable.get_untracked() { PadlockOpen } else { PadlockClose } />
                             <span class="text-neutral-400 text-xs mx-2">{withdraw_message}</span>
-                            <Tooltip icon=Information title="Withdrawal Tokens" description="Only gDOLRs earned above your airdrop amount can be withdrawn." />
+                            <Tooltip icon=Information title="Withdrawal Tokens" description="Only gDOLR earned above your airdrop amount can be withdrawn." />
                             <span class="ml-auto">{withdrawable_balance}</span>
                         </div>
                         <a

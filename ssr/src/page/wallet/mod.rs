@@ -175,7 +175,7 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
                                 <div class="flex flex-col items-center py-5 w-full">
                                     <div class="flex flex-row items-center w-9/12 md:w-5/12">
                                         <ConnectLogin
-                                            login_text=if !show_pnd_page() {"Login to claim your COYNs"} else {"Login to claim your gDOLRs"}
+                                            login_text=if !show_pnd_page() {"Login to claim your COYNs"} else {"Login to claim your gDOLR"}
                                             cta_location="wallet"
                                         />
                                     </div>

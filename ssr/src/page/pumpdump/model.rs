@@ -5,7 +5,7 @@ use yral_pump_n_dump_common::rest::{BalanceInfoResponse, UserBetsResponse};
 
 use crate::consts::PUMP_AND_DUMP_WORKER_URL;
 
-/// utility macro to quickly format gdolrs
+/// utility macro to quickly format gdolr
 #[macro_export]
 macro_rules! format_gdolr {
     ($num:expr) => {
