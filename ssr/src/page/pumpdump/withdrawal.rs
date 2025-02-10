@@ -1,8 +1,9 @@
 use candid::{Nat, Principal};
 use futures::TryFutureExt;
+use http::StatusCode;
 use leptos::{
     component, create_action, create_effect, create_rw_signal, event_target_value, expect_context,
-    logging, view, IntoView, ServerFnError, SignalSet, Suspense,
+    view, IntoView, ServerFnError, SignalSet, Suspense,
 };
 use leptos_router::use_navigate;
 use yral_canisters_common::{utils::token::balance::TokenBalance, Canisters};
@@ -140,12 +141,16 @@ pub fn PndWithdrawal() -> impl IntoView {
                 .join("/claim_gdollr")
                 .expect("Url to be valid");
             let client = reqwest::Client::new();
-            let _ = client
+            let res = client
                 .post(claim_url)
                 .json(&req)
                 .send()
                 .await
                 .map_err(ServerFnError::new)?;
+
+            if res.status() != StatusCode::OK {
+                return Err(ServerFnError::new("Request failed"));
+            }
 
             Ok::<(), ServerFnError>(())
         }
@@ -158,17 +163,15 @@ pub fn PndWithdrawal() -> impl IntoView {
             match res {
                 Ok(_) => {
                     nav(
-                        &format!("/pnd/success/?gdolr={}", gdolrs()),
+                        &format!("/pnd/withdraw/success/?gdolr={}", gdolrs()),
                         Default::default(),
                     );
                 }
                 Err(err) => {
-                    // TODO: remove log, redirect to failure page
-                    logging::error!("claim err: {}", err);
-                    // nav(
-                    //     &format!("/pnd/failure/?gdolr={}&err={err}", gdolrs()),
-                    //     Default::default(),
-                    // );
+                    nav(
+                        &format!("/pnd/withdraw/failure/?gdolr={}&err={err}", gdolrs()),
+                        Default::default(),
+                    );
                 }
             }
         }
