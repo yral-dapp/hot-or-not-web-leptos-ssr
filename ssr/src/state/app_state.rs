@@ -41,8 +41,7 @@ impl AppState {
                 app_type: AppType::Pumpdump,
                 id: "pumpdump",
                 name: "Pump and Dump",
-                // TODO: confirm description and theme color
-                description: "todo...",
+                description: "Pump it, Dump it, Cash it",
                 theme_color: "#000000",
                 manifest_path: "pumpdump.json",
             },
