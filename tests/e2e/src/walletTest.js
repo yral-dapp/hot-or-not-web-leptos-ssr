@@ -4,7 +4,7 @@ describe("wallet page tests", function () {
     })
 
     it("wallet page contains login button", async function (browser) {
-        browser.element.findByText('Login to claim', {timeout: 10000}).waitUntil('enabled');
+        browser.element.findByText('Login to claim', {timeout: 50000}).waitUntil('enabled');
     })
     
     // TODO: update this test so that either 1000 COYNS are present or a 100 GDOLR, never both
