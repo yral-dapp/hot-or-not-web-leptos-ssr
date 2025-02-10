@@ -5,10 +5,12 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use axum::{routing::get, Router};
-use hot_or_not_web_leptos_ssr::{app::App, init::AppStateBuilder, state::server::AppState};
+use hot_or_not_web_leptos_ssr::fallback::file_and_error_handler;
 use hot_or_not_web_leptos_ssr::{
-    fallback::file_and_error_handler, utils::host::is_host_a_preview_link,
+    app::App, init::AppStateBuilder, state::server::AppState,
+    utils::host::is_host_or_origin_from_preview_domain,
 };
+use http::{header, Method};
 use leptos::{get_configuration, logging::log, provide_context};
 use leptos_axum::handle_server_fns_with_context;
 use leptos_axum::{generate_route_list, LeptosRoutes};
@@ -143,13 +145,17 @@ async fn main() {
             get(server_fn_handler).post(server_fn_handler),
         )
         .layer(
-            CorsLayer::new().allow_origin(AllowOrigin::predicate(|origin, _| {
-                if let Ok(host) = origin.to_str() {
-                    is_host_a_preview_link(host) || host == "yral.com"
-                } else {
-                    false
-                }
-            })),
+            CorsLayer::new()
+                .allow_credentials(true)
+                .allow_headers([header::AUTHORIZATION, header::CONTENT_TYPE, header::ACCEPT])
+                .allow_methods([Method::POST, Method::GET, Method::PUT, Method::OPTIONS])
+                .allow_origin(AllowOrigin::predicate(|origin, _| {
+                    if let Ok(host) = origin.to_str() {
+                        is_host_or_origin_from_preview_domain(host) || host == "yral.com"
+                    } else {
+                        false
+                    }
+                })),
         )
         .leptos_routes_with_handler(routes, get(leptos_routes_handler))
         .fallback(file_and_error_handler)

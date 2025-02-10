@@ -29,7 +29,7 @@ async fn google_auth_redirector() -> Result<(), ServerFnError> {
 
 #[cfg(feature = "ssr")]
 fn is_valid_redirect_uri_inner(client_redirect_uri: &str) -> Option<()> {
-    use crate::utils::host::is_host_a_preview_link;
+    use crate::utils::host::is_host_or_origin_from_preview_domain;
 
     let parsed_uri = http::Uri::try_from(client_redirect_uri).ok()?;
 
@@ -42,7 +42,7 @@ fn is_valid_redirect_uri_inner(client_redirect_uri: &str) -> Option<()> {
         return Some(());
     }
 
-    is_host_a_preview_link(host).then_some(())
+    is_host_or_origin_from_preview_domain(host).then_some(())
 }
 
 #[cfg(feature = "ssr")]

@@ -27,14 +27,14 @@ pub fn show_cdao_page() -> bool {
 }
 
 #[cfg(feature = "ssr")]
-pub fn is_host_a_preview_link(host: &str) -> bool {
+pub fn is_host_or_origin_from_preview_domain(uri: &str) -> bool {
     use regex::Regex;
 
     static PR_PREVIEW_PATTERN: LazyLock<Regex> = LazyLock::new(|| {
-        Regex::new(r"^pr-\d*-yral-dapp-hot-or-not-web-leptos-ssr\.fly\.dev$").unwrap()
+        Regex::new(r"^(https:\/\/)?pr-\d*-yral-dapp-hot-or-not-web-leptos-ssr\.fly\.dev$").unwrap()
     });
 
-    PR_PREVIEW_PATTERN.is_match_at(host, 0)
+    PR_PREVIEW_PATTERN.is_match_at(uri, 0)
 }
 
 pub fn show_preview_component() -> bool {
@@ -46,7 +46,7 @@ pub fn show_cdao_condition(host: String) -> bool {
     host == "icpump.fun"
     // || host == "localhost:3000"
     // || host == "hot-or-not-web-leptos-ssr-staging.fly.dev"
-    || host.contains("yral-dapp-hot-or-not-web-leptos-ssr.fly.dev") // Use this when testing icpump changes
+    // || host.contains("yral-dapp-hot-or-not-web-leptos-ssr.fly.dev") // Use this when testing icpump changes
 }
 
 pub fn show_nsfw_content() -> bool {
@@ -57,4 +57,28 @@ pub fn show_nsfw_content() -> bool {
 pub fn show_nsfw_condition(host: String) -> bool {
     host == "hotornot.wtf" || host == "127.0.0.1:3000"
     // || host.contains("yral-dapp-hot-or-not-web-leptos-ssr.fly.dev")
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::utils::host::is_host_or_origin_from_preview_domain;
+
+    #[test]
+    fn preview_origin_regex_matches() {
+        let preview_link_url = "https://pr-636-yral-dapp-hot-or-not-web-leptos-ssr.fly.dev";
+        assert!(is_host_or_origin_from_preview_domain(preview_link_url))
+    }
+
+    #[test]
+    fn preview_host_regex_matches() {
+        let preview_link_url = "pr-636-yral-dapp-hot-or-not-web-leptos-ssr.fly.dev";
+        assert!(is_host_or_origin_from_preview_domain(preview_link_url))
+    }
+
+    #[test]
+    fn preview_localhost_fails() {
+        let preview_link_url =
+            "https://ramdom.com/pr-636-yral-dapp-hot-or-not-web-leptos-ssr.fly.dev";
+        assert!(!is_host_or_origin_from_preview_domain(preview_link_url))
+    }
 }
