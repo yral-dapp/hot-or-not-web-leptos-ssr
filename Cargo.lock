@@ -6588,7 +6588,7 @@ checksum = "3c5e1a9a646d36c3599cd173a41282daf47c44583ad367b8e6837255952e5c67"
 [[package]]
 name = "sns-validation"
 version = "0.1.0"
-source = "git+https://github.com/yral-dapp/yral-common.git?rev=83a890d5727e3cee3b49416e83baa955f7bc3b4c#83a890d5727e3cee3b49416e83baa955f7bc3b4c"
+source = "git+https://github.com/yral-dapp/yral-common.git?rev=c6e6312b779a9b928b146960b14a531cc51e6694#c6e6312b779a9b928b146960b14a531cc51e6694"
 dependencies = [
  "candid",
  "humantime",
@@ -8002,7 +8002,7 @@ dependencies = [
 [[package]]
 name = "yral-canisters-client"
 version = "0.1.0"
-source = "git+https://github.com/yral-dapp/yral-common.git?rev=83a890d5727e3cee3b49416e83baa955f7bc3b4c#83a890d5727e3cee3b49416e83baa955f7bc3b4c"
+source = "git+https://github.com/yral-dapp/yral-common.git?rev=c6e6312b779a9b928b146960b14a531cc51e6694#c6e6312b779a9b928b146960b14a531cc51e6694"
 dependencies = [
  "anyhow",
  "candid",
@@ -8017,7 +8017,7 @@ dependencies = [
 [[package]]
 name = "yral-canisters-common"
 version = "0.1.0"
-source = "git+https://github.com/yral-dapp/yral-common.git?rev=83a890d5727e3cee3b49416e83baa955f7bc3b4c#83a890d5727e3cee3b49416e83baa955f7bc3b4c"
+source = "git+https://github.com/yral-dapp/yral-common.git?rev=c6e6312b779a9b928b146960b14a531cc51e6694#c6e6312b779a9b928b146960b14a531cc51e6694"
 dependencies = [
  "candid",
  "ciborium",
@@ -8044,7 +8044,7 @@ dependencies = [
 [[package]]
 name = "yral-grpc-traits"
 version = "0.1.0"
-source = "git+https://github.com/yral-dapp/yral-common.git?rev=83a890d5727e3cee3b49416e83baa955f7bc3b4c#83a890d5727e3cee3b49416e83baa955f7bc3b4c"
+source = "git+https://github.com/yral-dapp/yral-common.git?rev=c6e6312b779a9b928b146960b14a531cc51e6694#c6e6312b779a9b928b146960b14a531cc51e6694"
 dependencies = [
  "serde",
 ]
@@ -8099,7 +8099,7 @@ dependencies = [
 [[package]]
 name = "yral-pump-n-dump-common"
 version = "0.1.0"
-source = "git+https://github.com/yral-dapp/yral-common.git?rev=83a890d5727e3cee3b49416e83baa955f7bc3b4c#83a890d5727e3cee3b49416e83baa955f7bc3b4c"
+source = "git+https://github.com/yral-dapp/yral-common.git?rev=c6e6312b779a9b928b146960b14a531cc51e6694#c6e6312b779a9b928b146960b14a531cc51e6694"
 dependencies = [
  "candid",
  "ic-agent",
@@ -8113,7 +8113,7 @@ dependencies = [
 [[package]]
 name = "yral-qstash-types"
 version = "0.1.0"
-source = "git+https://github.com/yral-dapp/yral-common.git?rev=83a890d5727e3cee3b49416e83baa955f7bc3b4c#83a890d5727e3cee3b49416e83baa955f7bc3b4c"
+source = "git+https://github.com/yral-dapp/yral-common.git?rev=c6e6312b779a9b928b146960b14a531cc51e6694#c6e6312b779a9b928b146960b14a531cc51e6694"
 dependencies = [
  "candid",
  "serde",
@@ -8134,7 +8134,7 @@ dependencies = [
 [[package]]
 name = "yral-types"
 version = "0.1.0"
-source = "git+https://github.com/yral-dapp/yral-common.git?rev=83a890d5727e3cee3b49416e83baa955f7bc3b4c#83a890d5727e3cee3b49416e83baa955f7bc3b4c"
+source = "git+https://github.com/yral-dapp/yral-common.git?rev=c6e6312b779a9b928b146960b14a531cc51e6694#c6e6312b779a9b928b146960b14a531cc51e6694"
 dependencies = [
  "ic-agent",
  "k256",
