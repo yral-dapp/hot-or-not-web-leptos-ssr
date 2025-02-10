@@ -163,13 +163,13 @@ pub fn PndWithdrawal() -> impl IntoView {
             match res {
                 Ok(_) => {
                     nav(
-                        &format!("/pnd/withdraw/success/?gdolr={}", gdolrs()),
+                        &format!("/pnd/withdraw/success?gdolr={}", gdolrs()),
                         Default::default(),
                     );
                 }
                 Err(err) => {
                     nav(
-                        &format!("/pnd/withdraw/failure/?gdolr={}&err={err}", gdolrs()),
+                        &format!("/pnd/withdraw/failure?gdolr={}&err={err}", gdolrs()),
                         Default::default(),
                     );
                 }
