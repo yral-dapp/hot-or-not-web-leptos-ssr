@@ -4,9 +4,7 @@ pub mod transactions;
 pub mod txn;
 
 use crate::component::icons::notification_icon::NotificationIcon;
-use crate::{
-    component::share_popup::ShareButtonWithFallbackPopup, state::canisters::unauth_canisters,
-};
+use crate::component::share_popup::ShareButtonWithFallbackPopup;
 use candid::Principal;
 use leptos::*;
 use leptos_router::Params;
