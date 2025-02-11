@@ -5,6 +5,7 @@ use candid::Principal;
 use codee::string::FromToStringCodec;
 use leptos::*;
 use leptos_icons::*;
+use crate::component::icons::home_icon::HomeIcon;
 use leptos_router::*;
 use leptos_use::use_cookie;
 
@@ -150,7 +151,7 @@ pub fn NavBar() -> impl IntoView {
             <NavIcon
                 idx=0
                 href=home_path
-                icon=HomeSymbol
+                icon=HomeIcon
                 filled_icon=HomeSymbolFilled
                 cur_selected=cur_selected
             />
