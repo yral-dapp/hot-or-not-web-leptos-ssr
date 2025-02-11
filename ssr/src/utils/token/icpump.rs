@@ -1,5 +1,8 @@
 use serde::{Deserialize, Serialize};
-use std::env;
+use std::{
+    env,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 use futures::stream::BoxStream;
 use futures::StreamExt;
@@ -23,6 +26,7 @@ pub struct TokenListItem {
     pub logo: String,
     pub description: String,
     pub created_at: String,
+    pub timestamp: i64,
     pub formatted_created_at: String,
     pub link: String,
     #[serde(default)]
@@ -95,9 +99,9 @@ pub async fn get_paginated_token_list(page: u32) -> Result<Vec<TokenListItem>, S
             .iter()
             .map(|item| {
                 let created_at_str = item.created_at.clone();
-                let created_at = DateTime::parse_str(&created_at_str).unwrap().timestamp();
+                let timestamp = DateTime::parse_str(&created_at_str).unwrap().timestamp();
                 let now = DateTime::now(0).unwrap().timestamp();
-                let elapsed = now - created_at;
+                let elapsed = now - timestamp;
 
                 let elapsed_str = if elapsed < 60 {
                     format!("{}s ago", elapsed)
@@ -117,6 +121,7 @@ pub async fn get_paginated_token_list(page: u32) -> Result<Vec<TokenListItem>, S
                     logo: item.logo.clone(),
                     description: item.description.clone(),
                     created_at: item.created_at.clone(),
+                    timestamp,
                     formatted_created_at: elapsed_str,
                     link: item.link.clone(),
                     is_nsfw: item.is_nsfw,
@@ -156,6 +161,10 @@ pub async fn get_mocked_paginated_token_list(page: u32) -> Vec<TokenListItem> {
                 description: "This is a test token".to_string(),
                 created_at: "69".to_string(),
                 formatted_created_at: "69 mins".to_string(),
+                timestamp: SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs() as i64,
                 link: format!("{} {}", Principal::anonymous().to_text(), id),
                 is_nsfw: false,
             }
@@ -257,9 +266,9 @@ impl From<icpump_search::SearchItemV1> for TokenListItem {
         use speedate::DateTime;
 
         let created_at_str = item.created_at.clone();
-        let created_at = DateTime::parse_str(&created_at_str).unwrap().timestamp();
+        let timestamp = DateTime::parse_str(&created_at_str).unwrap().timestamp();
         let now = DateTime::now(0).unwrap().timestamp();
-        let elapsed = now - created_at;
+        let elapsed = now - timestamp;
 
         let elapsed_str = if elapsed < 60 {
             format!("{}s ago", elapsed)
@@ -279,6 +288,7 @@ impl From<icpump_search::SearchItemV1> for TokenListItem {
             logo: item.logo,
             description: item.description,
             created_at: item.created_at,
+            timestamp,
             formatted_created_at: elapsed_str,
             link: item.link,
             is_nsfw: item.is_nsfw,
