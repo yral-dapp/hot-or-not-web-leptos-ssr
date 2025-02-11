@@ -31,8 +31,11 @@ pub fn TokenViewFallback() -> impl IntoView {
 }
 
 #[component]
-pub fn TokenList(user_principal: Principal, user_canister: Principal, viewer_principal: Principal) -> impl IntoView {
-
+pub fn TokenList(
+    user_principal: Principal,
+    user_canister: Principal,
+    viewer_principal: Principal,
+) -> impl IntoView {
     let provider = TokenRootList {
         viewer_principal,
         canisters: unauth_canisters(),
@@ -75,7 +78,6 @@ pub fn WalletCard(
 ) -> impl IntoView {
     let (viewer_principal, _) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE);
 
-
     let root: String = token_meta_data
         .root
         .map(|r| r.to_text())
@@ -106,8 +108,15 @@ pub fn WalletCard(
     let claimed = create_rw_signal(true);
 
     spawn_local(async move {
-        if let RootType::Other(root) = root_type{
-            let status = unauth_canisters().get_airdrop_status(token_meta_data.token_owner.unwrap().canister_id, root, viewer_principal.get_untracked().unwrap()).await.unwrap();
+        if let RootType::Other(root) = root_type {
+            let status = unauth_canisters()
+                .get_airdrop_status(
+                    token_meta_data.token_owner.unwrap().canister_id,
+                    root,
+                    viewer_principal.get_untracked().unwrap(),
+                )
+                .await
+                .unwrap();
             claimed.set(status);
         }
     });

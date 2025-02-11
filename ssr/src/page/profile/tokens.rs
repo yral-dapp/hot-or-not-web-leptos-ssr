@@ -57,8 +57,9 @@ async fn process_profile_tokens(
             let cans = cans.clone();
             async move {
                 let token = token_metadata(&cans, user_principal, deployed_cans).await?;
-                let root_type = RootType::Other(token.root.ok_or(ServerFnError::new("Invalid Root Type"))?);
-                
+                let root_type =
+                    RootType::Other(token.root.ok_or(ServerFnError::new("Invalid Root Type"))?);
+
                 Ok::<_, ServerFnError>((token, root_type))
             }
         })
