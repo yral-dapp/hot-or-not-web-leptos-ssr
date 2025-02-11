@@ -162,8 +162,9 @@ pub fn App() -> impl IntoView {
             // <Script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js"></Script>
 
             // content for this welcome page
+            <Body style="background: #000;" id="body"/>
             <Router fallback=|| view! { <NotFound/> }.into_view()>
-            <main class="bg-black">
+            <main>
                 <Routes>
                     // auth redirect routes exist outside main context
                     <GoogleAuthRedirectHandlerRoute/>
