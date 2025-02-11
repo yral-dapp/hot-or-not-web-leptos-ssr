@@ -17,7 +17,7 @@ pub fn OnboardingPopup() -> impl IntoView {
         <div class="fade-in fixed inset-0 bg-black/50 flex py-16 justify-center z-50 p-4">
             <div
                 style="background-size: cover; background-position: left; background-image: url('/img/pnd-onboarding-bg.png');"
-                class="rounded-2xl max-w-md flex flex-col h-[33.5rem] justify-center text-white gap-8 items-center pt-8 pb-5 px-8 absolute top-1/2 -translate-y-1/2"
+                class="rounded-2xl max-w-md flex flex-col h-[33.5rem] justify-center text-white gap-8 items-center pt-8 pb-5 px-8 absolute top-1/2 -translate-y-1/2 origin-center [@media(max-height:680px)]:scale-[.8]"
             >
                 <div
                     class="absolute flex items-center top-4 px-4 inset-x-0"
