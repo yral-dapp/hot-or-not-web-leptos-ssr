@@ -1,11 +1,7 @@
 use leptos::*;
 
+use crate::component::buttons::HighlightedButton;
 use crate::utils::event_streaming::events::{LoginCta, LoginJoinOverlayViewed};
-use crate::{
-    component::{
-        buttons::{HighlightedButton, HighlightedLinkButton},
-    },
-};
 
 use super::login_modal::LoginModal;
 

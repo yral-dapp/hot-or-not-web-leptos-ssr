@@ -202,13 +202,13 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
                     let profile_details = try_or_redirect_opt!(profile_info_res()?);
                     let is_own_account = try_or_redirect_opt!(is_own_account()?);
                     Some(
-                        view! { 
+                        view! {
                             <Header details=profile_details is_own_account=is_own_account/>
                         },
                     )
                 }}
             </Suspense>
-            
+
             <div class="flex h-full w-full flex-col items-center justify-center max-w-md mx-auto px-4 gap-4">
                 <Suspense fallback=move || view! { <ProfileCardLoading/> }>
                     {move || {
