@@ -166,6 +166,23 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
                     }}
                 </Suspense>
             <Suspense>
+                <div class="flex items-center justify-between">
+                <span>My Wallet</span>
+                <div class="flex items-center gap-8">
+                    <a href="/share">Share Icon</a>
+                    <a href="/notification">Notification Icon</a>
+                </div>
+                <div class="rounded-lg p-16 flex flex-col gap-16 bg-[#171717]">
+                <div class="flex items-center gap-3">
+                    <div class="h-12 w-12 rounded-full">
+                    Avatar
+                    </div>
+                    <div>Principal ID</div>
+                </div>
+                <button>
+                Login to claim tokens
+                </button>
+                </div>
                 {move || {
                     let is_own_account = try_or_redirect_opt!(is_own_account() ?);
                     Some(
@@ -186,7 +203,7 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
             </Suspense>
             <div class="h-full w-full">
             <div class="flex flex-col items-center justify-center max-w-md mx-auto px-4 mt-4 pb-6">
-                <div class="font-kumbh self-start pb-4 font-bold text-xl text-white">All Tokens</div>
+                <div class="font-kumbh self-start pb-4 font-bold text-xl text-white">My tokens</div>
                 <Suspense>
                     {move || {
                         let canister_id = try_or_redirect_opt!(canister_id() ?);
