@@ -215,10 +215,10 @@ pub fn PndWithdrawal() -> impl IntoView {
                             }>
                             {move || {
                                 let (BalanceInfoResponse { withdrawable, .. }, _) = try_or_redirect_opt!(details_res()?);
-                                let _can_withdraw = withdrawable > cents();
-                                let can_withdraw = true; // TODO: remove this, only for testing
+                                let can_withdraw = withdrawable > cents();
                                 let message = match (can_withdraw, is_claiming()) {
-                                    (false, _) => "Not enough winnings",
+                                    (false, _) if cents() > 0 => "Not enough winnings",
+                                    (false, _) => "Enter Amount",
                                     (_, true) => "Claiming...",
                                     (_, _) => "Withdraw Now!"
                                 };
