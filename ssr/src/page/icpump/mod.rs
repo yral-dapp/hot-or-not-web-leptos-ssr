@@ -556,18 +556,9 @@ pub fn ActionButton(
 ) -> impl IntoView {
     view! {
         <a
-            disabled=disabled
+            aria-disabled=move || disabled().to_string()
             href=href
-            class=move || {
-                format!(
-                    "flex flex-col gap-1 justify-center items-center text-xs transition-colors {}",
-                    if !disabled.get() {
-                        "group-hover:text-white text-neutral-300"
-                    } else {
-                        "group-hover:cursor-default text-neutral-600"
-                    },
-                )
-            }
+            class="flex flex-col gap-1 justify-center items-center text-xs transition-colors group-hover:text-white text-neutral-300 aria-disabled:group-hover:cursor-default aria-disabled:text-neutral-600 aria-disabled:pointer-events-none"
         >
             <div class="w-[1.875rem] h-[1.875rem] flex items-center justify-center">
                 {children()}
