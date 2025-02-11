@@ -8,17 +8,17 @@ use crate::{
     try_or_redirect_opt,
 };
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Params)]
+#[derive(Debug, PartialEq, Eq, Clone, Params)]
 struct SuccessParams {
-    cents: u64,
+    cents: Nat,
 }
 
 #[component]
 pub fn Success() -> impl IntoView {
     let params = use_query::<SuccessParams>();
     let SuccessParams { cents } = try_or_redirect_opt!(params.get_untracked());
-    let formatted_dolr =
-        TokenBalance::new(Nat::from(cents) * 1e6 as usize, 8).humanize_float_truncate_to_dp(2);
+    let formatted_dolr = TokenBalance::new(cents.clone(), 8).humanize_float_truncate_to_dp(4);
+    let formatted_cents = TokenBalance::new(cents.clone(), 6).humanize_float_truncate_to_dp(4);
 
     Some(view! {
         <div
@@ -38,7 +38,7 @@ pub fn Success() -> impl IntoView {
                         <img class="max-w-44" src="/img/cents-stack.png" />
                         <div class="flex flex-col gap-8 w-full px-5">
                             <div class="flex flex-col gap-2 items-center">
-                                <span class="font-bold text-lg">{format!("You've successfully claimed {cents} Cents.")}</span>
+                                <span class="font-bold text-lg">{format!("You've successfully claimed {formatted_cents} Cents.")}</span>
                                 <span class="text-neutral-300">Your wallet has been updated with {formatted_dolr} DOLR.</span>
                             </div>
                             <a class="rounded-lg px-5 py-2 text-center font-bold bg-white" href="/">

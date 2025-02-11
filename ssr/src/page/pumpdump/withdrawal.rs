@@ -3,7 +3,7 @@ use futures::TryFutureExt;
 use http::StatusCode;
 use leptos::{
     component, create_action, create_effect, create_rw_signal, event_target_value, expect_context,
-    view, IntoView, ServerFnError, SignalSet, Suspense,
+    logging, view, IntoView, ServerFnError, SignalSet, Suspense,
 };
 use leptos_router::use_navigate;
 use yral_canisters_common::{utils::token::balance::TokenBalance, Canisters};
@@ -108,18 +108,23 @@ pub fn PndWithdrawal() -> impl IntoView {
                 .await
         },
     );
-    let cents = create_rw_signal(0);
-    let dolrs = move || Nat::from(cents()) * 1e6 as usize;
+    let cents = create_rw_signal(TokenBalance::new(0usize.into(), 6));
+    let dolrs = move || cents().e8s;
     let formated_dolrs = move || {
         format!(
             "{}DOLR",
-            TokenBalance::new(dolrs(), 8).humanize_float_truncate_to_dp(2)
+            TokenBalance::new(dolrs(), 8).humanize_float_truncate_to_dp(4)
         )
     };
+
     let on_input = move |ev: leptos::ev::Event| {
         let value = event_target_value(&ev);
-        let value = value.parse::<usize>().ok();
-        let Some(value) = value else { return };
+        let value = TokenBalance::parse(&value, 6)
+            .inspect_err(|err| {
+                logging::error!("Couldn't parse value: {}", err);
+            })
+            .ok();
+        let value = value.unwrap_or_else(|| TokenBalance::new(0usize.into(), 6));
 
         cents.set(value);
     };
@@ -163,13 +168,13 @@ pub fn PndWithdrawal() -> impl IntoView {
             match res {
                 Ok(_) => {
                     nav(
-                        &format!("/pnd/withdraw/success?cents={}", cents()),
+                        &format!("/pnd/withdraw/success?cents={}", cents().e8s),
                         Default::default(),
                     );
                 }
                 Err(err) => {
                     nav(
-                        &format!("/pnd/withdraw/failure?cents={}&err={err}", cents()),
+                        &format!("/pnd/withdraw/failure?cents={}&err={err}", cents().e8s),
                         Default::default(),
                     );
                 }
@@ -215,8 +220,8 @@ pub fn PndWithdrawal() -> impl IntoView {
                             }>
                             {move || {
                                 let (BalanceInfoResponse { withdrawable, .. }, _) = try_or_redirect_opt!(details_res()?);
-                                let can_withdraw = withdrawable >= cents();
-                                let no_input = cents() == 0;
+                                let can_withdraw = TokenBalance::new(withdrawable, 0) >= cents();
+                                let no_input = cents().e8s == 0usize;
                                 let is_claiming = is_claiming();
                                 let message = if no_input {
                                     "Enter Amount"
