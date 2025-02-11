@@ -1,14 +1,18 @@
 use leptos::{component, expect_context, view, IntoView, Show, SignalGet};
+use leptos_icons::*;
 
-use crate::page::{
-    icpump::ProcessedTokenListResponse,
-    pumpdump::{
-        components::{
-            button::{DumpButton, PumpButton},
-            slider::BullBearSlider,
+use crate::{
+    component::icons::chevron_right_icon::ChevronRightIcon,
+    page::{
+        icpump::ProcessedTokenListResponse,
+        pumpdump::{
+            components::{
+                button::{DumpButton, PumpButton},
+                slider::BullBearSlider,
+            },
+            GameResult, GameRunningDataSignal, GameState, IdentitySignal, LoadRunningDataAction,
+            ShowOnboarding,
         },
-        GameResult, GameRunningDataSignal, GameState, IdentitySignal, LoadRunningDataAction,
-        ShowOnboarding,
     },
 };
 
@@ -26,6 +30,8 @@ pub fn PlayingCard() -> impl IntoView {
             .unwrap_or_else(|| "--".into())
     };
 
+    let token_link = token.token_details.link.clone();
+
     let player_count = move || {
         running_data
             .get()
@@ -39,8 +45,9 @@ pub fn PlayingCard() -> impl IntoView {
         >
             <div class="flex flex-col gap-6 w-full items-center">
                 <img class="size-32 rounded-[4px]" alt="Avatar" src=token.token_details.logo />
-                <a href="#" class="flex items-center gap-1">
+                <a href=token_link class="flex items-center gap-1">
                     <div class="font-bold text-lg">{token.token_details.token_name}</div>
+                    <Icon icon=ChevronRightIcon class="w-5 h-5 -mb-px" />
                 </a>
                 <div class="bg-[#212121] shrink-0 rounded-full relative w-full h-11 overflow-hidden">
                     <div
