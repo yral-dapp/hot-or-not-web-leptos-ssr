@@ -215,19 +215,23 @@ pub fn PndWithdrawal() -> impl IntoView {
                             }>
                             {move || {
                                 let (BalanceInfoResponse { withdrawable, .. }, _) = try_or_redirect_opt!(details_res()?);
-                                let can_withdraw = withdrawable > cents();
-                                let message = match (can_withdraw, is_claiming()) {
-                                    (false, _) if cents() > 0 => "Not enough winnings",
-                                    (false, _) => "Enter Amount",
-                                    (_, true) => "Claiming...",
-                                    (_, _) => "Withdraw Now!"
+                                let can_withdraw = withdrawable >= cents();
+                                let no_input = cents() == 0;
+                                let is_claiming = is_claiming();
+                                let message = if no_input {
+                                    "Enter Amount"
+                                } else {
+                                    match (can_withdraw, is_claiming) {
+                                        (false, _) => "Not enough winnings",
+                                        (_, true) => "Claiming...",
+                                        (_, _) => "Withdraw Now!"
+                                    }
                                 };
                                 Some(view! {
                                     <button
-                                        disabled=!can_withdraw || is_claiming()
-                                        class=("bg-brand-gradient", can_withdraw)
-                                        class=("bg-brand-gradient-disabled", !can_withdraw)
-                                        class="rounded-lg px-5 py-2 text-sm text-center font-bold"
+                                        disabled=no_input || !can_withdraw
+                                        class=("pointer-events-none", is_claiming)
+                                        class="rounded-lg px-5 py-2 text-sm text-center font-bold bg-brand-gradient disabled:bg-brand-gradient-disabled"
                                         on:click=move |_ev| send_claim.dispatch(())
                                     >{message}</button>
                                 })
