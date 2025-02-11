@@ -31,11 +31,10 @@ pub fn TokenViewFallback() -> impl IntoView {
 }
 
 #[component]
-pub fn TokenList(user_principal: Principal, user_canister: Principal) -> impl IntoView {
-    let (viewer_principal, _) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE);
+pub fn TokenList(user_principal: Principal, user_canister: Principal, viewer_principal: Principal) -> impl IntoView {
 
     let provider = TokenRootList {
-        viewer_principal: viewer_principal.get_untracked().unwrap(),
+        viewer_principal,
         canisters: unauth_canisters(),
         user_canister,
         user_principal,
@@ -47,9 +46,9 @@ pub fn TokenList(user_principal: Principal, user_canister: Principal) -> impl In
             <InfiniteScroller
                 provider
                 fetch_count=5
-                children=move |TokenListResponse{token_metadata, airdrop_claimed, root}, _ref| {
+                children=move |TokenListResponse{token_metadata, root}, _ref| {
                     view! {
-                        <WalletCard user_principal token_meta_data=token_metadata is_airdrop_claimed=airdrop_claimed _ref=_ref.unwrap_or_default() is_utility_token=root == RootType::COYNS/>
+                        <WalletCard user_principal token_meta_data=token_metadata _ref=_ref.unwrap_or_default() is_utility_token=root == RootType::COYNS root_type=root/>
                     }
                 }
             />
@@ -70,10 +69,13 @@ struct WalletCardOptionsContext {
 pub fn WalletCard(
     user_principal: Principal,
     token_meta_data: TokenMetadata,
-    is_airdrop_claimed: bool,
     #[prop(optional)] is_utility_token: bool,
+    root_type: RootType,
     #[prop(optional)] _ref: NodeRef<html::Div>,
 ) -> impl IntoView {
+    let (viewer_principal, _) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE);
+
+
     let root: String = token_meta_data
         .root
         .map(|r| r.to_text())
@@ -95,13 +97,21 @@ pub fn WalletCard(
     provide_context(WalletCardOptionsContext {
         is_utility_token,
         root,
-        token_owner: token_meta_data.token_owner,
+        token_owner: token_meta_data.token_owner.clone(),
         user_principal,
     });
 
     let airdrop_popup = create_rw_signal(false);
     let buffer_signal = create_rw_signal(false);
-    let claimed = create_rw_signal(is_airdrop_claimed);
+    let claimed = create_rw_signal(true);
+
+    spawn_local(async move {
+        if let RootType::Other(root) = root_type{
+            let status = unauth_canisters().get_airdrop_status(token_meta_data.token_owner.unwrap().canister_id, root, viewer_principal.get_untracked().unwrap()).await.unwrap();
+            claimed.set(status);
+        }
+    });
+
     view! {
         <div node_ref=_ref class="flex flex-col gap-4 bg-neutral-900/90 rounded-lg w-full font-kumbh text-white p-4">
             <div class="w-full flex items-center justify-between p-3 rounded-[4px] bg-neutral-800/70">

@@ -3,6 +3,7 @@ use futures::{stream::FuturesOrdered, TryStreamExt};
 use leptos::*;
 use yral_canisters_client::individual_user_template::DeployedCdaoCanisters;
 use yral_canisters_client::individual_user_template::IndividualUserTemplate;
+use yral_canisters_common::utils::token::RootType;
 
 use crate::{
     component::{bullet_loader::BulletLoader, token_confetti_symbol::TokenConfettiSymbol},
@@ -47,7 +48,7 @@ async fn process_profile_tokens(
     user: IndividualUserTemplate<'_>,
     cans: Canisters<true>,
     user_principal: Principal,
-) -> Result<Vec<(TokenMetadata, Option<bool>)>, ServerFnError> {
+) -> Result<Vec<(TokenMetadata, RootType)>, ServerFnError> {
     let tokens: Vec<_> = user
         .deployed_cdao_canisters()
         .await?
@@ -56,18 +57,9 @@ async fn process_profile_tokens(
             let cans = cans.clone();
             async move {
                 let token = token_metadata(&cans, user_principal, deployed_cans).await?;
-                let is_airdrop_claimed = if let (Some(token_owner), Some(root)) =
-                    (token.token_owner.clone(), token.root)
-                {
-                    Some(
-                        cans.get_airdrop_status(token_owner.canister_id, root, user_principal)
-                            .await?,
-                    )
-                } else {
-                    None
-                };
-
-                Ok::<_, ServerFnError>((token, is_airdrop_claimed))
+                let root_type = RootType::Other(token.root.ok_or(ServerFnError::new("Invalid Root Type"))?);
+                
+                Ok::<_, ServerFnError>((token, root_type))
             }
         })
         .collect::<FuturesOrdered<_>>()
@@ -108,12 +100,12 @@ pub fn ProfileTokens(user_canister: Principal, user_principal: Principal) -> imp
                             view! {
                                 {tokens
                                     .into_iter()
-                                    .map(|(token, is_airdrop_claimed)| {
+                                    .map(|(token, root_type)| {
                                         view! {
                                             <WalletCard
                                                 user_principal
                                                 token_meta_data=token
-                                                is_airdrop_claimed=is_airdrop_claimed.unwrap_or(true)
+                                                root_type=root_type
                                             />
                                         }
                                     })

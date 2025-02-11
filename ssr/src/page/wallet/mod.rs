@@ -140,17 +140,17 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
         },
     );
 
-    let canister_id = create_resource(
+    let canister_ids = auth_cans.derive(
         move || principal,
-        move |principal| async move {
-            let canisters = unauth_canisters();
+        move |cans_wire, principal| async move {
+            let canisters = Canisters::from_wire(cans_wire?, expect_context())?;
             let Some(user_canister) = canisters
                 .get_individual_canister_by_user_principal(principal)
                 .await?
             else {
                 return Err(ServerFnError::new("Failed to get user canister"));
             };
-            Ok((user_canister, principal))
+            Ok((user_canister, principal, canisters.user_principal()))
         },
     );
     view! {
@@ -189,10 +189,10 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
                 <div class="font-kumbh self-start pb-4 font-bold text-xl text-white">All Tokens</div>
                 <Suspense>
                     {move || {
-                        let canister_id = try_or_redirect_opt!(canister_id() ?);
+                        let canister_id = try_or_redirect_opt!(canister_ids() ?);
                         Some(
                             view! {
-                                <TokenList user_principal=canister_id.1 user_canister=canister_id.0 />
+                                <TokenList user_principal=canister_id.1 user_canister=canister_id.0 viewer_principal=canister_id.2/>
                             },
                         )
                     }}
