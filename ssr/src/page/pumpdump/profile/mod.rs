@@ -70,6 +70,20 @@ fn compute_result(info: ParticipatedGameInfo) -> GameResult {
 }
 
 async fn load_history(cans: Canisters<true>, page: u64) -> Result<(GameplayHistory, bool), String> {
+    // to test without playing games
+    // #[cfg(any(feature = "local-lib", feature = "local-bin"))]
+    // {
+    //     let history = vec![GameplayHistoryItem {
+    //         logo: "https://picsum.photos/200".into(),
+    //         owner_pfp: "https://picsum.photos/200?rand=1".into(),
+    //         owner_principal: Principal::anonymous(),
+    //         root: Principal::anonymous(),
+    //         state: GameState::ResultDeclared(GameResult::Win { amount: 100 }),
+    //     }];
+
+    //     return Ok((history, true));
+    // }
+
     use crate::utils::token::icpump::IcpumpTokenInfo;
     use yral_canisters_common::utils::token::RootType;
 
@@ -174,7 +188,7 @@ fn ProfileDataSection(#[prop(into)] profile_data: ProfileData) -> impl IntoView 
 #[component]
 fn GameplayHistorySkeleton() -> impl IntoView {
     view! {
-        <Skeleton class="text-neutral-800 [--shimmer:#363636] w-32 h-40 rounded-md" />
+        <Skeleton class="text-neutral-800 [--shimmer:#363636] max-w-32 max-h-40 w-32 h-40 rounded-md" />
     }
 }
 
@@ -195,7 +209,7 @@ fn GameplayHistoryCard(#[prop(into)] details: GameplayHistoryItem) -> impl IntoV
     };
     view! {
         <a href=href>
-            <div class="rounded-md overflow-hidden relative w-32 h-40">
+            <div class="rounded-md overflow-hidden relative max-w-32 max-h-40 w-32 h-40">
                 <div class="absolute z-1 inset-x-0 h-1/3 bg-gradient-to-b from-black/50 to-transparent"></div>
                 <div class="absolute z-[2] flex top-2 items-center gap-1 px-2">
                     <img src=details.owner_pfp alt="Profile name" class="w-4 h-4 shrink-0 object-cover rounded-full" />
@@ -328,7 +342,7 @@ pub fn PndProfilePage() -> impl IntoView {
                 <ProfileDataSection profile_data=profile_data.get().unwrap() />
             </Show>
             <div class="w-11/12 flex justify-center">
-                <div ref=scroll_container class="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4 pt-8 pb-16">
+                <div ref=scroll_container class="flex flex-wrap gap-4 justify-center pt-8 pb-16">
                     <For each=move || gameplay_history.get().into_iter().enumerate() key=|(idx, _)| *idx let:item>
                         <GameplayHistoryCard details=item.1 />
                     </For>
