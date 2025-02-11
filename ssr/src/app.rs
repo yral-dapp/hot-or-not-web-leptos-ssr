@@ -163,7 +163,7 @@ pub fn App() -> impl IntoView {
 
             // content for this welcome page
             <Router fallback=|| view! { <NotFound/> }.into_view()>
-            <main>
+            <main class="bg-black">
                 <Routes>
                     // auth redirect routes exist outside main context
                     <GoogleAuthRedirectHandlerRoute/>

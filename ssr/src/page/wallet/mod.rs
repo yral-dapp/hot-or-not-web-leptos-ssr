@@ -22,8 +22,48 @@ use crate::{
 };
 
 #[component]
-fn ProfileGreeter(details: ProfileDetails, is_own_account: bool) -> impl IntoView {
-    // let (is_connected, _) = account_connected_reader();
+fn ProfileCard(details: ProfileDetails, is_own_account: bool) -> impl IntoView {
+    view! {
+        <div class="w-full flex flex-col bg-neutral-900 rounded-lg p-4 gap-4">
+            <div class="flex items-center gap-4">
+                <img
+                    src=details.profile_pic_or_random()
+                    alt="Profile picture"
+                    class="w-12 h-12 rounded-full object-cover shrink-0"
+                />
+                <span class="line-clamp-1 text-lg font-kumbh font-semibold text-neutral-50">
+                    // TEMP: Workaround for hydration bug until leptos 0.7
+                    // class=("md:w-5/12", move || !is_connected())
+                    {details.display_name_or_fallback()}
+                </span>
+            </div>
+
+            <Show when=move || !is_own_account>
+                <ConnectLogin
+                    login_text="Login to claim tokens"
+                    cta_location="wallet"
+                />
+            </Show>
+        </div>
+    }
+}
+
+fn ProfileCardLoading() -> impl IntoView {
+    view! {
+        <div class="w-full flex flex-col bg-neutral-900 rounded-lg p-4 gap-4">
+            <div class="flex items-center gap-4">
+                <div
+                    class="w-12 h-12 rounded-full bg-loading shrink-0"
+                />
+                <div class="line-clamp-1 flex-1 bg-loading rounded-lg h-7">
+                </div>
+            </div>
+        </div>
+    }
+}
+
+#[component]
+fn Header(details: ProfileDetails, is_own_account: bool) -> impl IntoView {
     let share_link = {
         let principal = details.principal();
         format!("/wallet/{}", principal)
@@ -34,26 +74,28 @@ fn ProfileGreeter(details: ProfileDetails, is_own_account: bool) -> impl IntoVie
     );
 
     view! {
-        <div class="w-full flex items-center justify-between px-4 pb-2 pt-5 gap-10 mx-auto max-w-md">
-            <div class="flex items-center">
-                <img
-                    src=details.profile_pic_or_random()
-                    alt="Profile picture"
-                    class="w-8 h-8 rounded-full object-cover shrink-0"
-                />
-                <span class="line-clamp-2 text-sm text-[#A0A1A6] pl-2">
-                // TEMP: Workaround for hydration bug until leptos 0.7
-                    // class=("md:w-5/12", move || !is_connected())
-                    {details.display_name_or_fallback()}
-                </span>
+        <div class="w-full flex items-center justify-between px-4 py-3 gap-10 ">
+            <div class="text-white font-kumbh text-xl font-bold">My Wallet</div>
+            <div class="flex items-center gap-8">
                 <ShareButtonWithFallbackPopup share_link message />
+                <Show when=move || is_own_account>
+                    <a href="/wallet/notifications">
+                        <NotificationIcon show_dot=false classes="w-6 h-6 text-[#D4D4D4]".to_string() />
+                    </a>
+                </Show>
             </div>
+        </div>
+    }
+}
 
-            <Show when=move || is_own_account>
-                <a href="/wallet/notifications" disabled=true class="text-xl font-semibold">
-                    <NotificationIcon show_dot=false classes="w-8 h-8 text-neutral-600".to_string() />
-                </a>
-            </Show>
+fn HeaderLoading() -> impl IntoView {
+    view! {
+        <div class="w-full flex items-center justify-between px-4 py-3 gap-10 ">
+            <div class="text-white font-kumbh text-xl font-bold">My Wallet</div>
+            <div class="flex items-center gap-8">
+                <div class="w-6 h-6 rounded-full bg-loading"></div>
+                <div class="w-6 h-6 rounded-full bg-loading"></div>
+            </div>
         </div>
     }
 }
@@ -154,67 +196,42 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
         },
     );
     view! {
-        <div class="flex flex-col gap-4 pt-4 pb-12 bg-black min-h-dvh font-kumbh">
-
-                <Suspense>
-                    {move || {
-                        let profile_details = try_or_redirect_opt!(profile_info_res()?);
-                        let is_own_account = try_or_redirect_opt!(is_own_account()?);
-                        Some(
-                            view! { <ProfileGreeter details=profile_details is_own_account=is_own_account /> },
-                        )
-                    }}
-                </Suspense>
-            <Suspense>
-                <div class="flex items-center justify-between">
-                <span>My Wallet</span>
-                <div class="flex items-center gap-8">
-                    <a href="/share">Share Icon</a>
-                    <a href="/notification">Notification Icon</a>
-                </div>
-                <div class="rounded-lg p-16 flex flex-col gap-16 bg-[#171717]">
-                <div class="flex items-center gap-3">
-                    <div class="h-12 w-12 rounded-full">
-                    Avatar
-                    </div>
-                    <div>Principal ID</div>
-                </div>
-                <button>
-                Login to claim tokens
-                </button>
-                </div>
+        <div class="flex flex-col gap-4 pt-4 pb-12 bg-black min-h-dvh font-kumbh mx-auto max-w-md">
+             <Suspense fallback=move || view! { <HeaderLoading/> }>
                 {move || {
-                    let is_own_account = try_or_redirect_opt!(is_own_account() ?);
+                    let profile_details = try_or_redirect_opt!(profile_info_res()?);
+                    let is_own_account = try_or_redirect_opt!(is_own_account()?);
                     Some(
-                        view! {
-                            <Show when=move || !is_connected() && is_own_account>
-                                <div class="flex flex-col items-center py-5 w-full">
-                                    <div class="flex flex-row items-center w-9/12 md:w-5/12">
-                                        <ConnectLogin
-                                            login_text="Login to claim your COYNs"
-                                            cta_location="wallet"
-                                        />
-                                    </div>
-                                </div>
-                            </Show>
+                        view! { 
+                            <Header details=profile_details is_own_account=is_own_account/>
                         },
                     )
                 }}
             </Suspense>
-            <div class="h-full w-full">
-            <div class="flex flex-col items-center justify-center max-w-md mx-auto px-4 mt-4 pb-6">
-                <div class="font-kumbh self-start pb-4 font-bold text-xl text-white">My tokens</div>
+            
+            <div class="flex h-full w-full flex-col items-center justify-center max-w-md mx-auto px-4 gap-4">
+                <Suspense fallback=move || view! { <ProfileCardLoading/> }>
+                    {move || {
+                        let profile_details = try_or_redirect_opt!(profile_info_res()?);
+                        let is_own_account = try_or_redirect_opt!(is_own_account()?);
+                        Some(
+                            view! { <ProfileCard details=profile_details is_own_account=is_own_account /> },
+                        )
+                    }}
+                </Suspense>
                 <Suspense>
                     {move || {
                         let canister_id = try_or_redirect_opt!(canister_id() ?);
                         Some(
                             view! {
+                                <div class="font-kumbh self-start pt-3 font-bold text-lg text-white">
+                                    My tokens
+                                </div>
                                 <TokenList user_principal=canister_id.1 user_canister=canister_id.0 />
                             },
                         )
                     }}
                 </Suspense>
-                </div>
             </div>
         </div>
     }

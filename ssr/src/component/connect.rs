@@ -1,6 +1,11 @@
 use leptos::*;
 
 use crate::utils::event_streaming::events::{LoginCta, LoginJoinOverlayViewed};
+use crate::{
+    component::{
+        buttons::{HighlightedButton, HighlightedLinkButton},
+    },
+};
 
 use super::login_modal::LoginModal;
 
@@ -18,18 +23,17 @@ pub fn ConnectLogin(
     });
 
     view! {
-        <button
-            on:click=move |ev| {
-                ev.stop_propagation();
-                show_login.set(true);
-                login_click_action.dispatch(());
-            }
-
-            class="font-bold rounded-full bg-primary-600 py-2 md:py-3 w-full text-center text-lg md:text-xl text-white"
+        <HighlightedButton
+        classes="w-full".to_string()
+        alt_style=false
+        disabled=false
+        on_click=move || {
+            show_login.set(true);
+            login_click_action.dispatch(());
+        }
         >
             {move || if show_login() { "Connecting..." } else { login_text }}
-
-        </button>
+        </HighlightedButton>
         <LoginModal show=show_login />
     }
 }
