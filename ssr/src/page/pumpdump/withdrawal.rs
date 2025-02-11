@@ -17,7 +17,7 @@ use crate::{
         tooltip::Tooltip,
     },
     consts::PUMP_AND_DUMP_WORKER_URL,
-    format_gdolr,
+    format_cents,
     state::canisters::authenticated_canisters,
     try_or_redirect_opt,
 };
@@ -78,10 +78,10 @@ fn Header() -> impl IntoView {
 fn BalanceDisplay(#[prop(into)] balance: Nat, #[prop(into)] withdrawable: Nat) -> impl IntoView {
     view! {
         <div id="total-balance" class="self-center flex flex-col items-center gap-1">
-            <span class="text-neutral-400 text-sm">Total gDOLR balance</span>
+            <span class="text-neutral-400 text-sm">Total Cent balance</span>
             <div class="flex items-center gap-3 min-h-14 py-0.5">
-                <img class="size-9" src="/img/gdolr.png" alt="gdolr icon" />
-                <span class="font-bold text-4xl">{format_gdolr!(balance)}</span>
+                <img class="size-9" src="/img/cents.png" alt="cents icon" />
+                <span class="font-bold text-4xl">{format_cents!(balance)}</span>
             </div>
         </div>
         <div id="breakdown" class="flex justify-between py-2.5 px-3 bg-neutral-900 w-full gap-8 mt-5 rounded-lg">
@@ -89,9 +89,9 @@ fn BalanceDisplay(#[prop(into)] balance: Nat, #[prop(into)] withdrawable: Nat) -
                 <span class="text-xs">
                     Cents you can withdraw
                 </span>
-                <Tooltip icon=Information title="Withdrawal Tokens" description="Only gDOLR earned above your airdrop amount can be withdrawn." />
+                <Tooltip icon=Information title="Withdrawal Tokens" description="Only cents earned above your airdrop amount can be withdrawn." />
             </div>
-            <span class="text-lg font-semibold">{format_gdolr!(withdrawable)}</span>
+            <span class="text-lg font-semibold">{format_cents!(withdrawable)}</span>
         </div>
     }
 }
@@ -108,8 +108,8 @@ pub fn PndWithdrawal() -> impl IntoView {
                 .await
         },
     );
-    let gdolr = create_rw_signal(0);
-    let dolrs = move || Nat::from(gdolr()) * 1e6 as usize;
+    let cents = create_rw_signal(0);
+    let dolrs = move || Nat::from(cents()) * 1e6 as usize;
     let formated_dolrs = move || {
         format!(
             "{}DOLR",
@@ -121,7 +121,7 @@ pub fn PndWithdrawal() -> impl IntoView {
         let value = value.parse::<usize>().ok();
         let Some(value) = value else { return };
 
-        gdolr.set(value);
+        cents.set(value);
     };
 
     let auth_wire = authenticated_canisters();
@@ -163,13 +163,13 @@ pub fn PndWithdrawal() -> impl IntoView {
             match res {
                 Ok(_) => {
                     nav(
-                        &format!("/pnd/withdraw/success?gdolr={}", gdolr()),
+                        &format!("/pnd/withdraw/success?cents={}", cents()),
                         Default::default(),
                     );
                 }
                 Err(err) => {
                     nav(
-                        &format!("/pnd/withdraw/failure?gdolr={}&err={err}", gdolr()),
+                        &format!("/pnd/withdraw/failure?cents={}&err={err}", cents()),
                         Default::default(),
                     );
                 }
@@ -196,7 +196,7 @@ pub fn PndWithdrawal() -> impl IntoView {
                                 <div class="flex justify-between">
                                     <div class="flex gap-2 items-center">
                                         <span>You withdraw</span>
-                                        <Tooltip icon=Information title="Withdrawal Tokens" description="Only gDOLR earned above your airdrop amount can be withdrawn." />
+                                        <Tooltip icon=Information title="Withdrawal Tokens" description="Only cents earned above your airdrop amount can be withdrawn." />
                                     </div>
                                     <input disabled=is_claiming on:input=on_input type="text" inputmode="decimal" class="bg-neutral-800 h-10 w-32 rounded focus:outline focus:outline-1 focus:outline-[#E2017B] text-right px-4 text-lg" />
                                 </div>
@@ -215,7 +215,7 @@ pub fn PndWithdrawal() -> impl IntoView {
                             }>
                             {move || {
                                 let (BalanceInfoResponse { withdrawable, .. }, _) = try_or_redirect_opt!(details_res()?);
-                                let _can_withdraw = withdrawable > gdolr();
+                                let _can_withdraw = withdrawable > cents();
                                 let can_withdraw = true; // TODO: remove this, only for testing
                                 let message = match (can_withdraw, is_claiming()) {
                                     (false, _) => "Not enough winnings",
@@ -234,7 +234,7 @@ pub fn PndWithdrawal() -> impl IntoView {
                             }}
                             </Suspense>
                         </div>
-                        <span class="text-sm">1 gDOLR = 0.01 DOLR</span>
+                        <span class="text-sm">1 Cent = 0.01 DOLR</span>
                     </div>
                 </div>
             </div>

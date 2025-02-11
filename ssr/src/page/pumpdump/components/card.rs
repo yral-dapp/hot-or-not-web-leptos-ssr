@@ -22,7 +22,7 @@ use crate::{
     page::{
         icpump::ProcessedTokenListResponse,
         pumpdump::{
-            convert_e8s_to_gdolr, CardQuery, CurrentRound, GameResult, GameRunningData, GameState,
+            convert_e8s_to_cents, CardQuery, CurrentRound, GameResult, GameRunningData, GameState,
             IdentitySignal, LoadRunningDataAction, PlayerDataSignal, ShowSelectedCard,
             ShowSelectedCardSignal, WebsocketContext, WsResponse,
         },
@@ -51,7 +51,7 @@ fn compute_game_result(running_data: GameRunningData, raw_result: RawGameResult)
         }
     } else {
         let amount = (user_bet_count * raw_result.reward_pool) / raw_result.bet_count;
-        let amount = convert_e8s_to_gdolr(amount);
+        let amount = convert_e8s_to_cents(amount);
         GameResult::Win { amount }
     }
 }

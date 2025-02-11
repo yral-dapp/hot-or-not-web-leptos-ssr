@@ -5,21 +5,21 @@ use yral_pump_n_dump_common::rest::{BalanceInfoResponse, UserBetsResponse};
 
 use crate::consts::PUMP_AND_DUMP_WORKER_URL;
 
-/// utility macro to quickly format gdolr
+/// utility macro to quickly format cents
 #[macro_export]
-macro_rules! format_gdolr {
+macro_rules! format_cents {
     ($num:expr) => {
         TokenBalance::new($num, 6).humanize_float_truncate_to_dp(2)
     };
 }
 
-/// Convert e8s to gdolr
-/// Backend returns dolr in e8s, and 1dolr = 100gdolr
-pub(super) fn convert_e8s_to_gdolr(num: Nat) -> u128 {
+/// Convert e8s to cents
+/// Backend returns dolr in e8s, and 1dolr = 100cents
+pub(super) fn convert_e8s_to_cents(num: Nat) -> u128 {
     (num * 100u64 / 10u64.pow(8))
         .0
         .try_into()
-        .expect("gdolr, scoped at individual player, to be small enough to fit in a u128")
+        .expect("cents, scoped at individual player, to be small enough to fit in a u128")
 }
 
 /// Estimates the player count based on the count returned by the server
@@ -187,7 +187,7 @@ impl PlayerData {
             .map_err(|_| "failed to read response body".to_string())?;
         let wallet_balance = wallet_balance.balance;
 
-        let wallet_balance = convert_e8s_to_gdolr(wallet_balance);
+        let wallet_balance = convert_e8s_to_cents(wallet_balance);
 
         Ok(Self::new(games_count, wallet_balance))
     }

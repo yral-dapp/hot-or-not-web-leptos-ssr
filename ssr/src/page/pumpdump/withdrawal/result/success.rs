@@ -10,15 +10,15 @@ use crate::{
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Params)]
 struct SuccessParams {
-    gdolr: u64,
+    cents: u64,
 }
 
 #[component]
 pub fn Success() -> impl IntoView {
     let params = use_query::<SuccessParams>();
-    let SuccessParams { gdolr } = try_or_redirect_opt!(params.get_untracked());
+    let SuccessParams { cents } = try_or_redirect_opt!(params.get_untracked());
     let formatted_dolr =
-        TokenBalance::new(Nat::from(gdolr) * 1e6 as usize, 8).humanize_float_truncate_to_dp(2);
+        TokenBalance::new(Nat::from(cents) * 1e6 as usize, 8).humanize_float_truncate_to_dp(2);
 
     Some(view! {
         <div
@@ -35,10 +35,10 @@ pub fn Success() -> impl IntoView {
             <div class="w-full">
                 <div class="max-w-md w-full mx-auto px-4 mt-4 pb-6 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
                     <div class="w-full flex flex-col gap-12 items-center">
-                        <img class="max-w-44" src="/img/gdolr-stack.png" />
+                        <img class="max-w-44" src="/img/cents-stack.png" />
                         <div class="flex flex-col gap-8 w-full px-5">
                             <div class="flex flex-col gap-2 items-center">
-                                <span class="font-bold text-lg">{format!("You've successfully claimed {gdolr} gDOLR.")}</span>
+                                <span class="font-bold text-lg">{format!("You've successfully claimed {cents} Cents.")}</span>
                                 <span class="text-neutral-300">Your wallet has been updated with {formatted_dolr} DOLR.</span>
                             </div>
                             <a class="rounded-lg px-5 py-2 text-center font-bold bg-white" href="/">

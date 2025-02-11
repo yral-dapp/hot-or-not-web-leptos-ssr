@@ -48,8 +48,8 @@ pub fn PlayingCard() -> impl IntoView {
                     >
                         <div class="flex items-center gap-1">
                             <div class="text-[#A3A3A3] text-xs">Winning Pot:</div>
-                            <img src="/img/gdolr.png" alt="Coin" class="size-5" />
-                            <div class="text-[#E5E5E5] font-bold">{winning_pot} gDOLR</div>
+                            <img src="/img/cents.png" alt="Coin" class="size-5" />
+                            <div class="text-[#E5E5E5] font-bold">{winning_pot} Cents</div>
                         </div>
                         <button
                             on:click=move |_| show_onboarding.show()
@@ -114,8 +114,8 @@ fn WonCard(#[prop()] result: GameResult) -> impl IntoView {
                     class="bg-[#212121] w-full px-4 py-2 rounded-full flex items-center justify-center gap-2"
                 >
                     <span class="text-[#A3A3A3] text-xs">You have won:</span>
-                    <img src="/img/gdolr.png" alt="Coin" class="w-5 h-5" />
-                    <span class="text-[#E5E5E5] font-bold">{amount} gDOLR</span>
+                    <img src="/img/cents.png" alt="Coin" class="w-5 h-5" />
+                    <span class="text-[#E5E5E5] font-bold">{amount} Cents</span>
                 </div>
             </div>
             <button

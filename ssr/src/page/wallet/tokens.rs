@@ -6,7 +6,7 @@ use yral_canisters_common::cursored_data::token_roots::{TokenListResponse, Token
 use yral_canisters_common::utils::token::balance::TokenBalance;
 use yral_canisters_common::utils::token::{RootType, TokenMetadata, TokenOwner};
 use yral_canisters_common::Canisters;
-use yral_canisters_common::GDOLR_TOKEN_NAME;
+use yral_canisters_common::CENT_TOKEN_NAME;
 use yral_pump_n_dump_common::WithdrawalState;
 
 use crate::component::icons::information_icon::Information;
@@ -50,7 +50,7 @@ pub fn TokenList(user_principal: Principal, user_canister: Principal) -> impl In
         exclude: if show_pnd_page() {
             vec![RootType::COYNS]
         } else {
-            vec![RootType::GDOLR]
+            vec![RootType::CENTS]
         },
     };
 
@@ -61,7 +61,7 @@ pub fn TokenList(user_principal: Principal, user_canister: Principal) -> impl In
                 fetch_count=5
                 children=move |TokenListResponse{token_metadata, airdrop_claimed, root}, _ref| {
                     view! {
-                        <WalletCard user_principal token_metadata=token_metadata is_airdrop_claimed=airdrop_claimed _ref=_ref.unwrap_or_default() is_utility_token=matches!(root, RootType::COYNS | RootType::GDOLR)/>
+                        <WalletCard user_principal token_metadata=token_metadata is_airdrop_claimed=airdrop_claimed _ref=_ref.unwrap_or_default() is_utility_token=matches!(root, RootType::COYNS | RootType::CENTS)/>
                     }
                 }
             />
@@ -91,7 +91,7 @@ pub fn WalletCard(
         .map(|r| r.to_text())
         .unwrap_or(token_metadata.name.to_lowercase());
 
-    let is_gdolr = token_metadata.name == GDOLR_TOKEN_NAME;
+    let is_cents = token_metadata.name == CENT_TOKEN_NAME;
 
     let share_link = create_rw_signal("".to_string());
 
@@ -126,9 +126,9 @@ pub fn WalletCard(
         .withdrawable_state
         .as_ref()
         .map(|state| match state {
-            WithdrawalState::Value(_) => "gDOLR you can withdraw".to_string(),
+            WithdrawalState::Value(_) => "Cents you can withdraw".to_string(),
             WithdrawalState::NeedMoreEarnings(more) => format!(
-                "Earn {} gDOLR more to unlock",
+                "Earn {} Cents more to unlock",
                 TokenBalance::new(more.clone() * 100usize, 8).humanize_float_truncate_to_dp(2)
             ),
         });
@@ -165,12 +165,12 @@ pub fn WalletCard(
                         <div class="text-xs">{symbol}</div>
                     </div>
                 </div>
-                <Show when=move || is_gdolr>
+                <Show when=move || is_cents>
                     <div class="border-t border-neutral-700 flex flex-col pt-4 gap-2">
                         <div class="flex items-center">
                             <Icon class="text-neutral-300" icon=if is_withdrawable.get_untracked() { PadlockOpen } else { PadlockClose } />
                             <span class="text-neutral-400 text-xs mx-2">{withdraw_message}</span>
-                            <Tooltip icon=Information title="Withdrawal Tokens" description="Only gDOLR earned above your airdrop amount can be withdrawn." />
+                            <Tooltip icon=Information title="Withdrawal Tokens" description="Only Cents earned above your airdrop amount can be withdrawn." />
                             <span class="ml-auto">{withdrawable_balance}</span>
                         </div>
                         <a

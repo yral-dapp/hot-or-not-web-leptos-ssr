@@ -12,7 +12,7 @@ use yral_canisters_common::{utils::profile::ProfileDetails, Canisters};
 
 use crate::{
     component::{back_btn::BackButton, skeleton::Skeleton, title::Title},
-    page::pumpdump::{convert_e8s_to_gdolr, GameResult},
+    page::pumpdump::{convert_e8s_to_cents, GameResult},
     state::canisters::authenticated_canisters,
 };
 
@@ -60,7 +60,7 @@ fn compute_result(info: ParticipatedGameInfo) -> GameResult {
 
     if m(user_direction) == m(info.game_direction) {
         GameResult::Win {
-            amount: convert_e8s_to_gdolr(info.reward),
+            amount: convert_e8s_to_cents(info.reward),
         }
     } else {
         GameResult::Loss {
@@ -224,7 +224,7 @@ fn GameplayHistoryCard(#[prop(into)] details: GameplayHistoryItem) -> impl IntoV
                         class=(["bg-[#E2017B]", "text-white"], state.has_won())
                         class=(["bg-[#525252]", "text-[#A3A3A3]"], state.has_lost())
                     >
-                        {state.winnings().or(state.lossings())} gDOLR
+                        {state.winnings().or(state.lossings())} Cents
                     </div>
                 </Show>
             </div>

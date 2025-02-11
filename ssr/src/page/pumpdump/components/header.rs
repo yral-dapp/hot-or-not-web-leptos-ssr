@@ -43,10 +43,10 @@ pub fn Header() -> impl IntoView {
                     </Show>
                 </div>
                 <div class="h-5 opacity-0"></div>
-                <div class="text-xs text-neutral-400">gDOLR</div>
+                <div class="text-xs text-neutral-400">Cents</div>
                 <img
-                    src="/img/gdolr.png"
-                    alt="gDOLR"
+                    src="/img/cents.png"
+                    alt="Cents"
                     class="absolute select-none -right-1/4 bottom-1 size-9 -rotate-1"
                 />
                 <div class="absolute rounded-sm bg-[#212121] text-[#525252] p-0.5 size-5 -left-2 top-1/2 -translate-y-1/2">
