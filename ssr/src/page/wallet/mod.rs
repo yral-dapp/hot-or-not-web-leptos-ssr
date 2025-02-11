@@ -48,6 +48,7 @@ fn ProfileCard(details: ProfileDetails, is_own_account: bool) -> impl IntoView {
     }
 }
 
+#[component]
 fn ProfileCardLoading() -> impl IntoView {
     view! {
         <div class="w-full flex flex-col bg-neutral-900 rounded-lg p-4 gap-4">
@@ -88,6 +89,7 @@ fn Header(details: ProfileDetails, is_own_account: bool) -> impl IntoView {
     }
 }
 
+#[component]
 fn HeaderLoading() -> impl IntoView {
     view! {
         <div class="w-full flex items-center justify-between px-4 py-3 gap-10 ">
@@ -151,7 +153,7 @@ pub fn Wallet() -> impl IntoView {
 }
 #[component]
 pub fn WalletImpl(principal: Principal) -> impl IntoView {
-    let (is_connected, _) = account_connected_reader();
+    let (_is_connected, _) = account_connected_reader();
 
     let auth_cans = authenticated_canisters();
 
