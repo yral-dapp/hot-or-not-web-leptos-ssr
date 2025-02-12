@@ -1,14 +1,17 @@
 use leptos::*;
 
-use crate::page::pumpdump::GameRunningDataSignal;
+use crate::page::pumpdump::RunningGameRes;
 
 #[component]
 pub fn BullBearSlider() -> impl IntoView {
-    let running_data: GameRunningDataSignal = expect_context();
+    let game_res: RunningGameRes = expect_context();
     let position = move || {
-        let ratio = running_data
-            .get()
-            .map(|d| (d.dumps as f64 + 1.0) / (d.pumps as f64 + 1.0))
+        let Some(Ok(ctx)) = game_res.get() else {
+            return 39f64;
+        };
+
+        let ratio = ctx
+            .with_running_data(|d| (d.dumps as f64 + 1.0) / (d.pumps as f64 + 1.0))
             .unwrap_or(1f64);
         if ratio == 1f64 {
             39f64
@@ -18,8 +21,11 @@ pub fn BullBearSlider() -> impl IntoView {
     };
 
     let is_bear_attacking = create_memo(move |prev_state| {
-        let Some((new_dumps, new_pumps)) = running_data.with(|d| d.map(|d| (d.dumps, d.pumps)))
-        else {
+        let Some(Ok(ctx)) = game_res.get() else {
+            return (None, 0u64, 0u64);
+        };
+
+        let Some((new_dumps, new_pumps)) = ctx.with_running_data(|d| (d.dumps, d.pumps)) else {
             return (None, 0u64, 0u64);
         };
         // state was reset

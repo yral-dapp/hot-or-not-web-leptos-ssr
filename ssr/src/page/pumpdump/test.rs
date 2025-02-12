@@ -2,13 +2,9 @@ use std::rc::Rc;
 
 use candid::Principal;
 use codee::string::JsonSerdeCodec;
-use leptos::{
-    component, create_action, create_effect, create_node_ref, create_rw_signal, expect_context,
-    html::Input, view, For, IntoView, RwSignal, Show, SignalGet, SignalSet, SignalUpdate,
-};
+use leptos::{html::Input, *};
 use leptos_router::use_params_map;
 use leptos_use::{use_websocket, UseWebSocketReturn};
-use log;
 use yral_canisters_common::{
     utils::token::{RootType, TokenOwner},
     Canisters,
@@ -19,10 +15,8 @@ use yral_pump_n_dump_common::{
 };
 
 use crate::{
-    consts::PUMP_AND_DUMP_WORKER_URL,
-    page::pumpdump::{WebsocketContext, WebsocketContextSignal, WsResponse},
-    state::canisters::authenticated_canisters,
-    utils::token::icpump::IcpumpTokenInfo,
+    consts::PUMP_AND_DUMP_WORKER_URL, page::pumpdump::WsResponse,
+    state::canisters::authenticated_canisters, utils::token::icpump::IcpumpTokenInfo,
 };
 
 use super::{GameRunningData, PlayerData};
@@ -38,8 +32,22 @@ struct TestData {
 
 type TestDataSignal = RwSignal<Option<TestData>>;
 
+// based on https://leptos-use.rs/network/use_websocket.html#usage-with-provide_context
+#[derive(Clone)]
+struct WsCtx {
+    message: Signal<Option<WsResponse>>,
+    sendfn: Rc<dyn Fn(&WsRequest)>,
+}
+
+impl WsCtx {
+    #[inline]
+    fn send(&self, msg: &WsRequest) {
+        (self.sendfn)(msg)
+    }
+}
+
 #[component]
-fn WebsocketLogs(#[prop(into)] websocket: WebsocketContext, #[prop()] round: u64) -> impl IntoView {
+fn WebsocketLogs(websocket: WsCtx, round: u64) -> impl IntoView {
     let received = create_rw_signal(Vec::new());
     let sent = create_rw_signal(Vec::new());
     let message = websocket.message;
@@ -180,7 +188,7 @@ pub fn PndTest() -> impl IntoView {
         }
     });
 
-    let websocket: WebsocketContextSignal = create_rw_signal(None);
+    let websocket = create_rw_signal(None);
     let cans_wire = authenticated_canisters();
     let create_websocket_connection = create_action(move |&()| {
         let cans_wire = cans_wire.clone();
@@ -220,12 +228,10 @@ pub fn PndTest() -> impl IntoView {
             } = use_websocket::<WsRequest, WsResponse, JsonSerdeCodec>(websocket_url.as_str());
 
             // erase type, because sendfn is not send/sync
-            let context = WebsocketContext::new(
+            let context = WsCtx {
                 message,
-                Rc::new(move |message| {
-                    sendfn(message);
-                }),
-            );
+                sendfn: Rc::new(sendfn),
+            };
 
             websocket.set(Some(context));
         }

@@ -1,7 +1,10 @@
-use leptos::{component, expect_context, view, IntoView, Show, SignalGet};
+use leptos::*;
 use leptos_icons::Icon;
 
-use crate::{component::skeleton::Skeleton, page::pumpdump::PlayerDataSignal};
+use crate::{
+    component::skeleton::Skeleton,
+    page::pumpdump::{PlayerData, PlayerDataRes},
+};
 
 #[component]
 fn HeaderSkeleton() -> impl IntoView {
@@ -11,8 +14,7 @@ fn HeaderSkeleton() -> impl IntoView {
 }
 
 #[component]
-pub fn Header() -> impl IntoView {
-    let data: PlayerDataSignal = expect_context();
+fn HeaderCommon(#[prop(optional, into)] player_data: Option<Signal<PlayerData>>) -> impl IntoView {
     view! {
         <div class="flex items-center w-full justify-between pt-2 pb-3.5 gap-8">
             <a
@@ -20,9 +22,14 @@ pub fn Header() -> impl IntoView {
                 class="flex flex-col text-right text-sm ml-8 relative bg-neutral-900 rounded-lg pt-1 pb-1.5 pr-3 pl-8"
             >
                 <div class="font-bold text-sm">
-                    <Show when=move || data.get().is_some() fallback=HeaderSkeleton>
-                        {move || data.get().unwrap().games_count.to_string()}
-                    </Show>
+                    {if let Some(pd) = player_data {
+                        let game_count = move || with!(|pd| pd.games_count.to_string());
+                        game_count.into_view()
+                    } else {
+                        view! {
+                            <HeaderSkeleton/>
+                        }.into_view()
+                    }}
                 </div>
                 <div class="text-xs text-neutral-400 uppercase">Games</div>
                 <img
@@ -38,9 +45,14 @@ pub fn Header() -> impl IntoView {
                 <div
                     class="font-bold absolute top-1 text-sm"
                 >
-                    <Show when=move || data.get().is_some() fallback=HeaderSkeleton>
-                        {move || data.get().unwrap().wallet_balance.to_string().replace("_", "")}
-                    </Show>
+                    {if let Some(pd) = player_data {
+                        let wallet_balance = move || with!(|pd| pd.wallet_balance.to_string().replace("_", ""));
+                        wallet_balance.into_view()
+                    } else {
+                        view! {
+                            <HeaderSkeleton/>
+                        }.into_view()
+                    }}
                 </div>
                 <div class="h-5 opacity-0"></div>
                 <div class="text-xs text-neutral-400">Cents</div>
@@ -54,5 +66,22 @@ pub fn Header() -> impl IntoView {
                 </div>
             </a>
         </div>
+    }
+}
+
+#[component]
+pub fn Header() -> impl IntoView {
+    let data: PlayerDataRes = expect_context();
+    view! {
+        <Suspense fallback=|| view! { <HeaderCommon/> }>
+            {move || data.read.0.get().map(|d| match d {
+                Ok(d) => view! {
+                    <HeaderCommon player_data=d/>
+                },
+                Err(_) => view! {
+                    <HeaderCommon/>
+                }
+            })}
+        </Suspense>
     }
 }

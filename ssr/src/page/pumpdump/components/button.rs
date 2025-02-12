@@ -1,12 +1,7 @@
 use leptos::{html::Audio, *};
-use yral_pump_n_dump_common::{
-    ws::{WsMessage, WsRequest},
-    GameDirection,
-};
+use yral_pump_n_dump_common::GameDirection;
 
-use crate::page::pumpdump::{
-    CurrentRoundSignal, GameRunningDataSignal, PlayerDataSignal, WebsocketContextSignal,
-};
+use crate::page::pumpdump::RunningGameRes;
 
 fn non_visual_feedback(audio_ref: NodeRef<Audio>) {
     #[cfg(not(feature = "hydrate"))]
@@ -37,39 +32,21 @@ fn non_visual_feedback(audio_ref: NodeRef<Audio>) {
 
 #[component]
 pub fn DumpButton(audio_ref: NodeRef<Audio>) -> impl IntoView {
-    let running_data: GameRunningDataSignal = expect_context();
-    let player_data: PlayerDataSignal = expect_context();
-    let websocket: WebsocketContextSignal = expect_context();
-    let current_round: CurrentRoundSignal = expect_context();
+    let game_res: RunningGameRes = expect_context();
     let counter = move || {
-        running_data
-            .get()
-            .map(|value| value.dumps.to_string())
+        let Some(Ok(ctx)) = game_res.get() else {
+            return "-".to_string();
+        };
+        ctx.with_running_data(|v| v.dumps.to_string())
             .unwrap_or_else(|| "-".into())
     };
+
     let onclick = move |_| {
         non_visual_feedback(audio_ref);
-        if let (Some(websocket), Some(round)) = (websocket.get().as_ref(), current_round.get()) {
-            websocket.send(&WsRequest {
-                request_id: uuid::Uuid::new_v4(),
-                msg: WsMessage::Bet {
-                    direction: GameDirection::Dump,
-                    round: round.0,
-                },
-            });
-
-            player_data.update(|value| {
-                if let Some(value) = value.as_mut() {
-                    value.wallet_balance = value.wallet_balance.saturating_sub(1);
-                }
-            });
-
-            running_data.update(|value| {
-                if let Some(value) = value {
-                    value.dumps += 1;
-                }
-            });
-        }
+        let Some(Ok(ctx)) = game_res.get() else {
+            return;
+        };
+        ctx.send_bet(GameDirection::Dump);
 
         // debounceResistanceAnimation();
     };
@@ -131,40 +108,25 @@ pub fn MockDumpButton() -> impl IntoView {
 
 #[component]
 pub fn PumpButton(audio_ref: NodeRef<Audio>) -> impl IntoView {
-    let running_data: GameRunningDataSignal = expect_context();
-    let player_data: PlayerDataSignal = expect_context();
-    let websocket: WebsocketContextSignal = expect_context();
-    let current_round: CurrentRoundSignal = expect_context();
+    let game_res: RunningGameRes = expect_context();
     let counter = move || {
-        running_data
-            .get()
-            .map(|value| value.pumps.to_string())
+        let Some(Ok(ctx)) = game_res.get() else {
+            return "-".to_string();
+        };
+        ctx.with_running_data(|v| v.pumps.to_string())
             .unwrap_or_else(|| "-".into())
     };
+
     let onclick = move |_| {
         non_visual_feedback(audio_ref);
-        if let (Some(websocket), Some(round)) = (websocket.get().as_ref(), current_round.get()) {
-            websocket.send(&WsRequest {
-                request_id: uuid::Uuid::new_v4(),
-                msg: WsMessage::Bet {
-                    direction: GameDirection::Pump,
-                    round: round.0,
-                },
-            });
+        let Some(Ok(ctx)) = game_res.get() else {
+            return;
+        };
+        ctx.send_bet(GameDirection::Pump);
 
-            player_data.update(|value| {
-                if let Some(value) = value.as_mut() {
-                    value.wallet_balance = value.wallet_balance.saturating_sub(1);
-                }
-            });
-
-            running_data.update(|value| {
-                if let Some(value) = value.as_mut() {
-                    value.pumps += 1;
-                }
-            });
-        }
+        // debounceResistanceAnimation();
     };
+
     view! {
         <button
             aria-label="Vibration"

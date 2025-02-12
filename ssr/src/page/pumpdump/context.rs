@@ -1,12 +1,28 @@
 use std::rc::Rc;
 
 use candid::Principal;
-use leptos::{Action, RwSignal, Signal, SignalGet, SignalSet, WriteSignal};
+use leptos::{
+    create_action, create_effect, create_rw_signal, store_value, Action, ReadSignal, Resource,
+    RwSignal, ServerFnError, Signal, SignalGet, SignalGetUntracked, SignalSet, SignalUpdate,
+    SignalWith, StoredValue, WriteSignal,
+};
 use serde::{Deserialize, Serialize};
-use yral_canisters_common::Canisters;
-use yral_pump_n_dump_common::ws::{WsRequest, WsResp};
+use yral_pump_n_dump_common::{
+    ws::{GameResult as RawGameResult, WsError, WsMessage, WsRequest, WsResp},
+    GameDirection,
+};
 
-use super::model::{GameRunningData, PlayerData};
+use crate::{
+    page::icpump::ProcessedTokenListResponse,
+    state::canisters::AuthCansResource,
+    utils::{MockPartialEq, ParentResource},
+};
+
+use super::{
+    convert_e8s_to_cents,
+    model::{GameRunningData, PlayerData},
+    GameResult, GameState,
+};
 
 #[derive(Copy, Clone, Debug)]
 pub(super) struct ShowOnboarding(
@@ -34,18 +50,63 @@ impl ShowOnboarding {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(super) struct ShowSelectedCard(pub(super) bool);
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(super) struct CurrentRound(pub(super) u64);
-
 pub(super) type ShowSelectedCardSignal = RwSignal<ShowSelectedCard>;
-pub(super) type CurrentRoundSignal = RwSignal<Option<CurrentRound>>;
-pub(super) type GameRunningDataSignal = RwSignal<Option<GameRunningData>>;
-pub(super) type PlayerDataSignal = RwSignal<Option<PlayerData>>;
-pub(super) type LoadRunningDataAction = Action<(Principal, bool), ()>;
-pub(super) type WebsocketContextSignal = RwSignal<Option<WebsocketContext>>;
-pub(super) type IdentitySignal = RwSignal<Option<Canisters<true>>>;
+/// This is a local resource, you don't need <Suspense> with this
+pub(super) type RunningGameRes = Resource<MockPartialEq<()>, Result<RunningGameCtx, ServerFnError>>;
 
-pub(super) type Sendfn = Rc<dyn Fn(&WsRequest)>;
+type SendFn = Rc<dyn Fn(&WsRequest)>;
+
+#[derive(Clone, Copy)]
+pub(super) enum PlayerDataUpdate {
+    IncrementGameCount {
+        increase_wallet_amount_by: Option<u128>,
+    },
+    DecrementWalletBalance,
+}
+
+#[derive(Clone)]
+pub(super) struct PlayerDataRes {
+    /// this is a local resource
+    pub read: ParentResource<MockPartialEq<()>, Result<RwSignal<PlayerData>, ServerFnError>>,
+    update: Action<PlayerDataUpdate, ()>,
+}
+
+impl PlayerDataRes {
+    pub fn derive(auth_cans: AuthCansResource) -> Self {
+        let read = ParentResource(auth_cans.derive(
+            || (),
+            |cans_wire, _| async move {
+                let data = PlayerData::load(cans_wire?.user_canister).await?;
+                Ok::<_, ServerFnError>(create_rw_signal(data))
+            },
+        ));
+
+        let read_c = read.clone();
+        let update = create_action(move |&update_kind| {
+            let read = read_c.clone();
+            async move {
+                let Ok(pd) = read.wait_untracked().await else {
+                    return;
+                };
+                match update_kind {
+                    PlayerDataUpdate::IncrementGameCount {
+                        increase_wallet_amount_by,
+                    } => pd.update(|data| {
+                        data.games_count += 1;
+                        if let Some(amt) = increase_wallet_amount_by {
+                            data.wallet_balance += amt;
+                        }
+                    }),
+                    PlayerDataUpdate::DecrementWalletBalance => {
+                        pd.update(|d| d.wallet_balance = d.wallet_balance.saturating_sub(1));
+                    }
+                }
+            }
+        });
+
+        Self { read, update }
+    }
+}
 
 // TODO: use the WsResponse from pnd common crate
 #[derive(Serialize, Deserialize, Clone)]
@@ -54,24 +115,188 @@ pub(super) struct WsResponse {
     pub(super) response: WsResp,
 }
 
-// based on https://leptos-use.rs/network/use_websocket.html#usage-with-provide_context
 #[derive(Clone)]
-pub(super) struct WebsocketContext {
-    pub message: Signal<Option<WsResponse>>,
-    sendfn: Sendfn, // use Arc to make it easily cloneable
+pub(super) struct RunningGameCtx {
+    sendfn: SendFn,
+    pub reload_running_data: Action<(), ()>,
+    player_data: PlayerDataRes,
+    running_data: RwSignal<Option<GameRunningData>>,
+    current_round: StoredValue<Option<u64>>,
 }
 
-impl WebsocketContext {
-    pub(super) fn new(message: Signal<Option<WsResponse>>, send: Sendfn) -> Self {
-        Self {
-            message,
-            sendfn: send,
+impl RunningGameCtx {
+    fn compute_game_result(running_data: GameRunningData, raw_result: RawGameResult) -> GameResult {
+        if running_data.pumps == running_data.dumps {
+            return GameResult::Win { amount: 0 };
         }
+
+        let (user_direction, user_bet_count) = if running_data.pumps > running_data.dumps {
+            (GameDirection::Pump, running_data.pumps)
+        } else {
+            (GameDirection::Dump, running_data.dumps)
+        };
+
+        // TODO: impl eq on GameDirection in yral-common
+        let m = |direction: GameDirection| match direction {
+            GameDirection::Pump => 0,
+            GameDirection::Dump => 1,
+        };
+        if m(user_direction) != m(raw_result.direction) {
+            GameResult::Loss {
+                amount: running_data.pumps as u128 + running_data.dumps as u128,
+            }
+        } else {
+            let amount = (user_bet_count * raw_result.reward_pool) / raw_result.bet_count;
+            let amount = convert_e8s_to_cents(amount);
+            GameResult::Win { amount }
+        }
+    }
+
+    pub fn derive(
+        user_canister: Principal,
+        player_data: PlayerDataRes,
+        game_state: RwSignal<Option<GameState>>,
+        ws_message: Signal<Option<WsResponse>>,
+        sendfn: SendFn,
+        token: ProcessedTokenListResponse,
+    ) -> Self {
+        let running_data = create_rw_signal(None);
+        let current_round = store_value(None);
+
+        let token_owner_canister = token.token_owner.as_ref().map(|o| o.canister_id).unwrap();
+        let reload_running_data = create_action(move |_| async move {
+            let data = GameRunningData::load(token_owner_canister, token.root, user_canister)
+                .await
+                .inspect_err(|err| {
+                    log::error!("couldn't load running data: {err}");
+                })
+                .ok();
+
+            if data.is_some() {
+                game_state.set(Some(GameState::Playing));
+            }
+
+            running_data.set(data);
+        });
+
+        create_effect(move |_| {
+            let msg = ws_message.get()?;
+            match msg.response {
+                WsResp::WelcomeEvent {
+                    round,
+                    pool,
+                    player_count,
+                    user_bets,
+                } => {
+                    running_data.set(Some(GameRunningData::new(
+                        user_bets.pumps,
+                        user_bets.dumps,
+                        player_count,
+                        Some(pool),
+                    )));
+                    current_round.set_value(Some(round));
+                }
+                WsResp::BetSuccesful { .. } => (),
+                WsResp::Error(e) => {
+                    log::error!("ws: received error: {e:?}");
+                    if let WsError::BetFailure { direction, .. } = e {
+                        running_data.update(move |data| {
+                            if let Some(data) = data {
+                                match direction {
+                                    GameDirection::Pump => data.pumps -= 1,
+                                    GameDirection::Dump => data.dumps -= 1,
+                                }
+                            }
+                        });
+                    }
+                }
+                WsResp::GameResultEvent(res) => {
+                    let running_data = running_data.get_untracked()?;
+                    current_round.set_value(Some(res.new_round));
+                    let result = Self::compute_game_result(running_data, res);
+                    game_state.set(Some(GameState::ResultDeclared(result)));
+
+                    match result {
+                        GameResult::Win { amount } => {
+                            player_data
+                                .update
+                                .dispatch(PlayerDataUpdate::IncrementGameCount {
+                                    increase_wallet_amount_by: Some(amount),
+                                });
+                        }
+                        GameResult::Loss { .. } => {
+                            player_data
+                                .update
+                                .dispatch(PlayerDataUpdate::IncrementGameCount {
+                                    increase_wallet_amount_by: None,
+                                });
+                        }
+                    }
+                }
+                WsResp::WinningPoolEvent { new_pool, .. } => {
+                    running_data.update(|d| {
+                        let Some(data) = d.as_mut() else {
+                            return;
+                        };
+                        data.winning_pot = Some(new_pool);
+                    });
+                }
+            }
+            Some(())
+        });
+
+        Self {
+            sendfn,
+            reload_running_data,
+            running_data,
+            current_round,
+            player_data,
+        }
+    }
+
+    /// returns a signal which is true when
+    /// running data is loading
+    pub fn loading_data(&self) -> ReadSignal<bool> {
+        self.reload_running_data.pending()
     }
 
     // create a method to avoid having to use parantheses around the field
     #[inline(always)]
-    pub(super) fn send(&self, message: &WsRequest) {
+    fn send(&self, message: &WsRequest) {
         (self.sendfn)(message);
+    }
+
+    pub fn with_running_data<T>(&self, f: impl FnOnce(&GameRunningData) -> T) -> Option<T> {
+        self.running_data.with(|d| d.as_ref().map(f))
+    }
+
+    pub fn send_bet(&self, direction: GameDirection) {
+        self.send(&WsRequest {
+            request_id: uuid::Uuid::new_v4(),
+            msg: WsMessage::Bet {
+                direction,
+                round: self
+                    .current_round
+                    .get_value()
+                    .expect("expected current round to be ready"),
+            },
+        });
+
+        self.player_data
+            .update
+            .dispatch(PlayerDataUpdate::DecrementWalletBalance);
+        self.running_data.update(|value| {
+            let Some(value) = value else {
+                return;
+            };
+            match direction {
+                GameDirection::Dump => {
+                    value.dumps += 1;
+                }
+                GameDirection::Pump => {
+                    value.pumps += 1;
+                }
+            }
+        });
     }
 }

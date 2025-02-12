@@ -10,8 +10,7 @@ use crate::{
                 button::{DumpButton, PumpButton},
                 slider::BullBearSlider,
             },
-            GameResult, GameRunningDataSignal, GameState, IdentitySignal, LoadRunningDataAction,
-            ShowOnboarding,
+            GameResult, RunningGameRes, ShowOnboarding,
         },
     },
 };
@@ -20,23 +19,25 @@ use crate::{
 pub fn PlayingCard() -> impl IntoView {
     let token: ProcessedTokenListResponse = expect_context();
     let show_onboarding: ShowOnboarding = expect_context();
-    let running_data: GameRunningDataSignal = expect_context();
+    let game_res: RunningGameRes = expect_context();
     // let running_data: RwSignal<Option<GameRunningData>> = expect_context();
     let winning_pot = move || {
-        running_data
-            .get()
-            .and_then(|data| data.winning_pot)
-            .map(|value| value.to_string())
+        let Some(Ok(ctx)) = game_res.get() else {
+            return "--".to_string();
+        };
+        ctx.with_running_data(|data| data.winning_pot)
+            .flatten()
+            .map(|v| v.to_string())
             .unwrap_or_else(|| "--".into())
     };
 
     let token_link = token.token_details.link.clone();
 
     let player_count = move || {
-        running_data
-            .get()
-            .map(|data| data.player_count)
-            .map(|value| value.to_string())
+        let Some(Ok(ctx)) = game_res.get() else {
+            return "--".to_string();
+        };
+        ctx.with_running_data(|data| data.player_count.to_string())
             .unwrap_or_else(|| "--".into())
     };
 
@@ -94,21 +95,29 @@ pub fn PlayingCard() -> impl IntoView {
 }
 
 #[component]
-fn WonCard(#[prop()] result: GameResult) -> impl IntoView {
-    let GameResult::Win { amount } = result else {
-        unreachable!("Won card must only be shown in win condition")
+fn WonCard(win_amount: u128) -> impl IntoView {
+    let game_res: RunningGameRes = expect_context();
+    let loading_data = move || {
+        let Some(Ok(ctx)) = game_res.get() else {
+            return None;
+        };
+        Some(ctx.loading_data())
     };
-    let identity: IdentitySignal = expect_context();
-    let load_running_data: LoadRunningDataAction = expect_context();
-    let pending = load_running_data.pending();
+    let pending = move || {
+        let Some(loading) = loading_data() else {
+            return true;
+        };
+        loading.get()
+    };
 
     let on_click = move |_| {
-        let user_canister = identity
-            .get()
-            .expect("User Canister to exist at this point")
-            .user_canister();
-        load_running_data.dispatch((user_canister, true));
+        let Some(Ok(ctx)) = game_res.get() else {
+            return;
+        };
+
+        ctx.reload_running_data.dispatch(());
     };
+
     // TODO: add confetti animation
     view! {
         <div
@@ -126,20 +135,18 @@ fn WonCard(#[prop()] result: GameResult) -> impl IntoView {
                 >
                     <span class="text-neutral-400 text-xs">You have won:</span>
                     <img src="/img/cents.png" alt="Coin" class="w-5 h-5" />
-                    <span class="text-[#E5E5E5] font-bold">{amount} Cents</span>
+                    <span class="text-[#E5E5E5] font-bold">{win_amount} Cents</span>
                 </div>
             </div>
             <button
-                disabled=move || pending.get()
+                disabled=pending
                 on:click=on_click
                 class="w-full px-5 py-3 rounded-lg flex items-center transition-all justify-center gap-8 font-kumbh font-bold"
                 style:background="linear-gradient(73deg, #DA539C 0%, #E2017B 33%, #5F0938 100%)"
             >
-                {move || if load_running_data.pending().get() {
-                    "Start playing again"
-                } else {
-                    "Starting another round..."
-                }}
+                <Show when=pending fallback=|| "Start playing again">
+                    {"Starting another round..."}
+                </Show>
             </button>
         </div>
     }
@@ -147,16 +154,26 @@ fn WonCard(#[prop()] result: GameResult) -> impl IntoView {
 
 #[component]
 fn LostCard() -> impl IntoView {
-    let identity: IdentitySignal = expect_context();
-    let load_running_data: LoadRunningDataAction = expect_context();
-    let pending = load_running_data.pending();
+    let game_res: RunningGameRes = expect_context();
+    let loading_data = move || {
+        let Some(Ok(ctx)) = game_res.get() else {
+            return None;
+        };
+        Some(ctx.loading_data())
+    };
+    let pending = move || {
+        let Some(loading) = loading_data() else {
+            return true;
+        };
+        loading.get()
+    };
 
     let on_click = move |_| {
-        let user_canister = identity
-            .get()
-            .expect("User Canister to exist at this point")
-            .user_canister();
-        load_running_data.dispatch((user_canister, true));
+        let Some(Ok(ctx)) = game_res.get() else {
+            return;
+        };
+
+        ctx.reload_running_data.dispatch(());
     };
 
     view! {
@@ -173,34 +190,27 @@ fn LostCard() -> impl IntoView {
                 </div>
             </div>
             <button
-                disabled=move || pending.get()
+                disabled=pending
                 on:click=on_click
                 class="w-full px-5 py-3 rounded-lg flex items-center transition-all justify-center gap-8 font-kumbh font-bold"
                 style:background="linear-gradient(73deg, #DA539C 0%, #E2017B 33%, #5F0938 100%)"
             >
-                {move || if load_running_data.pending().get() {
-                    "Keep Playing"
-                } else {
-                    "Starting another round..."
-                }}
+                <Show when=pending fallback=|| "Keep Playing">
+                    {"Starting another round..."}
+                </Show>
             </button>
         </div>
     }
 }
 
 #[component]
-pub fn ResultDeclaredCard(#[prop()] game_state: GameState) -> impl IntoView {
-    match game_state {
-        GameState::Playing => {
-            unreachable!("This screen is not reachable until ResultDeclared state is reached")
-        }
-        GameState::ResultDeclared(result) => view! {
-            <Show
-                when=move || matches!(result, GameResult::Loss { .. })
-                fallback=move || view! { <WonCard result /> }
-            >
-                <LostCard />
-            </Show>
+pub fn ResultDeclaredCard(result: GameResult) -> impl IntoView {
+    match result {
+        GameResult::Loss { .. } => view! {
+            <LostCard />
+        },
+        GameResult::Win { amount } => view! {
+            <WonCard win_amount=amount/>
         },
     }
 }

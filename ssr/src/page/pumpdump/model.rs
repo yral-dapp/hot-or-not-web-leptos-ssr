@@ -1,6 +1,7 @@
 use candid::{Nat, Principal};
-use leptos::Params;
+use leptos::{Params, ServerFnError};
 use leptos_router::Params;
+use serde::{Deserialize, Serialize};
 use yral_pump_n_dump_common::rest::{BalanceInfoResponse, UserBetsResponse};
 
 use crate::consts::PUMP_AND_DUMP_WORKER_URL;
@@ -36,7 +37,7 @@ fn estimate_player_count(num: u64) -> u64 {
 ///
 /// This data is kept out of GameState so that mutating pumps and dumps doesn't
 /// cause the whole game card to rerender
-#[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq)]
 pub(super) struct GameRunningData {
     pub(super) pumps: u64,
     pub(super) dumps: u64,
@@ -45,7 +46,7 @@ pub(super) struct GameRunningData {
 }
 
 /// The current state of the game
-#[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub(super) enum GameState {
     Playing,
     ResultDeclared(GameResult),
@@ -85,20 +86,10 @@ impl GameState {
 }
 
 /// The result of the game, can never be draw
-#[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub(super) enum GameResult {
     Win { amount: u128 },
     Loss { amount: u128 },
-}
-
-impl GameState {
-    /// Load the current game state for the given token root and owner
-    pub(super) async fn load(
-        _owner_canister: Principal,
-        _root_principal: Principal,
-    ) -> Result<Self, String> {
-        Ok(Self::Playing)
-    }
 }
 
 impl GameRunningData {
@@ -147,7 +138,7 @@ impl GameRunningData {
 }
 
 /// The player's overarching stats
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub(super) struct PlayerData {
     pub(super) games_count: u64,
     pub(super) wallet_balance: u128,
@@ -162,7 +153,7 @@ impl PlayerData {
     }
 
     /// Load the user's stats from the server
-    pub(super) async fn load(user_canister: Principal) -> Result<Self, String> {
+    pub(super) async fn load(user_canister: Principal) -> Result<Self, ServerFnError> {
         let balance_url = PUMP_AND_DUMP_WORKER_URL
             .join(&format!("/balance/{user_canister}"))
             .expect("Url to be valid");
@@ -170,21 +161,9 @@ impl PlayerData {
             .join(&format!("/game_count/{user_canister}"))
             .expect("Url to be valid");
 
-        let games_count: u64 = reqwest::get(games_count_url)
-            .await
-            .map_err(|_| "Failed to load games count")?
-            .text()
-            .await
-            .map_err(|_| "failed to read response body".to_string())?
-            .parse()
-            .map_err(|_| "Couldn't parse nat number".to_string())?;
+        let games_count: u64 = reqwest::get(games_count_url).await?.text().await?.parse()?;
 
-        let wallet_balance: BalanceInfoResponse = reqwest::get(balance_url)
-            .await
-            .map_err(|_| "failed to load balance".to_string())?
-            .json()
-            .await
-            .map_err(|_| "failed to read response body".to_string())?;
+        let wallet_balance: BalanceInfoResponse = reqwest::get(balance_url).await?.json().await?;
         let wallet_balance = wallet_balance.balance;
 
         let wallet_balance = convert_e8s_to_cents(wallet_balance);
