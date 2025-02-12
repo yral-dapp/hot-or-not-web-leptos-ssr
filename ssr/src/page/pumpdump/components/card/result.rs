@@ -1,4 +1,4 @@
-use leptos::{component, expect_context, view, IntoView, Show, SignalGet};
+use leptos::*;
 use leptos_icons::*;
 
 use crate::{
@@ -39,6 +39,9 @@ pub fn PlayingCard() -> impl IntoView {
             .map(|value| value.to_string())
             .unwrap_or_else(|| "--".into())
     };
+
+    let audio_ref = create_node_ref::<html::Audio>();
+
     view! {
         <div
             class="bg-[#171717] flip-card transition-all absolute inset-0 h-full shrink-0 rounded-2xl flex flex-col gap-4 pt-14 pb-5 px-5 overflow-hidden"
@@ -80,9 +83,10 @@ pub fn PlayingCard() -> impl IntoView {
                 <div
                     class="flex relative items-center gap-6 justify-center w-full"
                 >
-                    <DumpButton />
+                    <audio _ref=audio_ref preload="auto" src="/pnd-tap.mp3"/>
+                    <DumpButton audio_ref />
 
-                    <PumpButton />
+                    <PumpButton audio_ref />
                 </div>
             </div>
         </div>

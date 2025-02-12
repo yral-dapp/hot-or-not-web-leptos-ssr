@@ -1,5 +1,4 @@
-use leptos::{component, expect_context, view, IntoView, SignalGet, SignalUpdate};
-use log;
+use leptos::{html::Audio, *};
 use yral_pump_n_dump_common::{
     ws::{WsMessage, WsRequest},
     GameDirection,
@@ -9,36 +8,35 @@ use crate::page::pumpdump::{
     CurrentRoundSignal, GameRunningDataSignal, PlayerDataSignal, WebsocketContextSignal,
 };
 
-#[cfg(not(feature = "hydrate"))]
-fn non_visual_feedback() {}
-
-#[cfg(feature = "hydrate")]
-fn non_visual_feedback() {
-    use leptos_use::use_window;
-    use wasm_bindgen::JsValue;
-    use web_sys::HtmlAudioElement;
-    let navigator = use_window().navigator();
-    match navigator {
-        Some(navigator) => {
-            if js_sys::Reflect::has(&navigator, &JsValue::from_str("vibrate")).unwrap_or(false) {
-                navigator.vibrate_with_duration(5);
-            } else {
-                log::warn!("Browser doesn't support vibrate api");
-            }
-        }
-        None => log::warn!("Couldn't get navigator for vibration"),
+fn non_visual_feedback(audio_ref: NodeRef<Audio>) {
+    #[cfg(not(feature = "hydrate"))]
+    {
+        _ = audio_ref;
     }
+    #[cfg(feature = "hydrate")]
+    {
+        use leptos::window;
+        use wasm_bindgen::JsValue;
+        use web_sys::js_sys::Reflect;
 
-    if let Err(err) = HtmlAudioElement::new_with_src("/pnd-tap.mp3").and_then(|d| {
-        d.set_volume(0.5);
-        d.play()
-    }) {
-        web_sys::console::warn_2(&JsValue::from_str("error playing tap audio"), &err);
+        let window = window();
+        let nav = window.navigator();
+        if Reflect::has(&nav, &JsValue::from_str("vibrate")).unwrap_or_default() {
+            nav.vibrate_with_duration(5);
+        } else {
+            log::debug!("browser does not support vibrate");
+        }
+        let Some(audio) = audio_ref.get() else {
+            return;
+        };
+        audio.set_current_time(0.);
+        audio.set_volume(0.5);
+        _ = audio.play();
     }
 }
 
 #[component]
-pub fn DumpButton() -> impl IntoView {
+pub fn DumpButton(audio_ref: NodeRef<Audio>) -> impl IntoView {
     let running_data: GameRunningDataSignal = expect_context();
     let player_data: PlayerDataSignal = expect_context();
     let websocket: WebsocketContextSignal = expect_context();
@@ -50,7 +48,7 @@ pub fn DumpButton() -> impl IntoView {
             .unwrap_or_else(|| "-".into())
     };
     let onclick = move |_| {
-        non_visual_feedback();
+        non_visual_feedback(audio_ref);
         if let (Some(websocket), Some(round)) = (websocket.get().as_ref(), current_round.get()) {
             websocket.send(&WsRequest {
                 request_id: uuid::Uuid::new_v4(),
@@ -132,7 +130,7 @@ pub fn MockDumpButton() -> impl IntoView {
 }
 
 #[component]
-pub fn PumpButton() -> impl IntoView {
+pub fn PumpButton(audio_ref: NodeRef<Audio>) -> impl IntoView {
     let running_data: GameRunningDataSignal = expect_context();
     let player_data: PlayerDataSignal = expect_context();
     let websocket: WebsocketContextSignal = expect_context();
@@ -144,7 +142,7 @@ pub fn PumpButton() -> impl IntoView {
             .unwrap_or_else(|| "-".into())
     };
     let onclick = move |_| {
-        non_visual_feedback();
+        non_visual_feedback(audio_ref);
         if let (Some(websocket), Some(round)) = (websocket.get().as_ref(), current_round.get()) {
             websocket.send(&WsRequest {
                 request_id: uuid::Uuid::new_v4(),
