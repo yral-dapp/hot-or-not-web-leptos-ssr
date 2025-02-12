@@ -3,9 +3,10 @@ use futures::TryFutureExt;
 use http::StatusCode;
 use leptos::{
     component, create_action, create_effect, create_rw_signal, event_target_value, expect_context,
-    logging, view, IntoView, ServerFnError, SignalSet, Suspense,
+    view, IntoView, ServerFnError, SignalSet, Suspense,
 };
 use leptos_router::use_navigate;
+use log;
 use yral_canisters_common::{utils::token::balance::TokenBalance, Canisters};
 use yral_pump_n_dump_common::rest::{BalanceInfoResponse, ClaimReq};
 
@@ -121,7 +122,7 @@ pub fn PndWithdrawal() -> impl IntoView {
         let value = event_target_value(&ev);
         let value = TokenBalance::parse(&value, 6)
             .inspect_err(|err| {
-                logging::error!("Couldn't parse value: {}", err);
+                log::error!("Couldn't parse value: {}", err);
             })
             .ok();
         let value = value.unwrap_or_else(|| TokenBalance::new(0usize.into(), 6));

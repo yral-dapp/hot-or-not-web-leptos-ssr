@@ -6,9 +6,9 @@ use std::rc::Rc;
 
 use codee::string::JsonSerdeCodec;
 use leptos::{
-    component, create_action, create_effect, create_rw_signal, expect_context, logging,
-    provide_context, view, IntoView, Show, SignalGet, SignalGetUntracked, SignalSetUntracked,
-    SignalUpdate, Suspense,
+    component, create_action, create_effect, create_rw_signal, expect_context, provide_context,
+    view, IntoView, Show, SignalGet, SignalGetUntracked, SignalSetUntracked, SignalUpdate,
+    Suspense,
 };
 use leptos_router::use_query;
 use leptos_use::{use_websocket, UseWebSocketReturn};
@@ -81,7 +81,7 @@ pub fn GameCard(#[prop()] token: ProcessedTokenListResponse) -> impl IntoView {
             let data = GameRunningData::load(owner_canister_id, token_root, user_canister)
                 .await
                 .inspect_err(|err| {
-                    logging::error!("couldn't load running data: {err}");
+                    log::error!("couldn't load running data: {err}");
                 })
                 .ok();
 
@@ -146,15 +146,12 @@ pub fn GameCard(#[prop()] token: ProcessedTokenListResponse) -> impl IntoView {
                             ))
                         });
                     }
-                    WsResp::BetSuccesful { round } => {
-                        logging::log!(
-                            "ws: bet successful for round: {round}. (note: current round: {:?})",
-                            current_round.get_untracked()
-                        );
+                    WsResp::BetSuccesful { round: _ } => {
+                        // noop
                     }
                     WsResp::Error(err) => {
                         // TODO: handle this error
-                        logging::error!("ws: received error: {err:?}");
+                        log::error!("ws: received error: {err:?}");
 
                         if let WsError::BetFailure { direction, .. } = err {
                             running_data.update(move |data| {
@@ -168,10 +165,6 @@ pub fn GameCard(#[prop()] token: ProcessedTokenListResponse) -> impl IntoView {
                         }
                     }
                     WsResp::GameResultEvent(result) => {
-                        logging::log!("ws: received result: winning direction = {}, bet_count = {}, reward_pool = {}", match result.direction {
-                             GameDirection::Pump => "pump",
-                             GameDirection::Dump => "dump",
-                        }, result.bet_count, result.reward_pool);
                         let running_data = running_data
                             .get_untracked()
                             .expect("running data to exist if we have recieved results");
@@ -179,10 +172,6 @@ pub fn GameCard(#[prop()] token: ProcessedTokenListResponse) -> impl IntoView {
                         let result = compute_game_result(running_data, result);
 
                         game_state.update(|s| *s = Some(GameState::ResultDeclared(result)));
-                        logging::log!(
-                            "after game state update: {:?}",
-                            current_round.get_untracked()
-                        );
                         match result {
                             GameResult::Win { amount } => {
                                 player_data.update(|data| {
@@ -201,8 +190,7 @@ pub fn GameCard(#[prop()] token: ProcessedTokenListResponse) -> impl IntoView {
                             }
                         }
                     }
-                    WsResp::WinningPoolEvent { new_pool, round } => {
-                        logging::log!("ws: received new winning pot: {new_pool} for round: {round}. (note, current round: {:?})", current_round.get_untracked());
+                    WsResp::WinningPoolEvent { new_pool, round: _ } => {
                         running_data.update(|data| {
                             if let Some(data) = data {
                                 data.winning_pot = Some(new_pool);
@@ -217,7 +205,6 @@ pub fn GameCard(#[prop()] token: ProcessedTokenListResponse) -> impl IntoView {
     let load_game_state = create_action(move |&()| {
         let card_query = card_query.clone();
         async move {
-            logging::log!("{:?}", show_selected_card.get());
             let state = match (
                 show_selected_card.get(),
                 card_query.and_then(|c| c.details()),
@@ -229,7 +216,7 @@ pub fn GameCard(#[prop()] token: ProcessedTokenListResponse) -> impl IntoView {
                 _ => GameState::load(owner_canister_id, token_root)
                     .await
                     .inspect_err(|err| {
-                        logging::error!("couldn't load game state: {err}");
+                        log::error!("couldn't load game state: {err}");
                     })
                     .ok(),
             };
@@ -244,7 +231,6 @@ pub fn GameCard(#[prop()] token: ProcessedTokenListResponse) -> impl IntoView {
         // might dispatch multiple times, need a way to ensure game state is
         // loaded only once
         if game_state.get().is_none() {
-            logging::log!("loading game state");
             load_game_state.dispatch(());
         }
     });

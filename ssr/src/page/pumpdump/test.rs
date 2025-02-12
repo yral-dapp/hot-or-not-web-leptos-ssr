@@ -4,10 +4,11 @@ use candid::Principal;
 use codee::string::JsonSerdeCodec;
 use leptos::{
     component, create_action, create_effect, create_node_ref, create_rw_signal, expect_context,
-    html::Input, logging, view, For, IntoView, RwSignal, Show, SignalGet, SignalSet, SignalUpdate,
+    html::Input, view, For, IntoView, RwSignal, Show, SignalGet, SignalSet, SignalUpdate,
 };
 use leptos_router::use_params_map;
 use leptos_use::{use_websocket, UseWebSocketReturn};
+use log;
 use yral_canisters_common::{
     utils::token::{RootType, TokenOwner},
     Canisters,
@@ -159,7 +160,7 @@ pub fn PndTest() -> impl IntoView {
                     RootType::Other(token_root),
                 )
                 .await
-                .inspect_err(|err| logging::error!("metadata request failed{err}"))
+                .inspect_err(|err| log::error!("metadata request failed{err}"))
                 .expect("couldn't get the token metadata")
                 .expect("token root to exist");
 
@@ -200,7 +201,7 @@ pub fn PndTest() -> impl IntoView {
                     RootType::Other(token_root),
                 )
                 .await
-                .inspect_err(|err| logging::error!("metadata request failed{err}"))
+                .inspect_err(|err| log::error!("metadata request failed: {err}"))
                 .expect("couldn't get the token metadata")
                 .expect("token root to exist");
 

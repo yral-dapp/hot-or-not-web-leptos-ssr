@@ -1,11 +1,12 @@
 use codee::string::FromToStringCodec;
 use leptos::{
-    component, create_action, create_effect, create_rw_signal, expect_context, html::Div, logging,
+    component, create_action, create_effect, create_rw_signal, expect_context, html::Div,
     provide_context, view, For, IntoView, NodeRef, Show, SignalGet, SignalGetUntracked, SignalSet,
     SignalUpdate, SignalUpdateUntracked,
 };
 use leptos_router::use_query;
 use leptos_use::{use_cookie, use_infinite_scroll_with_options, UseInfiniteScrollOptions};
+use log;
 use yral_canisters_common::{utils::token::RootType, Canisters};
 
 use crate::{
@@ -161,7 +162,7 @@ pub fn PumpNDump() -> impl IntoView {
                 Some(q) => load_selected_card(&cans, q)
                     .await
                     .inspect_err(|err| {
-                        logging::error!("Couldn't load selected card: {err}");
+                        log::error!("Couldn't load selected card: {err}");
                     })
                     .ok(),
                 None => Default::default(),
@@ -173,8 +174,6 @@ pub fn PumpNDump() -> impl IntoView {
                 .await
                 .expect("TODO: handle error");
             let had_tokens = !more_tokens.is_empty();
-
-            logging::log!("more {more_tokens:?}");
 
             let mut processed_token = match selected_card {
                 Some(t) => vec![t],
@@ -191,7 +190,6 @@ pub fn PumpNDump() -> impl IntoView {
                 &process_token_list_item(more_tokens, cans.user_principal()).await,
             );
 
-            logging::log!("processed {processed_token:?}");
             // ignore tokens with no owners
             processed_token.retain(|item| item.token_owner.is_some());
 

@@ -1,4 +1,5 @@
-use leptos::{component, expect_context, logging, view, IntoView, SignalGet, SignalUpdate};
+use leptos::{component, expect_context, view, IntoView, SignalGet, SignalUpdate};
+use log;
 use yral_pump_n_dump_common::{
     ws::{WsMessage, WsRequest},
     GameDirection,
@@ -22,10 +23,10 @@ fn non_visual_feedback() {
             if js_sys::Reflect::has(&navigator, &JsValue::from_str("vibrate")).unwrap_or(false) {
                 navigator.vibrate_with_duration(5);
             } else {
-                logging::warn!("Browser doesn't support vibrate api");
+                log::warn!("Browser doesn't support vibrate api");
             }
         }
-        None => logging::warn!("Couldn't get navigator for vibration"),
+        None => log::warn!("Couldn't get navigator for vibration"),
     }
 
     if let Err(err) = HtmlAudioElement::new_with_src("/pnd-tap.mp3").and_then(|d| {
