@@ -1,4 +1,4 @@
-use leptos::{component, expect_context, view, IntoView, SignalGet};
+use leptos::*;
 
 use crate::page::pumpdump::GameRunningDataSignal;
 
@@ -17,6 +17,38 @@ pub fn BullBearSlider() -> impl IntoView {
         }
     };
 
+    let is_bear_attacking = create_memo(move |prev_state| {
+        let Some((new_dumps, new_pumps)) = running_data.with(|d| d.map(|d| (d.dumps, d.pumps)))
+        else {
+            return (None, 0u64, 0u64);
+        };
+        // state was reset
+        if new_dumps == 0 && new_pumps == 0 {
+            return (None, 0u64, 0u64);
+        }
+
+        let (prev, prev_dumps, prev_pumps) = prev_state.copied().unwrap_or((None, 0u64, 0u64));
+
+        if new_dumps > prev_dumps {
+            return (Some(true), new_dumps, new_pumps);
+        } else if new_pumps > prev_pumps {
+            return (Some(false), new_dumps, new_pumps);
+        }
+
+        (prev, prev_dumps, prev_pumps)
+    });
+    let anim_classes = Signal::derive(move || {
+        let (Some(is_bear_attacking), _, _) = is_bear_attacking() else {
+            return ("", "");
+        };
+
+        if is_bear_attacking {
+            ("animate-push-right", "animate-shake")
+        } else {
+            ("animate-shake", "animate-push-left")
+        }
+    });
+
     view! {
         <div class="py-5 w-full">
             <div
@@ -31,13 +63,13 @@ pub fn BullBearSlider() -> impl IntoView {
                         style="filter: drop-shadow( -3px 3px 2px rgba(0, 0, 0, .7));"
                         src="/img/bear.png"
                         alt="Bear"
-                        class="h-6 push-right shake"
+                        class=move || format!("h-6 {}", anim_classes.with(|c| c.0))
                     />
                     <img
                         style="filter: drop-shadow( 3px 3px 2px rgba(0, 0, 0, .7));"
                         src="/img/bull.png"
                         alt="Bull"
-                        class="h-7 push-left shake"
+                        class=move || format!("h-7 {}", anim_classes.with(|c| c.1))
                     />
                 </div>
             </div>
