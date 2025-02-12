@@ -157,7 +157,10 @@ impl From<TokenFirestoreBindingsItem> for TokenListItem {
             token_symbol: item.token_symbol,
             logo: item.logo,
             description: item.description,
-            timestamp: timestamp.duration_since(UNIX_EPOCH).unwrap().as_secs() as i64,
+            timestamp: timestamp
+                .duration_since(SystemTime::UNIX_EPOCH)
+                .unwrap()
+                .as_secs() as i64,
             created_at: "".to_string(),
             formatted_created_at: elapsed_str,
             link: item.link,

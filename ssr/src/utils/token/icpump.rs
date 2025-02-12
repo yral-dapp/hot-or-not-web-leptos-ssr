@@ -306,3 +306,13 @@ impl TokenInfoProvider for IcpumpTokenInfo {
         get_token_by_id(token_id).await
     }
 }
+
+#[server]
+pub async fn get_token_timestamp_by_id(token_id: String) -> Result<i64, ServerFnError> {
+    use speedate::DateTime;
+    
+    let created_at = get_token_by_id(token_id).await?.created_at;
+    let timestamp = DateTime::parse_str(&created_at).unwrap().timestamp();
+
+    Ok(timestamp)
+}

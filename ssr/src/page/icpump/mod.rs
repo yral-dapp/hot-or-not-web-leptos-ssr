@@ -72,8 +72,9 @@ async fn process_token_list_item(
                 .get_token_owner(root_principal)
                 .await
                 .unwrap_or_default();
+
             let is_airdrop_claimed = if let Some(token_owner) = &token_owner_canister_id {
-                cans.get_airdrop_status(token_owner.canister_id, root_principal, key_principal)
+                cans.get_airdrop_status(token_owner.canister_id, root_principal, key_principal, token.timestamp)
                     .await
                     .unwrap_or(true)
             } else {

@@ -4,6 +4,7 @@ use leptos::*;
 use yral_canisters_client::individual_user_template::DeployedCdaoCanisters;
 use yral_canisters_client::individual_user_template::IndividualUserTemplate;
 
+use crate::utils::token::icpump::get_token_timestamp_by_id;
 use crate::{
     component::{bullet_loader::BulletLoader, token_confetti_symbol::TokenConfettiSymbol},
     page::wallet::tokens::WalletCard,
@@ -59,8 +60,10 @@ async fn process_profile_tokens(
                 let is_airdrop_claimed = if let (Some(token_owner), Some(root)) =
                     (token.token_owner.clone(), token.root)
                 {
+                    let timestamp = get_token_timestamp_by_id(root.to_string()).await.unwrap_or(0);
+
                     Some(
-                        cans.get_airdrop_status(token_owner.canister_id, root, user_principal)
+                        cans.get_airdrop_status(token_owner.canister_id, root, user_principal, timestamp)
                             .await?,
                     )
                 } else {
