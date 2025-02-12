@@ -527,7 +527,7 @@ pub fn ActionButton(
                 format!(
                     "flex flex-col gap-1 justify-center items-center text-xs transition-colors {}",
                     if !disabled.get() {
-                        "group-hover:text-white text-neutral-300"
+                        "group-hover:text-white text-neutral-300 pointer-events-none"
                     } else {
                         "group-hover:cursor-default text-neutral-600"
                     },
