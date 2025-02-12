@@ -1,6 +1,6 @@
 use crate::page::icpump::ai::ICPumpAi;
 use crate::page::icpump::ICPumpLanding;
-use crate::page::pumpdump::{test::PndTest, withdrawal, PndProfilePage};
+use crate::page::pumpdump::{withdrawal, PndProfilePage};
 use crate::state::app_type::AppType;
 use crate::utils::host::show_preview_component;
 // use crate::page::wallet::TestIndex;
@@ -196,10 +196,15 @@ pub fn App() -> impl IntoView {
                         <Route path="/token/transfer/:token_root" view=TokenTransfer/>
                         <Route path="/board" view=ICPumpLanding/>
                         <Route path="/icpump-ai" view=ICPumpAi/>
-                        <Route path="/pnd/test/:token_root" view=PndTest />
                         <Route path="/pnd/withdraw" view=withdrawal::PndWithdrawal />
                         <Route path="/pnd/withdraw/success" view=withdrawal::result::Success />
                         <Route path="/pnd/withdraw/failure" view=withdrawal::result::Failure />
+                        {
+                            #[cfg(any(feature = "local-bin", feature = "local-lib"))]
+                            view! {
+                                <Route path="/pnd/test/:token_root" view=crate::page::pumpdump::PndTest />
+                            }
+                        }
                     // <Route path="/test" view=TestIndex/>
                     </Route>
                 </Routes>
