@@ -9,7 +9,7 @@ use futures::StreamExt;
 
 use leptos::*;
 
-use yral_grpc_traits::{TokenInfoProvider, TokenListItemFS};
+use yral_grpc_traits::{TokenInfoProvider, TokenListItemFS, TokenListItemFSWithTimestamp};
 
 #[cfg(feature = "ssr")]
 #[derive(Debug, Clone)]
@@ -34,13 +34,15 @@ pub struct TokenListItem {
 }
 
 #[server]
-pub async fn get_token_by_id(token_id: String) -> Result<TokenListItemFS, ServerFnError> {
+pub async fn get_token_by_id(token_id: String) -> Result<TokenListItemFSWithTimestamp, ServerFnError> {
     #[cfg(feature = "firestore")]
     {
+        use speedate::DateTime;
+        
         let firestore_db: firestore::FirestoreDb = expect_context();
         const TEST_COLLECTION_NAME: &str = "tokens-list";
 
-        let token = firestore_db
+        let token: TokenListItemFS = firestore_db
             .fluent()
             .select()
             .by_id_in(TEST_COLLECTION_NAME)
@@ -54,7 +56,9 @@ pub async fn get_token_by_id(token_id: String) -> Result<TokenListItemFS, Server
                 )
             })?;
 
-        Ok(token)
+        let timestamp = DateTime::parse_str(&token.created_at).unwrap().timestamp();
+
+        Ok(TokenListItemFSWithTimestamp::from_token_list_item_fs(token, timestamp))
     }
 
     #[cfg(not(feature = "firestore"))]
@@ -302,7 +306,7 @@ pub struct IcpumpTokenInfo;
 impl TokenInfoProvider for IcpumpTokenInfo {
     type Error = ServerFnError;
 
-    async fn get_token_by_id(&self, token_id: String) -> Result<TokenListItemFS, ServerFnError> {
+    async fn get_token_by_id(&self, token_id: String) -> Result<TokenListItemFSWithTimestamp, ServerFnError> {
         get_token_by_id(token_id).await
     }
 }
