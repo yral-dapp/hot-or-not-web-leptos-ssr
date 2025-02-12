@@ -8,10 +8,12 @@ mod tokens;
 
 use candid::Principal;
 use codee::string::FromToStringCodec;
+use leptos::leptos_dom::is_browser;
 use leptos::*;
 use leptos_icons::*;
 use leptos_router::*;
 use leptos_use::use_cookie;
+use wasm_bindgen::{prelude::Closure, JsCast};
 
 use crate::{
     component::connect::ConnectLogin,
@@ -171,13 +173,26 @@ pub fn ProfileView() -> impl IntoView {
     let tab_params = use_params::<TabsParam>();
     let (is_connected, _) = account_connected_reader();
     let (reload_count, set_reload_count) = use_cookie::<u8, FromToStringCodec>(RELOAD_COUNT_STORE);
+    let is_loaded = create_rw_signal(false);
+
+    // Handle page load completion
+    create_effect(move |_| {
+        #[cfg(feature = "hydrate")]
+        if !is_loaded.get() && is_browser() {
+            let window = web_sys::window().unwrap();
+            let closure = Closure::wrap(Box::new(move || {
+                is_loaded.set(true);
+            }) as Box<dyn FnMut()>);
+
+            window.set_onload(Some(closure.as_ref().unchecked_ref()));
+            closure.forget();
+        }
+    });
 
     create_effect(move |_| {
         #[cfg(feature = "hydrate")]
         {
-            // Only check if connected and haven't reloaded yet
-            if is_connected.get() {
-                // Get current URL principal and stored principal
+            if is_loaded.get() && is_connected.get() {
                 let url_principal = params.with(|p| {
                     p.as_ref()
                         .ok()
@@ -189,7 +204,6 @@ pub fn ProfileView() -> impl IntoView {
                         .0
                         .get();
 
-                // Compare principals and reload if different
                 if let (Some(url_p), Some(stored_p)) = (url_principal, stored_principal) {
                     if url_p != stored_p {
                         let current_count = reload_count.get().unwrap_or(0);
