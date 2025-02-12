@@ -4,6 +4,7 @@ pub mod transactions;
 pub mod txn;
 
 use crate::component::icons::notification_icon::NotificationIcon;
+use crate::state::app_state::AppState;
 use crate::{
     component::share_popup::ShareButtonWithFallbackPopup, state::canisters::unauth_canisters,
 };
@@ -69,8 +70,10 @@ fn Header(details: ProfileDetails, is_own_account: bool) -> impl IntoView {
         let principal = details.principal();
         format!("/wallet/{}", principal)
     };
+    let app_state = use_context::<AppState>();
     let message = format!(
-        "Hey! Check out my YRAL profile 👇 {}. I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter",
+        "Hey there 👋! Here's my wallet link on {}: {}",
+        app_state.unwrap().name,
         share_link
     );
 
