@@ -15,7 +15,7 @@ use leptos_use::use_cookie;
 
 use crate::{
     component::connect::ConnectLogin,
-    consts::USER_PRINCIPAL_STORE,
+    consts::{RELOAD_COUNT_STORE, USER_PRINCIPAL_STORE},
     state::{
         auth::account_connected_reader,
         canisters::{authenticated_canisters, unauth_canisters},
@@ -170,25 +170,29 @@ pub fn ProfileView() -> impl IntoView {
     let params = use_params::<ProfileParams>();
     let tab_params = use_params::<TabsParam>();
     let (is_connected, _) = account_connected_reader();
-    let has_redirected = create_rw_signal(false);
+    let (reload_count, set_reload_count) = use_cookie::<u8, FromToStringCodec>(RELOAD_COUNT_STORE);
 
-    // Handle auth state change and redirect
     create_effect(move |_| {
         #[cfg(feature = "hydrate")]
         {
-            if !has_redirected.get_untracked() && is_connected.get() {
-                has_redirected.set(true);
-                let user_principal =
+            let current_count = reload_count.get().unwrap_or(0);
+
+            if current_count < 1 && is_connected.get() {
+                // Get user principal from cookie
+                if let Some(user_principal) =
                     use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE)
                         .0
                         .get()
-                        .unwrap();
                 {
+                    set_reload_count.set(Some(current_count + 1));
+
+                    // Redirect to new profile path
                     let new_path = format!("/profile/{}/tokens", user_principal);
 
                     if let Some(window) = web_sys::window() {
                         let location = window.location();
                         _ = location.set_href(&new_path);
+                        _ = location.reload();
                     }
                 }
             }

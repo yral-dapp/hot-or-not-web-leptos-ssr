@@ -54,6 +54,7 @@ pub const NSFW_SERVER_URL: &str = "https://prod-yral-nsfw-classification.fly.dev
 
 pub const CF_KV_ML_CACHE_NAMESPACE_ID: &str = "ea145fc839bd42f9bf2d34b950ddbda5";
 pub const CLOUDFLARE_ACCOUNT_ID: &str = "a209c523d2d9646cc56227dbe6ce3ede";
+pub const RELOAD_COUNT_STORE: &str = "reload-count";
 
 pub mod social {
     pub const TELEGRAM: &str = "https://t.me/+c-LTX0Cp-ENmMzI1";
