@@ -230,14 +230,14 @@ fn GameplayHistoryCard(#[prop(into)] details: GameplayHistoryItem) -> impl IntoV
                 >
                     <div class="text-xs font-semibold py-1 text-center"
                         class=(["bg-[#A00157]", "text-white"], state.has_won())
-                        class=(["text-[#A3A3A3]", "bg-[#212121]"], state.has_lost())
+                        class=(["text-neutral-400", "bg-[#212121]"], state.has_lost())
                     >
                         {if state.has_lost() { "You Lost" } else { "You Won" }}
                     </div>
                     <div
                         class="text-xs font-semibold py-1 text-center"
                         class=(["bg-[#E2017B]", "text-white"], state.has_won())
-                        class=(["bg-[#525252]", "text-[#A3A3A3]"], state.has_lost())
+                        class=(["bg-neutral-600", "text-neutral-400"], state.has_lost())
                     >
                         {state.winnings().or(state.lossings())} Cents
                     </div>

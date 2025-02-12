@@ -31,7 +31,7 @@ pub fn OnboardingPopup() -> impl IntoView {
                 })}
                     <button
                         on:click=move |_| show_onboarding.hide()
-                        class="p-1 flex items-center justify-center bg-[#525252] rounded-full"
+                        class="p-1 flex items-center justify-center bg-neutral-600 rounded-full"
                     >
                         <Icon class="size-3" icon=icondata::IoClose />
                     </button>
@@ -65,7 +65,7 @@ pub fn OnboardingPopup() -> impl IntoView {
                             <div class="flex gap-2 justify-between items-center">
                                 <div class="flex-1 text-xs text-left">
                                     <div class="text-white">Step 1</div>
-                                    <div class="text-[#A3A3A3]">
+                                    <div class="text-neutral-400">
                                         Vote for the Tide - Pump or Dump. Predict the next shift in momentum.
                                     </div>
                                 </div>
@@ -83,7 +83,7 @@ pub fn OnboardingPopup() -> impl IntoView {
                             <div class="flex flex-row-reverse gap-2 justify-between items-center">
                                 <div class="flex-1 text-xs text-right">
                                     <div class="text-white">Step 2</div>
-                                    <div class="text-[#A3A3A3]">
+                                    <div class="text-neutral-400">
                                         The battle for dominance begins here, keep voting as each vote influences the tide
                                     </div>
                                 </div>
@@ -96,7 +96,7 @@ pub fn OnboardingPopup() -> impl IntoView {
                             <div class="flex gap-2 justify-between items-center">
                                 <div class="flex-1 text-xs text-left">
                                     <div class="text-white">Step 3</div>
-                                    <div class="text-[#A3A3A3]">
+                                    <div class="text-neutal-400">
                                         Claim your rewards when the tide turns and overtakes the majority.
                                     </div>
                                 </div>

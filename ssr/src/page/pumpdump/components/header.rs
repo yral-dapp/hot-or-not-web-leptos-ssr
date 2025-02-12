@@ -49,7 +49,7 @@ pub fn Header() -> impl IntoView {
                     alt="Cents"
                     class="absolute select-none -right-1/4 bottom-1 size-9 -rotate-1"
                 />
-                <div class="absolute rounded-sm bg-[#212121] text-[#525252] p-0.5 size-5 -left-2 top-1/2 -translate-y-1/2">
+                <div class="absolute rounded-sm bg-[#212121] text-neutral-600 p-0.5 size-5 -left-2 top-1/2 -translate-y-1/2">
                     <Icon class="size-full" icon=icondata::FiPlus />
                 </div>
             </a>

@@ -54,7 +54,7 @@ pub fn PlayingCard() -> impl IntoView {
                         class="w-full animate-slide-up top-[3.5rem] flex items-center gap-2 justify-between absolute inset-0 py-2 pl-4 pr-2"
                     >
                         <div class="flex items-center gap-1">
-                            <div class="text-[#A3A3A3] text-xs">Winning Pot:</div>
+                            <div class="text-neutral-400 text-xs">Winning Pot:</div>
                             <img src="/img/cents.png" alt="Coin" class="size-5" />
                             <div class="text-[#E5E5E5] font-bold">{winning_pot} Cents</div>
                         </div>
@@ -71,7 +71,7 @@ pub fn PlayingCard() -> impl IntoView {
                     >
                         <img src="/img/player.png" alt="Coin" class="w-5 h-5" />
                         <div class="text-[#E5E5E5] font-bold">{player_count}</div>
-                        <div class="text-[#A3A3A3] text-xs">players are playing - join the action!</div>
+                        <div class="text-neutral-400 text-xs">players are playing - join the action!</div>
                     </div>
                 </div>
             </div>
@@ -114,13 +114,13 @@ fn WonCard(#[prop()] result: GameResult) -> impl IntoView {
             <img src="/img/trophy.png" alt="Trophy" class="w-32 h-[7.6rem] translate-x-3" />
             <div class="flex flex-col gap-4 items-center">
                 <div class="font-semibold text-xl">Victory is yours!</div>
-                <div class="text-[#A3A3A3] text-center">
+                <div class="text-neutral-400 text-center">
                     {"Your strategy paid off! The tide shifted to your side, and you've won big. 💰"}
                 </div>
                 <div
                     class="bg-[#212121] w-full px-4 py-2 rounded-full flex items-center justify-center gap-2"
                 >
-                    <span class="text-[#A3A3A3] text-xs">You have won:</span>
+                    <span class="text-neutral-400 text-xs">You have won:</span>
                     <img src="/img/cents.png" alt="Coin" class="w-5 h-5" />
                     <span class="text-[#E5E5E5] font-bold">{amount} Cents</span>
                 </div>
@@ -163,7 +163,7 @@ fn LostCard() -> impl IntoView {
             <img src="/img/sadface.png" alt="Sad face emoji" class="h-36 w-36" />
             <div class="flex flex-col gap-4 items-center">
                 <div class="font-semibold text-xl">The Tide Turned Against You!</div>
-                <div class="text-[#A3A3A3] text-center">
+                <div class="text-neutral-400 text-center">
                     The other side took the lead this time, but every vote brings you closer to your next win.
                     Stay in the game!
                 </div>
