@@ -1,9 +1,6 @@
 use std::rc::Rc;
 
-use crate::{
-    consts::USER_PRINCIPAL_STORE,
-    utils::host::{show_cdao_page, show_pnd_page},
-};
+use crate::{consts::USER_PRINCIPAL_STORE, state::app_type::AppType};
 
 use super::nav_icons::*;
 use candid::Principal;
@@ -12,27 +9,6 @@ use leptos::*;
 use leptos_icons::*;
 use leptos_router::*;
 use leptos_use::use_cookie;
-
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
-enum SiteHost {
-    #[default]
-    Yral,
-    Pumpdump,
-    Icpump,
-}
-
-impl SiteHost {
-    /// Figures out what site are we are hosting from
-    fn decide() -> Self {
-        if show_cdao_page() {
-            Self::Icpump
-        } else if show_pnd_page() {
-            Self::Pumpdump
-        } else {
-            Self::default()
-        }
-    }
-}
 
 #[derive(Clone)]
 struct NavItem {
@@ -224,10 +200,10 @@ fn icpump_nav_items() -> Vec<NavItem> {
 }
 
 fn get_nav_items() -> Vec<NavItem> {
-    match SiteHost::decide() {
-        SiteHost::Yral => yral_nav_items(),
-        SiteHost::Pumpdump => pnd_nav_items(),
-        SiteHost::Icpump => icpump_nav_items(),
+    match AppType::select() {
+        AppType::YRAL | AppType::HotOrNot => yral_nav_items(),
+        AppType::ICPump => icpump_nav_items(),
+        AppType::Pumpdump => pnd_nav_items(),
     }
 }
 

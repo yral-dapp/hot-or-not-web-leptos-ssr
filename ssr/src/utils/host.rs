@@ -51,10 +51,10 @@ pub fn show_cdao_condition(host: String) -> bool {
 
 pub fn show_pnd_page() -> bool {
     let host = get_host();
-    show_pnd_condition(host)
+    show_pnd_condition(&host)
 }
 
-pub fn show_pnd_condition(host: String) -> bool {
+pub fn show_pnd_condition(host: &str) -> bool {
     host == "pumpdump.wtf"
         || host == "www.pumpdump.wtf"
         || host == "localhost:3000"

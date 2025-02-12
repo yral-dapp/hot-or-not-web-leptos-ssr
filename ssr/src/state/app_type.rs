@@ -1,3 +1,5 @@
+use crate::utils::host::show_pnd_condition;
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum AppType {
     YRAL,
@@ -12,10 +14,26 @@ impl AppType {
             AppType::HotOrNot
         } else if host.contains("icpump") {
             AppType::ICPump
-        } else if host.contains("pumpdump") {
+        } else if show_pnd_condition(host) {
             AppType::Pumpdump
         } else {
             AppType::YRAL
+        }
+    }
+
+    pub fn select() -> Self {
+        #[cfg(feature = "hydrate")]
+        {
+            use leptos::window;
+            let hostname = window().location().hostname().unwrap_or_default();
+            AppType::from_host(&hostname)
+        }
+
+        #[cfg(not(feature = "hydrate"))]
+        {
+            use crate::utils::host::get_host;
+            let host = get_host();
+            AppType::from_host(&host)
         }
     }
 }

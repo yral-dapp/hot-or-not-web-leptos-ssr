@@ -83,26 +83,11 @@ fn GoogleAuthRedirectorRoute() -> impl IntoView {
     }
 }
 
-fn get_app_type() -> AppType {
-    #[cfg(feature = "hydrate")]
-    {
-        let hostname = window().location().hostname().unwrap_or_default();
-        AppType::from_host(&hostname)
-    }
-
-    #[cfg(not(feature = "hydrate"))]
-    {
-        use crate::utils::host::get_host;
-        let host = get_host();
-        AppType::from_host(&host)
-    }
-}
-
 #[component]
 pub fn App() -> impl IntoView {
     provide_meta_context();
 
-    let app_type = get_app_type();
+    let app_type = AppType::select();
     let app_state = AppState::from_type(&app_type);
     provide_context(app_state.clone());
 
