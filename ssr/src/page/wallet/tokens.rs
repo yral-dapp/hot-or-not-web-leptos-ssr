@@ -1,6 +1,5 @@
 use candid::{Nat, Principal};
 use codee::string::FromToStringCodec;
-use leptos::Show;
 use leptos_use::use_cookie;
 use yral_canisters_common::cursored_data::token_roots::{TokenListResponse, TokenRootList};
 use yral_canisters_common::utils::token::balance::TokenBalance;
@@ -116,33 +115,25 @@ pub fn WalletCard(
     let airdrop_popup = create_rw_signal(false);
     let buffer_signal = create_rw_signal(false);
     let claimed = create_rw_signal(is_airdrop_claimed);
-    let is_withdrawable = token_metadata
-        .withdrawable_state
-        .as_ref()
-        .map(|state| matches!(state, WithdrawalState::Value(..)))
-        .is_some_and(|is_withdrawable| is_withdrawable);
-    let is_withdrawable = create_rw_signal(is_withdrawable);
-    let withdraw_message = token_metadata
+    let (is_withdrawable, withdraw_message, withdrawable_balance) = token_metadata
         .withdrawable_state
         .as_ref()
         .map(|state| match state {
-            WithdrawalState::Value(_) => "Cents you can withdraw".to_string(),
-            WithdrawalState::NeedMoreEarnings(more) => format!(
-                "Earn {} Cents more to unlock",
-                TokenBalance::new(more.clone() * 100usize, 8).humanize_float_truncate_to_dp(2)
+            WithdrawalState::Value(bal) => (
+                true,
+                Some("Cents you can withdraw".to_string()),
+                Some(TokenBalance::new(bal.clone() * 100usize, 8).humanize_float_truncate_to_dp(2)),
             ),
-        });
-    let withdraw_message = create_rw_signal(withdraw_message);
-    let withdrawable_balance = token_metadata
-        .withdrawable_state
-        .as_ref()
-        .and_then(|state| match state {
-            WithdrawalState::Value(bal) => {
-                Some(TokenBalance::new(bal.clone() * 100usize, 8).humanize_float_truncate_to_dp(2))
-            }
-            WithdrawalState::NeedMoreEarnings(..) => None,
-        });
-    let withdrawable_balance = create_rw_signal(withdrawable_balance);
+            WithdrawalState::NeedMoreEarnings(more) => (
+                false,
+                Some(format!(
+                    "Earn {} Cents more to unlock",
+                    TokenBalance::new(more.clone() * 100usize, 8).humanize_float_truncate_to_dp(2)
+                )),
+                None,
+            ),
+        })
+        .unwrap_or_default();
     view! {
         <div node_ref=_ref class="flex flex-col gap-4 bg-neutral-900/90 rounded-lg w-full font-kumbh text-white p-4">
             <div class="flex flex-col gap-4 p-3 rounded-[4px] bg-neutral-800/70">
@@ -165,24 +156,25 @@ pub fn WalletCard(
                         <div class="text-xs">{symbol}</div>
                     </div>
                 </div>
-                <Show when=move || is_cents>
+                {is_cents.then_some(view! {
                     <div class="border-t border-neutral-700 flex flex-col pt-4 gap-2">
                         <div class="flex items-center">
-                            <Icon class="text-neutral-300" icon=if is_withdrawable.get_untracked() { PadlockOpen } else { PadlockClose } />
+                            <Icon class="text-neutral-300" icon=if is_withdrawable { PadlockOpen } else { PadlockClose } />
                             <span class="text-neutral-400 text-xs mx-2">{withdraw_message}</span>
                             <Tooltip icon=Information title="Withdrawal Tokens" description="Only Cents earned above your airdrop amount can be withdrawn." />
                             <span class="ml-auto">{withdrawable_balance}</span>
                         </div>
                         <a
                             class="rounded-lg px-5 py-2 text-sm text-center font-bold"
-                            class=(["pointer-events-none", "text-[#F6B0D6]", "bg-brand-gradient-disabled"], !is_withdrawable.get_untracked())
-                            class=(["text-neutral-50", "bg-brand-gradient"], is_withdrawable.get_untracked())
+                            class=(["pointer-events-none", "text-[#F6B0D6]", "bg-brand-gradient-disabled"], !is_withdrawable)
+                            class=(["text-neutral-50", "bg-brand-gradient"], is_withdrawable)
                             href="/pnd/withdraw"
                         >
                             Withdraw
                         </a>
                     </div>
-                </Show>
+
+                })}
             </div>
 
             <WalletCardOptions pop_up=pop_up.write_only() share_link=share_link.write_only() airdrop_popup buffer_signal claimed/>

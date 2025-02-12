@@ -18,10 +18,6 @@ module.exports = {
           950: "rgb(var(--color-primary-950))",
         },
       },
-      backgroundImage: {
-        "brand-gradient": "var(--color-brand-gradient)",
-        "brand-gradient-disabled": "var(--color-brand-gradient-disabled)",
-      },
       keyframes: {
         "blink-colors": {
           "0%": { color: "red" },
@@ -130,6 +126,8 @@ module.exports = {
       },
       backgroundImage: {
         'skeleton-shimmer': 'linear-gradient(-45deg, currentColor 40%, var(--shimmer, #FFFFFF) 50%, currentColor 60%)',
+        "brand-gradient": "var(--color-brand-gradient)",
+        "brand-gradient-disabled": "var(--color-brand-gradient-disabled)",
       },
       backgroundSize: {
         'skeleton-shimmer': '300%',
