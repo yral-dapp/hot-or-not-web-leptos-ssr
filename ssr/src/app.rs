@@ -141,9 +141,9 @@ pub fn App() -> impl IntoView {
             <Title text=app_state.name/>
 
             // Favicon
-            <Link rel="icon" type_="image/svg+xml" href=format!("./{}.svg", app_state.favicon_filename) />
-            <Link rel="shortcut icon" href=format!("./{}.ico", app_state.favicon_filename) />
-            <Link rel="apple-touch-icon" sizes="180x180" href=format!("./{}-apple.png", app_state.favicon_filename) />
+            <Link rel="icon" type_="image/svg+xml" href=format!("/{}.svg", app_state.favicon_filename) />
+            <Link rel="shortcut icon" href=format!("/{}.ico", app_state.favicon_filename) />
+            <Link rel="apple-touch-icon" sizes="180x180" href=format!("/{}-apple.png", app_state.favicon_filename) />
 
             // Meta
             <Meta name="apple-mobile-web-app-title" content=app_state.name />
