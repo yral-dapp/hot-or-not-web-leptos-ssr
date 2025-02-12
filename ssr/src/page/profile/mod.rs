@@ -175,24 +175,36 @@ pub fn ProfileView() -> impl IntoView {
     create_effect(move |_| {
         #[cfg(feature = "hydrate")]
         {
-            let current_count = reload_count.get().unwrap_or(0);
+            // Only check if connected and haven't reloaded yet
+            if is_connected.get() {
+                // Get current URL principal and stored principal
+                let url_principal = params.with(|p| {
+                    p.as_ref()
+                        .ok()
+                        .and_then(|params| Principal::from_text(&params.id).ok())
+                });
 
-            if current_count < 1 && is_connected.get() {
-                // Get user principal from cookie
-                if let Some(user_principal) =
+                let stored_principal =
                     use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE)
                         .0
-                        .get()
-                {
-                    set_reload_count.set(Some(current_count + 1));
+                        .get();
 
-                    // Redirect to new profile path
-                    let new_path = format!("/profile/{}/tokens", user_principal);
+                // Compare principals and reload if different
+                if let (Some(url_p), Some(stored_p)) = (url_principal, stored_principal) {
+                    if url_p != stored_p {
+                        let current_count = reload_count.get().unwrap_or(0);
+                        if current_count < 1 {
+                            set_reload_count.set(Some(current_count + 1));
 
-                    if let Some(window) = web_sys::window() {
-                        let location = window.location();
-                        _ = location.set_href(&new_path);
-                        _ = location.reload();
+                            // Redirect to new profile path
+                            let new_path = format!("/profile/{}/tokens", stored_p);
+
+                            if let Some(window) = web_sys::window() {
+                                let location = window.location();
+                                _ = location.set_href(&new_path);
+                                _ = location.reload();
+                            }
+                        }
                     }
                 }
             }
