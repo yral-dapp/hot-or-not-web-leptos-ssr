@@ -166,6 +166,21 @@ fn ProfileViewInner(user: ProfileDetails, user_canister: Principal) -> impl Into
 pub fn ProfileView() -> impl IntoView {
     let params = use_params::<ProfileParams>();
     let tab_params = use_params::<TabsParam>();
+    let has_refreshed = create_rw_signal(false);
+
+    // one-time refresh
+    create_effect(move |_| {
+        #[cfg(feature = "hydrate")]
+        {
+            if !has_refreshed.get_untracked() {
+                has_refreshed.set(true);
+                let location = web_sys::window()
+                    .map(|win| win.location())
+                    .expect("should have window location");
+                _ = location.reload();
+            }
+        }
+    });
 
     let param_principal = move || {
         params.with(|p| {
