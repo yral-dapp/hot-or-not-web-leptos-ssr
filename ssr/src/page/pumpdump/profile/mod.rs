@@ -69,6 +69,7 @@ fn compute_result(info: ParticipatedGameInfo) -> GameResult {
     }
 }
 
+// TODO: switch to using in-house `InfiniteScroller` for 0.7 migration
 async fn load_history(cans: Canisters<true>, page: u64) -> Result<(GameplayHistory, bool), String> {
     // to test without playing games
     // #[cfg(any(feature = "local-lib", feature = "local-bin"))]
