@@ -399,13 +399,13 @@ pub fn TokenCard(
 
             <div class="flex gap-4 justify-between items-center p-2">
                 <ActionButton label="Send".to_string() href=format!("/token/transfer/{root}")>
-                    <Icon class="w-full h-full" icon=SendIcon />
+                    <SendIcon class="w-full h-full" />
                 </ActionButton>
                 <ActionButton label="Buy/Sell".to_string() href="#".to_string() disabled=true>
                     <Icon class="w-full h-full" icon=ArrowLeftRightIcon />
                 </ActionButton>
                 <ActionButtonLink disabled=airdrop_disabled on:click=move |_|{airdrop_action.dispatch(());} label="Airdrop".to_string()>
-                    <Icon class="h-6 w-6" icon=AirdropIcon />
+                    <Icon class="h-full w-full" icon=AirdropIcon />
                 </ActionButtonLink>
                 <ActionButton label="Share".to_string() href="#".to_string()>
                     <Icon
@@ -534,11 +534,11 @@ pub fn ActionButton(
                 )
             }
         >
-            <div class="w-[1.875rem] h-[1.875rem] flex items-center justify-center">
+            <div class="w-[1.125rem] h-[1.125rem] flex items-center justify-center">
                 {children()}
             </div>
 
-            <div>{label}</div>
+            <div class="text-[0.625rem] font-medium leading-4">{label}</div>
         </a>
     }
 }
@@ -554,7 +554,7 @@ pub fn ActionButtonLink(
             disabled=disabled
             class="flex flex-col gap-1 justify-center items-center text-xs transition-colors enabled:group-hover:text-white enabled:text-neutral-300 disabled:group-hover:cursor-default disabled:text-neutral-600"
         >
-            <div class="w-[1.875rem] h-[1.875rem] flex items-center justify-center">
+            <div class="w-[1.125rem] h-[1.125rem] flex items-center justify-center">
                 {children()}
             </div>
 
