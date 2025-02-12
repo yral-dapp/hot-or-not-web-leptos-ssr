@@ -1,5 +1,6 @@
 use candid::Principal;
 use leptos::*;
+use leptos_meta::*;
 use leptos_router::*;
 use rand_chacha::{
     rand_core::{RngCore, SeedableRng},
@@ -150,6 +151,7 @@ pub fn YralRootPage() -> impl IntoView {
     }
 
     view! {
+        <Title text="YRAL - Home" />
         <Suspense fallback=FullScreenSpinner>
             {move || {
                 target_post

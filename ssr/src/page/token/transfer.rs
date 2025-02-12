@@ -3,7 +3,7 @@ use crate::utils::token::icpump::IcpumpTokenInfo;
 use crate::{
     component::{
         back_btn::BackButton, canisters_prov::WithAuthCans, spinner::FullScreenSpinner,
-        title::Title,
+        title::TitleText,
     },
     state::canisters::authenticated_canisters,
     utils::{
@@ -14,6 +14,7 @@ use crate::{
 use candid::Principal;
 use leptos::*;
 use leptos_icons::*;
+use leptos_meta::*;
 use leptos_router::*;
 use leptos_use::use_event_listener;
 use server_fn::codec::Cbor;
@@ -236,12 +237,12 @@ fn TokenTransferInner(cans: Canisters<true>, root: RootType, info: TokenMetadata
 
     view! {
         <div class="w-dvw min-h-dvh bg-neutral-800 flex flex-col gap-4">
-            <Title justify_center=false>
+            <TitleText justify_center=false>
                 <div class="grid grid-cols-3 justify-start w-full">
                     <BackButton fallback="/wallet" />
                     <span class="font-bold justify-self-center">Send {info.name}</span>
                 </div>
-            </Title>
+            </TitleText>
             <div class="flex flex-col w-full gap-4 md:gap-6 items-center p-4">
                 <div class="flex flex-col w-full gap-2 items-center">
                     <div class="flex flex-row justify-between w-full text-sm md:text-base text-white">
@@ -342,6 +343,7 @@ pub fn TokenTransfer() -> impl IntoView {
     };
 
     view! {
+        <Title text="ICPump - Token transfer" />
         <WithAuthCans
             fallback=FullScreenSpinner
             with=token_metadata_fetch

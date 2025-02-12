@@ -4,11 +4,13 @@ pub mod transactions;
 pub mod txn;
 
 use crate::component::icons::notification_icon::NotificationIcon;
+use crate::state::app_state::AppState;
 use crate::{
     component::share_popup::ShareButtonWithFallbackPopup, state::canisters::unauth_canisters,
 };
 use candid::Principal;
 use leptos::*;
+use leptos_meta::*;
 use leptos_router::Params;
 use leptos_router::{use_params, Redirect};
 use tokens::TokenList;
@@ -153,7 +155,11 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
             Ok((user_canister, principal))
         },
     );
+
+    let app_state = use_context::<AppState>();
+    let page_title = app_state.unwrap().name.to_owned() + " - Wallet";
     view! {
+        <Title text=page_title />
         <div class="flex flex-col gap-4 pt-4 pb-12 bg-black min-h-dvh font-kumbh">
 
                 <Suspense>

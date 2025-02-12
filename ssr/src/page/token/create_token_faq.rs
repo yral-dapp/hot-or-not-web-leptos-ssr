@@ -1,5 +1,6 @@
-use crate::component::{back_btn::BackButton, title::Title};
+use crate::component::{back_btn::BackButton, title::TitleText};
 use leptos::*;
+use leptos_meta::*;
 
 #[derive(Clone)]
 struct Section {
@@ -90,13 +91,14 @@ E.g: TRAV".into()),
     ];
 
     view! {
+        <Title text="ICPump - Token FAQ" />
         <div class="w-dvw min-h-dvh bg-black" style="padding-bottom:5rem;">
-            <Title justify_center=false>
+            <TitleText justify_center=false>
                 <div class="grid grid-cols-3 justify-start w-full px-4" style="background: black">
                     <BackButton fallback="/menu" />
                     <span class="font-bold justify-self-center">Help</span>
                 </div>
-            </Title>
+            </TitleText>
 
             // Render two different use cases of the component
             <CreateTokenFaqView title="Create a token".to_string() sections=sections1 />

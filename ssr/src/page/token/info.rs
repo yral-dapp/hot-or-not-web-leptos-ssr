@@ -5,13 +5,16 @@ use crate::state::canisters::authenticated_canisters;
 
 use crate::utils::token::icpump::IcpumpTokenInfo;
 use crate::{
-    component::{back_btn::BackButton, share_popup::*, spinner::FullScreenSpinner, title::Title},
+    component::{
+        back_btn::BackButton, share_popup::*, spinner::FullScreenSpinner, title::TitleText,
+    },
     page::wallet::transactions::Transactions,
     utils::web::copy_to_clipboard,
 };
 use candid::Principal;
 use leptos::*;
 use leptos_icons::*;
+use leptos_meta::*;
 use leptos_router::*;
 use serde::{Deserialize, Serialize};
 use yral_canisters_common::cursored_data::transaction::IndexOrLedger;
@@ -89,12 +92,12 @@ fn TokenInfoInner(
 
     view! {
         <div class="w-dvw min-h-dvh bg-neutral-800  flex flex-col gap-4">
-            <Title justify_center=false>
+            <TitleText justify_center=false>
                 <div class="grid grid-cols-3 justify-start w-full">
                     <BackButton fallback="/wallet" />
                     <span class="font-bold justify-self-center">Token details</span>
                 </div>
-            </Title>
+            </TitleText>
             <div class="flex flex-col w-full items-center px-8 md:px-10 gap-8">
                 <div class="flex flex-col justify-self-start w-full gap-6 md:gap-8 items-center">
                     <div class="flex flex-col gap-4 w-full bg-white/5 p-4 drop-shadow-lg rounded-xl">
@@ -279,6 +282,7 @@ pub fn TokenInfo() -> impl IntoView {
     );
 
     view! {
+        <Title text="ICPump - Token Info" />
         <Suspense fallback=FullScreenSpinner>
             {move || {
                 token_metadata_fetch.get()
