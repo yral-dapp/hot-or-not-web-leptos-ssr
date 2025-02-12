@@ -198,7 +198,7 @@ fn WalletCardOptions(
         view! {
             <div class="flex items-center justify-around">
             <ActionButton disabled=is_utility_token href=format!("/token/transfer/{root}") label="Send".to_string()>
-                <Icon class="h-6 w-6" icon=SendIcon/>
+                <SendIcon class="h-full w-full" />
             </ActionButton>
             <ActionButton disabled=true href="#".to_string() label="Buy/Sell".to_string()>
                 <Icon class="h-6 w-6" icon=ArrowLeftRightIcon />
