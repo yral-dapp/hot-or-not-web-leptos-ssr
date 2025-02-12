@@ -254,10 +254,8 @@ pub fn TokenInfo() -> impl IntoView {
                         .clone()
                         .ok_or(ServerFnError::new("Token owner not found for yral token"))?;
                     
-                    let timestamp = get_token_timestamp_by_id(root.to_string()).await.unwrap_or(0);
-                    
                     let is_airdrop_claimed = cans
-                        .get_airdrop_status(token_owner.canister_id, *root, cans.user_principal(), timestamp)
+                        .get_airdrop_status(token_owner.canister_id, *root, cans.user_principal(), m.timestamp)
                         .await?;
 
                     Some(TokenInfoResponse {

@@ -60,10 +60,8 @@ async fn process_profile_tokens(
                 let is_airdrop_claimed = if let (Some(token_owner), Some(root)) =
                     (token.token_owner.clone(), token.root)
                 {
-                    let timestamp = get_token_timestamp_by_id(root.to_string()).await.unwrap_or(0);
-
                     Some(
-                        cans.get_airdrop_status(token_owner.canister_id, root, user_principal, timestamp)
+                        cans.get_airdrop_status(token_owner.canister_id, root, user_principal, token.timestamp)
                             .await?,
                     )
                 } else {
