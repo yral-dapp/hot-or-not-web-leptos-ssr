@@ -166,7 +166,7 @@ fn ProfileViewInner(user: ProfileDetails, user_canister: Principal) -> impl Into
 pub fn ProfileView() -> impl IntoView {
     let params = use_params::<ProfileParams>();
     let tab_params = use_params::<TabsParam>();
-    let (is_connected, connection_effect) = account_connected_reader();
+    let (is_connected, _) = account_connected_reader();
     let has_refreshed = create_rw_signal(false);
 
     // one-time refresh when auth state changes
