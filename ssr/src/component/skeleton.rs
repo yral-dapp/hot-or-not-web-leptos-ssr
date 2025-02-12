@@ -23,7 +23,7 @@ use leptos::{component, view, IntoView};
 pub fn Skeleton(#[prop(into)] class: String) -> impl IntoView {
     view! {
         <div
-            class=format!("skeleton-shimmer-animation {}", class)
+            class=format!("animate-skeleton-shimmer bg-skeleton-shimmer bg-skeleton-shimmer bg-fixed {}", class)
         >
         </div>
     }

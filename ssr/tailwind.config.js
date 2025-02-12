@@ -82,6 +82,40 @@ module.exports = {
           to: {
             transform: 'translate(0) rotate(2deg)',
           }
+        },
+        shimmer: {
+          '0%': { backgroundPositionX: '100%' },
+          '100%': { backgroundPositionX: '0%' },
+        },
+        'slide-up': {
+          '0%': {
+            opacity: '1',
+            transform: 'translateY(0%)',
+          },
+          '10%': {
+            opacity: '1',
+            transform: 'translateY(-260%)',
+          },
+          '50%': {
+            opacity: '1',
+            transform: 'translateY(-260%)',
+          },
+          '55%': {
+            opacity: '1',
+            transform: 'translateY(-500%)',
+          },
+          '59%': {
+            opacity: '0',
+            transform: 'translateY(-500%)',
+          },
+          '60%': {
+            opacity: '0',
+            transform: 'translateY(0%)',
+          },
+          '100%': {
+            opacity: '0',
+            transform: 'translateY(0%)',
+          },
         }
       },
       animation: {
@@ -91,6 +125,14 @@ module.exports = {
         'shake': 'shake 0.2s cubic-bezier(.56, .14, 0, 1.48) forwards',
         'push-right': 'push-right 0.2s cubic-bezier(.56, .14, 0, 1.48) forwards',
         'push-left': 'push-left 0.2s cubic-bezier(.56, .14, 0, 1.48) forwards',
+        'skeleton-shimmer': 'shimmer 1200ms linear infinite',
+        'slide-up': 'slide-up 10s ease-in-out var(--animation-delay, 0s) infinite',
+      },
+      backgroundImage: {
+        'skeleton-shimmer': 'linear-gradient(-45deg, currentColor 40%, var(--shimmer, #FFFFFF) 50%, currentColor 60%)',
+      },
+      backgroundSize: {
+        'skeleton-shimmer': '300%',
       },
     },
   },

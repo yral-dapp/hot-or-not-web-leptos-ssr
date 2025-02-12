@@ -51,7 +51,7 @@ pub fn PlayingCard() -> impl IntoView {
                 </a>
                 <div class="bg-[#212121] shrink-0 rounded-full relative w-full h-11 overflow-hidden">
                     <div
-                        class="w-full slide-up top-[3.5rem] flex items-center gap-2 justify-between absolute inset-0 py-2 pl-4 pr-2"
+                        class="w-full animate-slide-up top-[3.5rem] flex items-center gap-2 justify-between absolute inset-0 py-2 pl-4 pr-2"
                     >
                         <div class="flex items-center gap-1">
                             <div class="text-[#A3A3A3] text-xs">Winning Pot:</div>
@@ -67,7 +67,7 @@ pub fn PlayingCard() -> impl IntoView {
                     </div>
                     <div
                         style="--animation-delay:5s;"
-                        class="w-full top-[3.5rem] slide-up flex items-center gap-1 absolute inset-0 py-2 pl-4 pr-2"
+                        class="w-full top-[3.5rem] animate-slide-up flex items-center gap-1 absolute inset-0 py-2 pl-4 pr-2"
                     >
                         <img src="/img/player.png" alt="Coin" class="w-5 h-5" />
                         <div class="text-[#E5E5E5] font-bold">{player_count}</div>
