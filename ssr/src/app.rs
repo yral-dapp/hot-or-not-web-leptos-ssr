@@ -147,7 +147,7 @@ pub fn App() -> impl IntoView {
 
             // Meta
             <Meta name="apple-mobile-web-app-title" content=app_state.name />
-            
+
             // App manifest
             <Link rel="manifest" href=app_state.manifest_config()/>
 
