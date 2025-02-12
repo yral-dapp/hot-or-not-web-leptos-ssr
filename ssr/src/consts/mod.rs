@@ -41,14 +41,6 @@ pub const ML_FEED_GRPC_URL: &str = "https://yral-ml-feed-server.fly.dev:443"; //
 pub static FALLBACK_USER_INDEX: Lazy<Principal> =
     Lazy::new(|| Principal::from_text("rimrc-piaaa-aaaao-aaljq-cai").unwrap());
 
-#[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
-pub static PUMP_AND_DUMP_WORKER_URL: Lazy<Url> =
-    Lazy::new(|| Url::parse("https://yral-pump-n-dump.go-bazzinga.workers.dev/").unwrap());
-
-#[cfg(any(feature = "local-bin", feature = "local-lib"))]
-pub static PUMP_AND_DUMP_WORKER_URL: Lazy<Url> =
-    Lazy::new(|| Url::parse("http://localhost:8787/").unwrap());
-
 pub const ICP_LEDGER_CANISTER_ID: &str = "ryjl3-tyaaa-aaaaa-aaaba-cai";
 
 pub const ICPUMP_LISTING_PAGE_SIZE: usize = 48;
