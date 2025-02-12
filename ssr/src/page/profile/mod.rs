@@ -7,12 +7,15 @@ mod speculation;
 mod tokens;
 
 use candid::Principal;
+use codee::string::FromToStringCodec;
 use leptos::*;
 use leptos_icons::*;
 use leptos_router::*;
+use leptos_use::use_cookie;
 
 use crate::{
     component::connect::ConnectLogin,
+    consts::USER_PRINCIPAL_STORE,
     state::{
         auth::account_connected_reader,
         canisters::{authenticated_canisters, unauth_canisters},
@@ -167,18 +170,27 @@ pub fn ProfileView() -> impl IntoView {
     let params = use_params::<ProfileParams>();
     let tab_params = use_params::<TabsParam>();
     let (is_connected, _) = account_connected_reader();
-    let has_refreshed = create_rw_signal(false);
+    let has_redirected = create_rw_signal(false);
 
-    // one-time refresh when auth state changes
+    // Handle auth state change and redirect
     create_effect(move |_| {
         #[cfg(feature = "hydrate")]
         {
-            if !has_refreshed.get_untracked() && is_connected.get() {
-                has_refreshed.set(true);
-                let location = web_sys::window()
-                    .map(|win| win.location())
-                    .expect("should have window location");
-                _ = location.reload();
+            if !has_redirected.get_untracked() && is_connected.get() {
+                has_redirected.set(true);
+                let user_principal =
+                    use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE)
+                        .0
+                        .get()
+                        .unwrap();
+                {
+                    let new_path = format!("/profile/{}/tokens", user_principal);
+
+                    if let Some(window) = web_sys::window() {
+                        let location = window.location();
+                        _ = location.set_href(&new_path);
+                    }
+                }
             }
         }
     });
