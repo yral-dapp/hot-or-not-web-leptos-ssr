@@ -2,12 +2,12 @@ use leptos::*;
 
 #[component]
 pub fn NotificationIcon(
-    #[prop(optional, default = "w-full h-full".to_string())] classes: String,
+    #[prop(into, optional, default = "w-full h-full".into())] class: String,
     #[prop(optional)] show_dot: bool,
 ) -> impl IntoView {
     view! {
         <svg
-            class=format!("text-neutral-200 {}", classes)
+            class=format!("text-neutral-200 {}", class)
             viewBox="0 0 24 24"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
