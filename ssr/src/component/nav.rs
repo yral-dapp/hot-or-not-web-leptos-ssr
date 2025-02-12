@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use crate::{consts::USER_PRINCIPAL_STORE, state::app_type::AppType};
 
 use super::nav_icons::*;
@@ -13,17 +11,7 @@ use leptos_use::use_cookie;
 #[derive(Clone)]
 struct NavItem {
     render_data: NavItemRenderData,
-    matcher: Rc<dyn Fn() -> bool>,
-}
-
-impl NavItem {
-    fn is_selected(&self) -> bool {
-        (self.matcher)()
-    }
-
-    fn is_upload(&self) -> bool {
-        matches!(self.render_data, NavItemRenderData::Upload)
-    }
+    cur_selected: Signal<bool>,
 }
 
 #[derive(Debug, Clone)]
@@ -48,7 +36,7 @@ fn pnd_nav_items() -> Vec<NavItem> {
                 filled_icon: Some(HomeSymbolFilled),
                 href: home_path.into(),
             },
-            matcher: Rc::new(move || matches!(path.get().as_str(), "/")),
+            cur_selected: Signal::derive(move || matches!(path.get().as_str(), "/")),
         },
         NavItem {
             render_data: NavItemRenderData::Icon {
@@ -56,11 +44,11 @@ fn pnd_nav_items() -> Vec<NavItem> {
                 filled_icon: Some(TokenSymbolFilled),
                 href: "/board".into(),
             },
-            matcher: Rc::new(move || matches!(path.get().as_str(), "/board")),
+            cur_selected: Signal::derive(move || matches!(path.get().as_str(), "/board")),
         },
         NavItem {
             render_data: NavItemRenderData::Upload,
-            matcher: Rc::new(move || matches!(path.get().as_str(), "/token/create")),
+            cur_selected: Signal::derive(move || matches!(path.get().as_str(), "/token/create")),
         },
         NavItem {
             render_data: NavItemRenderData::Icon {
@@ -68,7 +56,7 @@ fn pnd_nav_items() -> Vec<NavItem> {
                 filled_icon: Some(WalletSymbolFilled),
                 href: "/wallet".into(),
             },
-            matcher: Rc::new(move || {
+            cur_selected: Signal::derive(move || {
                 if path.get().starts_with("/pnd/withdraw") {
                     return true;
                 }
@@ -85,7 +73,7 @@ fn pnd_nav_items() -> Vec<NavItem> {
                 filled_icon: None,
                 href: "/menu".into(),
             },
-            matcher: Rc::new(move || matches!(path.get().as_str(), "/menu")),
+            cur_selected: Signal::derive(move || matches!(path.get().as_str(), "/menu")),
         },
     ]
 }
@@ -102,7 +90,7 @@ fn yral_nav_items() -> Vec<NavItem> {
                 filled_icon: Some(HomeSymbolFilled),
                 href: home_path.into(),
             },
-            matcher: Rc::new(move || matches!(path.get().as_str(), "/")),
+            cur_selected: Signal::derive(move || matches!(path.get().as_str(), "/")),
         },
         NavItem {
             render_data: NavItemRenderData::Icon {
@@ -110,7 +98,7 @@ fn yral_nav_items() -> Vec<NavItem> {
                 filled_icon: Some(WalletSymbolFilled),
                 href: "/wallet".into(),
             },
-            matcher: Rc::new(move || {
+            cur_selected: Signal::derive(move || {
                 // is selected only if the user is viewing their own wallet
                 let Some(user_principal) = user_principal.get() else {
                     return false;
@@ -120,7 +108,7 @@ fn yral_nav_items() -> Vec<NavItem> {
         },
         NavItem {
             render_data: NavItemRenderData::Upload,
-            matcher: Rc::new(move || matches!(path.get().as_str(), "/token/create")),
+            cur_selected: Signal::derive(move || matches!(path.get().as_str(), "/token/create")),
         },
         NavItem {
             render_data: NavItemRenderData::Icon {
@@ -128,7 +116,7 @@ fn yral_nav_items() -> Vec<NavItem> {
                 filled_icon: Some(ProfileIconFilled),
                 href: "/profile/token".into(),
             },
-            matcher: Rc::new(move || {
+            cur_selected: Signal::derive(move || {
                 // is selected only if the user is viewing their own profile
                 let Some(user_principal) = user_principal.get() else {
                     return false;
@@ -143,7 +131,7 @@ fn yral_nav_items() -> Vec<NavItem> {
                 filled_icon: None,
                 href: "/menu".into(),
             },
-            matcher: Rc::new(move || matches!(path.get().as_str(), "/menu")),
+            cur_selected: Signal::derive(move || matches!(path.get().as_str(), "/menu")),
         },
     ]
 }
@@ -160,7 +148,7 @@ fn icpump_nav_items() -> Vec<NavItem> {
                 filled_icon: Some(HomeSymbolFilled),
                 href: home_path.into(),
             },
-            matcher: Rc::new(move || matches!(path.get().as_str(), "/")),
+            cur_selected: Signal::derive(move || matches!(path.get().as_str(), "/")),
         },
         NavItem {
             render_data: NavItemRenderData::Icon {
@@ -168,7 +156,7 @@ fn icpump_nav_items() -> Vec<NavItem> {
                 filled_icon: Some(WalletSymbolFilled),
                 href: "/wallet".into(),
             },
-            matcher: Rc::new(move || {
+            cur_selected: Signal::derive(move || {
                 // is selected only if the user is viewing their own wallet
                 let Some(user_principal) = user_principal.get() else {
                     return false;
@@ -178,7 +166,7 @@ fn icpump_nav_items() -> Vec<NavItem> {
         },
         NavItem {
             render_data: NavItemRenderData::Upload,
-            matcher: Rc::new(move || matches!(path.get().as_str(), "/token/create")),
+            cur_selected: Signal::derive(move || matches!(path.get().as_str(), "/token/create")),
         },
         NavItem {
             render_data: NavItemRenderData::Icon {
@@ -186,7 +174,7 @@ fn icpump_nav_items() -> Vec<NavItem> {
                 filled_icon: Some(ProfileIconFilled),
                 href: "/icpump-ai".into(),
             },
-            matcher: Rc::new(move || matches!(path.get().as_str(), "/icpump-ai")),
+            cur_selected: Signal::derive(move || matches!(path.get().as_str(), "/icpump-ai")),
         },
         NavItem {
             render_data: NavItemRenderData::Icon {
@@ -194,7 +182,7 @@ fn icpump_nav_items() -> Vec<NavItem> {
                 filled_icon: None,
                 href: "/menu".into(),
             },
-            matcher: Rc::new(move || matches!(path.get().as_str(), "/menu")),
+            cur_selected: Signal::derive(move || matches!(path.get().as_str(), "/menu")),
         },
     ]
 }
@@ -211,27 +199,20 @@ fn get_nav_items() -> Vec<NavItem> {
 pub fn NavBar() -> impl IntoView {
     let items = get_nav_items();
 
-    let (items, _) = create_signal(items);
     view! {
         <Suspense>
             <div class="flex fixed bottom-0 left-0 z-50 flex-row justify-between items-center px-6 w-full bg-black/80">
-                <For each=move || (0..items.get().len()) key=|item| *item let:item>
-                    <Show
-                        when=move || items.get()[item].is_upload()
-                        fallback=move || {
-                            let item = &items.get()[item];
-                            let cur_selected = item.is_selected();
-                            let NavItemRenderData::Icon { href, icon, filled_icon } = item.render_data.clone() else {
-                                unreachable!("as of now, there's no other type available")
-                            };
-                            view! {
-                                <NavIcon href icon filled_icon cur_selected />
-                            }
-                        }
-                    >
-                        <UploadIcon cur_selected=items.get().get(item).unwrap().is_selected() />
-                    </Show>
-                </For>
+                {items.iter().map(|item| {
+                    let cur_selected = item.cur_selected;
+                    match item.render_data.clone() {
+                        NavItemRenderData::Icon { icon, filled_icon, href } => view! {
+                            <NavIcon href icon filled_icon cur_selected />
+                        },
+                        NavItemRenderData::Upload => view! {
+                            <UploadIcon cur_selected />
+                        },
+                    }
+                }).collect::<Vec<_>>()}
             </div>
         </Suspense>
     }
@@ -242,12 +223,12 @@ fn NavIcon(
     #[prop(into)] href: MaybeSignal<String>,
     #[prop(into)] icon: icondata_core::Icon,
     #[prop(into)] filled_icon: Option<icondata_core::Icon>,
-    #[prop(into)] cur_selected: bool,
+    #[prop(into)] cur_selected: Signal<bool>,
 ) -> impl IntoView {
     view! {
         <a href=href class="flex justify-center items-center">
             <Show
-                when=move || cur_selected
+                when=move || cur_selected()
                 fallback=move || {
                     view! {
                         <div class="py-5">
@@ -269,11 +250,11 @@ fn NavIcon(
 }
 
 #[component]
-fn UploadIcon(#[prop(into)] cur_selected: bool) -> impl IntoView {
+fn UploadIcon(#[prop(into)] cur_selected: Signal<bool>) -> impl IntoView {
     view! {
         <a href="/upload" class="flex justify-center items-center text-white rounded-full">
             <Show
-                when=move || cur_selected
+                when=move || cur_selected()
                 fallback=move || {
                     view! {
                         <Icon
