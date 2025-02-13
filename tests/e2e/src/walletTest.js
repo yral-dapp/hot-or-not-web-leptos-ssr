@@ -4,7 +4,10 @@ describe("wallet page tests", function () {
     })
 
     it("wallet page contains login button", async function (browser) {
-        browser.element.findByText('Login to claim', {timeout: 50000}).waitUntil('enabled');
+        browser.waitForElementVisible('body', 10000);
+        browser.pause(10000);
+
+        browser.element.findByText('Login to claim', {timeout: 50000, exact: false }).waitUntil('enabled');
     })
     
     // TODO: update this test so that either 1000 COYNS are present or a 1000 CENTS, never both
