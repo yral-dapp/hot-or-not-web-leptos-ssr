@@ -2,13 +2,11 @@ use crate::component::overlay::PopupOverlay;
 use crate::consts::ICPUMP_LISTING_PAGE_SIZE;
 use crate::consts::USER_PRINCIPAL_STORE;
 use crate::state::canisters::authenticated_canisters;
-use crate::state::canisters::unauth_canisters;
 use std::collections::VecDeque;
 
 use candid::Nat;
 use candid::Principal;
 use codee::string::FromToStringCodec;
-use futures::stream::FuturesOrdered;
 use futures::StreamExt;
 use html::Div;
 use leptos::*;
@@ -19,6 +17,7 @@ use leptos_use::use_media_query;
 use leptos_use::UseIntersectionObserverOptions;
 use serde::Deserialize;
 use serde::Serialize;
+use yral_canisters_common::utils::token::TokenOwner;
 use yral_canisters_common::Canisters;
 
 use crate::component::buttons::HighlightedLinkButton;
@@ -37,21 +36,56 @@ use crate::utils::token::icpump::TokenListItem;
 
 use crate::component::overlay::ShadowOverlay;
 use crate::page::wallet::airdrop::AirdropPopup;
-use yral_canisters_common::utils::token::TokenOwner;
 
 pub mod ai;
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
-struct ProcessedTokenListResponse {
-    token_details: TokenListItem,
-    root: Principal,
-    is_airdrop_claimed: bool,
-    token_owner: Option<TokenOwner>,
+pub struct ProcessedTokenListResponse {
+    pub token_details: TokenListItem,
+    pub root: Principal,
+    pub token_owner: Option<TokenOwner>,
+    pub is_airdrop_claimed: bool,
 }
 
-async fn process_token_list_item(
+#[cfg(any(feature = "local-bin", feature = "local-lib"))]
+pub async fn process_token_list_item(
     token_list_item: Vec<TokenListItem>,
     key_principal: Principal,
 ) -> Vec<ProcessedTokenListResponse> {
+    use yral_canisters_common::utils::token::TokenOwner;
+    token_list_item
+        .into_iter()
+        .map(|item| {
+            let root_principal = Principal::from_text(
+                item.link
+                    .trim_end_matches('/')
+                    .split('/')
+                    .last()
+                    .ok_or(ServerFnError::new("Not root given"))
+                    .unwrap_or_default(),
+            )
+            .unwrap_or(Principal::anonymous());
+            ProcessedTokenListResponse {
+                token_details: item,
+                root: root_principal,
+                token_owner: Some(TokenOwner {
+                    principal_id: key_principal,
+                    canister_id: key_principal,
+                }),
+                is_airdrop_claimed: false,
+            }
+        })
+        .collect()
+}
+
+#[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
+pub async fn process_token_list_item(
+    token_list_item: Vec<TokenListItem>,
+    key_principal: Principal,
+) -> Vec<ProcessedTokenListResponse> {
+    use crate::state::canisters::unauth_canisters;
+    use futures::stream::FuturesOrdered;
+
     let mut fut = FuturesOrdered::new();
 
     for token in token_list_item {
@@ -211,6 +245,7 @@ pub fn ICPumpListingFeed() -> impl IntoView {
 
 #[component]
 pub fn ICPumpLanding() -> impl IntoView {
+    // TODO: add the pump-ai icon here, as shown in the new ui for pnd game
     view! {
         <div class="min-h-screen bg-black text-white  flex flex-col gap-4 px-4 md:px-8 py-6 font-kumbh">
             <div class="flex lg:flex-row gap-4 flex-col items-center justify-center">
@@ -521,18 +556,9 @@ pub fn ActionButton(
 ) -> impl IntoView {
     view! {
         <a
-            disabled=disabled
+            aria-disabled=move || disabled().to_string()
             href=href
-            class=move || {
-                format!(
-                    "flex flex-col gap-1 justify-center items-center text-xs transition-colors {}",
-                    if !disabled.get() {
-                        "group-hover:text-white text-neutral-300"
-                    } else {
-                        "group-hover:cursor-default text-neutral-600"
-                    },
-                )
-            }
+            class="flex flex-col gap-1 justify-center items-center text-xs transition-colors group-hover:text-white text-neutral-300 aria-disabled:group-hover:cursor-default aria-disabled:text-neutral-600 aria-disabled:pointer-events-none"
         >
             <div class="w-[1.875rem] h-[1.875rem] flex items-center justify-center">
                 {children()}

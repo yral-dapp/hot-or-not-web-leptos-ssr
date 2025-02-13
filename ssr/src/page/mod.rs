@@ -14,6 +14,7 @@ pub mod post_view;
 pub mod preview_google_redirect;
 pub mod privacy;
 pub mod profile;
+pub mod pumpdump;
 pub mod refer_earn;
 pub mod root;
 pub mod settings;
