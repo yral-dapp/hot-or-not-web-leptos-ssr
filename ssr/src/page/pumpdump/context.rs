@@ -271,15 +271,13 @@ impl RunningGameCtx {
     }
 
     pub fn send_bet(&self, direction: GameDirection) {
+        let Some(round) = self.current_round.get_value() else {
+            log::debug!("trying to bet when game is not ready");
+            return;
+        };
         self.send(&WsRequest {
             request_id: uuid::Uuid::new_v4(),
-            msg: WsMessage::Bet {
-                direction,
-                round: self
-                    .current_round
-                    .get_value()
-                    .expect("expected current round to be ready"),
-            },
+            msg: WsMessage::Bet { direction, round },
         });
 
         self.player_data
