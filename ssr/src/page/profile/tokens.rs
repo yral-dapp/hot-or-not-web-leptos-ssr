@@ -4,7 +4,6 @@ use leptos::*;
 use yral_canisters_client::individual_user_template::DeployedCdaoCanisters;
 use yral_canisters_client::individual_user_template::IndividualUserTemplate;
 
-use crate::utils::token::icpump::get_token_timestamp_by_id;
 use crate::{
     component::{bullet_loader::BulletLoader, token_confetti_symbol::TokenConfettiSymbol},
     page::wallet::tokens::WalletCard,

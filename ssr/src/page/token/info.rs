@@ -3,7 +3,6 @@ use crate::page::token::TokenInfoParams;
 use crate::page::wallet::airdrop::AirdropPage;
 use crate::state::canisters::authenticated_canisters;
 
-use crate::utils::token::icpump::get_token_timestamp_by_id;
 use crate::utils::token::icpump::IcpumpTokenInfo;
 use crate::{
     component::{back_btn::BackButton, share_popup::*, spinner::FullScreenSpinner, title::Title},
