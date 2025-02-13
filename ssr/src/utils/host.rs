@@ -21,6 +21,7 @@ pub fn get_host() -> String {
     }
 }
 
+// TODO: migrate to AppType
 pub fn show_cdao_page() -> bool {
     let host = get_host();
     show_cdao_condition(host)
@@ -49,6 +50,7 @@ pub fn show_cdao_condition(host: String) -> bool {
     // || host.contains("yral-dapp-hot-or-not-web-leptos-ssr.fly.dev") // Use this when testing icpump changes
 }
 
+// TODO: migrate to AppType
 pub fn show_pnd_page() -> bool {
     let host = get_host();
     show_pnd_condition(&host)
@@ -62,6 +64,7 @@ pub fn show_pnd_condition(host: &str) -> bool {
         || host.contains("yral-dapp-hot-or-not-web-leptos-ssr.fly.dev") // Use this when testing icpump changes
 }
 
+// TODO: migrate to AppType
 pub fn show_nsfw_content() -> bool {
     let host = get_host();
     show_nsfw_condition(host)
