@@ -112,7 +112,7 @@ pub fn ProfileTokens(user_canister: Principal, user_principal: Principal) -> imp
                                         view! {
                                             <WalletCard
                                                 user_principal
-                                                token_meta_data=token
+                                                token_metadata=token
                                                 is_airdrop_claimed=is_airdrop_claimed.unwrap_or(true)
                                             />
                                         }
