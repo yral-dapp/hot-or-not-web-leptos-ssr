@@ -64,7 +64,7 @@ jobs:
           flyctl secrets set GRPC_AUTH_TOKEN="$GRPC_AUTH_TOKEN" --app "$APP_NAME" --stage
           flyctl secrets set HOTORNOT_GOOGLE_CLIENT_SECRET="$HOTORNOT_GOOGLE_CLIENT_SECRET" --app "$APP_NAME" --stage
           flyctl secrets set ICPUMPFUN_GOOGLE_CLIENT_SECRET="$ICPUMPFUN_GOOGLE_CLIENT_SECRET" --app "$APP_NAME" --stage
-          flyctl secrets set PUMPDUMP_GOOGLE_CLIENT_SECRET="$PUMPDUMP_GOOGLE_CLIENT_SECRET" --app "hot-or-not-web-leptos-ssr" --stage
+          flyctl secrets set PUMPDUMP_GOOGLE_CLIENT_SECRET="$PUMPDUMP_GOOGLE_CLIENT_SECRET" --app "$APP_NAME" --stage
           flyctl secrets set "HON_GOOGLE_SERVICE_ACCOUNT=$HON_GOOGLE_SERVICE_ACCOUNT" --app "$APP_NAME" --stage
           flyctl secrets set QSTASH_TOKEN="$QSTASH_TOKEN" --app "$APP_NAME" --stage
           flyctl secrets set GA4_API_SECRET="$GA4_API_SECRET" --app "$APP_NAME" --stage
