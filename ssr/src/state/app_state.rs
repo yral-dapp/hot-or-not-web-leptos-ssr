@@ -41,6 +41,14 @@ impl AppState {
                 manifest_path: "yral.json",
                 favicon_filename: "yral",
             },
+            AppType::Pumpdump => Self {
+                app_type: AppType::Pumpdump,
+                id: "pumpdump",
+                name: "Pump and Dump",
+                description: "Pump it, Dump it, Cash it",
+                theme_color: "#000000",
+                manifest_path: "pumpdump.json",
+            },
         }
     }
 
