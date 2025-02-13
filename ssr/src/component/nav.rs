@@ -90,7 +90,9 @@ fn yral_nav_items() -> Vec<NavItem> {
                 filled_icon: Some(HomeSymbolFilled),
                 href: home_path.into(),
             },
-            cur_selected: Signal::derive(move || matches!(path.get().as_str(), "/")),
+            cur_selected: Signal::derive(move || {
+                matches!(path.get().as_str(), "/") || path.get().contains("/hot-or-not")
+            }),
         },
         NavItem {
             render_data: NavItemRenderData::Icon {
@@ -108,7 +110,7 @@ fn yral_nav_items() -> Vec<NavItem> {
         },
         NavItem {
             render_data: NavItemRenderData::Upload,
-            cur_selected: Signal::derive(move || matches!(path.get().as_str(), "/token/create")),
+            cur_selected: Signal::derive(move || matches!(path.get().as_str(), "/upload")),
         },
         NavItem {
             render_data: NavItemRenderData::Icon {
@@ -148,7 +150,7 @@ fn icpump_nav_items() -> Vec<NavItem> {
                 filled_icon: Some(HomeSymbolFilled),
                 href: home_path.into(),
             },
-            cur_selected: Signal::derive(move || matches!(path.get().as_str(), "/")),
+            cur_selected: Signal::derive(move || matches!(path.get().as_str(), "/board")),
         },
         NavItem {
             render_data: NavItemRenderData::Icon {
@@ -170,8 +172,8 @@ fn icpump_nav_items() -> Vec<NavItem> {
         },
         NavItem {
             render_data: NavItemRenderData::Icon {
-                icon: ProfileIcon,
-                filled_icon: Some(ProfileIconFilled),
+                icon: ICPumpAiIcon,
+                filled_icon: None,
                 href: "/icpump-ai".into(),
             },
             cur_selected: Signal::derive(move || matches!(path.get().as_str(), "/icpump-ai")),
