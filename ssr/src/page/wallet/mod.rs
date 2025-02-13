@@ -32,7 +32,7 @@ fn ProfileCard(details: ProfileDetails, is_own_account: bool) -> impl IntoView {
                     alt="Profile picture"
                     class="w-12 h-12 rounded-full object-cover shrink-0"
                 />
-                <span class="line-clamp-1 text-lg font-kumbh font-semibold text-neutral-50">
+                <span class="line-clamp-1 text-lg font-kumbh font-semibold select-all text-neutral-50">
                     // TEMP: Workaround for hydration bug until leptos 0.7
                     // class=("md:w-5/12", move || !is_connected())
                     {details.display_name_or_fallback()}
@@ -57,7 +57,7 @@ fn ProfileCardLoading() -> impl IntoView {
                 <div
                     class="w-12 h-12 rounded-full bg-loading shrink-0"
                 />
-                <div class="line-clamp-1 flex-1 bg-loading rounded-lg h-7">
+                <div class="flex-1 bg-loading rounded-lg h-7">
                 </div>
             </div>
         </div>
