@@ -10,7 +10,7 @@ use std::cmp::Reverse;
 use crate::{
     component::{scrolling_post_view::ScrollingPostView, spinner::FullScreenSpinner},
     consts::NSFW_TOGGLE_STORE,
-    state::canisters::{authenticated_canisters, unauth_canisters},
+    state::{app_state::AppState, canisters::{authenticated_canisters, unauth_canisters}},
     try_or_redirect,
     utils::{posts::FetchCursor, route::failure_redirect},
 };
@@ -19,6 +19,7 @@ use codee::string::FromToStringCodec;
 use futures::StreamExt;
 use leptos::*;
 use leptos_router::*;
+use leptos_meta::*;
 use leptos_use::{storage::use_local_storage, use_debounce_fn};
 
 use video_iter::{FeedResultType, VideoFetchStream};
@@ -324,7 +325,11 @@ pub fn PostView() -> impl IntoView {
         }
     });
 
+    let app_state = use_context::<AppState>();
+    let page_title = app_state.unwrap().name.to_owned() + " - Home";
+    
     view! {
+        <Title text=page_title />
         <Suspense fallback=FullScreenSpinner>
 
             {{
