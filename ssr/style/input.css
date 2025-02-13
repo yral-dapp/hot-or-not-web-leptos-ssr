@@ -15,6 +15,9 @@
         --color-primary-800: 165 3 90;
         --color-primary-900: 115 2 62;
         --color-primary-950: 80 1 43;
+
+        --color-brand-gradient: linear-gradient(218.27deg, #FF78C1 9.83%, #E2017B 44.79%, #5F0938 78.48%);
+        --color-brand-gradient-disabled: linear-gradient(237.35deg, #DE98BE 19.96%, #C45D95 45.4%, #81546D 98.22%);
     }
 }
 
@@ -160,6 +163,43 @@
         opacity: 1;
         transform: translateX(calc(var(--x, 0)));
     }
+}
+
+.pump-button {
+		background: radial-gradient(circle, #da60a2 0%, #e2017b 100%);
+		box-shadow:
+			0px 2px 1px 0px #ffffff40 inset,
+			0px -4px 2px 0px #00000040 inset,
+			0px 0px 1px 4px #ffffff1a,
+			0px 0px 100px 0px #e2017b80,
+			0px 0px 100px 0px #e2017b80;
+}
+
+.pump-button:active {
+		background: radial-gradient(circle, #da60a2 0%, #a6015a 100%);
+		box-shadow:
+			0px 2px 1px 0px #ffffff40 inset,
+			0px -4px 2px 0px #00000040 inset,
+			0px 0px 1px 4px #ffffff1a,
+			0px 0px 100px 0px #e2017b80;
+}
+
+.dump-button {
+		background: radial-gradient(circle, #7da9ee 0%, #2e7cf6 100%);
+		box-shadow:
+			0px 2px 1px 0px #ffffff40 inset,
+			0px -4px 2px 0px #00000040 inset,
+			0px 0px 1px 4px #ffffff1a,
+			0px 0px 100px 0px #2e7cf680;
+}
+
+.dump-button:active {
+		background: radial-gradient(circle, #7da9ee 0%, #0644a4 100%);
+		box-shadow:
+			0px 2px 1px 0px #ffffff40 inset,
+			0px -4px 2px 0px #00000040 inset,
+			0px 0px 1px 4px #ffffff1a,
+			0px 0px 100px 0px #2e7cf680;
 }
 
 .bg-loading {

@@ -1,5 +1,5 @@
 use futures::{Future, StreamExt};
-use leptos::{create_memo, Resource, Serializable, Signal, SignalStream, SignalWith};
+use leptos::{create_memo, Memo, Resource, Serializable, Signal, SignalStream, SignalWith};
 use serde::{Deserialize, Serialize};
 
 pub mod ab_testing;
@@ -36,6 +36,53 @@ impl<T> PartialEq for MockPartialEq<T> {
 pub struct ParentResource<S: 'static + Clone, T: 'static + Clone>(pub Resource<S, T>);
 
 impl<S: 'static + Clone, T: 'static + Clone> ParentResource<S, T> {
+    fn tracker(&self) -> Memo<bool> {
+        let parent = self.0;
+        create_memo(move |prev| {
+            let prev: bool = prev.copied().unwrap_or_default();
+            let parent_is_none = parent.with(|p| p.is_none());
+            // If parent is none -> Resource is reloading
+            if parent_is_none {
+                !prev
+            // resource is loaded -> we were already waiting for it, so we don't need to reload
+            } else {
+                prev
+            }
+        })
+    }
+
+    /// Derive another resource that depends on this resource
+    /// Note: the source is not memoized like it is for resources
+    /// derived resource runs on the local machine
+    pub fn derive_local<DS: 'static + Clone, DT: 'static, F: Future<Output = DT> + 'static>(
+        &self,
+        source: impl Fn() -> DS + 'static,
+        fetcher: impl Fn(T, DS) -> F + Clone + 'static,
+    ) -> Resource<MockPartialEq<DS>, DT> {
+        let tracker = self.tracker();
+        let parent_signal = Signal::derive(self.0);
+
+        Resource::local(
+            move || {
+                tracker();
+                MockPartialEq(source())
+            },
+            move |st| {
+                let mut val_st = parent_signal.to_stream();
+                let fetcher = fetcher.clone();
+                async move {
+                    let val = loop {
+                        let res = val_st.next().await.expect("Signal stream ended?!");
+                        if let Some(val) = res {
+                            break val;
+                        }
+                    };
+                    fetcher(val, st.0).await
+                }
+            },
+        )
+    }
+
     /// Derive another resource that depends on this resource
     /// Note: the source is not memoized like it is for resources
     pub fn derive<
@@ -47,20 +94,9 @@ impl<S: 'static + Clone, T: 'static + Clone> ParentResource<S, T> {
         source: impl Fn() -> DS + 'static,
         fetcher: impl Fn(T, DS) -> F + Clone + 'static,
     ) -> Resource<MockPartialEq<DS>, DT> {
-        let parent = self.0;
-        let tracker = create_memo(move |prev| {
-            let prev: bool = prev.copied().unwrap_or_default();
-            let parent_is_none = parent.with(|p| p.is_none());
-            // If parent is none -> Resource is reloading
-            if parent_is_none {
-                !prev
-            // resource is loaded -> we were already waiting for it, so we don't need to reload
-            } else {
-                prev
-            }
-        });
+        let tracker = self.tracker();
+        let parent_signal = Signal::derive(self.0);
 
-        let parent_signal = Signal::derive(parent);
         Resource::new(
             move || {
                 tracker();

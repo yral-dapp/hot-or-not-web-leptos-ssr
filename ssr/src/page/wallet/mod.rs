@@ -5,6 +5,7 @@ pub mod txn;
 
 use crate::component::icons::notification_icon::NotificationIcon;
 use crate::state::app_state::AppState;
+use crate::utils::host::show_pnd_page;
 use crate::{
     component::share_popup::ShareButtonWithFallbackPopup, state::canisters::unauth_canisters,
 };
@@ -201,7 +202,7 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
         },
     );
     view! {
-        <div class="flex flex-col gap-4 pt-4 pb-12 bg-black min-h-dvh font-kumbh mx-auto max-w-md">
+        <div class="flex flex-col gap-4 pt-4 pb-12 bg-black min-h-dvh overflow-x-hidden font-kumbh mx-auto max-w-md">
              <Suspense fallback=move || view! { <HeaderLoading/> }>
                 {move || {
                     let profile_details = try_or_redirect_opt!(profile_info_res()?);
@@ -213,7 +214,6 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
                     )
                 }}
             </Suspense>
-
             <div class="flex h-full w-full flex-col items-center justify-center max-w-md mx-auto px-4 gap-4">
                 <Suspense fallback=move || view! { <ProfileCardLoading/> }>
                     {move || {
