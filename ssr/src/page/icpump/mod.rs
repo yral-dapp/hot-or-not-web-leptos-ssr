@@ -1,3 +1,5 @@
+use leptos_meta::*;
+
 use crate::component::overlay::PopupOverlay;
 use crate::consts::ICPUMP_LISTING_PAGE_SIZE;
 use crate::consts::USER_PRINCIPAL_STORE;
@@ -247,6 +249,7 @@ pub fn ICPumpListingFeed() -> impl IntoView {
 pub fn ICPumpLanding() -> impl IntoView {
     // TODO: add the pump-ai icon here, as shown in the new ui for pnd game
     view! {
+        <Title text="ICPump - Home" />
         <div class="min-h-screen bg-black text-white  flex flex-col gap-4 px-4 md:px-8 py-6 font-kumbh">
             <div class="flex lg:flex-row gap-4 flex-col items-center justify-center">
                 <div class="lg:left-0 lg:top-0 flex items-center gap-4">

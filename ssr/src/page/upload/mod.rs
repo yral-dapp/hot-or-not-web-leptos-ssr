@@ -1,6 +1,7 @@
 mod cf_upload;
 mod validators;
 mod video_upload;
+use leptos_meta::*;
 
 use crate::{
     component::toggle::ToggleWithLabel,
@@ -170,6 +171,7 @@ pub fn YralUploadPostPage() -> impl IntoView {
     let trigger_upload = create_rw_signal(None::<UploadParams>);
 
     view! {
+        <Title text="YRAL - Upload" />
         <div class="flex flex-col min-h-dvh w-dvw items-center overflow-y-scroll gap-6 md:gap-8 lg:gap-16 pb-12 pt-4 md:pt-6 px-3 md:px-6 lg:px-10 bg-black text-white">
             <div class="w-full flex justify-center items-center relative h-12">
             <h1 class="text-xl font-bold">Upload</h1>

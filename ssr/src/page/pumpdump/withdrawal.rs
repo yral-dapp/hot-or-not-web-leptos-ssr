@@ -14,7 +14,7 @@ use crate::{
     component::{
         back_btn::BackButton,
         icons::{information_icon::Information, notification_icon::NotificationIcon},
-        title::Title,
+        title::TitleText,
         tooltip::Tooltip,
     },
     consts::PUMP_AND_DUMP_WORKER_URL,
@@ -62,7 +62,7 @@ async fn load_withdrawal_details(user_canister: Principal) -> Result<Details, St
 fn Header() -> impl IntoView {
     view! {
         <div id="back-nav" class="flex flex-col items-center w-full gap-20 pb-16">
-            <Title justify_center=false>
+            <TitleText justify_center=false>
                 <div class="flex flex-row justify-between">
                     <BackButton fallback="/" />
                     <span class="font-bold text-2xl">Withdraw</span>
@@ -70,7 +70,7 @@ fn Header() -> impl IntoView {
                         <NotificationIcon show_dot=false classes="w-8 h-8 text-neutral-600".to_string() />
                     </a>
                 </div>
-            </Title>
+            </TitleText>
         </div>
     }
 }
