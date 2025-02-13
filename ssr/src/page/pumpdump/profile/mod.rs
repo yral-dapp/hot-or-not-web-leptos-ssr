@@ -11,7 +11,7 @@ use yral_canisters_client::individual_user_template::{
 use yral_canisters_common::{utils::profile::ProfileDetails, Canisters};
 
 use crate::{
-    component::{back_btn::BackButton, skeleton::Skeleton, title::Title},
+    component::{back_btn::BackButton, skeleton::Skeleton, title::TitleText},
     page::pumpdump::{convert_e8s_to_cents, GameResult},
     state::canisters::authenticated_canisters,
 };
@@ -331,13 +331,13 @@ pub fn PndProfilePage() -> impl IntoView {
     view! {
         <div class="min-h-screen w-full flex flex-col text-white pt-2 pb-12 bg-black items-center">
             <div id="back-nav" class="flex flex-col items-center w-full gap-20 pb-16">
-                <Title justify_center=false>
+                <TitleText justify_center=false>
                     <div class="flex flex-row justify-between">
                         <BackButton fallback="/" />
                         <span class="font-bold text-2xl">Profile</span>
                         <div></div>
                     </div>
-                </Title>
+                </TitleText>
             </div>
             <Show when=move || profile_data.get().is_some()>
                 <ProfileDataSection profile_data=profile_data.get().unwrap() />

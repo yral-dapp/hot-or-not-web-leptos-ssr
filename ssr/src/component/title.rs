@@ -1,7 +1,7 @@
 use leptos::*;
 
 #[component]
-pub fn Title(
+pub fn TitleText(
     /// `children` takes the `Children` type
     /// this is an alias for `Box<dyn FnOnce() -> Fragment>`
     #[prop(default = true)]

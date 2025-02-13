@@ -4,7 +4,7 @@ use leptos_router::{use_query, Params};
 use yral_canisters_common::utils::token::balance::TokenBalance;
 
 use crate::{
-    component::{back_btn::BackButton, title::Title},
+    component::{back_btn::BackButton, title::TitleText},
     try_or_redirect_opt,
 };
 
@@ -26,11 +26,11 @@ pub fn Success() -> impl IntoView {
             class="min-h-screen w-full flex flex-col text-white pt-2 pb-12 bg-black items-center relative max-md:bg-[length:271vw_100vh] md:bg-[length:max(100vw,100vh)] max-md:bg-[position:-51.2vh_-6vw]"
         >
             <div id="back-nav" class="flex flex-col items-center w-full gap-20 pb-16">
-                <Title justify_center=false>
+                <TitleText justify_center=false>
                     <div class="flex flex-row justify-between">
                         <BackButton fallback="/" />
                     </div>
-                </Title>
+                </TitleText>
             </div>
             <div class="w-full">
                 <div class="max-w-md w-full mx-auto px-4 mt-4 pb-6 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
