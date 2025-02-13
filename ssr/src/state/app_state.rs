@@ -48,6 +48,7 @@ impl AppState {
                 description: "Pump it, Dump it, Cash it",
                 theme_color: "#000000",
                 manifest_path: "pumpdump.json",
+                favicon_filename: "pumpdump",
             },
         }
     }
