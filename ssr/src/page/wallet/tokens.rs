@@ -136,7 +136,7 @@ pub fn WalletCard(
         .unwrap_or_default();
     view! {
         <div node_ref=_ref class="flex flex-col gap-4 bg-neutral-900/90 rounded-lg w-full font-kumbh text-white p-4">
-            <div class="flex flex-col gap-4 p-3 rounded-[4px] bg-neutral-800/70">
+            <div class="flex flex-col gap-4 p-3 rounded-sm bg-neutral-800/70">
                 <div class="w-full flex items-center justify-between">
                     <div class="flex items-center gap-2">
                         <img
@@ -166,7 +166,7 @@ pub fn WalletCard(
                         </div>
                         <a
                             class="rounded-lg px-5 py-2 text-sm text-center font-bold"
-                            class=(["pointer-events-none", "text-[#F6B0D6]", "bg-brand-gradient-disabled"], !is_withdrawable)
+                            class=(["pointer-events-none", "text-primary-300", "bg-brand-gradient-disabled"], !is_withdrawable)
                             class=(["text-neutral-50", "bg-brand-gradient"], is_withdrawable)
                             href="/pnd/withdraw"
                         >

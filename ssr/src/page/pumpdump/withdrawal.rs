@@ -204,13 +204,13 @@ pub fn PndWithdrawal() -> impl IntoView {
                                         <span>You withdraw</span>
                                         <Tooltip icon=Information title="Withdrawal Tokens" description="Only cents earned above your airdrop amount can be withdrawn." />
                                     </div>
-                                    <input disabled=is_claiming on:input=on_input type="text" inputmode="decimal" class="bg-neutral-800 h-10 w-32 rounded focus:outline focus:outline-1 focus:outline-[#E2017B] text-right px-4 text-lg" />
+                                    <input disabled=is_claiming on:input=on_input type="text" inputmode="decimal" class="bg-neutral-800 h-10 w-32 rounded focus:outline focus:outline-1 focus:outline-primary-600 text-right px-4 text-lg" />
                                 </div>
                                 <div class="flex justify-between">
                                     <div class="flex gap-2 items-center">
                                         <span>You get</span>
                                     </div>
-                                    <input disabled type="text" inputmode="decimal" class="bg-neutral-800 h-10 w-32 rounded focus:outline focus:outline-1 focus:outline-[#E2017B] text-right px-4 text-lg text-neutral-400" value=formated_dolrs />
+                                    <input disabled type="text" inputmode="decimal" class="bg-neutral-800 h-10 w-32 rounded focus:outline focus:outline-1 focus:outline-primary-600 text-right px-4 text-lg text-neutral-400" value=formated_dolrs />
                                 </div>
                             </div>
                             <Suspense fallback=|| view! {

@@ -45,22 +45,22 @@ pub fn PlayingCard() -> impl IntoView {
 
     view! {
         <div
-            class="bg-[#171717] flip-card transition-all absolute inset-0 h-full shrink-0 rounded-2xl flex flex-col gap-4 pt-14 pb-5 px-5 overflow-hidden"
+            class="bg-neutral-900 flip-card transition-all absolute inset-0 h-full shrink-0 rounded-2xl flex flex-col gap-4 pt-14 pb-5 px-5 overflow-hidden"
         >
             <div class="flex flex-col gap-6 w-full items-center">
-                <img class="size-32 rounded-[4px]" alt="Avatar" src=token.token_details.logo />
+                <img class="size-32 rounded-sm" alt="Avatar" src=token.token_details.logo />
                 <a href=token_link class="flex items-center gap-1">
                     <div class="font-bold text-lg">{token.token_details.token_name}</div>
                     <Icon icon=ChevronRightIcon class="w-5 h-5 -mb-px" />
                 </a>
                 <div class="bg-[#212121] shrink-0 rounded-full relative w-full h-11 overflow-hidden">
                     <div
-                        class="w-full animate-slide-up top-[3.5rem] flex items-center gap-2 justify-between absolute inset-0 py-2 pl-4 pr-2"
+                        class="w-full animate-slide-up top-14 flex items-center gap-2 justify-between absolute inset-0 py-2 pl-4 pr-2"
                     >
                         <div class="flex items-center gap-1">
                             <div class="text-neutral-400 text-xs">Winning Pot:</div>
                             <img src="/img/cents.png" alt="Coin" class="size-5" />
-                            <div class="text-[#E5E5E5] font-bold">{winning_pot} Cents</div>
+                            <div class="text-neutral-200 font-bold">{winning_pot} Cents</div>
                         </div>
                         <button
                             on:click=move |_| show_onboarding.show()
@@ -71,10 +71,10 @@ pub fn PlayingCard() -> impl IntoView {
                     </div>
                     <div
                         style="--animation-delay:5s;"
-                        class="w-full top-[3.5rem] animate-slide-up flex items-center gap-1 absolute inset-0 py-2 pl-4 pr-2"
+                        class="w-full top-14 animate-slide-up flex items-center gap-1 absolute inset-0 py-2 pl-4 pr-2"
                     >
                         <img src="/img/player.png" alt="Coin" class="w-5 h-5" />
-                        <div class="text-[#E5E5E5] font-bold">{player_count}</div>
+                        <div class="text-neutral-200 font-bold">{player_count}</div>
                         <div class="text-neutral-400 text-xs">players are playing - join the action!</div>
                     </div>
                 </div>
@@ -135,7 +135,7 @@ fn WonCard(win_amount: u128) -> impl IntoView {
                 >
                     <span class="text-neutral-400 text-xs">You have won:</span>
                     <img src="/img/cents.png" alt="Coin" class="w-5 h-5" />
-                    <span class="text-[#E5E5E5] font-bold">{win_amount} Cents</span>
+                    <span class="text-neutral-200 font-bold">{win_amount} Cents</span>
                 </div>
             </div>
             <button
