@@ -43,7 +43,7 @@ fn ProfileCard(details: ProfileDetails, is_own_account: bool) -> impl IntoView {
 
             <Show when=move || !is_own_account>
                 <ConnectLogin
-                    login_text="Login to claim tokens"
+                    login_text=if !show_pnd_page() {"Login to claim your COYNs"} else {"Login to claim your Cents"}
                     cta_location="wallet"
                 />
             </Show>
