@@ -25,7 +25,7 @@ use crate::{
 };
 
 #[component]
-fn ProfileCard(details: ProfileDetails, is_own_account: bool) -> impl IntoView {
+fn ProfileCard(details: ProfileDetails, is_own_account: bool, is_connected: bool) -> impl IntoView {
     view! {
         <div class="w-full flex flex-col bg-neutral-900 rounded-lg p-4 gap-4">
             <div class="flex items-center gap-4">
@@ -41,7 +41,7 @@ fn ProfileCard(details: ProfileDetails, is_own_account: bool) -> impl IntoView {
                 </span>
             </div>
 
-            <Show when=move || !is_own_account>
+            <Show when=move || !is_connected && is_own_account>
                 <ConnectLogin
                     login_text=if !show_pnd_page() {"Login to claim your COYNs"} else {"Login to claim your Cents"}
                     cta_location="wallet"
@@ -158,7 +158,7 @@ pub fn Wallet() -> impl IntoView {
 }
 #[component]
 pub fn WalletImpl(principal: Principal) -> impl IntoView {
-    let (_is_connected, _) = account_connected_reader();
+    let (is_connected, _) = account_connected_reader();
 
     let auth_cans = authenticated_canisters();
 
@@ -225,7 +225,7 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
                         let profile_details = try_or_redirect_opt!(profile_info_res()?);
                         let is_own_account = try_or_redirect_opt!(is_own_account()?);
                         Some(
-                            view! { <ProfileCard details=profile_details is_own_account=is_own_account /> },
+                            view! { <ProfileCard details=profile_details is_connected=is_connected() is_own_account=is_own_account /> },
                         )
                     }}
                 </Suspense>
