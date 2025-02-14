@@ -4,7 +4,7 @@ use leptos::*;
 use leptos_icons::*;
 use leptos_router::*;
 
-use crate::component::title::Title;
+use crate::component::title::TitleText;
 
 #[component]
 fn FaqItem(#[prop(into)] header: String, #[prop(into)] content: String) -> impl IntoView {
@@ -103,9 +103,9 @@ fn FaqSwitcher() -> impl IntoView {
 pub fn Faq() -> impl IntoView {
     view! {
         <div class="w-screen min-h-screen px-8 bg-black pt-4 pb-14 text-white flex flex-col items-center">
-            <Title>
+            <TitleText>
                 <span class="font-bold">FAQs</span>
-            </Title>
+            </TitleText>
             <div class="w-full text-lg my-8">Find all your answers here</div>
             <FaqSwitcher />
         </div>

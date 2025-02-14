@@ -11,6 +11,7 @@ use crate::{
 };
 use candid::Principal;
 use leptos::*;
+use leptos_meta::*;
 use leptos_router::Params;
 use leptos_router::{use_params, Redirect};
 use tokens::TokenList;
@@ -201,8 +202,12 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
             Ok((user_canister, principal))
         },
     );
+
+    let app_state = use_context::<AppState>();
+    let page_title = app_state.unwrap().name.to_owned() + " - Wallet";
     view! {
         <div class="flex flex-col gap-4 pt-4 pb-12 bg-black min-h-dvh overflow-x-hidden font-kumbh mx-auto max-w-md">
+             <Title text=page_title />
              <Suspense fallback=move || view! { <HeaderLoading/> }>
                 {move || {
                     let profile_details = try_or_redirect_opt!(profile_info_res()?);
