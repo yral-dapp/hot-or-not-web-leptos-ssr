@@ -93,6 +93,7 @@ pub mod core_clients {
         pub google_oauth: openidconnect::core::CoreClient,
         pub hotornot_google_oauth: openidconnect::core::CoreClient,
         pub icpump_google_oauth: openidconnect::core::CoreClient,
+        pub pumpdump_google_oauth: openidconnect::core::CoreClient,
     }
 
     impl CoreClients {
@@ -101,6 +102,8 @@ pub mod core_clients {
                 self.hotornot_google_oauth.clone()
             } else if host == "icpump.fun" {
                 self.icpump_google_oauth.clone()
+            } else if host == "pumpdump.wtf" {
+                self.pumpdump_google_oauth.clone()
             } else {
                 self.google_oauth.clone()
             }
