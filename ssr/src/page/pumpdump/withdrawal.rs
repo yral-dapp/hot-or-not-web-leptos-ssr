@@ -67,7 +67,7 @@ fn Header() -> impl IntoView {
                     <BackButton fallback="/" />
                     <span class="font-bold text-2xl">Withdraw</span>
                     <a href="/wallet/notifications" disabled=true class="text-xl font-semibold">
-                        <NotificationIcon show_dot=false classes="w-8 h-8 text-neutral-600".to_string() />
+                        <NotificationIcon show_dot=false class="w-8 h-8 text-neutral-600" />
                     </a>
                 </div>
             </TitleText>

@@ -2,50 +2,19 @@ use leptos::*;
 
 #[component]
 pub fn NotificationIcon(
-    #[prop(optional, default = "w-full h-full".to_string())] classes: String,
+    #[prop(into, optional, default = "w-full h-full".into())] class: String,
     #[prop(optional)] show_dot: bool,
 ) -> impl IntoView {
-    if show_dot {
-        view! {
-            <svg
-                class=format!("text-neutral-200 {}", classes)
-                viewBox="0 0 32 32"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-            >
-                <path
-                    d="M18.3067 28C18.0723 28.4041 17.7358 28.7395 17.331 28.9727C16.9261 29.2058 16.4672 29.3286 16 29.3286C15.5328 29.3286 15.0739 29.2058 14.669 28.9727C14.2642 28.7395 13.9277 28.4041 13.6933 28M24 10.6666C24 8.54489 23.1571 6.51006 21.6569 5.00977C20.1566 3.50948 18.1217 2.66663 16 2.66663C13.8783 2.66663 11.8434 3.50948 10.3431 5.00977C8.84286 6.51006 8 8.54489 8 10.6666C8 20 4 22.6666 4 22.6666H28C28 22.6666 24 20 24 10.6666Z"
-                    stroke="currentColor"
-                    stroke-width="1.5"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                />
-                <circle
-                    cx="26"
-                    cy="6"
-                    r="5"
-                    fill="#E2017B"
-                    stroke="black"
-                    stroke-width="2"
-                />
-            </svg>
-        }
-    } else {
-        view! {
-            <svg
-                class=format!("text-neutral-200 {}", classes)
-                viewBox="0 0 32 32"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-            >
-                <path
-                    d="M18.3067 28C18.0723 28.4041 17.7358 28.7395 17.331 28.9727C16.9261 29.2058 16.4672 29.3286 16 29.3286C15.5328 29.3286 15.0739 29.2058 14.669 28.9727C14.2642 28.7395 13.9277 28.4041 13.6933 28M24 10.6666C24 8.54489 23.1571 6.51006 21.6569 5.00977C20.1566 3.50948 18.1217 2.66663 16 2.66663C13.8783 2.66663 11.8434 3.50948 10.3431 5.00977C8.84286 6.51006 8 8.54489 8 10.6666C8 20 4 22.6666 4 22.6666H28C28 22.6666 24 20 24 10.6666Z"
-                    stroke="currentColor"
-                    stroke-width="1.5"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                />
-            </svg>
-        }
+    view! {
+        <svg
+            class=format!("text-neutral-200 {}", class)
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+        >
+            <path d="M20.5 17H4L5.15542 14.6892C5.71084 13.5783 6 12.3534 6 11.1115V8C6.16667 6.33333 7.6 3 12 3C16.4 3 17.8333 6.33333 18 8V10.7056C18 12.205 18.4214 13.6742 19.216 14.9456L20.5 17Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+            <path d="M12 21C13.6569 21 15 20.1046 15 19H9C9 20.1046 10.3431 21 12 21Z" fill="currentColor"/>
+            <circle cx="17" cy="5" r="3" fill="#E2017B" opacity=move || (if show_dot { "1" } else { "0" }).to_string()/>
+        </svg>
     }
 }
