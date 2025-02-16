@@ -1,8 +1,10 @@
 use crate::page::icpump::ai::ICPumpAi;
 use crate::page::icpump::ICPumpLanding;
-
+use crate::page::pumpdump::{withdrawal, PndProfilePage};
+use crate::state::app_type::AppType;
 use crate::utils::host::show_preview_component;
 // use crate::page::wallet::TestIndex;
+use crate::state::app_state::AppState;
 use crate::{
     component::{base_route::BaseRoute, nav::NavBar},
     error_template::{AppError, ErrorTemplate},
@@ -49,7 +51,7 @@ fn GoogleAuthRedirectHandlerRoute() -> impl IntoView {
     #[cfg(any(feature = "oauth-ssr", feature = "oauth-hydrate"))]
     {
         if show_preview_component() {
-            use crate::page::google_redirect::PreviewGoogleRedirectHandler;
+            use crate::page::preview_google_redirect::PreviewGoogleRedirectHandler;
             view! { <Route path view=PreviewGoogleRedirectHandler/> }
         } else {
             use crate::page::google_redirect::GoogleRedirectHandler;
@@ -68,7 +70,7 @@ fn GoogleAuthRedirectorRoute() -> impl IntoView {
     #[cfg(any(feature = "oauth-ssr", feature = "oauth-hydrate"))]
     {
         if show_preview_component() {
-            use crate::page::google_redirect::PreviewGoogleRedirector;
+            use crate::page::preview_google_redirect::PreviewGoogleRedirector;
             view! { <Route path view=PreviewGoogleRedirector/> }
         } else {
             use crate::page::google_redirect::GoogleRedirector;
@@ -83,8 +85,13 @@ fn GoogleAuthRedirectorRoute() -> impl IntoView {
 
 #[component]
 pub fn App() -> impl IntoView {
-    // Provides context that manages stylesheets, titles, meta tags, etc.
     provide_meta_context();
+
+    let app_type = AppType::select();
+    let app_state = AppState::from_type(&app_type);
+    provide_context(app_state.clone());
+
+    // Existing context providers
     provide_context(Canisters::default());
     provide_context(ContentSeedClient::default());
     provide_context(PostViewCtx::default());
@@ -116,35 +123,42 @@ pub fn App() -> impl IntoView {
     }
 
     view! {
-        <Stylesheet id="leptos" href="/pkg/hot-or-not-leptos-ssr.css"/>
+            <Stylesheet id="leptos" href="/pkg/hot-or-not-leptos-ssr.css"/>
+            <Title text=app_state.name/>
 
-        // sets the document title
-        <Title text="Yral"/>
+            // Favicon
+            <Link rel="icon" type_="image/svg+xml" href=format!("/{}.svg", app_state.favicon_filename) />
+            <Link rel="shortcut icon" href=format!("/{}.ico", app_state.favicon_filename) />
+            <Link rel="apple-touch-icon" sizes="180x180" href=format!("/{}-apple.png", app_state.favicon_filename) />
 
-        <Link rel="manifest" href="/app.webmanifest"/>
+            // Meta
+            <Meta name="apple-mobile-web-app-title" content=app_state.name />
 
-        // GA4 Global Site Tag (gtag.js) - Google Analytics
-        // G-6W5Q2MRX0E to test locally | G-PLNNETMSLM
-        <Show when=enable_ga4_script>
-            <Script
-                async_="true"
-                src=concat!("https://www.googletagmanager.com/gtag/js?id=", "G-PLNNETMSLM")
-            />
-            <Script>
-                {r#"
+            // App manifest
+            <Link rel="manifest" href=app_state.manifest_config()/>
+
+            // GA4 Global Site Tag (gtag.js) - Google Analytics
+            // G-6W5Q2MRX0E to test locally | G-PLNNETMSLM
+            <Show when=enable_ga4_script>
+                <Script
+                    async_="true"
+                    src=concat!("https://www.googletagmanager.com/gtag/js?id=", "G-PLNNETMSLM")
+                />
+                <Script>
+                    {r#"
                 window.dataLayer = window.dataLayer || [];
                 function gtag(){dataLayer.push(arguments);}
                 gtag('js', new Date());
                 gtag('config', 'G-PLNNETMSLM');
                 "#}
-            </Script>
-        </Show>
+                </Script>
+            </Show>
 
-        // <Script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js"></Script>
-        // <Script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js"></Script>
+            // <Script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js"></Script>
+            // <Script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js"></Script>
 
-        // content for this welcome page
-        <Router fallback=|| view! { <NotFound/> }.into_view()>
+            // content for this welcome page
+            <Router fallback=|| view! { <NotFound/> }.into_view()>
             <main>
                 <Routes>
                     // auth redirect routes exist outside main context
@@ -155,6 +169,7 @@ pub fn App() -> impl IntoView {
                         <Route path="/hot-or-not/:canister_id/:post_id" view=PostView/>
                         <Route path="/post/:canister_id/:post_id" view=SinglePost/>
                         <Route path="/profile/:canister_id/post/:post_id" view=ProfilePost/>
+                        <Route path="/pnd/profile" view=PndProfilePage/>
                         <Route path="/upload" view=UploadPostPage/>
                         <Route path="/error" view=ServerErrorPage/>
                         <Route path="/menu" view=Menu/>
@@ -176,6 +191,16 @@ pub fn App() -> impl IntoView {
                         <Route path="/token/transfer/:token_root" view=TokenTransfer/>
                         <Route path="/board" view=ICPumpLanding/>
                         <Route path="/icpump-ai" view=ICPumpAi/>
+                        <Route path="/pnd/withdraw" view=withdrawal::PndWithdrawal />
+                        <Route path="/pnd/withdraw/success" view=withdrawal::result::Success />
+                        <Route path="/pnd/withdraw/failure" view=withdrawal::result::Failure />
+                        {
+                            #[cfg(any(feature = "local-bin", feature = "local-lib"))]
+                            view! {
+                                <Route path="/pnd/test/:token_root" view=crate::page::pumpdump::PndTest />
+                            }
+                        }
+                    // <Route path="/test" view=TestIndex/>
                     </Route>
                 </Routes>
 

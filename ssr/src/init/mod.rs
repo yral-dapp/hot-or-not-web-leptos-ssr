@@ -101,10 +101,25 @@ fn init_google_oauth() -> crate::auth::core_clients::CoreClients {
     )
     .set_redirect_uri(RedirectUrl::new(redirect_uri).unwrap());
 
+    let client_id =
+        env::var("PUMPDUMP_GOOGLE_CLIENT_ID").expect("`PUMPDUMP_GOOGLE_CLIENT_ID` is required!");
+    let client_secret = env::var("PUMPDUMP_GOOGLE_CLIENT_SECRET")
+        .expect("`PUMPDUMP_GOOGLE_CLIENT_SECRET` is required!");
+    let redirect_uri = env::var("PUMPDUMP_GOOGLE_REDIRECT_URL")
+        .expect("`PUMPDUMP_GOOGLE_REDIRECT_URL` is required!");
+
+    let pumpdump_google_oauth = CoreClient::from_provider_metadata(
+        google_oauth_metadata.clone(),
+        ClientId::new(client_id),
+        Some(ClientSecret::new(client_secret)),
+    )
+    .set_redirect_uri(RedirectUrl::new(redirect_uri).unwrap());
+
     CoreClients {
         google_oauth,
         hotornot_google_oauth,
         icpump_google_oauth,
+        pumpdump_google_oauth,
     }
 }
 

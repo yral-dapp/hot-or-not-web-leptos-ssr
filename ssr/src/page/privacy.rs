@@ -1,15 +1,19 @@
 use leptos::*;
+use leptos_meta::*;
 
-use crate::component::{back_btn::BackButton, title::Title};
+use crate::{
+    component::{back_btn::BackButton, title::TitleText},
+    state::app_state::AppState,
+};
 
 #[component]
 pub fn PrivacyPolicy() -> impl IntoView {
+    let app_state = use_context::<AppState>();
+    let page_title = app_state.unwrap().name.to_owned() + " - Privacy Policy";
     view! {
+        <Title text=page_title />
         <div class="w-screen min-h-screen bg-black pt-4 pb-12 text-white flex flex-col items-center">
-            // <Title>
-            // <span class="font-bold">Privacy Policy</span>
-            // </Title>
-            <Title justify_center=false>
+            <TitleText justify_center=false>
                 <div class="flex flex-row justify-between">
                     <BackButton fallback="/menu".to_string() />
                     <div>
@@ -17,7 +21,7 @@ pub fn PrivacyPolicy() -> impl IntoView {
                     </div>
                     <div></div>
                 </div>
-            </Title>
+            </TitleText>
             <div class="px-8 flex h-full w-full flex-col space-y-8 overflow-hidden overflow-y-auto py-16">
                 <div class="text-xs whitespace-pre-line">
                     {r#"Thank you for choosing "Yral." We are delighted to provide our Service to you. "Yral" encompasses the Yral App, website, features, and associated services. It offers image and video posting capabilities along with various social and interactive features. This Privacy Policy outlines our information practices.

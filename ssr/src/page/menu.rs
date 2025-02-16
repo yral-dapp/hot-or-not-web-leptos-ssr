@@ -1,9 +1,10 @@
 use crate::component::content_upload::YoutubeUpload;
 use crate::component::modal::Modal;
 use crate::component::spinner::Spinner;
-use crate::component::title::Title;
+use crate::component::title::TitleText;
 use crate::component::{connect::ConnectLogin, social::*, toggle::Toggle};
 use crate::consts::{social, NSFW_TOGGLE_STORE};
+use crate::state::app_state::AppState;
 use crate::state::auth::account_connected_reader;
 use crate::state::canisters::authenticated_canisters;
 use crate::state::content_seed_client::ContentSeedClient;
@@ -13,6 +14,7 @@ use codee::string::FromToStringCodec;
 use leptos::html::Input;
 use leptos::*;
 use leptos_icons::*;
+use leptos_meta::*;
 use leptos_router::{use_query_map, Redirect};
 use leptos_use::storage::use_local_storage;
 use leptos_use::use_event_listener;
@@ -219,7 +221,11 @@ pub fn Menu() -> impl IntoView {
             Some(cans_wire.profile_details())
         },
     );
+
+    let app_state = use_context::<AppState>();
+    let page_title = app_state.unwrap().name.to_owned() + " - Menu";
     view! {
+        <Title text=page_title />
         <Suspense fallback=Spinner>
             {
                 move ||{
@@ -241,11 +247,11 @@ pub fn Menu() -> impl IntoView {
         </Modal>
         <div class="min-h-screen w-full flex flex-col text-white pt-2 pb-12 bg-black items-center divide-y divide-white/10">
             <div class="flex flex-col items-center w-full gap-20 pb-16">
-                <Title justify_center=false>
+                <TitleText justify_center=false>
                     <div class="flex flex-row justify-center">
                         <span class="font-bold text-2xl">Menu</span>
                     </div>
-                </Title>
+                </TitleText>
                 <div class="flex flex-col items-center w-full gap-4">
                     <div class="flex flex-row w-full max-w-lg justify-center gap-4 items-center px-4">
                         <ProfileInfo profile_details=profile_details />

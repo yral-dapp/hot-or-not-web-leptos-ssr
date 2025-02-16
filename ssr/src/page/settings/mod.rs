@@ -1,6 +1,6 @@
 use crate::component::back_btn::BackButton;
 use crate::component::canisters_prov::AuthCansProvider;
-use crate::component::title::Title;
+use crate::component::title::TitleText;
 use crate::component::{social::*, toggle::Toggle};
 use crate::consts::NOTIFICATIONS_ENABLED_STORE;
 use crate::state::auth::account_connected_reader;
@@ -141,13 +141,13 @@ pub fn Settings() -> impl IntoView {
     view! {
         <div class="min-h-screen w-full flex flex-col text-white pt-2 pb-12 bg-black items-center divide-y divide-white/10">
             <div class="flex flex-col items-center w-full gap-20 pb-16">
-                <Title justify_center=false>
+                <TitleText justify_center=false>
                     <div class="flex flex-row justify-between">
                         <BackButton fallback="/menu".to_string() />
                         <span class="font-bold text-2xl">Settings</span>
                         <div></div>
                     </div>
-                </Title>
+                </TitleText>
             </div>
             <div class="flex flex-col py-12 px-8 gap-8 w-full text-lg">
                 <AuthCansProvider let:canisters>

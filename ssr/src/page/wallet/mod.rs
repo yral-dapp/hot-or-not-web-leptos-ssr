@@ -4,11 +4,14 @@ pub mod transactions;
 pub mod txn;
 
 use crate::component::icons::notification_icon::NotificationIcon;
+use crate::state::app_state::AppState;
+use crate::utils::host::show_pnd_page;
 use crate::{
     component::share_popup::ShareButtonWithFallbackPopup, state::canisters::unauth_canisters,
 };
 use candid::Principal;
 use leptos::*;
+use leptos_meta::*;
 use leptos_router::Params;
 use leptos_router::{use_params, Redirect};
 use tokens::TokenList;
@@ -153,9 +156,12 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
             Ok((user_canister, principal))
         },
     );
-    view! {
-        <div class="flex flex-col gap-4 pt-4 pb-12 bg-black min-h-dvh font-kumbh">
 
+    let app_state = use_context::<AppState>();
+    let page_title = app_state.unwrap().name.to_owned() + " - Wallet";
+    view! {
+        <Title text=page_title />
+        <div class="flex flex-col gap-4 pt-4 pb-12 bg-black min-h-dvh font-kumbh overflow-x-hidden">
                 <Suspense>
                     {move || {
                         let profile_details = try_or_redirect_opt!(profile_info_res()?);
@@ -174,7 +180,7 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
                                 <div class="flex flex-col items-center py-5 w-full">
                                     <div class="flex flex-row items-center w-9/12 md:w-5/12">
                                         <ConnectLogin
-                                            login_text="Login to claim your COYNs"
+                                            login_text=if !show_pnd_page() {"Login to claim your COYNs"} else {"Login to claim your Cents"}
                                             cta_location="wallet"
                                         />
                                     </div>
