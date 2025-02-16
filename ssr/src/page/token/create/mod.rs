@@ -489,7 +489,7 @@ fn AdvanceSettings(
     #[prop()] items: Vec<(String, String, String)>, // heading, value, description
 ) -> impl IntoView {
     view! {
-        <div class="flex flex-col gap-3 pb-8">
+        <div id="advanced-settings" class="flex flex-col gap-3 pb-8">
             {
                 items.into_iter().map(|(h, v, d)| {
                     view! { <AdvanceSettingCard heading=h value=v description=d /> }
