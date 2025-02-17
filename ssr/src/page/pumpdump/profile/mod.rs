@@ -237,13 +237,16 @@ fn GameplayHistoryCard(#[prop(into)] details: GameplayHistoryItem) -> impl IntoV
         let root = details.root;
         let (state_label, amount) = match state {
             GameState::ResultDeclared(result) => match result {
-                GameResult::Win { amount } => ("win", amount),
-                GameResult::Loss { amount } => ("loss", amount),
+                GameResult::Win { amount } => ("win", Some(amount)),
+                GameResult::Loss { amount } => ("loss", Some(amount)),
             },
-            _ => unreachable!("gameplay history only includes games with result declared"),
+            GameState::Playing => ("pending", None),
         };
 
-        format!("/?root={root}&state={state_label}&amount={amount}")
+        match amount {
+            Some(amount) => format!("/?root={root}&state={state_label}&amount={amount}"),
+            None => format!("/?root={root}&state={state_label}"),
+        }
     };
     view! {
         <a href=href>
