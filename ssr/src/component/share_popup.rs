@@ -138,7 +138,7 @@ pub fn ShareButtonWithFallbackPopup(
 
     view! {
         <button on:click=on_share_click class=class>
-            <Icon  class="h-6 w-6 text-[#D4D4D4]" icon=ShareIcon />
+            <Icon  class="h-6 w-6 text-neutral-300" icon=ShareIcon />
         </button>
         <PopupOverlay show=show_fallback>
             <ShareContent
