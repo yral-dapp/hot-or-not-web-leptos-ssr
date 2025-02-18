@@ -2,10 +2,12 @@ use leptos::*;
 use leptos_icons::*;
 
 use crate::{
-    component::overlay::*, state::app_state::AppState, utils::{
+    component::overlay::*,
+    state::app_state::AppState,
+    utils::{
         host::get_host,
         web::{copy_to_clipboard, share_url},
-    }
+    },
 };
 
 use crate::component::icons::share_icon::ShareIcon;
@@ -24,7 +26,6 @@ pub fn ShareContent(
     let copy_clipboard = move |_| {
         copy_to_clipboard(&copy);
     };
-
 
     let app_state = use_context::<AppState>();
     view! {
