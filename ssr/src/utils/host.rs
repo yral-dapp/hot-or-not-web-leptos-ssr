@@ -21,6 +21,7 @@ pub fn get_host() -> String {
     }
 }
 
+// TODO: migrate to AppType
 pub fn show_cdao_page() -> bool {
     let host = get_host();
     show_cdao_condition(host)
@@ -46,9 +47,22 @@ pub fn show_cdao_condition(host: String) -> bool {
     host == "icpump.fun"
     // || host == "localhost:3000"
     // || host == "hot-or-not-web-leptos-ssr-staging.fly.dev"
+    || host.contains("yral-dapp-hot-or-not-web-leptos-ssr.fly.dev") // Use this when testing icpump changes
+}
+
+// TODO: migrate to AppType
+pub fn show_pnd_page() -> bool {
+    let host = get_host();
+    show_pnd_condition(&host)
+}
+
+pub fn show_pnd_condition(host: &str) -> bool {
+    host == "pumpdump.wtf" || host == "www.pumpdump.wtf"
+    // || host == "hot-or-not-web-leptos-ssr-staging.fly.dev"
     // || host.contains("yral-dapp-hot-or-not-web-leptos-ssr.fly.dev") // Use this when testing icpump changes
 }
 
+// TODO: migrate to AppType
 pub fn show_nsfw_content() -> bool {
     let host = get_host();
     show_nsfw_condition(host)

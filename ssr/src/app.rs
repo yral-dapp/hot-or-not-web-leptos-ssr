@@ -1,5 +1,6 @@
 use crate::page::icpump::ai::ICPumpAi;
 use crate::page::icpump::ICPumpLanding;
+use crate::page::pumpdump::{withdrawal, PndProfilePage};
 use crate::state::app_type::AppType;
 use crate::utils::host::show_preview_component;
 // use crate::page::wallet::TestIndex;
@@ -50,7 +51,7 @@ fn GoogleAuthRedirectHandlerRoute() -> impl IntoView {
     #[cfg(any(feature = "oauth-ssr", feature = "oauth-hydrate"))]
     {
         if show_preview_component() {
-            use crate::page::google_redirect::PreviewGoogleRedirectHandler;
+            use crate::page::preview_google_redirect::PreviewGoogleRedirectHandler;
             view! { <Route path view=PreviewGoogleRedirectHandler/> }
         } else {
             use crate::page::google_redirect::GoogleRedirectHandler;
@@ -69,7 +70,7 @@ fn GoogleAuthRedirectorRoute() -> impl IntoView {
     #[cfg(any(feature = "oauth-ssr", feature = "oauth-hydrate"))]
     {
         if show_preview_component() {
-            use crate::page::google_redirect::PreviewGoogleRedirector;
+            use crate::page::preview_google_redirect::PreviewGoogleRedirector;
             view! { <Route path view=PreviewGoogleRedirector/> }
         } else {
             use crate::page::google_redirect::GoogleRedirector;
@@ -82,26 +83,11 @@ fn GoogleAuthRedirectorRoute() -> impl IntoView {
     }
 }
 
-fn get_app_type() -> AppType {
-    #[cfg(feature = "hydrate")]
-    {
-        let hostname = window().location().hostname().unwrap_or_default();
-        AppType::from_host(&hostname)
-    }
-
-    #[cfg(not(feature = "hydrate"))]
-    {
-        use crate::utils::host::get_host;
-        let host = get_host();
-        AppType::from_host(&host)
-    }
-}
-
 #[component]
 pub fn App() -> impl IntoView {
     provide_meta_context();
 
-    let app_type = get_app_type();
+    let app_type = AppType::select();
     let app_state = AppState::from_type(&app_type);
     provide_context(app_state.clone());
 
@@ -139,6 +125,16 @@ pub fn App() -> impl IntoView {
     view! {
             <Stylesheet id="leptos" href="/pkg/hot-or-not-leptos-ssr.css"/>
             <Title text=app_state.name/>
+
+            // Favicon
+            <Link rel="icon" type_="image/svg+xml" href=format!("/{}.svg", app_state.favicon_filename) />
+            <Link rel="shortcut icon" href=format!("/{}.ico", app_state.favicon_filename) />
+            <Link rel="apple-touch-icon" sizes="180x180" href=format!("/{}-apple.png", app_state.favicon_filename) />
+
+            // Meta
+            <Meta name="apple-mobile-web-app-title" content=app_state.name />
+
+            // App manifest
             <Link rel="manifest" href=app_state.manifest_config()/>
 
             // GA4 Global Site Tag (gtag.js) - Google Analytics
@@ -162,6 +158,7 @@ pub fn App() -> impl IntoView {
             // <Script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js"></Script>
 
             // content for this welcome page
+            <Body class="bg-black" id="body"/>
             <Router fallback=|| view! { <NotFound/> }.into_view()>
             <main>
                 <Routes>
@@ -173,6 +170,7 @@ pub fn App() -> impl IntoView {
                         <Route path="/hot-or-not/:canister_id/:post_id" view=PostView/>
                         <Route path="/post/:canister_id/:post_id" view=SinglePost/>
                         <Route path="/profile/:canister_id/post/:post_id" view=ProfilePost/>
+                        <Route path="/pnd/profile" view=PndProfilePage/>
                         <Route path="/upload" view=UploadPostPage/>
                         <Route path="/error" view=ServerErrorPage/>
                         <Route path="/menu" view=Menu/>
@@ -194,6 +192,16 @@ pub fn App() -> impl IntoView {
                         <Route path="/token/transfer/:token_root" view=TokenTransfer/>
                         <Route path="/board" view=ICPumpLanding/>
                         <Route path="/icpump-ai" view=ICPumpAi/>
+                        <Route path="/pnd/withdraw" view=withdrawal::PndWithdrawal />
+                        <Route path="/pnd/withdraw/success" view=withdrawal::result::Success />
+                        <Route path="/pnd/withdraw/failure" view=withdrawal::result::Failure />
+                        {
+                            #[cfg(any(feature = "local-bin", feature = "local-lib"))]
+                            view! {
+                                <Route path="/pnd/test/:token_root" view=crate::page::pumpdump::PndTest />
+                            }
+                        }
+                    // <Route path="/test" view=TestIndex/>
                     </Route>
                 </Routes>
 

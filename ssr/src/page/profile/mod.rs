@@ -9,11 +9,13 @@ mod tokens;
 use candid::Principal;
 use leptos::*;
 use leptos_icons::*;
+use leptos_meta::*;
 use leptos_router::*;
 
 use crate::{
     component::connect::ConnectLogin,
     state::{
+        app_state::AppState,
         auth::account_connected_reader,
         canisters::{authenticated_canisters, unauth_canisters},
     },
@@ -205,7 +207,10 @@ pub fn ProfileView() -> impl IntoView {
             Ok((Some((user_details.into(), user_canister)), None))
         });
 
+    let app_state = use_context::<AppState>();
+    let page_title = app_state.unwrap().name.to_owned() + " - Profile";
     view! {
+        <Title text=page_title />
         <Suspense>
             {move || {
                 profile_info_res()

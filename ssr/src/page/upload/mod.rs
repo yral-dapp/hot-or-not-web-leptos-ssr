@@ -1,13 +1,14 @@
 mod cf_upload;
 mod validators;
 mod video_upload;
+use leptos_meta::*;
 
 use crate::{
     component::toggle::ToggleWithLabel,
     state::canisters::auth_canisters_store,
     utils::{
         event_streaming::events::{VideoUploadInitiated, VideoUploadUploadButtonClicked},
-        host::show_cdao_page,
+        host::{show_cdao_page, show_pnd_page},
         web::FileWithUrl,
     },
 };
@@ -170,8 +171,13 @@ pub fn YralUploadPostPage() -> impl IntoView {
     let trigger_upload = create_rw_signal(None::<UploadParams>);
 
     view! {
+        <Title text="YRAL - Upload" />
         <div class="flex flex-col min-h-dvh w-dvw items-center overflow-y-scroll gap-6 md:gap-8 lg:gap-16 pb-12 pt-4 md:pt-6 px-3 md:px-6 lg:px-10 bg-black text-white">
-            <h1 class="font-bold text-lg md:text-xl text-center">Upload</h1>
+            <div class="w-full flex justify-center items-center relative h-12">
+            <h1 class="text-xl font-bold">Upload</h1>
+            <img src="/img/logo.webp" class="absolute block sm:hidden top-0 left-0 w-12 h-12" />
+            <img src="/img/logo-mark.webp" class="hidden absolute sm:block top-0 left-0 h-12" />
+            </div>
             <div class="flex flex-col lg:flex-row place-content-center min-h-full w-full">
                 <Show
                     when=move || { with!(| trigger_upload | trigger_upload.is_some()) }
@@ -189,7 +195,7 @@ pub fn YralUploadPostPage() -> impl IntoView {
 
 #[component]
 pub fn UploadPostPage() -> impl IntoView {
-    if show_cdao_page() {
+    if show_cdao_page() || show_pnd_page() {
         view! { <CreatorDaoCreatePage /> }
     } else {
         view! { <YralUploadPostPage /> }
