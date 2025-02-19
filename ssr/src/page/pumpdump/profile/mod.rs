@@ -325,13 +325,11 @@ pub fn PndProfilePage() -> impl IntoView {
                     // since there were tokens loaded
                     // assume we have more tokens to load
                     // so, allow token loading
+                    page.update_untracked(|v| {
+                        *v += 1;
+                    });
                     should_load_more.set(true);
-                    return;
                 }
-
-                page.update_untracked(|v| {
-                    *v += 1;
-                });
             }
         },
         UseInfiniteScrollOptions::default()
