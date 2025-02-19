@@ -284,7 +284,6 @@ pub fn PndProfilePage() -> impl IntoView {
     let page = create_rw_signal(0);
     let should_load_more = create_rw_signal(true);
     let load_gameplay_history = create_action(move |&page| {
-        let cans_wire_res = auth_can_for_history.clone();
         async move {
             // since we are starting a load job, no more load jobs should be start
             should_load_more.set(false);
@@ -314,15 +313,38 @@ pub fn PndProfilePage() -> impl IntoView {
     let scroll_container = NodeRef::<Div>::new();
     let is_loading = use_infinite_scroll_with_options(
         scroll_container,
-        move |_| async move {
+       move |_| {
+            let cans_wire_res = auth_can_for_history.clone();
+            async move {
             if !should_load_more.get() {
                 return;
             }
-            load_gameplay_history.dispatch(page.get_untracked());
+            // since we are starting a load job, no more load jobs should be start
+            should_load_more.set(false);
+            let cans_wire = cans_wire_res
+                .wait_untracked()
+                .await
+                .map_err(|_| "Couldn't get cans_wire")?;
+            let cans = Canisters::from_wire(cans_wire.clone(), expect_context())
+                .map_err(|_| "Unable to authenticate".to_string())?;
+
+            let (processed_items, had_items) = load_history(cans, page.get_untracked()).await?;
+            gameplay_history.update(|list| {
+                list.extend(processed_items);
+            });
+
+            if had_items {
+                // since there were tokens loaded
+                // assume we have more tokens to load
+                // so, allow token loading
+                should_load_more.set(true)
+            }
+
             page.update_untracked(|v| {
                 *v += 1;
             });
-        },
+            Ok::<_, String>(()
+       }},
         UseInfiniteScrollOptions::default()
             .distance(400f64)
             .interval(2000f64),
