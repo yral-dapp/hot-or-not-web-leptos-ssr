@@ -13,7 +13,8 @@ use yral_canisters_common::{utils::profile::ProfileDetails, Canisters};
 use crate::{
     component::{back_btn::BackButton, skeleton::Skeleton, title::TitleText},
     page::pumpdump::{convert_e8s_to_cents, GameResult},
-    state::canisters::authenticated_canisters, try_or_redirect,
+    state::canisters::authenticated_canisters,
+    try_or_redirect,
 };
 
 use super::GameState;
@@ -314,7 +315,8 @@ pub fn PndProfilePage() -> impl IntoView {
                     .map_err(|_| "Unable to authenticate".to_string());
                 let cans = try_or_redirect!(cans);
 
-                let (processed_items, had_items) = try_or_redirect!(load_history(cans, page.get_untracked()).await);
+                let (processed_items, had_items) =
+                    try_or_redirect!(load_history(cans, page.get_untracked()).await);
                 gameplay_history.update(|list| {
                     list.extend(processed_items);
                 });
