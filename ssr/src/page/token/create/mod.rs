@@ -19,11 +19,9 @@ use std::env;
 use yral_canisters_common::{utils::profile::ProfileDetails, Canisters, CanistersAuthWire};
 
 use server_fn::codec::Cbor;
-use sns_validation::{humanize::parse_tokens, pbs::nns_pb::Tokens};
+use sns_validation::humanize::parse_tokens;
 use sns_validation::{
-    humanize::{
-        format_duration, format_percentage, format_tokens, parse_duration, parse_percentage,
-    },
+    humanize::{format_duration, format_percentage, format_tokens},
     pbs::sns_pb::SnsInitPayload,
 };
 
@@ -171,6 +169,7 @@ macro_rules! input_component {
             #[prop(into)] placeholder: String,
             #[prop(optional)] initial_value: Option<String>,
             #[prop(optional, into)] input_type: Option<String>,
+            #[prop(default = false)] disabled: bool,
             updater: U,
             validator: V,
         ) -> impl IntoView {
@@ -234,6 +233,7 @@ macro_rules! input_component {
                         placeholder=placeholder
                         class=move || input_class()
                         type=input_type.unwrap_or_else(|| "text".into() )
+                        disabled=disabled
                     />
                     <span class="text-red-500 font-semibold">
                         <Show when=move || show_error() && error()>
@@ -275,15 +275,6 @@ impl CreateTokenCtx {
         ctx.form_state.set(SnsFormState::default());
         ctx.invalid_cnt.set(0);
     }
-}
-
-fn parse_token_e8s(s: &str) -> Result<Tokens, String> {
-    let e8s: u64 = s
-        .replace('_', "")
-        .parse::<u64>()
-        .map_err(|err| err.to_string())?;
-
-    Ok(Tokens { e8s: Some(e8s) })
 }
 
 #[component]
@@ -456,6 +447,59 @@ pub fn CreateToken() -> impl IntoView {
 }
 
 #[component]
+fn CommingSoonBanner() -> impl IntoView {
+    view! {
+        <div class="with-gradient relative bg-black rounded-md p-3 bg-no-repeat bg-cover bg-left" style="background-image: url('/img/gradient-backdrop.png')">
+            <div class="flex flex-col gap-1">
+                <h2 class="text-white font-bold">Want to raise ICP?</h2>
+                <span class="text-font bg-clip-text text-transparent bg-gradient-to-r from-[#FFFFFF80] to-[#882B5E80]">Coming Soon...</span>
+            </div>
+            <img src="/img/coming-soon-art.svg" class="absolute right-0 bottom-0" />
+        </div>
+    }
+}
+
+#[component]
+fn AdvanceSettingCard(
+    #[prop(into)] heading: String,
+    #[prop(into)] description: String,
+    #[prop(into)] value: String,
+) -> impl IntoView {
+    view! {
+        <div class="bg-neutral-900 flex flex-col rounded-md p-3 gap-1">
+            <div class="flex justify-between">
+                <h2 class="text-neutral-400">{heading}</h2>
+                <div class="relative group">
+                    <div class="tooltip-trigger cursor-pointer bg-neutral-800 rounded-full size-6 grid">
+                        <span class="text-neutral-400 text-center text-xs grid place-items-center font-bold">i</span>
+                    </div>
+                    <div class="w-max max-w-[85vw] md:max-w-[400px] absolute pointer-events-none duration-150 rounded-md top-0 right-0 mt-8 z-50 opacity-0 group-hover:opacity-100 bg-[#EAC9DB] text-[#A00157] p-4">
+                        {description}
+                        <div class="absolute right-0 mr-1 -translate-x-1/2 bottom-full h-0 w-0 border-r-4 border-l-4 border-b-4 border-l-transparent border-r-transparent border-b-[#EAC9DB]"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="text-neutral-600">{value}</div>
+        </div>
+    }
+}
+
+#[component]
+fn AdvanceSettings(
+    #[prop()] items: Vec<(String, String, String)>, // heading, value, description
+) -> impl IntoView {
+    view! {
+        <div id="advanced-settings" class="flex flex-col gap-3 pb-8">
+            {
+                items.into_iter().map(|(h, v, d)| {
+                    view! { <AdvanceSettingCard heading=h value=v description=d /> }
+                }).collect_view()
+            }
+        </div>
+    }
+}
+
+#[component]
 pub fn CreateTokenSettings() -> impl IntoView {
     let fallback_url = "/token/create";
     let ctx: CreateTokenCtx = use_context().unwrap_or_else(|| {
@@ -465,39 +509,23 @@ pub fn CreateTokenSettings() -> impl IntoView {
     });
     let fstate = ctx.form_state;
 
-    let validate_tokens = |value: String| parse_tokens(&value).ok();
-    let validate_tokens_e8s = |value: String| parse_token_e8s(&value).ok();
-    let (transaction_fee, set_transaction_fee) = slice!(fstate.transaction_fee);
-    let (rejection_fee, set_rejection_fee) = slice!(fstate.proposals.rejection_fee);
+    let (transaction_fee, _) = slice!(fstate.transaction_fee);
+    let (rejection_fee, _) = slice!(fstate.proposals.rejection_fee);
 
-    let validate_duration = |value: String| parse_duration(&value).ok();
-    let (initial_voting_period, set_initial_voting_period) =
-        slice!(fstate.proposals.initial_voting_period);
-    let (max_wait_deadline_extension, set_max_wait_deadline_extension) =
+    let (initial_voting_period, _) = slice!(fstate.proposals.initial_voting_period);
+    let (max_wait_deadline_extension, _) =
         slice!(fstate.proposals.maximum_wait_for_quiet_deadline_extension);
-    let (min_creation_stake, set_min_creation_stake) =
-        slice!(fstate.neurons.minimum_creation_stake);
-    let (min_dissolve_delay, set_min_dissolve_delay) = slice!(fstate.voting.minimum_dissolve_delay);
-    let (age, set_age) = slice!(fstate.voting.maximum_voting_power_bonuses.age.duration);
+    let (min_creation_stake, _) = slice!(fstate.neurons.minimum_creation_stake);
+    let (min_dissolve_delay, _) = slice!(fstate.voting.minimum_dissolve_delay);
+    let (age, _) = slice!(fstate.voting.maximum_voting_power_bonuses.age.duration);
 
-    let validate_percentage = |value: String| parse_percentage(&value).ok();
-    let (age_bonus, set_age_bonus) = slice!(fstate.voting.maximum_voting_power_bonuses.age.bonus);
-    let (min_participants, set_min_participants) = slice!(fstate.swap.minimum_participants);
+    let (age_bonus, _) = slice!(fstate.voting.maximum_voting_power_bonuses.age.bonus);
+    let (min_participants, _) = slice!(fstate.swap.minimum_participants);
 
-    let optional_tokens_validator = |value: String| {
-        if value.is_empty() {
-            return Some(None);
-        }
-        Some(Some(parse_tokens(&value).ok()?))
-    };
-    let (min_direct_participants_icp, set_min_direct_participants_icp) =
-        slice!(fstate.swap.minimum_direct_participation_icp);
-    let (max_direct_participants_icp, set_max_direct_participants_icp) =
-        slice!(fstate.swap.maximum_direct_participation_icp);
-    let (min_participants_icp, set_min_participants_icp) =
-        slice!(fstate.swap.minimum_participant_icp);
-    let (max_participants_icp, set_max_participants_icp) =
-        slice!(fstate.swap.maximum_participant_icp);
+    let (min_direct_participants_icp, _) = slice!(fstate.swap.minimum_direct_participation_icp);
+    let (max_direct_participants_icp, _) = slice!(fstate.swap.maximum_direct_participation_icp);
+    let (min_participants_icp, _) = slice!(fstate.swap.minimum_participant_icp);
+    let (max_participants_icp, _) = slice!(fstate.swap.maximum_participant_icp);
 
     // let set_restricted_country = move |value: String| {
     //     ctx.form_state.update(|f| {
@@ -505,18 +533,83 @@ pub fn CreateTokenSettings() -> impl IntoView {
     //     });
     // };
 
-    let form_ref = create_node_ref::<html::Form>();
-    let reset_settings = move |_| {
-        let Some(form) = form_ref() else { return };
-        form.reset();
-        // ctx.form_state.update(|f| f.reset_advanced_settings());
-        ctx.on_form_reset.notify();
-    };
+    let items = vec![
+        (
+            "Transaction Fee (e8s)".into(),
+            transaction_fee.get_untracked().e8s.unwrap_or(1).to_string(),
+            "Fee for sending, receiving token post creation (canister to canister sending)".into(),
+        ),
+        (
+            "Rejection Fee (Token)".into(),
+            format_tokens(&rejection_fee.get_untracked()),
+            "Fee for proposal rejection once we raised the SNS proposal".into(),
+        ),
+        (
+            "Initial Voting Period (days)".into(),
+            format_duration(&initial_voting_period.get_untracked()),
+            "Duration for which the proposal remains live".into(),
+        ),
+        (
+            "Maximum wait for quiet deadline extention (days)".into(),
+            format_duration(&max_wait_deadline_extension.get_untracked()),
+            "Till how far into the sns swap process you can increase the duration for the swap"
+                .into(),
+        ),
+        (
+            "Minimum creation stake (token)".into(),
+            format_tokens(&min_creation_stake.get_untracked()),
+            "Minimum amount of tokens (e8s) to stake in each neuron".into(),
+        ),
+        (
+            "Minimum dissolve delay (months)".into(),
+            format_duration(&min_dissolve_delay.get_untracked()),
+            "Time commitment you give that by when will you get the liquid token".into(),
+        ),
+        (
+            "Age (duration in years)".into(),
+            format_duration(&age.get_untracked()),
+            "Age at which participants will earn full bonus".into(),
+        ),
+        (
+            "Age (bonus %)".into(),
+            format_percentage(&age_bonus.get_untracked()),
+            "% reward post max. age is hit".into(),
+        ),
+        (
+            "Minimum participants".into(),
+            min_participants.get_untracked().to_string(),
+            "Min number of participant required for execution of SNS".into(),
+        ),
+        (
+            "Minimum direct participant icp".into(),
+            min_direct_participants_icp
+                .with_untracked(|p| p.as_ref().map(format_tokens))
+                .unwrap_or_default(),
+            "Min token when direct participant is taking part in swap".into(),
+        ),
+        (
+            "Maximum direct participant icp".into(),
+            max_direct_participants_icp
+                .with_untracked(|p| p.as_ref().map(format_tokens))
+                .unwrap_or_default(),
+            "Max token when direct participant is taking part in swap".into(),
+        ),
+        (
+            "Minimum participant icp".into(),
+            format_tokens(&min_participants_icp.get_untracked()),
+            "Min. ICP taken from treasury of YRAL".into(),
+        ),
+        (
+            "Maximum participant icp".into(),
+            format_tokens(&max_participants_icp.get_untracked()),
+            "Max. ICP token from treasury of YRAL".into(),
+        ),
+    ];
 
     view! {
         <Title text="ICPump - Create token" />
         <div
-            class="w-dvw min-h-dvh bg-black pt-4 flex flex-col gap-4 p-4"
+            class="w-dvw min-h-dvh bg-black pt-4 flex flex-col gap-3 px-4"
             style="padding-bottom:5rem;"
         >
             <TitleText justify_center=false>
@@ -528,137 +621,8 @@ pub fn CreateTokenSettings() -> impl IntoView {
                     </a>
                 </div>
             </TitleText>
-            <label class="flex flex-cols-2 cursor-pointer px-1">
-                <span class="flex-1 text-sm font-medium text-gray-400 dark:text-gray-500">
-                    Do you want to raise ICP?
-                </span>
-                <div>
-                    <span class="text-sm font-medium text-gray-400 dark:text-gray-500">
-                        Coming Soon!
-                    </span>
-                // <input type="checkbox" value="" class="sr-only peer" checked disabled />
-                // <div class="relative w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:bg-gray-600">
-                // <div class="absolute top-0.5 left-0.5 bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform peer-checked:translate-x-5 dark:border-gray-600"/>
-                // </div>
-                </div>
-            // <div class="relative w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-gray-600"></div>
-            </label>
-            <form _ref=form_ref>
-                <InputBox
-                    heading="Transaction Fee (e8s)"
-                    input_type="number"
-                    placeholder="100"
-                    updater=set_transaction_fee
-                    validator=validate_tokens_e8s
-                    initial_value=transaction_fee.get_untracked().e8s.unwrap_or(1).to_string()
-                />
-                <InputBox
-                    heading="Rejection Fee (Token)"
-                    placeholder="1 Token"
-                    updater=set_rejection_fee
-                    validator=validate_tokens
-                    initial_value=format_tokens(&rejection_fee.get_untracked())
-                />
-                <InputBox
-                    heading="Initial Voting Period (days)"
-                    placeholder="4 days"
-                    updater=set_initial_voting_period
-                    validator=validate_duration
-                    initial_value=format_duration(&initial_voting_period.get_untracked())
-                />
-                <InputBox
-                    heading="Maximum wait for quiet deadline extention (days)"
-                    placeholder="1 day"
-                    updater=set_max_wait_deadline_extension
-                    validator=validate_duration
-                    initial_value=format_duration(&max_wait_deadline_extension.get_untracked())
-                />
-
-                <InputBox
-                    heading="Minimum creation stake (token)"
-                    placeholder="1 token"
-                    updater=set_min_creation_stake
-                    validator=validate_tokens
-                    initial_value=format_tokens(&min_creation_stake.get_untracked())
-                />
-
-                <InputBox
-                    heading="Minimum dissolve delay (months)"
-                    placeholder="1 month"
-                    updater=set_min_dissolve_delay
-                    validator=validate_duration
-                    initial_value=format_duration(&min_dissolve_delay.get_untracked())
-                />
-
-                <InputBox
-                    heading="Age (duration in years)"
-                    placeholder="4 years"
-                    updater=set_age
-                    validator=validate_duration
-                    initial_value=format_duration(&age.get_untracked())
-                />
-
-                <InputBox
-                    heading="Age (bonus %)"
-                    placeholder="25%"
-                    updater=set_age_bonus
-                    validator=validate_percentage
-                    initial_value=format_percentage(&age_bonus.get_untracked())
-                />
-
-                <InputBox
-                    heading="Minimum participants"
-                    placeholder="57"
-                    input_type="number"
-                    updater=set_min_participants
-                    validator=non_empty_string_validator_for_u64
-                    initial_value=min_participants.get_untracked().to_string()
-                />
-                <InputBox
-                    heading="Minimum direct participant icp"
-                    placeholder="100,000 tokens"
-                    updater=set_min_direct_participants_icp
-                    validator=optional_tokens_validator
-                    initial_value=min_direct_participants_icp
-                        .with_untracked(|p| p.as_ref().map(format_tokens))
-                        .unwrap_or_default()
-                />
-                <InputBox
-                    heading="Maximum direct participant icp"
-                    placeholder="1000000 tokens"
-                    updater=set_max_direct_participants_icp
-                    validator=optional_tokens_validator
-                    initial_value=max_direct_participants_icp
-                        .with_untracked(|p| p.as_ref().map(format_tokens))
-                        .unwrap_or_default()
-                />
-                <InputBox
-                    heading="Minimum participant icp"
-                    placeholder="10 tokens"
-                    updater=set_min_participants_icp
-                    validator=validate_tokens
-                    initial_value=format_tokens(&min_participants_icp.get_untracked())
-                />
-                <InputBox
-                    heading="Maximum participant icp"
-                    placeholder="10,000 tokens"
-                    updater=set_max_participants_icp
-                    validator=validate_tokens
-                    initial_value=format_tokens(&max_participants_icp.get_untracked())
-                />
-            // <InputBox
-            // heading="Restricted Country"
-            // placeholder="Antarctica"
-            // updater=set_restricted_country
-            // validator=non_empty_string_validator
-            // />
-            </form>
-            <button
-                on:click=reset_settings
-                class="w-full flex justify-center underline text-sm text-white my-4 "
-            >
-                Reset to default
-            </button>
+            <CommingSoonBanner />
+            <AdvanceSettings items=items />
         </div>
     }
 }
