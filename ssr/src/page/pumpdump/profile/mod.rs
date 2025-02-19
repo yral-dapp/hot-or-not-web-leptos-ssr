@@ -86,16 +86,18 @@ async fn load_history(cans: Canisters<true>, page: u64) -> Result<(GameplayHisto
     use crate::utils::token::icpump::IcpumpTokenInfo;
     use yral_canisters_common::utils::token::RootType;
 
-    let items = match page {
-        0 => load_uncommitted_games(&cans).await?,
+    let (items, request_more) = match page {
+        0 => (load_uncommitted_games(&cans).await?, true),
         page => {
             let page = page - 1; // -1 to take into account the uncommitted games
             let limit = 25;
             let start_index = page * limit;
-            load_from_chain(&cans, start_index, limit).await?
+            let items = load_from_chain(&cans, start_index, limit).await?;
+            let request_more = !items.is_empty();
+
+            (items, request_more)
         }
     };
-    let had_items = !items.is_empty();
 
     let mut processed_items = Vec::with_capacity(items.len());
     for item in items {
@@ -141,7 +143,7 @@ async fn load_history(cans: Canisters<true>, page: u64) -> Result<(GameplayHisto
         })
     }
 
-    Ok((processed_items, had_items))
+    Ok((processed_items, request_more))
 }
 
 async fn load_uncommitted_games(cans: &Canisters<true>) -> Result<UncommittedGamesRes, String> {
