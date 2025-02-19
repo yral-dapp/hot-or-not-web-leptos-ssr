@@ -224,17 +224,6 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
                     let is_own_account = try_or_redirect_opt!(is_own_account()?);
                     Some(
                         view! {
-                            <Show when=move || !is_connected() && is_own_account>
-                                <div class="flex flex-col items-center py-5 w-full">
-                                    <div class="flex flex-row items-center w-9/12 md:w-5/12">
-                                        <ConnectLogin
-                                            show_login
-                                            login_text=if !show_pnd_page() {"Login to claim your COYNs"} else {"Login to claim your Cents"}
-                                            cta_location="wallet"
-                                        />
-                                    </div>
-                                </div>
-                            </Show>
                             <Header details=profile_details is_own_account=is_own_account/>
                         },
                     )
