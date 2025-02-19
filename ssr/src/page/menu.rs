@@ -258,7 +258,7 @@ pub fn Menu() -> impl IntoView {
                     </div>
                     <Show when=move || !is_connected()>
                         <div class="w-full px-8 md:w-4/12 xl:w-2/12">
-                            <ConnectLogin />
+                            <ConnectLogin show_login=false />
                         </div>
                         <div class="w-full px-8 text-center text-sm font-sans">
                             {r#"Your Yral account has been setup. Login with Google to not lose progress."#}
