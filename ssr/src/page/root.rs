@@ -1,5 +1,6 @@
 use candid::Principal;
 use leptos::*;
+use leptos_meta::*;
 use leptos_router::*;
 use rand_chacha::{
     rand_core::{RngCore, SeedableRng},
@@ -9,8 +10,9 @@ use yral_canisters_common::utils::time::current_epoch;
 
 use crate::{
     component::spinner::FullScreenSpinner,
+    page::pumpdump::PumpNDump,
     utils::{
-        host::show_cdao_page,
+        host::{show_cdao_page, show_pnd_page},
         ml_feed::{
             get_coldstart_feed_paginated, get_coldstart_nsfw_feed_paginated,
             get_posts_ml_feed_cache_paginated,
@@ -150,6 +152,7 @@ pub fn YralRootPage() -> impl IntoView {
     }
 
     view! {
+        <Title text="YRAL - Home" />
         <Suspense fallback=FullScreenSpinner>
             {move || {
                 target_post
@@ -172,7 +175,9 @@ pub fn YralRootPage() -> impl IntoView {
 
 #[component]
 pub fn RootPage() -> impl IntoView {
-    if show_cdao_page() {
+    if show_pnd_page() {
+        view! { <PumpNDump /> }
+    } else if show_cdao_page() {
         view! { <CreatorDaoRootPage /> }
     } else {
         view! { <YralRootPage /> }

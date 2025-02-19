@@ -1,14 +1,14 @@
+use leptos_meta::*;
+
 use crate::component::overlay::PopupOverlay;
 use crate::consts::ICPUMP_LISTING_PAGE_SIZE;
 use crate::consts::USER_PRINCIPAL_STORE;
 use crate::state::canisters::authenticated_canisters;
-use crate::state::canisters::unauth_canisters;
 use std::collections::VecDeque;
 
 use candid::Nat;
 use candid::Principal;
 use codee::string::FromToStringCodec;
-use futures::stream::FuturesOrdered;
 use futures::StreamExt;
 use html::Div;
 use leptos::*;
@@ -19,6 +19,7 @@ use leptos_use::use_media_query;
 use leptos_use::UseIntersectionObserverOptions;
 use serde::Deserialize;
 use serde::Serialize;
+use yral_canisters_common::utils::token::TokenOwner;
 use yral_canisters_common::Canisters;
 
 use crate::component::buttons::HighlightedLinkButton;
@@ -37,21 +38,56 @@ use crate::utils::token::icpump::TokenListItem;
 
 use crate::component::overlay::ShadowOverlay;
 use crate::page::wallet::airdrop::AirdropPopup;
-use yral_canisters_common::utils::token::TokenOwner;
 
 pub mod ai;
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
-struct ProcessedTokenListResponse {
-    token_details: TokenListItem,
-    root: Principal,
-    is_airdrop_claimed: bool,
-    token_owner: Option<TokenOwner>,
+pub struct ProcessedTokenListResponse {
+    pub token_details: TokenListItem,
+    pub root: Principal,
+    pub token_owner: Option<TokenOwner>,
+    pub is_airdrop_claimed: bool,
 }
 
-async fn process_token_list_item(
+#[cfg(any(feature = "local-bin", feature = "local-lib"))]
+pub async fn process_token_list_item(
     token_list_item: Vec<TokenListItem>,
     key_principal: Principal,
 ) -> Vec<ProcessedTokenListResponse> {
+    use yral_canisters_common::utils::token::TokenOwner;
+    token_list_item
+        .into_iter()
+        .map(|item| {
+            let root_principal = Principal::from_text(
+                item.link
+                    .trim_end_matches('/')
+                    .split('/')
+                    .last()
+                    .ok_or(ServerFnError::new("Not root given"))
+                    .unwrap_or_default(),
+            )
+            .unwrap_or(Principal::anonymous());
+            ProcessedTokenListResponse {
+                token_details: item,
+                root: root_principal,
+                token_owner: Some(TokenOwner {
+                    principal_id: key_principal,
+                    canister_id: key_principal,
+                }),
+                is_airdrop_claimed: false,
+            }
+        })
+        .collect()
+}
+
+#[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
+pub async fn process_token_list_item(
+    token_list_item: Vec<TokenListItem>,
+    key_principal: Principal,
+) -> Vec<ProcessedTokenListResponse> {
+    use crate::state::canisters::unauth_canisters;
+    use futures::stream::FuturesOrdered;
+
     let mut fut = FuturesOrdered::new();
 
     for token in token_list_item {
@@ -212,7 +248,9 @@ pub fn ICPumpListingFeed() -> impl IntoView {
 
 #[component]
 pub fn ICPumpLanding() -> impl IntoView {
+    // TODO: add the pump-ai icon here, as shown in the new ui for pnd game
     view! {
+        <Title text="ICPump - Home" />
         <div class="min-h-screen bg-black text-white  flex flex-col gap-4 px-4 md:px-8 py-6 font-kumbh">
             <div class="flex lg:flex-row gap-4 flex-col items-center justify-center">
                 <div class="lg:left-0 lg:top-0 flex items-center gap-4">
@@ -400,13 +438,13 @@ pub fn TokenCard(
 
             <div class="flex gap-4 justify-between items-center p-2">
                 <ActionButton label="Send".to_string() href=format!("/token/transfer/{root}")>
-                    <Icon class="w-full h-full" icon=SendIcon />
+                    <SendIcon class="w-full h-full" />
                 </ActionButton>
                 <ActionButton label="Buy/Sell".to_string() href="#".to_string() disabled=true>
                     <Icon class="w-full h-full" icon=ArrowLeftRightIcon />
                 </ActionButton>
                 <ActionButtonLink disabled=airdrop_disabled on:click=move |_|{airdrop_action.dispatch(());} label="Airdrop".to_string()>
-                    <Icon class="h-6 w-6" icon=AirdropIcon />
+                    <Icon class="h-full w-full" icon=AirdropIcon />
                 </ActionButtonLink>
                 <ActionButton label="Share".to_string() href="#".to_string()>
                     <Icon
@@ -522,7 +560,7 @@ pub fn ActionButton(
 ) -> impl IntoView {
     view! {
         <a
-            disabled=disabled
+            aria-disabled=move || disabled().to_string()
             href=href
             class=move || {
                 format!(
@@ -530,16 +568,16 @@ pub fn ActionButton(
                     if !disabled.get() {
                         "group-hover:text-white text-neutral-300"
                     } else {
-                        "group-hover:cursor-default text-neutral-600"
+                        "text-neutral-600 pointer-events-none"
                     },
                 )
             }
         >
-            <div class="w-[1.875rem] h-[1.875rem] flex items-center justify-center">
+            <div class="w-[1.125rem] h-[1.125rem] flex items-center justify-center">
                 {children()}
             </div>
 
-            <div>{label}</div>
+            <div class="text-[0.625rem] font-medium leading-4">{label}</div>
         </a>
     }
 }
@@ -555,7 +593,7 @@ pub fn ActionButtonLink(
             disabled=disabled
             class="flex flex-col gap-1 justify-center items-center text-xs transition-colors enabled:group-hover:text-white enabled:text-neutral-300 disabled:group-hover:cursor-default disabled:text-neutral-600"
         >
-            <div class="w-[1.875rem] h-[1.875rem] flex items-center justify-center">
+            <div class="w-[1.125rem] h-[1.125rem] flex items-center justify-center">
                 {children()}
             </div>
 

@@ -2,7 +2,7 @@
 mod server_impl;
 
 use crate::{
-    component::{back_btn::BackButton, title::Title, token_logo_sanitize::TokenLogoSanitize},
+    component::{back_btn::BackButton, title::TitleText, token_logo_sanitize::TokenLogoSanitize},
     state::canisters::{auth_canisters_store, authenticated_canisters},
     utils::{
         event_streaming::events::{
@@ -14,6 +14,7 @@ use crate::{
 };
 use candid::Principal;
 use leptos::*;
+use leptos_meta::*;
 use std::env;
 use yral_canisters_common::{utils::profile::ProfileDetails, Canisters, CanistersAuthWire};
 
@@ -362,8 +363,9 @@ pub fn CreateToken() -> impl IntoView {
     });
 
     view! {
+        <Title text="ICPump - Create token" />
         <div class="w-dvw min-h-dvh bg-black pt-4 flex flex-col gap-4" style="padding-bottom:6rem">
-            <Title justify_center=false>
+            <TitleText justify_center=false>
                 <div class="flex justify-between w-full">
                     <div></div>
                     <span class="font-bold justify-self-center">Create Meme Token</span>
@@ -371,7 +373,7 @@ pub fn CreateToken() -> impl IntoView {
                         <img src="/img/info.svg" />
                     </a>
                 </div>
-            </Title>
+            </TitleText>
             <div class="flex flex-col w-full px-6 md:px-8 gap-2 md:gap-8">
                 <div class="flex flex-row w-full gap-4  justify-between items-center">
                     <TokenImage />
@@ -512,11 +514,12 @@ pub fn CreateTokenSettings() -> impl IntoView {
     };
 
     view! {
+        <Title text="ICPump - Create token" />
         <div
             class="w-dvw min-h-dvh bg-black pt-4 flex flex-col gap-4 p-4"
             style="padding-bottom:5rem;"
         >
-            <Title justify_center=false>
+            <TitleText justify_center=false>
                 <div class="flex justify-between w-full" style="background: black">
                     <BackButton fallback=fallback_url />
                     <span class="font-bold justify-self-center">Settings</span>
@@ -524,7 +527,7 @@ pub fn CreateTokenSettings() -> impl IntoView {
                         <img src="/img/info.svg" />
                     </a>
                 </div>
-            </Title>
+            </TitleText>
             <label class="flex flex-cols-2 cursor-pointer px-1">
                 <span class="flex-1 text-sm font-medium text-gray-400 dark:text-gray-500">
                     Do you want to raise ICP?

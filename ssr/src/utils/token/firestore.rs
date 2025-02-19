@@ -16,7 +16,7 @@ use web_time::{Duration, SystemTime};
 
 use super::icpump::TokenListItem;
 
-#[wasm_bindgen(module = "/src/utils/token/icpump.js")]
+#[wasm_bindgen(module = "/src/utils/token/icpump-inline.js")]
 extern "C" {
     #[wasm_bindgen(js_namespace = console)]
     fn log(s: &str);

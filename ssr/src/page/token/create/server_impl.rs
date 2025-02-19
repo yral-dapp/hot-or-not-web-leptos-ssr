@@ -303,7 +303,7 @@ mod real_impl {
     use crate::auth::delegate_short_lived_identity;
     use crate::page::token::create::DeployedCdaoCanistersRes;
     use crate::utils::token::nsfw::NSFWInfo;
-    use yral_canisters_client::individual_user_template::Result7;
+    use yral_canisters_client::individual_user_template::Result8;
 
     use crate::consts::ICP_LEDGER_CANISTER_ID;
     use crate::utils::token::nsfw;
@@ -361,9 +361,9 @@ mod real_impl {
         // NSFW check
         let mut nsfw_info = NSFWInfo::default();
         if let Some(token_logo) = create_sns.token_logo.clone() {
-            nsfw_info = nsfw::get_nsfw_info(token_logo)
-                .await
-                .map_err(|e| ServerFnError::new(format!("failed to get nsfw info {e:?}")))?;
+            // nsfw_info = nsfw::get_nsfw_info(token_logo)
+            //     .await
+            //     .map_err(|e| ServerFnError::new(format!("failed to get nsfw info {e:?}")))?;
         }
 
         let cans = Canisters::from_wire(cans_wire, expect_context())?;
@@ -374,11 +374,11 @@ mod real_impl {
             .map_err(|e| ServerFnError::new(format!("{e:?}")))?;
 
         let deployed_cans = match res {
-            Result7::Ok(c) => {
+            Result8::Ok(c) => {
                 log::debug!("deployed canister {}", c.governance);
                 c
             }
-            Result7::Err(e) => return Err(ServerFnError::new(format!("{e:?}"))),
+            Result8::Err(e) => return Err(ServerFnError::new(format!("{e:?}"))),
         };
 
         let participate_in_swap_req = ParticipateInSwapRequest {

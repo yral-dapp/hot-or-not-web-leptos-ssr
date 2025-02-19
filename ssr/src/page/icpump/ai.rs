@@ -2,6 +2,7 @@ use std::collections::VecDeque;
 
 use leptos::*;
 use leptos_icons::*;
+use leptos_meta::*;
 use pulldown_cmark::{Options, Parser};
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::Closure;
@@ -207,7 +208,7 @@ pub fn ICPumpAiToken(details: TokenListItem) -> impl IntoView {
         <a
             href=details.link
             class="text-xs w-full p-2 flex gap-2 border border-gray-900 bg-transparent hover:bg-white/10 active:bg-white/5">
-          <div class="relative">
+          <div class="relative shrink-0">
             <img
                 src=details.logo
                 class=move || {
@@ -480,6 +481,7 @@ pub fn ICPumpAi() -> impl IntoView {
     });
 
     view! {
+        <Title text="ICPump - AI Chat" />
         <div class="h-screen w-screen block bg-black text-white">
           <div class="max-w-md flex flex-col relative w-full mx-auto h-full"
                 class:justify-center={move|| page_no.get() != 2}

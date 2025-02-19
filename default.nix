@@ -1,6 +1,6 @@
 {}:
 let
-  rev = "33c968004c363ed5cddaba71215fd28845f68705";
+  rev = "efc8686dfc086e7cde15504bcae3e4951303486a";
   nixpkgs = fetchTarball "https://github.com/NixOS/nixpkgs/archive/${rev}.tar.gz";
   # nixpkgs = fetchTarball "https://github.com/NixOS/nixpkgs/archive/master.tar.gz";
   pkgs = import nixpkgs { };
