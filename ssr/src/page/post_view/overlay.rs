@@ -11,7 +11,6 @@ use crate::{
     utils::{
         event_streaming::events::{LikeVideo, ShareVideo},
         report::ReportOption,
-        
         user::UserDetails,
         web::{copy_to_clipboard, share_url},
     },
@@ -21,8 +20,6 @@ use leptos::*;
 use leptos_icons::*;
 use leptos_use::use_window;
 use yral_canisters_common::utils::posts::PostDetails;
-
-use super::bet::HNGameOverlay;
 
 #[component]
 fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
@@ -160,46 +157,31 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
     });
 
     view! {
-        <div class="flex flex-col pointer-events-none flex-nowrap h-full justify-between pt-5 pb-20 px-2 md:px-6 w-full text-white absolute bottom-0 left-0 bg-transparent z-[4]">
-            <div class="flex pointer-events-auto flex-row gap-2 w-9/12 rounded-s-full bg-gradient-to-r from-black/25 via-80% via-black/10 items-center p-2">
-                <div class="w-fit flex">
+        <div class="flex gap-8 pointer-events-none flex-nowrap h-full justify-between items-end pt-5 pb-20 px-2 md:px-6 w-full text-white absolute bottom-0 left-0 bg-transparent z-[4]">
+            <div class="flex flex-col">
+                <div class="w-full flex items-center gap-2">
                     <a
                         href=profile_url.clone()
-                        class="w-10 md:w-12 h-10 md:h-12 overflow-clip rounded-full border-primary-600 border-2"
+                        class="w-10 md:w-12 h-10 md:h-12 shrink-0 overflow-clip rounded-full border-primary-600 border-2"
                     >
                         <img class="h-full w-full object-cover" src=post.propic_url />
                     </a>
+                    <span class="text-sm font-kumbh flex-1 font-semibold line-clamp-1">
+                        <a href=profile_url>{post.display_name}</a>
+                    </span>
                 </div>
-                <div class="flex flex-col justify-center min-w-0">
-                    <div class="flex flex-row text-xs md:text-sm lg:text-base gap-1">
-                        <span class="font-semibold truncate">
-                            <a href=profile_url>{post.display_name}</a>
-                        </span>
-                        <span class="font-semibold">"|"</span>
-                        <span class="flex flex-row gap-1 items-center">
-                            <Icon
-                                class="text-sm md:text-base lg:text-lg"
-                                icon=icondata::AiEyeOutlined
-                            />
-                            {post.views}
-                        </span>
-                    </div>
+                <div class="w-full">
                     <ExpandableText description=post.description />
                 </div>
             </div>
-            <div class="flex flex-col gap-2 w-full">
-                <div class="flex flex-col pointer-events-auto gap-6 self-end items-end text-2xl md:text-3xl lg:text-4xl">
-                    <LikeAndAuthCanLoader post=post_c.clone() />
-                    <button on:click=move |_| show_report.set(true)>
-                        <Icon class="drop-shadow-lg w-9 h-9" icon=ReportIcon />
-                    </button>
-                    <button on:click=move |_| share()>
-                        <Icon class="drop-shadow-lg w-9 h-9" icon=ShareAltIcon />
-                    </button>
-                </div>
-                <div class="w-full bg-transparent pointer-events-auto">
-                    <HNGameOverlay post=post_c />
-                </div>
+            <div class="flex flex-col pointer-events-auto gap-6 self-end items-end text-2xl md:text-3xl lg:text-4xl">
+                <LikeAndAuthCanLoader post=post_c.clone() />
+                <button on:click=move |_| show_report.set(true)>
+                    <Icon class="drop-shadow-lg w-9 h-9" icon=ReportIcon />
+                </button>
+                <button on:click=move |_| share()>
+                    <Icon class="drop-shadow-lg w-9 h-9" icon=ShareAltIcon />
+                </button>
             </div>
         </div>
         <Modal show=show_share>
@@ -272,9 +254,12 @@ fn ExpandableText(description: String) -> impl IntoView {
 
     view! {
         <span
-            class="text-xs md:text-sm lg:text-base w-full"
-            class:truncate=truncated
-
+            class=format!("text-xs md:text-sm lg:text-base text-neutral-200 w-full {}",
+            if truncated() {
+                "line-clamp-1"
+            } else {
+                ""
+            })
             on:click=move |_| truncated.update(|e| *e = !*e)
         >
             {description}
