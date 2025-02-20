@@ -127,15 +127,15 @@ pub fn App() -> impl IntoView {
             <Title text=app_state.name/>
 
             // Favicon
-            <Link rel="icon" type_="image/svg+xml" href=format!("/img/{}/favicon.svg", app_state.assets_path) />
-            <Link rel="shortcut icon" href=format!("/img/{}/favicon.ico", app_state.assets_path) />
-            <Link rel="apple-touch-icon" sizes="180x180" href=format!("/img/{}/favicon-apple.png", app_state.assets_path) />
+            <Link rel="icon" type_="image/svg+xml" href=format!("/{}/favicon.svg", app_state.asset_path()) />
+            <Link rel="shortcut icon" href=format!("/{}/favicon.ico", app_state.asset_path()) />
+            <Link rel="apple-touch-icon" sizes="180x180" href=format!("/{}/favicon-apple.png", app_state.asset_path()) />
 
             // Meta
             <Meta name="apple-mobile-web-app-title" content=app_state.name />
 
             // App manifest
-            <Link rel="manifest" href=format!("/img/{}/manifest.json", app_state.assets_path)/>
+            <Link rel="manifest" href=format!("/{}/manifest.json", app_state.asset_path())/>
 
             // GA4 Global Site Tag (gtag.js) - Google Analytics
             // G-6W5Q2MRX0E to test locally | G-PLNNETMSLM

@@ -33,7 +33,7 @@ pub fn ShareContent(
             <div class="flex flex-col gap-2 items-center">
                 <img
                     class="w-16 h-16 md:w-20 md:h-20"
-                    src=format!("/img/{}/favicon.svg", app_state.clone().unwrap().assets_path)
+                    src=format!("/{}/favicon.svg", app_state.clone().unwrap().asset_path())
                     alt=format!("{} Logo", app_state.clone().unwrap().name)
                 />
 
