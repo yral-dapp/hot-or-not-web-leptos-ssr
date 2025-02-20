@@ -3,6 +3,7 @@ use crate::page::token::TokenInfoParams;
 use crate::page::wallet::airdrop::AirdropPage;
 use crate::state::canisters::authenticated_canisters;
 
+use crate::utils::token::icpump::AirdropKVConfig;
 use crate::utils::token::icpump::IcpumpTokenInfo;
 use crate::{
     component::{
@@ -255,8 +256,15 @@ pub fn TokenInfo() -> impl IntoView {
                         .token_owner
                         .clone()
                         .ok_or(ServerFnError::new("Token owner not found for yral token"))?;
+
                     let is_airdrop_claimed = cans
-                        .get_airdrop_status(token_owner.canister_id, *root, cans.user_principal())
+                        .get_airdrop_status(
+                            token_owner.canister_id,
+                            *root,
+                            cans.user_principal(),
+                            m.timestamp,
+                            &AirdropKVConfig,
+                        )
                         .await?;
 
                     Some(TokenInfoResponse {
