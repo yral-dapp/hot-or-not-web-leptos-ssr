@@ -1,9 +1,12 @@
-use crate::utils::icon::icon_gen;
+use leptos::*;
 
-icon_gen!(
-    HeartFilledIcon,
-    view_box = "0 0 36 36",
-    r###"
-        <path d="M18.837 29.8787C18.378 30.0404 17.622 30.0404 17.163 29.8787C13.248 28.5438 4.5 22.9753 4.5 13.5371C4.5 9.37079 7.8615 6 12.006 6C14.463 6 16.6365 7.18652 18 9.02023C19.3635 7.18652 21.5505 6 23.994 6C28.1385 6 31.5 9.37079 31.5 13.5371C31.5 22.9753 22.752 28.5438 18.837 29.8787Z" fill="#E2017B" stroke="#E2017B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-    "###
-);
+#[component]
+pub fn HeartFilledIcon(
+    #[prop(into, optional, default = "w-full h-full".into())] class: String,
+) -> impl IntoView {
+    view! {
+      <svg class=format!("{}", class) viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M18.8 29.9a3 3 0 0 1-1.6 0c-4-1.4-12.7-7-12.7-16.4A7.5 7.5 0 0 1 18 9a7.5 7.5 0 0 1 13.5 4.5c0 9.5-8.7 15-12.7 16.4Z" fill="#E2017B" stroke="#E2017B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    }
+}

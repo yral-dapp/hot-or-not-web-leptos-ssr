@@ -27,11 +27,7 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
 
     let liked = create_rw_signal(None::<bool>);
     let icon = Signal::derive(move || {
-        if liked().unwrap_or_default() {
-            HeartFilledIcon
-        } else {
-            HeartIcon
-        }
+        
     });
 
     let post_canister = post.canister_id;
@@ -80,7 +76,17 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
                 on:click=move |_| like_toggle.dispatch(())
                 disabled=move || liking() || liked.with(|l| l.is_none())
             >
-                <Icon class="w-9 h-9" icon=icon />
+            {
+                if liked().unwrap_or_default() {
+                    view! {
+                        <HeartFilledIcon class="w-9 h-9 text-neutral-50" />
+                    }
+                } else {
+                    view! {
+                        <HeartIcon class="w-9 h-9 text-neutral-50 hover:text-neutral-200 active:text-neutral-100" />
+                    }
+                }
+            }
             </button>
         </div>
     }
@@ -177,10 +183,10 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
             <div class="flex flex-col pointer-events-auto gap-6 pb-3 self-end items-end text-2xl md:text-3xl lg:text-4xl">
                 <LikeAndAuthCanLoader post=post_c.clone() />
                 <button on:click=move |_| show_report.set(true)>
-                    <Icon class="w-9 h-9" icon=ReportIcon />
+                    <ReportIcon class="w-9 h-9 text-neutral-50 hover:text-neutral-200 active:text-neutral-100" />
                 </button>
                 <button on:click=move |_| share()>
-                    <Icon class="w-9 h-9" icon=ShareAltIcon />
+                    <ShareAltIcon class="w-9 h-9 text-neutral-50 hover:text-neutral-200 active:text-neutral-100" />
                 </button>
             </div>
         </div>
