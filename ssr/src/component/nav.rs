@@ -1,11 +1,11 @@
 use crate::{consts::USER_PRINCIPAL_STORE, state::app_type::AppType};
 
 use super::nav_icons::*;
+use crate::component::icons::home_icon::HomeIcon;
 use candid::Principal;
 use codee::string::FromToStringCodec;
 use leptos::*;
 use leptos_icons::*;
-use crate::component::icons::home_icon::HomeIcon;
 use leptos_router::*;
 use leptos_use::use_cookie;
 
