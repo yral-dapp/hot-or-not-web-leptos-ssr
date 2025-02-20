@@ -361,9 +361,9 @@ mod real_impl {
         // NSFW check
         let mut nsfw_info = NSFWInfo::default();
         if let Some(token_logo) = create_sns.token_logo.clone() {
-            // nsfw_info = nsfw::get_nsfw_info(token_logo)
-            //     .await
-            //     .map_err(|e| ServerFnError::new(format!("failed to get nsfw info {e:?}")))?;
+            nsfw_info = nsfw::get_nsfw_info(token_logo)
+                .await
+                .map_err(|e| ServerFnError::new(format!("failed to get nsfw info {e:?}")))?;
         }
 
         let cans = Canisters::from_wire(cans_wire, expect_context())?;
