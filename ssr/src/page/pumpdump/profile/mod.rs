@@ -100,7 +100,12 @@ async fn load_history(cans: Canisters<true>, page: u64) -> Result<(GameplayHisto
     let items = match items {
         yral_canisters_client::individual_user_template::Result21::Ok(res) => res,
         yral_canisters_client::individual_user_template::Result21::Err(err) => {
-            return Err(format!("Couldn't load played games: {err}"));
+            return match err.as_str() {
+                "ReachedEndOfItemsList" => {
+                    return Ok((Vec::new(), false));
+                },
+                _ => Err(format!("Couldn't load played games: {err}")),
+            };
         }
     };
     let had_items = !items.is_empty();
