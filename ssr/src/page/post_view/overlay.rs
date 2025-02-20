@@ -1,6 +1,5 @@
 use crate::{
     component::{
-        canisters_prov::{with_cans, WithAuthCans},
         icons::{
             heart_filled_icon::HeartFilledIcon, heart_icon::HeartIcon, report_icon::ReportIcon,
             share_alt_icon::ShareAltIcon,
@@ -12,7 +11,7 @@ use crate::{
     utils::{
         event_streaming::events::{LikeVideo, ShareVideo},
         report::ReportOption,
-        route::failure_redirect,
+        
         user::UserDetails,
         web::{copy_to_clipboard, share_url},
     },
@@ -21,7 +20,7 @@ use gloo::timers::callback::Timeout;
 use leptos::*;
 use leptos_icons::*;
 use leptos_use::use_window;
-use yral_canisters_common::{utils::posts::PostDetails, Canisters};
+use yral_canisters_common::utils::posts::PostDetails;
 
 use super::bet::HNGameOverlay;
 
@@ -40,7 +39,6 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
 
     let post_canister = post.canister_id;
     let post_id = post.post_id;
-    let initial_liked = (post.liked_by_user, post.likes);
     let canisters = auth_canisters_store();
 
     let like_toggle = create_action(move |&()| {
@@ -77,20 +75,6 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
         }
     });
 
-    let liked_fetch = with_cans(move |cans: Canisters<true>| async move {
-        if let Some(liked) = initial_liked.0 {
-            return (liked, initial_liked.1);
-        }
-
-        match cans.post_like_info(post_canister, post_id).await {
-            Ok(liked) => liked,
-            Err(e) => {
-                failure_redirect(e);
-                (false, likes.try_get_untracked().unwrap_or_default())
-            }
-        }
-    });
-
     let liking = like_toggle.pending();
 
     view! {
@@ -101,14 +85,6 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
             >
                 <Icon class="w-9 h-9" icon=icon />
             </button>
-            <span class="text-sm md:text-md">{likes}</span>
-            <WithAuthCans with=liked_fetch let:d>
-                {move || {
-                    likes.set(d.1.1);
-                    liked.set(Some(d.1.0))
-                }}
-
-            </WithAuthCans>
         </div>
     }
 }
