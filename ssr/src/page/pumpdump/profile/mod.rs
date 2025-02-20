@@ -103,7 +103,7 @@ async fn load_history(cans: Canisters<true>, page: u64) -> Result<(GameplayHisto
             return match err.as_str() {
                 "ReachedEndOfItemsList" => {
                     return Ok((Vec::new(), false));
-                },
+                }
                 _ => Err(format!("Couldn't load played games: {err}")),
             };
         }
