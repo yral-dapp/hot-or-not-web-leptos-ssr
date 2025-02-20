@@ -1,7 +1,10 @@
 use crate::{
     component::{
         canisters_prov::{with_cans, WithAuthCans},
-        hn_icons::HomeFeedShareIcon,
+        icons::{
+            heart_filled_icon::HeartFilledIcon, heart_icon::HeartIcon, report_icon::ReportIcon,
+            share_alt_icon::ShareAltIcon,
+        },
         modal::Modal,
         option::SelectOption,
     },
@@ -27,11 +30,11 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
     let likes = create_rw_signal(post.likes);
 
     let liked = create_rw_signal(None::<bool>);
-    let icon_name = Signal::derive(move || {
+    let icon = Signal::derive(move || {
         if liked().unwrap_or_default() {
-            "/img/heart-icon-liked.svg"
+            HeartFilledIcon
         } else {
-            "/img/heart-icon-white.svg"
+            HeartIcon
         }
     });
 
@@ -96,7 +99,7 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
                 on:click=move |_| like_toggle.dispatch(())
                 disabled=move || liking() || liked.with(|l| l.is_none())
             >
-                <img src=icon_name style="width: 1em; height: 1em;" />
+                <Icon class="w-9 h-9" icon=icon />
             </button>
             <span class="text-sm md:text-md">{likes}</span>
             <WithAuthCans with=liked_fetch let:d>
@@ -210,15 +213,12 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
             </div>
             <div class="flex flex-col gap-2 w-full">
                 <div class="flex flex-col pointer-events-auto gap-6 self-end items-end text-2xl md:text-3xl lg:text-4xl">
-                    <button on:click=move |_| show_report.set(true)>
-                        <Icon class="drop-shadow-lg" icon=icondata::TbMessageReport />
-                    </button>
-                    <a href="/refer-earn">
-                        <Icon class="drop-shadow-lg" icon=icondata::AiGiftFilled />
-                    </a>
                     <LikeAndAuthCanLoader post=post_c.clone() />
+                    <button on:click=move |_| show_report.set(true)>
+                        <Icon class="drop-shadow-lg w-9 h-9" icon=ReportIcon />
+                    </button>
                     <button on:click=move |_| share()>
-                        <Icon class="drop-shadow-lg" icon=HomeFeedShareIcon />
+                        <Icon class="drop-shadow-lg w-9 h-9" icon=ShareAltIcon />
                     </button>
                 </div>
                 <div class="w-full bg-transparent pointer-events-auto">
