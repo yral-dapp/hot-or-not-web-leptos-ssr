@@ -177,10 +177,10 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
             <div class="flex flex-col pointer-events-auto gap-6 pb-3 self-end items-end text-2xl md:text-3xl lg:text-4xl">
                 <LikeAndAuthCanLoader post=post_c.clone() />
                 <button on:click=move |_| show_report.set(true)>
-                    <Icon class="drop-shadow-lg w-9 h-9" icon=ReportIcon />
+                    <Icon class="w-9 h-9" icon=ReportIcon />
                 </button>
                 <button on:click=move |_| share()>
-                    <Icon class="drop-shadow-lg w-9 h-9" icon=ShareAltIcon />
+                    <Icon class="w-9 h-9" icon=ShareAltIcon />
                 </button>
             </div>
         </div>
