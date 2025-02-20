@@ -360,8 +360,6 @@ async fn get_airdrop_config_from_kv() -> Result<AirdropConfig, ServerFnError> {
         )
     })?;
 
-    println!("DEBUG ----> url and token are {} {}", url, token);
-
     let kv_config = KVConfig::new(url, token);
 
     #[derive(Display)]
