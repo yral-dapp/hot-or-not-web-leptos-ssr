@@ -3,6 +3,7 @@ use leptos_icons::*;
 
 use crate::{
     component::overlay::*,
+    state::app_state::AppState,
     utils::{
         host::get_host,
         web::{copy_to_clipboard, share_url},
@@ -25,13 +26,15 @@ pub fn ShareContent(
     let copy_clipboard = move |_| {
         copy_to_clipboard(&copy);
     };
+
+    let app_state = use_context::<AppState>();
     view! {
         <div class="flex flex-col gap-6 items-center p-6 w-full h-full bg-white rounded-lg shadow-lg">
             <div class="flex flex-col gap-2 items-center">
                 <img
                     class="w-16 h-16 md:w-20 md:h-20"
-                    src="/img/android-chrome-384x384.png"
-                    alt="YRAL Logo"
+                    src=format!("/{}.svg", app_state.clone().unwrap().favicon_filename)
+                    alt=format!("{} Logo", app_state.clone().unwrap().name)
                 />
 
                 <span class="text-xl font-semibold text-center md:text-2xl">Share this app</span>
@@ -138,10 +141,7 @@ pub fn ShareButtonWithFallbackPopup(
 
     view! {
         <button on:click=on_share_click class=class>
-            <div class="rounded-full p-[6px] bg-neutral-800">
-                <Icon icon=ShareIcon />
-            </div>
-
+            <Icon  class="h-6 w-6 text-neutral-300" icon=ShareIcon />
         </button>
         <PopupOverlay show=show_fallback>
             <ShareContent
