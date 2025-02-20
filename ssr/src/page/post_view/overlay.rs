@@ -26,7 +26,6 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
     let likes = create_rw_signal(post.likes);
 
     let liked = create_rw_signal(None::<bool>);
-    let icon = Signal::derive(move || {});
 
     let post_canister = post.canister_id;
     let post_id = post.post_id;
