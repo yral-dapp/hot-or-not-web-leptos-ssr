@@ -37,6 +37,15 @@
     }
 }
 
+.hide-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
 .tada {
     animation-name: tada;
     animation-duration: 1s;
