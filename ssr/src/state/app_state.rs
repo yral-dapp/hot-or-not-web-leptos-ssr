@@ -7,8 +7,7 @@ pub struct AppState {
     pub name: &'static str,
     pub description: &'static str,
     pub theme_color: &'static str,
-    pub manifest_path: &'static str,
-    pub favicon_filename: &'static str,
+    pub assets_path: &'static str,
 }
 
 impl AppState {
@@ -20,8 +19,7 @@ impl AppState {
                 name: "Hot Or Not",
                 description: "Vote on the hottest content and earn rewards",
                 theme_color: "#FF4500",
-                manifest_path: "hotornot.json",
-                favicon_filename: "hotornot",
+                assets_path: "hotornot",
             },
             AppType::ICPump => Self {
                 app_type: AppType::ICPump,
@@ -29,8 +27,7 @@ impl AppState {
                 name: "ICPump",
                 description: "Create and trade tokens on the Internet Computer",
                 theme_color: "#4CAF50",
-                manifest_path: "icpump.json",
-                favicon_filename: "icpump",
+                assets_path: "icpump",
             },
             AppType::YRAL => Self {
                 app_type: AppType::YRAL,
@@ -38,8 +35,7 @@ impl AppState {
                 name: "YRAL",
                 description: "The First App to Host Creative Short Video Challenges",
                 theme_color: "#E20479",
-                manifest_path: "yral.json",
-                favicon_filename: "yral",
+                assets_path: "yral",
             },
             AppType::Pumpdump => Self {
                 app_type: AppType::Pumpdump,
@@ -47,13 +43,8 @@ impl AppState {
                 name: "Pump and Dump",
                 description: "Pump it, Dump it, Cash it",
                 theme_color: "#000000",
-                manifest_path: "pumpdump.json",
-                favicon_filename: "pumpdump",
+                assets_path: "pumpdump",
             },
         }
-    }
-
-    pub fn manifest_config(&self) -> &'static str {
-        self.manifest_path
     }
 }
