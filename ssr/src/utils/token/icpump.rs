@@ -349,7 +349,20 @@ async fn get_airdrop_config_from_kv() -> Result<AirdropConfig, ServerFnError> {
     use yral_config_cf_kv::KVConfig;
     use yral_config_keys::key_derive;
 
-    let kv_config = KVConfig::new("http://localhost:8787".to_string(), "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJob3Qtb3Itbm90LXdlYi1sZXB0b3Mtc3NyIiwiY29tcGFueSI6ImdvYmF6emluZ2EifQ.HW3WQWxepMNJr7jLjOkqsoi5efWqRb9n8l-g-wFrhJyiRRF1NL0OtBZduXcjdQ52aQo9wL2OWT3QIXQ4Zx7rDg".to_string());
+    let url = env::var("CF_KV_FETCH_URL").map_err(|e| {
+        ServerFnError::ServerError::<std::convert::Infallible>(
+            "CF_KV_FETCH_URL is not set".to_string(),
+        )
+    })?;
+    let token = env::var("CF_KV_FETCH_TOKEN").map_err(|e| {
+        ServerFnError::ServerError::<std::convert::Infallible>(
+            "CF_KV_FETCH_TOKEN is not set".to_string(),
+        )
+    })?;
+
+    println!("DEBUG ----> url and token are {} {}", url, token);
+
+    let kv_config = KVConfig::new(url, token);
 
     #[derive(Display)]
     #[display("CycleDuration")]
@@ -382,8 +395,6 @@ async fn get_airdrop_config_from_kv() -> Result<AirdropConfig, ServerFnError> {
 pub struct AirdropKVConfig;
 
 impl AirdropConfigProvider for AirdropKVConfig {
-    type Error = ServerFnError;
-
     async fn get_airdrop_config(&self) -> AirdropConfig {
         get_airdrop_config_from_kv().await.unwrap()
     }
