@@ -158,7 +158,7 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
 
     view! {
         <div class="flex gap-8 pointer-events-none flex-nowrap h-full justify-between items-end pt-5 pb-20 px-2 md:px-6 w-full text-white absolute bottom-0 left-0 bg-transparent z-[4]">
-            <div class="flex flex-col">
+            <div class="flex flex-col gap-2">
                 <div class="w-full flex items-center gap-2">
                     <a
                         href=profile_url.clone()
@@ -174,7 +174,7 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
                     <ExpandableText description=post.description />
                 </div>
             </div>
-            <div class="flex flex-col pointer-events-auto gap-6 self-end items-end text-2xl md:text-3xl lg:text-4xl">
+            <div class="flex flex-col pointer-events-auto gap-6 pb-3 self-end items-end text-2xl md:text-3xl lg:text-4xl">
                 <LikeAndAuthCanLoader post=post_c.clone() />
                 <button on:click=move |_| show_report.set(true)>
                     <Icon class="drop-shadow-lg w-9 h-9" icon=ReportIcon />
