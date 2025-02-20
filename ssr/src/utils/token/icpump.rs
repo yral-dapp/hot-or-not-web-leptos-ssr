@@ -9,7 +9,9 @@ use futures::StreamExt;
 
 use leptos::*;
 
-use yral_grpc_traits::{TokenInfoProvider, TokenListItemFS, TokenListItemFSWithTimestamp};
+use yral_grpc_traits::{
+    AirdropConfig, AirdropConfigProvider, TokenInfoProvider, TokenListItemFS
+};
 
 #[cfg(feature = "ssr")]
 #[derive(Debug, Clone)]
@@ -34,11 +36,11 @@ pub struct TokenListItem {
 }
 
 #[server]
-pub async fn get_token_by_id(token_id: String) -> Result<TokenListItemFSWithTimestamp, ServerFnError> {
+pub async fn get_token_by_id(
+    token_id: String,
+) -> Result<TokenListItemFS, ServerFnError> {
     #[cfg(feature = "firestore")]
     {
-        use speedate::DateTime;
-        
         let firestore_db: firestore::FirestoreDb = expect_context();
         const TEST_COLLECTION_NAME: &str = "tokens-list";
 
@@ -55,10 +57,8 @@ pub async fn get_token_by_id(token_id: String) -> Result<TokenListItemFSWithTime
                     "Token not found".to_string(),
                 )
             })?;
-
-        let timestamp = DateTime::parse_str(&token.created_at).unwrap().timestamp();
-
-        Ok(TokenListItemFSWithTimestamp::from_token_list_item_fs(token, timestamp))
+    
+        Ok(token)
     }
 
     #[cfg(not(feature = "firestore"))]
@@ -163,6 +163,7 @@ pub async fn get_paginated_token_list_with_limit(
                 formatted_created_at: "69 mins".to_string(),
                 link: "http://localhost:3000/token/info/53fza-eeaaa-aaaaa-qacda-cai/".to_string(),
                 is_nsfw: false,
+                timestamp: 0,
             }])
         } else {
             Ok(vec![])
@@ -334,7 +335,56 @@ pub struct IcpumpTokenInfo;
 impl TokenInfoProvider for IcpumpTokenInfo {
     type Error = ServerFnError;
 
-    async fn get_token_by_id(&self, token_id: String) -> Result<TokenListItemFSWithTimestamp, ServerFnError> {
+    async fn get_token_by_id(
+        &self,
+        token_id: String,
+    ) -> Result<TokenListItemFS, ServerFnError> {
         get_token_by_id(token_id).await
+    }
+}
+
+#[server]
+async fn get_airdrop_config_from_kv() -> Result<AirdropConfig, ServerFnError> {
+    use derive_more::Display;
+    use yral_config_cf_kv::KVConfig;
+    use yral_config_keys::key_derive;
+
+    let kv_config = KVConfig::new("http://localhost:8787".to_string(), "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJob3Qtb3Itbm90LXdlYi1sZXB0b3Mtc3NyIiwiY29tcGFueSI6ImdvYmF6emluZ2EifQ.HW3WQWxepMNJr7jLjOkqsoi5efWqRb9n8l-g-wFrhJyiRRF1NL0OtBZduXcjdQ52aQo9wL2OWT3QIXQ4Zx7rDg".to_string());
+
+    #[derive(Display)]
+    #[display("CycleDuration")]
+    pub struct CycleDuration;
+    key_derive!(CycleDuration => u64|120);
+
+    #[derive(Display)]
+    #[display("ClaimLimit")]
+    pub struct ClaimLimit;
+    key_derive!(ClaimLimit => usize|3);
+
+    let cycle_duration = kv_config.get(CycleDuration).await.map_err(|e| {
+        ServerFnError::ServerError::<std::convert::Infallible>(
+            "cannot fetch airdrop cycle_duration from cf kv".to_string(),
+        )
+    })?;
+    let claim_limit = kv_config.get(ClaimLimit).await.map_err(|e| {
+        ServerFnError::ServerError::<std::convert::Infallible>(
+            "cannot fetch airdrop claim_limit from cf kv".to_string(),
+        )
+    })?;
+ 
+    Ok(AirdropConfig {
+        cycle_duration,
+        claim_limit,
+    })
+}
+
+#[derive(Clone, Copy)]
+pub struct AirdropKVConfig;
+
+impl AirdropConfigProvider for AirdropKVConfig {
+    type Error = ServerFnError;
+
+    async fn get_airdrop_config(&self) -> AirdropConfig {
+        get_airdrop_config_from_kv().await.unwrap()
     }
 }
