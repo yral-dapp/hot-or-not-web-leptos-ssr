@@ -27,8 +27,6 @@ use crate::component::icons::airdrop_icon::AirdropIcon;
 use crate::component::icons::arrow_left_right_icon::ArrowLeftRightIcon;
 use crate::component::icons::chevron_right_icon::ChevronRightIcon;
 use crate::component::icons::eye_hide_icon::EyeHiddenIcon;
-use crate::component::icons::send_icon::SendIcon;
-use crate::component::icons::share_icon::ShareIcon;
 use crate::component::share_popup::ShareContent;
 use crate::utils::host::get_host;
 use crate::utils::token::firestore::init_firebase;
@@ -341,7 +339,6 @@ pub fn TokenCard(
     let show_nsfw = create_rw_signal(false);
 
     let share_link = create_rw_signal("".to_string());
-    let share_link_coin = format!("/token/info/{}/{}", root, details.user_id);
     let symbol = details.token_symbol.clone();
     let share_message = move || {
         format!(
@@ -394,12 +391,12 @@ pub fn TokenCard(
     view! {
         <div
             class:tada=is_new_token
-            class="flex flex-col gap-2 py-3 px-3 w-full text-xs rounded-lg transition-colors md:px-4 hover:bg-gradient-to-b group bg-neutral-900/90 font-kumbh hover:from-neutral-600 hover:to-neutral-800"
+            class="flex flex-col w-full rounded-lg"
         >
-            <div class="flex gap-3 items-stretch">
+            <div class="flex gap-2 p-3">
                 <div
                     style="box-shadow: 0px 0px 4px rgba(255, 255, 255, 0.16);"
-                    class="overflow-hidden relative w-[7rem] h-[7rem] rounded-[4px] shrink-0"
+                    class="overflow-hidden relative w-28 h-28 rounded-lg shrink-0"
                 >
                     <Show when=move || details.is_nsfw && !show_nsfw.get()>
                         <button
@@ -418,11 +415,11 @@ pub fn TokenCard(
                         class="w-full h-full"
                     />
                 </div>
-                <div class="flex flex-col justify-between overflow-hidden w-full">
+                <div class="flex flex-1 flex-col justify-between overflow-hidden w-full">
                     <div class="flex flex-col gap-2">
                         <div class="flex gap-4 justify-between items-center w-full text-lg">
                             <span class="font-medium shrink line-clamp-1">{details.name.clone()}</span>
-                            <span class="font-bold shrink-0">{symbol}</span>
+                            <span class="font-bold shrink-0">${symbol}</span>
                         </div>
                         <span class="text-sm line-clamp-2 text-neutral-400">
                             {details.description.clone()}
@@ -434,30 +431,15 @@ pub fn TokenCard(
                     </div>
                 </div>
             </div>
-
-            <div class="flex gap-4 justify-between items-center p-2">
-                <ActionButton label="Send".to_string() href=format!("/token/transfer/{root}")>
-                    <SendIcon class="w-full h-full" />
-                </ActionButton>
-                <ActionButton label="Buy/Sell".to_string() href="#".to_string() disabled=true>
-                    <Icon class="w-full h-full" icon=ArrowLeftRightIcon />
-                </ActionButton>
-                <ActionButtonLink disabled=airdrop_disabled on:click=move |_|{airdrop_action.dispatch(());} label="Airdrop".to_string()>
-                    <Icon class="h-full w-full" icon=AirdropIcon />
-                </ActionButtonLink>
-                <ActionButton label="Share".to_string() href="#".to_string()>
-                    <Icon
-                        class="w-full h-full"
-                        icon=ShareIcon
-                        on:click=move |_| {
-                            pop_up.set(true);
-                            share_link.set(share_link_coin.clone())
-                        }
-                    />
-                </ActionButton>
-                <ActionButton label="Details".to_string() href=details.link>
-                    <Icon class="w-full h-full" icon=ChevronRightIcon />
-                </ActionButton>
+            <div class="border-t-[1px] border-neutral-800 flex w-full items-center">
+                <a href="#".to_string() class="flex py-4 items-center flex-1 border-r-[1px] border-neutral-800 gap-3">
+                    <Icon class="w-4 h-4" icon=ArrowLeftRightIcon />
+                    <div class="text-sm font-kumbh text-neutral-300">Swap</div>
+                </a>
+                <button disabled=airdrop_disabled on:click=move |_|{airdrop_action.dispatch(());} class="flex py-4 items-center flex-1 gap-3">
+                    <Icon class="w-4 h-4" icon=AirdropIcon />
+                    <div class="text-sm font-kumbh text-neutral-300">Claim Airdrop</div>
+                </button>
             </div>
             <PopupOverlay show=pop_up>
                 <ShareContent
