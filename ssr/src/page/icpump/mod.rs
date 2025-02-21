@@ -391,7 +391,7 @@ pub fn TokenCard(
     view! {
         <div
             class:tada=is_new_token
-            class="flex flex-col w-full rounded-lg"
+            class="flex flex-col w-full rounded-lg bg-neutral-900"
         >
             <div class="flex gap-2 p-3">
                 <div
@@ -432,13 +432,13 @@ pub fn TokenCard(
                 </div>
             </div>
             <div class="border-t-[1px] border-neutral-800 flex w-full items-center">
-                <a href="#".to_string() class="flex py-4 items-center flex-1 border-r-[1px] border-neutral-800 gap-3">
-                    <Icon class="w-4 h-4" icon=ArrowLeftRightIcon />
-                    <div class="text-sm font-kumbh text-neutral-300">Swap</div>
+                <a href="#".to_string() class="flex py-4 text-neutral-300 bg-transparent hover:bg-neutral-950 active:bg-black items-center justify-center flex-1 border-r-[1px] border-neutral-800 gap-2">
+                    <Icon class="w-5 h-5" icon=ArrowLeftRightIcon />
+                    <div class="text-sm font-kumbh">Swap</div>
                 </a>
-                <button disabled=airdrop_disabled on:click=move |_|{airdrop_action.dispatch(());} class="flex py-4 items-center flex-1 gap-3">
-                    <Icon class="w-4 h-4" icon=AirdropIcon />
-                    <div class="text-sm font-kumbh text-neutral-300">Claim Airdrop</div>
+                <button disabled=airdrop_disabled on:click=move |_|{airdrop_action.dispatch(());} class="flex text-neutral-300 py-4 items-center hover:bg-neutral-950 active:bg-black justify-center flex-1 gap-2">
+                    <Icon class="w-5 h-5" icon=AirdropIcon />
+                    <div class="text-sm font-kumbh">Claim Airdrop</div>
                 </button>
             </div>
             <PopupOverlay show=pop_up>
