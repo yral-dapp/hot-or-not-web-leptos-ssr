@@ -84,7 +84,7 @@ pub fn PlayingCard() -> impl IntoView {
                 <div
                     class="flex relative items-center gap-6 justify-center w-full"
                 >
-                    <audio _ref=audio_ref preload="auto" src="/pnd-tap.mp3"/>
+                    <audio _ref=audio_ref preload="auto" src="/img/pumpdump/tap.mp3"/>
                     <DumpButton audio_ref />
 
                     <PumpButton audio_ref />
