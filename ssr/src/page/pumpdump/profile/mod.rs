@@ -5,13 +5,16 @@ use leptos::{
     SignalUpdateUntracked,
 };
 use leptos_use::{use_infinite_scroll_with_options, UseInfiniteScrollOptions};
-use yral_canisters_client::individual_user_template::{
-    GameDirection, IndividualUserTemplate, ParticipatedGameInfo,
-};
+use yral_canisters_client::individual_user_template::IndividualUserTemplate;
 use yral_canisters_common::{utils::profile::ProfileDetails, Canisters};
+use yral_pump_n_dump_common::{
+    rest::{CompletedGameInfo, UncommittedGameInfo, UncommittedGamesRes},
+    GameDirection,
+};
 
 use crate::{
     component::{back_btn::BackButton, skeleton::Skeleton, title::TitleText},
+    consts::PUMP_AND_DUMP_WORKER_URL,
     page::pumpdump::{convert_e8s_to_cents, GameResult},
     state::canisters::authenticated_canisters,
     try_or_redirect,
@@ -46,20 +49,15 @@ struct GameplayHistoryItem {
 
 type GameplayHistory = Vec<GameplayHistoryItem>;
 
-fn compute_result(info: ParticipatedGameInfo) -> GameResult {
+fn compute_result(info: impl Into<CompletedGameInfo>) -> GameResult {
+    let info = info.into();
     let user_direction = match info.pumps.cmp(&info.dumps) {
         std::cmp::Ordering::Greater => GameDirection::Pump,
         std::cmp::Ordering::Less => GameDirection::Dump,
         std::cmp::Ordering::Equal => return GameResult::Win { amount: 0 },
     };
 
-    // TODO: make game direction comparable
-    let m = |d: GameDirection| match d {
-        GameDirection::Pump => 0,
-        GameDirection::Dump => 1,
-    };
-
-    if m(user_direction) == m(info.game_direction) {
+    if user_direction == info.outcome {
         GameResult::Win {
             amount: convert_e8s_to_cents(info.reward),
         }
@@ -89,26 +87,18 @@ async fn load_history(cans: Canisters<true>, page: u64) -> Result<(GameplayHisto
     use crate::utils::token::icpump::IcpumpTokenInfo;
     use yral_canisters_common::utils::token::RootType;
 
-    let limit = 25;
-    let start_index = page * limit;
-    let items = cans
-        .individual_user(cans.user_canister())
-        .await
-        .played_game_info_with_pagination_cursor(start_index, limit)
-        .await
-        .map_err(|err| format!("Couldn't load gameplay history: {err}"))?;
-    let items = match items {
-        yral_canisters_client::individual_user_template::Result21::Ok(res) => res,
-        yral_canisters_client::individual_user_template::Result21::Err(err) => {
-            return match err.as_str() {
-                "ReachedEndOfItemsList" => {
-                    return Ok((Vec::new(), false));
-                }
-                _ => Err(format!("Couldn't load played games: {err}")),
-            };
+    let (items, request_more) = match page {
+        0 => (load_uncommitted_games(&cans).await?, true),
+        page => {
+            let page = page - 1; // -1 to take into account the uncommitted games
+            let limit = 25;
+            let start_index = page * limit;
+            let items = load_from_chain(&cans, start_index, limit).await?;
+            let request_more = !items.is_empty();
+
+            (items, request_more)
         }
     };
-    let had_items = !items.is_empty();
 
     let mut processed_items = Vec::with_capacity(items.len());
     for item in items {
@@ -116,7 +106,7 @@ async fn load_history(cans: Canisters<true>, page: u64) -> Result<(GameplayHisto
             .token_metadata_by_root_type(
                 &IcpumpTokenInfo,
                 Some(cans.user_canister()),
-                RootType::Other(item.token_root),
+                RootType::Other(item.token_root()),
             )
             .await
             .ok()
@@ -144,12 +134,61 @@ async fn load_history(cans: Canisters<true>, page: u64) -> Result<(GameplayHisto
                 .token_owner
                 .expect("owner to exist if backend returns it")
                 .principal_id,
-            root: item.token_root,
-            state: GameState::ResultDeclared(compute_result(item)),
+            root: item.token_root(),
+            state: match item {
+                UncommittedGameInfo::Completed(item) => {
+                    GameState::ResultDeclared(compute_result(item))
+                }
+                UncommittedGameInfo::Pending { .. } => GameState::Playing,
+            },
         })
     }
 
-    Ok((processed_items, had_items))
+    Ok((processed_items, request_more))
+}
+
+async fn load_uncommitted_games(cans: &Canisters<true>) -> Result<UncommittedGamesRes, String> {
+    let uncommitted_games = PUMP_AND_DUMP_WORKER_URL
+        .join(&format!("/uncommitted_games/{}", cans.user_canister()))
+        .expect("url to be valid");
+
+    let uncommitted_games: UncommittedGamesRes = reqwest::get(uncommitted_games)
+        .await
+        .map_err(|err| format!("Coulnd't load bets: {err}"))?
+        .json()
+        .await
+        .map_err(|err| format!("Couldn't parse bets out of repsonse: {err}"))?;
+
+    Ok(uncommitted_games)
+}
+
+async fn load_from_chain(
+    cans: &Canisters<true>,
+    start_index: u64,
+    limit: u64,
+) -> Result<UncommittedGamesRes, String> {
+    let items = cans
+        .individual_user(cans.user_canister())
+        .await
+        .played_game_info_with_pagination_cursor(start_index, limit)
+        .await
+        .map_err(|err| format!("Couldn't load gameplay history: {err}"))?;
+    let items = match items {
+        yral_canisters_client::individual_user_template::Result21::Ok(res) => res,
+        yral_canisters_client::individual_user_template::Result21::Err(err) => {
+            return match err.as_str() {
+                "ReachedEndOfItemsList" => {
+                    return Ok(Default::default());
+                }
+                _ => Err(format!("Couldn't load played games: {err}")),
+            };
+        }
+    };
+    let items = items
+        .into_iter()
+        .map(|item| UncommittedGameInfo::Completed(item.into()))
+        .collect();
+    Ok(items)
 }
 
 type GameplayHistorySignal = RwSignal<GameplayHistory>;
@@ -202,13 +241,16 @@ fn GameplayHistoryCard(#[prop(into)] details: GameplayHistoryItem) -> impl IntoV
         let root = details.root;
         let (state_label, amount) = match state {
             GameState::ResultDeclared(result) => match result {
-                GameResult::Win { amount } => ("win", amount),
-                GameResult::Loss { amount } => ("loss", amount),
+                GameResult::Win { amount } => ("win", Some(amount)),
+                GameResult::Loss { amount } => ("loss", Some(amount)),
             },
-            _ => unreachable!("gameplay history only includes games with result declared"),
+            GameState::Playing => ("pending", None),
         };
 
-        format!("/?root={root}&state={state_label}&amount={amount}")
+        match amount {
+            Some(amount) => format!("/?root={root}&state={state_label}&amount={amount}"),
+            None => format!("/?root={root}&state={state_label}"),
+        }
     };
     view! {
         <a href=href>
