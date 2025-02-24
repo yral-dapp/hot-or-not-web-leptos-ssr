@@ -23,7 +23,7 @@ use crate::page::icpump::{ActionButton, ActionButtonLink};
 use crate::page::wallet::airdrop::AirdropPopup;
 use crate::state::canisters::authenticated_canisters;
 use crate::utils::host::{get_host, show_pnd_page};
-use crate::utils::token::icpump::IcpumpTokenInfo;
+use crate::utils::token::icpump::{AirdropKVConfig, IcpumpTokenInfo};
 use crate::{component::infinite_scroller::InfiniteScroller, state::canisters::unauth_canisters};
 
 use leptos::*;
@@ -46,6 +46,7 @@ pub fn TokenList(user_principal: Principal, user_canister: Principal) -> impl In
         user_canister,
         user_principal,
         nsfw_detector: IcpumpTokenInfo,
+        airdrop_config_provider: AirdropKVConfig,
         exclude: if show_pnd_page() {
             vec![RootType::COYNS]
         } else {

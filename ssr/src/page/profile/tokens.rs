@@ -4,6 +4,7 @@ use leptos::*;
 use yral_canisters_client::individual_user_template::DeployedCdaoCanisters;
 use yral_canisters_client::individual_user_template::IndividualUserTemplate;
 
+use crate::utils::token::icpump::AirdropKVConfig;
 use crate::{
     component::{bullet_loader::BulletLoader, token_confetti_symbol::TokenConfettiSymbol},
     page::wallet::tokens::WalletCard,
@@ -32,12 +33,14 @@ async fn token_metadata(
     let governance = deployed_cans.governance;
     let ledger = deployed_cans.ledger;
     let index = deployed_cans.index;
+    let swap = deployed_cans.swap;
     cans.get_token_metadata(
         &IcpumpTokenInfo,
         Some(user_principal),
         deployed_cans.root,
         governance,
         ledger,
+        swap,
         index,
     )
     .await
@@ -60,8 +63,14 @@ async fn process_profile_tokens(
                     (token.token_owner.clone(), token.root)
                 {
                     Some(
-                        cans.get_airdrop_status(token_owner.canister_id, root, user_principal)
-                            .await?,
+                        cans.get_airdrop_status(
+                            token_owner.canister_id,
+                            root,
+                            user_principal,
+                            token.timestamp,
+                            &AirdropKVConfig,
+                        )
+                        .await?,
                     )
                 } else {
                     None

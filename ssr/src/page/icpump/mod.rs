@@ -85,7 +85,7 @@ pub async fn process_token_list_item(
     token_list_item: Vec<TokenListItem>,
     key_principal: Principal,
 ) -> Vec<ProcessedTokenListResponse> {
-    use crate::state::canisters::unauth_canisters;
+    use crate::{state::canisters::unauth_canisters, utils::token::icpump::AirdropKVConfig};
     use futures::stream::FuturesOrdered;
 
     let mut fut = FuturesOrdered::new();
@@ -108,10 +108,17 @@ pub async fn process_token_list_item(
                 .get_token_owner(root_principal)
                 .await
                 .unwrap_or_default();
+
             let is_airdrop_claimed = if let Some(token_owner) = &token_owner_canister_id {
-                cans.get_airdrop_status(token_owner.canister_id, root_principal, key_principal)
-                    .await
-                    .unwrap_or(true)
+                cans.get_airdrop_status(
+                    token_owner.canister_id,
+                    root_principal,
+                    key_principal,
+                    Some(token.timestamp),
+                    &AirdropKVConfig,
+                )
+                .await
+                .unwrap_or(true)
             } else {
                 true
             };
