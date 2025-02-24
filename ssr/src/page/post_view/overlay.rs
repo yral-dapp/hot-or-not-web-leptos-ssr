@@ -161,8 +161,8 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
 
     view! {
         <div class="flex gap-8 from-black bg-gradient-to-t to-transparent pointer-events-none flex-nowrap justify-between items-end pt-5 pb-20 pl-4 pr-5 md:px-6 w-full text-white absolute bottom-0 left-0 z-[4]">
-            <div class="flex flex-col gap-2">
-                <div class="w-full flex items-center pointer-events-auto gap-2">
+            <div class="flex flex-col gap-2 pointer-events-auto">
+                <div class="w-full flex items-center gap-2">
                     <a
                         href=profile_url.clone()
                         class="w-10 md:w-12 h-10 md:h-12 shrink-0 overflow-clip rounded-full border-primary-600 border-2"
