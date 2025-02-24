@@ -1,4 +1,4 @@
-use leptos::*;
+use leptos::prelude::*;
 use leptos_icons::Icon;
 
 use crate::utils::icon::icon_gen;

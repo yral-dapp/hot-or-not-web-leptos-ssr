@@ -1,13 +1,12 @@
 use candid::Principal;
 use ic_agent::Identity;
 use leptos::html::Input;
-use leptos::{create_effect, MaybeSignal, ReadSignal, RwSignal, SignalGetUntracked};
-use leptos::{create_signal, ev, expect_context, html::Video, NodeRef, SignalGet, SignalSet};
+use leptos::prelude::Signal;
 use leptos_use::{use_event_listener, use_timeout_fn, UseTimeoutFnReturn};
 use serde_json::json;
 use sns_validation::pbs::sns_pb::SnsInitPayload;
 use wasm_bindgen::JsCast;
-
+use leptos::{ev, prelude::*};
 use super::EventHistory;
 use crate::component::auth_providers::ProviderKind;
 use crate::state::auth::account_connected_reader;
@@ -23,6 +22,7 @@ use yral_canisters_common::{
     utils::{posts::PostDetails, profile::ProfileDetails},
     Canisters,
 };
+use leptos::html::Video;
 
 pub enum AnalyticsEvent {
     VideoWatched(VideoWatched),
@@ -57,7 +57,7 @@ pub struct VideoWatched;
 impl VideoWatched {
     pub fn send_event(
         &self,
-        vid_details: MaybeSignal<Option<PostDetails>>,
+        vid_details: Signal<Option<PostDetails>>,
         container_ref: NodeRef<Video>,
     ) {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
@@ -65,8 +65,8 @@ impl VideoWatched {
             let (is_connected, _) = account_connected_reader();
 
             // video_viewed - analytics
-            let (video_watched, set_video_watched) = create_signal(false);
-            let (full_video_watched, set_full_video_watched) = create_signal(false);
+            let (video_watched, set_video_watched) = signal(false);
+            let (full_video_watched, set_full_video_watched) = signal(false);
 
             let cans_store: RwSignal<Option<Canisters<true>>> = auth_canisters_store();
 
@@ -348,7 +348,7 @@ impl VideoUploadUploadButtonClicked {
                 .map(|v| v.checked())
                 .unwrap_or_default();
 
-            create_effect(move |_| {
+            Effect::new(move |_| {
                 send_event_ssr_spawn(
                     "video_upload_upload_button_clicked".to_string(),
                     json!({

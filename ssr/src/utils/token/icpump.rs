@@ -4,8 +4,8 @@ use std::env;
 use futures::stream::BoxStream;
 use futures::StreamExt;
 
-use leptos::*;
-
+use leptos::prelude::*;
+use leptos::logging;
 use yral_grpc_traits::{TokenInfoProvider, TokenListItemFS};
 
 #[cfg(feature = "ssr")]

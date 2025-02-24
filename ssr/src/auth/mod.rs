@@ -7,7 +7,8 @@ use ic_agent::{
     Identity,
 };
 use k256::elliptic_curve::JwkEcKey;
-use leptos::{server, server_fn::codec::Json, ServerFnError};
+use leptos::{server, server_fn::codec::Json};
+use leptos::prelude::*;
 use rand_chacha::rand_core::OsRng;
 use serde::{Deserialize, Serialize};
 use web_time::Duration;

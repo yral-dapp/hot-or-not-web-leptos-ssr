@@ -1,8 +1,7 @@
 use candid::Nat;
-use leptos::{component, view, IntoView, Params, SignalGetUntracked};
-use leptos_router::{use_query, Params};
+use leptos::{component, view, IntoView, Params, prelude::*};
 use yral_canisters_common::utils::token::balance::TokenBalance;
-
+use leptos_router::{hooks::use_query, params::Params};
 use crate::try_or_redirect_opt;
 
 #[derive(Debug, PartialEq, Eq, Clone, Params)]

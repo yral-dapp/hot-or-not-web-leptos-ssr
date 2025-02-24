@@ -6,17 +6,19 @@ pub mod txn;
 use crate::component::icons::notification_icon::NotificationIcon;
 use crate::state::app_state::AppState;
 use crate::utils::host::show_pnd_page;
+use crate::utils::send_wrap;
 use crate::{
     component::share_popup::ShareButtonWithFallbackPopup, state::canisters::unauth_canisters,
 };
 use candid::Principal;
-use leptos::*;
+use leptos::prelude::*;
 use leptos_meta::*;
-use leptos_router::Params;
-use leptos_router::{use_params, Redirect};
+use leptos_router::components::Redirect;
+use leptos_router::hooks::use_params;
 use tokens::TokenList;
 use yral_canisters_common::utils::profile::ProfileDetails;
 use yral_canisters_common::Canisters;
+use leptos_router::params::Params;
 
 use crate::{
     component::{canisters_prov::AuthCansProvider, connect::ConnectLogin},
@@ -140,7 +142,7 @@ pub fn Wallet() -> impl IntoView {
     view! {
         {move || {
             match param_principal() {
-                Some(principal) => view! { <WalletImpl principal /> },
+                Some(principal) => view! { <WalletImpl principal /> }.into_any(),
                 None => {
                     view! {
                         <AuthCansProvider let:cans>
@@ -150,7 +152,7 @@ pub fn Wallet() -> impl IntoView {
                                 }
                             }}
                         </AuthCansProvider>
-                    }
+                    }.into_any()
                 }
             }
         }}
@@ -162,9 +164,10 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
 
     let auth_cans = authenticated_canisters();
 
-    let profile_info_res = auth_cans.derive(
+    let profile_info_res = Resource::new(
         move || principal,
-        move |cans_wire, principal| async move {
+        move |principal| send_wrap(async move {
+            let cans_wire = auth_cans.await;
             let cans_wire = cans_wire?;
             let canisters = Canisters::from_wire(cans_wire, expect_context())?;
 
@@ -177,21 +180,21 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
             let user = canisters.individual_user(user_canister).await;
             let user_details = user.get_profile_details().await?;
             Ok::<ProfileDetails, ServerFnError>(user_details.into())
-        },
+        }),
     );
 
-    let is_own_account = auth_cans.derive(
+    let is_own_account = Resource::new(
         move || principal,
-        move |cans_wire, principal| async move {
-            let cans_wire = cans_wire?;
+        move |principal| async move {
+            let cans_wire = auth_cans.await?;
             let canisters = Canisters::from_wire(cans_wire, expect_context())?;
             Ok::<_, ServerFnError>(canisters.user_principal() == principal)
         },
     );
 
-    let canister_id = create_resource(
+    let canister_id = Resource::new(
         move || principal,
-        move |principal| async move {
+        move |principal| send_wrap(async move {
             let canisters = unauth_canisters();
             let Some(user_canister) = canisters
                 .get_individual_canister_by_user_principal(principal)
@@ -201,7 +204,7 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
             };
             Ok((user_canister, principal))
         },
-    );
+    ));
 
     let app_state = use_context::<AppState>();
     let page_title = app_state.unwrap().name.to_owned() + " - Wallet";
@@ -210,8 +213,8 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
              <Title text=page_title />
              <Suspense fallback=move || view! { <HeaderLoading/> }>
                 {move || {
-                    let profile_details = try_or_redirect_opt!(profile_info_res()?);
-                    let is_own_account = try_or_redirect_opt!(is_own_account()?);
+                    let profile_details = try_or_redirect_opt!(profile_info_res.get()?);
+                    let is_own_account = try_or_redirect_opt!(is_own_account.get()?);
                     Some(
                         view! {
                             <Header details=profile_details is_own_account=is_own_account/>
@@ -222,8 +225,8 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
             <div class="flex h-full w-full flex-col items-center justify-center max-w-md mx-auto px-4 gap-4">
                 <Suspense fallback=move || view! { <ProfileCardLoading/> }>
                     {move || {
-                        let profile_details = try_or_redirect_opt!(profile_info_res()?);
-                        let is_own_account = try_or_redirect_opt!(is_own_account()?);
+                        let profile_details = try_or_redirect_opt!(profile_info_res.get()?);
+                        let is_own_account = try_or_redirect_opt!(is_own_account.get()?);
                         Some(
                             view! { <ProfileCard details=profile_details is_connected=is_connected() is_own_account=is_own_account /> },
                         )
@@ -231,7 +234,7 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
                 </Suspense>
                 <Suspense>
                     {move || {
-                        let canister_id = try_or_redirect_opt!(canister_id() ?);
+                        let canister_id = try_or_redirect_opt!(canister_id.get() ?);
                         Some(
                             view! {
                                 <div class="font-kumbh self-start pt-3 font-bold text-lg text-white">
@@ -244,5 +247,5 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
                 </Suspense>
             </div>
         </div>
-    }
+    }.into_any()
 }

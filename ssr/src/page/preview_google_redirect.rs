@@ -1,6 +1,6 @@
 use ic_agent::identity::DelegatedIdentity;
-use leptos::*;
-use leptos_router::use_query;
+use leptos::prelude::*;
+use leptos_router::hooks::use_query;
 use serde::{Deserialize, Serialize};
 use yral_types::delegated_identity::DelegatedIdentityWire;
 
@@ -64,9 +64,8 @@ async fn preview_google_auth_redirector(redirect_url: String) -> Result<(), Serv
 #[component]
 pub fn PreviewGoogleRedirector() -> impl IntoView {
     let host = get_host();
-    let google_redirect = create_local_resource(
-        || {},
-        move |_| {
+    let google_redirect = LocalResource::new(
+        move || {
             let host = host.clone();
             async move {
                 let url = get_google_auth_url(host).await?;
@@ -75,8 +74,9 @@ pub fn PreviewGoogleRedirector() -> impl IntoView {
         },
     );
 
-    create_local_resource(google_redirect, |url_res| async {
-        let url_res = url_res.transpose()?;
+    LocalResource::new(move || async move {
+        let url_res = google_redirect.get();
+        let url_res = url_res.map(|u| u.take()).transpose()?;
         if let Some(redirect_url) = url_res {
             preview_google_auth_redirector(redirect_url).await?;
             return Ok(());
@@ -84,8 +84,8 @@ pub fn PreviewGoogleRedirector() -> impl IntoView {
         Ok::<(), ServerFnError>(())
     });
 
-    let do_close = create_rw_signal(false);
-    create_effect(move |_| {
+    let do_close = RwSignal::new(false);
+    Effect::new(move |_| {
         if !do_close() {
             return;
         }
@@ -96,7 +96,7 @@ pub fn PreviewGoogleRedirector() -> impl IntoView {
     view! {
         <Suspense>
             {move || {
-                if let Some(Err(err)) = google_redirect() {
+                if let Some(Err(err)) = google_redirect.get().map(|res| res.take()) {
                     log::info!("Error Redirecting {}", err)
                 }
                 None::<()>
@@ -146,13 +146,13 @@ async fn preview_handle_oauth_query(
 
 #[component]
 pub fn PreviewGoogleRedirectHandler() -> impl IntoView {
-    let query = use_query::<OAuthQuery>();
-    let identity_resource = create_local_resource(query, |query_res| async move {
-        if let Err(e) = query_res {
+    let query_res = use_query::<OAuthQuery>();
+    let identity_resource = LocalResource::new(move|| async move {
+        if let Err(e) = query_res.get() {
             return Err(format!("Invalid Params {}", e));
         }
 
-        let oauth_query = query_res.unwrap();
+        let oauth_query = query_res.get().unwrap();
 
         let delegated_identity_wire = preview_handle_oauth_query(oauth_query)
             .await
@@ -167,7 +167,7 @@ pub fn PreviewGoogleRedirectHandler() -> impl IntoView {
         <Loading text="Logging out...".to_string()>
             <Suspense>
                 {move || {
-                    identity_resource().map(|identity_res| view! { <IdentitySender identity_res/> })
+                    identity_resource.get().map(|identity_res| view! { <IdentitySender identity_res=identity_res.take()/> })
                 }}
 
             </Suspense>

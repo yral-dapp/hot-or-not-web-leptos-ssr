@@ -1,12 +1,12 @@
-use leptos::*;
+use leptos::prelude::*;
 
 #[component]
 pub fn SelectOption(#[prop(into)] is: String, value: ReadSignal<String>) -> impl IntoView {
-    let is_copy = is.clone();
-
+    let display = is.clone();
+    let val = is.clone();
     view! {
-        <option value=is.clone() selected=move || value() == is_copy>
-            {is}
+        <option value=val selected=move || value() == is>
+            {display}
         </option>
     }
 }

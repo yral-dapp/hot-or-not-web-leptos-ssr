@@ -1,6 +1,6 @@
 use leptos::{html::Audio, *};
 use yral_pump_n_dump_common::GameDirection;
-
+use leptos::prelude::*;
 use crate::page::pumpdump::RunningGameRes;
 
 fn non_visual_feedback(audio_ref: NodeRef<Audio>) {
@@ -10,7 +10,6 @@ fn non_visual_feedback(audio_ref: NodeRef<Audio>) {
     }
     #[cfg(feature = "hydrate")]
     {
-        use leptos::window;
         use wasm_bindgen::JsValue;
         use web_sys::js_sys::Reflect;
 
@@ -34,7 +33,7 @@ fn non_visual_feedback(audio_ref: NodeRef<Audio>) {
 pub fn DumpButton(audio_ref: NodeRef<Audio>) -> impl IntoView {
     let game_res: RunningGameRes = expect_context();
     let counter = move || {
-        let Some(Ok(ctx)) = game_res.get() else {
+        let Some(Ok(ctx)) = game_res.get().map(|res| res.take()) else {
             return "-".to_string();
         };
         ctx.with_running_data(|v| v.dumps.to_string())
@@ -43,7 +42,7 @@ pub fn DumpButton(audio_ref: NodeRef<Audio>) -> impl IntoView {
 
     let onclick = move |_| {
         non_visual_feedback(audio_ref);
-        let Some(Ok(ctx)) = game_res.get() else {
+        let Some(Ok(ctx)) = game_res.get().map(|res| res.take()) else {
             return;
         };
         ctx.send_bet(GameDirection::Dump);
@@ -110,7 +109,7 @@ pub fn MockDumpButton() -> impl IntoView {
 pub fn PumpButton(audio_ref: NodeRef<Audio>) -> impl IntoView {
     let game_res: RunningGameRes = expect_context();
     let counter = move || {
-        let Some(Ok(ctx)) = game_res.get() else {
+        let Some(Ok(ctx)) = game_res.get().map(|res| res.take()) else {
             return "-".to_string();
         };
         ctx.with_running_data(|v| v.pumps.to_string())
@@ -119,7 +118,7 @@ pub fn PumpButton(audio_ref: NodeRef<Audio>) -> impl IntoView {
 
     let onclick = move |_| {
         non_visual_feedback(audio_ref);
-        let Some(Ok(ctx)) = game_res.get() else {
+        let Some(Ok(ctx)) = game_res.get().map(|res| res.take()) else {
             return;
         };
         ctx.send_bet(GameDirection::Pump);

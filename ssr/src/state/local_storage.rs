@@ -1,6 +1,6 @@
 use candid::Principal;
 use codee::string::JsonSerdeCodec;
-use leptos::{Signal, WriteSignal};
+use leptos::prelude::*;
 use leptos_use::storage::use_local_storage;
 
 use crate::consts::REFERRER_STORE;

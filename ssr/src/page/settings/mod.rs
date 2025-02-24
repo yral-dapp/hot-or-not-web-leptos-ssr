@@ -5,9 +5,10 @@ use crate::component::{social::*, toggle::Toggle};
 use crate::consts::NOTIFICATIONS_ENABLED_STORE;
 use crate::state::auth::account_connected_reader;
 use crate::utils::notifications::get_token_for_principal;
+use crate::utils::send_wrap;
 use codee::string::FromToStringCodec;
 use leptos::html::Input;
-use leptos::*;
+use leptos::{ev, prelude::*};
 use leptos_icons::*;
 use leptos_use::storage::use_local_storage;
 use leptos_use::use_event_listener;
@@ -112,9 +113,9 @@ fn EnableNotifications(user_details: ProfileDetails) -> impl IntoView {
 
     let (notifs_enabled, set_notifs_enabled, _) =
         use_local_storage::<bool, FromToStringCodec>(NOTIFICATIONS_ENABLED_STORE);
-    let toggle_ref = create_node_ref::<Input>();
+    let toggle_ref = NodeRef::<Input>::new();
 
-    let on_token_click = create_action(move |()| async move {
+    let on_token_click: Action<(), (), LocalStorage> = Action::new_unsync(move |()| async move {
         get_token_for_principal(user_details.principal.to_string()).await;
     });
 

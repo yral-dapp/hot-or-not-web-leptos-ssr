@@ -1,3 +1,5 @@
+use leptos::prelude::window;
+
 use crate::utils::host::show_pnd_condition;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -24,7 +26,6 @@ impl AppType {
     pub fn select() -> Self {
         #[cfg(feature = "hydrate")]
         {
-            use leptos::window;
             let hostname = window().location().hostname().unwrap_or_default();
             AppType::from_host(&hostname)
         }

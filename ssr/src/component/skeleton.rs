@@ -1,4 +1,4 @@
-use leptos::{component, view, IntoView};
+use leptos::prelude::*;
 
 /// Component for creating skeleton loaders, Usage is similar to shadcn's skeleton.
 /// Every instance of Skeleton shimmers in unison across the page, and doesn't

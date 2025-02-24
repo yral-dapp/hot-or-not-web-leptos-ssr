@@ -1,7 +1,7 @@
-use leptos::*;
+use leptos::prelude::*;
 use leptos_icons::*;
 use leptos_use::{use_intersection_observer_with_options, UseIntersectionObserverOptions};
-
+use leptos::html;
 use crate::page::post_view::video_loader::{BgView, VideoViewForQueue};
 
 use crate::state::audio_state::AudioState;
@@ -25,7 +25,7 @@ pub fn MuteIconOverlay(show_mute_icon: RwSignal<bool>) -> impl IntoView {
 }
 
 #[component]
-pub fn ScrollingPostView<F: Fn() -> V + Clone + 'static, V>(
+pub fn ScrollingPostView<F: Fn() -> V + Clone + 'static + Send + Sync, V>(
     video_queue: RwSignal<Vec<PostDetails>>,
     current_idx: RwSignal<usize>,
     #[prop(optional)] fetch_next_videos: Option<F>,
@@ -40,12 +40,12 @@ pub fn ScrollingPostView<F: Fn() -> V + Clone + 'static, V>(
         ..
     } = AudioState::get();
 
-    let scroll_root: NodeRef<html::Div> = create_node_ref();
+    let scroll_root: NodeRef<html::Div> = NodeRef::new();
 
     let var_name = view! {
         <div class="h-full w-full overflow-hidden overflow-y-auto">
             <div
-                _ref=scroll_root
+                node_ref=scroll_root
                 class="snap-mandatory snap-y overflow-y-scroll h-dvh w-dvw bg-black"
                 style:scroll-snap-points-y="repeat(100vh)"
             >
@@ -56,7 +56,7 @@ pub fn ScrollingPostView<F: Fn() -> V + Clone + 'static, V>(
                     each=move || video_queue().into_iter().enumerate()
                     key=move |(_, details)| (details.canister_id, details.post_id)
                     children=move |(queue_idx, _details)| {
-                        let container_ref = create_node_ref::<html::Div>();
+                        let container_ref = NodeRef::<html::Div>::new();
                         let next_videos = fetch_next_videos.clone();
                         use_intersection_observer_with_options(
                             container_ref,
@@ -82,8 +82,8 @@ pub fn ScrollingPostView<F: Fn() -> V + Clone + 'static, V>(
                                 .thresholds(vec![0.83])
                                 .root(Some(scroll_root)),
                         );
-                        create_effect(move |_| {
-                            let Some(container) = container_ref() else {
+                        Effect::new(move |_| {
+                            let Some(container) = container_ref.get() else {
                                 return;
                             };
                             if current_idx() == queue_idx && recovering_state.get_untracked() {
@@ -91,11 +91,11 @@ pub fn ScrollingPostView<F: Fn() -> V + Clone + 'static, V>(
                                 recovering_state.set(false);
                             }
                         });
-                        let show_video = create_memo(move |_| {
+                        let show_video = Memo::new(move |_| {
                             queue_idx.abs_diff(current_idx()) <= 20
                         });
                         view! {
-                            <div _ref=container_ref class="snap-always snap-end w-full h-full">
+                            <div node_ref=container_ref class="snap-always snap-end w-full h-full">
                                 <Show when=show_video>
                                     <BgView video_queue current_idx idx=queue_idx>
                                         <VideoViewForQueue
@@ -107,7 +107,7 @@ pub fn ScrollingPostView<F: Fn() -> V + Clone + 'static, V>(
                                     </BgView>
                                 </Show>
                             </div>
-                        }
+                        }.into_any()
                     }
                 />
 
@@ -121,5 +121,5 @@ pub fn ScrollingPostView<F: Fn() -> V + Clone + 'static, V>(
             </div>
         </div>
     };
-    var_name
+    var_name.into_any()
 }

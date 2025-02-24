@@ -1,4 +1,4 @@
-use leptos::{component, create_signal, expect_context, view, IntoView, SignalGet, SignalSet};
+use leptos::{component, either::Either, prelude::*};
 use leptos_icons::Icon;
 
 use crate::page::pumpdump::{
@@ -11,7 +11,7 @@ use crate::page::pumpdump::{
 
 #[component]
 pub fn OnboardingPopup() -> impl IntoView {
-    let (step, set_step) = create_signal(0);
+    let (step, set_step) = signal(0);
     let show_onboarding: ShowOnboarding = expect_context();
     view! {
         <div class="fade-in fixed inset-0 bg-black/50 flex py-16 justify-center z-50 p-4">
@@ -37,7 +37,7 @@ pub fn OnboardingPopup() -> impl IntoView {
                     </button>
                 </div>
                 {move || if step.get() == 0 {
-                    view! {
+                    Either::Left(view! {
                         <img src="/img/pumpndump.png" alt="Logo" class="h-32 pt-8" />
                         <div class="flex flex-col gap-5 items-center">
                             <div class="font-bold text-xl">Shape the Future of Tokens!</div>
@@ -57,9 +57,9 @@ pub fn OnboardingPopup() -> impl IntoView {
                             >
                             <Icon class="size-6 -mb-0.5" icon=icondata::FiChevronRight />
                         </div>
-                    }
+                    }.into_any())
                 } else {
-                    view! {
+                    Either::Right(view! {
                         <div class="flex flex-col text-sm gap-5 items-center text-center">
                             <div class="font-bold text-xl">How it works?</div>
                             <div class="flex gap-2 justify-between items-center">
@@ -110,7 +110,7 @@ pub fn OnboardingPopup() -> impl IntoView {
                             class="w-full px-5 py-3 rounded-lg flex items-center transition-all justify-center gap-8 font-kumbh font-bold"
                             style:background="linear-gradient(73deg, #DA539C 0%, #E2017B 33%, #5F0938 100%)"
                         >Ok, got it!</button>
-                    }
+                    }.into_any())
                 }}
             </div>
         </div>

@@ -1,8 +1,8 @@
 use candid::Principal;
-use leptos::*;
+use leptos::prelude::*;
 use yral_canisters_common::{Canisters, CanistersAuthWire};
 
-use crate::utils::{MockPartialEq, ParentResource};
+use crate::utils::MockPartialEq;
 use yral_types::delegated_identity::DelegatedIdentityWire;
 
 pub fn unauth_canisters() -> Canisters<false> {
@@ -17,10 +17,7 @@ pub async fn do_canister_auth(
     Ok(canisters.into())
 }
 
-pub type AuthCansResource = ParentResource<
-    MockPartialEq<Option<DelegatedIdentityWire>>,
-    Result<CanistersAuthWire, ServerFnError>,
->;
+pub type AuthCansResource = Resource<Result<CanistersAuthWire, ServerFnError>>;
 
 /// The Authenticated Canisters helper resource
 /// prefer using helpers from [crate::component::canisters_prov]

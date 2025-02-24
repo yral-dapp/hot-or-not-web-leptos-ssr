@@ -1,16 +1,15 @@
 use std::sync::LazyLock;
-
+use leptos_use::use_window;
+use leptos::prelude::*;
 pub fn get_host() -> String {
     #[cfg(feature = "hydrate")]
     {
-        use leptos::window;
-        window().location().host().unwrap().to_string()
+        use_window().as_ref().unwrap().location().host().unwrap().to_string()
     }
 
     #[cfg(not(feature = "hydrate"))]
     {
         use axum::http::request::Parts;
-        use leptos::{expect_context, use_context};
 
         let parts: Option<Parts> = use_context();
         if parts.is_none() {

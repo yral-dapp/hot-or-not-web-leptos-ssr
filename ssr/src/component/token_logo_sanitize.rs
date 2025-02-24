@@ -1,15 +1,15 @@
-use leptos::*;
+use leptos::{ev, prelude::*, reactive::wrappers::write::SignalSetter};
 use leptos_use::use_event_listener;
 
 use crate::utils::web::FileWithUrl;
-
+use leptos::html;
 #[component]
 pub fn TokenLogoSanitize(
-    #[prop(into)] img_file: Signal<Option<FileWithUrl>>,
+    #[prop(into)] img_file: Signal<Option<FileWithUrl>, LocalStorage>,
     #[prop(into)] output_b64: SignalSetter<Option<String>>,
 ) -> impl IntoView {
-    let img_ref: NodeRef<html::Img> = create_node_ref();
-    let canvas_ref: NodeRef<html::Canvas> = create_node_ref();
+    let img_ref: NodeRef<html::Img> = NodeRef::new();
+    let canvas_ref: NodeRef<html::Canvas> = NodeRef::new();
 
     _ = use_event_listener(img_ref, ev::load, move |_| {
         #[cfg(feature = "hydrate")]
@@ -67,10 +67,10 @@ pub fn TokenLogoSanitize(
     });
 
     view! {
-        <canvas _ref=canvas_ref class="hidden"></canvas>
+        <canvas node_ref=canvas_ref class="hidden"></canvas>
         <Show when=move || img_file.with(|img| img.is_some())>
             <img
-                _ref=img_ref
+                node_ref=img_ref
                 class="hidden"
                 src=move || img_file.with(|f| f.as_ref().unwrap().url.to_string())
             />

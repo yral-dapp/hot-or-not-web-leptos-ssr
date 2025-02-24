@@ -3,9 +3,9 @@ use crate::{consts::USER_PRINCIPAL_STORE, state::app_type::AppType};
 use super::nav_icons::*;
 use candid::Principal;
 use codee::string::FromToStringCodec;
-use leptos::*;
+use leptos::{either::Either, prelude::*};
 use leptos_icons::*;
-use leptos_router::*;
+use leptos_router::{hooks::use_location, *};
 use leptos_use::use_cookie;
 
 #[derive(Clone)]
@@ -19,7 +19,7 @@ enum NavItemRenderData {
     Icon {
         icon: icondata_core::Icon,
         filled_icon: Option<icondata_core::Icon>,
-        href: MaybeSignal<String>,
+        href: Signal<String>,
     },
     Upload,
 }
@@ -28,7 +28,7 @@ fn pnd_nav_items() -> Vec<NavItem> {
     let cur_location = use_location();
     let path = cur_location.pathname;
     let (user_principal, _) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE);
-    let home_path = create_rw_signal("/".to_string());
+    let home_path = RwSignal::new("/".to_string());
     vec![
         NavItem {
             render_data: NavItemRenderData::Icon {
@@ -82,7 +82,7 @@ fn yral_nav_items() -> Vec<NavItem> {
     let cur_location = use_location();
     let path = cur_location.pathname;
     let (user_principal, _) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE);
-    let home_path = create_rw_signal("/".to_string());
+    let home_path = RwSignal::new("/".to_string());
     vec![
         NavItem {
             render_data: NavItemRenderData::Icon {
@@ -142,7 +142,7 @@ fn icpump_nav_items() -> Vec<NavItem> {
     let cur_location = use_location();
     let path = cur_location.pathname;
     let (user_principal, _) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE);
-    let home_path = create_rw_signal("/".to_string());
+    let home_path = RwSignal::new("/".to_string());
     vec![
         NavItem {
             render_data: NavItemRenderData::Icon {
@@ -207,12 +207,12 @@ pub fn NavBar() -> impl IntoView {
                 {items.iter().map(|item| {
                     let cur_selected = item.cur_selected;
                     match item.render_data.clone() {
-                        NavItemRenderData::Icon { icon, filled_icon, href } => view! {
+                        NavItemRenderData::Icon { icon, filled_icon, href } => Either::Left(view! {
                             <NavIcon href icon filled_icon cur_selected />
-                        },
-                        NavItemRenderData::Upload => view! {
+                        }),
+                        NavItemRenderData::Upload => Either::Right(view! {
                             <UploadIcon cur_selected />
-                        },
+                        }),
                     }
                 }).collect::<Vec<_>>()}
             </div>
@@ -222,7 +222,7 @@ pub fn NavBar() -> impl IntoView {
 
 #[component]
 fn NavIcon(
-    #[prop(into)] href: MaybeSignal<String>,
+    #[prop(into)] href: Signal<String>,
     #[prop(into)] icon: icondata_core::Icon,
     #[prop(into)] filled_icon: Option<icondata_core::Icon>,
     #[prop(into)] cur_selected: Signal<bool>,

@@ -1,7 +1,8 @@
 use crate::{state::canisters::auth_canisters_store, utils::event_streaming::events::ErrorEvent};
 use gloo::history::{BrowserHistory, History};
-use leptos::*;
-use leptos_router::*;
+use leptos::prelude::*;
+use leptos_router::hooks::use_query;
+use leptos_router::params::Params;
 
 #[derive(Clone, Params, PartialEq)]
 struct ServerErrParams {
@@ -39,7 +40,7 @@ pub fn ServerErrorPage() -> impl IntoView {
 }
 
 #[component]
-pub fn ErrorView(#[prop(into)] error: MaybeSignal<String>) -> impl IntoView {
+pub fn ErrorView(#[prop(into)] error: Signal<String>) -> impl IntoView {
     let go_back = move || {
         let history = BrowserHistory::new();
 

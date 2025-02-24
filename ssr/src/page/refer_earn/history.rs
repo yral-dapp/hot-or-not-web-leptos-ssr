@@ -1,5 +1,5 @@
-use leptos::*;
-
+use leptos::prelude::*;
+use leptos::html;
 use crate::component::bullet_loader::BulletLoader;
 use crate::component::canisters_prov::AuthCansProvider;
 use crate::component::infinite_scroller::InfiniteScroller;
@@ -12,7 +12,7 @@ use yral_canisters_common::{
 #[component]
 fn HistoryItem(detail: HistoryDetails, _ref: NodeRef<html::Div>) -> impl IntoView {
     view! {
-        <div _ref=_ref class="px-2 grid grid-cols-4 grid-rows-1 items-center gap-2 w-full">
+        <div node_ref=_ref class="px-2 grid grid-cols-4 grid-rows-1 items-center gap-2 w-full">
             <div class="flex flex-row col-span-3 items-center gap-4 justify-items-start">
                 <img
                     class="aspect-square w-12 md:w-16 lg:w-24 rounded-full"

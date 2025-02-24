@@ -1,14 +1,12 @@
 use codee::string::FromToStringCodec;
-use leptos::{html::Div, *};
-use leptos_router::use_query;
+use leptos::{html::Div, prelude::*};
+use leptos_router::hooks::use_query;
 use leptos_use::{use_cookie, use_infinite_scroll_with_options, UseInfiniteScrollOptions};
 use log;
 use yral_canisters_common::{utils::token::RootType, Canisters};
 
 use crate::{
-    page::icpump::{process_token_list_item, ProcessedTokenListResponse},
-    state::canisters::{authenticated_canisters, unauth_canisters},
-    utils::token::icpump::{get_paginated_token_list_with_limit, IcpumpTokenInfo, TokenListItem},
+    component::show_any::ShowAny, page::icpump::{process_token_list_item, ProcessedTokenListResponse}, state::canisters::{authenticated_canisters, unauth_canisters}, utils::{send_wrap, token::icpump::{get_paginated_token_list_with_limit, IcpumpTokenInfo, TokenListItem}}
 };
 
 pub mod profile;
@@ -69,11 +67,11 @@ async fn load_selected_card(
 #[component]
 pub fn PumpNDump() -> impl IntoView {
     let card_query = use_query::<CardQuery>();
-    let s: ShowSelectedCardSignal = create_rw_signal(ShowSelectedCard(
+    let s: ShowSelectedCardSignal = RwSignal::new(ShowSelectedCard(
         card_query.with_untracked(|cq| cq.as_ref().is_ok_and(|q| q.is_valid())),
     ));
     provide_context(s);
-    let card_query_fused = create_rw_signal(card_query.get_untracked().ok());
+    let card_query_fused = RwSignal::new(card_query.get_untracked().ok());
 
     let auth_cans = authenticated_canisters();
     provide_context(PlayerDataRes::derive(auth_cans.clone()));
@@ -82,15 +80,15 @@ pub fn PumpNDump() -> impl IntoView {
     let show_onboarding = ShowOnboarding(should_show, set_should_show);
     provide_context(show_onboarding);
 
-    let tokens = create_rw_signal(Vec::<ProcessedTokenListResponse>::new());
+    let tokens = RwSignal::new(Vec::<ProcessedTokenListResponse>::new());
 
     let cans = unauth_canisters();
-    let token_fetch_action = create_action(move |page: &u32| {
+    let token_fetch_action = Action::new(move |page: &u32| {
         let cans_wire_res = auth_cans.clone();
         let cans = cans.clone();
         let page = *page;
-        async move {
-            let cans_wire = cans_wire_res.wait_untracked().await?;
+        send_wrap(async move {
+            let cans_wire = cans_wire_res.await?;
             let cans = Canisters::from_wire(cans_wire.clone(), cans)?;
 
             let selected_card = card_query_fused.get();
@@ -123,7 +121,7 @@ pub fn PumpNDump() -> impl IntoView {
             });
 
             Ok::<_, ServerFnError>((page + 1, list_end))
-        }
+        })
     });
     let token_fetching = token_fetch_action.pending();
     let prev_state = token_fetch_action.value();
@@ -161,14 +159,14 @@ pub fn PumpNDump() -> impl IntoView {
                     <For each=move || tokens.get() key=|item| (item.root, item.token_details.token_name.clone()) let:token>
                         <GameCard token />
                     </For>
-                    <Show when=move || loading.get() || tokens.with(|t| t.is_empty())>
+                    <ShowAny when=move || loading.get() || tokens.with(|t| t.is_empty())>
                         <CardSkeleton />
-                    </Show>
+                    </ShowAny>
                 </div>
             </div>
-            <Show when=move || show_onboarding.should_show()>
+            <ShowAny when=move || show_onboarding.should_show()>
                 <OnboardingPopup />
-            </Show>
+            </ShowAny>
         </div>
     }
 }

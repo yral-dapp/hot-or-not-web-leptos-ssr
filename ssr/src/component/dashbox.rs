@@ -1,6 +1,6 @@
 use crate::utils::web::copy_to_clipboard;
 use gloo::timers::callback::Timeout;
-use leptos::*;
+use leptos::prelude::*;
 use leptos_icons::*;
 
 #[component]
@@ -14,10 +14,10 @@ pub fn DashboxLoading() -> impl IntoView {
 
 #[component]
 pub fn DashboxLoaded(text: String) -> impl IntoView {
-    let show_copied_popup = create_rw_signal(false);
+    let show_copied_popup = RwSignal::new(false);
 
     let text_copy = text.clone();
-    let click_copy = create_action(move |()| {
+    let click_copy = Action::new(move |()| {
         let text = text_copy.clone();
         async move {
             let _ = copy_to_clipboard(&text);
@@ -30,7 +30,7 @@ pub fn DashboxLoaded(text: String) -> impl IntoView {
     view! {
         <div class="flex items-center w-fit rounded-full border-dashed border-2 p-3 gap-2 border-primary-500">
             <span class="text-md lg:text-lg text-ellipsis line-clamp-1">{text}</span>
-            <button on:click=move |_| click_copy.dispatch(())>
+            <button on:click=move |_| {click_copy.dispatch(());}>
                 <Icon class="text-xl" icon=icondata::FaCopyRegular />
             </button>
         </div>

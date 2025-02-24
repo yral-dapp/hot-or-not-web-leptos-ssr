@@ -1,4 +1,6 @@
-pub type ABComponent = Box<dyn Fn() -> Option<leptos::View>>;
+use leptos::prelude::*;
+
+pub type ABComponent<T> = Box<dyn Fn() -> Option<View<T>>>;
 
 #[macro_export]
 macro_rules! abselector_id {

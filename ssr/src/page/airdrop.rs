@@ -1,5 +1,5 @@
 use crate::component::{airdrop_logo::AirdropLogo, social::*, title::TitleText};
-use leptos::*;
+use leptos::prelude::*;
 
 #[component]
 pub fn Airdrop() -> impl IntoView {

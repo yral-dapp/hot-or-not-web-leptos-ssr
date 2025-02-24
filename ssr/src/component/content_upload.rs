@@ -2,10 +2,10 @@ use super::spinner::Spinner;
 use crate::{
     auth::delegate_short_lived_identity,
     page::menu::AuthorizedUserToSeedContent,
-    state::{canisters::authenticated_canisters, content_seed_client::ContentSeedClient},
+    state::{canisters::authenticated_canisters, content_seed_client::ContentSeedClient}, utils::send_wrap,
 };
 use candid::Principal;
-use leptos::*;
+use leptos::prelude::*;
 use yral_canisters_common::Canisters;
 
 #[component]
@@ -17,11 +17,11 @@ fn YoutubeUploadInner(#[prop(optional)] url: String) -> impl IntoView {
     };
 
     let authenticated_canisters = authenticated_canisters();
-    let on_submit = create_action(move |_| {
+    let on_submit = Action::new(move |_| {
         let authenticated_canisters = authenticated_canisters.clone();
-        async move {
+        send_wrap(async move {
             let canisters_copy = Canisters::from_wire(
-                authenticated_canisters.wait_untracked().await.unwrap(),
+                authenticated_canisters.get_untracked().unwrap().unwrap(),
                 expect_context(),
             )
             .unwrap();
@@ -35,7 +35,7 @@ fn YoutubeUploadInner(#[prop(optional)] url: String) -> impl IntoView {
                 Err(e) => e.to_string(),
                 _ => "Submitted!".to_string(),
             }
-        }
+        })
     });
     let submit_res = on_submit.value();
 
@@ -63,7 +63,7 @@ fn YoutubeUploadInner(#[prop(optional)] url: String) -> impl IntoView {
                         <button
                             type="submit"
                             class="border border-solid px-4 text-xl md:text-2xl w-fit text-white hover:bg-white hover:text-black"
-                            on:click=move |_| on_submit.dispatch(())
+                            on:click=move |_| {on_submit.dispatch(());}
                         >
 
                             Submit
@@ -80,7 +80,7 @@ fn YoutubeUploadInner(#[prop(optional)] url: String) -> impl IntoView {
 
 #[component]
 pub fn YoutubeUpload(#[prop(optional)] url: String, user_principal: Principal) -> impl IntoView {
-    let url_s = store_value(url);
+    let url_s = StoredValue::new(url);
 
     let authorized_ctx: AuthorizedUserToSeedContent = expect_context();
     let authorized = authorized_ctx.0;

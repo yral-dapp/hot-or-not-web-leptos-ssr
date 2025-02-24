@@ -1,11 +1,7 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
 use candid::Principal;
-use leptos::{
-    create_action, create_effect, create_rw_signal, store_value, Action, ReadSignal, Resource,
-    RwSignal, ServerFnError, Signal, SignalGet, SignalGetUntracked, SignalSet, SignalUpdate,
-    SignalWith, StoredValue, WriteSignal,
-};
+use leptos::prelude::*;
 use serde::{Deserialize, Serialize};
 use yral_pump_n_dump_common::{
     ws::{GameResult as RawGameResult, WsError, WsMessage, WsRequest, WsResp},
@@ -14,8 +10,7 @@ use yral_pump_n_dump_common::{
 
 use crate::{
     page::icpump::ProcessedTokenListResponse,
-    state::canisters::AuthCansResource,
-    utils::{MockPartialEq, ParentResource},
+    state::canisters::AuthCansResource, utils::send_wrap,
 };
 
 use super::{
@@ -52,9 +47,9 @@ pub(super) struct ShowSelectedCard(pub(super) bool);
 
 pub(super) type ShowSelectedCardSignal = RwSignal<ShowSelectedCard>;
 /// This is a local resource, you don't need <Suspense> with this
-pub(super) type RunningGameRes = Resource<MockPartialEq<()>, Result<RunningGameCtx, ServerFnError>>;
+pub(super) type RunningGameRes = LocalResource<Result<RunningGameCtx, ServerFnError>>;
 
-type SendFn = Rc<dyn Fn(&WsRequest)>;
+type SendFn = Arc<dyn Fn(&WsRequest) + Send + Sync>;
 
 #[derive(Clone, Copy)]
 pub(super) enum PlayerDataUpdate {
@@ -67,25 +62,26 @@ pub(super) enum PlayerDataUpdate {
 #[derive(Clone)]
 pub(super) struct PlayerDataRes {
     /// this is a local resource
-    pub read: ParentResource<MockPartialEq<()>, Result<RwSignal<PlayerData>, ServerFnError>>,
+    pub read: Resource<Result<RwSignal<PlayerData>, ServerFnError>>,
     update: Action<PlayerDataUpdate, ()>,
 }
 
 impl PlayerDataRes {
     pub fn derive(auth_cans: AuthCansResource) -> Self {
-        let read = ParentResource(auth_cans.derive(
+        let read = Resource::new(
             || (),
-            |cans_wire, _| async move {
+            move |_| send_wrap(async move {
+                let cans_wire = auth_cans.await;
                 let data = PlayerData::load(cans_wire?.user_canister).await?;
-                Ok::<_, ServerFnError>(create_rw_signal(data))
-            },
-        ));
+                Ok::<_, ServerFnError>(RwSignal::new(data))
+            }),
+        );
 
         let read_c = read.clone();
-        let update = create_action(move |&update_kind| {
+        let update = Action::new(move |&update_kind| {
             let read = read_c.clone();
             async move {
-                let Ok(pd) = read.wait_untracked().await else {
+                let Ok(pd) = read.await else {
                     return;
                 };
                 match update_kind {
@@ -160,11 +156,11 @@ impl RunningGameCtx {
         sendfn: SendFn,
         token: ProcessedTokenListResponse,
     ) -> Self {
-        let running_data = create_rw_signal(None);
-        let current_round = store_value(None);
+        let running_data = RwSignal::new(None);
+        let current_round = StoredValue::new(None);
 
         let token_owner_canister = token.token_owner.as_ref().map(|o| o.canister_id).unwrap();
-        let reload_running_data = create_action(move |_| async move {
+        let reload_running_data = Action::new(move |_| send_wrap(async move {
             let data = GameRunningData::load(token_owner_canister, token.root, user_canister)
                 .await
                 .inspect_err(|err| {
@@ -177,9 +173,9 @@ impl RunningGameCtx {
             }
 
             running_data.set(data);
-        });
+        }));
 
-        create_effect(move |_| {
+        Effect::new(move |_| {
             let msg = ws_message.get()?;
             match msg.response {
                 WsResp::WelcomeEvent {
@@ -256,7 +252,7 @@ impl RunningGameCtx {
 
     /// returns a signal which is true when
     /// running data is loading
-    pub fn loading_data(&self) -> ReadSignal<bool> {
+    pub fn loading_data(&self) -> Memo<bool> {
         self.reload_running_data.pending()
     }
 

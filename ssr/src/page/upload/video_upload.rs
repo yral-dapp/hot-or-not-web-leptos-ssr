@@ -9,10 +9,7 @@ use crate::{
     utils::{
         event_streaming::events::{
             VideoUploadSuccessful, VideoUploadUnsuccessful, VideoUploadVideoSelected,
-        },
-        route::go_to_root,
-        web::FileWithUrl,
-        MockPartialEq,
+        }, route::go_to_root, send_wrap, web::FileWithUrl, MockPartialEq
     },
 };
 use futures::StreamExt;
@@ -21,7 +18,7 @@ use ic_agent::Identity;
 use leptos::{
     ev::durationchange,
     html::{Input, Video},
-    *,
+    prelude::*,
 };
 use leptos_icons::*;
 use leptos_use::use_event_listener;
@@ -43,11 +40,11 @@ pub fn DropBox() -> impl IntoView {
 }
 
 #[component]
-pub fn PreVideoUpload(file_blob: WriteSignal<Option<FileWithUrl>>) -> impl IntoView {
-    let file_ref = create_node_ref::<Input>();
-    let file = create_rw_signal(None::<FileWithUrl>);
-    let video_ref = create_node_ref::<Video>();
-    let modal_show = create_rw_signal(false);
+pub fn PreVideoUpload(file_blob: WriteSignal<Option<FileWithUrl>, LocalStorage>) -> impl IntoView {
+    let file_ref = NodeRef::<Input>::new();
+    let file = RwSignal::new_local(None::<FileWithUrl>);
+    let video_ref = NodeRef::<Video>::new();
+    let modal_show = RwSignal::new(false);
     let canister_store = auth_canisters_store();
 
     #[cfg(feature = "hydrate")]
@@ -81,11 +78,9 @@ pub fn PreVideoUpload(file_blob: WriteSignal<Option<FileWithUrl>>) -> impl IntoV
             return;
         }
 
-        batch(|| {
-            modal_show.set(true);
-            file.set(None);
-            file_blob.set(None);
-        });
+        modal_show.set(true);
+        file.set(None);
+        file_blob.set(None);
         if let Some(f) = file_ref.get_untracked() {
             f.set_value("");
         }
@@ -97,26 +92,26 @@ pub fn PreVideoUpload(file_blob: WriteSignal<Option<FileWithUrl>>) -> impl IntoV
                 for="dropzone-file"
                 class="flex justify-start flex-col h-full w-full cursor-pointer"
             >
-                <Show when=move || { with!(| file | file.is_none()) }>
+                <Show when=move || { file.with(| file | file.is_none()) }>
                     <DropBox />
                 </Show>
                 <video
-                    _ref=video_ref
+                    node_ref=video_ref
                     class="object-contain w-full"
                     playsinline
                     muted
                     autoplay
                     loop
                     oncanplay="this.muted=true"
-                    src=move || with!(| file | file.as_ref().map(| f | f.url.to_string()))
+                    src=move || file.with(| file | file.as_ref().map(| f | f.url.to_string()))
                     style:display=move || {
-                        with!(| file | file.as_ref().map(| _ | "block").unwrap_or("none"))
+                        file.with(| file | file.as_ref().map(| _ | "block").unwrap_or("none"))
                     }
                 ></video>
                 <input
                     on:click=move |_| modal_show.set(true)
                     id="dropzone-file"
-                    _ref=file_ref
+                    node_ref=file_ref
                     type="file"
                     accept="video/*"
                     class="hidden w-0 h-0"
@@ -160,10 +155,10 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
     let hashtags = params.hashtags;
     let description = params.description;
 
-    let uploading = create_rw_signal(true);
-    let processing = create_rw_signal(true);
-    let publishing = create_rw_signal(true);
-    let video_url = file_blob.url;
+    let uploading = RwSignal::new(true);
+    let processing = RwSignal::new(true);
+    let publishing = RwSignal::new(true);
+    let video_url = StoredValue::new_local(file_blob.url);
     let file_blob = file_blob.file.clone();
 
     let up_hashtags = hashtags.clone();
@@ -174,9 +169,9 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
 
     let up_desc = description.clone();
 
-    let upload_action = create_local_resource(
-        move || canister_store().map(MockPartialEq),
-        move |cans| {
+    let upload_action = LocalResource::new(
+        move || {
+            let cans = canister_store().map(MockPartialEq);
             let hashtags = up_hashtags.clone();
             let description = up_desc.clone();
             let file_blob = file_blob.clone();
@@ -255,7 +250,7 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
         },
     );
 
-    let publish_action = create_action(move |(canisters, uid): &(Canisters<true>, String)| {
+    let publish_action: Action<_, _, LocalStorage> = Action::new_unsync(move |(canisters, uid): &(Canisters<true>, String)| {
         let canisters = canisters.clone();
         let hashtags = hashtags.clone();
         let hashtags_len = hashtags.len();
@@ -311,7 +306,7 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
                 autoplay
                 loop
                 oncanplay="this.muted=true"
-                src=move || video_url.to_string()
+                src=move || video_url.get_value().to_string()
             ></video>
         </div>
         <div class="flex flex-col basis-full lg:basis-7/12 gap-4 px-4">
@@ -325,8 +320,8 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
                 <ProgressItem initial_text="Publishing" done_text="Published" loading=publishing />
                 <Suspense>
                     {move || {
-                        let uid = upload_action().flatten()?;
-                        let cans_wire = (cans_res.0)()?.ok()?;
+                        let uid = upload_action.get().map(|a| a.take()).flatten()?;
+                        let cans_wire = cans_res.get()?.ok()?;
                         let canisters = Canisters::from_wire(cans_wire, expect_context()).ok()?;
                         publish_action.dispatch((canisters, uid));
                         Some(())
@@ -342,5 +337,5 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
                 Continue Browsing
             </button>
         </div>
-    }
+    }.into_any()
 }

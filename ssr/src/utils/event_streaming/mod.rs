@@ -1,7 +1,7 @@
 use std::env;
 
 use gloo_utils::format::JsValueSerdeExt;
-use leptos::*;
+use leptos::prelude::*;
 use serde::Serialize;
 use serde_json::json;
 use wasm_bindgen::prelude::*;
@@ -71,6 +71,8 @@ pub async fn send_event_ssr(event_name: String, params: String) -> Result<(), Se
 
 #[cfg(feature = "ga4")]
 pub fn send_event_ssr_spawn(event_name: String, params: String) {
+    use leptos::task::spawn_local;
+
     let mut params = serde_json::from_str::<serde_json::Value>(&params).unwrap();
     params["page_location"] = json!(window().location().href().unwrap().to_string());
     let params = serde_json::to_string(&params).unwrap();
@@ -126,6 +128,8 @@ pub async fn send_event_warehouse_ssr(
 
 #[cfg(feature = "ga4")]
 pub fn send_event_warehouse_ssr_spawn(event_name: String, params: String) {
+    use leptos::task::spawn_local;
+
     spawn_local(async move {
         let _ = send_event_warehouse_ssr(event_name, params).await;
     });

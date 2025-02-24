@@ -1,4 +1,4 @@
-use leptos::*;
+use leptos::{either::Either, prelude::*};
 use leptos_icons::Icon;
 
 use crate::{
@@ -23,12 +23,12 @@ fn HeaderCommon(#[prop(optional, into)] player_data: Option<Signal<PlayerData>>)
             >
                 <div class="font-bold text-sm">
                     {if let Some(pd) = player_data {
-                        let game_count = move || with!(|pd| pd.games_count.to_string());
-                        game_count.into_view()
+                        let game_count = pd.with(|pd| pd.games_count.to_string());
+                        Either::Left(game_count)
                     } else {
-                        view! {
+                        Either::Right(view! {
                             <HeaderSkeleton/>
-                        }.into_view()
+                        }.into_view())
                     }}
                 </div>
                 <div class="text-xs text-neutral-400 uppercase">Games</div>
@@ -46,12 +46,12 @@ fn HeaderCommon(#[prop(optional, into)] player_data: Option<Signal<PlayerData>>)
                     class="font-bold absolute top-1 text-sm"
                 >
                     {if let Some(pd) = player_data {
-                        let wallet_balance = move || with!(|pd| pd.wallet_balance.to_string().replace("_", ""));
-                        wallet_balance.into_view()
+                        let wallet_balance = pd.with(|pd| pd.wallet_balance.to_string().replace("_", ""));
+                        Either::Left(wallet_balance)
                     } else {
-                        view! {
+                        Either::Right(view! {
                             <HeaderSkeleton/>
-                        }.into_view()
+                        })
                     }}
                 </div>
                 <div class="h-5 opacity-0"></div>
@@ -74,13 +74,13 @@ pub fn Header() -> impl IntoView {
     let data: PlayerDataRes = expect_context();
     view! {
         <Suspense fallback=|| view! { <HeaderCommon/> }>
-            {move || data.read.0.get().map(|d| match d {
+            {move || data.read.get().map(|d| match d {
                 Ok(d) => view! {
                     <HeaderCommon player_data=d/>
-                },
+                }.into_any(),
                 Err(_) => view! {
                     <HeaderCommon/>
-                }
+                }.into_any(),
             })}
         </Suspense>
     }

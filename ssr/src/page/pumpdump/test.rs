@@ -1,9 +1,7 @@
-use std::rc::Rc;
-
 use candid::Principal;
 use codee::string::JsonSerdeCodec;
-use leptos::{html::Input, *};
-use leptos_router::use_params_map;
+use leptos::{html::Input, prelude::*};
+use leptos_router::hooks::use_params_map;
 use leptos_use::{use_websocket, UseWebSocketReturn};
 use yral_canisters_common::{
     utils::token::{RootType, TokenOwner},
@@ -13,12 +11,11 @@ use yral_pump_n_dump_common::{
     ws::{websocket_connection_url, WsMessage, WsRequest},
     GameDirection,
 };
-
+use std::sync::Arc;
 use crate::{
     consts::PUMP_AND_DUMP_WORKER_URL, page::pumpdump::WsResponse,
-    state::canisters::authenticated_canisters, utils::token::icpump::IcpumpTokenInfo,
+    state::canisters::authenticated_canisters, utils::{send_wrap, token::icpump::IcpumpTokenInfo},
 };
-
 use super::{GameRunningData, PlayerData};
 
 #[derive(Debug, Clone)]
@@ -36,7 +33,7 @@ type TestDataSignal = RwSignal<Option<TestData>>;
 #[derive(Clone)]
 struct WsCtx {
     message: Signal<Option<WsResponse>>,
-    sendfn: Rc<dyn Fn(&WsRequest)>,
+    sendfn: Arc<dyn Fn(&WsRequest) + Send + Sync>,
 }
 
 impl WsCtx {
@@ -48,8 +45,8 @@ impl WsCtx {
 
 #[component]
 fn WebsocketLogs(websocket: WsCtx, round: u64) -> impl IntoView {
-    let received = create_rw_signal(Vec::new());
-    let sent = create_rw_signal(Vec::new());
+    let received = RwSignal::new(Vec::new());
+    let sent = RwSignal::new(Vec::new());
     let message = websocket.message;
     let pump_socket = websocket.clone();
     let send_pump = move || {
@@ -74,7 +71,7 @@ fn WebsocketLogs(websocket: WsCtx, round: u64) -> impl IntoView {
         websocket.send(&message);
         sent.update(move |d| d.push(serde_json::to_string_pretty(&message).unwrap()));
     };
-    create_effect(move |_| {
+    Effect::new(move |_| {
         if let Some(message) = message.get() {
             received.update(move |d| d.push(serde_json::to_string_pretty(&message).unwrap()));
         }
@@ -147,17 +144,14 @@ pub fn PndTest() -> impl IntoView {
         .expect("token_root to be in path params");
     let token_root = Principal::from_text(token_root).expect("token root to be valid");
 
-    let data: TestDataSignal = create_rw_signal(None);
-    let round = create_rw_signal(0u64);
+    let data: TestDataSignal = RwSignal::new(None);
+    let round = RwSignal::new(0u64);
 
     let cans_wire = authenticated_canisters();
-    let fetch_test_data = create_action(move |&()| {
+    let fetch_test_data = Action::new(move |&()| {
         let cans_wire = cans_wire.clone();
-        async move {
-            let cans_wire = cans_wire
-                .wait_untracked()
-                .await
-                .expect("cans_wire to be there");
+        send_wrap(async move {
+            let cans_wire = cans_wire.await.expect("cans_wire to be there");
             let cans = Canisters::from_wire(cans_wire.clone(), expect_context())
                 .expect("get auth canisters from the wire");
 
@@ -185,18 +179,17 @@ pub fn PndTest() -> impl IntoView {
                 .await
                 .unwrap(),
             }));
-        }
+        })
     });
 
-    let websocket = create_rw_signal(None);
+    let websocket = RwSignal::new(None);
     let cans_wire = authenticated_canisters();
-    let create_websocket_connection = create_action(move |&()| {
+    let create_websocket_connection = Action::new(move |&()| {
         let cans_wire = cans_wire.clone();
-        async move {
+        send_wrap(async move {
             let mut ws_url = PUMP_AND_DUMP_WORKER_URL.clone();
             ws_url.set_scheme("ws").expect("schema to valid");
             let cans_wire = cans_wire
-                .wait_untracked()
                 .await
                 .expect("cans_wire to be there");
             let cans = Canisters::from_wire(cans_wire.clone(), expect_context())
@@ -230,25 +223,25 @@ pub fn PndTest() -> impl IntoView {
             // erase type, because sendfn is not send/sync
             let context = WsCtx {
                 message,
-                sendfn: Rc::new(sendfn),
+                sendfn: Arc::new(sendfn),
             };
 
             websocket.set(Some(context));
-        }
+        })
     });
-    create_effect(move |_| {
+    Effect::new(move |_| {
         if websocket.get().is_none() {
             create_websocket_connection.dispatch(());
         }
     });
 
-    create_effect(move |_| {
+    Effect::new(move |_| {
         if data.get().is_none() {
             fetch_test_data.dispatch(());
         }
     });
 
-    let input_ref = create_node_ref::<Input>();
+    let input_ref = NodeRef::<Input>::new();
     let change_round = move |_: leptos::ev::Event| {
         if let Some(input) = input_ref.get() {
             let value = input.value().parse().unwrap_or_default();
@@ -260,7 +253,7 @@ pub fn PndTest() -> impl IntoView {
         <Show when=move || data.get().is_some()>
             <PresentDetails data=data.get().unwrap() />
         </Show>
-        <input ref=input_ref type="number" on:input=change_round placeholder="round" />
+        <input node_ref=input_ref type="number" on:input=change_round placeholder="round" />
         <Show when=move || websocket.get().is_some()>
             <WebsocketLogs round=round.get() websocket=websocket.get().unwrap() />
         </Show>

@@ -25,12 +25,11 @@ pub fn share_url(url: &str) -> Option<()> {
     }
     #[cfg(feature = "hydrate")]
     {
-        use leptos::window;
         use wasm_bindgen::JsValue;
         use web_sys::{js_sys::Reflect, ShareData};
-        let window = window();
-        let nav = window.navigator();
-        if !Reflect::has(&nav, &JsValue::from_str("share")).unwrap_or_default() {
+        let window = use_window();
+        let nav = window.navigator()?;
+        if !Reflect::has(&nav.clone().into(), &JsValue::from_str("share")).unwrap_or_default() {
             return None;
         }
         let share_data = ShareData::new();

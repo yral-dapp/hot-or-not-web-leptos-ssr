@@ -1,4 +1,4 @@
-use leptos::*;
+use leptos::prelude::*;
 
 use crate::page::pumpdump::RunningGameRes;
 
@@ -6,7 +6,7 @@ use crate::page::pumpdump::RunningGameRes;
 pub fn BullBearSlider() -> impl IntoView {
     let game_res: RunningGameRes = expect_context();
     let position = move || {
-        let Some(Ok(ctx)) = game_res.get() else {
+        let Some(Ok(ctx)) = game_res.get().map(|res| res.take()) else {
             return 39f64;
         };
 
@@ -20,8 +20,8 @@ pub fn BullBearSlider() -> impl IntoView {
         }
     };
 
-    let is_bear_attacking = create_memo(move |prev_state| {
-        let Some(Ok(ctx)) = game_res.get() else {
+    let is_bear_attacking = Memo::new(move |prev_state| {
+        let Some(Ok(ctx)) = game_res.get().map(|res| res.take()) else {
             return (None, 0u64, 0u64);
         };
 

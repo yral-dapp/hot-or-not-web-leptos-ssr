@@ -3,7 +3,7 @@ use std::pin::Pin;
 use candid::Principal;
 use codee::string::JsonSerdeCodec;
 use futures::{stream::FuturesOrdered, Stream, StreamExt};
-use leptos::*;
+use leptos::prelude::*;
 use leptos_use::storage::use_local_storage;
 
 use yral_canisters_client::post_cache::{self, NsfwFilter};

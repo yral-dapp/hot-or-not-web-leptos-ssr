@@ -1,5 +1,5 @@
 use super::overlay::ShadowOverlay;
-use leptos::*;
+use leptos::prelude::*;
 use leptos_icons::*;
 
 #[component]
@@ -18,5 +18,5 @@ pub fn Modal(#[prop(into)] show: RwSignal<bool>, children: ChildrenFn) -> impl I
                 <div class="py-4 w-full">{children()}</div>
             </div>
         </ShadowOverlay>
-    }
+    }.into_any()
 }

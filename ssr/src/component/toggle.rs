@@ -1,4 +1,4 @@
-use leptos::{html::Input, *};
+use leptos::{html::Input, prelude::*};
 
 #[component]
 fn ToggleInner(

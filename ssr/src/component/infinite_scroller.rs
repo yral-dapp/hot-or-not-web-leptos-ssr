@@ -1,6 +1,12 @@
+use crate::utils::send_wrap;
+use send_wrapper::SendWrapper;
+
 use super::bullet_loader::BulletLoader;
-use leptos::{html::ElementDescriptor, *};
-use leptos_use::{use_intersection_observer_with_options, UseIntersectionObserverOptions};
+use leptos::{html::ElementType, prelude::*};
+use leptos_use::{
+    core::{IntoElementsMaybeSignal, SignalVecMarker},
+    use_intersection_observer_with_options, UseIntersectionObserverOptions,
+};
 use std::marker::PhantomData;
 use yral_canisters_common::cursored_data::{CursoredDataProvider, KeyedData, PageEntry};
 
@@ -22,22 +28,25 @@ pub(crate) fn InfiniteScroller<Prov, EF, N, RootNode>(
     #[prop(optional)] _rn: PhantomData<RootNode>,
 ) -> impl IntoView
 where
-    RootNode: ElementDescriptor + Clone + 'static,
-    Prov: CursoredDataProvider + Clone + 'static,
-    EF: Fn(InferData<Prov>, Option<NodeRef<RootNode>>) -> N + Clone + 'static,
+    RootNode: ElementType + Clone + 'static,
+    NodeRef<RootNode>: IntoElementsMaybeSignal<leptos::web_sys::Element, SignalVecMarker>,
+    Prov: CursoredDataProvider + Clone + 'static + Send + Sync,
+    <Prov as CursoredDataProvider>::Data: Send + Sync,
+    EF: Fn(InferData<Prov>, Option<NodeRef<RootNode>>) -> N + Clone + 'static + Send + Sync,
     N: IntoView + 'static,
 {
-    let data = create_rw_signal(Vec::<InferData<Prov>>::new());
-    let end = create_rw_signal(false);
-    let cursor = create_rw_signal(0);
+    let data = RwSignal::new(Vec::<InferData<Prov>>::new());
+    let end = RwSignal::new(false);
+    let cursor = RwSignal::new(0);
 
-    let fetch_res = create_resource(cursor, move |cursor| {
+    let fetch_res = Resource::new(cursor, move |cursor| {
         let provider = provider.clone();
         async move {
+            let future = provider.get_by_cursor(cursor, cursor + fetch_count);
             let PageEntry {
                 data: mut fetched,
                 end: list_end,
-            } = match provider.get_by_cursor(cursor, cursor + fetch_count).await {
+            } = match SendWrapper::new(future).await {
                 Ok(t) => t,
                 Err(e) => {
                     log::warn!("failed to fetch data err {e}");
@@ -52,14 +61,15 @@ where
         }
     });
     let upper_data = move || {
-        with!(|data| data
-            .iter()
-            .take(data.len().saturating_sub(1))
-            .cloned()
-            .collect::<Vec<_>>())
+        data.with(|data| {
+            data.iter()
+                .take(data.len().saturating_sub(1))
+                .cloned()
+                .collect::<Vec<_>>()
+        })
     };
-    let last_data = move || with!(|data| data.last().cloned());
-    let last_elem = create_node_ref::<RootNode>();
+    let last_data = move || data.with(|data| data.last().cloned());
+    let last_elem = NodeRef::<RootNode>::new();
 
     use_intersection_observer_with_options(
         last_elem,
@@ -74,8 +84,8 @@ where
         },
         UseIntersectionObserverOptions::default().thresholds(vec![0.1]),
     );
-    let data_loading = fetch_res.loading();
-    let children = store_value(children);
+    let data_loading = move || fetch_res.with(|d| d.is_none());
+    let children = StoredValue::new(children);
     let loader = custom_loader.unwrap_or_else(|| BulletLoader.into());
 
     view! {
@@ -90,5 +100,5 @@ where
         <Show when=move || {
             !data_loading() && data.with(|d| d.is_empty())
         }>{empty_content.run()}</Show>
-    }
+    }.into_any()
 }

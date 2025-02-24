@@ -1,10 +1,10 @@
 use std::marker::PhantomData;
 
 use candid::Principal;
-use leptos::*;
-use leptos_router::*;
+use leptos::prelude::*;
+use leptos_router::{hooks::{use_navigate, use_params}, *};
 use leptos_use::use_debounce_fn;
-
+use leptos_router::params::Params;
 use crate::{
     component::{
         back_btn::BackButton, scrolling_post_view::ScrollingPostView, spinner::FullScreenSpinner,
@@ -12,7 +12,7 @@ use crate::{
     page::profile::{profile_iter::FixedFetchCursor, ProfilePostsContext},
     state::canisters::{auth_canisters_store, unauth_canisters},
     try_or_redirect,
-    utils::route::failure_redirect,
+    utils::{route::failure_redirect, send_wrap},
 };
 
 use super::{
@@ -34,17 +34,18 @@ fn ProfilePostWithUpdates<const LIMIT: u64, VidStream: ProfVideoStream<LIMIT>>(
         current_index,
         queue_end,
     } = expect_context();
-    let recovering_state = create_rw_signal(true);
-    let fetch_cursor = create_rw_signal(FixedFetchCursor::<LIMIT> {
+    let recovering_state = RwSignal::new(true);
+    let fetch_cursor = RwSignal::new(FixedFetchCursor::<LIMIT> {
         start: start_index.get_untracked() as u64,
         limit: 10,
     });
     let auth_canister = auth_canisters_store();
-    let overlay = match auth_canister.get_untracked() {
-        Some(canisters) if canisters.user_canister() == initial_post.canister_id => {
-            || view! { <YourProfileOverlay /> }.into_view()
+    let overlay = move || {
+        if auth_canister.get_untracked().map(|c| c.user_canister() == initial_post.canister_id).unwrap_or(false) {
+            view! { <YourProfileOverlay /> }.into_any()
+        } else {
+            view! { <></> }.into_any()
         }
-        _ => || view! {}.into_view(),
     };
 
     if start_index.get_untracked() == 0 {
@@ -54,7 +55,7 @@ fn ProfilePostWithUpdates<const LIMIT: u64, VidStream: ProfVideoStream<LIMIT>>(
         queue_end.set(true)
     }
 
-    let next_videos = create_action(move |_| async move {
+    let next_videos: Action<_, _, LocalStorage> = Action::new_unsync(move |_| async move {
         let cursor = fetch_cursor.get_untracked();
 
         let posts_res = if let Some(canisters) = auth_canister.get_untracked() {
@@ -81,20 +82,20 @@ fn ProfilePostWithUpdates<const LIMIT: u64, VidStream: ProfVideoStream<LIMIT>>(
         move || {
             if !next_videos.pending().get_untracked() && !queue_end.get_untracked() {
                 log::debug!("trigger rerender");
-                next_videos.dispatch(video_queue)
+                next_videos.dispatch(video_queue);
             }
         },
         500.0,
     );
 
-    let current_post_base = create_memo(move |_| {
+    let current_post_base = Memo::new(move |_| {
         video_queue.with(|q| {
             let details = q.get(current_index());
             details.map(|d| (d.canister_id, d.post_id))
         })
     });
 
-    create_effect(move |_| {
+    Effect::new(move |_| {
         let Some((canister_id, post_id)) = current_post_base.get() else {
             return;
         };
@@ -122,11 +123,11 @@ fn ProfilePostWithUpdates<const LIMIT: u64, VidStream: ProfVideoStream<LIMIT>>(
             overlay
             threshold_trigger_fetch=10
         />
-    }
+    }.into_any()
 }
 
 #[component]
-fn ProfilePostBase<IV: IntoView, C: Fn(PostDetails) -> IV + Clone + 'static>(
+fn ProfilePostBase<IV: IntoView +'static, C: Fn(PostDetails) -> IV + Clone + 'static + Send + Sync>(
     #[prop(into)] canister_and_post: Signal<Option<(Principal, u64)>>,
     children: C,
 ) -> impl IntoView {
@@ -136,9 +137,9 @@ fn ProfilePostBase<IV: IntoView, C: Fn(PostDetails) -> IV + Clone + 'static>(
         ..
     } = expect_context();
 
-    let intial_post = create_resource(canister_and_post, move |params| {
+    let intial_post = Resource::new(canister_and_post, move |params| {
         let canisters = unauth_canisters();
-        async move {
+        send_wrap(async move {
             let Some((canister_id, post_id)) = params else {
                 failure_redirect("Invalid profile post");
                 return None;
@@ -163,9 +164,9 @@ fn ProfilePostBase<IV: IntoView, C: Fn(PostDetails) -> IV + Clone + 'static>(
                     None
                 }
             }
-        }
+        })
     });
-    let children_s = store_value(children);
+    let children_s = StoredValue::new(children);
 
     view! {
         <Suspense fallback=FullScreenSpinner>

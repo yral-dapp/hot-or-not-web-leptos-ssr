@@ -1,11 +1,12 @@
 use std::cmp::Ordering;
 
 use codee::string::FromToStringCodec;
-use leptos::{html::Video, *};
+use leptos::{ev, html::Video, prelude::*};
 use leptos_use::storage::use_local_storage;
 use leptos_use::use_event_listener;
 
-use crate::consts::USER_ONBOARDING_STORE;
+use crate::component::show_any::ShowAny;
+use crate::{consts::USER_ONBOARDING_STORE, utils::send_wrap};
 use crate::page::post_view::BetEligiblePostCtx;
 use crate::utils::event_streaming::events::VideoWatched;
 use yral_canisters_client::individual_user_template::PostViewDetailsFromFrontend;
@@ -30,23 +31,23 @@ pub fn BgView(
     idx: usize,
     children: Children,
 ) -> impl IntoView {
-    let post = create_memo(move |_| video_queue.with(|q| q.get(idx).cloned()));
+    let post = Memo::new(move |_| video_queue.with(|q| q.get(idx).cloned()));
     let uid = move || post().as_ref().map(|q| q.uid.clone()).unwrap_or_default();
 
     let (is_connected, _) = account_connected_reader();
-    let (show_login_popup, set_show_login_popup) = create_signal(true);
+    let (show_login_popup, set_show_login_popup) = signal(true);
 
-    let (show_refer_login_popup, set_show_refer_login_popup) = create_signal(true);
+    let (show_refer_login_popup, set_show_refer_login_popup) = signal(true);
     let (referrer_store, _, _) = use_referrer_store();
 
     let onboarding_eligible_post_context = BetEligiblePostCtx::default();
     provide_context(onboarding_eligible_post_context.clone());
 
-    let (show_onboarding_popup, set_show_onboarding_popup) = create_signal(false);
+    let (show_onboarding_popup, set_show_onboarding_popup) = signal(false);
     let (is_onboarded, set_onboarded, _) =
         use_local_storage::<bool, FromToStringCodec>(USER_ONBOARDING_STORE);
 
-    create_effect(move |_| {
+    Effect::new(move |_| {
         if current_idx.get() % 5 != 0 {
             set_show_login_popup.update(|n| *n = false);
         } else {
@@ -55,7 +56,7 @@ pub fn BgView(
         Some(())
     });
 
-    create_effect(move |_| {
+    Effect::new(move |_| {
         if onboarding_eligible_post_context.can_place_bet.get() && (!is_onboarded.get()) {
             set_show_onboarding_popup.update(|show| *show = true);
         } else {
@@ -70,7 +71,7 @@ pub fn BgView(
                 style:background-color="rgb(0, 0, 0)"
                 style:background-image=move || format!("url({})", bg_url(uid()))
             ></div>
-            <Show when=move || {
+            <ShowAny when=move || {
                 current_idx.get() != 0 && current_idx.get() % 5 == 0 && !is_connected.get()
                     && show_login_popup.get()
             }>
@@ -81,8 +82,8 @@ pub fn BgView(
                     body_text="SignUp/Login to save your progress and claim your rewards."
                     login_text="Login"
                 />
-            </Show>
-            <Show when=move || {
+            </ShowAny>
+            <ShowAny when=move || {
                 referrer_store.get().is_some() && idx == 0 && !is_connected.get()
                     && show_refer_login_popup.get()
             }>
@@ -93,37 +94,37 @@ pub fn BgView(
                     body_text="SignUp from this link to get 500 COYNs as referral rewards."
                     login_text="Sign Up"
                 />
-            </Show>
-            <Show when=move || { show_onboarding_popup.get() }>
+            </ShowAny>
+            <ShowAny when=move || { show_onboarding_popup.get() }>
                 <OnboardingPopUp onboard_on_click=set_onboarded />
-            </Show>
+            </ShowAny>
             {move || post().map(|post| view! { <VideoDetailsOverlay post /> })}
             {children()}
         </div>
-    }
+    }.into_any()
 }
 
 #[component]
 pub fn VideoView(
-    #[prop(into)] post: MaybeSignal<Option<PostDetails>>,
+    #[prop(into)] post: Signal<Option<PostDetails>>,
     #[prop(optional)] _ref: NodeRef<Video>,
     #[prop(optional)] autoplay_at_render: bool,
     muted: RwSignal<bool>,
 ) -> impl IntoView {
     let post_for_uid = post.clone();
-    let uid = create_memo(move |_| post_for_uid.with(|p| p.as_ref().map(|p| p.uid.clone())));
+    let uid = Memo::new(move |_| post_for_uid.with(|p| p.as_ref().map(|p| p.uid.clone())));
     let view_bg_url = move || uid().map(bg_url);
     let view_video_url = move || uid().map(mp4_url);
 
     // Handles mute/unmute
-    create_effect(move |_| {
-        let vid = _ref()?;
+    Effect::new(move |_| {
+        let vid = _ref.get()?;
         vid.set_muted(muted());
         Some(())
     });
 
-    create_effect(move |_| {
-        let vid = _ref()?;
+    Effect::new(move |_| {
+        let vid = _ref.get()?;
         // the attributes in DOM don't seem to be working
         vid.set_muted(muted.get_untracked());
         vid.set_loop(true);
@@ -139,12 +140,12 @@ pub fn VideoView(
     // 2. When video is 95% done -> full view
     let post_for_view = post.clone();
     let send_view_detail_action =
-        create_action(move |(percentage_watched, watch_count): &(u8, u8)| {
+        Action::new(move |(percentage_watched, watch_count): &(u8, u8)| {
             let percentage_watched = *percentage_watched;
             let watch_count = *watch_count;
             let post_for_view = post_for_view.clone();
 
-            async move {
+            send_wrap(async move {
                 let canisters = unauth_canisters();
 
                 let payload = match percentage_watched.cmp(&95) {
@@ -170,13 +171,13 @@ pub fn VideoView(
                     log::warn!("failed to send view details: {:?}", err);
                 }
                 Some(())
-            }
+            })
         });
 
-    let video_views_watch_multiple = create_rw_signal(false);
+    let video_views_watch_multiple = RwSignal::new(false);
 
     let _ = use_event_listener(_ref, ev::pause, move |_evt| {
-        let Some(video) = _ref() else {
+        let Some(video) = _ref.get() else {
             return;
         };
 
@@ -191,7 +192,7 @@ pub fn VideoView(
     });
 
     let _ = use_event_listener(_ref, ev::timeupdate, move |_evt| {
-        let Some(video) = _ref() else {
+        let Some(video) = _ref.get() else {
             return;
         };
 
@@ -228,11 +229,11 @@ pub fn VideoViewForQueue(
     idx: usize,
     muted: RwSignal<bool>,
 ) -> impl IntoView {
-    let container_ref = create_node_ref::<Video>();
+    let container_ref = NodeRef::<Video>::new();
 
     // Handles autoplay
-    create_effect(move |_| {
-        let Some(vid) = container_ref() else {
+    Effect::new(move |_| {
+        let Some(vid) = container_ref.get() else {
             return;
         };
         if idx != current_idx() {

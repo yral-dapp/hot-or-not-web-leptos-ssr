@@ -1,21 +1,17 @@
 use crate::{
     component::{
-        canisters_prov::{with_cans, WithAuthCans},
+        canisters_prov::with_cans,
         hn_icons::HomeFeedShareIcon,
         modal::Modal,
         option::SelectOption,
     },
     state::canisters::auth_canisters_store,
     utils::{
-        event_streaming::events::{LikeVideo, ShareVideo},
-        report::ReportOption,
-        route::failure_redirect,
-        user::UserDetails,
-        web::{copy_to_clipboard, share_url},
+        event_streaming::events::{LikeVideo, ShareVideo}, report::ReportOption, route::failure_redirect, send_wrap, user::UserDetails, web::{copy_to_clipboard, share_url}
     },
 };
 use gloo::timers::callback::Timeout;
-use leptos::*;
+use leptos::{prelude::*, task::spawn_local};
 use leptos_icons::*;
 use leptos_use::use_window;
 use yral_canisters_common::{utils::posts::PostDetails, Canisters};
@@ -24,9 +20,9 @@ use super::bet::HNGameOverlay;
 
 #[component]
 fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
-    let likes = create_rw_signal(post.likes);
+    let likes = RwSignal::new(post.likes);
 
-    let liked = create_rw_signal(None::<bool>);
+    let liked = RwSignal::new(None::<bool>);
     let icon_name = Signal::derive(move || {
         if liked().unwrap_or_default() {
             "/img/heart-icon-liked.svg"
@@ -40,7 +36,7 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
     let initial_liked = (post.liked_by_user, post.likes);
     let canisters = auth_canisters_store();
 
-    let like_toggle = create_action(move |&()| {
+    let like_toggle: Action<_, _, LocalStorage> = Action::new_unsync(move |&()| {
         let post_details = post.clone();
         let canister_store = canisters;
 
@@ -49,17 +45,20 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
                 log::warn!("Trying to toggle like without auth");
                 return;
             };
-            batch(move || {
-                if liked.get_untracked().unwrap_or_default() {
-                    likes.update(|l| *l -= 1);
-                    liked.set(Some(false));
-                } else {
-                    likes.update(|l| *l += 1);
-                    liked.set(Some(true));
 
-                    LikeVideo.send_event(post_details, likes, canister_store);
-                }
-            });
+            let mut likes_w = likes.write();
+            let mut liked_w = liked.write();
+            if liked_w.unwrap_or_default() {
+                *likes_w -= 1;
+                *liked_w = Some(false);
+            } else {
+                *likes_w -= 1;
+                *liked_w = Some(true);
+                LikeVideo.send_event(post_details, likes, canister_store);
+            }
+            // this is important to commit the writes to the signal
+            std::mem::drop((likes_w, liked_w));
+
             let individual = canisters.individual_user(post_canister).await;
             match individual
                 .update_post_toggle_like_status_by_caller(post_id)
@@ -74,49 +73,57 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
         }
     });
 
-    let liked_fetch = with_cans(move |cans: Canisters<true>| async move {
-        if let Some(liked) = initial_liked.0 {
-            return (liked, initial_liked.1);
-        }
 
-        match cans.post_like_info(post_canister, post_id).await {
-            Ok(liked) => liked,
-            Err(e) => {
-                failure_redirect(e);
-                (false, likes.try_get_untracked().unwrap_or_default())
+    let liked_fetch = with_cans(move |cans: Canisters<true>| send_wrap(async move {
+        let result = if let Some(liked) = initial_liked.0 {
+            (liked, initial_liked.1)
+        } else {
+            match cans.post_like_info(post_canister, post_id).await {
+                Ok(liked) => liked,
+                Err(e) => {
+                    failure_redirect(e);
+                    (false, likes.try_get_untracked().unwrap_or_default())
+                }
             }
-        }
-    });
+        };
+        Ok::<_, ServerFnError>(result)
+    }));
 
     let liking = like_toggle.pending();
 
     view! {
         <div class="flex flex-col gap-1 items-center">
             <button
-                on:click=move |_| like_toggle.dispatch(())
+                on:click=move |_| {like_toggle.dispatch(());}
                 disabled=move || liking() || liked.with(|l| l.is_none())
             >
                 <img src=icon_name style="width: 1em; height: 1em;" />
             </button>
             <span class="text-sm md:text-md">{likes}</span>
-            <WithAuthCans with=liked_fetch let:d>
-                {move || {
-                    likes.set(d.1.1);
-                    liked.set(Some(d.1.0))
-                }}
-
-            </WithAuthCans>
+            <Suspense>
+                {move || Suspend::new(async move {
+                    match liked_fetch.await {
+                        Ok(res) => {
+                            likes.set(res.1);
+                            liked.set(Some(res.0))
+                        },
+                        Err(e) => {
+                            log::warn!("failed to fetch like status {e}");
+                        }
+                    }
+                })}
+            </Suspense>
         </div>
     }
 }
 
 #[component]
 pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
-    let show_share = create_rw_signal(false);
-    let show_report = create_rw_signal(false);
-    let (report_option, set_report_option) =
-        create_signal(ReportOption::Nudity.as_str().to_string());
-    let show_copied_popup = create_rw_signal(false);
+    let show_share = RwSignal::new(false);
+    let show_report = RwSignal::new(false);
+    let report_option =
+        RwSignal::new(ReportOption::Nudity.as_str().to_string());
+    let show_copied_popup = RwSignal::new(false);
     let base_url = || {
         use_window()
             .as_ref()
@@ -152,7 +159,7 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
     };
 
     let post_details_report = post.clone();
-    let click_report = create_action(move |()| {
+    let click_report = Action::new(move |()| {
         #[cfg(feature = "ga4")]
         {
             use crate::utils::report::send_report_offchain;
@@ -256,43 +263,43 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
                         class="p-2 w-full block rounded-lg text-sm"
                         on:change=move |ev| {
                             let new_value = event_target_value(&ev);
-                            set_report_option(new_value);
+                            report_option.set(new_value);
                         }
                     >
 
                         <SelectOption
-                            value=report_option
+                            value=report_option.read_only()
                             is=format!("{}", ReportOption::Nudity.as_str())
                         />
                         <SelectOption
-                            value=report_option
+                            value=report_option.read_only()
                             is=format!("{}", ReportOption::Violence.as_str())
                         />
                         <SelectOption
-                            value=report_option
+                            value=report_option.read_only()
                             is=format!("{}", ReportOption::Offensive.as_str())
                         />
                         <SelectOption
-                            value=report_option
+                            value=report_option.read_only()
                             is=format!("{}", ReportOption::Spam.as_str())
                         />
                         <SelectOption
-                            value=report_option
+                            value=report_option.read_only()
                             is=format!("{}", ReportOption::Other.as_str())
                         />
                     </select>
                 </div>
-                <button on:click=move |_| click_report.dispatch(())>
+                <button on:click=move |_| {click_report.dispatch(());}>
                     <div class="rounded-lg bg-pink-500 p-1">Submit</div>
                 </button>
             </div>
         </Modal>
-    }
+    }.into_any()
 }
 
 #[component]
 fn ExpandableText(description: String) -> impl IntoView {
-    let truncated = create_rw_signal(true);
+    let truncated = RwSignal::new(true);
 
     view! {
         <span

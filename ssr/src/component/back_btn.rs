@@ -1,7 +1,7 @@
 use gloo::history::{BrowserHistory, History};
-use leptos::*;
+use leptos::prelude::*;
 use leptos_icons::Icon;
-use leptos_router::use_navigate;
+use leptos_router::hooks::use_navigate;
 use reqwest::Url;
 
 use crate::state::history::HistoryCtx;
@@ -38,7 +38,7 @@ pub fn go_back_or_fallback(fallback: &str) {
 }
 
 #[component]
-pub fn BackButton(#[prop(into)] fallback: MaybeSignal<String>) -> impl IntoView {
+pub fn BackButton(#[prop(into)] fallback: Signal<String>) -> impl IntoView {
     view! {
         <button
             on:click=move |_| go_back_or_fallback(&fallback.get_untracked())

@@ -1,4 +1,4 @@
-use leptos::{component, view, IntoView};
+use leptos::{component, view, IntoView, prelude::*};
 
 use crate::component::skeleton::Skeleton;
 

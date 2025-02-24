@@ -1,24 +1,23 @@
 #[cfg(feature = "ssr")]
 mod server_impl;
+use server_fn::codec::Json;
 
 use crate::{
-    component::{back_btn::BackButton, title::TitleText, token_logo_sanitize::TokenLogoSanitize},
+    component::{back_btn::BackButton, show_any::ShowAny, title::TitleText, token_logo_sanitize::TokenLogoSanitize},
     state::canisters::{auth_canisters_store, authenticated_canisters},
     utils::{
         event_streaming::events::{
             TokenCreationCompleted, TokenCreationFailed, TokenCreationStarted,
-        },
-        token::{nsfw::NSFWInfo, DeployedCdaoCanisters},
-        web::FileWithUrl,
+        }, send_wrap, token::{nsfw::NSFWInfo, DeployedCdaoCanisters}, web::FileWithUrl
     },
 };
 use candid::Principal;
-use leptos::*;
+use leptos::{ev, html::{Input, Textarea}, prelude::*};
 use leptos_meta::*;
 use std::env;
 use yral_canisters_common::{utils::profile::ProfileDetails, Canisters, CanistersAuthWire};
 
-use server_fn::codec::Cbor;
+use leptos::html;
 use sns_validation::{humanize::parse_tokens, pbs::nns_pb::Tokens};
 use sns_validation::{
     humanize::{
@@ -42,7 +41,7 @@ pub struct DeployedCdaoCanistersRes {
 }
 
 #[server(
-    input = Cbor
+    input = Json
 )]
 async fn deploy_cdao_canisters(
     cans_wire: CanistersAuthWire,
@@ -77,10 +76,10 @@ async fn deploy_cdao_canisters(
 #[component]
 fn TokenImage() -> impl IntoView {
     let ctx = expect_context::<CreateTokenCtx>();
-    let img_file = create_rw_signal(None::<FileWithUrl>);
+    let img_file = RwSignal::new_local(None::<FileWithUrl>);
     let fstate = ctx.form_state;
 
-    // let img_file = create_rw_signal(None::<FileWithUrl>);
+    // let img_file = RwSignal::new(None::<FileWithUrl>);
     let (logo_b64, set_logo_b64) = slice!(fstate.logo_b64);
 
     let on_file_input = move |ev: ev::Event| {
@@ -99,7 +98,7 @@ fn TokenImage() -> impl IntoView {
         })
     };
 
-    let file_input_ref: NodeRef<html::Input> = create_node_ref::<leptos::html::Input>();
+    let file_input_ref: NodeRef<html::Input> = NodeRef::<html::Input>::new();
 
     let on_edit_click = move |_| {
         // Trigger the file input click
@@ -137,7 +136,7 @@ fn TokenImage() -> impl IntoView {
                     <div class="absolute bottom-0 right-0 p-1 rounded-full bg-white ">
                         <img src="/img/upload.svg" class="bg-white" />
                     </div>
-                    <Show
+                    <ShowAny
                         when=move || logo_b64.with(|u| u.is_some())
                         fallback=|| view! { <div></div> }
                     >
@@ -153,7 +152,7 @@ fn TokenImage() -> impl IntoView {
                                 <img src="/img/edit.svg" class="bg-white w-4 h-4 rounded-full" />
                             </button>
                         </div>
-                    </Show>
+                    </ShowAny>
 
                 </div>
 
@@ -162,6 +161,48 @@ fn TokenImage() -> impl IntoView {
         <TokenLogoSanitize img_file=img_file output_b64=set_logo_b64 />
     }
 }
+
+macro_rules! input_element {
+    (
+        textarea,
+        $node_ref:ident,
+        $value:ident,
+        $on_input:ident,
+        $placeholder:ident,
+        $class:ident,
+        $kind:ident
+    ) => {
+        view! {
+            <textarea
+                node_ref=$node_ref
+                on:input=move |_| $on_input()
+                placeholder=$placeholder
+                class=move || $class()
+            />
+        }
+    };
+    (
+        input,
+        $node_ref:ident,
+        $value:ident,
+        $on_input:ident,
+        $placeholder:ident,
+        $class:ident,
+        $kind:ident
+    ) => {
+        view! {
+            <input
+                node_ref=$node_ref
+                value={$value.unwrap_or_default()}
+                on:input=move |_| $on_input()
+                placeholder=$placeholder
+                class=move || $class()
+                type=$kind.unwrap_or_else(|| "text".into())
+            />
+        }
+    };
+}
+
 
 macro_rules! input_component {
     ($name:ident, $input_element:ident, $input_type:ident, $attrs:expr) => {
@@ -175,14 +216,14 @@ macro_rules! input_component {
             validator: V,
         ) -> impl IntoView {
             let ctx: CreateTokenCtx = expect_context();
-            let error = create_rw_signal(initial_value.is_none());
-            let show_error = create_rw_signal(false);
+            let error = RwSignal::new(initial_value.is_none());
+            let show_error = RwSignal::new(false);
             if error.get_untracked() {
                 ctx.invalid_cnt.update(|c| *c += 1);
             }
-            let input_ref = create_node_ref::<html::$input_type>();
+            let input_ref = NodeRef::<$input_type>::new();
             let on_input = move || {
-                let Some(input) = input_ref() else {
+                let Some(input) = input_ref.get() else {
                     return;
                 };
                 let value = input.value();
@@ -204,7 +245,7 @@ macro_rules! input_component {
                         }
                     }
             };
-            create_effect(move |prev| {
+            Effect::new(move |prev: Option<()>| {
                 ctx.on_form_reset.track();
                 // Do not trigger on render
                 if prev.is_none() {
@@ -227,14 +268,15 @@ macro_rules! input_component {
             view! {
                 <div class="flex flex-col grow gap-y-1 text-sm md:text-base">
                      <span class="text-white font-semibold">{heading.clone()}</span>
-                     <$input_element
-                        _ref=input_ref
-                        value={initial_value.unwrap_or_default()}
-                        on:input=move |_| on_input()
-                        placeholder=placeholder
-                        class=move || input_class()
-                        type=input_type.unwrap_or_else(|| "text".into() )
-                    />
+                     {input_element! {
+                        $input_element,
+                        input_ref,
+                        initial_value,
+                        on_input,
+                        placeholder,
+                        input_class,
+                        input_type
+                     }}
                     <span class="text-red-500 font-semibold">
                         <Show when=move || show_error() && error()>
                                 "Invalid "
@@ -311,11 +353,10 @@ pub fn CreateToken() -> impl IntoView {
 
     let cans_wire_res = authenticated_canisters();
 
-    let create_action = create_action(move |&()| {
+    let create_action = Action::new(move |&()| {
         let cans_wire_res = cans_wire_res.clone();
         async move {
             let cans_wire = cans_wire_res
-                .wait_untracked()
                 .await
                 .map_err(|e| e.to_string())?;
             let cans = Canisters::from_wire(cans_wire.clone(), expect_context())
@@ -350,7 +391,7 @@ pub fn CreateToken() -> impl IntoView {
     });
     let creating = create_action.pending();
 
-    let create_disabled = create_memo(move |_| {
+    let create_disabled = Memo::new(move |_| {
         creating()
             || auth_cans.with(|c| c.is_none())
             || ctx.form_state.with(|f| f.logo_b64.is_none())
@@ -428,7 +469,7 @@ pub fn CreateToken() -> impl IntoView {
 
                 <div class="w-full flex justify-center">
                     <button
-                        on:click=move |_| create_action.dispatch(())
+                        on:click=move |_| {create_action.dispatch(());}
                         disabled=create_disabled
                         class="text-white disabled:text-neutral-500 md:text-xl py-4 md:py-4 font-bold w-full md:w-1/2 lg:w-1/3 rounded-full bg-primary-600 disabled:bg-primary-500/30"
                     >
@@ -452,7 +493,7 @@ pub fn CreateToken() -> impl IntoView {
             />
 
         </div>
-    }
+    }.into_any()
 }
 
 #[component]
@@ -505,9 +546,9 @@ pub fn CreateTokenSettings() -> impl IntoView {
     //     });
     // };
 
-    let form_ref = create_node_ref::<html::Form>();
+    let form_ref = NodeRef::<html::Form>::new();
     let reset_settings = move |_| {
-        let Some(form) = form_ref() else { return };
+        let Some(form) = form_ref.get() else { return };
         form.reset();
         // ctx.form_state.update(|f| f.reset_advanced_settings());
         ctx.on_form_reset.notify();
@@ -543,7 +584,7 @@ pub fn CreateTokenSettings() -> impl IntoView {
                 </div>
             // <div class="relative w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-gray-600"></div>
             </label>
-            <form _ref=form_ref>
+            <form node_ref=form_ref>
                 <InputBox
                     heading="Transaction Fee (e8s)"
                     input_type="number"
@@ -660,5 +701,5 @@ pub fn CreateTokenSettings() -> impl IntoView {
                 Reset to default
             </button>
         </div>
-    }
+    }.into_any()
 }

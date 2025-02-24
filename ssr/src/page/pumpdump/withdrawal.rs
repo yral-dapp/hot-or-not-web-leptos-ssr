@@ -1,11 +1,8 @@
 use candid::{Nat, Principal};
 use futures::TryFutureExt;
 use http::StatusCode;
-use leptos::{
-    component, create_action, create_effect, create_rw_signal, event_target_value, expect_context,
-    view, IntoView, ServerFnError, SignalSet, Suspense,
-};
-use leptos_router::use_navigate;
+use leptos::prelude::*;
+use leptos_router::hooks::use_navigate;
 use log;
 use yral_canisters_common::{utils::token::balance::TokenBalance, Canisters};
 use yral_pump_n_dump_common::rest::{BalanceInfoResponse, ClaimReq};
@@ -20,7 +17,7 @@ use crate::{
     consts::PUMP_AND_DUMP_WORKER_URL,
     format_cents,
     state::canisters::authenticated_canisters,
-    try_or_redirect_opt,
+    try_or_redirect_opt, utils::send_wrap,
 };
 
 pub mod result;
@@ -66,7 +63,7 @@ fn Header() -> impl IntoView {
                 <div class="flex flex-row justify-between">
                     <BackButton fallback="/" />
                     <span class="font-bold text-2xl">Withdraw</span>
-                    <a href="/wallet/notifications" disabled=true class="text-xl font-semibold">
+                    <a href="/wallet/notifications" aria_disabled=true class="text-xl font-semibold">
                         <NotificationIcon show_dot=false class="w-8 h-8 text-neutral-600" />
                     </a>
                 </div>
@@ -100,16 +97,16 @@ fn BalanceDisplay(#[prop(into)] balance: Nat, #[prop(into)] withdrawable: Nat) -
 #[component]
 pub fn PndWithdrawal() -> impl IntoView {
     let auth_wire = authenticated_canisters();
-    let details_res = auth_wire.derive(
-        move || (),
-        move |cans_wire, _| async move {
-            let cans_wire = cans_wire?;
+    let details_res = Resource::new(
+        move ||(),
+        move |_| send_wrap(async move {
+            let cans_wire = auth_wire.await?;
             load_withdrawal_details(cans_wire.user_canister)
                 .map_err(ServerFnError::new)
                 .await
-        },
+        }),
     );
-    let cents = create_rw_signal(TokenBalance::new(0usize.into(), 6));
+    let cents = RwSignal::new(TokenBalance::new(0usize.into(), 6));
     let dolrs = move || cents().e8s;
     let formated_dolrs = move || {
         format!(
@@ -131,11 +128,10 @@ pub fn PndWithdrawal() -> impl IntoView {
     };
 
     let auth_wire = authenticated_canisters();
-    let send_claim = create_action(move |&()| {
+    let send_claim = Action::new(move |&()| {
         let auth_wire = auth_wire.clone();
-        async move {
+        send_wrap(async move {
             let auth_wire = auth_wire
-                .wait_untracked()
                 .await
                 .map_err(ServerFnError::new)?;
 
@@ -159,11 +155,11 @@ pub fn PndWithdrawal() -> impl IntoView {
             }
 
             Ok::<(), ServerFnError>(())
-        }
+        })
     });
     let is_claiming = send_claim.pending();
     let claim_res = send_claim.value();
-    create_effect(move |_| {
+    Effect::new(move |_| {
         if let Some(res) = claim_res() {
             let nav = use_navigate();
             match res {
@@ -189,7 +185,7 @@ pub fn PndWithdrawal() -> impl IntoView {
                 <div class="flex flex-col items-center justify-center max-w-md mx-auto px-4 mt-4 pb-6">
                     <Suspense>
                     {move || {
-                        let (balance_info, _) = try_or_redirect_opt!(details_res()?);
+                        let (balance_info, _) = try_or_redirect_opt!(details_res.get()?);
                         Some(view! {
                             <BalanceDisplay balance=balance_info.balance withdrawable=balance_info.withdrawable />
                         })
@@ -220,7 +216,7 @@ pub fn PndWithdrawal() -> impl IntoView {
                                 >Please Wait</button>
                             }>
                             {move || {
-                                let (BalanceInfoResponse { withdrawable, .. }, _) = try_or_redirect_opt!(details_res()?);
+                                let (BalanceInfoResponse { withdrawable, .. }, _) = try_or_redirect_opt!(details_res.get()?);
                                 let can_withdraw = TokenBalance::new(withdrawable, 0) >= cents();
                                 let no_input = cents().e8s == 0usize;
                                 let is_claiming = is_claiming();
@@ -238,7 +234,7 @@ pub fn PndWithdrawal() -> impl IntoView {
                                         disabled=no_input || !can_withdraw
                                         class=("pointer-events-none", is_claiming)
                                         class="rounded-lg px-5 py-2 text-sm text-center font-bold bg-brand-gradient disabled:bg-brand-gradient-disabled"
-                                        on:click=move |_ev| send_claim.dispatch(())
+                                        on:click=move |_ev| {send_claim.dispatch(());}
                                     >{message}</button>
                                 })
                             }}

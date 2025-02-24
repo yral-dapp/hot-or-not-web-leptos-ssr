@@ -1,6 +1,6 @@
-use leptos::*;
+use leptos::{either::Either, prelude::*};
 use leptos_icons::*;
-
+use leptos::html;
 use crate::{
     component::icons::chevron_right_icon::ChevronRightIcon,
     page::{
@@ -22,7 +22,7 @@ pub fn PlayingCard() -> impl IntoView {
     let game_res: RunningGameRes = expect_context();
     // let running_data: RwSignal<Option<GameRunningData>> = expect_context();
     let winning_pot = move || {
-        let Some(Ok(ctx)) = game_res.get() else {
+        let Some(Ok(ctx)) = game_res.get().map(|res| res.take()) else {
             return "--".to_string();
         };
         ctx.with_running_data(|data| data.winning_pot)
@@ -34,14 +34,14 @@ pub fn PlayingCard() -> impl IntoView {
     let token_link = token.token_details.link.clone();
 
     let player_count = move || {
-        let Some(Ok(ctx)) = game_res.get() else {
+        let Some(Ok(ctx)) = game_res.get().map(|res| res.take()) else {
             return "--".to_string();
         };
         ctx.with_running_data(|data| data.player_count.to_string())
             .unwrap_or_else(|| "--".into())
     };
 
-    let audio_ref = create_node_ref::<html::Audio>();
+    let audio_ref = NodeRef::<html::Audio>::new();
 
     view! {
         <div
@@ -84,7 +84,7 @@ pub fn PlayingCard() -> impl IntoView {
                 <div
                     class="flex relative items-center gap-6 justify-center w-full"
                 >
-                    <audio _ref=audio_ref preload="auto" src="/pnd-tap.mp3"/>
+                    <audio node_ref=audio_ref preload="auto" src="/pnd-tap.mp3"/>
                     <DumpButton audio_ref />
 
                     <PumpButton audio_ref />
@@ -98,7 +98,7 @@ pub fn PlayingCard() -> impl IntoView {
 fn WonCard(win_amount: u128) -> impl IntoView {
     let game_res: RunningGameRes = expect_context();
     let loading_data = move || {
-        let Some(Ok(ctx)) = game_res.get() else {
+        let Some(Ok(ctx)) = game_res.get().map(|res| res.take()) else {
             return None;
         };
         Some(ctx.loading_data())
@@ -111,7 +111,7 @@ fn WonCard(win_amount: u128) -> impl IntoView {
     };
 
     let on_click = move |_| {
-        let Some(Ok(ctx)) = game_res.get() else {
+        let Some(Ok(ctx)) = game_res.get().map(|res| res.take()) else {
             return;
         };
 
@@ -156,7 +156,7 @@ fn WonCard(win_amount: u128) -> impl IntoView {
 fn LostCard() -> impl IntoView {
     let game_res: RunningGameRes = expect_context();
     let loading_data = move || {
-        let Some(Ok(ctx)) = game_res.get() else {
+        let Some(Ok(ctx)) = game_res.get().map(|res| res.take()) else {
             return None;
         };
         Some(ctx.loading_data())
@@ -169,7 +169,7 @@ fn LostCard() -> impl IntoView {
     };
 
     let on_click = move |_| {
-        let Some(Ok(ctx)) = game_res.get() else {
+        let Some(Ok(ctx)) = game_res.get().map(|res| res.take()) else {
             return;
         };
 
@@ -206,11 +206,11 @@ fn LostCard() -> impl IntoView {
 #[component]
 pub fn ResultDeclaredCard(result: GameResult) -> impl IntoView {
     match result {
-        GameResult::Loss { .. } => view! {
+        GameResult::Loss { .. } => Either::Left(view! {
             <LostCard />
-        },
-        GameResult::Win { amount } => view! {
+        }),
+        GameResult::Win { amount } => Either::Right(view! {
             <WonCard win_amount=amount/>
-        },
+        }),
     }
 }

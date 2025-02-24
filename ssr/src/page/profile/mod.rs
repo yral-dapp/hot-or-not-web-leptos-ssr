@@ -7,10 +7,11 @@ mod speculation;
 mod tokens;
 
 use candid::Principal;
-use leptos::*;
+use futures::future::Either;
+use leptos::prelude::*;
 use leptos_icons::*;
 use leptos_meta::*;
-use leptos_router::*;
+use leptos_router::{components::Redirect, hooks::use_params, params::Params};
 
 use crate::{
     component::connect::ConnectLogin,
@@ -18,7 +19,7 @@ use crate::{
         app_state::AppState,
         auth::account_connected_reader,
         canisters::{authenticated_canisters, unauth_canisters},
-    },
+    }, utils::send_wrap,
 };
 
 use posts::ProfilePosts;
@@ -61,7 +62,7 @@ struct TabsParam {
 fn ListSwitcher1(user_canister: Principal, user_principal: Principal) -> impl IntoView {
     let param = use_params::<TabsParam>();
 
-    let current_tab = create_memo(move |_| {
+    let current_tab = Memo::new(move |_| {
         param.with(|p| {
             let tab = p.as_ref().map(|p| p.tab.as_str()).unwrap_or("tokens");
             match tab {
@@ -82,21 +83,21 @@ fn ListSwitcher1(user_canister: Principal, user_principal: Principal) -> impl In
     };
     view! {
         <div class="relative flex flex-row w-11/12 md:w-9/12 text-center text-xl md:text-2xl">
-            <A class=move || tab_class(0) href=move || format!("/profile/{}/posts", user_principal)>
+            <a class=move || tab_class(0) href=move || format!("/profile/{}/posts", user_principal)>
                 <Icon icon=icondata::FiGrid />
-            </A>
-            <A
+            </a>
+            <a
                 class=move || tab_class(1)
                 href=move || format!("/profile/{}/stakes", user_principal)
             >
                 <Icon icon=icondata::BsTrophy />
-            </A>
-            <A
+            </a>
+            <a
                 class=move || tab_class(2)
                 href=move || format!("/profile/{}/tokens", user_principal)
             >
                 <Icon icon=icondata::AiDollarCircleOutlined />
-            </A>
+            </a>
         </div>
 
         <div class="flex flex-col gap-y-12 justify-center pb-12 w-11/12 sm:w-7/12">
@@ -162,7 +163,7 @@ fn ProfileViewInner(user: ProfileDetails, user_canister: Principal) -> impl Into
                 <ListSwitcher1 user_canister user_principal=user.principal />
             </div>
         </div>
-    }
+    }.into_any()
 }
 #[component]
 pub fn ProfileView() -> impl IntoView {
@@ -179,8 +180,8 @@ pub fn ProfileView() -> impl IntoView {
     let auth_cans = authenticated_canisters();
 
     let profile_info_res =
-        auth_cans.derive(param_principal, move |cans_wire, principal| async move {
-            let cans_wire = cans_wire?;
+        Resource::new(param_principal, move |principal| send_wrap(async move {
+            let cans_wire = auth_cans.await?;
             let canisters = Canisters::from_wire(cans_wire.clone(), expect_context())?;
             let user_principal = canisters.user_principal();
 
@@ -205,7 +206,7 @@ pub fn ProfileView() -> impl IntoView {
             let user = canisters.individual_user(user_canister).await;
             let user_details = user.get_profile_details().await?;
             Ok((Some((user_details.into(), user_canister)), None))
-        });
+        }));
 
     let app_state = use_context::<AppState>();
     let page_title = app_state.unwrap().name.to_owned() + " - Profile";
@@ -213,37 +214,36 @@ pub fn ProfileView() -> impl IntoView {
         <Title text=page_title />
         <Suspense>
             {move || {
-                profile_info_res()
-                    .map(|res| {
-                        match res {
-                            Ok((None, Some(user_principal))) => {
-                                if let Ok(TabsParam { tab }) = tab_params() {
-                                    view! {
-                                        <Redirect path=format!(
-                                            "/profile/{}/{}",
-                                            user_principal,
-                                            tab,
-                                        ) />
-                                    }
-                                } else {
-                                    view! { <Redirect path="/" /> }
-                                }
-                            }
-                            Err(_) => view! { <Redirect path="/" /> },
-                            Ok((Some((user_details, user_canister)), None)) => {
+                profile_info_res.get().map(|res| {
+                    match res {
+                        Ok((None, Some(user_principal))) => {
+                            if let Ok(TabsParam { tab }) = tab_params() {
                                 view! {
-                                    <ProfileComponent user_details=Some((
-                                        user_details,
-                                        user_canister,
-                                    )) />
-                                }
+                                    <Redirect path=format!(
+                                        "/profile/{}/{}",
+                                        user_principal,
+                                        tab,
+                                    ) />
+                                }.into_any()
+                            } else {
+                                view! { <Redirect path="/" /> }.into_any()
                             }
-                            _ => view! { <Redirect path="/" /> },
                         }
-                    })
+                        Err(_) => view! { <Redirect path="/" /> }.into_any(),
+                        Ok((Some((user_details, user_canister)), None)) => {
+                            view! {
+                                <ProfileComponent user_details=Some((
+                                    user_details,
+                                    user_canister,
+                                )) />
+                            }.into_any()
+                        }
+                        _ => view! { <Redirect path="/" /> }.into_any(),
+                    }
+                })
             }}
         </Suspense>
-    }
+    }.into_any()
 }
 
 #[component]
@@ -261,13 +261,9 @@ pub fn ProfileComponent(user_details: Option<(ProfileDetails, Principal)>) -> im
         *idx = 0;
     });
 
-    view! {
-        {move || {
-            if let Some((user, user_canister)) = user_details.clone() {
-                view! { <ProfileViewInner user user_canister /> }
-            } else {
-                view! { <Redirect path="/" /> }
-            }
-        }}
+    if let Some((user, user_canister)) = user_details.clone() {
+        view! { <ProfileViewInner user user_canister /> }.into_any()
+    } else {
+        view! { <Redirect path="/" /> }.into_any()
     }
 }

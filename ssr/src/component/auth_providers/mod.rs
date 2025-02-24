@@ -2,11 +2,11 @@
 mod google;
 #[cfg(feature = "local-auth")]
 mod local_storage;
-
+use leptos::prelude::ServerFnError;
 use candid::Principal;
 use codee::string::FromToStringCodec;
 use ic_agent::Identity;
-use leptos::*;
+use leptos::{ev, prelude::*, reactive::wrappers::write::SignalSetter};
 use leptos_use::storage::use_local_storage;
 use yral_types::delegated_identity::DelegatedIdentityWire;
 
@@ -81,12 +81,12 @@ fn LoginProvButton<Cb: Fn(ev::MouseEvent) + 'static>(
     prov: ProviderKind,
     #[prop(into)] class: Oco<'static, str>,
     on_click: Cb,
-    #[prop(optional, into)] disabled: MaybeSignal<bool>,
+    #[prop(optional, into)] disabled: Signal<bool>,
     children: Children,
 ) -> impl IntoView {
     let ctx: LoginProvCtx = expect_context();
 
-    let click_action = create_action(move |()| async move {
+    let click_action = Action::new(move |()| async move {
         LoginMethodSelected.send_event(prov);
     });
 
@@ -112,14 +112,14 @@ pub fn LoginProviders(show_modal: RwSignal<bool>, lock_closing: RwSignal<bool>) 
         use_local_storage::<bool, FromToStringCodec>(ACCOUNT_CONNECTED_STORE);
     let auth = auth_state();
 
-    let new_identity = create_rw_signal::<Option<DelegatedIdentityWire>>(None);
+    let new_identity = RwSignal::new(None::<DelegatedIdentityWire>);
 
-    let processing = create_rw_signal(None);
+    let processing = RwSignal::new(None);
 
-    create_local_resource(
-        move || MockPartialEq(new_identity()),
-        move |identity| async move {
-            let Some(identity) = identity.0 else {
+    LocalResource::new(
+        move || async move {
+            let identity = move || MockPartialEq(new_identity());
+            let Some(identity) = identity().0 else {
                 return Ok(());
             };
 
@@ -189,7 +189,7 @@ mod server_fn_impl {
     #[cfg(feature = "backend-admin")]
     mod backend_admin {
         use candid::Principal;
-        use leptos::ServerFnError;
+        use leptos::prelude::*;
 
         use crate::state::canisters::unauth_canisters;
         use yral_canisters_client::individual_user_template::KnownPrincipalType;
@@ -296,8 +296,7 @@ mod server_fn_impl {
     #[cfg(not(feature = "backend-admin"))]
     mod mock {
         use candid::Principal;
-        use leptos::ServerFnError;
-
+        use leptos::prelude::ServerFnError;
         pub async fn issue_referral_rewards_impl(
             _referee_canister: Principal,
         ) -> Result<(), ServerFnError> {

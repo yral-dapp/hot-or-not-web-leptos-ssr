@@ -1,19 +1,15 @@
 use candid::Principal;
-use leptos::{
-    component, create_action, create_effect, create_rw_signal, expect_context, html::Div, view,
-    For, IntoView, NodeRef, RwSignal, Show, SignalGet, SignalGetUntracked, SignalSet, SignalUpdate,
-    SignalUpdateUntracked,
-};
+use leptos::prelude::*;
 use leptos_use::{use_infinite_scroll_with_options, UseInfiniteScrollOptions};
 use yral_canisters_client::individual_user_template::{
     GameDirection, IndividualUserTemplate, ParticipatedGameInfo,
 };
 use yral_canisters_common::{utils::profile::ProfileDetails, Canisters};
-
+use leptos::html::Div;
 use crate::{
     component::{back_btn::BackButton, skeleton::Skeleton, title::TitleText},
     page::pumpdump::{convert_e8s_to_cents, GameResult},
-    state::canisters::authenticated_canisters,
+    state::canisters::authenticated_canisters, utils::send_wrap,
 };
 
 use super::GameState;
@@ -249,17 +245,17 @@ fn GameplayHistoryCard(#[prop(into)] details: GameplayHistoryItem) -> impl IntoV
 
 #[component]
 pub fn PndProfilePage() -> impl IntoView {
-    let profile_data: ProfileDataSignal = create_rw_signal(None);
+    let profile_data: ProfileDataSignal = RwSignal::new(None);
     // TODO: write the create_effect and action combo for profile data
 
-    let gameplay_history: GameplayHistorySignal = create_rw_signal(Default::default());
+    let gameplay_history: GameplayHistorySignal = RwSignal::new(Default::default());
 
     let auth_cans = authenticated_canisters();
     let auth_cans_for_profile = auth_cans.clone();
-    let load_profile_data = create_action(move |&()| {
+    let load_profile_data = Action::new(move |&()| {
         let value = auth_cans_for_profile.clone();
         async move {
-            let cans_wire = value.wait_untracked().await.map_err(|e| e.to_string())?;
+            let cans_wire = value.await.map_err(|e| e.to_string())?;
 
             let user = cans_wire.profile_details.clone();
             let canisters = Canisters::from_wire(cans_wire.clone(), expect_context())
@@ -274,24 +270,21 @@ pub fn PndProfilePage() -> impl IntoView {
         }
     });
 
-    create_effect(move |_| {
+    Effect::new(move |_| {
         if profile_data.get_untracked().is_none() {
             load_profile_data.dispatch(());
         }
     });
 
     let auth_can_for_history = auth_cans.clone();
-    let page = create_rw_signal(0);
-    let should_load_more = create_rw_signal(true);
-    let load_gameplay_history = create_action(move |&page| {
+    let page = RwSignal::new(0);
+    let should_load_more = RwSignal::new(true);
+    let load_gameplay_history = Action::new(move |&page| {
         let cans_wire_res = auth_can_for_history.clone();
-        async move {
+        send_wrap(async move {
             // since we are starting a load job, no more load jobs should be start
             should_load_more.set(false);
-            let cans_wire = cans_wire_res
-                .wait_untracked()
-                .await
-                .map_err(|_| "Couldn't get cans_wire")?;
+            let cans_wire = cans_wire_res.await.map_err(|_| "Couldn't get cans_wire")?;
             let cans = Canisters::from_wire(cans_wire.clone(), expect_context())
                 .map_err(|_| "Unable to authenticate".to_string())?;
 
@@ -308,7 +301,7 @@ pub fn PndProfilePage() -> impl IntoView {
             }
 
             Ok::<_, String>(())
-        }
+        })
     });
 
     let scroll_container = NodeRef::<Div>::new();
@@ -343,7 +336,7 @@ pub fn PndProfilePage() -> impl IntoView {
                 <ProfileDataSection profile_data=profile_data.get().unwrap() />
             </Show>
             <div class="w-11/12 flex justify-center">
-                <div ref=scroll_container class="flex flex-wrap gap-4 justify-center pt-8 pb-16">
+                <div node_ref=scroll_container class="flex flex-wrap gap-4 justify-center pt-8 pb-16">
                     <For each=move || gameplay_history.get().into_iter().enumerate() key=|(idx, _)| *idx let:item>
                         <GameplayHistoryCard details=item.1 />
                     </For>

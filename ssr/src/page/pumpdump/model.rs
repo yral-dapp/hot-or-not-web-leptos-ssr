@@ -1,6 +1,6 @@
 use candid::{Nat, Principal};
-use leptos::{Params, ServerFnError};
-use leptos_router::Params;
+use leptos::prelude::*;
+use leptos_router::params::Params;
 use serde::{Deserialize, Serialize};
 use yral_pump_n_dump_common::rest::{BalanceInfoResponse, UserBetsResponse};
 

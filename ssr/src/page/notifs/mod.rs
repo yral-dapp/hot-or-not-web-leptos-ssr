@@ -1,8 +1,8 @@
-use leptos::*;
+use leptos::prelude::*;
 
 use crate::{
     component::canisters_prov::AuthCansProvider, state::auth::account_connected_reader,
-    utils::notifications::get_token_for_principal,
+    utils::{notifications::get_token_for_principal, send_wrap},
 };
 use yral_canisters_common::utils::profile::ProfileDetails;
 
@@ -10,7 +10,7 @@ use yral_canisters_common::utils::profile::ProfileDetails;
 fn NotifInnerComponent(details: ProfileDetails) -> impl IntoView {
     let (_, _) = account_connected_reader();
 
-    let on_token_click = create_action(move |()| async move {
+    let on_token_click: Action<(), (), LocalStorage> = Action::new_unsync(move |()| async move {
         get_token_for_principal(details.principal.to_string()).await;
     });
 
@@ -21,7 +21,7 @@ fn NotifInnerComponent(details: ProfileDetails) -> impl IntoView {
         <div class="flex flex-row gap-2 text-black">
             <button
                 class="p-2 bg-gray-200 rounded-md"
-                on:click=move |_| on_token_click.dispatch(())
+                on:click=move |_| {on_token_click.dispatch(());}
             >
                 "Get Token"
             </button>

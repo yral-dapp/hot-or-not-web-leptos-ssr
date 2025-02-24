@@ -17,8 +17,8 @@ pub mod server {
 
     use axum::extract::FromRef;
     use axum_extra::extract::cookie::Key;
-    use leptos::LeptosOptions;
-    use leptos_router::RouteListing;
+    use leptos::prelude::*;
+    use leptos_axum::AxumRouteListing;
     use yral_canisters_common::Canisters;
 
     #[derive(FromRef, Clone)]
@@ -30,7 +30,7 @@ pub mod server {
         #[cfg(feature = "cloudflare")]
         pub cloudflare: gob_cloudflare::CloudflareAuth,
         pub kv: KVStoreImpl,
-        pub routes: Vec<RouteListing>,
+        pub routes: Vec<AxumRouteListing>,
         pub cookie_key: Key,
         #[cfg(feature = "oauth-ssr")]
         pub google_oauth_clients: crate::auth::core_clients::CoreClients,

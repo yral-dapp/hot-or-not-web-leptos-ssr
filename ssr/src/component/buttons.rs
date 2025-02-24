@@ -1,4 +1,4 @@
-use leptos::*;
+use leptos::prelude::*;
 
 #[component]
 pub fn HighlightedButton(
@@ -45,7 +45,7 @@ pub fn HighlightedLinkButton(
     view! {
         <a
             href=href
-            disabled=disabled
+            aria_disabled=disabled
             class=format!(
                 "w-full px-5 py-3 rounded-lg flex items-center transition-all justify-center gap-8 font-kumbh font-bold {}",
                 classes,

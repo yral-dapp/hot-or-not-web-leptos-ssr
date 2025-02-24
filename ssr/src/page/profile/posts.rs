@@ -1,4 +1,4 @@
-use leptos::*;
+use leptos::prelude::*;
 use leptos_icons::*;
 
 use candid::Principal;
@@ -12,10 +12,11 @@ use crate::{
 use super::ic::ProfileStream;
 use super::ProfilePostsContext;
 use yral_canisters_common::utils::posts::PostDetails;
+use leptos::html;
 
 #[component]
 fn Post(details: PostDetails, user_canister: Principal, _ref: NodeRef<html::Div>) -> impl IntoView {
-    let image_error = create_rw_signal(false);
+    let image_error = RwSignal::new(false);
 
     let profile_post_url = format!("/profile/{user_canister}/post/{}", details.post_id);
 
@@ -29,7 +30,7 @@ fn Post(details: PostDetails, user_canister: Principal, _ref: NodeRef<html::Div>
     };
 
     view! {
-        <div _ref=_ref class="relative w-full basis-1/3 md:basis-1/4 xl:basis-1/5">
+        <div node_ref=_ref class="relative w-full basis-1/3 md:basis-1/4 xl:basis-1/5">
             <div class="relative aspect-[9/16] h-full rounded-md border-white/20 m-2 border-[1px]">
                 <a class="h-full w-full" href=profile_post_url on:click=move |_| video_click()>
                     <Show

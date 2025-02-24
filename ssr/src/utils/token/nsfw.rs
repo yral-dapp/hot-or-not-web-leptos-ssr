@@ -1,6 +1,6 @@
 use std::env;
 
-use leptos::*;
+use leptos::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "ssr")]

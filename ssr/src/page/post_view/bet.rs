@@ -1,4 +1,4 @@
-use leptos::*;
+use leptos::{either::Either, prelude::*};
 use leptos_icons::*;
 use leptos_use::use_interval_fn;
 use web_time::Duration;
@@ -12,7 +12,7 @@ use crate::{
     page::post_view::BetEligiblePostCtx,
     state::canisters::unauth_canisters,
     try_or_redirect_opt,
-    utils::{time::to_hh_mm_ss, MockPartialEq},
+    utils::{send_wrap, time::to_hh_mm_ss},
 };
 use yral_canisters_common::{
     utils::{
@@ -59,7 +59,7 @@ impl From<CoinState> for u64 {
 
 #[component]
 fn CoinStateView(
-    #[prop(into)] coin: MaybeSignal<CoinState>,
+    #[prop(into)] coin: Signal<CoinState>,
     #[prop(into)] class: String,
     #[prop(optional, into)] disabled: Signal<bool>,
 ) -> impl IntoView {
@@ -82,7 +82,7 @@ fn HNButton(
     kind: VoteKind,
     #[prop(into)] disabled: Signal<bool>,
 ) -> impl IntoView {
-    let grayscale = create_memo(move |_| bet_direction() != Some(kind) && disabled());
+    let grayscale = Memo::new(move |_| bet_direction() != Some(kind) && disabled());
     let show_spinner = move || disabled() && bet_direction() == Some(kind);
     let icon = if kind == VoteKind::Hot {
         HotIcon
@@ -111,14 +111,14 @@ fn HNButtonOverlay(
     bet_direction: RwSignal<Option<VoteKind>>,
     refetch_bet: Trigger,
 ) -> impl IntoView {
-    let place_bet_action = create_action(
+    let place_bet_action = Action::new(
         move |(canisters, bet_direction, bet_amount): &(Canisters<true>, VoteKind, u64)| {
             let post_can_id = post.canister_id;
             let post_id = post.post_id;
             let cans = canisters.clone();
             let bet_amount = *bet_amount;
             let bet_direction = *bet_direction;
-            async move {
+            send_wrap(async move {
                 match cans
                     .vote_on_post(bet_amount, bet_direction, post_id, post_can_id)
                     .await
@@ -129,11 +129,11 @@ fn HNButtonOverlay(
                         None
                     }
                 }
-            }
+            })
         },
     );
     let place_bet_res = place_bet_action.value();
-    create_effect(move |_| {
+    Effect::new(move |_| {
         if place_bet_res().flatten().is_some() {
             refetch_bet.notify();
         }
@@ -142,7 +142,7 @@ fn HNButtonOverlay(
 
     let BetEligiblePostCtx { can_place_bet } = expect_context();
 
-    create_effect(move |_| {
+    Effect::new(move |_| {
         if !running.get() {
             can_place_bet.set(true)
         } else {
@@ -154,7 +154,7 @@ fn HNButtonOverlay(
         <AuthCansProvider let:canisters>
 
             {
-                create_effect(move |_| {
+                Effect::new(move |_| {
                     let Some(bet_direction) = bet_direction() else {
                         return;
                     };
@@ -262,9 +262,9 @@ fn HNWonLost(participation: VoteDetails) -> impl IntoView {
 
                 </div>
                 {if won {
-                    view! { <WinBadge /> }
+                    Either::Left(view! { <WinBadge /> })
                 } else {
-                    view! { <LostBadge /> }
+                    Either::Right(view! { <LostBadge /> })
                 }}
 
             </div>
@@ -276,7 +276,7 @@ fn HNWonLost(participation: VoteDetails) -> impl IntoView {
 #[component]
 fn BetTimer(post: PostDetails, participation: VoteDetails, refetch_bet: Trigger) -> impl IntoView {
     let bet_duration = participation.vote_duration().as_secs();
-    let time_remaining = create_rw_signal(participation.time_remaining(post.created_at));
+    let time_remaining = RwSignal::new(participation.time_remaining(post.created_at));
     _ = use_interval_fn(
         move || {
             time_remaining.try_update(|t| *t = t.saturating_sub(Duration::from_secs(1)));
@@ -288,7 +288,7 @@ fn BetTimer(post: PostDetails, participation: VoteDetails, refetch_bet: Trigger)
         1000,
     );
 
-    let percentage = create_memo(move |_| {
+    let percentage = Memo::new(move |_| {
         let remaining_secs = time_remaining().as_secs();
         100 - ((remaining_secs * 100) / bet_duration).min(100)
     });
@@ -363,14 +363,16 @@ pub fn HNUserParticipation(
     view! {
         {match participation.outcome {
             VoteOutcome::AwaitingResult => {
-                view! { <HNAwaitingResults post refetch_bet participation /> }
+                view! { <HNAwaitingResults post refetch_bet participation /> }.into_any()
             }
             VoteOutcome::Won(_) => {
-                view! { <HNWonLost participation /> }
+                view! { <HNWonLost participation /> }.into_any()
             }
-            VoteOutcome::Draw(_) => view! { "Draw" }.into_view(),
+            VoteOutcome::Draw(_) => {
+                view! { "Draw" }.into_any()
+            }
             VoteOutcome::Lost => {
-                view! { <HNWonLost participation /> }
+                view! { <HNWonLost participation /> }.into_any()
             }
         }
             .into_view()}
@@ -385,12 +387,12 @@ fn MaybeHNButtons(
     coin: RwSignal<CoinState>,
     refetch_bet: Trigger,
 ) -> impl IntoView {
-    let post = store_value(post);
-    let is_betting_enabled: Resource<(), Option<bool>> = create_resource(
+    let post = StoredValue::new(post);
+    let is_betting_enabled: Resource<Option<bool>> = Resource::new(
         move || (),
         move |_| {
             let post = post.get_value();
-            async move {
+            send_wrap(async move {
                 let canisters = unauth_canisters();
                 let user = canisters.individual_user(post.canister_id).await;
                 let res = user
@@ -398,7 +400,7 @@ fn MaybeHNButtons(
                     .await
                     .ok()?;
                 Some(matches!(res, BettingStatus::BettingOpen { .. }))
-            }
+            })
         },
     );
     let BetEligiblePostCtx { can_place_bet } = expect_context();
@@ -406,7 +408,7 @@ fn MaybeHNButtons(
     view! {
         <Suspense fallback=LoaderWithShadowBg>
             {move || {
-                is_betting_enabled()
+                is_betting_enabled.get()
                     .and_then(|enabled| {
                         if !enabled.unwrap_or_default() {
                             can_place_bet.set(false);
@@ -426,7 +428,7 @@ fn MaybeHNButtons(
             }}
 
         </Suspense>
-    }
+    }.into_any()
 }
 
 #[component]
@@ -449,22 +451,19 @@ fn ShadowBg() -> impl IntoView {
 
 #[component]
 pub fn HNGameOverlay(post: PostDetails) -> impl IntoView {
-    let bet_direction = create_rw_signal(None::<VoteKind>);
-    let coin = create_rw_signal(CoinState::C50);
+    let bet_direction = RwSignal::new(None::<VoteKind>);
+    let coin = RwSignal::new(CoinState::C50);
 
-    let refetch_bet = create_trigger();
-    let post = store_value(post);
+    let refetch_bet = Trigger::new();
+    let post = StoredValue::new(post);
 
     let create_bet_participation_outcome = move |canisters: Canisters<true>| {
         // TODO: leptos 0.7, switch to `create_resource`
-        create_local_resource(
+        LocalResource::new(
             // MockPartialEq is necessary
             // See: https://github.com/leptos-rs/leptos/issues/2661
             move || {
                 refetch_bet.track();
-                MockPartialEq(())
-            },
-            move |_| {
                 let cans = canisters.clone();
                 async move {
                     let post = post.get_value();
@@ -488,23 +487,23 @@ pub fn HNGameOverlay(post: PostDetails) -> impl IntoView {
                 let bet_participation_outcome = create_bet_participation_outcome(canisters);
                 view! {
                     {move || {
-                        bet_participation_outcome()
+                        bet_participation_outcome.get()
                             .and_then(|res| {
-                                let participation = try_or_redirect_opt!(res);
+                                let participation = try_or_redirect_opt!(res.as_ref());
                                 let post = post.get_value();
                                 Some(
                                     if let Some(participation) = participation {
                                         view! {
-                                            <HNUserParticipation post refetch_bet participation />
-                                        }
+                                            <HNUserParticipation post refetch_bet participation=participation.clone() />
+                                        }.into_any()
                                     } else {
                                         view! {
                                             <MaybeHNButtons post bet_direction coin refetch_bet />
-                                        }
+                                        }.into_any()
                                     },
                                 )
                             })
-                            .unwrap_or_else(|| view! { <LoaderWithShadowBg /> })
+                            .unwrap_or_else(|| view! { <LoaderWithShadowBg /> }.into_any())
                     }}
                 }
             }

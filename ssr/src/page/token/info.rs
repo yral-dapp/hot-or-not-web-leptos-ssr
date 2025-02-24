@@ -1,8 +1,13 @@
+use crate::component::show_any::ShowAny;
 use crate::page::token::RootType;
 use crate::page::token::TokenInfoParams;
 use crate::page::wallet::airdrop::AirdropPage;
 use crate::state::canisters::authenticated_canisters;
-
+use crate::utils::send_wrap;
+use leptos_router::components::Redirect;
+use leptos_router::hooks::use_params;
+use leptos_router::hooks::use_query;
+use leptos_router::params::Params;
 use crate::utils::token::icpump::IcpumpTokenInfo;
 use crate::{
     component::{
@@ -12,7 +17,7 @@ use crate::{
     utils::web::copy_to_clipboard,
 };
 use candid::Principal;
-use leptos::*;
+use leptos::prelude::*;
 use leptos_icons::*;
 use leptos_meta::*;
 use leptos_router::*;
@@ -36,14 +41,14 @@ fn TokenField(
             <span class="text-white text-sm md:text-base">{label}</span>
             <div class="bg-white/5 text-base md:text-lg text-white/50 px-2 py-4 rounded-xl w-full flex justify-between">
                 <div>{value}</div>
-                <Show when=move || copy>
+                <ShowAny when=move || copy>
                     <button on:click=copy_clipboard.clone()>
                         <Icon
                             class="w-6 h-6 text-white/50 cursor-pointer hover:text-white/80"
                             icon=icondata::BiCopyRegular
                         />
                     </button>
-                </Show>
+                </ShowAny>
             </div>
         </div>
     }
@@ -73,7 +78,7 @@ fn TokenInfoInner(
 ) -> impl IntoView {
     let meta_c1 = meta.clone();
     let meta_c = meta.clone();
-    let detail_toggle = create_rw_signal(false);
+    let detail_toggle = RwSignal::new(false);
     let view_detail_icon = Signal::derive(move || {
         if detail_toggle() {
             icondata::AiUpOutlined
@@ -88,7 +93,7 @@ fn TokenInfoInner(
     ));
 
     let decimals = meta.decimals;
-    let blur_active = create_rw_signal(meta.is_nsfw);
+    let blur_active = RwSignal::new(meta.is_nsfw);
 
     view! {
         <div class="w-dvw min-h-dvh bg-neutral-800  flex flex-col gap-4">
@@ -115,7 +120,7 @@ fn TokenInfoInner(
                                             }
                                         }
                                     />
-                                    <Show when=move || blur_active()>
+                                    <ShowAny when=move || blur_active()>
                                         <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
                                             on:click=move |_| {
                                                 if meta.is_nsfw {
@@ -127,7 +132,7 @@ fn TokenInfoInner(
                                                 icon=icondata::AiEyeInvisibleOutlined
                                             />
                                         </div>
-                                    </Show>
+                                    </ShowAny>
                                 </div>
                                 <span class="text-base md:text-lg font-semibold text-white">
                                     {meta.name}
@@ -142,11 +147,11 @@ fn TokenInfoInner(
                                             message
                                             style="w-12 h-12".into()
                                         />
-                                    }
+                                    }.into_any()
                                 })}
                         </div>
 
-                        <Show when= move|| key_principal.clone().is_some()>
+                        <ShowAny when= move|| key_principal.clone().is_some()>
                             <div class="flex flex-row justify-between border-b p-1 border-white items-center">
                                 <span class="text-xs md:text-sm text-green-500">Balance</span>
                                 <span class="text-lg md:text-xl text-white">
@@ -162,7 +167,7 @@ fn TokenInfoInner(
                                     })}
                                 </span>
                             </div>
-                        </Show>
+                        </ShowAny>
                         <button
                             on:click=move |_| detail_toggle.update(|t| *t = !*t)
                             class="w-full bg-transparent p-1 flex flex-row justify-center items-center gap-2 text-white"
@@ -173,20 +178,20 @@ fn TokenInfoInner(
                             </div>
                         </button>
                     </div>
-                    <Show when=detail_toggle>
+                    <ShowAny when=detail_toggle>
                         <TokenDetails meta=meta_c.clone() />
-                    </Show>
+                    </ShowAny>
                 </div>
-                    <Show when= move || is_user_principal>
+                    <ShowAny when= move || is_user_principal>
                         <a
                             href=format!("/token/transfer/{}", root.to_string())
                             class="fixed bottom-20 left-4 right-4 p-3 bg-primary-600 text-white text-center md:text-lg rounded-full z-50"
                         >
                             Send
                         </a>
-                    </Show>
+                    </ShowAny>
                 {if let Some(key_principal) = key_principal {
-                    view! { <Transactions source=IndexOrLedger::Index { key_principal, index: meta.index } symbol=meta.symbol.clone() decimals/> }
+                    view! { <Transactions source=IndexOrLedger::Index { key_principal, index: meta.index } symbol=meta.symbol.clone() decimals/> }.into_any()
                 } else {
                     view! {
                         <Transactions
@@ -194,11 +199,11 @@ fn TokenInfoInner(
                             symbol=meta.symbol.clone()
                             decimals
                         />
-                    }
+                    }.into_any()
                 }}
             </div>
         </div>
-    }
+    }.into_any()
 }
 
 #[derive(Params, PartialEq, Clone, Serialize, Deserialize)]
@@ -227,16 +232,17 @@ pub fn TokenInfo() -> impl IntoView {
     let key_principal = use_params::<TokenKeyParam>();
     let airdrop_param = use_query::<AirdropParam>();
     let key_principal = move || key_principal.with(|p| p.as_ref().map(|p| p.key_principal).ok());
-
-    let token_metadata_fetch = authenticated_canisters().derive(
+    let cans_wire = authenticated_canisters();
+    let token_metadata_fetch = Resource::new(
         move || (params(), key_principal()),
-        move |cans_wire, (params_result, key_principal)| async move {
+        move |(params_result, key_principal)| send_wrap(async move {
             let params = match params_result {
                 Ok(p) => p,
                 Err(_) => return Ok::<_, ServerFnError>(None),
             };
 
-            let cans = Canisters::from_wire(cans_wire?, expect_context())?;
+            let cans_wire = cans_wire.await?;
+            let cans = Canisters::from_wire(cans_wire, expect_context())?;
 
             let meta = cans
                 .token_metadata_by_root_type(
@@ -278,7 +284,7 @@ pub fn TokenInfo() -> impl IntoView {
             };
 
             Ok(res)
-        },
+        }),
     );
 
     view! {
@@ -293,7 +299,7 @@ pub fn TokenInfo() -> impl IntoView {
                                     if !is_token_viewer_airdrop_claimed && meta.token_owner.clone().map(|t| t.principal_id) == key_principal && !is_user_principal{
                                         return view! {
                                             <AirdropPage airdrop_amount=airdrop_amt meta/>
-                                        }
+                                        }.into_any()
                                     }
                                 }
                                 view! {
@@ -303,9 +309,9 @@ pub fn TokenInfo() -> impl IntoView {
                                         meta
                                         is_user_principal=is_user_principal
                                     />
-                                }
+                                }.into_any()
                             }
-                            _ => view! { <Redirect path="/wallet" /> },
+                            _ => view! { <Redirect path="/wallet" /> }.into_any(),
                         }
                     })
             }}

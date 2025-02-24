@@ -1,12 +1,11 @@
-use leptos::*;
-use leptos_router::*;
+use leptos::prelude::*;
+use leptos_router::{hooks::use_query, *};
 use openidconnect::CsrfToken;
 use serde::{Deserialize, Serialize};
 use server_fn::codec::{GetUrl, Json};
-
 use crate::{component::loading::Loading, utils::route::go_to_root};
 use yral_types::delegated_identity::DelegatedIdentityWire;
-
+use leptos_router::params::Params;
 pub type GoogleAuthMessage = Result<DelegatedIdentityWire, String>;
 
 #[server]
@@ -95,7 +94,7 @@ pub struct OAuthQuery {
 
 #[component]
 pub fn IdentitySender(identity_res: GoogleAuthMessage) -> impl IntoView {
-    create_effect(move |_| {
+    Effect::new(move |_| {
         let _id = &identity_res;
         #[cfg(feature = "hydrate")]
         {
@@ -155,7 +154,7 @@ struct OAuthState {
 #[component]
 pub fn GoogleRedirectHandler() -> impl IntoView {
     let query = use_query::<OAuthQuery>();
-    let identity_resource = create_blocking_resource(query, |query_res| async move {
+    let identity_resource = Resource::new_blocking(query, |query_res| async move {
         let Ok(oauth_query) = query_res else {
             return RedirectHandlerReturnType::Identity(Err("Invalid query".to_string()));
         };
@@ -182,13 +181,13 @@ pub fn GoogleRedirectHandler() -> impl IntoView {
         <Loading text="Logging out...".to_string()>
             <Suspense>
                 {move || {
-                    identity_resource()
+                    identity_resource.get()
                         .map(|identity_res: RedirectHandlerReturnType| match identity_res {
                             RedirectHandlerReturnType::Identity(identity_res) => {
-                                view! { <IdentitySender identity_res/> }.into_view()
+                                Some(view! { <IdentitySender identity_res/> })
                             }
-                            RedirectHandlerReturnType::ExternalClient(_) => view! {}.into_view(),
-                        })
+                            RedirectHandlerReturnType::ExternalClient(_) => None,
+                        }).flatten()
                 }}
 
             </Suspense>
@@ -198,9 +197,9 @@ pub fn GoogleRedirectHandler() -> impl IntoView {
 
 #[component]
 pub fn GoogleRedirector() -> impl IntoView {
-    let google_redirect = create_blocking_resource(|| (), |_| google_auth_redirector());
-    let do_close = create_rw_signal(false);
-    create_effect(move |_| {
+    let google_redirect = Resource::new_blocking(|| (), |_| google_auth_redirector());
+    let do_close = RwSignal::new(false);
+    Effect::new(move |_| {
         if !do_close() {
             return;
         }
@@ -211,7 +210,7 @@ pub fn GoogleRedirector() -> impl IntoView {
     view! {
         <Suspense>
             {move || {
-                if let Some(Err(_)) = google_redirect() {
+                if let Some(Err(_)) = google_redirect.get() {
                     do_close.set(true)
                 }
                 None::<()>

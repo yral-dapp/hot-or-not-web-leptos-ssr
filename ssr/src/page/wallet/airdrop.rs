@@ -5,12 +5,12 @@ use crate::{
         spinner::{SpinnerCircle, SpinnerCircleStyled},
     },
     state::canisters::authenticated_canisters,
-    utils::host::get_host,
+    utils::{host::get_host, send_wrap},
 };
 use candid::{Nat, Principal};
-use leptos::*;
+use leptos::prelude::*;
 use leptos_icons::Icon;
-use leptos_router::use_location;
+use leptos_router::hooks::use_location;
 use yral_canisters_common::{
     utils::token::{TokenMetadata, TokenOwner},
     Canisters,
@@ -18,9 +18,9 @@ use yral_canisters_common::{
 
 #[component]
 pub fn AirdropPage(meta: TokenMetadata, airdrop_amount: u64) -> impl IntoView {
-    let claimed = create_rw_signal(false);
+    let claimed = RwSignal::new(false);
 
-    let buffer_signal = create_rw_signal(false);
+    let buffer_signal = RwSignal::new(false);
 
     view! {
         <div
@@ -61,15 +61,15 @@ fn AirdropButton(
     root: Option<Principal>,
 ) -> impl IntoView {
     let cans_res = authenticated_canisters();
-    let airdrop_action = create_action(move |&()| {
+    let airdrop_action = Action::new(move |&()| {
         let cans_res = cans_res.clone();
         let token_owner_cans_id = token_owner.clone().unwrap().canister_id;
-        async move {
+        send_wrap(async move {
             if claimed.get() && !buffer_signal.get() {
                 return Ok(());
             }
             buffer_signal.set(true);
-            let cans_wire = cans_res.wait_untracked().await?;
+            let cans_wire = cans_res.await?;
             let cans = Canisters::from_wire(cans_wire, expect_context())?;
             let token_owner = cans.individual_user(token_owner_cans_id).await;
 
@@ -88,7 +88,7 @@ fn AirdropButton(
             buffer_signal.set(false);
             claimed.set(true);
             Ok::<_, ServerFnError>(())
-        }
+        })
     });
 
     let name_c = name.clone();
@@ -122,7 +122,7 @@ fn AirdropButton(
                             </div>
                         </HighlightedButton>
                     }
-                        .into_view()
+                        .into_any()
                 } else if claimed.get() {
                     view! {
                         <HighlightedLinkButton
@@ -134,7 +134,7 @@ fn AirdropButton(
                             "Go to wallet"
                         </HighlightedLinkButton>
                     }
-                        .into_view()
+                        .into_any()
                 } else {
                     view! {
                         <HighlightedButton
@@ -148,7 +148,7 @@ fn AirdropButton(
                             "Claim Now"
                         </HighlightedButton>
                     }
-                        .into_view()
+                        .into_any()
                 }
             }}
         </div>
@@ -219,7 +219,7 @@ fn AirdropPopUpButton(
                             <SpinnerCircleStyled/>
                         </div>
                     }
-                        .into_view())
+                        .into_any())
                 } else if claimed.get() {
                     let host = host.clone();
                     let PopUpButtonTextRedirection { href, text } = pop_up_button_href(host, pathname.pathname.get());
@@ -236,7 +236,7 @@ fn AirdropPopUpButton(
                         </div>
 
                     }
-                        .into_view())
+                        .into_any())
                 } else {
                     None
                 }
@@ -277,7 +277,7 @@ pub fn AirdropPopup(
 }
 
 #[component]
-fn AirdropAnimation(claimed: MaybeSignal<bool>, logo: String) -> impl IntoView {
+fn AirdropAnimation(claimed: Signal<bool>, logo: String) -> impl IntoView {
     let logo_c = logo.clone();
     view! {
         <Show when=claimed fallback=move || view! {

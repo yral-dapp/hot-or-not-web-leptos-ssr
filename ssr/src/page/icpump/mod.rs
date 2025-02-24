@@ -1,17 +1,19 @@
+use leptos::task::spawn_local;
 use leptos_meta::*;
 
 use crate::component::overlay::PopupOverlay;
 use crate::consts::ICPUMP_LISTING_PAGE_SIZE;
 use crate::consts::USER_PRINCIPAL_STORE;
 use crate::state::canisters::authenticated_canisters;
+use crate::utils::send_wrap;
 use std::collections::VecDeque;
 
 use candid::Nat;
 use candid::Principal;
 use codee::string::FromToStringCodec;
 use futures::StreamExt;
-use html::Div;
-use leptos::*;
+use leptos::html::Div;
+use leptos::prelude::*;
 use leptos_icons::Icon;
 use leptos_use::use_cookie;
 use leptos_use::use_intersection_observer_with_options;
@@ -131,17 +133,18 @@ pub async fn process_token_list_item(
 
 #[component]
 pub fn ICPumpListingFeed() -> impl IntoView {
-    let page = create_rw_signal(1);
-    let end = create_rw_signal(false);
-    let loading = create_rw_signal(true);
+    let page = RwSignal::new(1);
+    let end = RwSignal::new(false);
+    let loading = RwSignal::new(true);
     let (curr_principal, _) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE);
-    let token_list: RwSignal<Vec<ProcessedTokenListResponse>> = create_rw_signal(vec![]);
+    let token_list: RwSignal<Vec<ProcessedTokenListResponse>> = RwSignal::new(vec![]);
     let new_token_list: RwSignal<VecDeque<ProcessedTokenListResponse>> =
-        create_rw_signal(VecDeque::new());
+        RwSignal::new(VecDeque::new());
 
-    let fetch_res = authenticated_canisters().derive(
+    let fetch_res = Resource::new(
         move || page.get(),
-        move |cans, page| async move {
+        move |page| send_wrap(async move {
+            let cans = authenticated_canisters().await;
             let cans = Canisters::from_wire(cans.unwrap(), expect_context()).unwrap();
             new_token_list.set(VecDeque::new());
 
@@ -162,10 +165,10 @@ pub fn ICPumpListingFeed() -> impl IntoView {
             });
 
             loading.set(false);
-        },
+        }),
     );
 
-    create_effect(move |_| {
+    Effect::new(move |_| {
         fetch_res.refetch();
         if let Some(principal) = curr_principal.get() {
             spawn_local(async move {
@@ -338,9 +341,9 @@ pub fn TokenCard(
     is_airdrop_claimed: bool,
     token_owner: Option<TokenOwner>,
 ) -> impl IntoView {
-    let show_nsfw = create_rw_signal(false);
+    let show_nsfw = RwSignal::new(false);
 
-    let share_link = create_rw_signal("".to_string());
+    let share_link = RwSignal::new("".to_string());
     let share_link_coin = format!("/token/info/{}/{}", root, details.user_id);
     let symbol = details.token_symbol.clone();
     let share_message = move || {
@@ -350,24 +353,26 @@ pub fn TokenCard(
         share_link.get(),
     )
     };
-    let pop_up = create_rw_signal(false);
-    let airdrop_popup = create_rw_signal(false);
+    let pop_up = RwSignal::new(false);
+    let airdrop_popup = RwSignal::new(false);
     let base_url = get_host();
 
-    let claimed = create_rw_signal(is_airdrop_claimed);
-    let buffer_signal = create_rw_signal(false);
+    let claimed = RwSignal::new(is_airdrop_claimed);
+    let buffer_signal = RwSignal::new(false);
     let cans_res = authenticated_canisters();
     let token_owner_c = token_owner.clone();
-    let airdrop_action = create_action(move |&()| {
+    let airdrop_action = Action::new(move |&()| {
         let cans_res = cans_res.clone();
         let token_owner_cans_id = token_owner_c.clone().unwrap().canister_id;
         airdrop_popup.set(true);
-        async move {
+        send_wrap(async move {
             if claimed.get() && !buffer_signal.get() {
                 return Ok(());
             }
             buffer_signal.set(true);
-            let cans_wire = cans_res.wait_untracked().await?;
+            let cans_wire = cans_res
+                .get_untracked()
+                .ok_or_else(|| ServerFnError::new("Auth Failed"))??;
             let cans = Canisters::from_wire(cans_wire, expect_context())?;
             let token_owner = cans.individual_user(token_owner_cans_id).await;
 
@@ -386,7 +391,7 @@ pub fn TokenCard(
             buffer_signal.set(false);
             claimed.set(true);
             Ok::<_, ServerFnError>(())
-        }
+        })
     });
 
     let airdrop_disabled =
@@ -456,7 +461,7 @@ pub fn TokenCard(
                     />
                 </ActionButton>
                 <ActionButton label="Details".to_string() href=details.link>
-                    <Icon class="w-full h-full" icon=ChevronRightIcon />
+                    <Icon class="w-4 h-4" icon=ChevronRightIcon />
                 </ActionButton>
             </div>
             <PopupOverlay show=pop_up>
@@ -480,7 +485,7 @@ pub fn TokenCard(
                 </div>
             </ShadowOverlay>
         </div>
-    }
+    }.into_any()
 }
 
 #[component]
@@ -488,9 +493,9 @@ pub fn TokenCardLoadingFeed() -> impl IntoView {
     let is_lg_screen = use_media_query("(min-width: 1024px)");
     let is_md_screen = use_media_query("(min-width: 768px)");
 
-    let num_cards = create_rw_signal(6);
+    let num_cards = RwSignal::new(6);
 
-    create_effect(move |_| {
+    Effect::new(move |_| {
         num_cards.set(match (is_lg_screen.get(), is_md_screen.get()) {
             (true, _) => 6,
             (_, true) => 4,
@@ -555,7 +560,7 @@ pub fn ActionButton(
     href: String,
     label: String,
     children: Children,
-    #[prop(optional, into)] disabled: MaybeSignal<bool>,
+    #[prop(optional, into)] disabled: Signal<bool>,
 ) -> impl IntoView {
     view! {
         <a
@@ -585,7 +590,7 @@ pub fn ActionButton(
 pub fn ActionButtonLink(
     label: String,
     children: Children,
-    #[prop(optional, into)] disabled: MaybeSignal<bool>,
+    #[prop(optional, into)] disabled: Signal<bool>,
 ) -> impl IntoView {
     view! {
         <button

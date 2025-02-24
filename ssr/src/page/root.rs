@@ -1,7 +1,7 @@
 use candid::Principal;
-use leptos::*;
+use leptos::prelude::*;
 use leptos_meta::*;
-use leptos_router::*;
+use leptos_router::components::Redirect;
 use rand_chacha::{
     rand_core::{RngCore, SeedableRng},
     ChaCha8Rng,
@@ -126,10 +126,7 @@ async fn get_top_post_id_mlfeed_nsfw() -> Result<Option<(Principal, u64)>, Serve
 #[component]
 pub fn CreatorDaoRootPage() -> impl IntoView {
     view! {
-        {move || {
-            let redirect_url = "/board".to_string();
-            view! { <Redirect path=redirect_url /> }
-        }}
+        <Redirect path="/board".to_string() />
     }
 }
 
@@ -138,16 +135,16 @@ pub fn YralRootPage() -> impl IntoView {
     let target_post;
     #[cfg(any(feature = "local-bin", feature = "local-lib"))]
     {
-        target_post = create_resource(|| (), |_| get_top_post_id());
+        target_post = Resource::new(|| (), |_| get_top_post_id());
     }
     #[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
     {
         use crate::utils::host::show_nsfw_content;
 
         if show_nsfw_content() {
-            target_post = create_resource(|| (), |_| get_top_post_id_mlfeed_nsfw());
+            target_post = Resource::new(|| (), |_| get_top_post_id_mlfeed_nsfw());
         } else {
-            target_post = create_resource(|| (), |_| get_top_post_id_mlfeed());
+            target_post = Resource::new(|| (), |_| get_top_post_id_mlfeed());
         }
     }
 
@@ -176,10 +173,10 @@ pub fn YralRootPage() -> impl IntoView {
 #[component]
 pub fn RootPage() -> impl IntoView {
     if show_pnd_page() {
-        view! { <PumpNDump /> }
+        view! { <PumpNDump /> }.into_any()
     } else if show_cdao_page() {
-        view! { <CreatorDaoRootPage /> }
+        view! { <CreatorDaoRootPage /> }.into_any()
     } else {
-        view! { <YralRootPage /> }
+        view! { <YralRootPage /> }.into_any()
     }
 }

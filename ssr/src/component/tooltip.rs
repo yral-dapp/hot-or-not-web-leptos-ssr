@@ -1,6 +1,6 @@
 use leptos::{component, view, IntoView};
 use leptos_icons::*;
-
+use leptos::prelude::*;
 /// a dumb tooltip. Can't specify direction, customize content, make it stick with a close button, etc.
 #[component]
 pub fn Tooltip(

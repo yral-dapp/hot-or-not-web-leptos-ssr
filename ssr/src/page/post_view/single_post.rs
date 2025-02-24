@@ -1,6 +1,5 @@
 use candid::Principal;
-use leptos::*;
-use leptos_router::*;
+use leptos::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use super::{overlay::VideoDetailsOverlay, video_loader::VideoView};
@@ -13,9 +12,10 @@ use crate::{
         audio_state::AudioState,
         canisters::{auth_canisters_store, unauth_canisters},
     },
-    utils::bg_url,
+    utils::{bg_url, send_wrap},
 };
 use yral_canisters_common::utils::posts::PostDetails;
+use leptos_router::{components::Redirect, hooks::use_params, params::Params};
 
 #[derive(Params, PartialEq, Clone, Copy)]
 struct PostParams {
@@ -74,7 +74,7 @@ fn UnavailablePost() -> impl IntoView {
 pub fn SinglePost() -> impl IntoView {
     let params = use_params::<PostParams>();
     let auth_cans = auth_canisters_store();
-    let fetch_post = create_resource(params, move |params| async move {
+    let fetch_post = Resource::new(params, move |params| send_wrap(async move {
         let params = params.map_err(|_| PostFetchError::Invalid)?;
         let post_uid = if let Some(canisters) = auth_cans.get_untracked() {
             canisters
@@ -89,18 +89,18 @@ pub fn SinglePost() -> impl IntoView {
         post_uid
             .map_err(|e| PostFetchError::GetUid(e.to_string()))
             .and_then(|post| post.ok_or(PostFetchError::Unavailable))
-    });
+    }));
 
     view! {
         <Suspense fallback=FullScreenSpinner>
             {move || {
-                fetch_post()
+                fetch_post.get()
                     .map(|post| match post {
-                        Ok(post) => view! { <SinglePostViewInner post /> },
-                        Err(PostFetchError::Invalid) => view! { <Redirect path="/" /> },
-                        Err(PostFetchError::Unavailable) => view! { <UnavailablePost /> },
+                        Ok(post) => view! { <SinglePostViewInner post /> }.into_any(),
+                        Err(PostFetchError::Invalid) => view! { <Redirect path="/" /> }.into_any(),
+                        Err(PostFetchError::Unavailable) => view! { <UnavailablePost /> }.into_any(),
                         Err(PostFetchError::GetUid(e)) => {
-                            view! { <Redirect path=format!("/error?err={e}") /> }
+                            view! { <Redirect path=format!("/error?err={e}") /> }.into_any()
                         }
                     })
             }}

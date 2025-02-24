@@ -7,7 +7,7 @@ use yral_canisters_common::utils::token::{RootType, TokenMetadata, TokenOwner};
 use yral_canisters_common::Canisters;
 use yral_canisters_common::CENT_TOKEN_NAME;
 use yral_pump_n_dump_common::WithdrawalState;
-
+use leptos::html;
 use crate::component::icons::information_icon::Information;
 use crate::component::icons::padlock_icon::{PadlockClose, PadlockOpen};
 use crate::component::icons::{
@@ -23,10 +23,11 @@ use crate::page::icpump::{ActionButton, ActionButtonLink};
 use crate::page::wallet::airdrop::AirdropPopup;
 use crate::state::canisters::authenticated_canisters;
 use crate::utils::host::{get_host, show_pnd_page};
+use crate::utils::send_wrap;
 use crate::utils::token::icpump::IcpumpTokenInfo;
 use crate::{component::infinite_scroller::InfiniteScroller, state::canisters::unauth_canisters};
 
-use leptos::*;
+use leptos::prelude::*;
 use leptos_icons::*;
 
 #[component]
@@ -92,7 +93,7 @@ pub fn WalletCard(
 
     let is_cents = token_metadata.name == CENT_TOKEN_NAME;
 
-    let share_link = create_rw_signal("".to_string());
+    let share_link = RwSignal::new("".to_string());
 
     let symbol = token_metadata.symbol.clone();
     let share_message = move || {
@@ -102,7 +103,7 @@ pub fn WalletCard(
         share_link.get(),
     )
     };
-    let pop_up = create_rw_signal(false);
+    let pop_up = RwSignal::new(false);
     let base_url = get_host();
 
     provide_context(WalletCardOptionsContext {
@@ -112,9 +113,9 @@ pub fn WalletCard(
         user_principal,
     });
 
-    let airdrop_popup = create_rw_signal(false);
-    let buffer_signal = create_rw_signal(false);
-    let claimed = create_rw_signal(is_airdrop_claimed);
+    let airdrop_popup = RwSignal::new(false);
+    let buffer_signal = RwSignal::new(false);
+    let claimed = RwSignal::new(is_airdrop_claimed);
     let (is_withdrawable, withdraw_message, withdrawable_balance) = token_metadata
         .withdrawable_state
         .as_ref()
@@ -140,7 +141,6 @@ pub fn WalletCard(
                 <div class="w-full flex items-center justify-between">
                     <div class="flex items-center gap-2">
                         <img
-                            clone:token_meta_data
                             src=token_metadata.logo_b64.clone()
                             alt=token_metadata.name.clone()
                             class="w-8 h-8 rounded-full object-cover"
@@ -201,7 +201,7 @@ pub fn WalletCard(
                 </div>
             </ShadowOverlay>
         </div>
-    }
+    }.into_any()
 }
 
 #[component]
@@ -217,18 +217,18 @@ fn WalletCardOptions(
         let token_owner_c = token_owner.clone();
         let root_c = root.clone();
         let cans_res = authenticated_canisters();
-        let airdrop_action = create_action(move |&()| {
+        let airdrop_action = Action::new(move |&()| {
             let cans_res = cans_res.clone();
             let token_owner_cans_id = token_owner_c.clone().unwrap().canister_id;
             airdrop_popup.set(true);
             let root = Principal::from_text(root_c.clone()).unwrap();
 
-            async move {
+            send_wrap(async move {
                 if claimed.get() && !buffer_signal.get() {
                     return Ok(());
                 }
                 buffer_signal.set(true);
-                let cans_wire = cans_res.wait_untracked().await?;
+                let cans_wire = cans_res.await?;
                 let cans = Canisters::from_wire(cans_wire, expect_context())?;
                 let token_owner = cans.individual_user(token_owner_cans_id).await;
                 token_owner
@@ -244,7 +244,7 @@ fn WalletCardOptions(
                 buffer_signal.set(false);
                 claimed.set(true);
                 Ok::<_, ServerFnError>(())
-            }
+            })
         });
 
         let airdrop_disabled = Signal::derive(move || token_owner.is_some() && claimed.get() || token_owner.is_none());

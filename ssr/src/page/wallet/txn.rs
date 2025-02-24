@@ -1,8 +1,8 @@
-use leptos::*;
+use leptos::prelude::*;
 use leptos_icons::Icon;
-use leptos_router::use_params;
+use leptos_router::hooks::use_params;
 use yral_canisters_common::utils::transaction::{TxnDirection, TxnInfoType, TxnInfoWallet};
-
+use leptos::html;
 use crate::{page::token::info::TokenKeyParam, utils::time::parse_ns_to_datetime};
 
 fn direction_to_icon(direction: TxnDirection) -> &'static icondata_core::IconData {
@@ -38,7 +38,7 @@ pub fn TxnView(
     );
 
     view! {
-        <div _ref=_ref class="grid grid-cols-2 grid-rows-1 w-full py-3 border-b-2 border-white/10 justify-between">
+        <div node_ref=_ref class="grid grid-cols-2 grid-rows-1 w-full py-3 border-b-2 border-white/10 justify-between">
             <div class="flex flex-row gap-2">
                 {
                     match direction{
@@ -47,21 +47,21 @@ pub fn TxnView(
                                 <div class="flex items-center justify-center w-7 h-7 lg:w-10 lg:h-10 rounded-md text-green-600 bg-green-600/5 text-lg lg:text-xl">
                                     <Icon icon=txn_info_to_icon(info.tag) />
                                 </div>
-                            }
+                            }.into_any()
                         },
                         TxnDirection::Deducted => {
                             view! {
                                 <div class="flex items-center justify-center w-7 h-7 lg:w-10 lg:h-10 rounded-md text-red-600 bg-red-600/5 text-lg lg:text-xl">
                                     <Icon icon=txn_info_to_icon(info.tag) />
                                 </div>
-                            }
+                            }.into_any()
                         },
                         TxnDirection::Transaction => {
                             view! {
                                 <div class="flex items-center justify-center w-7 h-7 lg:w-10 lg:h-10 rounded-md text-white bg-blue-600/5 text-lg lg:text-xl">
                                     <Icon icon=txn_info_to_icon(info.tag) />
                                 </div>
-                            }
+                            }.into_any()
                         },
                     }
                 }
@@ -75,23 +75,23 @@ pub fn TxnView(
                                 TxnInfoType::Mint { to } => {
                                     match params.get(){
                                         Ok(_) => None,
-                                        Err(_) => Some(view! {<div class="text-sm md:text-md text-white/50">{format!("To: {}", to)}</div>})
+                                        Err(_) => Some(view! {<div class="text-sm md:text-md text-white/50">{format!("To: {}", to)}</div>}.into_any())
                                     }
                                 },
                                 TxnInfoType::Burn { from } => {
                                     match params.get(){
                                         Ok(_) => None,
-                                        Err(_) => Some(view! {<div class="text-sm md:text-md text-white/50">{format!("From: {}", from)}</div>})
+                                        Err(_) => Some(view! {<div class="text-sm md:text-md text-white/50">{format!("From: {}", from)}</div>}.into_any())
                                     }
                                 },
-                                TxnInfoType::Received { from } => Some(view! {<div class="text-sm md:text-md text-white/50">{format!("From: {}", from)}</div>}),
-                                TxnInfoType::Sent { to } => Some(view! {<div class="text-sm md:text-md text-white/50">{format!("To: {}", to)}</div>}),
+                                TxnInfoType::Received { from } => Some(view! {<div class="text-sm md:text-md text-white/50">{format!("From: {}", from)}</div>}.into_any()),
+                                TxnInfoType::Sent { to } => Some(view! {<div class="text-sm md:text-md text-white/50">{format!("To: {}", to)}</div>}.into_any()),
                                 TxnInfoType::Transfer { from, to } => Some(view! {
                                     <div class="flex flex-col space-y-1">
                                     <div class="text-sm md:text-md text-white/50">{format!("From: {}", from)}</div>
                                     <div class="text-sm md:text-md text-white/50">{format!("To: {}", to)}</div>
                                     </div>
-                                })
+                                }.into_any())
                             }
                         }
                     }
