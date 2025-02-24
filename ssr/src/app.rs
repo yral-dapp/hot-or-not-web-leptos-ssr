@@ -134,10 +134,14 @@ pub fn App() -> impl IntoView {
     // History Tracking
     let history_ctx = HistoryCtx::default();
     provide_context(history_ctx.clone());
-    Effect::new(move |_| {
-        let loc = use_location();
-        history_ctx.push(&loc.pathname.get());
-    });
+
+    #[cfg(feature = "hydrate")]
+    {
+        Effect::new(move |_| {
+            let loc = use_location();
+            history_ctx.push(&loc.pathname.get());
+        });
+    }
 
     // Analytics
     let enable_ga4_script = RwSignal::new(false);

@@ -35,7 +35,7 @@ mod local_claim {
     use candid::{Nat, Principal};
     use ic_agent::{identity::DelegatedIdentity, Identity};
     use ic_base_types::PrincipalId;
-    use leptos::ServerFnError;
+    use leptos::prelude::*;
     use yral_canisters_client::{
         sns_governance::{
             Account, Amount, Command, Command1, Disburse, DissolveState, ListNeurons, ManageNeuron,

@@ -252,7 +252,7 @@ pub fn PndProfilePage() -> impl IntoView {
 
     let auth_cans = authenticated_canisters();
     let auth_cans_for_profile = auth_cans.clone();
-    let load_profile_data = Action::new(move |&()| {
+    let load_profile_data: Action<(), std::result::Result<(), String>, LocalStorage> = Action::new_unsync(move |&()| {
         let value = auth_cans_for_profile.clone();
         async move {
             let cans_wire = value.await.map_err(|e| e.to_string())?;
@@ -279,7 +279,7 @@ pub fn PndProfilePage() -> impl IntoView {
     let auth_can_for_history = auth_cans.clone();
     let page = RwSignal::new(0);
     let should_load_more = RwSignal::new(true);
-    let load_gameplay_history = Action::new(move |&page| {
+    let load_gameplay_history: Action<u64, std::result::Result<(), String>, LocalStorage> = Action::new_unsync(move |&page| {
         let cans_wire_res = auth_can_for_history.clone();
         send_wrap(async move {
             // since we are starting a load job, no more load jobs should be start

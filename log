@@ -1,0 +1,1774 @@
+[38;5;77m  JavaScript[0m config files are no longer required in Tailwind CSS v4. If you still need to use a JS config file, refer to the docs here: https://tailwindcss.com/docs/upgrade-guide#using-a-javascript-config-file.
+[38;5;214m        Path[0m 'node_modules' folder not found, please install the required packages first
+[38;5;214m        Path[0m continuing without using 'node_modules'
+   Compiling hot-or-not-web-leptos-ssr v0.1.0 (/mnt/c/Users/user/OneDrive/Documents/hot-or-not-web-leptos-ssr/ssr)
+   Compiling yral-canisters-common v0.1.0 (https://github.com/yral-dapp/yral-common.git?rev=729f8ce327391000265f79a3b97e818c699c5551#729f8ce3)
+warning: unused import: `crate::utils::host::show_preview_component`
+ --> ssr/src/app.rs:5:5
+  |
+5 | use crate::utils::host::show_preview_component;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `utils::event_streaming::EventHistory`
+  --> ssr/src/app.rs:33:5
+   |
+33 |     utils::event_streaming::EventHistory,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `leptos::either::Either`
+  --> ssr/src/app.rs:35:5
+   |
+35 | use leptos::either::Either;
+   |     ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `leptos_router::components::*`
+  --> ssr/src/app.rs:42:5
+   |
+42 | use leptos_router::components::*;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `ic_agent::identity::Secp256k1Identity`
+ --> ssr/src/component/auth_providers/local_storage.rs:2:5
+  |
+2 | use ic_agent::identity::Secp256k1Identity;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::utils::send_wrap`
+ --> ssr/src/component/infinite_scroller.rs:1:5
+  |
+1 | use crate::utils::send_wrap;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `*`
+ --> ssr/src/page/faq/mod.rs:5:42
+  |
+5 | use leptos_router::{hooks::query_signal, *};
+  |                                          ^
+
+warning: unused import: `send_wrap`
+ --> ssr/src/page/notifs/mod.rs:5:53
+  |
+5 |     utils::{notifications::get_token_for_principal, send_wrap},
+  |                                                     ^^^^^^^^^
+
+warning: unused import: `user::UserDetails`
+  --> ssr/src/page/post_view/overlay.rs:10:117
+   |
+10 | ...   event_streaming::events::{LikeVideo, ShareVideo}, report::ReportOption, route::failure_redirect, send_wrap, user::UserDetails, web:...
+   |                                                                                                                   ^^^^^^^^^^^^^^^^^
+
+warning: unused import: `task::spawn_local`
+  --> ssr/src/page/post_view/overlay.rs:14:26
+   |
+14 | use leptos::{prelude::*, task::spawn_local};
+   |                          ^^^^^^^^^^^^^^^^^
+
+warning: unused import: `futures::future::Either`
+  --> ssr/src/page/profile/mod.rs:10:5
+   |
+10 | use futures::future::Either;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::sync::Arc`
+ --> ssr/src/page/pumpdump/components/card.rs:7:5
+  |
+7 | use std::sync::Arc;
+  |     ^^^^^^^^^^^^^^
+
+warning: unused import: `PageEntry`
+  --> ssr/src/page/refer_earn/history.rs:63:76
+   |
+63 |         cursored_data::{ref_history::HistoryDetails, CursoredDataProvider, PageEntry},
+   |                                                                            ^^^^^^^^^
+
+warning: unused imports: `ChaCha8Rng`, `RngCore`, and `SeedableRng`
+ --> ssr/src/page/root.rs:6:17
+  |
+6 |     rand_core::{RngCore, SeedableRng},
+  |                 ^^^^^^^  ^^^^^^^^^^^
+7 |     ChaCha8Rng,
+  |     ^^^^^^^^^^
+
+warning: unused import: `yral_canisters_common::utils::time::current_epoch`
+ --> ssr/src/page/root.rs:9:5
+  |
+9 | use yral_canisters_common::utils::time::current_epoch;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `get_coldstart_feed_paginated`, `get_coldstart_nsfw_feed_paginated`, and `get_posts_ml_feed_cache_paginated`
+  --> ssr/src/page/root.rs:17:13
+   |
+17 |             get_coldstart_feed_paginated, get_coldstart_nsfw_feed_paginated,
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+18 |             get_posts_ml_feed_cache_paginated,
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::utils::send_wrap`
+ --> ssr/src/page/settings/mod.rs:8:5
+  |
+8 | use crate::utils::send_wrap;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `TokenCreationCompleted`, `TokenCreationFailed`, and `send_wrap`
+  --> ssr/src/page/token/create/mod.rs:10:13
+   |
+10 |             TokenCreationCompleted, TokenCreationFailed, TokenCreationStarted,
+   |             ^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^
+11 |         }, send_wrap, token::{nsfw::NSFWInfo, DeployedCdaoCanisters}, web::FileWithUrl
+   |            ^^^^^^^^^
+
+warning: unused import: `leptos_router::*`
+  --> ssr/src/page/token/info.rs:23:5
+   |
+23 | use leptos_router::*;
+   |     ^^^^^^^^^^^^^^^^
+
+warning: unnecessary parentheses around pattern
+   --> ssr/src/page/token/transfer.rs:359:28
+    |
+359 |                         Ok((None)) => view! { <Redirect path="/" /> }.into_any(),
+    |                            ^    ^
+    |
+    = note: `#[warn(unused_parens)]` on by default
+help: remove these parentheses
+    |
+359 -                         Ok((None)) => view! { <Redirect path="/" /> }.into_any(),
+359 +                         Ok(None) => view! { <Redirect path="/" /> }.into_any(),
+    |
+
+warning: unused import: `send_wrap`
+  --> ssr/src/page/upload/video_upload.rs:12:31
+   |
+12 |         }, route::go_to_root, send_wrap, web::FileWithUrl, MockPartialEq
+   |                               ^^^^^^^^^
+
+warning: unused import: `candid::Principal`
+   --> ssr/src/page/wallet/txn.rs:117:9
+    |
+117 |     use candid::Principal;
+    |         ^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::utils::MockPartialEq`
+ --> ssr/src/state/canisters.rs:5:5
+  |
+5 | use crate::utils::MockPartialEq;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `StreamExt`
+ --> ssr/src/utils/mod.rs:1:23
+  |
+1 | use futures::{Future, StreamExt};
+  |                       ^^^^^^^^^
+
+warning: unused import: `leptos::prelude::*`
+ --> ssr/src/utils/mod.rs:2:5
+  |
+2 | use leptos::prelude::*;
+  |     ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::env`
+ --> ssr/src/utils/event_streaming/mod.rs:1:5
+  |
+1 | use std::env;
+  |     ^^^^^^^^
+
+warning: unused import: `gloo_utils::format::JsValueSerdeExt`
+ --> ssr/src/utils/event_streaming/mod.rs:3:5
+  |
+3 | use gloo_utils::format::JsValueSerdeExt;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `serde_json::json`
+ --> ssr/src/utils/event_streaming/mod.rs:6:5
+  |
+6 | use serde_json::json;
+  |     ^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::consts::GTAG_MEASUREMENT_ID`
+ --> ssr/src/utils/event_streaming/mod.rs:9:5
+  |
+9 | use crate::consts::GTAG_MEASUREMENT_ID;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `ic_agent::Identity`
+ --> ssr/src/utils/event_streaming/events.rs:2:5
+  |
+2 | use ic_agent::Identity;
+  |     ^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `UseTimeoutFnReturn`, `use_event_listener`, and `use_timeout_fn`
+ --> ssr/src/utils/event_streaming/events.rs:5:18
+  |
+5 | use leptos_use::{use_event_listener, use_timeout_fn, UseTimeoutFnReturn};
+  |                  ^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `serde_json::json`
+ --> ssr/src/utils/event_streaming/events.rs:6:5
+  |
+6 | use serde_json::json;
+  |     ^^^^^^^^^^^^^^^^
+
+warning: unused import: `wasm_bindgen::JsCast`
+ --> ssr/src/utils/event_streaming/events.rs:8:5
+  |
+8 | use wasm_bindgen::JsCast;
+  |     ^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `ev`
+ --> ssr/src/utils/event_streaming/events.rs:9:14
+  |
+9 | use leptos::{ev, prelude::*};
+  |              ^^
+
+warning: unused import: `super::EventHistory`
+  --> ssr/src/utils/event_streaming/events.rs:10:5
+   |
+10 | use super::EventHistory;
+   |     ^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::state::auth::account_connected_reader`
+  --> ssr/src/utils/event_streaming/events.rs:12:5
+   |
+12 | use crate::state::auth::account_connected_reader;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::state::canisters::auth_canisters_store`
+  --> ssr/src/utils/event_streaming/events.rs:13:5
+   |
+13 | use crate::state::canisters::auth_canisters_store;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::state::history::HistoryCtx`
+  --> ssr/src/utils/event_streaming/events.rs:14:5
+   |
+14 | use crate::state::history::HistoryCtx;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `user_details_can_store_or_ret` and `user_details_or_ret`
+  --> ssr/src/utils/event_streaming/events.rs:20:26
+   |
+20 | use crate::utils::user::{user_details_can_store_or_ret, user_details_or_ret};
+   |                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::sync::LazyLock`
+ --> ssr/src/utils/host.rs:1:5
+  |
+1 | use std::sync::LazyLock;
+  |     ^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `leptos::prelude::*`
+ --> ssr/src/utils/host.rs:3:5
+  |
+3 | use leptos::prelude::*;
+  |     ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `leptos::server`
+ --> ssr/src/utils/notifications/device_id.rs:1:5
+  |
+1 | use leptos::server;
+  |     ^^^^^^^^^^^^^^
+
+warning: unused import: `std::env`
+ --> ssr/src/utils/notifications/device_id.rs:2:5
+  |
+2 | use std::env;
+  |     ^^^^^^^^
+
+warning: unused import: `leptos::prelude::*`
+ --> ssr/src/utils/notifications/device_id.rs:3:5
+  |
+3 | use leptos::prelude::*;
+  |     ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `env`
+ --> ssr/src/utils/report.rs:1:11
+  |
+1 | use std::{env, fmt::Display};
+  |           ^^^
+
+warning: unused import: `leptos::server`
+ --> ssr/src/utils/report.rs:3:5
+  |
+3 | use leptos::server;
+  |     ^^^^^^^^^^^^^^
+
+warning: unused import: `leptos::prelude::*`
+ --> ssr/src/utils/report.rs:4:5
+  |
+4 | use leptos::prelude::*;
+  |     ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `futures::stream::BoxStream`
+ --> ssr/src/utils/token/icpump.rs:4:5
+  |
+4 | use futures::stream::BoxStream;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `leptos::logging`
+ --> ssr/src/utils/token/icpump.rs:8:5
+  |
+8 | use leptos::logging;
+  |     ^^^^^^^^^^^^^^^
+
+warning: unused macro definition: `user_details_or_ret`
+  --> ssr/src/utils/user.rs:30:14
+   |
+30 | macro_rules! user_details_or_ret {
+   |              ^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_macros)]` on by default
+
+warning: unused macro definition: `user_details_can_store_or_ret`
+  --> ssr/src/utils/user.rs:40:14
+   |
+40 | macro_rules! user_details_can_store_or_ret {
+   |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused variable: `canisters_copy`
+   --> ssr/src/page/post_view/overlay.rs:140:9
+    |
+140 |     let canisters_copy = canisters;
+    |         ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_canisters_copy`
+    |
+    = note: `#[warn(unused_variables)]` on by default
+
+warning: unused variable: `post_details_report`
+   --> ssr/src/page/post_view/overlay.rs:161:9
+    |
+161 |     let post_details_report = post.clone();
+    |         ^^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_post_details_report`
+
+warning: unused variable: `input_type`
+   --> ssr/src/page/token/create/mod.rs:214:37
+    |
+214 |             #[prop(optional, into)] input_type: Option<String>,
+    |                                     ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_input_type`
+...
+303 | input_component!(InputArea, textarea, Textarea, rows = 4);
+    | --------------------------------------------------------- in this macro invocation
+    |
+    = note: this warning originates in the macro `input_component` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: unused variable: `input_type`
+   --> ssr/src/page/token/create/mod.rs:214:37
+    |
+214 |             #[prop(optional, into)] input_type: Option<String>,
+    |                                     ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_input_type`
+...
+304 | input_component!(InputField, textarea, Textarea, rows = 1);
+    | ---------------------------------------------------------- in this macro invocation
+    |
+    = note: this warning originates in the macro `input_component` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: unused variable: `sns_init_payload`
+   --> ssr/src/utils/event_streaming/events.rs:803:9
+    |
+803 |         sns_init_payload: SnsInitPayload,
+    |         ^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_sns_init_payload`
+
+warning: unused variable: `token_root`
+   --> ssr/src/utils/event_streaming/events.rs:804:9
+    |
+804 |         token_root: Principal,
+    |         ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_token_root`
+
+warning: unused variable: `profile_details`
+   --> ssr/src/utils/event_streaming/events.rs:805:9
+    |
+805 |         profile_details: ProfileDetails,
+    |         ^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_profile_details`
+
+warning: unused variable: `canister_id`
+   --> ssr/src/utils/event_streaming/events.rs:806:9
+    |
+806 |         canister_id: Principal,
+    |         ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_canister_id`
+
+warning: unused variable: `nsfw_info`
+   --> ssr/src/utils/event_streaming/events.rs:807:9
+    |
+807 |         nsfw_info: NSFWInfo,
+    |         ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_nsfw_info`
+
+warning: unused variable: `error_str`
+   --> ssr/src/utils/event_streaming/events.rs:845:9
+    |
+845 |         error_str: String,
+    |         ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_error_str`
+
+warning: unused variable: `sns_init_payload`
+   --> ssr/src/utils/event_streaming/events.rs:846:9
+    |
+846 |         sns_init_payload: SnsInitPayload,
+    |         ^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_sns_init_payload`
+
+warning: unused variable: `profile_details`
+   --> ssr/src/utils/event_streaming/events.rs:847:9
+    |
+847 |         profile_details: ProfileDetails,
+    |         ^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_profile_details`
+
+warning: unused variable: `canister_id`
+   --> ssr/src/utils/event_streaming/events.rs:848:9
+    |
+848 |         canister_id: Principal,
+    |         ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_canister_id`
+
+warning: unused variable: `principal_id`
+  --> ssr/src/utils/notifications/mod.rs:12:38
+   |
+12 | pub async fn get_token_for_principal(principal_id: String) {
+   |                                      ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_principal_id`
+
+warning: unused variable: `token`
+  --> ssr/src/utils/notifications/mod.rs:16:17
+   |
+16 |             let token: String = token_js.as_string().unwrap_or_default();
+   |                 ^^^^^ help: if this is intentional, prefix it with an underscore: `_token`
+
+warning: unused import: `futures::StreamExt`
+ --> ssr/src/utils/token/icpump.rs:5:5
+  |
+5 | use futures::StreamExt;
+  |     ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: ``
+ --> ssr/src/component/nav.rs:8:42
+  |
+8 | use leptos_router::{hooks::use_location, *};
+  |                                          ^
+
+warning: unused variable: `vid_details`
+  --> ssr/src/utils/event_streaming/events.rs:60:9
+   |
+60 |         vid_details: Signal<Option<PostDetails>>,
+   |         ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_vid_details`
+
+warning: unused variable: `container_ref`
+  --> ssr/src/utils/event_streaming/events.rs:61:9
+   |
+61 |         container_ref: NodeRef<Video>,
+   |         ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_container_ref`
+
+warning: unused variable: `post_details`
+   --> ssr/src/utils/event_streaming/events.rs:206:9
+    |
+206 |         post_details: PostDetails,
+    |         ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_post_details`
+
+warning: unused variable: `likes`
+   --> ssr/src/utils/event_streaming/events.rs:207:9
+    |
+207 |         likes: RwSignal<u64>,
+    |         ^^^^^ help: if this is intentional, prefix it with an underscore: `_likes`
+
+warning: unused variable: `cans_store`
+   --> ssr/src/utils/event_streaming/events.rs:208:9
+    |
+208 |         cans_store: RwSignal<Option<Canisters<true>>>,
+    |         ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_cans_store`
+
+warning: unused variable: `post_details`
+   --> ssr/src/utils/event_streaming/events.rs:259:9
+    |
+259 |         post_details: PostDetails,
+    |         ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_post_details`
+
+warning: unused variable: `cans_store`
+   --> ssr/src/utils/event_streaming/events.rs:260:9
+    |
+260 |         cans_store: RwSignal<Option<Canisters<true>>>,
+    |         ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_cans_store`
+
+warning: unused variable: `hashtag_inp`
+   --> ssr/src/utils/event_streaming/events.rs:331:9
+    |
+331 |         hashtag_inp: NodeRef<Input>,
+    |         ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_hashtag_inp`
+
+warning: unused variable: `is_nsfw`
+   --> ssr/src/utils/event_streaming/events.rs:332:9
+    |
+332 |         is_nsfw: NodeRef<Input>,
+    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_is_nsfw`
+
+warning: unused variable: `enable_hot_or_not`
+   --> ssr/src/utils/event_streaming/events.rs:333:9
+    |
+333 |         enable_hot_or_not: NodeRef<Input>,
+    |         ^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_enable_hot_or_not`
+
+warning: unused variable: `cans_store`
+   --> ssr/src/utils/event_streaming/events.rs:334:9
+    |
+334 |         cans_store: RwSignal<Option<Canisters<true>>>,
+    |         ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_cans_store`
+
+warning: unused variable: `cans_store`
+   --> ssr/src/utils/event_streaming/events.rs:374:30
+    |
+374 |     pub fn send_event(&self, cans_store: RwSignal<Option<Canisters<true>>>) {
+    |                              ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_cans_store`
+
+warning: unused variable: `error`
+   --> ssr/src/utils/event_streaming/events.rs:401:9
+    |
+401 |         error: String,
+    |         ^^^^^ help: if this is intentional, prefix it with an underscore: `_error`
+
+warning: unused variable: `hashtags_len`
+   --> ssr/src/utils/event_streaming/events.rs:402:9
+    |
+402 |         hashtags_len: usize,
+    |         ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_hashtags_len`
+
+warning: unused variable: `is_nsfw`
+   --> ssr/src/utils/event_streaming/events.rs:403:9
+    |
+403 |         is_nsfw: bool,
+    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_is_nsfw`
+
+warning: unused variable: `enable_hot_or_not`
+   --> ssr/src/utils/event_streaming/events.rs:404:9
+    |
+404 |         enable_hot_or_not: bool,
+    |         ^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_enable_hot_or_not`
+
+warning: unused variable: `cans_store`
+   --> ssr/src/utils/event_streaming/events.rs:405:9
+    |
+405 |         cans_store: RwSignal<Option<Canisters<true>>>,
+    |         ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_cans_store`
+
+warning: unused variable: `video_id`
+   --> ssr/src/utils/event_streaming/events.rs:436:9
+    |
+436 |         video_id: String,
+    |         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_video_id`
+
+warning: unused variable: `hashtags_len`
+   --> ssr/src/utils/event_streaming/events.rs:437:9
+    |
+437 |         hashtags_len: usize,
+    |         ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_hashtags_len`
+
+warning: unused variable: `is_nsfw`
+   --> ssr/src/utils/event_streaming/events.rs:438:9
+    |
+438 |         is_nsfw: bool,
+    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_is_nsfw`
+
+warning: unused variable: `enable_hot_or_not`
+   --> ssr/src/utils/event_streaming/events.rs:439:9
+    |
+439 |         enable_hot_or_not: bool,
+    |         ^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_enable_hot_or_not`
+
+warning: unused variable: `post_id`
+   --> ssr/src/utils/event_streaming/events.rs:440:9
+    |
+440 |         post_id: u64,
+    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_post_id`
+
+warning: unused variable: `cans_store`
+   --> ssr/src/utils/event_streaming/events.rs:441:9
+    |
+441 |         cans_store: RwSignal<Option<Canisters<true>>>,
+    |         ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_cans_store`
+
+warning: unused variable: `logged_in`
+   --> ssr/src/utils/event_streaming/events.rs:472:30
+    |
+472 |     pub fn send_event(&self, logged_in: ReadSignal<bool>) {
+    |                              ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_logged_in`
+
+warning: unused variable: `logged_in`
+   --> ssr/src/utils/event_streaming/events.rs:508:9
+    |
+508 |         logged_in: ReadSignal<bool>,
+    |         ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_logged_in`
+
+warning: unused variable: `cans_store`
+   --> ssr/src/utils/event_streaming/events.rs:509:9
+    |
+509 |         cans_store: RwSignal<Option<Canisters<true>>>,
+    |         ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_cans_store`
+
+warning: unused variable: `canisters`
+   --> ssr/src/utils/event_streaming/events.rs:544:30
+    |
+544 |     pub fn send_event(&self, canisters: Canisters<true>) {
+    |                              ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_canisters`
+
+warning: unused variable: `prov`
+   --> ssr/src/utils/event_streaming/events.rs:573:30
+    |
+573 |     pub fn send_event(&self, prov: ProviderKind) {
+    |                              ^^^^ help: if this is intentional, prefix it with an underscore: `_prov`
+
+warning: unused variable: `cta_location`
+   --> ssr/src/utils/event_streaming/events.rs:625:30
+    |
+625 |     pub fn send_event(&self, cta_location: String) {
+    |                              ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_cta_location`
+
+warning: unused variable: `cans_store`
+   --> ssr/src/utils/event_streaming/events.rs:648:30
+    |
+648 |     pub fn send_event(&self, cans_store: RwSignal<Option<Canisters<true>>>) {
+    |                              ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_cans_store`
+
+warning: unused variable: `cans_store`
+   --> ssr/src/utils/event_streaming/events.rs:676:30
+    |
+676 |     pub fn send_event(&self, cans_store: RwSignal<Option<Canisters<true>>>) {
+    |                              ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_cans_store`
+
+warning: unused variable: `error_str`
+   --> ssr/src/utils/event_streaming/events.rs:704:30
+    |
+704 |     pub fn send_event(&self, error_str: String, cans_store: RwSignal<Option<Canisters<true>>>) {
+    |                              ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_error_str`
+
+warning: unused variable: `cans_store`
+   --> ssr/src/utils/event_streaming/events.rs:704:49
+    |
+704 |     pub fn send_event(&self, error_str: String, cans_store: RwSignal<Option<Canisters<true>>>) {
+    |                                                 ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_cans_store`
+
+warning: unused variable: `post_details`
+   --> ssr/src/utils/event_streaming/events.rs:735:9
+    |
+735 |         post_details: PostDetails,
+    |         ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_post_details`
+
+warning: unused variable: `cans_store`
+   --> ssr/src/utils/event_streaming/events.rs:736:9
+    |
+736 |         cans_store: RwSignal<Option<Canisters<true>>>,
+    |         ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_cans_store`
+
+warning: unused variable: `sns_init_payload`
+   --> ssr/src/utils/event_streaming/events.rs:770:9
+    |
+770 |         sns_init_payload: SnsInitPayload,
+    |         ^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_sns_init_payload`
+
+warning: unused variable: `cans_store`
+   --> ssr/src/utils/event_streaming/events.rs:771:9
+    |
+771 |         cans_store: RwSignal<Option<Canisters<true>>>,
+    |         ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_cans_store`
+
+warning: unused variable: `amount`
+   --> ssr/src/utils/event_streaming/events.rs:877:30
+    |
+877 |     pub fn send_event(&self, amount: u64, cans_store: Canisters<true>) {
+    |                              ^^^^^^ help: if this is intentional, prefix it with an underscore: `_amount`
+
+warning: unused variable: `cans_store`
+   --> ssr/src/utils/event_streaming/events.rs:877:43
+    |
+877 |     pub fn send_event(&self, amount: u64, cans_store: Canisters<true>) {
+    |                                           ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_cans_store`
+
+warning: unused variable: `amount`
+   --> ssr/src/utils/event_streaming/events.rs:903:30
+    |
+903 |     pub fn send_event(&self, amount: String, to: Principal, cans_store: Canisters<true>) {
+    |                              ^^^^^^ help: if this is intentional, prefix it with an underscore: `_amount`
+
+warning: unused variable: `to`
+   --> ssr/src/utils/event_streaming/events.rs:903:46
+    |
+903 |     pub fn send_event(&self, amount: String, to: Principal, cans_store: Canisters<true>) {
+    |                                              ^^ help: if this is intentional, prefix it with an underscore: `_to`
+
+warning: unused variable: `cans_store`
+   --> ssr/src/utils/event_streaming/events.rs:903:61
+    |
+903 |     pub fn send_event(&self, amount: String, to: Principal, cans_store: Canisters<true>) {
+    |                                                             ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_cans_store`
+
+warning: unused variable: `canisters`
+   --> ssr/src/utils/event_streaming/events.rs:930:30
+    |
+930 |     pub fn send_event(&self, canisters: Canisters<true>, pathname: String) {
+    |                              ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_canisters`
+
+warning: unused variable: `pathname`
+   --> ssr/src/utils/event_streaming/events.rs:930:58
+    |
+930 |     pub fn send_event(&self, canisters: Canisters<true>, pathname: String) {
+    |                                                          ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_pathname`
+
+warning: field `user_details` is never read
+   --> ssr/src/page/menu.rs:149:24
+    |
+148 | #[component]
+    | ------------ field in this struct
+149 | fn EnableNotifications(user_details: ProfileDetails) -> impl IntoView {
+    |                        ^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` on by default
+
+warning: fields `stat` and `info` are never read
+   --> ssr/src/page/pumpdump/profile/mod.rs:148:9
+    |
+147 | #[component]
+    | ------------ fields in this struct
+148 | fn Stat(stat: u64, #[prop(into)] info: String) -> impl IntoView {
+    |         ^^^^                     ^^^^
+
+warning: fields `text`, `href`, `icon`, and `target` are never read
+  --> ssr/src/page/settings/mod.rs:19:19
+   |
+17 | #[component]
+   | ------------ fields in this struct
+18 | fn MenuItem(
+19 |     #[prop(into)] text: String,
+   |                   ^^^^
+20 |     #[prop(into)] href: String,
+   |                   ^^^^
+21 |     #[prop(into)] icon: icondata::Icon,
+   |                   ^^^^
+22 |     #[prop(into, optional)] target: String,
+   |                             ^^^^^^
+
+warning: fields `heading`, `placeholder`, `initial_value`, `input_type`, `updater`, and `validator` are never read
+   --> ssr/src/page/token/create/mod.rs:211:27
+    |
+209 |         #[component]
+    |         ------------ fields in this struct
+210 |         fn $name<T: 'static, U: Fn(T) + 'static + Copy, V: Fn(String) -> Option<T> + 'static + Copy>(
+211 |             #[prop(into)] heading: String,
+    |                           ^^^^^^^
+212 |             #[prop(into)] placeholder: String,
+    |                           ^^^^^^^^^^^
+213 |             #[prop(optional)] initial_value: Option<String>,
+    |                               ^^^^^^^^^^^^^
+214 |             #[prop(optional, into)] input_type: Option<String>,
+    |                                     ^^^^^^^^^^
+215 |             updater: U,
+    |             ^^^^^^^
+216 |             validator: V,
+    |             ^^^^^^^^^
+...
+304 | input_component!(InputField, textarea, Textarea, rows = 1);
+    | ---------------------------------------------------------- in this macro invocation
+    |
+    = note: this warning originates in the macro `input_component` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: struct `GA4Event` is never constructed
+  --> ssr/src/utils/event_streaming/mod.rs:14:8
+   |
+14 | struct GA4Event {
+   |        ^^^^^^^^
+
+warning: struct `Event` is never constructed
+  --> ssr/src/utils/event_streaming/mod.rs:21:8
+   |
+21 | struct Event {
+   |        ^^^^^
+
+warning: function `convert_leaf_values_to_string` is never used
+   --> ssr/src/utils/event_streaming/mod.rs:172:4
+    |
+172 | fn convert_leaf_values_to_string(value: serde_json::Value) -> serde_json::Value {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: `hot-or-not-web-leptos-ssr` (lib) generated 119 warnings (run `cargo fix --lib -p hot-or-not-web-leptos-ssr` to apply 49 suggestions)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2m 19s
+[38;5;77m       Cargo[0m finished [38;5;241mcargo build --package=hot-or-not-web-leptos-ssr --lib --target-dir=/mnt/c/Users/user/OneDrive/Documents/hot-or-not-web-leptos-ssr/target/front --target=wasm32-unknown-unknown --no-default-features --features=local-lib[0m
+[38;5;77m       Front[0m generating JS/WASM with wasm-bindgen
+[38;5;77m    Finished[0m generating JS/WASM for front in 7.469619697s
+[38;5;77m    Tailwind[0m finished [38;5;241mtailwindcss --input ssr/style/input.css --config tailwind.config.js --output /mnt/c/Users/user/OneDrive/Documents/hot-or-not-web-leptos-ssr/target/tmp/tailwind.css[0m
+   Compiling either v1.13.0
+   Compiling itertools v0.13.0
+   Compiling binread_derive v2.1.0
+   Compiling smallvec v1.13.2
+   Compiling pkg-config v0.3.31
+   Compiling vcpkg v0.2.15
+   Compiling idna v1.0.3
+   Compiling regex-automata v0.4.9
+   Compiling openssl v0.10.70
+   Compiling parking_lot_core v0.9.10
+   Compiling foreign-types-shared v0.1.1
+   Compiling openssl-macros v0.1.1
+   Compiling native-tls v0.2.13
+   Compiling match_cfg v0.1.0
+   Compiling tinyvec_macros v0.1.1
+   Compiling enum-as-inner v0.6.1
+   Compiling foreign-types v0.3.2
+   Compiling linked-hash-map v0.5.6
+   Compiling zeroize v1.8.1
+   Compiling parking_lot v0.12.3
+   Compiling tinyvec v1.8.1
+   Compiling hostname v0.3.1
+   Compiling quick-error v1.2.3
+   Compiling generic-array v0.14.7
+   Compiling lru-cache v0.1.2
+   Compiling proc-macro-utils v0.10.0
+   Compiling rustls-native-certs v0.8.1
+   Compiling prost-derive v0.13.4
+   Compiling resolv-conf v0.7.0
+   Compiling openssl-sys v0.9.105
+   Compiling hyper-rustls v0.27.5
+   Compiling subtle v2.6.1
+   Compiling reactive_stores v0.1.7
+   Compiling block-buffer v0.10.4
+   Compiling crypto-common v0.1.6
+   Compiling quote-use-macros v0.8.4
+   Compiling manyhow-macros v0.11.4
+   Compiling string_cache v0.8.8
+   Compiling digest v0.10.7
+   Compiling leptos_hot_reload v0.7.7
+   Compiling itertools v0.11.0
+   Compiling serde_with_macros v3.12.0
+   Compiling regex v1.11.1
+   Compiling sha2 v0.10.8
+   Compiling url v2.5.4
+   Compiling lalrpop-util v0.20.2
+   Compiling ic_principal v0.1.1
+   Compiling structmeta-derive v0.3.0
+   Compiling lalrpop v0.20.2
+   Compiling serde_json v1.0.138
+   Compiling tokio-stream v0.1.17
+   Compiling manyhow v0.11.4
+   Compiling quote-use v0.8.4
+   Compiling option-ext v0.2.0
+   Compiling hyper-rustls v0.26.0
+   Compiling attribute-derive-macro v0.10.3
+   Compiling dirs-sys v0.4.1
+   Compiling binread v2.2.0
+   Compiling hyperlocal-next v0.9.0
+   Compiling home v0.5.11
+   Compiling base64 v0.21.7
+   Compiling dirs v5.0.1
+   Compiling prost v0.13.4
+   Compiling itertools v0.12.1
+   Compiling docker_credential v1.3.1
+   Compiling candid v0.10.13
+   Compiling tachys v0.1.7
+   Compiling structmeta v0.3.0
+   Compiling prost-types v0.13.4
+   Compiling tonic v0.12.3
+   Compiling dfn_protobuf v0.9.0 (https://github.com/dfinity/ic?rev=tags%2Frelease-2024-10-17_03-07-base#e54d3fa3)
+   Compiling hickory-proto v0.24.2
+   Compiling server_fn v0.7.7
+   Compiling redis v0.25.4
+   Compiling serde_with v3.12.0
+   Compiling parse-display-derive v0.9.1
+   Compiling prost-build v0.13.4
+   Compiling bollard-stubs v1.44.0-rc.2
+   Compiling tonic-build v0.12.3
+   Compiling ic-transport-types v0.38.2
+   Compiling attribute-derive v0.10.3
+   Compiling ic-protobuf v0.9.0 (https://github.com/dfinity/ic?rev=tags%2Frelease-2024-10-17_03-07-base#e54d3fa3)
+   Compiling phantom_newtype v0.9.0 (https://github.com/dfinity/ic?rev=tags%2Frelease-2024-10-17_03-07-base#e54d3fa3)
+   Compiling ic-btc-interface v0.2.2
+   Compiling hickory-resolver v0.24.2
+   Compiling ic-ledger-hash-of v0.1.0 (https://github.com/dfinity/ic?rev=tags%2Frelease-2024-10-17_03-07-base#e54d3fa3)
+   Compiling ic-cdk-macros v0.16.0
+   Compiling leptos_macro v0.7.7
+   Compiling hot-or-not-web-leptos-ssr v0.1.0 (/mnt/c/Users/user/OneDrive/Documents/hot-or-not-web-leptos-ssr/ssr)
+   Compiling ic-ledger-core v0.9.0 (https://github.com/dfinity/ic?rev=tags%2Frelease-2024-10-17_03-07-base#e54d3fa3)
+   Compiling icrc-ledger-types v0.1.6 (https://github.com/dfinity/ic?rev=tags%2Frelease-2024-10-17_03-07-base#e54d3fa3)
+   Compiling sns-validation v0.1.0 (https://github.com/yral-dapp/yral-common.git?rev=729f8ce327391000265f79a3b97e818c699c5551#729f8ce3)
+   Compiling tonic-web-wasm-client v0.6.1
+   Compiling bb8-redis v0.15.0
+   Compiling candid_parser v0.1.4
+   Compiling bollard v0.16.1
+   Compiling ic-cdk v0.16.0
+   Compiling ic-base-types v0.9.0 (https://github.com/dfinity/ic?rev=tags%2Frelease-2024-10-17_03-07-base#e54d3fa3)
+   Compiling ic-error-types v0.9.0 (https://github.com/dfinity/ic?rev=tags%2Frelease-2024-10-17_03-07-base#e54d3fa3)
+   Compiling tokio-native-tls v0.3.1
+   Compiling leptos_server v0.7.7
+   Compiling leptos_dom v0.7.7
+   Compiling parse-display v0.9.1
+   Compiling hyper-tls v0.6.0
+   Compiling ic-btc-replica-types v0.9.0 (https://github.com/dfinity/ic?rev=tags%2Frelease-2024-10-17_03-07-base#e54d3fa3)
+   Compiling dfn_core v0.9.0 (https://github.com/dfinity/ic?rev=tags%2Frelease-2024-10-17_03-07-base#e54d3fa3)
+   Compiling reqwest v0.12.12
+   Compiling ic-management-canister-types v0.9.0 (https://github.com/dfinity/ic?rev=tags%2Frelease-2024-10-17_03-07-base#e54d3fa3)
+   Compiling dfn_candid v0.9.0 (https://github.com/dfinity/ic?rev=tags%2Frelease-2024-10-17_03-07-base#e54d3fa3)
+   Compiling leptos v0.7.7
+   Compiling ic-agent v0.38.2
+   Compiling testcontainers v0.20.1
+   Compiling ic-ledger-canister-core v0.9.0 (https://github.com/dfinity/ic?rev=tags%2Frelease-2024-10-17_03-07-base#e54d3fa3)
+   Compiling icp-ledger v0.9.0 (https://github.com/dfinity/ic?rev=tags%2Frelease-2024-10-17_03-07-base#e54d3fa3)
+   Compiling yral-testcontainers v0.1.0 (https://github.com/yral-dapp/yral-testcontainers?rev=7438ba7cb281e7f195cf81f2a8532f63ce005771#7438ba7c)
+   Compiling yral-identity v0.1.0 (https://github.com/yral-dapp/yral-identity.git?rev=156bc0e7a4bc3d9a3b4faab4b9b3048e88a0c701#156bc0e7)
+   Compiling yral-identity v0.1.0 (https://github.com/yral-dapp/yral-identity?rev=adbf4be5cb62a26f2a90032261321bf1df33f08b#adbf4be5)
+   Compiling yral-types v0.1.0 (https://github.com/yral-dapp/yral-common.git?rev=729f8ce327391000265f79a3b97e818c699c5551#729f8ce3)
+   Compiling yral-pump-n-dump-common v0.1.0 (https://github.com/yral-dapp/yral-common.git?rev=729f8ce327391000265f79a3b97e818c699c5551#729f8ce3)
+   Compiling yral-metadata-types v0.1.0 (https://github.com/yral-dapp/yral-metadata?rev=56e3f1f1f5f452673bee17739520c800c1264295#56e3f1f1)
+   Compiling yral-qstash-types v0.1.0 (https://github.com/yral-dapp/yral-common.git?rev=729f8ce327391000265f79a3b97e818c699c5551#729f8ce3)
+   Compiling leptos_router v0.7.7
+   Compiling leptos_meta v0.7.7
+   Compiling leptos_icons v0.4.0 (https://github.com/ozpv/leptos-icons?rev=cd80dc418aa5da2865b79c7822c68aeb2486f30f#cd80dc41)
+   Compiling yral-canisters-client v0.1.0 (https://github.com/yral-dapp/yral-common.git?rev=729f8ce327391000265f79a3b97e818c699c5551#729f8ce3)
+   Compiling yral-metadata-client v0.1.0 (https://github.com/yral-dapp/yral-metadata?rev=56e3f1f1f5f452673bee17739520c800c1264295#56e3f1f1)
+   Compiling leptos_integration_utils v0.7.7
+   Compiling leptos_axum v0.7.7
+   Compiling leptos-use v0.15.6 (https://github.com/Synphonyte/leptos-use?rev=bacd162a9d11b3f1be117851308469e3eec09f30#bacd162a)
+   Compiling yral-canisters-common v0.1.0 (https://github.com/yral-dapp/yral-common.git?rev=729f8ce327391000265f79a3b97e818c699c5551#729f8ce3)
+warning: unused import: `crate::utils::host::show_preview_component`
+ --> ssr/src/app.rs:5:5
+  |
+5 | use crate::utils::host::show_preview_component;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `utils::event_streaming::EventHistory`
+  --> ssr/src/app.rs:33:5
+   |
+33 |     utils::event_streaming::EventHistory,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `leptos::either::Either`
+  --> ssr/src/app.rs:35:5
+   |
+35 | use leptos::either::Either;
+   |     ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `leptos_router::hooks::use_location`
+  --> ssr/src/app.rs:36:5
+   |
+36 | use leptos_router::hooks::use_location;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `leptos_router::components::*`
+  --> ssr/src/app.rs:42:5
+   |
+42 | use leptos_router::components::*;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `BrowserHistory` and `History`
+ --> ssr/src/component/back_btn.rs:1:21
+  |
+1 | use gloo::history::{BrowserHistory, History};
+  |                     ^^^^^^^^^^^^^^  ^^^^^^^
+
+warning: unused import: `leptos_router::hooks::use_navigate`
+ --> ssr/src/component/back_btn.rs:4:5
+  |
+4 | use leptos_router::hooks::use_navigate;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `reqwest::Url`
+ --> ssr/src/component/back_btn.rs:5:5
+  |
+5 | use reqwest::Url;
+  |     ^^^^^^^^^^^^
+
+warning: unused import: `crate::state::history::HistoryCtx`
+ --> ssr/src/component/back_btn.rs:7:5
+  |
+7 | use crate::state::history::HistoryCtx;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::utils::send_wrap`
+ --> ssr/src/component/infinite_scroller.rs:1:5
+  |
+1 | use crate::utils::send_wrap;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `BufWriter`, `Write`, `env`, and `fs::OpenOptions`
+ --> ssr/src/init/mod.rs:5:5
+  |
+5 |     env,
+  |     ^^^
+6 |     fs::OpenOptions,
+  |     ^^^^^^^^^^^^^^^
+7 |     io::{BufWriter, Write},
+  |          ^^^^^^^^^  ^^^^^
+
+warning: unused import: `leptos_router::RouteListing`
+  --> ssr/src/init/mod.rs:13:5
+   |
+13 | use leptos_router::RouteListing;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `*`
+ --> ssr/src/page/faq/mod.rs:5:42
+  |
+5 | use leptos_router::{hooks::query_signal, *};
+  |                                          ^
+
+warning: unused import: `send_wrap`
+ --> ssr/src/page/notifs/mod.rs:5:53
+  |
+5 |     utils::{notifications::get_token_for_principal, send_wrap},
+  |                                                     ^^^^^^^^^
+
+warning: unused import: `user::UserDetails`
+  --> ssr/src/page/post_view/overlay.rs:10:117
+   |
+10 | ...   event_streaming::events::{LikeVideo, ShareVideo}, report::ReportOption, route::failure_redirect, send_wrap, user::UserDetails, web:...
+   |                                                                                                                   ^^^^^^^^^^^^^^^^^
+
+warning: unused import: `task::spawn_local`
+  --> ssr/src/page/post_view/overlay.rs:14:26
+   |
+14 | use leptos::{prelude::*, task::spawn_local};
+   |                          ^^^^^^^^^^^^^^^^^
+
+warning: unused import: `candid::Principal`
+ --> ssr/src/page/post_view/video_iter.rs:3:5
+  |
+3 | use candid::Principal;
+  |     ^^^^^^^^^^^^^^^^^
+
+warning: unused import: `codee::string::JsonSerdeCodec`
+ --> ssr/src/page/post_view/video_iter.rs:4:5
+  |
+4 | use codee::string::JsonSerdeCodec;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `leptos_use::storage::use_local_storage`
+ --> ssr/src/page/post_view/video_iter.rs:7:5
+  |
+7 | use leptos_use::storage::use_local_storage;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `consts::USER_CANISTER_ID_STORE` and `state::canisters::auth_canisters_store`
+  --> ssr/src/page/post_view/video_iter.rs:12:5
+   |
+12 |     consts::USER_CANISTER_ID_STORE,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+13 |     state::canisters::auth_canisters_store,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `futures::future::Either`
+  --> ssr/src/page/profile/mod.rs:10:5
+   |
+10 | use futures::future::Either;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::sync::Arc`
+ --> ssr/src/page/pumpdump/components/card.rs:7:5
+  |
+7 | use std::sync::Arc;
+  |     ^^^^^^^^^^^^^^
+
+warning: unused import: `PageEntry`
+  --> ssr/src/page/refer_earn/history.rs:63:76
+   |
+63 |         cursored_data::{ref_history::HistoryDetails, CursoredDataProvider, PageEntry},
+   |                                                                            ^^^^^^^^^
+
+warning: unused import: `crate::utils::send_wrap`
+ --> ssr/src/page/settings/mod.rs:8:5
+  |
+8 | use crate::utils::send_wrap;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `send_wrap`
+  --> ssr/src/page/token/create/mod.rs:11:12
+   |
+11 |         }, send_wrap, token::{nsfw::NSFWInfo, DeployedCdaoCanisters}, web::FileWithUrl
+   |            ^^^^^^^^^
+
+warning: unused import: `leptos_router::*`
+  --> ssr/src/page/token/info.rs:23:5
+   |
+23 | use leptos_router::*;
+   |     ^^^^^^^^^^^^^^^^
+
+warning: unnecessary parentheses around pattern
+   --> ssr/src/page/token/transfer.rs:359:28
+    |
+359 |                         Ok((None)) => view! { <Redirect path="/" /> }.into_any(),
+    |                            ^    ^
+    |
+    = note: `#[warn(unused_parens)]` on by default
+help: remove these parentheses
+    |
+359 -                         Ok((None)) => view! { <Redirect path="/" /> }.into_any(),
+359 +                         Ok(None) => view! { <Redirect path="/" /> }.into_any(),
+    |
+
+warning: unused imports: `VideoUploadVideoSelected` and `send_wrap`
+  --> ssr/src/page/upload/video_upload.rs:11:61
+   |
+11 |             VideoUploadSuccessful, VideoUploadUnsuccessful, VideoUploadVideoSelected,
+   |                                                             ^^^^^^^^^^^^^^^^^^^^^^^^
+12 |         }, route::go_to_root, send_wrap, web::FileWithUrl, MockPartialEq
+   |                               ^^^^^^^^^
+
+warning: unused import: `candid::Principal`
+   --> ssr/src/page/wallet/txn.rs:117:9
+    |
+117 |     use candid::Principal;
+    |         ^^^^^^^^^^^^^^^^^
+
+warning: unused import: `leptos::prelude::window`
+ --> ssr/src/state/app_type.rs:1:5
+  |
+1 | use leptos::prelude::window;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::utils::MockPartialEq`
+ --> ssr/src/state/canisters.rs:5:5
+  |
+5 | use crate::utils::MockPartialEq;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `StreamExt`
+ --> ssr/src/utils/mod.rs:1:23
+  |
+1 | use futures::{Future, StreamExt};
+  |                       ^^^^^^^^^
+
+warning: unused import: `leptos::prelude::*`
+ --> ssr/src/utils/mod.rs:2:5
+  |
+2 | use leptos::prelude::*;
+  |     ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::env`
+ --> ssr/src/utils/event_streaming/mod.rs:1:5
+  |
+1 | use std::env;
+  |     ^^^^^^^^
+
+warning: unused import: `gloo_utils::format::JsValueSerdeExt`
+ --> ssr/src/utils/event_streaming/mod.rs:3:5
+  |
+3 | use gloo_utils::format::JsValueSerdeExt;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `serde_json::json`
+ --> ssr/src/utils/event_streaming/mod.rs:6:5
+  |
+6 | use serde_json::json;
+  |     ^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::consts::GTAG_MEASUREMENT_ID`
+ --> ssr/src/utils/event_streaming/mod.rs:9:5
+  |
+9 | use crate::consts::GTAG_MEASUREMENT_ID;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `ic_agent::Identity`
+ --> ssr/src/utils/event_streaming/events.rs:2:5
+  |
+2 | use ic_agent::Identity;
+  |     ^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `UseTimeoutFnReturn`, `use_event_listener`, and `use_timeout_fn`
+ --> ssr/src/utils/event_streaming/events.rs:5:18
+  |
+5 | use leptos_use::{use_event_listener, use_timeout_fn, UseTimeoutFnReturn};
+  |                  ^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `serde_json::json`
+ --> ssr/src/utils/event_streaming/events.rs:6:5
+  |
+6 | use serde_json::json;
+  |     ^^^^^^^^^^^^^^^^
+
+warning: unused import: `wasm_bindgen::JsCast`
+ --> ssr/src/utils/event_streaming/events.rs:8:5
+  |
+8 | use wasm_bindgen::JsCast;
+  |     ^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `ev`
+ --> ssr/src/utils/event_streaming/events.rs:9:14
+  |
+9 | use leptos::{ev, prelude::*};
+  |              ^^
+
+warning: unused import: `super::EventHistory`
+  --> ssr/src/utils/event_streaming/events.rs:10:5
+   |
+10 | use super::EventHistory;
+   |     ^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::state::auth::account_connected_reader`
+  --> ssr/src/utils/event_streaming/events.rs:12:5
+   |
+12 | use crate::state::auth::account_connected_reader;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::state::canisters::auth_canisters_store`
+  --> ssr/src/utils/event_streaming/events.rs:13:5
+   |
+13 | use crate::state::canisters::auth_canisters_store;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::state::history::HistoryCtx`
+  --> ssr/src/utils/event_streaming/events.rs:14:5
+   |
+14 | use crate::state::history::HistoryCtx;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `user_details_can_store_or_ret` and `user_details_or_ret`
+  --> ssr/src/utils/event_streaming/events.rs:20:26
+   |
+20 | use crate::utils::user::{user_details_can_store_or_ret, user_details_or_ret};
+   |                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `leptos_use::use_window`
+ --> ssr/src/utils/host.rs:2:5
+  |
+2 | use leptos_use::use_window;
+  |     ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `leptos::server`
+ --> ssr/src/utils/notifications/device_id.rs:1:5
+  |
+1 | use leptos::server;
+  |     ^^^^^^^^^^^^^^
+
+warning: unused import: `std::env`
+ --> ssr/src/utils/notifications/device_id.rs:2:5
+  |
+2 | use std::env;
+  |     ^^^^^^^^
+
+warning: unused import: `leptos::prelude::*`
+ --> ssr/src/utils/notifications/device_id.rs:3:5
+  |
+3 | use leptos::prelude::*;
+  |     ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `env`
+ --> ssr/src/utils/report.rs:1:11
+  |
+1 | use std::{env, fmt::Display};
+  |           ^^^
+
+warning: unused import: `leptos::server`
+ --> ssr/src/utils/report.rs:3:5
+  |
+3 | use leptos::server;
+  |     ^^^^^^^^^^^^^^
+
+warning: unused import: `leptos::prelude::*`
+ --> ssr/src/utils/report.rs:4:5
+  |
+4 | use leptos::prelude::*;
+  |     ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `futures::stream::BoxStream`
+ --> ssr/src/utils/token/icpump.rs:4:5
+  |
+4 | use futures::stream::BoxStream;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused macro definition: `user_details_or_ret`
+  --> ssr/src/utils/user.rs:30:14
+   |
+30 | macro_rules! user_details_or_ret {
+   |              ^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_macros)]` on by default
+
+warning: unused macro definition: `user_details_can_store_or_ret`
+  --> ssr/src/utils/user.rs:40:14
+   |
+40 | macro_rules! user_details_can_store_or_ret {
+   |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused variable: `output_b64`
+ --> ssr/src/component/token_logo_sanitize.rs:9:19
+  |
+9 |     #[prop(into)] output_b64: SignalSetter<Option<String>>,
+  |                   ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_output_b64`
+  |
+  = note: `#[warn(unused_variables)]` on by default
+
+warning: unused variable: `end`
+   --> ssr/src/utils/token/icpump.rs:143:13
+    |
+143 |         let end = start + limit;
+    |             ^^^ help: if this is intentional, prefix it with an underscore: `_end`
+
+warning: unused variable: `canisters_copy`
+   --> ssr/src/page/post_view/overlay.rs:140:9
+    |
+140 |     let canisters_copy = canisters;
+    |         ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_canisters_copy`
+
+warning: unused variable: `post_details_report`
+   --> ssr/src/page/post_view/overlay.rs:161:9
+    |
+161 |     let post_details_report = post.clone();
+    |         ^^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_post_details_report`
+
+warning: unused variable: `chunks`
+   --> ssr/src/page/post_view/video_iter.rs:103:9
+    |
+103 |         chunks: usize,
+    |         ^^^^^^ help: if this is intentional, prefix it with an underscore: `_chunks`
+
+warning: unused variable: `video_queue`
+   --> ssr/src/page/post_view/video_iter.rs:105:9
+    |
+105 |         video_queue: Vec<PostDetails>,
+    |         ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_video_queue`
+
+warning: unused variable: `token_id`
+  --> ssr/src/utils/token/icpump.rs:33:30
+   |
+33 | pub async fn get_token_by_id(token_id: String) -> Result<TokenListItemFS, ServerFnError> {
+   |                              ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_token_id`
+
+warning: unused variable: `sns_init_payload`
+   --> ssr/src/utils/event_streaming/events.rs:803:9
+    |
+803 |         sns_init_payload: SnsInitPayload,
+    |         ^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_sns_init_payload`
+
+warning: unused variable: `token_root`
+   --> ssr/src/utils/event_streaming/events.rs:804:9
+    |
+804 |         token_root: Principal,
+    |         ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_token_root`
+
+warning: unused variable: `profile_details`
+   --> ssr/src/utils/event_streaming/events.rs:805:9
+    |
+805 |         profile_details: ProfileDetails,
+    |         ^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_profile_details`
+
+warning: unused variable: `canister_id`
+   --> ssr/src/utils/event_streaming/events.rs:806:9
+    |
+806 |         canister_id: Principal,
+    |         ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_canister_id`
+
+warning: unused variable: `nsfw_info`
+   --> ssr/src/utils/event_streaming/events.rs:807:9
+    |
+807 |         nsfw_info: NSFWInfo,
+    |         ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_nsfw_info`
+
+warning: unused variable: `error_str`
+   --> ssr/src/utils/event_streaming/events.rs:845:9
+    |
+845 |         error_str: String,
+    |         ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_error_str`
+
+warning: unused variable: `sns_init_payload`
+   --> ssr/src/utils/event_streaming/events.rs:846:9
+    |
+846 |         sns_init_payload: SnsInitPayload,
+    |         ^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_sns_init_payload`
+
+warning: unused variable: `profile_details`
+   --> ssr/src/utils/event_streaming/events.rs:847:9
+    |
+847 |         profile_details: ProfileDetails,
+    |         ^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_profile_details`
+
+warning: unused variable: `canister_id`
+   --> ssr/src/utils/event_streaming/events.rs:848:9
+    |
+848 |         canister_id: Principal,
+    |         ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_canister_id`
+
+warning: unused variable: `input_type`
+   --> ssr/src/page/token/create/mod.rs:214:37
+    |
+214 |             #[prop(optional, into)] input_type: Option<String>,
+    |                                     ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_input_type`
+...
+303 | input_component!(InputArea, textarea, Textarea, rows = 4);
+    | --------------------------------------------------------- in this macro invocation
+    |
+    = note: this warning originates in the macro `input_component` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: unused variable: `input_type`
+   --> ssr/src/page/token/create/mod.rs:214:37
+    |
+214 |             #[prop(optional, into)] input_type: Option<String>,
+    |                                     ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_input_type`
+...
+304 | input_component!(InputField, textarea, Textarea, rows = 1);
+    | ---------------------------------------------------------- in this macro invocation
+    |
+    = note: this warning originates in the macro `input_component` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: unused variable: `canister_store`
+  --> ssr/src/page/upload/video_upload.rs:48:9
+   |
+48 |     let canister_store = auth_canisters_store();
+   |         ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_canister_store`
+
+warning: unused variable: `principal_id`
+  --> ssr/src/utils/notifications/mod.rs:12:38
+   |
+12 | pub async fn get_token_for_principal(principal_id: String) {
+   |                                      ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_principal_id`
+
+warning: unused variable: `token`
+  --> ssr/src/utils/notifications/mod.rs:16:17
+   |
+16 |             let token: String = token_js.as_string().unwrap_or_default();
+   |                 ^^^^^ help: if this is intentional, prefix it with an underscore: `_token`
+
+warning: unused import: `futures::StreamExt`
+ --> ssr/src/utils/token/icpump.rs:5:5
+  |
+5 | use futures::StreamExt;
+  |     ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: ``
+ --> ssr/src/component/nav.rs:8:42
+  |
+8 | use leptos_router::{hooks::use_location, *};
+  |                                          ^
+
+warning: unused variable: `fallback`
+  --> ssr/src/component/back_btn.rs:12:28
+   |
+12 | pub fn go_back_or_fallback(fallback: &str) {
+   |                            ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_fallback`
+
+warning: unused variable: `vid_details`
+  --> ssr/src/utils/event_streaming/events.rs:60:9
+   |
+60 |         vid_details: Signal<Option<PostDetails>>,
+   |         ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_vid_details`
+
+warning: unused variable: `container_ref`
+  --> ssr/src/utils/event_streaming/events.rs:61:9
+   |
+61 |         container_ref: NodeRef<Video>,
+   |         ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_container_ref`
+
+warning: unused variable: `post_details`
+   --> ssr/src/utils/event_streaming/events.rs:206:9
+    |
+206 |         post_details: PostDetails,
+    |         ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_post_details`
+
+warning: unused variable: `likes`
+   --> ssr/src/utils/event_streaming/events.rs:207:9
+    |
+207 |         likes: RwSignal<u64>,
+    |         ^^^^^ help: if this is intentional, prefix it with an underscore: `_likes`
+
+warning: unused variable: `cans_store`
+   --> ssr/src/utils/event_streaming/events.rs:208:9
+    |
+208 |         cans_store: RwSignal<Option<Canisters<true>>>,
+    |         ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_cans_store`
+
+warning: unused variable: `post_details`
+   --> ssr/src/utils/event_streaming/events.rs:259:9
+    |
+259 |         post_details: PostDetails,
+    |         ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_post_details`
+
+warning: unused variable: `cans_store`
+   --> ssr/src/utils/event_streaming/events.rs:260:9
+    |
+260 |         cans_store: RwSignal<Option<Canisters<true>>>,
+    |         ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_cans_store`
+
+warning: unused variable: `hashtag_inp`
+   --> ssr/src/utils/event_streaming/events.rs:331:9
+    |
+331 |         hashtag_inp: NodeRef<Input>,
+    |         ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_hashtag_inp`
+
+warning: unused variable: `is_nsfw`
+   --> ssr/src/utils/event_streaming/events.rs:332:9
+    |
+332 |         is_nsfw: NodeRef<Input>,
+    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_is_nsfw`
+
+warning: unused variable: `enable_hot_or_not`
+   --> ssr/src/utils/event_streaming/events.rs:333:9
+    |
+333 |         enable_hot_or_not: NodeRef<Input>,
+    |         ^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_enable_hot_or_not`
+
+warning: unused variable: `cans_store`
+   --> ssr/src/utils/event_streaming/events.rs:334:9
+    |
+334 |         cans_store: RwSignal<Option<Canisters<true>>>,
+    |         ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_cans_store`
+
+warning: unused variable: `cans_store`
+   --> ssr/src/utils/event_streaming/events.rs:374:30
+    |
+374 |     pub fn send_event(&self, cans_store: RwSignal<Option<Canisters<true>>>) {
+    |                              ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_cans_store`
+
+warning: unused variable: `error`
+   --> ssr/src/utils/event_streaming/events.rs:401:9
+    |
+401 |         error: String,
+    |         ^^^^^ help: if this is intentional, prefix it with an underscore: `_error`
+
+warning: unused variable: `hashtags_len`
+   --> ssr/src/utils/event_streaming/events.rs:402:9
+    |
+402 |         hashtags_len: usize,
+    |         ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_hashtags_len`
+
+warning: unused variable: `is_nsfw`
+   --> ssr/src/utils/event_streaming/events.rs:403:9
+    |
+403 |         is_nsfw: bool,
+    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_is_nsfw`
+
+warning: unused variable: `enable_hot_or_not`
+   --> ssr/src/utils/event_streaming/events.rs:404:9
+    |
+404 |         enable_hot_or_not: bool,
+    |         ^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_enable_hot_or_not`
+
+warning: unused variable: `cans_store`
+   --> ssr/src/utils/event_streaming/events.rs:405:9
+    |
+405 |         cans_store: RwSignal<Option<Canisters<true>>>,
+    |         ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_cans_store`
+
+warning: unused variable: `video_id`
+   --> ssr/src/utils/event_streaming/events.rs:436:9
+    |
+436 |         video_id: String,
+    |         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_video_id`
+
+warning: unused variable: `hashtags_len`
+   --> ssr/src/utils/event_streaming/events.rs:437:9
+    |
+437 |         hashtags_len: usize,
+    |         ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_hashtags_len`
+
+warning: unused variable: `is_nsfw`
+   --> ssr/src/utils/event_streaming/events.rs:438:9
+    |
+438 |         is_nsfw: bool,
+    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_is_nsfw`
+
+warning: unused variable: `enable_hot_or_not`
+   --> ssr/src/utils/event_streaming/events.rs:439:9
+    |
+439 |         enable_hot_or_not: bool,
+    |         ^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_enable_hot_or_not`
+
+warning: unused variable: `post_id`
+   --> ssr/src/utils/event_streaming/events.rs:440:9
+    |
+440 |         post_id: u64,
+    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_post_id`
+
+warning: unused variable: `cans_store`
+   --> ssr/src/utils/event_streaming/events.rs:441:9
+    |
+441 |         cans_store: RwSignal<Option<Canisters<true>>>,
+    |         ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_cans_store`
+
+warning: unused variable: `logged_in`
+   --> ssr/src/utils/event_streaming/events.rs:472:30
+    |
+472 |     pub fn send_event(&self, logged_in: ReadSignal<bool>) {
+    |                              ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_logged_in`
+
+warning: unused variable: `logged_in`
+   --> ssr/src/utils/event_streaming/events.rs:508:9
+    |
+508 |         logged_in: ReadSignal<bool>,
+    |         ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_logged_in`
+
+warning: unused variable: `cans_store`
+   --> ssr/src/utils/event_streaming/events.rs:509:9
+    |
+509 |         cans_store: RwSignal<Option<Canisters<true>>>,
+    |         ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_cans_store`
+
+warning: unused variable: `canisters`
+   --> ssr/src/utils/event_streaming/events.rs:544:30
+    |
+544 |     pub fn send_event(&self, canisters: Canisters<true>) {
+    |                              ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_canisters`
+
+warning: unused variable: `prov`
+   --> ssr/src/utils/event_streaming/events.rs:573:30
+    |
+573 |     pub fn send_event(&self, prov: ProviderKind) {
+    |                              ^^^^ help: if this is intentional, prefix it with an underscore: `_prov`
+
+warning: unused variable: `cta_location`
+   --> ssr/src/utils/event_streaming/events.rs:625:30
+    |
+625 |     pub fn send_event(&self, cta_location: String) {
+    |                              ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_cta_location`
+
+warning: unused variable: `cans_store`
+   --> ssr/src/utils/event_streaming/events.rs:648:30
+    |
+648 |     pub fn send_event(&self, cans_store: RwSignal<Option<Canisters<true>>>) {
+    |                              ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_cans_store`
+
+warning: unused variable: `cans_store`
+   --> ssr/src/utils/event_streaming/events.rs:676:30
+    |
+676 |     pub fn send_event(&self, cans_store: RwSignal<Option<Canisters<true>>>) {
+    |                              ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_cans_store`
+
+warning: unused variable: `error_str`
+   --> ssr/src/utils/event_streaming/events.rs:704:30
+    |
+704 |     pub fn send_event(&self, error_str: String, cans_store: RwSignal<Option<Canisters<true>>>) {
+    |                              ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_error_str`
+
+warning: unused variable: `cans_store`
+   --> ssr/src/utils/event_streaming/events.rs:704:49
+    |
+704 |     pub fn send_event(&self, error_str: String, cans_store: RwSignal<Option<Canisters<true>>>) {
+    |                                                 ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_cans_store`
+
+warning: unused variable: `post_details`
+   --> ssr/src/utils/event_streaming/events.rs:735:9
+    |
+735 |         post_details: PostDetails,
+    |         ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_post_details`
+
+warning: unused variable: `cans_store`
+   --> ssr/src/utils/event_streaming/events.rs:736:9
+    |
+736 |         cans_store: RwSignal<Option<Canisters<true>>>,
+    |         ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_cans_store`
+
+warning: unused variable: `sns_init_payload`
+   --> ssr/src/utils/event_streaming/events.rs:770:9
+    |
+770 |         sns_init_payload: SnsInitPayload,
+    |         ^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_sns_init_payload`
+
+warning: unused variable: `cans_store`
+   --> ssr/src/utils/event_streaming/events.rs:771:9
+    |
+771 |         cans_store: RwSignal<Option<Canisters<true>>>,
+    |         ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_cans_store`
+
+warning: unused variable: `amount`
+   --> ssr/src/utils/event_streaming/events.rs:877:30
+    |
+877 |     pub fn send_event(&self, amount: u64, cans_store: Canisters<true>) {
+    |                              ^^^^^^ help: if this is intentional, prefix it with an underscore: `_amount`
+
+warning: unused variable: `cans_store`
+   --> ssr/src/utils/event_streaming/events.rs:877:43
+    |
+877 |     pub fn send_event(&self, amount: u64, cans_store: Canisters<true>) {
+    |                                           ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_cans_store`
+
+warning: unused variable: `amount`
+   --> ssr/src/utils/event_streaming/events.rs:903:30
+    |
+903 |     pub fn send_event(&self, amount: String, to: Principal, cans_store: Canisters<true>) {
+    |                              ^^^^^^ help: if this is intentional, prefix it with an underscore: `_amount`
+
+warning: unused variable: `to`
+   --> ssr/src/utils/event_streaming/events.rs:903:46
+    |
+903 |     pub fn send_event(&self, amount: String, to: Principal, cans_store: Canisters<true>) {
+    |                                              ^^ help: if this is intentional, prefix it with an underscore: `_to`
+
+warning: unused variable: `cans_store`
+   --> ssr/src/utils/event_streaming/events.rs:903:61
+    |
+903 |     pub fn send_event(&self, amount: String, to: Principal, cans_store: Canisters<true>) {
+    |                                                             ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_cans_store`
+
+warning: unused variable: `canisters`
+   --> ssr/src/utils/event_streaming/events.rs:930:30
+    |
+930 |     pub fn send_event(&self, canisters: Canisters<true>, pathname: String) {
+    |                              ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_canisters`
+
+warning: unused variable: `pathname`
+   --> ssr/src/utils/event_streaming/events.rs:930:58
+    |
+930 |     pub fn send_event(&self, canisters: Canisters<true>, pathname: String) {
+    |                                                          ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_pathname`
+
+warning: field `user_details` is never read
+   --> ssr/src/page/menu.rs:149:24
+    |
+148 | #[component]
+    | ------------ field in this struct
+149 | fn EnableNotifications(user_details: ProfileDetails) -> impl IntoView {
+    |                        ^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` on by default
+
+warning: fields `stat` and `info` are never read
+   --> ssr/src/page/pumpdump/profile/mod.rs:148:9
+    |
+147 | #[component]
+    | ------------ fields in this struct
+148 | fn Stat(stat: u64, #[prop(into)] info: String) -> impl IntoView {
+    |         ^^^^                     ^^^^
+
+warning: fields `text`, `href`, `icon`, and `target` are never read
+  --> ssr/src/page/settings/mod.rs:19:19
+   |
+17 | #[component]
+   | ------------ fields in this struct
+18 | fn MenuItem(
+19 |     #[prop(into)] text: String,
+   |                   ^^^^
+20 |     #[prop(into)] href: String,
+   |                   ^^^^
+21 |     #[prop(into)] icon: icondata::Icon,
+   |                   ^^^^
+22 |     #[prop(into, optional)] target: String,
+   |                             ^^^^^^
+
+warning: fields `heading`, `placeholder`, `initial_value`, `input_type`, `updater`, and `validator` are never read
+   --> ssr/src/page/token/create/mod.rs:211:27
+    |
+209 |         #[component]
+    |         ------------ fields in this struct
+210 |         fn $name<T: 'static, U: Fn(T) + 'static + Copy, V: Fn(String) -> Option<T> + 'static + Copy>(
+211 |             #[prop(into)] heading: String,
+    |                           ^^^^^^^
+212 |             #[prop(into)] placeholder: String,
+    |                           ^^^^^^^^^^^
+213 |             #[prop(optional)] initial_value: Option<String>,
+    |                               ^^^^^^^^^^^^^
+214 |             #[prop(optional, into)] input_type: Option<String>,
+    |                                     ^^^^^^^^^^
+215 |             updater: U,
+    |             ^^^^^^^
+216 |             validator: V,
+    |             ^^^^^^^^^
+...
+304 | input_component!(InputField, textarea, Textarea, rows = 1);
+    | ---------------------------------------------------------- in this macro invocation
+    |
+    = note: this warning originates in the macro `input_component` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: struct `GA4Event` is never constructed
+  --> ssr/src/utils/event_streaming/mod.rs:14:8
+   |
+14 | struct GA4Event {
+   |        ^^^^^^^^
+
+warning: struct `Event` is never constructed
+  --> ssr/src/utils/event_streaming/mod.rs:21:8
+   |
+21 | struct Event {
+   |        ^^^^^
+
+warning: function `convert_leaf_values_to_string` is never used
+   --> ssr/src/utils/event_streaming/mod.rs:172:4
+    |
+172 | fn convert_leaf_values_to_string(value: serde_json::Value) -> serde_json::Value {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: `hot-or-not-web-leptos-ssr` (lib) generated 132 warnings (run `cargo fix --lib -p hot-or-not-web-leptos-ssr` to apply 55 suggestions)
