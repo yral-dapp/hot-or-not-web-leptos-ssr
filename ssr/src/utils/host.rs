@@ -16,7 +16,9 @@ pub fn get_host() -> String {
             return "".to_string();
         }
         let headers = parts.unwrap().headers;
-        headers.get("Host").unwrap().to_str().unwrap().to_string()
+        headers.get("Host")
+            .map(|h| h.to_str().unwrap_or_default().to_string())
+            .unwrap_or_default()
     }
 }
 
