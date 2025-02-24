@@ -14,6 +14,7 @@ use crate::{
     component::{back_btn::BackButton, skeleton::Skeleton, title::TitleText},
     page::pumpdump::{convert_e8s_to_cents, GameResult},
     state::canisters::authenticated_canisters,
+    try_or_redirect,
 };
 
 use super::GameState;
@@ -99,7 +100,12 @@ async fn load_history(cans: Canisters<true>, page: u64) -> Result<(GameplayHisto
     let items = match items {
         yral_canisters_client::individual_user_template::Result21::Ok(res) => res,
         yral_canisters_client::individual_user_template::Result21::Err(err) => {
-            return Err(format!("Couldn't load played games: {err}"));
+            return match err.as_str() {
+                "ReachedEndOfItemsList" => {
+                    return Ok((Vec::new(), false));
+                }
+                _ => Err(format!("Couldn't load played games: {err}")),
+            };
         }
     };
     let had_items = !items.is_empty();
@@ -174,11 +180,7 @@ fn ProfileDataSection(#[prop(into)] profile_data: ProfileData) -> impl IntoView 
                         src=profile_pic
                     />
                     <div class="flex flex-col text-center items-center gap-4">
-                        <span
-                            class="text-md text-white font-bold w-full"
-                        >
-                            {display_name}
-                        </span>
+                        <span class="text-md text-white font-bold w-full">{display_name}</span>
                     </div>
                 </div>
             </div>
@@ -213,22 +215,35 @@ fn GameplayHistoryCard(#[prop(into)] details: GameplayHistoryItem) -> impl IntoV
             <div class="rounded-md overflow-hidden relative max-w-32 max-h-40 w-32 h-40">
                 <div class="absolute z-1 inset-x-0 h-1/3 bg-gradient-to-b from-black/50 to-transparent"></div>
                 <div class="absolute z-[2] flex top-2 items-center gap-1 px-2">
-                    <img src=details.owner_pfp alt="Profile name" class="w-4 h-4 shrink-0 object-cover rounded-full" />
-                    <span class="text-xs font-medium line-clamp-1">{details.owner_principal.to_string()}</span>
+                    <img
+                        src=details.owner_pfp
+                        alt="Profile name"
+                        class="w-4 h-4 shrink-0 object-cover rounded-full"
+                    />
+                    <span class="text-xs font-medium line-clamp-1">
+                        {details.owner_principal.to_string()}
+                    </span>
                 </div>
-                <img src=details.logo class="w-full bg-white/5 h-28 object-cover" alt="Coin title" />
+                <img
+                    src=details.logo
+                    class="w-full bg-white/5 h-28 object-cover"
+                    alt="Coin title"
+                />
                 <Show
                     when=move || !state.is_running()
-                    fallback=move || view! {
-                        <div
-                            style="background: linear-gradient(248.46deg, rgba(61, 142, 255, 0.4) 16.67%, rgba(57, 0, 89, 0.4) 52.62%, rgba(226, 1, 123, 0.4) 87.36%);"
-                            class="text-xs font-semibold justify-center py-4 flex items-center text-[#FAFAFA]"
-                        >
-                            Pending
-                        </div>
+                    fallback=move || {
+                        view! {
+                            <div
+                                style="background: linear-gradient(248.46deg, rgba(61, 142, 255, 0.4) 16.67%, rgba(57, 0, 89, 0.4) 52.62%, rgba(226, 1, 123, 0.4) 87.36%);"
+                                class="text-xs font-semibold justify-center py-4 flex items-center text-[#FAFAFA]"
+                            >
+                                Pending
+                            </div>
+                        }
                     }
                 >
-                    <div class="text-xs font-semibold py-1 text-center"
+                    <div
+                        class="text-xs font-semibold py-1 text-center"
                         class=(["bg-primary-800", "text-white"], state.has_won())
                         class=(["text-neutral-400", "bg-[#212121]"], state.has_lost())
                     >
@@ -239,7 +254,8 @@ fn GameplayHistoryCard(#[prop(into)] details: GameplayHistoryItem) -> impl IntoV
                         class=(["bg-primary-600", "text-white"], state.has_won())
                         class=(["bg-neutral-600", "text-neutral-400"], state.has_lost())
                     >
-                        {state.winnings().or(state.lossings())} Cents
+                        {state.winnings().or(state.lossings())}
+                        Cents
                     </div>
                 </Show>
             </div>
@@ -283,45 +299,43 @@ pub fn PndProfilePage() -> impl IntoView {
     let auth_can_for_history = auth_cans.clone();
     let page = create_rw_signal(0);
     let should_load_more = create_rw_signal(true);
-    let load_gameplay_history = create_action(move |&page| {
-        let cans_wire_res = auth_can_for_history.clone();
-        async move {
-            // since we are starting a load job, no more load jobs should be start
-            should_load_more.set(false);
-            let cans_wire = cans_wire_res
-                .wait_untracked()
-                .await
-                .map_err(|_| "Couldn't get cans_wire")?;
-            let cans = Canisters::from_wire(cans_wire.clone(), expect_context())
-                .map_err(|_| "Unable to authenticate".to_string())?;
-
-            let (processed_items, had_items) = load_history(cans, page).await?;
-            gameplay_history.update(|list| {
-                list.extend(processed_items);
-            });
-
-            if had_items {
-                // since there were tokens loaded
-                // assume we have more tokens to load
-                // so, allow token loading
-                should_load_more.set(true)
-            }
-
-            Ok::<_, String>(())
-        }
-    });
 
     let scroll_container = NodeRef::<Div>::new();
     let is_loading = use_infinite_scroll_with_options(
         scroll_container,
-        move |_| async move {
-            if !should_load_more.get() {
-                return;
+        move |_| {
+            let cans_wire_res = auth_can_for_history.clone();
+            async move {
+                if !should_load_more.get() {
+                    return;
+                }
+                // since we are starting a load job, no more load jobs should be start
+                should_load_more.set(false);
+                let cans_wire = cans_wire_res
+                    .wait_untracked()
+                    .await
+                    .map_err(|_| "Couldn't get cans_wire");
+                let cans_wire = try_or_redirect!(cans_wire);
+                let cans = Canisters::from_wire(cans_wire.clone(), expect_context())
+                    .map_err(|_| "Unable to authenticate".to_string());
+                let cans = try_or_redirect!(cans);
+
+                let (processed_items, had_items) =
+                    try_or_redirect!(load_history(cans, page.get_untracked()).await);
+                gameplay_history.update(|list| {
+                    list.extend(processed_items);
+                });
+
+                if had_items {
+                    // since there were tokens loaded
+                    // assume we have more tokens to load
+                    // so, allow token loading
+                    page.update_untracked(|v| {
+                        *v += 1;
+                    });
+                    should_load_more.set(true);
+                }
             }
-            load_gameplay_history.dispatch(page.get_untracked());
-            page.update_untracked(|v| {
-                *v += 1;
-            });
         },
         UseInfiniteScrollOptions::default()
             .distance(400f64)
@@ -344,7 +358,11 @@ pub fn PndProfilePage() -> impl IntoView {
             </Show>
             <div class="w-11/12 flex justify-center">
                 <div ref=scroll_container class="flex flex-wrap gap-4 justify-center pt-8 pb-16">
-                    <For each=move || gameplay_history.get().into_iter().enumerate() key=|(idx, _)| *idx let:item>
+                    <For
+                        each=move || gameplay_history.get().into_iter().enumerate()
+                        key=|(idx, _)| *idx
+                        let:item
+                    >
                         <GameplayHistoryCard details=item.1 />
                     </For>
                     <Show when=move || is_loading() && should_load_more.get_untracked()>
