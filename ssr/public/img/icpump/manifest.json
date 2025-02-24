@@ -23,28 +23,28 @@
   "screenshots": [
     {
       "src": "/img/icpump/1.png",
-      "sizes": "2796x1290",
+      "sizes": "1290x2796",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "ICPump - Your crypto wallet"
     },
     {
       "src": "/img/icpump/2.png",
-      "sizes": "2796x1290",
+      "sizes": "1290x2796",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "Create your own meme-coin"
     },
     {
       "src": "/img/icpump/3.png",
-      "sizes": "2796x1290",
+      "sizes": "1290x2796",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "Airdrop your followers - Win big!"
     },
     {
       "src": "/img/icpump/4.png",
-      "sizes": "2796x1290",
+      "sizes": "1290x2796",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "Discover tokens through PumpAI"
