@@ -126,6 +126,7 @@ derive_more = { version = "2", features = ["display"] }
 
 uuid = { version = "1.11.0", features = ["serde", "v4"] }
 regex = { version = "1.11.1", optional = true }
+rand = "0.8.5"
 
 [build-dependencies]
 tonic-build = { version = "0.12.0", default-features = false, features = [

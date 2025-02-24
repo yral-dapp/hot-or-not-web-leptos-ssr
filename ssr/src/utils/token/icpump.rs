@@ -3,15 +3,14 @@ use std::{
     env,
     time::{SystemTime, UNIX_EPOCH},
 };
+use yral_config_cf_kv::KVConfig;
 
 use futures::stream::BoxStream;
 use futures::StreamExt;
 
 use leptos::*;
 
-use yral_grpc_traits::{
-    AirdropConfig, AirdropConfigProvider, TokenInfoProvider, TokenListItemFS
-};
+use yral_grpc_traits::{AirdropConfig, AirdropConfigProvider, TokenInfoProvider, TokenListItemFS};
 
 #[cfg(feature = "ssr")]
 #[derive(Debug, Clone)]
@@ -36,9 +35,7 @@ pub struct TokenListItem {
 }
 
 #[server]
-pub async fn get_token_by_id(
-    token_id: String,
-) -> Result<TokenListItemFS, ServerFnError> {
+pub async fn get_token_by_id(token_id: String) -> Result<TokenListItemFS, ServerFnError> {
     #[cfg(feature = "firestore")]
     {
         let firestore_db: firestore::FirestoreDb = expect_context();
@@ -57,7 +54,7 @@ pub async fn get_token_by_id(
                     "Token not found".to_string(),
                 )
             })?;
-    
+
         Ok(token)
     }
 
@@ -335,20 +332,12 @@ pub struct IcpumpTokenInfo;
 impl TokenInfoProvider for IcpumpTokenInfo {
     type Error = ServerFnError;
 
-    async fn get_token_by_id(
-        &self,
-        token_id: String,
-    ) -> Result<TokenListItemFS, ServerFnError> {
+    async fn get_token_by_id(&self, token_id: String) -> Result<TokenListItemFS, ServerFnError> {
         get_token_by_id(token_id).await
     }
 }
 
-#[server]
-async fn get_airdrop_config_from_kv() -> Result<AirdropConfig, ServerFnError> {
-    use derive_more::Display;
-    use yral_config_cf_kv::KVConfig;
-    use yral_config_keys::key_derive;
-
+fn get_kv_config() -> Result<KVConfig, ServerFnError> {
     let url = env::var("CF_KV_FETCH_URL").map_err(|e| {
         ServerFnError::ServerError::<std::convert::Infallible>(
             "CF_KV_FETCH_URL is not set".to_string(),
@@ -360,7 +349,15 @@ async fn get_airdrop_config_from_kv() -> Result<AirdropConfig, ServerFnError> {
         )
     })?;
 
-    let kv_config = KVConfig::new(url, token);
+    Ok(KVConfig::new(url, token))
+}
+
+#[server]
+async fn get_airdrop_config_from_kv() -> Result<AirdropConfig, ServerFnError> {
+    use derive_more::Display;
+    use yral_config_keys::key_derive;
+
+    let kv_config = get_kv_config()?;
 
     #[derive(Display)]
     #[display("CycleDuration")]
@@ -382,7 +379,7 @@ async fn get_airdrop_config_from_kv() -> Result<AirdropConfig, ServerFnError> {
             "cannot fetch airdrop claim_limit from cf kv".to_string(),
         )
     })?;
- 
+
     Ok(AirdropConfig {
         cycle_duration,
         claim_limit,
@@ -396,4 +393,38 @@ impl AirdropConfigProvider for AirdropKVConfig {
     async fn get_airdrop_config(&self) -> AirdropConfig {
         get_airdrop_config_from_kv().await.unwrap()
     }
+}
+
+#[server]
+pub async fn get_airdrop_amount_from_kv() -> Result<u64, ServerFnError> {
+    use derive_more::Display;
+    use rand::prelude::*;
+    use yral_config_keys::key_derive;
+
+    let kv_config = get_kv_config()?;
+
+    #[derive(Display)]
+    #[display("AirdropUpperLimit")]
+    pub struct AirdropUpperLimit;
+    key_derive!(AirdropUpperLimit => u64|100);
+
+    #[derive(Display)]
+    #[display("AirdropLowerLimit")]
+    pub struct AirdropLowerLimit;
+    key_derive!(AirdropLowerLimit => u64|10);
+
+    let upper = kv_config.get(AirdropUpperLimit).await.map_err(|e| {
+        ServerFnError::ServerError::<std::convert::Infallible>(
+            "cannot fetch airdrop cycle_duration from cf kv".to_string(),
+        )
+    })?;
+    let lower = kv_config.get(AirdropLowerLimit).await.map_err(|e| {
+        ServerFnError::ServerError::<std::convert::Infallible>(
+            "cannot fetch airdrop claim_limit from cf kv".to_string(),
+        )
+    })?;
+
+    let amount: u64 = rand::thread_rng().gen_range(lower..=upper);
+
+    Ok(amount)
 }

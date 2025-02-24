@@ -4,6 +4,7 @@ use crate::component::overlay::PopupOverlay;
 use crate::consts::ICPUMP_LISTING_PAGE_SIZE;
 use crate::consts::USER_PRINCIPAL_STORE;
 use crate::state::canisters::authenticated_canisters;
+use crate::utils::token::icpump::get_airdrop_amount_from_kv;
 use std::collections::VecDeque;
 
 use candid::Nat;
@@ -378,11 +379,13 @@ pub fn TokenCard(
             let cans = Canisters::from_wire(cans_wire, expect_context())?;
             let token_owner = cans.individual_user(token_owner_cans_id).await;
 
+            let amount = get_airdrop_amount_from_kv().await?;
+
             token_owner
                 .request_airdrop(
                     root,
                     None,
-                    Into::<Nat>::into(100u64) * 10u64.pow(8),
+                    Into::<Nat>::into(amount) * 10u64.pow(8),
                     cans.user_canister(),
                 )
                 .await?;

@@ -23,7 +23,7 @@ use crate::page::icpump::{ActionButton, ActionButtonLink};
 use crate::page::wallet::airdrop::AirdropPopup;
 use crate::state::canisters::authenticated_canisters;
 use crate::utils::host::{get_host, show_pnd_page};
-use crate::utils::token::icpump::{AirdropKVConfig, IcpumpTokenInfo};
+use crate::utils::token::icpump::{get_airdrop_amount_from_kv, AirdropKVConfig, IcpumpTokenInfo};
 use crate::{component::infinite_scroller::InfiniteScroller, state::canisters::unauth_canisters};
 
 use leptos::*;
@@ -232,11 +232,13 @@ fn WalletCardOptions(
                 let cans_wire = cans_res.wait_untracked().await?;
                 let cans = Canisters::from_wire(cans_wire, expect_context())?;
                 let token_owner = cans.individual_user(token_owner_cans_id).await;
+                let amount = get_airdrop_amount_from_kv().await?;
+                
                 token_owner
                     .request_airdrop(
                         root,
                         None,
-                        Into::<Nat>::into(100u64) * 10u64.pow(8),
+                        Into::<Nat>::into(amount) * 10u64.pow(8),
                         cans.user_canister(),
                     )
                     .await?;
