@@ -31,6 +31,7 @@ pub struct ShowLoginSignal(RwSignal<bool>);
 
 #[component]
 fn ProfileCard(details: ProfileDetails, is_own_account: bool, is_connected: bool) -> impl IntoView {
+    let ShowLoginSignal(show_login) = expect_context();
     view! {
         <div class="w-full flex flex-col bg-neutral-900 rounded-lg p-4 gap-4">
             <div class="flex items-center gap-4">
@@ -48,7 +49,7 @@ fn ProfileCard(details: ProfileDetails, is_own_account: bool, is_connected: bool
 
             <Show when=move || !is_connected && is_own_account>
                 <ConnectLogin
-                    show_login=false
+                    show_login
                     login_text=if !show_pnd_page() {"Login to claim your COYNs"} else {"Login to claim your Cents"}
                     cta_location="wallet"
                 />
