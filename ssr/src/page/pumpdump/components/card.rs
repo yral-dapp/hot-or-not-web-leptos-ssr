@@ -34,11 +34,14 @@ pub fn GameCard(token: ProcessedTokenListResponse) -> impl IntoView {
     create_effect(move |_| {
         match (
             show_selected_card.get(),
-            card_query.as_ref().and_then(|c| c.details()),
+            card_query.as_ref().map(|c| c.details()),
         ) {
             (ShowSelectedCard(true), Some((root, result))) if root == token.root => {
                 show_selected_card.set_untracked(ShowSelectedCard(false));
-                game_state.set(Some(GameState::ResultDeclared(result)))
+                match result {
+                    Some(result) => game_state.set(Some(GameState::ResultDeclared(result))),
+                    None => game_state.set(Some(GameState::Playing)),
+                }
             }
             _ => game_state.set(Some(GameState::Playing)),
         }
