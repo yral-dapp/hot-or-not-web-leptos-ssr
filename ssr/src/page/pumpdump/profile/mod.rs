@@ -7,10 +7,7 @@ use leptos::{
 use leptos_use::{use_infinite_scroll_with_options, UseInfiniteScrollOptions};
 use yral_canisters_client::individual_user_template::IndividualUserTemplate;
 use yral_canisters_common::{utils::profile::ProfileDetails, Canisters};
-use yral_pump_n_dump_common::{
-    rest::{CompletedGameInfo, UncommittedGameInfo, UncommittedGamesRes},
-    GameDirection,
-};
+use yral_pump_n_dump_common::rest::{CompletedGameInfo, UncommittedGameInfo, UncommittedGamesRes};
 
 use crate::{
     component::{back_btn::BackButton, skeleton::Skeleton, title::TitleText},
@@ -51,19 +48,17 @@ type GameplayHistory = Vec<GameplayHistoryItem>;
 
 fn compute_result(info: impl Into<CompletedGameInfo>) -> GameResult {
     let info = info.into();
-    let user_direction = match info.pumps.cmp(&info.dumps) {
-        std::cmp::Ordering::Greater => GameDirection::Pump,
-        std::cmp::Ordering::Less => GameDirection::Dump,
-        std::cmp::Ordering::Equal => return GameResult::Win { amount: 0 },
-    };
 
-    if user_direction == info.outcome {
-        GameResult::Win {
-            amount: convert_e8s_to_cents(info.reward),
+    let reward = convert_e8s_to_cents(info.reward);
+    let spent = info.pumps as u128 + info.dumps as u128;
+
+    if spent > reward {
+        GameResult::Loss {
+            amount: spent - reward,
         }
     } else {
-        GameResult::Loss {
-            amount: info.pumps as u128 + info.dumps as u128,
+        GameResult::Win {
+            amount: reward - spent,
         }
     }
 }

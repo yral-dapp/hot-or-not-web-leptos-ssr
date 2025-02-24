@@ -125,30 +125,39 @@ pub(super) struct RunningGameCtx {
 }
 
 impl RunningGameCtx {
-    fn compute_game_result(running_data: GameRunningData, raw_result: RawGameResult) -> GameResult {
+    fn compute_reward(running_data: GameRunningData, raw_result: &RawGameResult) -> u128 {
+        let user_bet_count = match raw_result.direction {
+            GameDirection::Pump => running_data.pumps,
+            GameDirection::Dump => running_data.dumps,
+        };
+
+        // backend already deducts 10% fees, so fe dont need to
+        let reward = (user_bet_count * raw_result.reward_pool.clone()) / raw_result.bet_count;
+
+        convert_e8s_to_cents(reward)
+    }
+
+    fn compute_game_result(
+        running_data: GameRunningData,
+        raw_result: &RawGameResult,
+    ) -> GameResult {
         if running_data.pumps == running_data.dumps {
             return GameResult::Win { amount: 0 };
         }
 
-        let (user_direction, user_bet_count) = if running_data.pumps > running_data.dumps {
-            (GameDirection::Pump, running_data.pumps)
-        } else {
-            (GameDirection::Dump, running_data.dumps)
-        };
+        let spent = running_data.pumps as u128 + running_data.dumps as u128;
+        let reward = Self::compute_reward(running_data, raw_result);
 
-        // TODO: impl eq on GameDirection in yral-common
-        let m = |direction: GameDirection| match direction {
-            GameDirection::Pump => 0,
-            GameDirection::Dump => 1,
-        };
-        if m(user_direction) != m(raw_result.direction) {
+        if spent > reward {
             GameResult::Loss {
-                amount: running_data.pumps as u128 + running_data.dumps as u128,
+                // net loss
+                amount: spent - reward,
             }
         } else {
-            let amount = (user_bet_count * raw_result.reward_pool) / raw_result.bet_count;
-            let amount = convert_e8s_to_cents(amount);
-            GameResult::Win { amount }
+            GameResult::Win {
+                // net profit or zero
+                amount: reward - spent,
+            }
         }
     }
 
@@ -213,22 +222,23 @@ impl RunningGameCtx {
                 WsResp::GameResultEvent(res) => {
                     let running_data = running_data.get_untracked()?;
                     current_round.set_value(Some(res.new_round));
-                    let result = Self::compute_game_result(running_data, res);
+                    let result = Self::compute_game_result(running_data, &res);
+                    let reward = Self::compute_reward(running_data, &res);
                     game_state.set(Some(GameState::ResultDeclared(result)));
 
                     match result {
-                        GameResult::Win { amount } => {
+                        GameResult::Win { .. } => {
                             player_data
                                 .update
                                 .dispatch(PlayerDataUpdate::IncrementGameCount {
-                                    increase_wallet_amount_by: Some(amount),
+                                    increase_wallet_amount_by: Some(reward),
                                 });
                         }
                         GameResult::Loss { .. } => {
                             player_data
                                 .update
                                 .dispatch(PlayerDataUpdate::IncrementGameCount {
-                                    increase_wallet_amount_by: None,
+                                    increase_wallet_amount_by: Some(reward),
                                 });
                         }
                     }
