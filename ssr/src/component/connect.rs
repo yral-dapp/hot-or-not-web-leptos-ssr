@@ -9,14 +9,13 @@ use super::login_modal::LoginModal;
 pub fn ConnectLogin(
     #[prop(optional, default = "Login")] login_text: &'static str,
     #[prop(optional, default = "menu")] cta_location: &'static str,
-    #[prop(optional, default = None)] show_login: Option<RwSignal<bool>>,
+    #[prop(optional, default = false.into())] show_login: RwSignal<bool>,
 ) -> impl IntoView {
     LoginJoinOverlayViewed.send_event();
 
     let login_click_action = create_action(move |()| async move {
         LoginCta.send_event(cta_location.to_string());
     });
-    let show_login = show_login.unwrap_or_else(|| false.into());
 
     view! {
         <HighlightedButton
