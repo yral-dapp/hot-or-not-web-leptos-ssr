@@ -23,28 +23,28 @@
   "screenshots": [
     {
       "src": "/img/yral/1.png",
-      "sizes": "2796x1290",
+      "sizes": "1290x2796",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "Powered by Internet Computer"
     },
     {
       "src": "/img/yral/2.png",
-      "sizes": "2796x1290",
+      "sizes": "1290x2796",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "Decentralized social media"
     },
     {
       "src": "/img/yral/3.png",
-      "sizes": "2796x1290",
+      "sizes": "1290x2796",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "Discover new videos every day"
     },
     {
       "src": "/img/yral/4.png",
-      "sizes": "2796x1290",
+      "sizes": "1290x2796",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "Earn by watching videos"
