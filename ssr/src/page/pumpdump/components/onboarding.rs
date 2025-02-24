@@ -46,7 +46,7 @@ pub fn OnboardingPopup() -> impl IntoView {
                                 make the tides shift to snatch up with reward pool.
                             </div>
                             <div class="flex gap-0.5 text-sm">
-                                <img src="/img/icpump/cents.webp" alt="Coin" class="w-5 h-5" />
+                                <img src="/img/pumpdump/cents.webp" alt="Coin" class="w-5 h-5" />
                                 <div>1 Cent = 1 vote</div>
                             </div>
                         </div>

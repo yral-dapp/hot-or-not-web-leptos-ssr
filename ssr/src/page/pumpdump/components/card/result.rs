@@ -59,7 +59,7 @@ pub fn PlayingCard() -> impl IntoView {
                     >
                         <div class="flex items-center gap-1">
                             <div class="text-neutral-400 text-xs">Winning Pot:</div>
-                            <img src="/img/icpump/cents.webp" alt="Coin" class="size-5" />
+                            <img src="/img/pumpdump/cents.webp" alt="Coin" class="size-5" />
                             <div class="text-neutral-200 font-bold">{winning_pot} Cents</div>
                         </div>
                         <button
@@ -134,7 +134,7 @@ fn WonCard(win_amount: u128) -> impl IntoView {
                     class="bg-[#212121] w-full px-4 py-2 rounded-full flex items-center justify-center gap-2"
                 >
                     <span class="text-neutral-400 text-xs">You have won:</span>
-                    <img src="/img/icpump/cents.webp" alt="Coin" class="w-5 h-5" />
+                    <img src="/img/pumpdump/cents.webp" alt="Coin" class="w-5 h-5" />
                     <span class="text-neutral-200 font-bold">{win_amount} Cents</span>
                 </div>
             </div>

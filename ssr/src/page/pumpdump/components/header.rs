@@ -57,7 +57,7 @@ fn HeaderCommon(#[prop(optional, into)] player_data: Option<Signal<PlayerData>>)
                 <div class="h-5 opacity-0"></div>
                 <div class="text-xs text-neutral-400">Cents</div>
                 <img
-                    src="/img/icpump/cents.webp"
+                    src="/img/pumpdump/cents.webp"
                     alt="Cents"
                     class="absolute select-none -right-1/4 bottom-1 size-9 -rotate-1"
                 />
