@@ -46,7 +46,7 @@ pub fn ScrollingPostView<F: Fn() -> V + Clone + 'static, V>(
         <div class="h-full w-full overflow-hidden overflow-y-auto">
             <div
                 _ref=scroll_root
-                class="snap-mandatory snap-y overflow-y-scroll h-dvh w-dvw bg-black"
+                class="snap-mandatory snap-y overflow-y-scroll h-dvh w-dvw bg-black hide-scrollbar"
                 style:scroll-snap-points-y="repeat(100vh)"
             >
 
