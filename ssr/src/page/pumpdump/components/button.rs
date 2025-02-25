@@ -1,7 +1,7 @@
 use leptos::{html::Audio, *};
 use yral_pump_n_dump_common::GameDirection;
 
-use crate::page::pumpdump::RunningGameRes;
+use crate::page::pumpdump::{PlayerDataRes, RunningGameRes};
 
 fn non_visual_feedback(audio_ref: NodeRef<Audio>) {
     #[cfg(not(feature = "hydrate"))]
@@ -33,6 +33,14 @@ fn non_visual_feedback(audio_ref: NodeRef<Audio>) {
 #[component]
 pub fn DumpButton(audio_ref: NodeRef<Audio>) -> impl IntoView {
     let game_res: RunningGameRes = expect_context();
+    let player_data: PlayerDataRes = expect_context();
+    let has_no_balance = move || {
+        player_data
+            .read
+            .0
+            .get()
+            .is_some_and(|d| d.is_ok_and(|d| d.get().wallet_balance == 0))
+    };
     let counter = move || {
         let Some(Ok(ctx)) = game_res.get() else {
             return "-".to_string();
@@ -55,7 +63,8 @@ pub fn DumpButton(audio_ref: NodeRef<Audio>) -> impl IntoView {
         <button
             aria-label="Vibration"
             on:click=onclick
-            class="dump-button rounded-[28px] transition-all duration-150 ring-4 group text-white ring-white/25 gap-2 min-w-36 p-3 flex flex-col items-center justify-center touch-none"
+            disabled=has_no_balance
+            class="dump-button transition duration-300 disabled:grayscale rounded-[28px] transition-all duration-150 ring-4 group text-white ring-white/25 gap-2 min-w-36 p-3 flex flex-col items-center justify-center touch-none"
         >
             <div class="text-xl font-bold">DUMP</div>
             <div class="bg-[#4683DC] rounded-full w-12 h-3 relative">
@@ -69,7 +78,7 @@ pub fn DumpButton(audio_ref: NodeRef<Audio>) -> impl IntoView {
                         </span>
                 </div>
                 <img
-                    src="/img/skull.png"
+                    src="/img/pumpdump/skull.webp"
                     class="absolute w-6 h-6 -left-3 -top-1/2 transition group-active:saturate-150 group-active:scale-110 group-active:rotate-12"
                     alt="DUMP"
                 />
@@ -97,7 +106,7 @@ pub fn MockDumpButton() -> impl IntoView {
                         </span>
                 </div>
                 <img
-                    src="/img/skull.png"
+                    src="/img/pumpdump/skull.webp"
                     class="absolute w-6 h-6 -left-3 -top-1/2 transition group-active:saturate-150 group-active:scale-110 group-active:rotate-12"
                     alt="DUMP"
                 />
@@ -109,6 +118,14 @@ pub fn MockDumpButton() -> impl IntoView {
 #[component]
 pub fn PumpButton(audio_ref: NodeRef<Audio>) -> impl IntoView {
     let game_res: RunningGameRes = expect_context();
+    let player_data: PlayerDataRes = expect_context();
+    let has_no_balance = move || {
+        player_data
+            .read
+            .0
+            .get()
+            .is_some_and(|d| d.is_ok_and(|d| d.get().wallet_balance == 0))
+    };
     let counter = move || {
         let Some(Ok(ctx)) = game_res.get() else {
             return "-".to_string();
@@ -131,7 +148,8 @@ pub fn PumpButton(audio_ref: NodeRef<Audio>) -> impl IntoView {
         <button
             aria-label="Vibration"
             on:click=onclick
-            class="pump-button rounded-[28px] transition-all duration-150 ring-4 group text-white ring-white/25 gap-2 min-w-36 p-3 flex flex-col items-center justify-center touch-none"
+            disabled=has_no_balance
+            class="pump-button transition duration-300 disabled:grayscale rounded-[28px] transition-all duration-150 ring-4 group text-white ring-white/25 gap-2 min-w-36 p-3 flex flex-col items-center justify-center touch-none"
         >
             <div class="text-xl font-bold">PUMP</div>
             <div class="bg-[#E2027B] rounded-full w-12 h-3 relative">
@@ -145,7 +163,7 @@ pub fn PumpButton(audio_ref: NodeRef<Audio>) -> impl IntoView {
                     </span>
                 </div>
                 <img
-                    src="/img/fire.png"
+                    src="/img/pumpdump/fire.webp"
                     class="absolute w-6 h-6 -left-3 -top-1/2 transition group-active:saturate-150 group-active:scale-110 group-active:-rotate-12"
                     alt="PUMP"
                 />
@@ -173,7 +191,7 @@ pub fn MockPumpButton() -> impl IntoView {
                     </span>
                 </div>
                 <img
-                    src="/img/fire.png"
+                    src="/img/pumpdump/fire.webp"
                     class="absolute w-6 h-6 -left-3 -top-1/2 transition group-active:saturate-150 group-active:scale-110 group-active:-rotate-12"
                     alt="PUMP"
                 />

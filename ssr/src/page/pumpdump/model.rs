@@ -177,28 +177,44 @@ impl PlayerData {
 pub(super) struct CardQuery {
     pub(super) root: Principal,
     pub(super) state: String,
-    pub(super) amount: u128,
+    pub(super) amount: Option<u128>,
 }
 
 impl CardQuery {
     /// Check whether the query parameters are coherent
     pub(super) fn is_valid(&self) -> bool {
-        let Self { state, .. } = self;
+        let Self { state, amount, .. } = self;
         // only win and loss states are allowed currently
-        matches!(state.as_str(), "win" | "loss")
+        matches!(
+            (state.as_str(), amount),
+            ("win", &Some(..)) | ("loss", &Some(..)) | ("pending", &None)
+        )
     }
 
     /// Parses out the details necessary for showing game card
-    pub(super) fn details(&self) -> Option<(Principal, GameResult)> {
+    ///
+    /// PANICS: when the query is invalid
+    pub(super) fn details(&self) -> (Principal, Option<GameResult>) {
         let Self {
             root,
             state,
             amount,
         } = self;
         match state.as_str() {
-            "win" => Some((*root, GameResult::Win { amount: *amount })),
-            "loss" => Some((*root, GameResult::Loss { amount: *amount })),
-            _ => None,
+            "win" => (
+                *root,
+                Some(GameResult::Win {
+                    amount: *amount.as_ref().expect("amount to exist for win state"),
+                }),
+            ),
+            "loss" => (
+                *root,
+                Some(GameResult::Loss {
+                    amount: *amount.as_ref().expect("amount to exist for loss state"),
+                }),
+            ),
+            "pending" => (*root, None),
+            _ => unreachable!("Unknown state key"),
         }
     }
 }

@@ -133,7 +133,7 @@ fn TokenImage() -> impl IntoView {
                         class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                     />
                     <div class="absolute bottom-0 right-0 p-1 rounded-full bg-white ">
-                        <img src="/img/upload.svg" class="bg-white" />
+                        <img src="/img/icpump/upload.svg" class="bg-white" />
                     </div>
                     <Show
                         when=move || logo_b64.with(|u| u.is_some())
@@ -148,7 +148,7 @@ fn TokenImage() -> impl IntoView {
                                 on:click=on_edit_click
                                 class="w-4 h-4 flex items-center justify-center rounded-full bg-white"
                             >
-                                <img src="/img/edit.svg" class="bg-white w-4 h-4 rounded-full" />
+                                <img src="/img/icpump/edit.svg" class="bg-white w-4 h-4 rounded-full" />
                             </button>
                         </div>
                     </Show>
@@ -361,7 +361,7 @@ pub fn CreateToken() -> impl IntoView {
                     <div></div>
                     <span class="font-bold justify-self-center">Create Meme Token</span>
                     <a href="/token/create/faq">
-                        <img src="/img/info.svg" />
+                        <img src="/img/icpump/info.svg" />
                     </a>
                 </div>
             </TitleText>
@@ -617,7 +617,7 @@ pub fn CreateTokenSettings() -> impl IntoView {
                     <BackButton fallback=fallback_url />
                     <span class="font-bold justify-self-center">Settings</span>
                     <a href="/token/create/faq">
-                        <img src="/img/info.svg" />
+                        <img src="/img/icpump/info.svg" />
                     </a>
                 </div>
             </TitleText>

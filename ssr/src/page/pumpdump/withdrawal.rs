@@ -67,7 +67,7 @@ fn Header() -> impl IntoView {
                     <BackButton fallback="/" />
                     <span class="font-bold text-2xl">Withdraw</span>
                     <a href="/wallet/notifications" disabled=true class="text-xl font-semibold">
-                        <NotificationIcon show_dot=false classes="w-8 h-8 text-neutral-600".to_string() />
+                        <NotificationIcon show_dot=false class="w-8 h-8 text-neutral-600" />
                     </a>
                 </div>
             </TitleText>
@@ -81,7 +81,7 @@ fn BalanceDisplay(#[prop(into)] balance: Nat, #[prop(into)] withdrawable: Nat) -
         <div id="total-balance" class="self-center flex flex-col items-center gap-1">
             <span class="text-neutral-400 text-sm">Total Cent balance</span>
             <div class="flex items-center gap-3 min-h-14 py-0.5">
-                <img class="size-9" src="/img/cents.png" alt="cents icon" />
+                <img class="size-9" src="/img/pumpdump/cents.webp" alt="cents icon" />
                 <span class="font-bold text-4xl">{format_cents!(balance)}</span>
             </div>
         </div>
