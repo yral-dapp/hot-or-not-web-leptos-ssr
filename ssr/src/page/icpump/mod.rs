@@ -386,6 +386,8 @@ pub fn TokenCard(
         }
     });
 
+    let swap_disabled = Signal::derive(move || true);
+
     let airdrop_disabled =
         Signal::derive(move || token_owner.is_some() && claimed.get() || token_owner.is_none());
     view! {
@@ -432,11 +434,11 @@ pub fn TokenCard(
                 </div>
             </div>
             <div class="border-t-[1px] border-neutral-800 flex w-full items-center overflow-hidden rounded-b-lg">
-                <a href="#".to_string() class="flex py-4 text-neutral-300 bg-transparent hover:bg-neutral-950/40 active:bg-neutral-950/10 items-center justify-center flex-1 border-r-[1px] transition-colors border-neutral-800 gap-2">
+                <a href="#".to_string() class=format!("flex py-4 text-neutral-300 bg-transparent hover:bg-neutral-950/40 active:bg-neutral-950/10 items-center justify-center flex-1 border-r-[1px] transition-colors border-neutral-800 gap-2 {}", if swap_disabled.get() { "pointer-events-none !text-neutral-600" } else { "" })>
                     <Icon class="w-5 h-5" icon=ArrowLeftRightIcon />
                     <div class="text-sm font-kumbh">Swap</div>
                 </a>
-                <button disabled=airdrop_disabled on:click=move |_|{airdrop_action.dispatch(());} class="flex text-neutral-300 py-4 items-center hover:bg-neutral-950/40 active:bg-neutral-950/10 transition-colors justify-center flex-1 gap-2">
+                <button disabled=airdrop_disabled on:click=move |_|{airdrop_action.dispatch(());} class="flex text-neutral-300 py-4 disabled:text-neutral-600 items-center hover:bg-neutral-950/40 active:bg-neutral-950/10 transition-colors justify-center flex-1 gap-2">
                     <Icon class="w-5 h-5" icon=AirdropIcon />
                     <div class="text-sm font-kumbh">Claim Airdrop</div>
                 </button>
