@@ -106,9 +106,10 @@ pub fn App() -> impl IntoView {
                     module = "/src/utils/notifications/setup-firebase-messaging-inline.js"
                 )]
                 extern "C" {
-                    fn init_firebase();
+                    #[wasm_bindgen(js_name = "init_firebase")]
+                    fn init_firebase_js();
                 }
-                init_firebase();
+                init_firebase_js();
             }
         }
     });

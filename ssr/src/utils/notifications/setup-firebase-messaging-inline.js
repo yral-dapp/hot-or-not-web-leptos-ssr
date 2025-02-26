@@ -19,7 +19,7 @@ function showNotification(payload) {
   }
 }
 
-function init_firebase() {
+export function init_firebase() {
   if (initialized) {
     return;
   }
