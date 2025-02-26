@@ -4,6 +4,7 @@ use crate::page::pumpdump::{withdrawal, PndProfilePage};
 use crate::state::app_type::AppType;
 use crate::utils::host::show_preview_component;
 // use crate::page::wallet::TestIndex;
+use crate::consts::NOTIFICATIONS_ENABLED_STORE;
 use crate::state::app_state::AppState;
 use crate::{
     component::{base_route::BaseRoute, nav::NavBar},
@@ -32,6 +33,8 @@ use crate::{
     state::{audio_state::AudioState, content_seed_client::ContentSeedClient, history::HistoryCtx},
     utils::event_streaming::EventHistory,
 };
+use codee::string::FromToStringCodec;
+use leptos_use::storage::use_local_storage;
 use yral_canisters_common::Canisters;
 
 use leptos::*;
@@ -90,6 +93,25 @@ pub fn App() -> impl IntoView {
     let app_type = AppType::select();
     let app_state = AppState::from_type(&app_type);
     provide_context(app_state.clone());
+
+    // Check if notifications are enabled and initialize Firebase if they are
+    let (notifs_enabled, _, _) =
+        use_local_storage::<bool, FromToStringCodec>(NOTIFICATIONS_ENABLED_STORE);
+    create_effect(move |_| {
+        if notifs_enabled() {
+            #[cfg(feature = "hydrate")]
+            {
+                use wasm_bindgen::prelude::*;
+                #[wasm_bindgen(
+                    module = "/src/utils/notifications/setup-firebase-messaging-inline.js"
+                )]
+                extern "C" {
+                    fn init_firebase();
+                }
+                init_firebase();
+            }
+        }
+    });
 
     // Existing context providers
     provide_context(Canisters::default());
