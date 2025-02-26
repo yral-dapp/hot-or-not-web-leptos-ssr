@@ -116,7 +116,9 @@ pub fn WalletCard(
     });
 
     let (is_connected, _) = account_connected_reader();
-    let ShowLoginSignal(show_login) = expect_context();
+    let show_login = use_context()
+        .map(|ShowLoginSignal(show_login)| show_login)
+        .unwrap_or_else(|| false.into());
     let nav = use_navigate();
     let withdraw_handle = move |_| {
         if !is_connected() {
