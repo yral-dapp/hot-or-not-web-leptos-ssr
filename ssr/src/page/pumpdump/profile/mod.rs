@@ -91,7 +91,7 @@ async fn load_history(cans: Canisters<true>, page: u64) -> Result<(GameplayHisto
         0 => (load_uncommitted_games(&cans).await?, true),
         page => {
             let page = page - 1; // -1 to take into account the uncommitted games
-            let limit = 25;
+            let limit = 3;
             let start_index = page * limit;
             let items = load_from_chain(&cans, start_index, limit).await?;
             let request_more = !items.is_empty();
