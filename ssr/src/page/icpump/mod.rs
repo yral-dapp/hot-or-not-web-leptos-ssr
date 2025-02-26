@@ -395,7 +395,7 @@ pub fn TokenCard(
             class:tada=is_new_token
             class="flex flex-col w-full rounded-lg bg-neutral-900"
         >
-            <div class="flex gap-2 p-3">
+            <a href=details.link class="flex gap-2 p-3">
                 <div
                     style="box-shadow: 0px 0px 4px rgba(255, 255, 255, 0.16);"
                     class="overflow-hidden relative w-28 h-28 rounded-lg shrink-0"
@@ -432,7 +432,7 @@ pub fn TokenCard(
                         <span class="shrink-0">{details.formatted_created_at}</span>
                     </div>
                 </div>
-            </div>
+            </a>
             <div class="border-t-[1px] border-neutral-800 flex w-full items-center overflow-hidden rounded-b-lg">
                 <a href="#".to_string() class=format!("flex py-4 text-neutral-300 bg-transparent hover:bg-neutral-950/40 active:bg-neutral-950/10 items-center justify-center flex-1 border-r-[1px] transition-colors border-neutral-800 gap-2 {}", if swap_disabled.get() { "pointer-events-none !text-neutral-600" } else { "" })>
                     <Icon class="w-5 h-5" icon=ArrowLeftRightIcon />
