@@ -19,6 +19,7 @@ const messaging = firebase.messaging();
 
 // Handle foreground messages
 messaging.onMessage((payload) => {
+  console.log('Received foreground message:', payload);
   const notificationTitle = payload.notification.title;
   const notificationOptions = {
     body: payload.notification.body,
