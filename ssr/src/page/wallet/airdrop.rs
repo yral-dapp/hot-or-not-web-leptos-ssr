@@ -193,23 +193,25 @@ fn pop_up_button_href(host: String, pathname: String) -> PopUpButtonTextRedirect
 fn AirdropPopUpButton(
     claimed: RwSignal<bool>,
     name: String,
+    amount: RwSignal<u64>,
     buffer_signal: RwSignal<bool>,
 ) -> impl IntoView {
     let host = get_host();
     let pathname = use_location();
     let name_c = name.clone();
     let name_c2 = name.clone();
+    let name_c3 = name.clone();
     view! {
         <div
             style="--duration:1500ms"
             class="fade-in flex text-xl font-bold z-[2] w-full flex-col gap-4 items-center justify-center px-8"
         >
             <Show when=claimed fallback=move || view! {
-                <div class="text-center font-normal"><span class="font-semibold">100 {name_c.clone()}</span> successfully claimed and added to your wallet!</div>
+                <div class="text-center font-normal"><span class="font-semibold">{amount} {format!(" {}", name_c)}</span> successfully claimed and added to your wallet!</div>
             }.into_view()>
                 <div class="text-center">
-                    {format!("100 {}", name_c2.clone())} <br />
-                    <span class="text-center font-normal">Claim for <span class="font-semibold">100 {name_c2.clone()}</span> is being processed</span>
+                    {amount} {format!(" {}", name_c2)} <br />
+                    <span class="text-center font-normal">Claim for <span class="font-semibold">{amount} {format!(" {}", name_c3)}</span> is being processed</span>
                 </div>
             </Show>
             {move || {
@@ -248,6 +250,7 @@ fn AirdropPopUpButton(
 #[component]
 pub fn AirdropPopup(
     name: String,
+    amount: RwSignal<u64>,
     logo: String,
     buffer_signal: RwSignal<bool>,
     claimed: RwSignal<bool>,
@@ -270,6 +273,7 @@ pub fn AirdropPopup(
             <AirdropPopUpButton
                 claimed
                 name
+                amount
                 buffer_signal
             />
         </div>

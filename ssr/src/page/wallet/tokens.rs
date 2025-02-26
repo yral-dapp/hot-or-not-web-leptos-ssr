@@ -114,6 +114,7 @@ pub fn WalletCard(
     });
 
     let airdrop_popup = create_rw_signal(false);
+    let airdrop_amount = create_rw_signal::<u64>(0);
     let buffer_signal = create_rw_signal(false);
     let claimed = create_rw_signal(is_airdrop_claimed);
     let (is_withdrawable, withdraw_message, withdrawable_balance) = token_metadata
@@ -178,7 +179,7 @@ pub fn WalletCard(
                 })}
             </div>
 
-            <WalletCardOptions pop_up=pop_up.write_only() share_link=share_link.write_only() airdrop_popup buffer_signal claimed/>
+            <WalletCardOptions airdrop_amount pop_up=pop_up.write_only() share_link=share_link.write_only() airdrop_popup buffer_signal claimed/>
 
             <PopupOverlay show=pop_up >
                 <ShareContent
@@ -193,6 +194,7 @@ pub fn WalletCard(
                     <div class="rounded-lg z-[500]">
                         <AirdropPopup
                             name=token_metadata.name.clone()
+                            amount=airdrop_amount
                             logo=token_metadata.logo_b64.clone()
                             buffer_signal
                             claimed
@@ -208,6 +210,7 @@ pub fn WalletCard(
 #[component]
 fn WalletCardOptions(
     pop_up: WriteSignal<bool>,
+    airdrop_amount: RwSignal<u64>,
     share_link: WriteSignal<String>,
     airdrop_popup: RwSignal<bool>,
     buffer_signal: RwSignal<bool>,
@@ -221,10 +224,13 @@ fn WalletCardOptions(
         let airdrop_action = create_action(move |&()| {
             let cans_res = cans_res.clone();
             let token_owner_cans_id = token_owner_c.clone().unwrap().canister_id;
-            airdrop_popup.set(true);
             let root = Principal::from_text(root_c.clone()).unwrap();
-
+            
             async move {
+                let amount = get_airdrop_amount_from_kv().await?;
+                airdrop_amount.set(amount);
+                airdrop_popup.set(true);
+
                 if claimed.get() && !buffer_signal.get() {
                     return Ok(());
                 }
@@ -232,7 +238,6 @@ fn WalletCardOptions(
                 let cans_wire = cans_res.wait_untracked().await?;
                 let cans = Canisters::from_wire(cans_wire, expect_context())?;
                 let token_owner = cans.individual_user(token_owner_cans_id).await;
-                let amount = get_airdrop_amount_from_kv().await?;
                 
                 token_owner
                     .request_airdrop(

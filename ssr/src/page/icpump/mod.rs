@@ -359,6 +359,7 @@ pub fn TokenCard(
     )
     };
     let pop_up = create_rw_signal(false);
+    let airdrop_amount = create_rw_signal::<u64>(0);
     let airdrop_popup = create_rw_signal(false);
     let base_url = get_host();
 
@@ -369,8 +370,11 @@ pub fn TokenCard(
     let airdrop_action = create_action(move |&()| {
         let cans_res = cans_res.clone();
         let token_owner_cans_id = token_owner_c.clone().unwrap().canister_id;
-        airdrop_popup.set(true);
         async move {
+            let amount = get_airdrop_amount_from_kv().await?;
+            airdrop_amount.set(amount);
+            airdrop_popup.set(true);
+            
             if claimed.get() && !buffer_signal.get() {
                 return Ok(());
             }
@@ -379,7 +383,6 @@ pub fn TokenCard(
             let cans = Canisters::from_wire(cans_wire, expect_context())?;
             let token_owner = cans.individual_user(token_owner_cans_id).await;
 
-            let amount = get_airdrop_amount_from_kv().await?;
 
             token_owner
                 .request_airdrop(
@@ -483,6 +486,7 @@ pub fn TokenCard(
                             name=details.name.clone()
                             logo=details.logo.clone()
                             buffer_signal
+                            amount=airdrop_amount
                             claimed
                             airdrop_popup
                         />
