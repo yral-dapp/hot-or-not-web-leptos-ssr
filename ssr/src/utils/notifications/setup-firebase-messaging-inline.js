@@ -3,6 +3,22 @@ import "https://www.gstatic.com/firebasejs/9.2.0/firebase-messaging-compat.js";
 
 let initialized = false;
 
+function showNotification(payload) {
+  const notificationTitle = payload.notification.title;
+  const notificationOptions = {
+    body: payload.notification.body
+  };
+
+  if (!("Notification" in window)) {
+    console.log("This browser does not support desktop notification");
+    return;
+  }
+
+  if (Notification.permission === "granted") {
+    new Notification(notificationTitle, notificationOptions);
+  }
+}
+
 function init_firebase() {
   if (initialized) {
     return;
@@ -16,6 +32,14 @@ function init_firebase() {
     messagingSenderId: "82502260393",
     appId: "1:82502260393:web:390e9d4e588cba65237bb8",
   });
+
+  // Set up foreground message handler
+  const messaging = firebase.messaging();
+  messaging.onMessage((payload) => {
+    console.log('Message received in foreground:', payload);
+    showNotification(payload);
+  });
+
   initialized = true;
 }
 

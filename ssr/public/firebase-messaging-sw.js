@@ -17,16 +17,3 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// Handle foreground messages
-messaging.onMessage((payload) => {
-  console.log('Received foreground message:', payload);
-  const notificationTitle = payload.notification.title;
-  const notificationOptions = {
-    body: payload.notification.body,
-    // Enable these options for more features
-    requireInteraction: true,
-    silent: false
-  };
-
-  self.registration.showNotification(notificationTitle, notificationOptions);
-});
