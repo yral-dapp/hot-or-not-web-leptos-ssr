@@ -1,5 +1,6 @@
 use candid::{Nat, Principal};
 use codee::string::FromToStringCodec;
+use leptos_router::use_navigate;
 use leptos_use::use_cookie;
 use yral_canisters_common::cursored_data::token_roots::{TokenListResponse, TokenRootList};
 use yral_canisters_common::utils::token::balance::TokenBalance;
@@ -21,6 +22,8 @@ use crate::component::tooltip::Tooltip;
 use crate::consts::USER_PRINCIPAL_STORE;
 use crate::page::icpump::{ActionButton, ActionButtonLink};
 use crate::page::wallet::airdrop::AirdropPopup;
+use crate::page::wallet::ShowLoginSignal;
+use crate::state::auth::account_connected_reader;
 use crate::state::canisters::authenticated_canisters;
 use crate::utils::host::{get_host, show_pnd_page};
 use crate::utils::token::icpump::IcpumpTokenInfo;
@@ -112,6 +115,20 @@ pub fn WalletCard(
         user_principal,
     });
 
+    let (is_connected, _) = account_connected_reader();
+    let show_login = use_context()
+        .map(|ShowLoginSignal(show_login)| show_login)
+        .unwrap_or_else(|| false.into());
+    let nav = use_navigate();
+    let withdraw_handle = move |_| {
+        if !is_connected() {
+            show_login.set(true);
+            return;
+        }
+
+        nav("/pnd/withdraw", Default::default());
+    };
+
     let airdrop_popup = create_rw_signal(false);
     let buffer_signal = create_rw_signal(false);
     let claimed = create_rw_signal(is_airdrop_claimed);
@@ -164,14 +181,14 @@ pub fn WalletCard(
                             <Tooltip icon=Information title="Withdrawal Tokens" description="Only Cents earned above your airdrop amount can be withdrawn." />
                             <span class="ml-auto">{withdrawable_balance}</span>
                         </div>
-                        <a
+                        <button
                             class="rounded-lg px-5 py-2 text-sm text-center font-bold"
                             class=(["pointer-events-none", "text-primary-300", "bg-brand-gradient-disabled"], !is_withdrawable)
                             class=(["text-neutral-50", "bg-brand-gradient"], is_withdrawable)
-                            href="/pnd/withdraw"
+                            on:click=withdraw_handle
                         >
                             Withdraw
-                        </a>
+                        </button>
                     </div>
 
                 })}

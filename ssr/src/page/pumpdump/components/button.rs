@@ -78,7 +78,7 @@ pub fn DumpButton(audio_ref: NodeRef<Audio>) -> impl IntoView {
                         </span>
                 </div>
                 <img
-                    src="/img/skull.png"
+                    src="/img/pumpdump/skull.webp"
                     class="absolute w-6 h-6 -left-3 -top-1/2 transition group-active:saturate-150 group-active:scale-110 group-active:rotate-12"
                     alt="DUMP"
                 />
@@ -106,7 +106,7 @@ pub fn MockDumpButton() -> impl IntoView {
                         </span>
                 </div>
                 <img
-                    src="/img/skull.png"
+                    src="/img/pumpdump/skull.webp"
                     class="absolute w-6 h-6 -left-3 -top-1/2 transition group-active:saturate-150 group-active:scale-110 group-active:rotate-12"
                     alt="DUMP"
                 />
@@ -163,7 +163,7 @@ pub fn PumpButton(audio_ref: NodeRef<Audio>) -> impl IntoView {
                     </span>
                 </div>
                 <img
-                    src="/img/fire.png"
+                    src="/img/pumpdump/fire.webp"
                     class="absolute w-6 h-6 -left-3 -top-1/2 transition group-active:saturate-150 group-active:scale-110 group-active:-rotate-12"
                     alt="PUMP"
                 />
@@ -191,7 +191,7 @@ pub fn MockPumpButton() -> impl IntoView {
                     </span>
                 </div>
                 <img
-                    src="/img/fire.png"
+                    src="/img/pumpdump/fire.webp"
                     class="absolute w-6 h-6 -left-3 -top-1/2 transition group-active:saturate-150 group-active:scale-110 group-active:-rotate-12"
                     alt="PUMP"
                 />
