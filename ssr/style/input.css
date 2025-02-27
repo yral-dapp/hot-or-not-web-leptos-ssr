@@ -217,3 +217,59 @@
         background: rgb(64 64 64 / var(--tw-bg-opacity, 1));
     }
 }
+
+@keyframes bubbleRiseAndVibrate {
+    0% {
+        bottom: 0;
+        width: 14px;
+        height: 14px;
+        opacity: 0.3;
+        transform: translateX(-50%) scale(0.4);
+    }
+    15% {
+        transform: translateX(calc(-50% + var(--random-x1, 5px))) scale(0.6);
+    }
+    30% {
+        width: 30px;
+        height: 30px;
+        opacity: 1;
+        transform: translateX(calc(-50% + var(--random-x2, -5px))) scale(1);
+    }
+    45% {
+        transform: translateX(calc(-50% + var(--random-x3, 7px))) scale(0.9);
+    }
+    50% {
+        width: 24px;
+        height: 24px;
+        transform: translateX(calc(-50% + var(--random-x4, -7px))) scale(0.8);
+    }
+    65% {
+        transform: translateX(calc(-50% + var(--random-x5, 4px))) scale(0.7);
+    }
+    75% {
+        width: 18px;
+        height: 18px;
+        transform: translateX(calc(-50% + var(--random-x6, -4px))) scale(0.6);
+    }
+    90% {
+        transform: translateX(calc(-50% + var(--random-x7, 3px))) scale(0.4);
+    }
+    100% {
+        bottom: 100%;
+        width: 12px;
+        height: 12px;
+        opacity: 0;
+        transform: translateX(calc(-50% + var(--random-x8, -3px))) scale(0.2);
+        margin-left: -2px;
+    }
+}
+
+.animate-bubble-1 {
+    animation: bubbleRiseAndVibrate 1s cubic-bezier(0.45, 0, 0.55, 1);
+}
+.animate-bubble-2 {
+    animation: bubbleRiseAndVibrate 1.1s cubic-bezier(0.45, 0, 0.55, 1) 0.375s;
+}
+.animate-bubble-3 {
+    animation: bubbleRiseAndVibrate 1.15s cubic-bezier(0.45, 0, 0.55, 1) 0.7s;
+}
