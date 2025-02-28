@@ -8,6 +8,7 @@ use leptos::{
 use leptos_use::{use_infinite_scroll_with_options, UseInfiniteScrollOptions};
 use yral_canisters_client::{
     individual_user_template::IndividualUserTemplate, sns_ledger::MetadataValue,
+    sns_root::ListSnsCanistersArg,
 };
 use yral_canisters_common::{
     utils::profile::{propic_from_principal, ProfileDetails},
@@ -101,49 +102,69 @@ async fn load_history(cans: Canisters<true>, page: u64) -> Result<(GameplayHisto
     let token_infos = items
         .into_iter()
         .map(async |item| {
-            let token_owner = cans.get_token_owner(item.token_root()).await.ok().flatten();
-            let (token_owner_principal, token_owner_canister) = token_owner
-                .map(|o| (o.principal_id, Some(o.canister_id)))
-                .unwrap_or_else(|| (Principal::anonymous(), None));
+            let token_root = item.token_root();
 
-            let pfp = if let Some(canister) = token_owner_canister {
-                cans.individual_user(canister)
-                    .await
-                    .get_profile_details()
-                    .await
-                    .map(|details| {
-                        let details = ProfileDetails::from(details);
-                        details.profile_pic_or_random()
-                    })
-                    .ok()
-            } else {
-                None
+            let owner_and_pfp_fut = async {
+                let token_owner = cans.get_token_owner(token_root).await.ok().flatten();
+                let (token_owner_principal, token_owner_canister) = token_owner
+                    .map(|o| (o.principal_id, Some(o.canister_id)))
+                    .unwrap_or_else(|| (Principal::anonymous(), None));
+
+                let pfp = if let Some(canister) = token_owner_canister {
+                    cans.individual_user(canister)
+                        .await
+                        .get_profile_details()
+                        .await
+                        .map(|details| {
+                            let details = ProfileDetails::from(details);
+                            details.profile_pic_or_random()
+                        })
+                        .ok()
+                } else {
+                    None
+                };
+                let pfp = pfp.unwrap_or_else(|| propic_from_principal(token_owner_principal));
+                (token_owner_principal, pfp)
             };
-            let pfp = pfp.unwrap_or_else(|| propic_from_principal(token_owner_principal));
 
-            let logo = cans
-                .sns_ledger(item.token_root())
-                .await
-                .icrc_1_metadata()
-                .await
-                .unwrap_or_default()
-                .into_iter()
-                .find_map(|(k, v)| {
-                    if k != "icrc1:logo" {
-                        return None;
-                    }
-                    let MetadataValue::Text(logo) = v else {
-                        return None;
-                    };
-                    Some(logo)
-                })
-                .unwrap_or_else(|| propic_from_principal(item.token_root()));
+            let token_logo_fut = async {
+                let ledger = cans
+                    .sns_root(token_root)
+                    .await
+                    .list_sns_canisters(ListSnsCanistersArg {})
+                    .await
+                    .ok()
+                    .and_then(|l| l.ledger);
+                let Some(ledger) = ledger else {
+                    return propic_from_principal(token_root);
+                };
+
+                cans.sns_ledger(ledger)
+                    .await
+                    .icrc_1_metadata()
+                    .await
+                    .unwrap_or_default()
+                    .into_iter()
+                    .find_map(|(k, v)| {
+                        if k != "icrc1:logo" {
+                            return None;
+                        }
+                        let MetadataValue::Text(logo) = v else {
+                            return None;
+                        };
+                        Some(logo)
+                    })
+                    .unwrap_or_else(|| propic_from_principal(token_root))
+            };
+
+            let ((owner_principal, owner_pfp), logo) =
+                futures::join!(owner_and_pfp_fut, token_logo_fut);
 
             GameplayHistoryItem {
                 logo,
-                root: item.token_root(),
-                owner_principal: token_owner_principal,
-                owner_pfp: pfp,
+                root: token_root,
+                owner_principal,
+                owner_pfp,
                 state: match item {
                     UncommittedGameInfo::Completed(item) => {
                         GameState::ResultDeclared(compute_result(item))
