@@ -1,3 +1,3 @@
 [submodule "contracts"]
 	path = ssr/src/utils/contracts
-	url = git@github.com:yral-dapp/contracts.git
+	url = https://github.com/yral-dapp/contracts.git
