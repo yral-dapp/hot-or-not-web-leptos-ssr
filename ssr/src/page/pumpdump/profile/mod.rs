@@ -1,12 +1,18 @@
 use candid::Principal;
+use futures::{stream::FuturesOrdered, StreamExt};
 use leptos::{
     component, create_action, create_effect, create_rw_signal, expect_context, html::Div, view,
     For, IntoView, NodeRef, RwSignal, Show, SignalGet, SignalGetUntracked, SignalSet, SignalUpdate,
     SignalUpdateUntracked,
 };
 use leptos_use::{use_infinite_scroll_with_options, UseInfiniteScrollOptions};
-use yral_canisters_client::individual_user_template::IndividualUserTemplate;
-use yral_canisters_common::{utils::profile::ProfileDetails, Canisters};
+use yral_canisters_client::{
+    individual_user_template::IndividualUserTemplate, sns_ledger::MetadataValue,
+};
+use yral_canisters_common::{
+    utils::profile::{propic_from_principal, ProfileDetails},
+    Canisters,
+};
 use yral_pump_n_dump_common::rest::{CompletedGameInfo, UncommittedGameInfo, UncommittedGamesRes};
 
 use crate::{
@@ -79,14 +85,11 @@ async fn load_history(cans: Canisters<true>, page: u64) -> Result<(GameplayHisto
     //     return Ok((history, true));
     // }
 
-    use crate::utils::token::icpump::IcpumpTokenInfo;
-    use yral_canisters_common::utils::token::RootType;
-
     let (items, request_more) = match page {
         0 => (load_uncommitted_games(&cans).await?, true),
         page => {
             let page = page - 1; // -1 to take into account the uncommitted games
-            let limit = 3;
+            let limit = 10;
             let start_index = page * limit;
             let items = load_from_chain(&cans, start_index, limit).await?;
             let request_more = !items.is_empty();
@@ -95,49 +98,62 @@ async fn load_history(cans: Canisters<true>, page: u64) -> Result<(GameplayHisto
         }
     };
 
-    let mut processed_items = Vec::with_capacity(items.len());
-    for item in items {
-        let meta = cans
-            .token_metadata_by_root_type(
-                &IcpumpTokenInfo,
-                Some(cans.user_canister()),
-                RootType::Other(item.token_root()),
-            )
-            .await
-            .ok()
-            .flatten()
-            .expect("backend to return a token that exists");
+    let token_infos = items
+        .into_iter()
+        .map(async |item| {
+            let token_owner = cans.get_token_owner(item.token_root()).await.ok().flatten();
+            let (token_owner_principal, token_owner_canister) = token_owner
+                .map(|o| (o.principal_id, Some(o.canister_id)))
+                .unwrap_or_else(|| (Principal::anonymous(), None));
 
-        let pfp = cans
-            .individual_user(
-                meta.token_owner
-                    .as_ref()
-                    .expect("owner to exist")
-                    .canister_id,
-            )
-            .await
-            .get_profile_details()
-            .await
-            .map(Into::<ProfileDetails>::into)
-            .map_err(|err| format!("Couldn't load owner profile details: {err}"))?
-            .profile_pic_or_random();
+            let pfp = if let Some(canister) = token_owner_canister {
+                cans.individual_user(canister)
+                    .await
+                    .get_profile_details()
+                    .await
+                    .map(|details| {
+                        let details = ProfileDetails::from(details);
+                        details.profile_pic_or_random()
+                    })
+                    .ok()
+            } else {
+                None
+            };
+            let pfp = pfp.unwrap_or_else(|| propic_from_principal(token_owner_principal));
 
-        processed_items.push(GameplayHistoryItem {
-            logo: meta.logo_b64,
-            owner_pfp: pfp,
-            owner_principal: meta
-                .token_owner
-                .expect("owner to exist if backend returns it")
-                .principal_id,
-            root: item.token_root(),
-            state: match item {
-                UncommittedGameInfo::Completed(item) => {
-                    GameState::ResultDeclared(compute_result(item))
-                }
-                UncommittedGameInfo::Pending { .. } => GameState::Playing,
-            },
+            let logo = cans
+                .sns_ledger(item.token_root())
+                .await
+                .icrc_1_metadata()
+                .await
+                .unwrap_or_default()
+                .into_iter()
+                .find_map(|(k, v)| {
+                    if k != "icrc1:logo" {
+                        return None;
+                    }
+                    let MetadataValue::Text(logo) = v else {
+                        return None;
+                    };
+                    Some(logo)
+                })
+                .unwrap_or_else(|| propic_from_principal(item.token_root()));
+
+            GameplayHistoryItem {
+                logo,
+                root: item.token_root(),
+                owner_principal: token_owner_principal,
+                owner_pfp: pfp,
+                state: match item {
+                    UncommittedGameInfo::Completed(item) => {
+                        GameState::ResultDeclared(compute_result(item))
+                    }
+                    UncommittedGameInfo::Pending { .. } => GameState::Playing,
+                },
+            }
         })
-    }
+        .collect::<FuturesOrdered<_>>();
+    let processed_items = token_infos.collect().await;
 
     Ok((processed_items, request_more))
 }
