@@ -6,7 +6,6 @@ pub mod audio_state;
 pub mod auth;
 pub mod canisters;
 pub mod content_seed_client;
-pub mod history;
 pub mod local_storage;
 
 #[cfg(feature = "ssr")]

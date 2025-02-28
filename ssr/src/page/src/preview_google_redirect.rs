@@ -4,8 +4,8 @@ use leptos_router::hooks::use_query;
 use serde::{Deserialize, Serialize};
 use yral_types::delegated_identity::DelegatedIdentityWire;
 
-use component::loading::Loading;
 use crate::google_redirect::{IdentitySender, OAuthQuery};
+use component::loading::Loading;
 use utils::host::get_host;
 
 #[server]
@@ -62,15 +62,13 @@ async fn preview_google_auth_redirector(redirect_url: String) -> Result<(), Serv
 #[component]
 pub fn PreviewGoogleRedirector() -> impl IntoView {
     let host = get_host();
-    let google_redirect = LocalResource::new(
-        move || {
-            let host = host.clone();
-            async move {
-                let url = get_google_auth_url(host).await?;
-                Ok::<String, ServerFnError>(url)
-            }
-        },
-    );
+    let google_redirect = LocalResource::new(move || {
+        let host = host.clone();
+        async move {
+            let url = get_google_auth_url(host).await?;
+            Ok::<String, ServerFnError>(url)
+        }
+    });
 
     LocalResource::new(move || async move {
         let url_res = google_redirect.get();
@@ -145,7 +143,7 @@ async fn preview_handle_oauth_query(
 #[component]
 pub fn PreviewGoogleRedirectHandler() -> impl IntoView {
     let query_res = use_query::<OAuthQuery>();
-    let identity_resource = LocalResource::new(move|| async move {
+    let identity_resource = LocalResource::new(move || async move {
         if let Err(e) = query_res.get() {
             return Err(format!("Invalid Params {}", e));
         }

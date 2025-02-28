@@ -10,7 +10,7 @@ extern "C" {
 }
 
 pub async fn get_token_for_principal(principal_id: String) {
-    let token_promise = unsafe{get_token()};
+    let token_promise = get_token();
     match JsFuture::from(token_promise).await {
         Ok(token_js) => {
             let token: String = token_js.as_string().unwrap_or_default();

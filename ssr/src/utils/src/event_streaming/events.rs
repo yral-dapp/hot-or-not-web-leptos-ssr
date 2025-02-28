@@ -1,16 +1,16 @@
+use super::EventHistory;
 use candid::Principal;
+use codee::string::FromToStringCodec;
+use consts::ACCOUNT_CONNECTED_STORE;
 use ic_agent::Identity;
 use leptos::html::Input;
 use leptos::prelude::Signal;
+use leptos::{ev, prelude::*};
 use leptos_use::storage::use_local_storage;
 use leptos_use::{use_event_listener, use_timeout_fn, UseTimeoutFnReturn};
 use serde_json::json;
 use sns_validation::pbs::sns_pb::SnsInitPayload;
 use wasm_bindgen::JsCast;
-use leptos::{ev, prelude::*};
-use super::EventHistory;
-use codee::string::FromToStringCodec;
-use consts::ACCOUNT_CONNECTED_STORE;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ProviderKind {
     #[cfg(feature = "local-auth")]
@@ -36,7 +36,7 @@ pub fn account_connected_reader() -> (ReadSignal<bool>, Effect<LocalStorage>) {
         is_connected,
         Effect::new(move |_| {
             set_is_connected(read_account_connected());
-        })
+        }),
     )
 }
 
@@ -113,11 +113,11 @@ use crate::event_streaming::{
 };
 use crate::token::nsfw::NSFWInfo;
 use crate::user::{user_details_can_store_or_ret, user_details_or_ret};
+use leptos::html::Video;
 use yral_canisters_common::{
     utils::{posts::PostDetails, profile::ProfileDetails},
     Canisters,
 };
-use leptos::html::Video;
 
 pub enum AnalyticsEvent {
     VideoWatched(VideoWatched),

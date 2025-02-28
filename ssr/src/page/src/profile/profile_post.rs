@@ -1,21 +1,26 @@
 use std::marker::PhantomData;
 
 use candid::Principal;
+use component::{back_btn::BackButton, spinner::FullScreenSpinner};
 use leptos::prelude::*;
-use leptos_router::{hooks::{use_navigate, use_params}, *};
-use leptos_use::use_debounce_fn;
 use leptos_router::params::Params;
-use component::{
-    back_btn::BackButton, spinner::FullScreenSpinner,
+use leptos_router::{
+    hooks::{use_navigate, use_params},
+    *,
 };
-use state::canisters::{unauth_canisters};
-use utils::{route::failure_redirect, send_wrap, try_or_redirect, event_streaming::events::auth_canisters_store};
+use leptos_use::use_debounce_fn;
+use state::canisters::unauth_canisters;
+use utils::{
+    event_streaming::events::auth_canisters_store, route::failure_redirect, send_wrap,
+    try_or_redirect,
+};
 
 use crate::scrolling_post_view::ScrollingPostView;
 
 use super::{
     overlay::YourProfileOverlay,
-    profile_iter::{FixedFetchCursor, ProfVideoStream, ProfileVideoStream}, ProfilePostsContext,
+    profile_iter::{FixedFetchCursor, ProfVideoStream, ProfileVideoStream},
+    ProfilePostsContext,
 };
 
 use yral_canisters_common::utils::posts::PostDetails;
@@ -39,7 +44,11 @@ fn ProfilePostWithUpdates<const LIMIT: u64, VidStream: ProfVideoStream<LIMIT>>(
     });
     let auth_canister = auth_canisters_store();
     let overlay = move || {
-        if auth_canister.get_untracked().map(|c| c.user_canister() == initial_post.canister_id).unwrap_or(false) {
+        if auth_canister
+            .get_untracked()
+            .map(|c| c.user_canister() == initial_post.canister_id)
+            .unwrap_or(false)
+        {
             view! { <YourProfileOverlay /> }.into_any()
         } else {
             view! { <></> }.into_any()
@@ -121,11 +130,15 @@ fn ProfilePostWithUpdates<const LIMIT: u64, VidStream: ProfVideoStream<LIMIT>>(
             overlay
             threshold_trigger_fetch=10
         />
-    }.into_any()
+    }
+    .into_any()
 }
 
 #[component]
-fn ProfilePostBase<IV: IntoView +'static, C: Fn(PostDetails) -> IV + Clone + 'static + Send + Sync>(
+fn ProfilePostBase<
+    IV: IntoView + 'static,
+    C: Fn(PostDetails) -> IV + Clone + 'static + Send + Sync,
+>(
     #[prop(into)] canister_and_post: Signal<Option<(Principal, u64)>>,
     children: C,
 ) -> impl IntoView {

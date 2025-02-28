@@ -3,16 +3,14 @@ use std::sync::Arc;
 use candid::Principal;
 use leptos::prelude::*;
 use serde::{Deserialize, Serialize};
+use state::canisters::AuthCansResource;
+use utils::send_wrap;
 use yral_pump_n_dump_common::{
     ws::{GameResult as RawGameResult, WsError, WsMessage, WsRequest, WsResp},
     GameDirection,
 };
-use state::canisters::AuthCansResource;
-use utils::send_wrap;
 
-use crate::{
-    icpump::ProcessedTokenListResponse,
-};
+use crate::icpump::ProcessedTokenListResponse;
 
 use super::{
     convert_e8s_to_cents,
@@ -71,11 +69,13 @@ impl PlayerDataRes {
     pub fn derive(auth_cans: AuthCansResource) -> Self {
         let read = Resource::new(
             || (),
-            move |_| send_wrap(async move {
-                let cans_wire = auth_cans.await;
-                let data = PlayerData::load(cans_wire?.user_canister).await?;
-                Ok::<_, ServerFnError>(RwSignal::new(data))
-            }),
+            move |_| {
+                send_wrap(async move {
+                    let cans_wire = auth_cans.await;
+                    let data = PlayerData::load(cans_wire?.user_canister).await?;
+                    Ok::<_, ServerFnError>(RwSignal::new(data))
+                })
+            },
         );
 
         let read_c = read.clone();
@@ -161,20 +161,22 @@ impl RunningGameCtx {
         let current_round = StoredValue::new(None);
 
         let token_owner_canister = token.token_owner.as_ref().map(|o| o.canister_id).unwrap();
-        let reload_running_data = Action::new(move |_| send_wrap(async move {
-            let data = GameRunningData::load(token_owner_canister, token.root, user_canister)
-                .await
-                .inspect_err(|err| {
-                    log::error!("couldn't load running data: {err}");
-                })
-                .ok();
+        let reload_running_data = Action::new(move |_| {
+            send_wrap(async move {
+                let data = GameRunningData::load(token_owner_canister, token.root, user_canister)
+                    .await
+                    .inspect_err(|err| {
+                        log::error!("couldn't load running data: {err}");
+                    })
+                    .ok();
 
-            if data.is_some() {
-                game_state.set(Some(GameState::Playing));
-            }
+                if data.is_some() {
+                    game_state.set(Some(GameState::Playing));
+                }
 
-            running_data.set(data);
-        }));
+                running_data.set(data);
+            })
+        });
 
         Effect::new(move |_| {
             let msg = ws_message.get()?;

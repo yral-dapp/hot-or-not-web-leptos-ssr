@@ -6,10 +6,10 @@ use leptos_meta::*;
 use component::toggle::ToggleWithLabel;
 
 use utils::{
+    event_streaming::events::auth_canisters_store,
     event_streaming::events::{VideoUploadInitiated, VideoUploadUploadButtonClicked},
     host::{show_cdao_page, show_pnd_page},
     web::FileWithUrl,
-    event_streaming::events::auth_canisters_store,
 };
 
 use leptos::{
@@ -40,8 +40,8 @@ fn PreUploadView(trigger_upload: WriteSignal<Option<UploadParams>, LocalStorage>
     let file_blob = RwSignal::new_local(None::<FileWithUrl>);
     let desc = NodeRef::<Textarea>::new();
     let invalid_form = Memo::new(move |_| {
-            // Description error
-            !desc_err_memo.with(|desc_err_memo| desc_err_memo.is_empty())
+        // Description error
+        !desc_err_memo.with(|desc_err_memo| desc_err_memo.is_empty())
                 // Hashtags error
                 || !hashtags_err_memo.with(|hashtags_err_memo| hashtags_err_memo.is_empty())
                 // File is not uploaded
@@ -50,8 +50,6 @@ fn PreUploadView(trigger_upload: WriteSignal<Option<UploadParams>, LocalStorage>
                 || hashtags.with(|hashtags| hashtags.is_empty())
                 // Description is empty
                 || desc.get().map(|d| d.value().is_empty()).unwrap_or(true)
-
-        
     });
     let hashtag_inp = NodeRef::<Input>::new();
     let enable_hot_or_not = NodeRef::<Input>::new();

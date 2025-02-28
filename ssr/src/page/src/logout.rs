@@ -1,12 +1,15 @@
+use auth::logout_identity;
 use codee::string::FromToStringCodec;
+use component::loading::Loading;
+use consts::ACCOUNT_CONNECTED_STORE;
 use leptos::prelude::*;
 use leptos_router::components::Redirect;
 use leptos_use::storage::use_local_storage;
-use auth::logout_identity;
-use component::loading::Loading;
-use consts::ACCOUNT_CONNECTED_STORE;
-use state::{auth::auth_state};
-use utils::{event_streaming::events::{LogoutClicked, LogoutConfirmation, auth_canisters_store}, try_or_redirect_opt};
+use state::auth::auth_state;
+use utils::{
+    event_streaming::events::{auth_canisters_store, LogoutClicked, LogoutConfirmation},
+    try_or_redirect_opt,
+};
 
 #[component]
 pub fn Logout() -> impl IntoView {

@@ -5,8 +5,8 @@ use component::overlay::PopupOverlay;
 use consts::ICPUMP_LISTING_PAGE_SIZE;
 use consts::USER_PRINCIPAL_STORE;
 use state::canisters::authenticated_canisters;
-use utils::send_wrap;
 use std::collections::VecDeque;
+use utils::send_wrap;
 
 use candid::Nat;
 use candid::Principal;
@@ -38,8 +38,8 @@ use utils::token::firestore::listen_to_documents;
 use utils::token::icpump::get_paginated_token_list;
 use utils::token::icpump::TokenListItem;
 
-use component::overlay::ShadowOverlay;
 use crate::wallet::airdrop::AirdropPopup;
+use component::overlay::ShadowOverlay;
 
 pub mod ai;
 
@@ -87,8 +87,8 @@ pub async fn process_token_list_item(
     token_list_item: Vec<TokenListItem>,
     key_principal: Principal,
 ) -> Vec<ProcessedTokenListResponse> {
-    use state::canisters::unauth_canisters;
     use futures::stream::FuturesOrdered;
+    use state::canisters::unauth_canisters;
 
     let mut fut = FuturesOrdered::new();
 
@@ -143,29 +143,31 @@ pub fn ICPumpListingFeed() -> impl IntoView {
 
     let fetch_res = Resource::new(
         move || page.get(),
-        move |page| send_wrap(async move {
-            let cans = authenticated_canisters().await;
-            let cans = Canisters::from_wire(cans.unwrap(), expect_context()).unwrap();
-            new_token_list.set(VecDeque::new());
+        move |page| {
+            send_wrap(async move {
+                let cans = authenticated_canisters().await;
+                let cans = Canisters::from_wire(cans.unwrap(), expect_context()).unwrap();
+                new_token_list.set(VecDeque::new());
 
-            loading.set(true);
+                loading.set(true);
 
-            let mut fetched_token_list = process_token_list_item(
-                get_paginated_token_list(page).await.unwrap(),
-                cans.user_principal(),
-            )
-            .await;
+                let mut fetched_token_list = process_token_list_item(
+                    get_paginated_token_list(page).await.unwrap(),
+                    cans.user_principal(),
+                )
+                .await;
 
-            if fetched_token_list.len() < ICPUMP_LISTING_PAGE_SIZE {
-                end.set(true);
-            }
+                if fetched_token_list.len() < ICPUMP_LISTING_PAGE_SIZE {
+                    end.set(true);
+                }
 
-            token_list.update(|t| {
-                t.append(&mut fetched_token_list);
-            });
+                token_list.update(|t| {
+                    t.append(&mut fetched_token_list);
+                });
 
-            loading.set(false);
-        }),
+                loading.set(false);
+            })
+        },
     );
 
     Effect::new(move |_| {

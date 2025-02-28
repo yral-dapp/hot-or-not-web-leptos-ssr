@@ -1,6 +1,6 @@
+use leptos::prelude::*;
 use leptos::server;
 use std::env;
-use leptos::prelude::*;
 #[cfg(feature = "ga4")]
 #[server]
 pub async fn send_principal_and_token_offchain(

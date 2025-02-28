@@ -1,8 +1,8 @@
+use crate::post_view::video_loader::{BgView, VideoViewForQueue};
+use leptos::html;
 use leptos::prelude::*;
 use leptos_icons::*;
 use leptos_use::{use_intersection_observer_with_options, UseIntersectionObserverOptions};
-use leptos::html;
-use crate::post_view::video_loader::{BgView, VideoViewForQueue};
 
 use state::audio_state::AudioState;
 use yral_canisters_common::utils::posts::PostDetails;

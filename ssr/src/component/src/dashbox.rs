@@ -1,7 +1,7 @@
-use utils::web::copy_to_clipboard;
 use gloo::timers::callback::Timeout;
 use leptos::prelude::*;
 use leptos_icons::*;
+use utils::web::copy_to_clipboard;
 
 #[component]
 pub fn DashboxLoading() -> impl IntoView {

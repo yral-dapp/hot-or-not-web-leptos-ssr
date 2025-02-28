@@ -4,7 +4,7 @@ use page::icpump::ICPumpLanding;
 use page::pumpdump::{withdrawal, PndProfilePage};
 use state::app_type::AppType;
 // use crate::page::wallet::TestIndex;
-use state::app_state::AppState;
+use crate::error_template::{AppError, ErrorTemplate};
 use component::{base_route::BaseRoute, nav::NavBar};
 use page::{
     err::ServerErrorPage,
@@ -27,20 +27,16 @@ use page::{
     upload::UploadPostPage,
     wallet::Wallet,
 };
-use crate::{
-    error_template::{AppError, ErrorTemplate},
-};
+use state::app_state::AppState;
 
-use state::{audio_state::AudioState, content_seed_client::ContentSeedClient};
-use utils::event_streaming::EventHistory;
-use leptos::either::Either;
-use leptos_router::hooks::use_location;
-use leptos_router::{components::*, path, MatchNestedRoutes};
-use yral_canisters_common::Canisters;
-use utils::event_streaming::events::{HistoryCtx};
 use leptos::prelude::*;
 use leptos_meta::*;
-use leptos_router::components::*;
+use leptos_router::hooks::use_location;
+use leptos_router::{components::*, path, MatchNestedRoutes};
+use state::{audio_state::AudioState, content_seed_client::ContentSeedClient};
+use utils::event_streaming::events::HistoryCtx;
+use utils::event_streaming::EventHistory;
+use yral_canisters_common::Canisters;
 
 #[component]
 fn NotFound() -> impl IntoView {
@@ -89,7 +85,6 @@ fn GoogleAuthRedirectorRoute() -> impl MatchNestedRoutes + Clone {
     }
 }
 
-
 pub fn shell(options: LeptosOptions) -> impl IntoView {
     view! {
         <!DOCTYPE html>
@@ -107,7 +102,6 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
         </html>
     }
 }
-
 
 #[component]
 pub fn App() -> impl IntoView {

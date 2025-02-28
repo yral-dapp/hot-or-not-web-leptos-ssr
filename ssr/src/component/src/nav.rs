@@ -1,12 +1,12 @@
-use state::app_type::AppType;
 use consts::USER_PRINCIPAL_STORE;
+use state::app_type::AppType;
 
 use crate::nav_icons::*;
 use candid::Principal;
 use codee::string::FromToStringCodec;
 use leptos::{either::Either, prelude::*};
 use leptos_icons::*;
-use leptos_router::{hooks::use_location, *};
+use leptos_router::hooks::use_location;
 use leptos_use::use_cookie;
 
 #[derive(Clone)]

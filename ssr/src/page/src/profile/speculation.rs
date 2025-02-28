@@ -1,7 +1,7 @@
 use candid::Principal;
+use leptos::html;
 use leptos::prelude::*;
 use leptos_icons::*;
-use leptos::html;
 use leptos_router::hooks::use_location;
 use leptos_use::use_interval_fn;
 use web_time::Duration;
@@ -112,26 +112,30 @@ pub fn Speculation(details: VoteDetails, _ref: NodeRef<html::Div>) -> impl IntoV
 
     let post_details = Resource::new(
         move || (bet_canister, details.post_id),
-        move |(canister_id, post_id)| send_wrap(async move {
-            let canister = unauth_canisters();
-            let user = canister.individual_user(canister_id).await;
-            let post_details = user.get_individual_post_details_by_id(post_id).await.ok()?;
-            Some(PostDetails::from_canister_post(
-                false,
-                canister_id,
-                post_details,
-            ))
-        }),
+        move |(canister_id, post_id)| {
+            send_wrap(async move {
+                let canister = unauth_canisters();
+                let user = canister.individual_user(canister_id).await;
+                let post_details = user.get_individual_post_details_by_id(post_id).await.ok()?;
+                Some(PostDetails::from_canister_post(
+                    false,
+                    canister_id,
+                    post_details,
+                ))
+            })
+        },
     );
 
     let profile_details = Resource::new(
         move || bet_canister,
-        move |canister_id| send_wrap(async move {
-            let canister = unauth_canisters();
-            let user = canister.individual_user(canister_id).await;
-            let profile_details = user.get_profile_details().await.ok()?;
-            Some(ProfileDetails::from(profile_details))
-        }),
+        move |canister_id| {
+            send_wrap(async move {
+                let canister = unauth_canisters();
+                let user = canister.individual_user(canister_id).await;
+                let profile_details = user.get_profile_details().await.ok()?;
+                Some(ProfileDetails::from(profile_details))
+            })
+        },
     );
 
     let details = StoredValue::new(details);

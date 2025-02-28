@@ -1,8 +1,8 @@
-use utils::event_streaming::events::{ErrorEvent, auth_canisters_store};
 use gloo::history::{BrowserHistory, History};
 use leptos::prelude::*;
 use leptos_router::hooks::use_query;
 use leptos_router::params::Params;
+use utils::event_streaming::events::{auth_canisters_store, ErrorEvent};
 
 #[derive(Clone, Params, PartialEq)]
 struct ServerErrParams {

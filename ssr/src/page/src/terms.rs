@@ -1,6 +1,6 @@
+use component::{back_btn::BackButton, title::TitleText};
 use leptos::prelude::*;
 use leptos_meta::*;
-use component::{back_btn::BackButton, title::TitleText};
 use state::app_state::AppState;
 
 #[component]

@@ -2,21 +2,20 @@
 pub mod google;
 #[cfg(feature = "local-auth")]
 pub mod local_storage;
-use leptos::prelude::ServerFnError;
 use candid::Principal;
 use codee::string::FromToStringCodec;
+use consts::ACCOUNT_CONNECTED_STORE;
 use ic_agent::Identity;
+use leptos::prelude::ServerFnError;
 use leptos::{ev, prelude::*, reactive::wrappers::write::SignalSetter};
 use leptos_use::storage::use_local_storage;
-use yral_types::delegated_identity::DelegatedIdentityWire;
-use consts::ACCOUNT_CONNECTED_STORE;
+use state::{auth::auth_state, local_storage::use_referrer_store};
 use utils::{
     event_streaming::events::{LoginMethodSelected, LoginSuccessful, ProviderKind},
     MockPartialEq,
 };
-use 
-    state::{auth::auth_state, local_storage::use_referrer_store};
 use yral_canisters_common::Canisters;
+use yral_types::delegated_identity::DelegatedIdentityWire;
 
 #[server]
 async fn issue_referral_rewards(referee_canister: Principal) -> Result<(), ServerFnError> {
@@ -106,28 +105,26 @@ pub fn LoginProviders(show_modal: RwSignal<bool>, lock_closing: RwSignal<bool>) 
 
     let processing = RwSignal::new(None);
 
-    LocalResource::new(
-        move || async move {
-            let identity = move || MockPartialEq(new_identity());
-            let Some(identity) = identity().0 else {
-                return Ok(());
-            };
+    LocalResource::new(move || async move {
+        let identity = move || MockPartialEq(new_identity());
+        let Some(identity) = identity().0 else {
+            return Ok(());
+        };
 
-            let (referrer_store, _, _) = use_referrer_store();
-            let referrer = referrer_store.get_untracked();
+        let (referrer_store, _, _) = use_referrer_store();
+        let referrer = referrer_store.get_untracked();
 
-            // This is some redundant work, but saves us 100+ lines of resource handling
-            let canisters = Canisters::authenticate_with_network(identity, referrer).await?;
+        // This is some redundant work, but saves us 100+ lines of resource handling
+        let canisters = Canisters::authenticate_with_network(identity, referrer).await?;
 
-            if let Err(e) = handle_user_login(canisters.clone(), referrer).await {
-                log::warn!("failed to handle user login, err {e}. skipping");
-            }
+        if let Err(e) = handle_user_login(canisters.clone(), referrer).await {
+            log::warn!("failed to handle user login, err {e}. skipping");
+        }
 
-            LoginSuccessful.send_event(canisters);
+        LoginSuccessful.send_event(canisters);
 
-            Ok::<_, ServerFnError>(())
-        },
-    );
+        Ok::<_, ServerFnError>(())
+    });
 
     let ctx = LoginProvCtx {
         processing: processing.read_only(),

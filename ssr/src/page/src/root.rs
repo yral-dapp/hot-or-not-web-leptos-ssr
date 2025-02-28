@@ -1,4 +1,6 @@
+use crate::pumpdump::PumpNDump;
 use candid::Principal;
+use component::spinner::FullScreenSpinner;
 use leptos::prelude::*;
 use leptos_meta::*;
 use leptos_router::components::Redirect;
@@ -6,7 +8,6 @@ use rand_chacha::{
     rand_core::{RngCore, SeedableRng},
     ChaCha8Rng,
 };
-use yral_canisters_common::utils::time::current_epoch;
 use utils::{
     host::{show_cdao_page, show_pnd_page},
     ml_feed::{
@@ -14,8 +15,7 @@ use utils::{
         get_posts_ml_feed_cache_paginated,
     },
 };
-use component::spinner::FullScreenSpinner;
-use crate::pumpdump::PumpNDump;
+use yral_canisters_common::utils::time::current_epoch;
 
 #[server]
 async fn get_top_post_id() -> Result<Option<(Principal, u64)>, ServerFnError> {
@@ -52,9 +52,9 @@ async fn get_top_post_id() -> Result<Option<(Principal, u64)>, ServerFnError> {
 #[server]
 async fn get_top_post_id_mlcache() -> Result<Option<(Principal, u64)>, ServerFnError> {
     use auth::server_impl::extract_principal_from_cookie;
-    use state::canisters::unauth_canisters;
     use axum_extra::extract::{cookie::Key, SignedCookieJar};
     use leptos_axum::extract_with_state;
+    use state::canisters::unauth_canisters;
 
     let key: Key = expect_context();
     let jar: SignedCookieJar = extract_with_state(&key).await?;

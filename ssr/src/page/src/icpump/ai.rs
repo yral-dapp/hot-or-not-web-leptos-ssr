@@ -1,19 +1,19 @@
 use std::collections::VecDeque;
 
+use leptos::html;
 use leptos::{either::Either, ev, prelude::*};
 use leptos_icons::*;
 use leptos_meta::*;
 use pulldown_cmark::{Options, Parser};
 use serde::{Deserialize, Serialize};
-use wasm_bindgen::prelude::Closure;
-use wasm_bindgen::prelude::*;
-use leptos::html;
 use utils::{
     token::icpump::{
         get_pumpai_results, get_pumpai_results_contextual, ICPumpChatInteraction, TokenListItem,
     },
     try_or_redirect,
 };
+use wasm_bindgen::prelude::Closure;
+use wasm_bindgen::prelude::*;
 
 const QUERY_LIST: [&str; 3] = [
     "Dog meme token",
@@ -137,9 +137,7 @@ pub fn ICPumpAiPage2(
                 input.click();
             }) as Box<dyn FnMut()>);
 
-            unsafe {
-                setTimeout(&closure, 100);
-            }
+            setTimeout(&closure, 100);
             closure.forget(); // Prevent the closure from being dropped
         }
     });

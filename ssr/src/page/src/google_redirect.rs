@@ -1,13 +1,13 @@
+use component::auth_providers::google::GoogleAuthMessage;
+use component::loading::Loading;
 use leptos::prelude::*;
-use leptos_router::{hooks::use_query, *};
+use leptos_router::hooks::use_query;
+use leptos_router::params::Params;
 use openidconnect::CsrfToken;
 use serde::{Deserialize, Serialize};
 use server_fn::codec::{GetUrl, Json};
-use component::loading::Loading;
 use utils::route::go_to_root;
 use yral_types::delegated_identity::DelegatedIdentityWire;
-use leptos_router::params::Params;
-use component::auth_providers::google::GoogleAuthMessage;
 #[server]
 async fn google_auth_redirector() -> Result<(), ServerFnError> {
     use auth::core_clients::CoreClients;

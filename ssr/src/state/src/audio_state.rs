@@ -1,7 +1,6 @@
 use leptos::prelude::*;
 use leptos_use::{use_timeout_fn, UseTimeoutFnReturn};
 
-
 struct DisplayMutedIconTimeout {
     // TODO: use TAIT once stable
     // instead of Dyn dispatch

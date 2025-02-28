@@ -2,7 +2,7 @@ use candid::Principal;
 use leptos::prelude::*;
 use yral_canisters_common::{Canisters, CanistersAuthWire};
 
-use utils::{send_wrap, MockPartialEq};
+use utils::send_wrap;
 use yral_types::delegated_identity::DelegatedIdentityWire;
 
 pub fn unauth_canisters() -> Canisters<false> {

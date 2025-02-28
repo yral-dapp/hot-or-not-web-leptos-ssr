@@ -1,28 +1,24 @@
-use component::show_any::ShowAny;
 use crate::token::RootType;
 use crate::token::TokenInfoParams;
 use crate::wallet::airdrop::AirdropPage;
-use state::canisters::authenticated_canisters;
-use utils::send_wrap;
+use component::show_any::ShowAny;
+use component::{
+    back_btn::BackButton, share_popup::*, spinner::FullScreenSpinner, title::TitleText,
+};
 use leptos_router::components::Redirect;
 use leptos_router::hooks::use_params;
 use leptos_router::hooks::use_query;
 use leptos_router::params::Params;
+use state::canisters::authenticated_canisters;
+use utils::send_wrap;
 use utils::token::icpump::IcpumpTokenInfo;
-use component::{
-    back_btn::BackButton, share_popup::*, spinner::FullScreenSpinner, title::TitleText,
-};
 use utils::web::copy_to_clipboard;
 
-use crate::{
-
-    wallet::transactions::Transactions,
-};
+use crate::wallet::transactions::Transactions;
 use candid::Principal;
 use leptos::prelude::*;
 use leptos_icons::*;
 use leptos_meta::*;
-use leptos_router::*;
 use serde::{Deserialize, Serialize};
 use yral_canisters_common::cursored_data::transaction::IndexOrLedger;
 use yral_canisters_common::utils::token::TokenMetadata;
@@ -237,56 +233,62 @@ pub fn TokenInfo() -> impl IntoView {
     let cans_wire = authenticated_canisters();
     let token_metadata_fetch = Resource::new(
         move || (params(), key_principal()),
-        move |(params_result, key_principal)| send_wrap(async move {
-            let params = match params_result {
-                Ok(p) => p,
-                Err(_) => return Ok::<_, ServerFnError>(None),
-            };
+        move |(params_result, key_principal)| {
+            send_wrap(async move {
+                let params = match params_result {
+                    Ok(p) => p,
+                    Err(_) => return Ok::<_, ServerFnError>(None),
+                };
 
-            let cans_wire = cans_wire.await?;
-            let cans = Canisters::from_wire(cans_wire, expect_context())?;
+                let cans_wire = cans_wire.await?;
+                let cans = Canisters::from_wire(cans_wire, expect_context())?;
 
-            let meta = cans
-                .token_metadata_by_root_type(
-                    &IcpumpTokenInfo,
-                    key_principal,
-                    params.token_root.clone(),
-                )
-                .await
-                .ok()
-                .flatten();
+                let meta = cans
+                    .token_metadata_by_root_type(
+                        &IcpumpTokenInfo,
+                        key_principal,
+                        params.token_root.clone(),
+                    )
+                    .await
+                    .ok()
+                    .flatten();
 
-            let token_root = &params.token_root;
-            let res = match (meta, token_root) {
-                (Some(m), RootType::Other(root)) => {
-                    let token_owner = m
-                        .token_owner
-                        .clone()
-                        .ok_or(ServerFnError::new("Token owner not found for yral token"))?;
-                    let is_airdrop_claimed = cans
-                        .get_airdrop_status(token_owner.canister_id, *root, cans.user_principal())
-                        .await?;
+                let token_root = &params.token_root;
+                let res = match (meta, token_root) {
+                    (Some(m), RootType::Other(root)) => {
+                        let token_owner = m
+                            .token_owner
+                            .clone()
+                            .ok_or(ServerFnError::new("Token owner not found for yral token"))?;
+                        let is_airdrop_claimed = cans
+                            .get_airdrop_status(
+                                token_owner.canister_id,
+                                *root,
+                                cans.user_principal(),
+                            )
+                            .await?;
 
-                    Some(TokenInfoResponse {
+                        Some(TokenInfoResponse {
+                            meta: m,
+                            root: token_root.clone(),
+                            key_principal,
+                            is_user_principal: Some(cans.user_principal()) == key_principal,
+                            is_token_viewer_airdrop_claimed: is_airdrop_claimed,
+                        })
+                    }
+                    (Some(m), _) => Some(TokenInfoResponse {
                         meta: m,
                         root: token_root.clone(),
                         key_principal,
                         is_user_principal: Some(cans.user_principal()) == key_principal,
-                        is_token_viewer_airdrop_claimed: is_airdrop_claimed,
-                    })
-                }
-                (Some(m), _) => Some(TokenInfoResponse {
-                    meta: m,
-                    root: token_root.clone(),
-                    key_principal,
-                    is_user_principal: Some(cans.user_principal()) == key_principal,
-                    is_token_viewer_airdrop_claimed: true,
-                }),
-                _ => None,
-            };
+                        is_token_viewer_airdrop_claimed: true,
+                    }),
+                    _ => None,
+                };
 
-            Ok(res)
-        }),
+                Ok(res)
+            })
+        },
     );
 
     view! {

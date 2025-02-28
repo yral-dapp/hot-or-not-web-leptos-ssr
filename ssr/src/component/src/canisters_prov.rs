@@ -1,10 +1,8 @@
 use futures::Future;
 use leptos::prelude::*;
 use serde::{Deserialize, Serialize};
-use  state::canisters::{authenticated_canisters, unauth_canisters};
-use utils::{
-    try_or_redirect_opt,
-};
+use state::canisters::{authenticated_canisters, unauth_canisters};
+use utils::try_or_redirect_opt;
 use utils::MockPartialEq;
 use yral_canisters_common::Canisters;
 

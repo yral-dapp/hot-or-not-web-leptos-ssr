@@ -4,21 +4,20 @@ use ic_agent::identity::DelegatedIdentity;
 use leptos_router::hooks::use_query;
 pub use result::*;
 pub use skeleton::*;
-use std::sync::Arc;
 
 use codee::string::JsonSerdeCodec;
+use consts::PUMP_AND_DUMP_WORKER_URL;
 use leptos::{either::Either, prelude::*};
 use leptos_use::{use_websocket, UseWebSocketReturn};
-use yral_pump_n_dump_common::ws::{websocket_connection_url, WsRequest};
-use consts::PUMP_AND_DUMP_WORKER_URL;
 use state::canisters::authenticated_canisters;
+use yral_pump_n_dump_common::ws::{websocket_connection_url, WsRequest};
 
 use crate::{
     icpump::ProcessedTokenListResponse,
-        pumpdump::{
-            CardQuery, GameState, PlayerDataRes, RunningGameCtx, RunningGameRes, ShowSelectedCard,
-            ShowSelectedCardSignal, WsResponse,
-        },
+    pumpdump::{
+        CardQuery, GameState, PlayerDataRes, RunningGameCtx, RunningGameRes, ShowSelectedCard,
+        ShowSelectedCardSignal, WsResponse,
+    },
 };
 
 #[component]

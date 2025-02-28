@@ -1,5 +1,5 @@
-use leptos::prelude::*;
 use leptos::html::Video;
+use leptos::prelude::*;
 
 use state::audio_state::AudioState;
 

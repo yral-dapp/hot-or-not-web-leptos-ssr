@@ -1,9 +1,9 @@
-use std::env;
-use leptos::prelude::*;
-use consts::ML_FEED_GRPC_URL;
 use candid::Principal;
+use consts::ML_FEED_GRPC_URL;
+use leptos::prelude::*;
 use leptos::server;
 use serde::{Deserialize, Serialize};
+use std::env;
 
 use super::types::PostId;
 

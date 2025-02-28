@@ -6,26 +6,24 @@ use leptos_router::components::Outlet;
 use leptos_router::hooks::use_query;
 use leptos_use::use_cookie;
 
+use crate::spinner::FullScreenSpinner;
 use auth::delegate_identity;
-use consts::{ACCOUNT_CONNECTED_STORE, USER_CANISTER_ID_STORE, USER_PRINCIPAL_STORE};
-use utils::event_streaming::events::PageVisit;
-use utils::send_wrap;
 use auth::{
     extract_identity, generate_anonymous_identity_if_required, set_anonymous_identity_cookie,
 };
+use codee::string::{FromToStringCodec, JsonSerdeCodec};
+use consts::{ACCOUNT_CONNECTED_STORE, USER_CANISTER_ID_STORE, USER_PRINCIPAL_STORE};
+use leptos_router::params::Params;
+use leptos_use::storage::use_local_storage;
 use state::{
     auth::AuthState,
     canisters::{do_canister_auth, AuthCansResource},
     local_storage::use_referrer_store,
 };
-use utils::{MockPartialEq, try_or_redirect};
-use crate::{
-    spinner::FullScreenSpinner,
-};
-use codee::string::{FromToStringCodec, JsonSerdeCodec};
-use leptos_use::storage::use_local_storage;
+use utils::event_streaming::events::PageVisit;
+use utils::send_wrap;
+use utils::{try_or_redirect, MockPartialEq};
 use yral_canisters_common::Canisters;
-use leptos_router::params::Params;
 
 #[derive(Params, PartialEq, Clone)]
 struct Referrer {
@@ -42,19 +40,17 @@ fn CtxProvider(temp_identity: Option<JwkEcKey>, children: ChildrenFn) -> impl In
 
     let new_identity_issued = temp_identity.is_some();
     let temp_identity_c = temp_identity.clone();
-    LocalResource::new(
-        move || {
-            let temp_identity = temp_identity_c.clone();
-            async move {
-                let Some(id) = temp_identity else {
-                    return;
-                };
-                if let Err(e) = set_anonymous_identity_cookie(id).await {
-                    log::error!("Failed to set anonymous identity as cookie?! err {e}");
-                }
+    LocalResource::new(move || {
+        let temp_identity = temp_identity_c.clone();
+        async move {
+            let Some(id) = temp_identity else {
+                return;
+            };
+            if let Err(e) = set_anonymous_identity_cookie(id).await {
+                log::error!("Failed to set anonymous identity as cookie?! err {e}");
             }
-        },
-    );
+        }
+    });
 
     let referrer_query = use_query::<Referrer>();
     let referrer_principal = Signal::derive(move || {

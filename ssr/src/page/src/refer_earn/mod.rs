@@ -11,12 +11,12 @@ use leptos_use::use_window;
 
 use component::canisters_prov::AuthCansProvider;
 use component::connect::ConnectLogin;
-use state::app_state::AppState;
-use utils::event_streaming::events::{Refer, ReferShareLink};
 use component::{back_btn::BackButton, dashbox::DashboxLoading, title::TitleText};
-use utils::event_streaming::events::{auth_canisters_store, account_connected_reader};
-use utils::web::{copy_to_clipboard, share_url };
 use history::HistoryView;
+use state::app_state::AppState;
+use utils::event_streaming::events::{account_connected_reader, auth_canisters_store};
+use utils::event_streaming::events::{Refer, ReferShareLink};
+use utils::web::{copy_to_clipboard, share_url};
 
 #[component]
 fn WorkButton(#[prop(into)] text: String, #[prop(into)] head: String) -> impl IntoView {

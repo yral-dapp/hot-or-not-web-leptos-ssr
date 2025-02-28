@@ -1,18 +1,20 @@
 use component::{
-    canisters_prov::with_cans,
-    hn_icons::HomeFeedShareIcon,
-    modal::Modal,
-    option::SelectOption,
+    canisters_prov::with_cans, hn_icons::HomeFeedShareIcon, modal::Modal, option::SelectOption,
 };
 
-use utils::event_streaming::events::auth_canisters_store;
-use utils::{
-    event_streaming::events::{LikeVideo, ShareVideo}, report::ReportOption, route::failure_redirect, send_wrap, user::UserDetails, web::{copy_to_clipboard, share_url}
-};
 use gloo::timers::callback::Timeout;
 use leptos::{prelude::*, task::spawn_local};
 use leptos_icons::*;
 use leptos_use::use_window;
+use utils::event_streaming::events::auth_canisters_store;
+use utils::{
+    event_streaming::events::{LikeVideo, ShareVideo},
+    report::ReportOption,
+    route::failure_redirect,
+    send_wrap,
+    user::UserDetails,
+    web::{copy_to_clipboard, share_url},
+};
 use yral_canisters_common::{utils::posts::PostDetails, Canisters};
 
 use super::bet::HNGameOverlay;
@@ -72,21 +74,22 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
         }
     });
 
-
-    let liked_fetch = with_cans(move |cans: Canisters<true>| send_wrap(async move {
-        let result = if let Some(liked) = initial_liked.0 {
-            (liked, initial_liked.1)
-        } else {
-            match cans.post_like_info(post_canister, post_id).await {
-                Ok(liked) => liked,
-                Err(e) => {
-                    failure_redirect(e);
-                    (false, likes.try_get_untracked().unwrap_or_default())
+    let liked_fetch = with_cans(move |cans: Canisters<true>| {
+        send_wrap(async move {
+            let result = if let Some(liked) = initial_liked.0 {
+                (liked, initial_liked.1)
+            } else {
+                match cans.post_like_info(post_canister, post_id).await {
+                    Ok(liked) => liked,
+                    Err(e) => {
+                        failure_redirect(e);
+                        (false, likes.try_get_untracked().unwrap_or_default())
+                    }
                 }
-            }
-        };
-        Ok::<_, ServerFnError>(result)
-    }));
+            };
+            Ok::<_, ServerFnError>(result)
+        })
+    });
 
     let liking = like_toggle.pending();
 
@@ -120,8 +123,7 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
 pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
     let show_share = RwSignal::new(false);
     let show_report = RwSignal::new(false);
-    let report_option =
-        RwSignal::new(ReportOption::Nudity.as_str().to_string());
+    let report_option = RwSignal::new(ReportOption::Nudity.as_str().to_string());
     let show_copied_popup = RwSignal::new(false);
     let base_url = || {
         use_window()

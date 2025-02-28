@@ -1,7 +1,3 @@
-use leptos::{either::Either, prelude::*};
-use leptos_icons::*;
-use leptos::html;
-use component::icons::chevron_right_icon::ChevronRightIcon;
 use crate::{
     icpump::ProcessedTokenListResponse,
     pumpdump::{
@@ -12,6 +8,10 @@ use crate::{
         GameResult, RunningGameRes, ShowOnboarding,
     },
 };
+use component::icons::chevron_right_icon::ChevronRightIcon;
+use leptos::html;
+use leptos::{either::Either, prelude::*};
+use leptos_icons::*;
 
 #[component]
 pub fn PlayingCard() -> impl IntoView {

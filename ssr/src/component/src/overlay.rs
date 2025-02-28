@@ -1,7 +1,7 @@
 use super::spinner::Spinner;
-use leptos::prelude::*;
-use leptos::portal::Portal;
 use crate::show_any::ShowAny;
+use leptos::portal::Portal;
+use leptos::prelude::*;
 #[derive(Clone, Copy)]
 pub enum ShowOverlay {
     /// Show overlay and allow closing by user
@@ -193,5 +193,6 @@ pub fn ActionTrackerPopup<
                 </div>
             </Show>
         </ShadowOverlay>
-    }.into_any()
+    }
+    .into_any()
 }

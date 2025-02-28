@@ -4,17 +4,13 @@ pub mod overlay;
 pub mod single_post;
 pub mod video_iter;
 pub mod video_loader;
-use priority_queue::DoublePriorityQueue;
-use std::cmp::Reverse;
 use crate::scrolling_post_view::ScrollingPostView;
-use component::{spinner::FullScreenSpinner};
+use component::spinner::FullScreenSpinner;
 use consts::NSFW_TOGGLE_STORE;
+use priority_queue::DoublePriorityQueue;
 use state::canisters::{authenticated_canisters, unauth_canisters};
+use std::cmp::Reverse;
 
-use utils::{
-    try_or_redirect,
-    posts::FetchCursor, route::failure_redirect, send_wrap
-};
 use candid::Principal;
 use codee::string::FromToStringCodec;
 use futures::StreamExt;
@@ -24,6 +20,7 @@ use leptos_router::{
     params::Params,
 };
 use leptos_use::{storage::use_local_storage, use_debounce_fn};
+use utils::{posts::FetchCursor, route::failure_redirect, send_wrap, try_or_redirect};
 
 use video_iter::{FeedResultType, VideoFetchStream};
 use yral_canisters_common::{utils::posts::PostDetails, Canisters};
@@ -335,7 +332,8 @@ pub fn PostView() -> impl IntoView {
                 { Some(view! { <PostViewWithUpdatesMLFeed initial_post /> }) }
             })}
         </Suspense>
-    }.into_any()
+    }
+    .into_any()
 }
 
 // #[component]

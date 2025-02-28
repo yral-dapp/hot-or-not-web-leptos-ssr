@@ -4,13 +4,16 @@ use leptos_icons::*;
 use candid::Principal;
 
 use component::profile_placeholders::NoMorePostsGraphic;
-use state::canisters::{unauth_canisters};
-use utils::{bg_url, event_streaming::events::ProfileViewVideo, profile::PostsProvider, event_streaming::events::auth_canisters_store};
+use state::canisters::unauth_canisters;
+use utils::{
+    bg_url, event_streaming::events::auth_canisters_store,
+    event_streaming::events::ProfileViewVideo, profile::PostsProvider,
+};
 
 use super::ic::ProfileStream;
 use super::ProfilePostsContext;
-use yral_canisters_common::utils::posts::PostDetails;
 use leptos::html;
+use yral_canisters_common::utils::posts::PostDetails;
 
 #[component]
 fn Post(details: PostDetails, user_canister: Principal, _ref: NodeRef<html::Div>) -> impl IntoView {

@@ -10,13 +10,11 @@ use hot_or_not_web_leptos_ssr::fallback::file_and_error_handler;
 use state::server::AppState;
 use utils::host::is_host_or_origin_from_preview_domain;
 
-use hot_or_not_web_leptos_ssr::{
-    app::App, init::AppStateBuilder,
-};
 use hot_or_not_web_leptos_ssr::app::shell;
+use hot_or_not_web_leptos_ssr::{app::App, init::AppStateBuilder};
 use http::{header, Method};
-use leptos::prelude::*;
 use leptos::logging::log;
+use leptos::prelude::*;
 use leptos_axum::handle_server_fns_with_context;
 use leptos_axum::{generate_route_list, LeptosRoutes};
 use tower_http::cors::{AllowOrigin, CorsLayer};

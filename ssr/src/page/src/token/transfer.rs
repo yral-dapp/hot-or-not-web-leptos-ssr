@@ -1,24 +1,21 @@
 use crate::token::RootType;
-use utils::send_wrap;
-use utils::token::icpump::IcpumpTokenInfo;
-use component::{
-    back_btn::BackButton, spinner::FullScreenSpinner,
-    title::TitleText,
-};
-use state::canisters::authenticated_canisters;
-use utils::{
-    event_streaming::events::TokensTransferred,
-    web::{copy_to_clipboard, paste_from_clipboard},
-};
 use candid::Principal;
+use component::{back_btn::BackButton, spinner::FullScreenSpinner, title::TitleText};
 use leptos::either::Either;
+use leptos::html;
 use leptos::{ev, prelude::*};
 use leptos_icons::*;
 use leptos_meta::*;
 use leptos_router::components::Redirect;
-use leptos::html;
 use leptos_router::hooks::use_params;
 use server_fn::codec::Json;
+use state::canisters::authenticated_canisters;
+use utils::send_wrap;
+use utils::token::icpump::IcpumpTokenInfo;
+use utils::{
+    event_streaming::events::TokensTransferred,
+    web::{copy_to_clipboard, paste_from_clipboard},
+};
 
 use leptos_use::use_event_listener;
 use yral_canisters_client::sns_root::ListSnsCanistersArg;
@@ -64,7 +61,9 @@ async fn transfer_ck_token_to_user_principal(
 }
 
 #[component]
-fn FormError<V: 'static + Send + Sync>(#[prop(into)] res: Signal<Result<V, String>>) -> impl IntoView {
+fn FormError<V: 'static + Send + Sync>(
+    #[prop(into)] res: Signal<Result<V, String>>,
+) -> impl IntoView {
     let err = Signal::derive(move || res.with(|r| r.as_ref().err().cloned()));
 
     view! {
@@ -78,7 +77,11 @@ fn FormError<V: 'static + Send + Sync>(#[prop(into)] res: Signal<Result<V, Strin
 }
 
 #[component]
-fn TokenTransferInner(root: RootType, info: TokenMetadata, source_addr: Principal) -> impl IntoView {
+fn TokenTransferInner(
+    root: RootType,
+    info: TokenMetadata,
+    source_addr: Principal,
+) -> impl IntoView {
     let copy_source = move || {
         let _ = copy_to_clipboard(&source_addr.to_string());
     };
@@ -322,11 +325,10 @@ fn TokenTransferInner(root: RootType, info: TokenMetadata, source_addr: Principa
 pub fn TokenTransfer() -> impl IntoView {
     let params = use_params::<TokenParams>();
     let cans = authenticated_canisters();
-    let token_metadata_fetch =         Resource::new(params, move |params|
+    let token_metadata_fetch = Resource::new(params, move |params| {
         send_wrap(async move {
             let cans = cans.await?;
             let cans = Canisters::from_wire(cans, expect_context())?;
-
 
             let Ok(params) = params else {
                 return Ok::<_, ServerFnError>(None);
@@ -342,7 +344,8 @@ pub fn TokenTransfer() -> impl IntoView {
                 .flatten();
 
             Ok(meta.map(|m| (m, params.token_root, cans.user_principal())))
-    }));
+        })
+    });
 
     view! {
         <Title text="ICPump - Token transfer" />
@@ -354,7 +357,7 @@ pub fn TokenTransfer() -> impl IntoView {
                             println!("Error: {:?}", e);
                             view! { <Redirect path=format!("/error?err={e}") /> }.into_any()
                         },
-                        Ok((None)) => view! { <Redirect path="/" /> }.into_any(),
+                        Ok(None) => view! { <Redirect path="/" /> }.into_any(),
                         Ok(Some((info, root, source_addr))) => view! { <TokenTransferInner info root source_addr/> }.into_any(),
                     }
                 })

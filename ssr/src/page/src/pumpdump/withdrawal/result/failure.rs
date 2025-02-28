@@ -1,8 +1,8 @@
 use candid::Nat;
-use leptos::{component, view, IntoView, Params, prelude::*};
-use yral_canisters_common::utils::token::balance::TokenBalance;
+use leptos::{component, prelude::*, view, IntoView, Params};
 use leptos_router::{hooks::use_query, params::Params};
 use utils::try_or_redirect_opt;
+use yral_canisters_common::utils::token::balance::TokenBalance;
 
 #[derive(Debug, PartialEq, Eq, Clone, Params)]
 struct FailureParams {

@@ -22,7 +22,11 @@ use yral_types::delegated_identity::DelegatedIdentityWire;
 //     DelegatedIdentityWire,
 // };
 
-use super::{fetch_identity_from_kv, set_cookies, store::{KVStore, KVStoreImpl}, try_extract_identity, update_user_identity_and_delegate};
+use super::{
+    fetch_identity_from_kv, set_cookies,
+    store::{KVStore, KVStoreImpl},
+    try_extract_identity, update_user_identity_and_delegate,
+};
 
 const PKCE_VERIFIER_COOKIE: &str = "google-pkce-verifier";
 const CSRF_TOKEN_COOKIE: &str = "google-csrf-token";

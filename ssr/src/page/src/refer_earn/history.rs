@@ -1,10 +1,10 @@
-use leptos::prelude::*;
-use leptos::html;
 use component::bullet_loader::BulletLoader;
 use component::canisters_prov::AuthCansProvider;
 use component::infinite_scroller::InfiniteScroller;
-use utils::time::get_day_month;
 use history_provider::*;
+use leptos::html;
+use leptos::prelude::*;
+use utils::time::get_day_month;
 use yral_canisters_common::{
     cursored_data::ref_history::HistoryDetails, utils::profile::propic_from_principal, Canisters,
 };

@@ -1,8 +1,7 @@
+use crate::pumpdump::{PlayerData, PlayerDataRes};
+use component::skeleton::Skeleton;
 use leptos::{either::Either, prelude::*};
 use leptos_icons::Icon;
-use component::skeleton::Skeleton;
-use crate::pumpdump::{PlayerData, PlayerDataRes};
-
 
 #[component]
 fn HeaderSkeleton() -> impl IntoView {

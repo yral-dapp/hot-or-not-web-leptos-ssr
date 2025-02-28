@@ -6,17 +6,17 @@ use futures::{stream::FuturesOrdered, Stream, StreamExt};
 use leptos::prelude::*;
 use leptos_use::storage::use_local_storage;
 
-use yral_canisters_client::post_cache::{self, NsfwFilter};
 use consts::USER_CANISTER_ID_STORE;
 use utils::{
+    event_streaming::events::auth_canisters_store,
     host::show_nsfw_content,
     ml_feed::{
         get_coldstart_feed_paginated, get_coldstart_nsfw_feed_paginated,
         get_posts_ml_feed_cache_paginated,
     },
     posts::FetchCursor,
-    event_streaming::events::auth_canisters_store,
 };
+use yral_canisters_client::post_cache::{self, NsfwFilter};
 use yral_canisters_common::{utils::posts::PostDetails, Canisters, Error as CanistersError};
 
 type PostsStream<'a> = Pin<Box<dyn Stream<Item = Vec<Result<PostDetails, CanistersError>>> + 'a>>;

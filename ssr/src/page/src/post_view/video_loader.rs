@@ -5,20 +5,17 @@ use leptos::{ev, html::Video, prelude::*};
 use leptos_use::storage::use_local_storage;
 use leptos_use::use_event_listener;
 
-use component::show_any::ShowAny;
-use consts::USER_ONBOARDING_STORE;
-use utils::send_wrap;
 use crate::post_view::BetEligiblePostCtx;
-use utils::event_streaming::events::VideoWatched;
-use yral_canisters_client::individual_user_template::PostViewDetailsFromFrontend;
+use component::show_any::ShowAny;
 use component::{
     feed_popup::FeedPopUp, onboarding_flow::OnboardingPopUp, video_player::VideoPlayer,
 };
-use state::{
-    canisters::unauth_canisters,
-    local_storage::use_referrer_store,
-};
-use utils::{bg_url, mp4_url, event_streaming::events::account_connected_reader};
+use consts::USER_ONBOARDING_STORE;
+use state::{canisters::unauth_canisters, local_storage::use_referrer_store};
+use utils::event_streaming::events::VideoWatched;
+use utils::send_wrap;
+use utils::{bg_url, event_streaming::events::account_connected_reader, mp4_url};
+use yral_canisters_client::individual_user_template::PostViewDetailsFromFrontend;
 
 use super::{overlay::VideoDetailsOverlay, PostDetails};
 
@@ -99,7 +96,8 @@ pub fn BgView(
             {move || post().map(|post| view! { <VideoDetailsOverlay post /> })}
             {children()}
         </div>
-    }.into_any()
+    }
+    .into_any()
 }
 
 #[component]

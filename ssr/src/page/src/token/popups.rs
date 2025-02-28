@@ -1,11 +1,9 @@
+use component::{overlay::ActionTrackerPopup, token_confetti_symbol::TokenConfettiSymbol};
 use leptos::{either::Either, prelude::*};
 use leptos_icons::*;
 use yral_canisters_common::utils::token::balance::TokenBalance;
-use component::{overlay::ActionTrackerPopup, token_confetti_symbol::TokenConfettiSymbol};
 
-use crate::{
-    token::create::CreateTokenCtx,
-};
+use crate::token::create::CreateTokenCtx;
 
 #[component]
 fn SuccessPopup<ImgIV: IntoView, Img: Fn() -> ImgIV, TxtIV: IntoView, Txt: Fn() -> TxtIV>(

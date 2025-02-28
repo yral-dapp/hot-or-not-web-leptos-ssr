@@ -1,8 +1,12 @@
 use candid::Principal;
 use codee::string::JsonSerdeCodec;
+use consts::PUMP_AND_DUMP_WORKER_URL;
 use leptos::{html::Input, prelude::*};
 use leptos_router::hooks::use_params_map;
 use leptos_use::{use_websocket, UseWebSocketReturn};
+use state::canisters::authenticated_canisters;
+use std::sync::Arc;
+use utils::{send_wrap, token::icpump::IcpumpTokenInfo};
 use yral_canisters_common::{
     utils::token::{RootType, TokenOwner},
     Canisters,
@@ -11,15 +15,9 @@ use yral_pump_n_dump_common::{
     ws::{websocket_connection_url, WsMessage, WsRequest},
     GameDirection,
 };
-use std::sync::Arc;
-use consts::PUMP_AND_DUMP_WORKER_URL;
-use state::canisters::authenticated_canisters;
-use utils::{send_wrap, token::icpump::IcpumpTokenInfo};
 
-use crate::{
-    pumpdump::WsResponse,
-};
 use super::{GameRunningData, PlayerData};
+use crate::pumpdump::WsResponse;
 
 #[derive(Debug, Clone)]
 struct TestData {
@@ -192,9 +190,7 @@ pub fn PndTest() -> impl IntoView {
         send_wrap(async move {
             let mut ws_url = PUMP_AND_DUMP_WORKER_URL.clone();
             ws_url.set_scheme("ws").expect("schema to valid");
-            let cans_wire = cans_wire
-                .await
-                .expect("cans_wire to be there");
+            let cans_wire = cans_wire.await.expect("cans_wire to be there");
             let cans = Canisters::from_wire(cans_wire.clone(), expect_context())
                 .expect("get auth canisters from the wire");
 

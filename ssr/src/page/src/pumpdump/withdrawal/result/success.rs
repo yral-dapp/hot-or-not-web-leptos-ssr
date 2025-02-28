@@ -1,10 +1,9 @@
 use candid::Nat;
-use leptos::{prelude::*};
-use yral_canisters_common::utils::token::balance::TokenBalance;
+use component::{back_btn::BackButton, title::TitleText};
+use leptos::prelude::*;
 use leptos_router::{hooks::use_query, params::Params};
 use utils::try_or_redirect_opt;
-use component::{back_btn::BackButton, title::TitleText};
-
+use yral_canisters_common::utils::token::balance::TokenBalance;
 
 #[derive(Debug, PartialEq, Eq, Clone, Params)]
 struct SuccessParams {

@@ -1,10 +1,10 @@
+use crate::token::info::TokenKeyParam;
+use leptos::html;
 use leptos::prelude::*;
 use leptos_icons::Icon;
 use leptos_router::hooks::use_params;
-use yral_canisters_common::utils::transaction::{TxnDirection, TxnInfoType, TxnInfoWallet};
-use leptos::html;
 use utils::time::parse_ns_to_datetime;
-use crate::token::info::TokenKeyParam;
+use yral_canisters_common::utils::transaction::{TxnDirection, TxnInfoType, TxnInfoWallet};
 
 fn direction_to_icon(direction: TxnDirection) -> &'static icondata_core::IconData {
     use TxnDirection::*;

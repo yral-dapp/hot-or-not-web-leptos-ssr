@@ -1,20 +1,27 @@
 #[cfg(feature = "ssr")]
 mod server_impl;
+use component::{
+    back_btn::BackButton, show_any::ShowAny, title::TitleText,
+    token_logo_sanitize::TokenLogoSanitize,
+};
 use server_fn::codec::Json;
-use component::{back_btn::BackButton, show_any::ShowAny, title::TitleText, token_logo_sanitize::TokenLogoSanitize};
 use state::canisters::authenticated_canisters;
 
-
-use utils::{
-    event_streaming::events::{
-        TokenCreationCompleted, TokenCreationFailed, TokenCreationStarted,
-        account_connected_reader, auth_canisters_store,
-    }, send_wrap, token::{nsfw::NSFWInfo, DeployedCdaoCanisters}, web::FileWithUrl
-};
 use candid::Principal;
-use leptos::{ev, html::{Input, Textarea}, prelude::*};
+use leptos::{
+    ev,
+    html::{Input, Textarea},
+    prelude::*,
+};
 use leptos_meta::*;
 use std::env;
+use utils::{
+    event_streaming::events::{
+        auth_canisters_store, TokenCreationCompleted, TokenCreationFailed, TokenCreationStarted,
+    },
+    token::{nsfw::NSFWInfo, DeployedCdaoCanisters},
+    web::FileWithUrl,
+};
 use yral_canisters_common::{utils::profile::ProfileDetails, Canisters, CanistersAuthWire};
 
 use leptos::html;
@@ -203,7 +210,6 @@ macro_rules! input_element {
     };
 }
 
-
 macro_rules! input_component {
     ($name:ident, $input_element:ident, $input_type:ident, $attrs:expr) => {
         #[component]
@@ -356,9 +362,7 @@ pub fn CreateToken() -> impl IntoView {
     let create_action = Action::new(move |&()| {
         let cans_wire_res = cans_wire_res.clone();
         async move {
-            let cans_wire = cans_wire_res
-                .await
-                .map_err(|e| e.to_string())?;
+            let cans_wire = cans_wire_res.await.map_err(|e| e.to_string())?;
             let cans = Canisters::from_wire(cans_wire.clone(), expect_context())
                 .map_err(|_| "Unable to authenticate".to_string())?;
 
@@ -701,5 +705,6 @@ pub fn CreateTokenSettings() -> impl IntoView {
                 Reset to default
             </button>
         </div>
-    }.into_any()
+    }
+    .into_any()
 }

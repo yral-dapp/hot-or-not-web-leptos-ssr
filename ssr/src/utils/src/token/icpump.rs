@@ -5,7 +5,6 @@ use futures::stream::BoxStream;
 use futures::StreamExt;
 
 use leptos::prelude::*;
-use leptos::logging;
 use yral_grpc_traits::{TokenInfoProvider, TokenListItemFS};
 
 #[cfg(feature = "ssr")]
@@ -139,6 +138,8 @@ pub async fn get_paginated_token_list_with_limit(
     #[cfg(not(feature = "firestore"))]
     {
         use candid::Principal;
+        use leptos::logging;
+
         let start = (page - 1) * limit;
         let end = start + limit;
         logging::log!("page {page}");
@@ -162,8 +163,8 @@ pub async fn get_paginated_token_list_with_limit(
 }
 
 pub async fn get_mocked_paginated_token_list(page: u32) -> Vec<TokenListItem> {
-    use consts::ICPUMP_LISTING_PAGE_SIZE;
     use candid::Principal;
+    use consts::ICPUMP_LISTING_PAGE_SIZE;
 
     let page_range = if page == 21 {
         0..5

@@ -3,7 +3,6 @@ pub mod google;
 pub mod store;
 
 use axum::response::IntoResponse;
-use leptos::prelude::*;
 use axum_extra::extract::{
     cookie::{Cookie, Key, SameSite},
     SignedCookieJar,
@@ -12,6 +11,7 @@ use candid::Principal;
 use http::header;
 use ic_agent::{identity::Secp256k1Identity, Identity};
 use k256::elliptic_curve::JwkEcKey;
+use leptos::prelude::*;
 use leptos_axum::{extract_with_state, ResponseOptions};
 use rand_chacha::rand_core::OsRng;
 use yral_canisters_common::utils::time::current_epoch;

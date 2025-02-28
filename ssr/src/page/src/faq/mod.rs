@@ -2,7 +2,7 @@ mod items;
 
 use leptos::prelude::*;
 use leptos_icons::*;
-use leptos_router::{hooks::query_signal, *};
+use leptos_router::hooks::query_signal;
 
 use component::title::TitleText;
 
@@ -72,13 +72,11 @@ fn FaqView(
 #[component]
 fn FaqSwitcher() -> impl IntoView {
     let (cur_tab, set_cur_tab) = query_signal::<String>("tab");
-    let current_tab = Signal::derive(move || {
-        match cur_tab.get().as_deref() {
-            Some("general") => 0,
-            Some("tokens") => 1,
-            Some("nfts") => 2,
-            _ => 0,
-        }
+    let current_tab = Signal::derive(move || match cur_tab.get().as_deref() {
+        Some("general") => 0,
+        Some("tokens") => 1,
+        Some("nfts") => 2,
+        _ => 0,
     });
 
     view! {

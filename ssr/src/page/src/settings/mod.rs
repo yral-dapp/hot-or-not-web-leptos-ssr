@@ -1,17 +1,16 @@
+use codee::string::FromToStringCodec;
 use component::back_btn::BackButton;
 use component::canisters_prov::AuthCansProvider;
 use component::title::TitleText;
 use component::{social::*, toggle::Toggle};
 use consts::NOTIFICATIONS_ENABLED_STORE;
-use utils::event_streaming::events::account_connected_reader;
-use utils::notifications::get_token_for_principal;
-use utils::send_wrap;
-use codee::string::FromToStringCodec;
 use leptos::html::Input;
 use leptos::{ev, prelude::*};
 use leptos_icons::*;
 use leptos_use::storage::use_local_storage;
 use leptos_use::use_event_listener;
+use utils::event_streaming::events::account_connected_reader;
+use utils::notifications::get_token_for_principal;
 use yral_canisters_common::utils::profile::ProfileDetails;
 
 #[component]

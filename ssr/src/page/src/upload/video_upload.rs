@@ -3,12 +3,6 @@ use super::{
     UploadParams,
 };
 use component::modal::Modal;
-use state::canisters::{authenticated_canisters};
-use utils::{
-    event_streaming::events::{
-        auth_canisters_store, VideoUploadSuccessful, VideoUploadUnsuccessful, VideoUploadVideoSelected
-    }, route::go_to_root, send_wrap, try_or_redirect_opt, web::FileWithUrl, MockPartialEq
-};
 use futures::StreamExt;
 use gloo::timers::future::IntervalStream;
 use ic_agent::Identity;
@@ -19,6 +13,17 @@ use leptos::{
 };
 use leptos_icons::*;
 use leptos_use::use_event_listener;
+use state::canisters::authenticated_canisters;
+use utils::{
+    event_streaming::events::{
+        auth_canisters_store, VideoUploadSuccessful, VideoUploadUnsuccessful,
+        VideoUploadVideoSelected,
+    },
+    route::go_to_root,
+    try_or_redirect_opt,
+    web::FileWithUrl,
+    MockPartialEq,
+};
 use web_time::SystemTime;
 use yral_canisters_common::Canisters;
 
@@ -166,101 +171,25 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
 
     let up_desc = description.clone();
 
-    let upload_action = LocalResource::new(
-        move || {
-            let cans = canister_store().map(MockPartialEq);
-            let hashtags = up_hashtags.clone();
-            let description = up_desc.clone();
-            let file_blob = file_blob.clone();
-            async move {
-                let cans = cans?.0;
-                let creator_principal = cans.identity().sender().unwrap();
-                let time_ms = SystemTime::now()
-                    .duration_since(SystemTime::UNIX_EPOCH)
-                    .unwrap()
-                    .as_millis();
-
-                // TODO: authenticated call
-                let res = get_upload_info(
-                    creator_principal,
-                    hashtags,
-                    description,
-                    time_ms.to_string(),
-                )
-                .await;
-
-                if res.is_err() {
-                    let e = res.as_ref().err().unwrap().to_string();
-                    VideoUploadUnsuccessful.send_event(
-                        e,
-                        hashtags_len,
-                        is_nsfw,
-                        enable_hot_or_not,
-                        canister_store,
-                    );
-                }
-
-                let upload_info = try_or_redirect_opt!(res);
-
-                let res = upload_video_stream(&upload_info, &file_blob).await;
-
-                if res.is_err() {
-                    let e = res.as_ref().err().unwrap().to_string();
-                    VideoUploadUnsuccessful.send_event(
-                        e,
-                        hashtags_len,
-                        is_nsfw,
-                        enable_hot_or_not,
-                        canister_store,
-                    );
-                }
-
-                try_or_redirect_opt!(res);
-
-                uploading.set(false);
-
-                let mut check_status = IntervalStream::new(4000);
-                while (check_status.next().await).is_some() {
-                    let uid = upload_info.uid.clone();
-                    let res = get_video_status(uid).await;
-
-                    if res.is_err() {
-                        let e = res.as_ref().err().unwrap().to_string();
-                        VideoUploadUnsuccessful.send_event(
-                            e,
-                            hashtags_len,
-                            is_nsfw,
-                            enable_hot_or_not,
-                            canister_store,
-                        );
-                    }
-
-                    let status = try_or_redirect_opt!(res);
-                    if status == "ready" {
-                        break;
-                    }
-                }
-                processing.set(false);
-
-                Some(upload_info.uid)
-            }
-        },
-    );
-
-    let publish_action: Action<_, _, LocalStorage> = Action::new_unsync(move |(canisters, uid): &(Canisters<true>, String)| {
-        let canisters = canisters.clone();
-        let hashtags = hashtags.clone();
-        let hashtags_len = hashtags.len();
-        let description = description.clone();
-        let uid = uid.clone();
+    let upload_action = LocalResource::new(move || {
+        let cans = canister_store().map(MockPartialEq);
+        let hashtags = up_hashtags.clone();
+        let description = up_desc.clone();
+        let file_blob = file_blob.clone();
         async move {
-            let res = publish_video(
-                canisters,
+            let cans = cans?.0;
+            let creator_principal = cans.identity().sender().unwrap();
+            let time_ms = SystemTime::now()
+                .duration_since(SystemTime::UNIX_EPOCH)
+                .unwrap()
+                .as_millis();
+
+            // TODO: authenticated call
+            let res = get_upload_info(
+                creator_principal,
                 hashtags,
                 description,
-                uid.clone(),
-                params.enable_hot_or_not,
-                params.is_nsfw,
+                time_ms.to_string(),
             )
             .await;
 
@@ -275,23 +204,98 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
                 );
             }
 
+            let upload_info = try_or_redirect_opt!(res);
+
+            let res = upload_video_stream(&upload_info, &file_blob).await;
+
+            if res.is_err() {
+                let e = res.as_ref().err().unwrap().to_string();
+                VideoUploadUnsuccessful.send_event(
+                    e,
+                    hashtags_len,
+                    is_nsfw,
+                    enable_hot_or_not,
+                    canister_store,
+                );
+            }
+
             try_or_redirect_opt!(res);
 
-            publishing.set(false);
+            uploading.set(false);
 
-            let post_id = res.unwrap();
-            VideoUploadSuccessful.send_event(
-                uid,
-                hashtags_len,
-                is_nsfw,
-                enable_hot_or_not,
-                post_id,
-                canister_store,
-            );
+            let mut check_status = IntervalStream::new(4000);
+            while (check_status.next().await).is_some() {
+                let uid = upload_info.uid.clone();
+                let res = get_video_status(uid).await;
 
-            Some(())
+                if res.is_err() {
+                    let e = res.as_ref().err().unwrap().to_string();
+                    VideoUploadUnsuccessful.send_event(
+                        e,
+                        hashtags_len,
+                        is_nsfw,
+                        enable_hot_or_not,
+                        canister_store,
+                    );
+                }
+
+                let status = try_or_redirect_opt!(res);
+                if status == "ready" {
+                    break;
+                }
+            }
+            processing.set(false);
+
+            Some(upload_info.uid)
         }
     });
+
+    let publish_action: Action<_, _, LocalStorage> =
+        Action::new_unsync(move |(canisters, uid): &(Canisters<true>, String)| {
+            let canisters = canisters.clone();
+            let hashtags = hashtags.clone();
+            let hashtags_len = hashtags.len();
+            let description = description.clone();
+            let uid = uid.clone();
+            async move {
+                let res = publish_video(
+                    canisters,
+                    hashtags,
+                    description,
+                    uid.clone(),
+                    params.enable_hot_or_not,
+                    params.is_nsfw,
+                )
+                .await;
+
+                if res.is_err() {
+                    let e = res.as_ref().err().unwrap().to_string();
+                    VideoUploadUnsuccessful.send_event(
+                        e,
+                        hashtags_len,
+                        is_nsfw,
+                        enable_hot_or_not,
+                        canister_store,
+                    );
+                }
+
+                try_or_redirect_opt!(res);
+
+                publishing.set(false);
+
+                let post_id = res.unwrap();
+                VideoUploadSuccessful.send_event(
+                    uid,
+                    hashtags_len,
+                    is_nsfw,
+                    enable_hot_or_not,
+                    post_id,
+                    canister_store,
+                );
+
+                Some(())
+            }
+        });
     let cans_res = authenticated_canisters();
 
     view! {

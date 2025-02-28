@@ -1,27 +1,27 @@
+use codee::string::FromToStringCodec;
+use component::content_upload::AuthorizedUserToSeedContent;
 use component::content_upload::YoutubeUpload;
 use component::modal::Modal;
 use component::spinner::Spinner;
 use component::title::TitleText;
 use component::{connect::ConnectLogin, social::*, toggle::Toggle};
 use consts::{social, NSFW_TOGGLE_STORE};
-use state::app_state::AppState;
-use state::canisters::authenticated_canisters;
-use state::content_seed_client::ContentSeedClient;
-use utils::notifications::get_token_for_principal;
-use utils::send_wrap;
-use component::content_upload::AuthorizedUserToSeedContent;
-use codee::string::FromToStringCodec;
 use leptos::either::Either;
 use leptos::html::Input;
 use leptos::{ev, prelude::*};
 use leptos_icons::*;
 use leptos_meta::*;
-use leptos_router::{hooks::use_query_map, components::Redirect};
+use leptos_router::{components::Redirect, hooks::use_query_map};
 use leptos_use::storage::use_local_storage;
 use leptos_use::use_event_listener;
+use state::app_state::AppState;
+use state::canisters::authenticated_canisters;
+use state::content_seed_client::ContentSeedClient;
+use utils::event_streaming::events::account_connected_reader;
+use utils::notifications::get_token_for_principal;
+use utils::send_wrap;
 use yral_canisters_common::utils::profile::ProfileDetails;
 use yral_canisters_common::Canisters;
-use utils::{event_streaming::events::account_connected_reader};
 #[component]
 fn MenuItem(
     #[prop(into)] text: String,
@@ -164,7 +164,8 @@ fn EnableNotifications(user_details: ProfileDetails) -> impl IntoView {
                 </button>
             </div>
         </div>
-    }.into_any()
+    }
+    .into_any()
 }
 
 #[component]
@@ -186,39 +187,41 @@ pub fn Menu() -> impl IntoView {
     let cans = authenticated_canisters();
     let authorized_fetch_res = Resource::new(
         move || {},
-        move |_| send_wrap(async move {
-            let Ok(cans) = cans.await else {
-                is_authorized_to_seed_content.0.set(None);
-                return None;
-            };
-            let Ok(cans_wire) = Canisters::from_wire(cans, expect_context()) else {
-                is_authorized_to_seed_content.0.set(None);
-                return None;
-            };
+        move |_| {
+            send_wrap(async move {
+                let Ok(cans) = cans.await else {
+                    is_authorized_to_seed_content.0.set(None);
+                    return None;
+                };
+                let Ok(cans_wire) = Canisters::from_wire(cans, expect_context()) else {
+                    is_authorized_to_seed_content.0.set(None);
+                    return None;
+                };
 
-            let user_principal = cans_wire.user_principal();
+                let user_principal = cans_wire.user_principal();
 
-            match is_authorized_to_seed_content.0.get_untracked() {
-                Some((auth, principal)) if principal == user_principal => {
-                    is_authorized_to_seed_content
-                        .0
-                        .set(Some((auth, user_principal)))
+                match is_authorized_to_seed_content.0.get_untracked() {
+                    Some((auth, principal)) if principal == user_principal => {
+                        is_authorized_to_seed_content
+                            .0
+                            .set(Some((auth, user_principal)))
+                    }
+                    _ => (),
                 }
-                _ => (),
-            }
 
-            let content_seed_client: ContentSeedClient = expect_context();
+                let content_seed_client: ContentSeedClient = expect_context();
 
-            let res = content_seed_client
-                .check_if_authorized(user_principal)
-                .await
-                .unwrap_or_default();
+                let res = content_seed_client
+                    .check_if_authorized(user_principal)
+                    .await
+                    .unwrap_or_default();
 
-            is_authorized_to_seed_content
-                .0
-                .set(Some((res, user_principal)));
-            Some(cans_wire.profile_details())
-        }),
+                is_authorized_to_seed_content
+                    .0
+                    .set(Some((res, user_principal)));
+                Some(cans_wire.profile_details())
+            })
+        },
     );
 
     let app_state = use_context::<AppState>();

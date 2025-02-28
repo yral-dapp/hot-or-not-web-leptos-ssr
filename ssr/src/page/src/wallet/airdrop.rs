@@ -1,14 +1,14 @@
+use candid::{Nat, Principal};
 use component::{
     back_btn::BackButton,
     buttons::{HighlightedButton, HighlightedLinkButton},
     spinner::{SpinnerCircle, SpinnerCircleStyled},
 };
-use state::canisters::authenticated_canisters;
-use utils::{host::get_host, send_wrap};
-use candid::{Nat, Principal};
 use leptos::prelude::*;
 use leptos_icons::Icon;
 use leptos_router::hooks::use_location;
+use state::canisters::authenticated_canisters;
+use utils::{host::get_host, send_wrap};
 use yral_canisters_common::{
     utils::token::{TokenMetadata, TokenOwner},
     Canisters,

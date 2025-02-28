@@ -1,11 +1,9 @@
+use crate::overlay::*;
 use leptos::{ev, prelude::*, reactive::wrappers::write::SignalSetter};
 use leptos_icons::*;
 use utils::{
     host::get_host,
     web::{copy_to_clipboard, share_url},
-};
-use crate::{
-    overlay::*,
 };
 
 use crate::icons::share_icon::ShareIcon;
@@ -146,5 +144,6 @@ pub fn ShareButtonWithFallbackPopup(
                 show_popup=show_fallback
             />
         </PopupOverlay>
-    }.into_any()
+    }
+    .into_any()
 }

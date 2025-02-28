@@ -1,11 +1,5 @@
+use crate::format_cents;
 use candid::{Nat, Principal};
-use futures::TryFutureExt;
-use http::StatusCode;
-use leptos::prelude::*;
-use leptos_router::hooks::use_navigate;
-use log;
-use yral_canisters_common::{utils::token::balance::TokenBalance, Canisters};
-use yral_pump_n_dump_common::rest::{BalanceInfoResponse, ClaimReq};
 use component::{
     back_btn::BackButton,
     icons::{information_icon::Information, notification_icon::NotificationIcon},
@@ -13,11 +7,15 @@ use component::{
     tooltip::Tooltip,
 };
 use consts::PUMP_AND_DUMP_WORKER_URL;
+use futures::TryFutureExt;
+use http::StatusCode;
+use leptos::prelude::*;
+use leptos_router::hooks::use_navigate;
+use log;
 use state::canisters::authenticated_canisters;
 use utils::{send_wrap, try_or_redirect_opt};
-use crate::{
-    format_cents,
-};
+use yral_canisters_common::{utils::token::balance::TokenBalance, Canisters};
+use yral_pump_n_dump_common::rest::{BalanceInfoResponse, ClaimReq};
 
 pub mod result;
 
@@ -97,13 +95,15 @@ fn BalanceDisplay(#[prop(into)] balance: Nat, #[prop(into)] withdrawable: Nat) -
 pub fn PndWithdrawal() -> impl IntoView {
     let auth_wire = authenticated_canisters();
     let details_res = Resource::new(
-        move ||(),
-        move |_| send_wrap(async move {
-            let cans_wire = auth_wire.await?;
-            load_withdrawal_details(cans_wire.user_canister)
-                .map_err(ServerFnError::new)
-                .await
-        }),
+        move || (),
+        move |_| {
+            send_wrap(async move {
+                let cans_wire = auth_wire.await?;
+                load_withdrawal_details(cans_wire.user_canister)
+                    .map_err(ServerFnError::new)
+                    .await
+            })
+        },
     );
     let cents = RwSignal::new(TokenBalance::new(0usize.into(), 6));
     let dolrs = move || cents().e8s;
@@ -130,9 +130,7 @@ pub fn PndWithdrawal() -> impl IntoView {
     let send_claim = Action::new(move |&()| {
         let auth_wire = auth_wire.clone();
         send_wrap(async move {
-            let auth_wire = auth_wire
-                .await
-                .map_err(ServerFnError::new)?;
+            let auth_wire = auth_wire.await.map_err(ServerFnError::new)?;
 
             let cans = Canisters::from_wire(auth_wire.clone(), expect_context())
                 .map_err(ServerFnError::new)?;

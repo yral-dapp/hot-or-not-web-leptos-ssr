@@ -1,8 +1,8 @@
-use leptos::prelude::*;
 use component::canisters_prov::AuthCansProvider;
+use leptos::prelude::*;
 use utils::event_streaming::events::account_connected_reader;
-use utils::{notifications::get_token_for_principal, send_wrap};
-    
+use utils::notifications::get_token_for_principal;
+
 use yral_canisters_common::utils::profile::ProfileDetails;
 
 #[component]

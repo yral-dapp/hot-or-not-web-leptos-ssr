@@ -7,19 +7,19 @@ mod speculation;
 mod tokens;
 
 use candid::Principal;
+use component::connect::ConnectLogin;
 use leptos::prelude::*;
 use leptos_icons::*;
 use leptos_meta::*;
 use leptos_router::{components::Redirect, hooks::use_params, params::Params};
-use component::connect::ConnectLogin;
+use posts::ProfilePosts;
+use speculation::ProfileSpeculations;
 use state::{
     app_state::AppState,
     canisters::{authenticated_canisters, unauth_canisters},
 };
-use utils::{send_wrap, event_streaming::events::account_connected_reader};
-use posts::ProfilePosts;
-use speculation::ProfileSpeculations;
 use tokens::ProfileTokens;
+use utils::{event_streaming::events::account_connected_reader, send_wrap};
 use yral_canisters_common::{
     utils::{posts::PostDetails, profile::ProfileDetails},
     Canisters,
@@ -174,8 +174,8 @@ pub fn ProfileView() -> impl IntoView {
 
     let auth_cans = authenticated_canisters();
 
-    let profile_info_res =
-        Resource::new(param_principal, move |principal| send_wrap(async move {
+    let profile_info_res = Resource::new(param_principal, move |principal| {
+        send_wrap(async move {
             let cans_wire = auth_cans.await?;
             let canisters = Canisters::from_wire(cans_wire.clone(), expect_context())?;
             let user_principal = canisters.user_principal();
@@ -201,7 +201,8 @@ pub fn ProfileView() -> impl IntoView {
             let user = canisters.individual_user(user_canister).await;
             let user_details = user.get_profile_details().await?;
             Ok((Some((user_details.into(), user_canister)), None))
-        }));
+        })
+    });
 
     let app_state = use_context::<AppState>();
     let page_title = app_state.unwrap().name.to_owned() + " - Profile";
@@ -238,7 +239,8 @@ pub fn ProfileView() -> impl IntoView {
                 })
             }}
         </Suspense>
-    }.into_any()
+    }
+    .into_any()
 }
 
 #[component]

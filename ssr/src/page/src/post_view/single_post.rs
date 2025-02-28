@@ -3,16 +3,13 @@ use leptos::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use super::{overlay::VideoDetailsOverlay, video_loader::VideoView};
-use utils::{bg_url, send_wrap};
-use component::{
-    back_btn::go_back_or_fallback,
-    spinner::FullScreenSpinner,
-};
+use crate::scrolling_post_view::MuteIconOverlay;
+use component::{back_btn::go_back_or_fallback, spinner::FullScreenSpinner};
+use leptos_router::{components::Redirect, hooks::use_params, params::Params};
 use state::{audio_state::AudioState, canisters::unauth_canisters};
 use utils::event_streaming::events::auth_canisters_store;
+use utils::{bg_url, send_wrap};
 use yral_canisters_common::utils::posts::PostDetails;
-use leptos_router::{components::Redirect, hooks::use_params, params::Params};
-use crate::scrolling_post_view::MuteIconOverlay;
 #[derive(Params, PartialEq, Clone, Copy)]
 struct PostParams {
     canister_id: Principal,
@@ -70,22 +67,24 @@ fn UnavailablePost() -> impl IntoView {
 pub fn SinglePost() -> impl IntoView {
     let params = use_params::<PostParams>();
     let auth_cans = auth_canisters_store();
-    let fetch_post = Resource::new(params, move |params| send_wrap(async move {
-        let params = params.map_err(|_| PostFetchError::Invalid)?;
-        let post_uid = if let Some(canisters) = auth_cans.get_untracked() {
-            canisters
-                .get_post_details(params.canister_id, params.post_id)
-                .await
-        } else {
-            let canisters = unauth_canisters();
-            canisters
-                .get_post_details(params.canister_id, params.post_id)
-                .await
-        };
-        post_uid
-            .map_err(|e| PostFetchError::GetUid(e.to_string()))
-            .and_then(|post| post.ok_or(PostFetchError::Unavailable))
-    }));
+    let fetch_post = Resource::new(params, move |params| {
+        send_wrap(async move {
+            let params = params.map_err(|_| PostFetchError::Invalid)?;
+            let post_uid = if let Some(canisters) = auth_cans.get_untracked() {
+                canisters
+                    .get_post_details(params.canister_id, params.post_id)
+                    .await
+            } else {
+                let canisters = unauth_canisters();
+                canisters
+                    .get_post_details(params.canister_id, params.post_id)
+                    .await
+            };
+            post_uid
+                .map_err(|e| PostFetchError::GetUid(e.to_string()))
+                .and_then(|post| post.ok_or(PostFetchError::Unavailable))
+        })
+    });
 
     view! {
         <Suspense fallback=FullScreenSpinner>

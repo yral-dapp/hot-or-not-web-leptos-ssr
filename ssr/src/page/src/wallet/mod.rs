@@ -3,24 +3,24 @@ pub mod tokens;
 pub mod transactions;
 pub mod txn;
 
-use component::icons::notification_icon::NotificationIcon;
-use state::{app_state::AppState, canisters::authenticated_canisters};
-use utils::host::show_pnd_page;
-use utils::send_wrap;
-use component::share_popup::ShareButtonWithFallbackPopup;
-use state::canisters::unauth_canisters;
 use candid::Principal;
+use component::icons::notification_icon::NotificationIcon;
+use component::share_popup::ShareButtonWithFallbackPopup;
+use component::{canisters_prov::AuthCansProvider, connect::ConnectLogin};
 use leptos::prelude::*;
 use leptos_meta::*;
 use leptos_router::components::Redirect;
 use leptos_router::hooks::use_params;
+use leptos_router::params::Params;
+use state::canisters::unauth_canisters;
+use state::{app_state::AppState, canisters::authenticated_canisters};
 use tokens::TokenList;
+use utils::event_streaming::events::account_connected_reader;
+use utils::host::show_pnd_page;
+use utils::send_wrap;
+use utils::try_or_redirect_opt;
 use yral_canisters_common::utils::profile::ProfileDetails;
 use yral_canisters_common::Canisters;
-use leptos_router::params::Params;
-use utils::try_or_redirect_opt;
-use component::{canisters_prov::AuthCansProvider, connect::ConnectLogin};
-use utils::{event_streaming::events::account_connected_reader};
 
 #[component]
 fn ProfileCard(details: ProfileDetails, is_own_account: bool, is_connected: bool) -> impl IntoView {
@@ -162,21 +162,23 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
 
     let profile_info_res = Resource::new(
         move || principal,
-        move |principal| send_wrap(async move {
-            let cans_wire = auth_cans.await;
-            let cans_wire = cans_wire?;
-            let canisters = Canisters::from_wire(cans_wire, expect_context())?;
+        move |principal| {
+            send_wrap(async move {
+                let cans_wire = auth_cans.await;
+                let cans_wire = cans_wire?;
+                let canisters = Canisters::from_wire(cans_wire, expect_context())?;
 
-            let Some(user_canister) = canisters
-                .get_individual_canister_by_user_principal(principal)
-                .await?
-            else {
-                return Err(ServerFnError::new("Failed to get user canister"));
-            };
-            let user = canisters.individual_user(user_canister).await;
-            let user_details = user.get_profile_details().await?;
-            Ok::<ProfileDetails, ServerFnError>(user_details.into())
-        }),
+                let Some(user_canister) = canisters
+                    .get_individual_canister_by_user_principal(principal)
+                    .await?
+                else {
+                    return Err(ServerFnError::new("Failed to get user canister"));
+                };
+                let user = canisters.individual_user(user_canister).await;
+                let user_details = user.get_profile_details().await?;
+                Ok::<ProfileDetails, ServerFnError>(user_details.into())
+            })
+        },
     );
 
     let is_own_account = Resource::new(
@@ -190,17 +192,19 @@ pub fn WalletImpl(principal: Principal) -> impl IntoView {
 
     let canister_id = Resource::new(
         move || principal,
-        move |principal| send_wrap(async move {
-            let canisters = unauth_canisters();
-            let Some(user_canister) = canisters
-                .get_individual_canister_by_user_principal(principal)
-                .await?
-            else {
-                return Err(ServerFnError::new("Failed to get user canister"));
-            };
-            Ok((user_canister, principal))
+        move |principal| {
+            send_wrap(async move {
+                let canisters = unauth_canisters();
+                let Some(user_canister) = canisters
+                    .get_individual_canister_by_user_principal(principal)
+                    .await?
+                else {
+                    return Err(ServerFnError::new("Failed to get user canister"));
+                };
+                Ok((user_canister, principal))
+            })
         },
-    ));
+    );
 
     let app_state = use_context::<AppState>();
     let page_title = app_state.unwrap().name.to_owned() + " - Wallet";

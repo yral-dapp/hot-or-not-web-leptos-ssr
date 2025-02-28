@@ -1,7 +1,7 @@
 use leptos::prelude::*;
 use leptos_icons::*;
-use yral_canisters_common::cursored_data::CursoredDataProvider;
 use utils::profile::PROFILE_CHUNK_SZ;
+use yral_canisters_common::cursored_data::CursoredDataProvider;
 
 use component::{
     bullet_loader::BulletLoader,

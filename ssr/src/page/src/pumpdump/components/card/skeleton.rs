@@ -1,5 +1,5 @@
-use leptos::{view, IntoView, prelude::*};
 use component::skeleton::Skeleton;
+use leptos::{prelude::*, view, IntoView};
 #[component]
 pub fn CardSkeleton() -> impl IntoView {
     view! {

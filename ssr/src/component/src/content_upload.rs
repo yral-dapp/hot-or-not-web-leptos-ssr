@@ -1,7 +1,6 @@
 use super::spinner::Spinner;
 use auth::delegate_short_lived_identity;
 use state::{canisters::authenticated_canisters, content_seed_client::ContentSeedClient};
-use utils::send_wrap;
 #[derive(Default, Clone, Copy)]
 pub struct AuthorizedUserToSeedContent(pub RwSignal<Option<(bool, Principal)>>);
 use candid::Principal;

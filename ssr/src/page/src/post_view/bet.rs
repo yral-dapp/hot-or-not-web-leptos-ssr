@@ -1,15 +1,14 @@
+use crate::post_view::BetEligiblePostCtx;
+use component::{
+    bullet_loader::BulletLoader, canisters_prov::AuthCansProvider, hn_icons::*, spinner::SpinnerFit,
+};
 use leptos::{either::Either, prelude::*};
 use leptos_icons::*;
 use leptos_use::use_interval_fn;
+use state::canisters::unauth_canisters;
+use utils::{send_wrap, time::to_hh_mm_ss, try_or_redirect_opt};
 use web_time::Duration;
 use yral_canisters_client::individual_user_template::BettingStatus;
-use component::{
-    bullet_loader::BulletLoader, canisters_prov::AuthCansProvider, hn_icons::*,
-    spinner::SpinnerFit,
-};
-use state::canisters::unauth_canisters;
-use crate::post_view::BetEligiblePostCtx;
-use utils::{send_wrap, time::to_hh_mm_ss, try_or_redirect_opt};
 use yral_canisters_common::{
     utils::{
         posts::PostDetails,
@@ -424,7 +423,8 @@ fn MaybeHNButtons(
             }}
 
         </Suspense>
-    }.into_any()
+    }
+    .into_any()
 }
 
 #[component]
