@@ -62,7 +62,7 @@ pub async fn process_token_list_item(
                 item.link
                     .trim_end_matches('/')
                     .split('/')
-                    .last()
+                    .next_back()
                     .ok_or(ServerFnError::new("Not root given"))
                     .unwrap_or_default(),
             )
