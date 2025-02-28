@@ -1,2 +1,7 @@
+# Target-specific settings for native Linux platforms
+[target.'cfg(target_os = "linux")']
+rustflags = ["-C", "link-arg=-fuse-ld=mold"]
+
+# Settings for all targets (including WebAssembly)
 [target.'cfg(all())']
 rustflags = ["--cfg=web_sys_unstable_apis"]

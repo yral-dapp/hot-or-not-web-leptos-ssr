@@ -13,12 +13,9 @@ use yral_testcontainers::{
     backend::{self, YralBackend, ADMIN_SECP_BYTES},
     metadata::{self, YralMetadata},
 };
-
-use crate::{
-    canister_ids::USER_INDEX_ID,
-    consts::{METADATA_API_BASE, YRAL_BACKEND_CONTAINER_TAG, YRAL_METADATA_CONTAINER_TAG},
-    state::admin_canisters::AdminCanisters,
-};
+use consts::{METADATA_API_BASE, YRAL_BACKEND_CONTAINER_TAG, YRAL_METADATA_CONTAINER_TAG};
+use state::admin_canisters::AdminCanisters;
+use crate::canister_ids::USER_INDEX_ID;
 
 type MaybeContainer<I> = Option<ContainerAsync<I>>;
 

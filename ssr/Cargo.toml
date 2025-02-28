@@ -88,6 +88,12 @@ regex = {workspace = true, optional = true}
 tonic-build = {workspace = true}
 anyhow = {workspace = true}
 send_wrapper = {workspace = true}
+auth = {workspace = true}
+consts = {workspace = true}
+utils.workspace = true
+state.workspace = true
+component.workspace = true
+page.workspace = true
 
 
 [build-dependencies]
@@ -105,6 +111,11 @@ hydrate = [
     "tonic/codegen",
     "speedate",
     "send_wrapper/futures",
+    "consts/hydrate",
+    "utils/hydrate",
+    "state/hydrate",
+    "component/hydrate",
+    "page/hydrate",
 ]
 ssr = [
     "dep:axum",
@@ -135,22 +146,28 @@ ssr = [
     "tonic-build/transport",
     "speedate",
     "dep:regex",
+    "consts/ssr",
+    "utils/ssr",
+    "state/ssr",
+    "component/ssr",
+    "page/ssr",
+    "auth/ssr",
 ]
 # Fetch mock referral history instead of history via canister
-mock-referral-history = ["dep:rand_chacha", "k256/arithmetic"]
+mock-referral-history = ["dep:rand_chacha", "k256/arithmetic", "consts/mock-referral-history", "utils/mock-referral-history", "state/mock-referral-history", "component/mock-referral-history", "page/mock-referral-history"]
 
 
-mock-history = ["mock-referral-history", "mock-wallet-history"]
-oauth-ssr = ["dep:openidconnect"]
-oauth-hydrate = []
-local-auth = []
-redis-kv = []
-cloudflare = ["dep:gob-cloudflare"]
-backend-admin = []
-ga4 = []
-mock-wallet-history = ["dep:rand_chacha"]
-firestore = ["dep:firestore", "speedate"]
-qstash = []
+mock-history = ["mock-referral-history", "mock-wallet-history", "consts/mock-history", "utils/mock-history", "state/mock-history", "component/mock-history", "page/mock-history"]
+oauth-ssr = ["dep:openidconnect", "consts/oauth-ssr", "utils/oauth-ssr", "state/oauth-ssr", "component/oauth-ssr", "page/oauth-ssr", "auth/oauth-ssr"]
+oauth-hydrate = ["consts/oauth-hydrate", "utils/oauth-hydrate", "state/oauth-hydrate", "component/oauth-hydrate", "page/oauth-hydrate"]
+local-auth = ["consts/local-auth", "utils/local-auth", "state/local-auth", "component/local-auth", "page/local-auth"]
+redis-kv = ["consts/redis-kv", "utils/redis-kv", "state/redis-kv", "component/redis-kv", "page/redis-kv"]
+cloudflare = ["dep:gob-cloudflare", "consts/cloudflare", "utils/cloudflare", "state/cloudflare", "component/cloudflare", "page/cloudflare"]
+backend-admin = ["consts/backend-admin", "utils/backend-admin", "state/backend-admin", "component/backend-admin", "page/backend-admin"]
+ga4 = ["consts/ga4", "utils/ga4", "state/ga4", "component/ga4", "page/ga4"]
+mock-wallet-history = ["dep:rand_chacha", "consts/mock-wallet-history", "utils/mock-wallet-history", "state/mock-wallet-history", "component/mock-wallet-history", "page/mock-wallet-history"]
+firestore = ["dep:firestore", "speedate", "consts/firestore", "utils/firestore", "state/firestore", "component/firestore", "page/firestore"]
+qstash = ["consts/qstash", "utils/qstash", "state/qstash", "component/qstash", "page/qstash"]
 release-bin = [
     "ssr",
     "cloudflare",
@@ -161,6 +178,11 @@ release-bin = [
     "ga4",
     "firestore",
     "qstash",
+    "consts/release-bin",
+    "utils/release-bin",
+    "state/release-bin",
+    "component/release-bin",
+    "page/release-bin",
 ]
 release-lib = [
     "hydrate",
@@ -170,6 +192,11 @@ release-lib = [
     "dep:openidconnect",
     "oauth-hydrate",
     "ga4",
+    "consts/release-lib",
+    "utils/release-lib",
+    "state/release-lib",
+    "component/release-lib",
+    "page/release-lib",
 ]
 local-bin = [
     "ssr",
@@ -181,6 +208,11 @@ local-bin = [
     "yral-canisters-common/local",
     "dep:yral-metadata-client",
     "dep:yral-metadata-types",
+    "consts/local-bin",
+    "utils/local-bin",
+    "state/local-bin",
+    "component/local-bin",
+    "page/local-bin",
 ]
 local-lib = [
     "hydrate",
@@ -188,6 +220,11 @@ local-lib = [
     "local-auth",
     "backend-admin",
     "yral-canisters-common/local",
+    "consts/local-lib",
+    "utils/local-lib",
+    "state/local-lib",
+    "component/local-lib",
+    "page/local-lib",
 ]
 
 [package.metadata.leptos]

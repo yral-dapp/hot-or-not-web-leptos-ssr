@@ -1,42 +1,43 @@
-use crate::page::icpump::ai::ICPumpAi;
-use crate::page::icpump::ICPumpLanding;
-use crate::page::pumpdump::{withdrawal, PndProfilePage};
-use crate::state::app_type::AppType;
-use crate::utils::host::show_preview_component;
+use component::content_upload::AuthorizedUserToSeedContent;
+use page::icpump::ai::ICPumpAi;
+use page::icpump::ICPumpLanding;
+use page::pumpdump::{withdrawal, PndProfilePage};
+use state::app_type::AppType;
 // use crate::page::wallet::TestIndex;
-use crate::state::app_state::AppState;
-use crate::{
-    component::{base_route::BaseRoute, nav::NavBar},
-    error_template::{AppError, ErrorTemplate},
-    page::{
-        err::ServerErrorPage,
-        leaderboard::Leaderboard,
-        logout::Logout,
-        menu::{AuthorizedUserToSeedContent, Menu},
-        post_view::{single_post::SinglePost, PostView, PostViewCtx},
-        privacy::PrivacyPolicy,
-        profile::{profile_post::ProfilePost, ProfilePostsContext, ProfileView},
-        refer_earn::ReferEarn,
-        root::RootPage,
-        settings::Settings,
-        terms::TermsOfService,
-        token::{
-            create::{CreateToken, CreateTokenCtx, CreateTokenSettings},
-            create_token_faq::CreateTokenFAQ,
-            info::TokenInfo,
-            transfer::TokenTransfer,
-        },
-        upload::UploadPostPage,
-        wallet::Wallet,
+use state::app_state::AppState;
+use component::{base_route::BaseRoute, nav::NavBar};
+use page::{
+    err::ServerErrorPage,
+    leaderboard::Leaderboard,
+    logout::Logout,
+    menu::Menu,
+    post_view::{single_post::SinglePost, PostView, PostViewCtx},
+    privacy::PrivacyPolicy,
+    profile::{profile_post::ProfilePost, ProfilePostsContext, ProfileView},
+    refer_earn::ReferEarn,
+    root::RootPage,
+    settings::Settings,
+    terms::TermsOfService,
+    token::{
+        create::{CreateToken, CreateTokenCtx, CreateTokenSettings},
+        create_token_faq::CreateTokenFAQ,
+        info::TokenInfo,
+        transfer::TokenTransfer,
     },
-    state::{audio_state::AudioState, content_seed_client::ContentSeedClient, history::HistoryCtx},
-    utils::event_streaming::EventHistory,
+    upload::UploadPostPage,
+    wallet::Wallet,
 };
+use crate::{
+    error_template::{AppError, ErrorTemplate},
+};
+
+use state::{audio_state::AudioState, content_seed_client::ContentSeedClient};
+use utils::event_streaming::EventHistory;
 use leptos::either::Either;
 use leptos_router::hooks::use_location;
 use leptos_router::{components::*, path, MatchNestedRoutes};
 use yral_canisters_common::Canisters;
-
+use utils::event_streaming::events::{HistoryCtx};
 use leptos::prelude::*;
 use leptos_meta::*;
 use leptos_router::components::*;
@@ -59,7 +60,7 @@ fn GoogleAuthRedirectHandlerRoute() -> impl MatchNestedRoutes + Clone {
         // } else {
 
         // }
-        use crate::page::google_redirect::GoogleRedirectHandler;
+        use page::google_redirect::GoogleRedirectHandler;
         view! { <Route path view=GoogleRedirectHandler/> }.into_inner()
     }
     #[cfg(not(any(feature = "oauth-ssr", feature = "oauth-hydrate")))]
@@ -79,7 +80,7 @@ fn GoogleAuthRedirectorRoute() -> impl MatchNestedRoutes + Clone {
         // } else {
 
         // }
-        use crate::page::google_redirect::GoogleRedirector;
+        use page::google_redirect::GoogleRedirector;
         view! { <Route path view=GoogleRedirector/> }.into_inner()
     }
     #[cfg(not(any(feature = "oauth-ssr", feature = "oauth-hydrate")))]
@@ -127,7 +128,7 @@ pub fn App() -> impl IntoView {
 
     #[cfg(feature = "hydrate")]
     {
-        use crate::utils::ml_feed::ml_feed_grpcweb::MLFeed;
+        use utils::ml_feed::ml_feed_grpcweb::MLFeed;
         provide_context(MLFeed::default());
     }
 

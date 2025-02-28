@@ -11,12 +11,9 @@ use axum_extra::extract::cookie::Key;
 use leptos::prelude::*;
 use leptos_axum::AxumRouteListing;
 use leptos_router::RouteListing;
-
-use crate::{
-    auth::server_impl::store::KVStoreImpl,
-    state::server::AppState,
-    utils::token::{icpump::ICPumpSearchGrpcChannel, nsfw::ICPumpNSFWGrpcChannel},
-};
+use auth::server_impl::store::KVStoreImpl;
+use utils::token::{icpump::ICPumpSearchGrpcChannel, nsfw::ICPumpNSFWGrpcChannel};
+use state::server::AppState;
 use yral_canisters_common::Canisters;
 
 #[cfg(feature = "cloudflare")]
@@ -48,9 +45,9 @@ fn init_cookie_key() -> Key {
 }
 
 #[cfg(feature = "oauth-ssr")]
-fn init_google_oauth() -> crate::auth::core_clients::CoreClients {
-    use crate::auth::core_clients::CoreClients;
-    use crate::consts::google::GOOGLE_ISSUER_URL;
+fn init_google_oauth() -> auth::core_clients::CoreClients {
+    use auth::core_clients::CoreClients;
+    use consts::google::GOOGLE_ISSUER_URL;
     use openidconnect::core::CoreProviderMetadata;
     use openidconnect::{
         core::CoreClient, reqwest::http_client, ClientId, ClientSecret, IssuerUrl, RedirectUrl,
@@ -156,7 +153,7 @@ async fn init_firestoredb() -> firestore::FirestoreDb {
 
 #[cfg(feature = "ga4")]
 async fn init_grpc_offchain_channel() -> tonic::transport::Channel {
-    use crate::consts::OFF_CHAIN_AGENT_GRPC_URL;
+    use consts::OFF_CHAIN_AGENT_GRPC_URL;
     use tonic::transport::{Channel, ClientTlsConfig};
 
     let tls_config = ClientTlsConfig::new().with_webpki_roots();
@@ -170,7 +167,7 @@ async fn init_grpc_offchain_channel() -> tonic::transport::Channel {
 }
 
 async fn init_grpc_icpump_search_channel() -> ICPumpSearchGrpcChannel {
-    use crate::consts::ICPUMP_SEARCH_GRPC_URL;
+    use consts::ICPUMP_SEARCH_GRPC_URL;
     use tonic::transport::{Channel, ClientTlsConfig};
 
     let tls_config = ClientTlsConfig::new().with_webpki_roots();
@@ -186,7 +183,7 @@ async fn init_grpc_icpump_search_channel() -> ICPumpSearchGrpcChannel {
 }
 
 async fn init_grpc_nsfw_channel() -> ICPumpNSFWGrpcChannel {
-    use crate::consts::NSFW_SERVER_URL;
+    use consts::NSFW_SERVER_URL;
     use tonic::transport::{Channel, ClientTlsConfig};
 
     let tls_config = ClientTlsConfig::new().with_webpki_roots();
@@ -201,8 +198,8 @@ async fn init_grpc_nsfw_channel() -> ICPumpNSFWGrpcChannel {
 }
 
 #[cfg(feature = "backend-admin")]
-fn init_admin_canisters() -> crate::state::admin_canisters::AdminCanisters {
-    use crate::state::admin_canisters::AdminCanisters;
+fn init_admin_canisters() -> state::admin_canisters::AdminCanisters {
+    use state::admin_canisters::AdminCanisters;
 
     #[cfg(feature = "local-bin")]
     {
@@ -229,8 +226,8 @@ fn init_admin_canisters() -> crate::state::admin_canisters::AdminCanisters {
 }
 
 #[cfg(feature = "qstash")]
-fn init_qstash_client() -> crate::utils::qstash::QStashClient {
-    use crate::utils::qstash::QStashClient;
+fn init_qstash_client() -> utils::qstash::QStashClient {
+    use utils::qstash::QStashClient;
 
     let auth_token = env::var("QSTASH_TOKEN").expect("`QSTASH_TOKEN` is required!");
 
@@ -263,7 +260,7 @@ impl AppStateBuilder {
     async fn init_kv(&mut self) -> KVStoreImpl {
         #[cfg(feature = "redis-kv")]
         {
-            use crate::auth::server_impl::store::redis_kv::RedisKV;
+            use auth::server_impl::store::redis_kv::RedisKV;
             let redis_url: String;
             #[cfg(feature = "local-bin")]
             {
@@ -279,7 +276,7 @@ impl AppStateBuilder {
 
         #[cfg(not(feature = "redis-kv"))]
         {
-            use crate::auth::server_impl::store::redb_kv::ReDBKV;
+            use auth::server_impl::store::redb_kv::ReDBKV;
             KVStoreImpl::ReDB(ReDBKV::new().expect("Failed to initialize ReDB"))
         }
     }
