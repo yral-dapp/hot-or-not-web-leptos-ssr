@@ -8,7 +8,7 @@ pub mod fallback;
 #[cfg(feature = "ssr")]
 pub mod init;
 
-// #[cfg(feature = "hydrate")]
+#[cfg(feature = "hydrate")]
 #[wasm_bindgen::prelude::wasm_bindgen]
 pub fn hydrate() {
     use crate::app::App;

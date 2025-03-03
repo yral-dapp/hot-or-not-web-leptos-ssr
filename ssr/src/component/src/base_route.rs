@@ -31,18 +31,24 @@ struct Referrer {
 }
 
 #[component]
-fn CtxProvider(temp_identity: Option<JwkEcKey>, children: ChildrenFn) -> impl IntoView {
+fn CtxProvider(children: ChildrenFn) -> impl IntoView {
     let auth = AuthState::default();
     provide_context(auth);
 
     let canisters_store = RwSignal::new(None::<Canisters<true>>);
     provide_context(canisters_store);
 
-    let new_identity_issued = temp_identity.is_some();
-    let temp_identity_c = temp_identity.clone();
+    let temp_identity_res = OnceResource::new_blocking(async move {
+            generate_anonymous_identity_if_required()
+                .await
+                .expect("Failed to generate anonymous identity?!")
+        },
+    );
+
+    let temp_identity_c = temp_identity_res.clone();
     LocalResource::new(move || {
-        let temp_identity = temp_identity_c.clone();
         async move {
+            let temp_identity = temp_identity_c.await;
             let Some(id) = temp_identity else {
                 return;
             };
@@ -72,19 +78,13 @@ fn CtxProvider(temp_identity: Option<JwkEcKey>, children: ChildrenFn) -> impl In
     let (_, set_user_canister_id, _) =
         use_local_storage::<Option<Principal>, JsonSerdeCodec>(USER_CANISTER_ID_STORE);
     let (_, set_user_principal) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE);
-    Effect::new(move |_| {
-        if new_identity_issued {
-            set_logged_in(false);
-            set_user_canister_id(None);
-            set_user_principal(None);
-        }
-    });
 
+    let temp_identity_c = temp_identity_res.clone();
     let canisters_res: AuthCansResource = Resource::new(
         move || MockPartialEq(auth()),
         move |auth_id| {
-            let temp_identity = temp_identity.clone();
             send_wrap(async move {
+            let temp_identity = temp_identity_c.await;
                 let ref_principal = referrer_principal.get_untracked();
 
                 if let Some(id_wire) = auth_id.0 {
@@ -104,33 +104,42 @@ fn CtxProvider(temp_identity: Option<JwkEcKey>, children: ChildrenFn) -> impl In
             })
         },
     );
-    provide_context(canisters_res.clone());
+    provide_context::<AuthCansResource>(canisters_res.clone());
 
     let location = leptos_router::hooks::use_location();
 
     view! {
         {children()}
         <Suspense>
-            {move || {
-                canisters_res.get()
-                    .map(|res| {
-                        let cans_wire = try_or_redirect!(res);
-                        let maybe_cans = Canisters::from_wire(cans_wire, expect_context());
-                        let cans = try_or_redirect!(maybe_cans);
-                        let user_canister = cans.user_canister();
-                        let user_principal = cans.user_principal();
-                        Effect::new(move |_| {
-                            set_user_canister_id(Some(user_canister));
-                            set_user_principal(Some(user_principal));
-                        });
-                        canisters_store.set(Some(cans.clone()));
-                        Effect::new(move |_| {
-                            let pathname = location.pathname.get();
-                            let cans = cans.clone();
-                            PageVisit.send_event(cans, pathname);
-                        });
-                    })
-            }}
+            {move || Suspend::new(async move {
+                let temp_id = temp_identity_res.await;
+                let res = canisters_res.await;
+                let cans_wire = try_or_redirect!(res);
+                let maybe_cans = Canisters::from_wire(cans_wire, expect_context());
+                let cans = try_or_redirect!(maybe_cans);
+                let user_canister = cans.user_canister();
+                let user_principal = cans.user_principal();
+                Effect::new(move |_| {
+                    set_user_canister_id(Some(user_canister));
+                    set_user_principal(Some(user_principal));
+                });
+
+                // We need to perform this cleanup in case the user's cookie expired
+                Effect::new(move |_| {
+                    if temp_id.is_some() {
+                        set_logged_in(false);
+                        set_user_canister_id(None);
+                        set_user_principal(None);
+                    }
+                });
+
+                canisters_store.set(Some(cans.clone()));
+                Effect::new(move |_| {
+                    let pathname = location.pathname.get();
+                    let cans = cans.clone();
+                    PageVisit.send_event(cans, pathname);
+                });
+            })}
 
         </Suspense>
     }
@@ -138,28 +147,9 @@ fn CtxProvider(temp_identity: Option<JwkEcKey>, children: ChildrenFn) -> impl In
 
 #[component]
 pub fn BaseRoute() -> impl IntoView {
-    let temp_identity_res = Resource::new_blocking(
-        || (),
-        |_| async move {
-            generate_anonymous_identity_if_required()
-                .await
-                .expect("Failed to generate anonymous identity?!")
-        },
-    );
-
     view! {
-        <Suspense fallback=FullScreenSpinner>
-            {move || {
-                temp_identity_res.get()
-                    .map(|temp_identity| {
-                        view! {
-                            <CtxProvider temp_identity>
-                                <Outlet/>
-                            </CtxProvider>
-                        }
-                    })
-            }}
-
-        </Suspense>
+        <CtxProvider>
+            <Outlet/>
+        </CtxProvider>
     }
 }
