@@ -66,7 +66,7 @@ pub fn DumpButton(audio_ref: NodeRef<Audio>) -> impl IntoView {
 
     view! {
         <div class="relative">
-            <div class="absolute -top-32 h-32 left-1/2">
+            <div class="absolute -top-16 h-32 left-0">
                 <SkullBubbles spawn_bubbles/>
             </div>
             <button
@@ -158,7 +158,7 @@ pub fn PumpButton(audio_ref: NodeRef<Audio>) -> impl IntoView {
 
     view! {
         <div class="relative">
-            <div class="absolute -top-32 h-32 left-1/2">
+            <div class="absolute -top-16 h-32 right-0">
                 <FireBubbles spawn_bubbles/>
             </div>
             <button
