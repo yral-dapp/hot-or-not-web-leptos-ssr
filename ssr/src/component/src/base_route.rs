@@ -1,12 +1,10 @@
 use candid::Principal;
 use ic_agent::identity::Secp256k1Identity;
-use k256::elliptic_curve::JwkEcKey;
 use leptos::prelude::*;
 use leptos_router::components::Outlet;
 use leptos_router::hooks::use_query;
 use leptos_use::use_cookie;
 
-use crate::spinner::FullScreenSpinner;
 use auth::delegate_identity;
 use auth::{
     extract_identity, generate_anonymous_identity_if_required, set_anonymous_identity_cookie,

@@ -235,7 +235,7 @@ fn NavIcon(
                 fallback=move || {
                     view! {
                         <div class="py-5">
-                            <Icon icon=icon class="text-2xl text-white md:text-3xl" />
+                            <Icon icon=icon class="text-2xl text-white md:text-3xl size-6" />
                         </div>
                     }
                 }
@@ -244,7 +244,7 @@ fn NavIcon(
                 <div class="py-5 border-t-2 border-t-pink-500">
                     <Icon
                         icon=filled_icon.unwrap_or(icon)
-                        class="text-2xl text-white md:text-3xl aspect-square"
+                        class="text-2xl text-white md:text-3xl size-6 aspect-square"
                     />
                 </div>
             </Show>
