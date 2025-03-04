@@ -180,9 +180,8 @@ pub fn App() -> impl IntoView {
 
             // <Script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js"></Script>
             // <Script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js"></Script>
-
             <Router>
-            <main>
+            <main class="bg-black" id="body">
                 <Routes fallback=|| view! { <NotFound/> }.into_view()>
                     // auth redirect routes exist outside main context
                     <GoogleAuthRedirectHandlerRoute/>
@@ -203,6 +202,7 @@ pub fn App() -> impl IntoView {
                         <Route path=path!("/terms-of-service") view=TermsOfService/>
                         <Route path=path!("/privacy-policy") view=PrivacyPolicy/>
                         <Route path=path!("/wallet/:id") view=Wallet/>
+                        <Route path=path!("/wallet") view=Wallet/>
                         <Route path=path!("/leaderboard") view=Leaderboard/>
                         <Route path=path!("/logout") view=Logout/>
                         <Route path=path!("/token/create") view=CreateToken/>

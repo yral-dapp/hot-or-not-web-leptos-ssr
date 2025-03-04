@@ -38,7 +38,7 @@ fn CtxProvider(children: ChildrenFn) -> impl IntoView {
     let canisters_store = RwSignal::new(None::<Canisters<true>>);
     provide_context(canisters_store);
 
-    let temp_identity_res = OnceResource::new_blocking(async move {
+    let temp_identity_res = OnceResource::new(async move {
             generate_anonymous_identity_if_required()
                 .await
                 .expect("Failed to generate anonymous identity?!")
