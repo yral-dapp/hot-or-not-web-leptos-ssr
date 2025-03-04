@@ -221,8 +221,8 @@
 @keyframes bubbleRiseAndVibrate {
     0% {
         bottom: 0;
-        width: 14px;
-        height: 14px;
+        width: 16px;
+        height: 16px;
         opacity: 0.3;
         transform: translateX(-50%) scale(0.4);
     }
@@ -230,25 +230,25 @@
         transform: translateX(calc(-50% + var(--random-x1, 5px))) scale(0.6);
     }
     30% {
-        width: 30px;
-        height: 30px;
+        width: 28px;
+        height: 28px;
         opacity: 1;
         transform: translateX(calc(-50% + var(--random-x2, -5px))) scale(1);
     }
     45% {
-        transform: translateX(calc(-50% + var(--random-x3, 7px))) scale(0.9);
+        transform: translateX(calc(-50% + var(--random-x3, 7px)));
     }
     50% {
-        width: 24px;
-        height: 24px;
-        transform: translateX(calc(-50% + var(--random-x4, -7px))) scale(0.8);
+        width: 34px;
+        height: 34px;
+        transform: translateX(calc(-50% + var(--random-x4, -7px))) scale(1);
     }
     65% {
-        transform: translateX(calc(-50% + var(--random-x5, 4px))) scale(0.7);
+        transform: translateX(calc(-50% + var(--random-x5, 4px))) scale(0.8);
     }
     75% {
-        width: 18px;
-        height: 18px;
+        width: 24px;
+        height: 24px;
         transform: translateX(calc(-50% + var(--random-x6, -4px))) scale(0.6);
     }
     90% {
@@ -256,8 +256,8 @@
     }
     100% {
         bottom: 100%;
-        width: 12px;
-        height: 12px;
+        width: 16px;
+        height: 16px;
         opacity: 0;
         transform: translateX(calc(-50% + var(--random-x8, -3px))) scale(0.2);
         margin-left: -2px;
