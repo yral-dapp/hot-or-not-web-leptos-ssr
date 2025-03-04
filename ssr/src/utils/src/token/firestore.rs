@@ -103,7 +103,7 @@ fn get_firebase_config() -> JsValue {
 }
 
 // Initialize Firebase app and Firestore
-pub unsafe fn init_firebase() -> (FirebaseApp, Firestore) {
+pub fn init_firebase() -> (FirebaseApp, Firestore) {
     let config = get_firebase_config();
 
     let app = initializeApp(&config).unwrap();
@@ -162,7 +162,7 @@ impl From<TokenFirestoreBindingsItem> for TokenListItem {
     }
 }
 
-pub unsafe fn listen_to_documents(firestore: &Firestore) -> BoxStream<'static, Vec<TokenListItem>> {
+pub fn listen_to_documents(firestore: &Firestore) -> BoxStream<'static, Vec<TokenListItem>> {
     let (sender, receiver) = mpsc::channel(100);
 
     let collection_ref = collection(firestore, "tokens-list");

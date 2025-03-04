@@ -174,8 +174,8 @@ pub fn ICPumpListingFeed() -> impl IntoView {
         fetch_res.refetch();
         if let Some(principal) = curr_principal.get() {
             spawn_local(async move {
-                let (_app, firestore) = unsafe { init_firebase() };
-                let mut stream = unsafe { listen_to_documents(&firestore) };
+                let (_app, firestore) =  init_firebase();
+                let mut stream = listen_to_documents(&firestore);
                 while let Some(doc) = stream.next().await {
                     let doc = process_token_list_item(doc, principal).await;
                     for item in doc {
@@ -364,7 +364,7 @@ pub fn TokenCard(
     let cans_res = authenticated_canisters();
     let token_owner_c = token_owner.clone();
     let airdrop_action = Action::new(move |&()| {
-        let cans_res = cans_res.clone();
+        let cans_res = cans_res;
         let token_owner_cans_id = token_owner_c.clone().unwrap().canister_id;
         airdrop_popup.set(true);
         send_wrap(async move {

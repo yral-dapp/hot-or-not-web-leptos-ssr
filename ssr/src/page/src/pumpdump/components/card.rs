@@ -31,7 +31,7 @@ pub fn GameCard(token: ProcessedTokenListResponse) -> impl IntoView {
     Effect::new(move |_| {
         match (
             show_selected_card.get(),
-            card_query.as_ref().and_then(|c| Some(c.details())),
+            card_query.as_ref().map(|c| c.details()),
         ) {
             (ShowSelectedCard(true), Some((root, Some(result)))) if root == token.root => {
                 show_selected_card.set(ShowSelectedCard(false));

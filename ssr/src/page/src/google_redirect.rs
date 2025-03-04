@@ -182,12 +182,12 @@ pub fn GoogleRedirectHandler() -> impl IntoView {
             <Suspense>
                 {move || {
                     identity_resource.get()
-                        .map(|identity_res: RedirectHandlerReturnType| match identity_res {
+                        .and_then(|identity_res: RedirectHandlerReturnType| match identity_res {
                             RedirectHandlerReturnType::Identity(identity_res) => {
                                 Some(view! { <IdentitySender identity_res/> })
                             }
                             RedirectHandlerReturnType::ExternalClient(_) => None,
-                        }).flatten()
+                        })
                 }}
 
             </Suspense>

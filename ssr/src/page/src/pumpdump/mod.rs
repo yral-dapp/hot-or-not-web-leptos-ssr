@@ -78,7 +78,7 @@ pub fn PumpNDump() -> impl IntoView {
     let card_query_fused = RwSignal::new(card_query.get_untracked().ok());
 
     let auth_cans = authenticated_canisters();
-    provide_context(PlayerDataRes::derive(auth_cans.clone()));
+    provide_context(PlayerDataRes::derive(auth_cans));
 
     let (should_show, set_should_show) = use_cookie::<bool, FromToStringCodec>("show_onboarding");
     let show_onboarding = ShowOnboarding(should_show, set_should_show);
@@ -88,7 +88,7 @@ pub fn PumpNDump() -> impl IntoView {
 
     let cans = unauth_canisters();
     let token_fetch_action = Action::new(move |page: &u32| {
-        let cans_wire_res = auth_cans.clone();
+        let cans_wire_res = auth_cans;
         let cans = cans.clone();
         let page = *page;
         send_wrap(async move {

@@ -106,7 +106,7 @@ fn CreateTokenErrorPopup(
         <ErrorPopup
             error
             header=move || {
-                let token_name = token_name.clone();
+                let token_name = token_name;
                 view! {
                     Token
                     <span class="text-primary-600">
@@ -148,7 +148,7 @@ pub fn TokenCreationPopup(
                         <CreateTokenErrorPopup
                             close_popup=close_popup.write_only()
                             error=e
-                            token_name=token_name.clone()
+                            token_name=token_name
                         />
                     })
                 }

@@ -240,7 +240,7 @@ fn WalletCardOptions(
         let root_c = root.clone();
         let cans_res = authenticated_canisters();
         let airdrop_action = Action::new(move |&()| {
-            let cans_res = cans_res.clone();
+            let cans_res = cans_res;
             let token_owner_cans_id = token_owner_c.clone().unwrap().canister_id;
             airdrop_popup.set(true);
             let root = Principal::from_text(root_c.clone()).unwrap();

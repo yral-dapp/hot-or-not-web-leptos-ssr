@@ -165,7 +165,7 @@ impl VideoWatched {
 
             let cans_store: RwSignal<Option<Canisters<true>>> = auth_canisters_store();
 
-            let post_for_time = vid_details.clone();
+            let post_for_time = vid_details;
             let _ = use_event_listener(container_ref, ev::timeupdate, move |evt| {
                 let user = user_details_can_store_or_ret!(cans_store);
                 let post_o = post_for_time();
@@ -245,7 +245,7 @@ impl VideoWatched {
             });
 
             // video duration watched - warehousing
-            let post_for_warehouse = vid_details.clone();
+            let post_for_warehouse = vid_details;
             let _ = use_event_listener(container_ref, ev::pause, move |evt| {
                 let user = user_details_can_store_or_ret!(cans_store);
                 let post_o = post_for_warehouse();

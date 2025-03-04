@@ -1,15 +1,9 @@
 use candid::Principal;
-use component::{back_btn::BackButton, skeleton::Skeleton, title::TitleText};
-use consts::PUMP_AND_DUMP_WORKER_URL;
 use futures::{stream::FuturesOrdered, StreamExt};
-use leptos::html::Div;
-use leptos::prelude::*;
+use leptos::{html::Div, prelude::*};
 use leptos_use::{use_infinite_scroll_with_options, UseInfiniteScrollOptions};
-use state::canisters::authenticated_canisters;
-use utils::{send_wrap, try_or_redirect};
 use yral_canisters_client::{
-    individual_user_template::{GameDirection, IndividualUserTemplate, ParticipatedGameInfo},
-    sns_ledger::MetadataValue,
+    individual_user_template::IndividualUserTemplate, sns_ledger::MetadataValue,
     sns_root::ListSnsCanistersArg,
 };
 use yral_canisters_common::{
@@ -17,8 +11,12 @@ use yral_canisters_common::{
     Canisters,
 };
 use yral_pump_n_dump_common::rest::{CompletedGameInfo, UncommittedGameInfo, UncommittedGamesRes};
-
+use component::{back_btn::BackButton, skeleton::Skeleton, title::TitleText};
+use consts::PUMP_AND_DUMP_WORKER_URL;
 use crate::pumpdump::{convert_e8s_to_cents, GameResult};
+use state::canisters::authenticated_canisters;
+
+use utils::try_or_redirect;
 
 use super::GameState;
 
@@ -82,8 +80,6 @@ async fn load_history(cans: Canisters<true>, page: u64) -> Result<(GameplayHisto
     //     return Ok((history, true));
     // }
 
-    use utils::token::icpump::IcpumpTokenInfo;
-    use yral_canisters_common::utils::token::RootType;
     let (items, request_more) = match page {
         0 => (load_uncommitted_games(&cans).await?, true),
         page => {
@@ -344,24 +340,22 @@ pub fn PndProfilePage() -> impl IntoView {
 
     let auth_cans = authenticated_canisters();
     let auth_cans_for_profile = auth_cans.clone();
-    let load_profile_data: Action<(), std::result::Result<(), String>, LocalStorage> =
-        Action::new_unsync(move |&()| {
-            let value = auth_cans_for_profile.clone();
-            async move {
-                let cans_wire = value.await.map_err(|e| e.to_string())?;
+    let load_profile_data: Action<(), std::result::Result<(), _>, LocalStorage> = Action::new_unsync(move |&()| {
+        let value = auth_cans_for_profile.clone();
+        async move {
+            let cans_wire = value.get().ok_or(ServerFnError::new("Auth failed"))??;
 
-                let user = cans_wire.profile_details.clone();
-                let canisters = Canisters::from_wire(cans_wire.clone(), expect_context())
-                    .map_err(|e| e.to_string())?;
+            let user = cans_wire.profile_details.clone();
+            let canisters = Canisters::from_wire(cans_wire.clone(), expect_context())?;
 
-                let ind_user = canisters.individual_user(canisters.user_canister()).await;
+            let ind_user = canisters.individual_user(canisters.user_canister()).await;
 
-                // TODO: send telemetry or something for these errors
-                profile_data.set(Some(ProfileData::load(user, ind_user).await?));
+            // TODO: send telemetry or something for these errors
+            profile_data.set(Some(ProfileData::load(user, ind_user).await.map_err(|e| ServerFnError::new(e))?));
 
-                Ok::<_, String>(())
-            }
-        });
+            Ok::<_, ServerFnError>(())
+        }
+    });
 
     Effect::new(move |_| {
         if profile_data.get_untracked().is_none() {
@@ -370,33 +364,6 @@ pub fn PndProfilePage() -> impl IntoView {
     });
 
     let auth_can_for_history = auth_cans.clone();
-    let page = RwSignal::new(0);
-    let should_load_more = RwSignal::new(true);
-    let load_gameplay_history: Action<u64, std::result::Result<(), String>, LocalStorage> =
-        Action::new_unsync(move |&page| {
-            let cans_wire_res = auth_can_for_history.clone();
-            send_wrap(async move {
-                // since we are starting a load job, no more load jobs should be start
-                should_load_more.set(false);
-                let cans_wire = cans_wire_res.await.map_err(|_| "Couldn't get cans_wire")?;
-                let cans = Canisters::from_wire(cans_wire.clone(), expect_context())
-                    .map_err(|_| "Unable to authenticate".to_string())?;
-
-                let (processed_items, had_items) = load_history(cans, page).await?;
-                gameplay_history.update(|list| {
-                    list.extend(processed_items);
-                });
-
-                if had_items {
-                    // since there were tokens loaded
-                    // assume we have more tokens to load
-                    // so, allow token loading
-                    should_load_more.set(true)
-                }
-
-                Ok::<_, String>(())
-            })
-        });
     let page = RwSignal::new(0);
     let should_load_more = RwSignal::new(true);
 
@@ -411,7 +378,9 @@ pub fn PndProfilePage() -> impl IntoView {
                 }
                 // since we are starting a load job, no more load jobs should be start
                 should_load_more.set(false);
-                let cans_wire = cans_wire_res.await.map_err(|_| "Couldn't get cans_wire");
+                let cans_wire = cans_wire_res
+                    .await
+                    .map_err(|_| "Couldn't get cans_wire");
                 let cans_wire = try_or_redirect!(cans_wire);
                 let cans = Canisters::from_wire(cans_wire.clone(), expect_context())
                     .map_err(|_| "Unable to authenticate".to_string());

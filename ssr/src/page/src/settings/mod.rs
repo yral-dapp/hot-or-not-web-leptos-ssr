@@ -14,6 +14,7 @@ use utils::notifications::get_token_for_principal;
 use yral_canisters_common::utils::profile::ProfileDetails;
 
 #[component]
+#[allow(dead_code)]
 fn MenuItem(
     #[prop(into)] text: String,
     #[prop(into)] href: String,

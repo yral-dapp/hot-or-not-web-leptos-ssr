@@ -42,7 +42,7 @@ fn CtxProvider(children: ChildrenFn) -> impl IntoView {
             .expect("Failed to generate anonymous identity?!")
     });
 
-    let temp_identity_c = temp_identity_res.clone();
+    let temp_identity_c = temp_identity_res;
     LocalResource::new(move || async move {
         let temp_identity = temp_identity_c.await;
         let Some(id) = temp_identity else {
@@ -74,7 +74,7 @@ fn CtxProvider(children: ChildrenFn) -> impl IntoView {
         use_local_storage::<Option<Principal>, JsonSerdeCodec>(USER_CANISTER_ID_STORE);
     let (_, set_user_principal) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE);
 
-    let temp_identity_c = temp_identity_res.clone();
+    let temp_identity_c = temp_identity_res;
     let canisters_res: AuthCansResource = Resource::new(
         move || MockPartialEq(auth()),
         move |auth_id| {
@@ -99,7 +99,7 @@ fn CtxProvider(children: ChildrenFn) -> impl IntoView {
             })
         },
     );
-    provide_context::<AuthCansResource>(canisters_res.clone());
+    provide_context::<AuthCansResource>(canisters_res);
 
     let location = leptos_router::hooks::use_location();
 

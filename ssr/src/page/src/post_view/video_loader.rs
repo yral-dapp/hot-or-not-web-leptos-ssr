@@ -107,7 +107,7 @@ pub fn VideoView(
     #[prop(optional)] autoplay_at_render: bool,
     muted: RwSignal<bool>,
 ) -> impl IntoView {
-    let post_for_uid = post.clone();
+    let post_for_uid = post;
     let uid = Memo::new(move |_| post_for_uid.with(|p| p.as_ref().map(|p| p.uid.clone())));
     let view_bg_url = move || uid().map(bg_url);
     let view_video_url = move || uid().map(mp4_url);
@@ -134,12 +134,12 @@ pub fn VideoView(
     // Video views send to canister
     // 1. When video is paused -> partial video view
     // 2. When video is 95% done -> full view
-    let post_for_view = post.clone();
+    let post_for_view = post;
     let send_view_detail_action =
         Action::new(move |(percentage_watched, watch_count): &(u8, u8)| {
             let percentage_watched = *percentage_watched;
             let watch_count = *watch_count;
-            let post_for_view = post_for_view.clone();
+            let post_for_view = post_for_view;
 
             send_wrap(async move {
                 let canisters = unauth_canisters();

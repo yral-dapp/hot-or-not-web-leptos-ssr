@@ -150,7 +150,7 @@ pub fn PndTest() -> impl IntoView {
 
     let cans_wire = authenticated_canisters();
     let fetch_test_data = Action::new(move |&()| {
-        let cans_wire = cans_wire.clone();
+        let cans_wire = cans_wire;
         send_wrap(async move {
             let cans_wire = cans_wire.await.expect("cans_wire to be there");
             let cans = Canisters::from_wire(cans_wire.clone(), expect_context())
@@ -186,7 +186,7 @@ pub fn PndTest() -> impl IntoView {
     let websocket = RwSignal::new(None);
     let cans_wire = authenticated_canisters();
     let create_websocket_connection = Action::new(move |&()| {
-        let cans_wire = cans_wire.clone();
+        let cans_wire = cans_wire;
         send_wrap(async move {
             let mut ws_url = PUMP_AND_DUMP_WORKER_URL.clone();
             ws_url.set_scheme("ws").expect("schema to valid");

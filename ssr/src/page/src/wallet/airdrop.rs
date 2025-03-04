@@ -60,7 +60,7 @@ fn AirdropButton(
 ) -> impl IntoView {
     let cans_res = authenticated_canisters();
     let airdrop_action = Action::new(move |&()| {
-        let cans_res = cans_res.clone();
+        let cans_res = cans_res;
         let token_owner_cans_id = token_owner.clone().unwrap().canister_id;
         send_wrap(async move {
             if claimed.get() && !buffer_signal.get() {

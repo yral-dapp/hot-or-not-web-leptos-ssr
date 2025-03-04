@@ -128,7 +128,7 @@ pub fn PndWithdrawal() -> impl IntoView {
 
     let auth_wire = authenticated_canisters();
     let send_claim = Action::new(move |&()| {
-        let auth_wire = auth_wire.clone();
+        let auth_wire = auth_wire;
         send_wrap(async move {
             let auth_wire = auth_wire.await.map_err(ServerFnError::new)?;
 

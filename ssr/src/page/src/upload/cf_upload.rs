@@ -146,7 +146,7 @@ mod cf_impl {
     }
 }
 
-// #[cfg(not(feature = "cloudflare"))]
+#[cfg(not(feature = "cloudflare"))]
 mod mock_impl {
     use super::UploadInfo;
     use leptos::prelude::*;

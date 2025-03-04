@@ -142,6 +142,7 @@ fn NsfwToggle() -> impl IntoView {
 }
 
 #[component]
+#[allow(dead_code)]
 fn EnableNotifications(user_details: ProfileDetails) -> impl IntoView {
     let (_, _) = account_connected_reader();
 

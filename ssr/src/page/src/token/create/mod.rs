@@ -207,10 +207,11 @@ macro_rules! input_element {
         }
     };
 }
-
 macro_rules! input_component {
     ($name:ident, $input_element:ident, $input_type:ident, $attrs:expr) => {
         #[component]
+        #[allow(dead_code)]
+        #[allow(unused_variables)]
         fn $name<T: 'static, U: Fn(T) + 'static + Copy, V: Fn(String) -> Option<T> + 'static + Copy>(
             #[prop(into)] heading: String,
             #[prop(into)] placeholder: String,
@@ -350,7 +351,7 @@ pub fn CreateToken() -> impl IntoView {
     let cans_wire_res = authenticated_canisters();
 
     let create_action = Action::new(move |&()| {
-        let cans_wire_res = cans_wire_res.clone();
+        let cans_wire_res = cans_wire_res;
         async move {
             let cans_wire = cans_wire_res.await.map_err(|e| e.to_string())?;
             let cans = Canisters::from_wire(cans_wire.clone(), expect_context())

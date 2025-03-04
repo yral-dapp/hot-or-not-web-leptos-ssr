@@ -321,7 +321,7 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
                 <ProgressItem initial_text="Publishing" done_text="Published" loading=publishing />
                 <Suspense>
                     {move || {
-                        let uid = upload_action.get().map(|a| a.take()).flatten()?;
+                        let uid = upload_action.get().map(|a| a.take())??;
                         let cans_wire = cans_res.get()?.ok()?;
                         let canisters = Canisters::from_wire(cans_wire, expect_context()).ok()?;
                         publish_action.dispatch((canisters, uid));

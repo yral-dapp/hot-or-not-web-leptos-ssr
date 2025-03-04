@@ -78,9 +78,9 @@ impl PlayerDataRes {
             },
         );
 
-        let read_c = read.clone();
+        let read_c = read;
         let update = Action::new(move |&update_kind| {
-            let read = read_c.clone();
+            let read = read_c;
             async move {
                 let Ok(pd) = read.await else {
                     return;

@@ -49,9 +49,9 @@ fn ProfilePostWithUpdates<const LIMIT: u64, VidStream: ProfVideoStream<LIMIT>>(
             .map(|c| c.user_canister() == initial_post.canister_id)
             .unwrap_or(false)
         {
-            view! { <YourProfileOverlay /> }.into_any()
+            Some(view! { <YourProfileOverlay /> }.into_any())
         } else {
-            view! { <></> }.into_any()
+            None
         }
     };
 

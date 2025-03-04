@@ -166,7 +166,7 @@ fn TokenTransferInner(
 
     let send_action = Action::new(move |&()| {
         let root = root.clone();
-        let auth_cans_wire = auth_cans_wire.clone();
+        let auth_cans_wire = auth_cans_wire;
         send_wrap(async move {
             let auth_cans_wire = auth_cans_wire.await?;
             let cans = Canisters::from_wire(auth_cans_wire.clone(), expect_context())?;
