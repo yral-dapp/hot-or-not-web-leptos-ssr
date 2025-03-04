@@ -174,7 +174,7 @@ pub fn ICPumpListingFeed() -> impl IntoView {
         fetch_res.refetch();
         if let Some(principal) = curr_principal.get() {
             spawn_local(async move {
-                let (_app, firestore) =  init_firebase();
+                let (_app, firestore) = init_firebase();
                 let mut stream = listen_to_documents(&firestore);
                 while let Some(doc) = stream.next().await {
                     let doc = process_token_list_item(doc, principal).await;
