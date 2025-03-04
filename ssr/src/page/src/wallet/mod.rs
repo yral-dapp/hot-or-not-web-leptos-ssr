@@ -22,7 +22,6 @@ use utils::try_or_redirect_opt;
 use yral_canisters_common::utils::profile::ProfileDetails;
 use yral_canisters_common::Canisters;
 
-
 /// Controller for the login modal, passed through context
 /// under wallet
 #[derive(Debug, Clone, Copy)]

@@ -7,9 +7,11 @@ use leptos::prelude::*;
 use leptos_use::{use_infinite_scroll_with_options, UseInfiniteScrollOptions};
 use state::canisters::authenticated_canisters;
 use utils::{send_wrap, try_or_redirect};
-use yral_canisters_client::{individual_user_template::{
-    GameDirection, IndividualUserTemplate, ParticipatedGameInfo,
-}, sns_ledger::MetadataValue, sns_root::ListSnsCanistersArg};
+use yral_canisters_client::{
+    individual_user_template::{GameDirection, IndividualUserTemplate, ParticipatedGameInfo},
+    sns_ledger::MetadataValue,
+    sns_root::ListSnsCanistersArg,
+};
 use yral_canisters_common::{
     utils::profile::{propic_from_principal, ProfileDetails},
     Canisters,
@@ -409,9 +411,7 @@ pub fn PndProfilePage() -> impl IntoView {
                 }
                 // since we are starting a load job, no more load jobs should be start
                 should_load_more.set(false);
-                let cans_wire = cans_wire_res
-                    .await
-                    .map_err(|_| "Couldn't get cans_wire");
+                let cans_wire = cans_wire_res.await.map_err(|_| "Couldn't get cans_wire");
                 let cans_wire = try_or_redirect!(cans_wire);
                 let cans = Canisters::from_wire(cans_wire.clone(), expect_context())
                     .map_err(|_| "Unable to authenticate".to_string());

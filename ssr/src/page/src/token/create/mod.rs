@@ -540,7 +540,8 @@ fn AdvanceSettings(
                 }).collect_view()
             }
         </div>
-    }.into_any()
+    }
+    .into_any()
 }
 
 #[component]

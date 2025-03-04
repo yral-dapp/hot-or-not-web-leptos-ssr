@@ -37,22 +37,19 @@ fn CtxProvider(children: ChildrenFn) -> impl IntoView {
     provide_context(canisters_store);
 
     let temp_identity_res = OnceResource::new(async move {
-            generate_anonymous_identity_if_required()
-                .await
-                .expect("Failed to generate anonymous identity?!")
-        },
-    );
+        generate_anonymous_identity_if_required()
+            .await
+            .expect("Failed to generate anonymous identity?!")
+    });
 
     let temp_identity_c = temp_identity_res.clone();
-    LocalResource::new(move || {
-        async move {
-            let temp_identity = temp_identity_c.await;
-            let Some(id) = temp_identity else {
-                return;
-            };
-            if let Err(e) = set_anonymous_identity_cookie(id).await {
-                log::error!("Failed to set anonymous identity as cookie?! err {e}");
-            }
+    LocalResource::new(move || async move {
+        let temp_identity = temp_identity_c.await;
+        let Some(id) = temp_identity else {
+            return;
+        };
+        if let Err(e) = set_anonymous_identity_cookie(id).await {
+            log::error!("Failed to set anonymous identity as cookie?! err {e}");
         }
     });
 
@@ -82,7 +79,7 @@ fn CtxProvider(children: ChildrenFn) -> impl IntoView {
         move || MockPartialEq(auth()),
         move |auth_id| {
             send_wrap(async move {
-            let temp_identity = temp_identity_c.await;
+                let temp_identity = temp_identity_c.await;
                 let ref_principal = referrer_principal.get_untracked();
 
                 if let Some(id_wire) = auth_id.0 {
