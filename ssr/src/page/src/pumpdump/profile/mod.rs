@@ -355,7 +355,7 @@ pub fn PndProfilePage() -> impl IntoView {
                 profile_data.set(Some(
                     ProfileData::load(user, ind_user)
                         .await
-                        .map_err(|e| ServerFnError::new)?,
+                        .map_err(|e| ServerFnError::new(e.to_string()))?,
                 ));
 
                 Ok::<_, ServerFnError>(())

@@ -207,6 +207,9 @@ macro_rules! input_element {
         }
     };
 }
+
+#[allow(dead_code)]
+#[allow(unused_variables)]
 macro_rules! input_component {
     ($name:ident, $input_element:ident, $input_type:ident, $attrs:expr) => {
         #[component]
