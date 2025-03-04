@@ -112,7 +112,7 @@ module.exports = {
             opacity: '0',
             transform: 'translateY(0%)',
           },
-        }
+        },
       },
       animation: {
         "blink-colors": "blink-colors 5s step-end infinite",
