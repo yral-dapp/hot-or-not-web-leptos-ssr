@@ -1,14 +1,20 @@
 use candid::Principal;
 use component::{back_btn::BackButton, skeleton::Skeleton, title::TitleText};
+use consts::PUMP_AND_DUMP_WORKER_URL;
+use futures::{stream::FuturesOrdered, StreamExt};
 use leptos::html::Div;
 use leptos::prelude::*;
 use leptos_use::{use_infinite_scroll_with_options, UseInfiniteScrollOptions};
 use state::canisters::authenticated_canisters;
-use utils::send_wrap;
-use yral_canisters_client::individual_user_template::{
+use utils::{send_wrap, try_or_redirect};
+use yral_canisters_client::{individual_user_template::{
     GameDirection, IndividualUserTemplate, ParticipatedGameInfo,
+}, sns_ledger::MetadataValue, sns_root::ListSnsCanistersArg};
+use yral_canisters_common::{
+    utils::profile::{propic_from_principal, ProfileDetails},
+    Canisters,
 };
-use yral_canisters_common::{utils::profile::ProfileDetails, Canisters};
+use yral_pump_n_dump_common::rest::{CompletedGameInfo, UncommittedGameInfo, UncommittedGamesRes};
 
 use crate::pumpdump::{convert_e8s_to_cents, GameResult};
 
@@ -41,26 +47,19 @@ struct GameplayHistoryItem {
 
 type GameplayHistory = Vec<GameplayHistoryItem>;
 
-fn compute_result(info: ParticipatedGameInfo) -> GameResult {
-    let user_direction = match info.pumps.cmp(&info.dumps) {
-        std::cmp::Ordering::Greater => GameDirection::Pump,
-        std::cmp::Ordering::Less => GameDirection::Dump,
-        std::cmp::Ordering::Equal => return GameResult::Win { amount: 0 },
-    };
+fn compute_result(info: impl Into<CompletedGameInfo>) -> GameResult {
+    let info = info.into();
 
-    // TODO: make game direction comparable
-    let m = |d: GameDirection| match d {
-        GameDirection::Pump => 0,
-        GameDirection::Dump => 1,
-    };
+    let reward = convert_e8s_to_cents(info.reward);
+    let spent = info.pumps as u128 + info.dumps as u128;
 
-    if m(user_direction) == m(info.game_direction) {
-        GameResult::Win {
-            amount: convert_e8s_to_cents(info.reward),
+    if spent > reward {
+        GameResult::Loss {
+            amount: spent - reward,
         }
     } else {
-        GameResult::Loss {
-            amount: info.pumps as u128 + info.dumps as u128,
+        GameResult::Win {
+            amount: reward - spent,
         }
     }
 }
@@ -83,9 +82,119 @@ async fn load_history(cans: Canisters<true>, page: u64) -> Result<(GameplayHisto
 
     use utils::token::icpump::IcpumpTokenInfo;
     use yral_canisters_common::utils::token::RootType;
+    let (items, request_more) = match page {
+        0 => (load_uncommitted_games(&cans).await?, true),
+        page => {
+            let page = page - 1; // -1 to take into account the uncommitted games
+            let limit = 10;
+            let start_index = page * limit;
+            let items = load_from_chain(&cans, start_index, limit).await?;
+            let request_more = !items.is_empty();
 
-    let limit = 25;
-    let start_index = page * limit;
+            (items, request_more)
+        }
+    };
+
+    let token_infos = items
+        .into_iter()
+        .map(async |item| {
+            let token_root = item.token_root();
+
+            let owner_and_pfp_fut = async {
+                let token_owner = cans.get_token_owner(token_root).await.ok().flatten();
+                let (token_owner_principal, token_owner_canister) = token_owner
+                    .map(|o| (o.principal_id, Some(o.canister_id)))
+                    .unwrap_or_else(|| (Principal::anonymous(), None));
+
+                let pfp = if let Some(canister) = token_owner_canister {
+                    cans.individual_user(canister)
+                        .await
+                        .get_profile_details()
+                        .await
+                        .map(|details| {
+                            let details = ProfileDetails::from(details);
+                            details.profile_pic_or_random()
+                        })
+                        .ok()
+                } else {
+                    None
+                };
+                let pfp = pfp.unwrap_or_else(|| propic_from_principal(token_owner_principal));
+                (token_owner_principal, pfp)
+            };
+
+            let token_logo_fut = async {
+                let ledger = cans
+                    .sns_root(token_root)
+                    .await
+                    .list_sns_canisters(ListSnsCanistersArg {})
+                    .await
+                    .ok()
+                    .and_then(|l| l.ledger);
+                let Some(ledger) = ledger else {
+                    return propic_from_principal(token_root);
+                };
+
+                cans.sns_ledger(ledger)
+                    .await
+                    .icrc_1_metadata()
+                    .await
+                    .unwrap_or_default()
+                    .into_iter()
+                    .find_map(|(k, v)| {
+                        if k != "icrc1:logo" {
+                            return None;
+                        }
+                        let MetadataValue::Text(logo) = v else {
+                            return None;
+                        };
+                        Some(logo)
+                    })
+                    .unwrap_or_else(|| propic_from_principal(token_root))
+            };
+
+            let ((owner_principal, owner_pfp), logo) =
+                futures::join!(owner_and_pfp_fut, token_logo_fut);
+
+            GameplayHistoryItem {
+                logo,
+                root: token_root,
+                owner_principal,
+                owner_pfp,
+                state: match item {
+                    UncommittedGameInfo::Completed(item) => {
+                        GameState::ResultDeclared(compute_result(item))
+                    }
+                    UncommittedGameInfo::Pending { .. } => GameState::Playing,
+                },
+            }
+        })
+        .collect::<FuturesOrdered<_>>();
+    let processed_items = token_infos.collect().await;
+
+    Ok((processed_items, request_more))
+}
+
+async fn load_uncommitted_games(cans: &Canisters<true>) -> Result<UncommittedGamesRes, String> {
+    let uncommitted_games = PUMP_AND_DUMP_WORKER_URL
+        .join(&format!("/uncommitted_games/{}", cans.user_canister()))
+        .expect("url to be valid");
+
+    let uncommitted_games: UncommittedGamesRes = reqwest::get(uncommitted_games)
+        .await
+        .map_err(|err| format!("Coulnd't load bets: {err}"))?
+        .json()
+        .await
+        .map_err(|err| format!("Couldn't parse bets out of repsonse: {err}"))?;
+
+    Ok(uncommitted_games)
+}
+
+async fn load_from_chain(
+    cans: &Canisters<true>,
+    start_index: u64,
+    limit: u64,
+) -> Result<UncommittedGamesRes, String> {
     let items = cans
         .individual_user(cans.user_canister())
         .await
@@ -95,51 +204,19 @@ async fn load_history(cans: Canisters<true>, page: u64) -> Result<(GameplayHisto
     let items = match items {
         yral_canisters_client::individual_user_template::Result21::Ok(res) => res,
         yral_canisters_client::individual_user_template::Result21::Err(err) => {
-            return Err(format!("Couldn't load played games: {err}"));
+            return match err.as_str() {
+                "ReachedEndOfItemsList" => {
+                    return Ok(Default::default());
+                }
+                _ => Err(format!("Couldn't load played games: {err}")),
+            };
         }
     };
-    let had_items = !items.is_empty();
-
-    let mut processed_items = Vec::with_capacity(items.len());
-    for item in items {
-        let meta = cans
-            .token_metadata_by_root_type(
-                &IcpumpTokenInfo,
-                Some(cans.user_canister()),
-                RootType::Other(item.token_root),
-            )
-            .await
-            .ok()
-            .flatten()
-            .expect("backend to return a token that exists");
-
-        let pfp = cans
-            .individual_user(
-                meta.token_owner
-                    .as_ref()
-                    .expect("owner to exist")
-                    .canister_id,
-            )
-            .await
-            .get_profile_details()
-            .await
-            .map(Into::<ProfileDetails>::into)
-            .map_err(|err| format!("Couldn't load owner profile details: {err}"))?
-            .profile_pic_or_random();
-
-        processed_items.push(GameplayHistoryItem {
-            logo: meta.logo_b64,
-            owner_pfp: pfp,
-            owner_principal: meta
-                .token_owner
-                .expect("owner to exist if backend returns it")
-                .principal_id,
-            root: item.token_root,
-            state: GameState::ResultDeclared(compute_result(item)),
-        })
-    }
-
-    Ok((processed_items, had_items))
+    let items = items
+        .into_iter()
+        .map(|item| UncommittedGameInfo::Completed(item.into()))
+        .collect();
+    Ok(items)
 }
 
 type GameplayHistorySignal = RwSignal<GameplayHistory>;
@@ -170,11 +247,7 @@ fn ProfileDataSection(#[prop(into)] profile_data: ProfileData) -> impl IntoView 
                         src=profile_pic
                     />
                     <div class="flex flex-col text-center items-center gap-4">
-                        <span
-                            class="text-md text-white font-bold w-full"
-                        >
-                            {display_name}
-                        </span>
+                        <span class="text-md text-white font-bold w-full">{display_name}</span>
                     </div>
                 </div>
             </div>
@@ -196,35 +269,51 @@ fn GameplayHistoryCard(#[prop(into)] details: GameplayHistoryItem) -> impl IntoV
         let root = details.root;
         let (state_label, amount) = match state {
             GameState::ResultDeclared(result) => match result {
-                GameResult::Win { amount } => ("win", amount),
-                GameResult::Loss { amount } => ("loss", amount),
+                GameResult::Win { amount } => ("win", Some(amount)),
+                GameResult::Loss { amount } => ("loss", Some(amount)),
             },
-            _ => unreachable!("gameplay history only includes games with result declared"),
+            GameState::Playing => ("pending", None),
         };
 
-        format!("/?root={root}&state={state_label}&amount={amount}")
+        match amount {
+            Some(amount) => format!("/?root={root}&state={state_label}&amount={amount}"),
+            None => format!("/?root={root}&state={state_label}"),
+        }
     };
     view! {
         <a href=href>
             <div class="rounded-md overflow-hidden relative max-w-32 max-h-40 w-32 h-40">
                 <div class="absolute z-1 inset-x-0 h-1/3 bg-gradient-to-b from-black/50 to-transparent"></div>
                 <div class="absolute z-[2] flex top-2 items-center gap-1 px-2">
-                    <img src=details.owner_pfp alt="Profile name" class="w-4 h-4 shrink-0 object-cover rounded-full" />
-                    <span class="text-xs font-medium line-clamp-1">{details.owner_principal.to_string()}</span>
+                    <img
+                        src=details.owner_pfp
+                        alt="Profile name"
+                        class="w-4 h-4 shrink-0 object-cover rounded-full"
+                    />
+                    <span class="text-xs font-medium line-clamp-1">
+                        {details.owner_principal.to_string()}
+                    </span>
                 </div>
-                <img src=details.logo class="w-full bg-white/5 h-28 object-cover" alt="Coin title" />
+                <img
+                    src=details.logo
+                    class="w-full bg-white/5 h-28 object-cover"
+                    alt="Coin title"
+                />
                 <Show
                     when=move || !state.is_running()
-                    fallback=move || view! {
-                        <div
-                            style="background: linear-gradient(248.46deg, rgba(61, 142, 255, 0.4) 16.67%, rgba(57, 0, 89, 0.4) 52.62%, rgba(226, 1, 123, 0.4) 87.36%);"
-                            class="text-xs font-semibold justify-center py-4 flex items-center text-[#FAFAFA]"
-                        >
-                            Pending
-                        </div>
+                    fallback=move || {
+                        view! {
+                            <div
+                                style="background: linear-gradient(248.46deg, rgba(61, 142, 255, 0.4) 16.67%, rgba(57, 0, 89, 0.4) 52.62%, rgba(226, 1, 123, 0.4) 87.36%);"
+                                class="text-xs font-semibold justify-center py-4 flex items-center text-[#FAFAFA]"
+                            >
+                                Pending
+                            </div>
+                        }
                     }
                 >
-                    <div class="text-xs font-semibold py-1 text-center"
+                    <div
+                        class="text-xs font-semibold py-1 text-center"
                         class=(["bg-primary-800", "text-white"], state.has_won())
                         class=(["text-neutral-400", "bg-[#212121]"], state.has_lost())
                     >
@@ -235,7 +324,8 @@ fn GameplayHistoryCard(#[prop(into)] details: GameplayHistoryItem) -> impl IntoV
                         class=(["bg-primary-600", "text-white"], state.has_won())
                         class=(["bg-neutral-600", "text-neutral-400"], state.has_lost())
                     >
-                        {state.winnings().or(state.lossings())} Cents
+                        {state.winnings().or(state.lossings())}
+                        Cents
                     </div>
                 </Show>
             </div>
@@ -305,18 +395,44 @@ pub fn PndProfilePage() -> impl IntoView {
                 Ok::<_, String>(())
             })
         });
+    let page = RwSignal::new(0);
+    let should_load_more = RwSignal::new(true);
 
     let scroll_container = NodeRef::<Div>::new();
     let is_loading = use_infinite_scroll_with_options(
         scroll_container,
-        move |_| async move {
-            if !should_load_more.get() {
-                return;
+        move |_| {
+            let cans_wire_res = auth_can_for_history.clone();
+            async move {
+                if !should_load_more.get() {
+                    return;
+                }
+                // since we are starting a load job, no more load jobs should be start
+                should_load_more.set(false);
+                let cans_wire = cans_wire_res
+                    .await
+                    .map_err(|_| "Couldn't get cans_wire");
+                let cans_wire = try_or_redirect!(cans_wire);
+                let cans = Canisters::from_wire(cans_wire.clone(), expect_context())
+                    .map_err(|_| "Unable to authenticate".to_string());
+                let cans = try_or_redirect!(cans);
+
+                let (processed_items, had_items) =
+                    try_or_redirect!(load_history(cans, page.get_untracked()).await);
+                gameplay_history.update(|list| {
+                    list.extend(processed_items);
+                });
+
+                if had_items {
+                    // since there were tokens loaded
+                    // assume we have more tokens to load
+                    // so, allow token loading
+                    page.update_untracked(|v| {
+                        *v += 1;
+                    });
+                    should_load_more.set(true);
+                }
             }
-            load_gameplay_history.dispatch(page.get_untracked());
-            page.update_untracked(|v| {
-                *v += 1;
-            });
         },
         UseInfiniteScrollOptions::default()
             .distance(400f64)
@@ -339,7 +455,11 @@ pub fn PndProfilePage() -> impl IntoView {
             </Show>
             <div class="w-11/12 flex justify-center">
                 <div node_ref=scroll_container class="flex flex-wrap gap-4 justify-center pt-8 pb-16">
-                    <For each=move || gameplay_history.get().into_iter().enumerate() key=|(idx, _)| *idx let:item>
+                    <For
+                        each=move || gameplay_history.get().into_iter().enumerate()
+                        key=|(idx, _)| *idx
+                        let:item
+                    >
                         <GameplayHistoryCard details=item.1 />
                     </For>
                     <Show when=move || is_loading() && should_load_more.get_untracked()>

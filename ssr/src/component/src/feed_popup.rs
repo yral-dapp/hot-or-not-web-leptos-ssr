@@ -19,19 +19,19 @@ pub fn FeedPopUp<F: Fn(MouseEvent) + 'static>(
                 <div class="flex flex-col justify-center w-9/12 sm:w-4/12 relative">
                     <img
                         class="h-28 w-28 absolute -left-4 -top-10"
-                        src="/img/coins/coin-topleft.svg"
+                        src="/img/common/coins/coin-topleft.svg"
                     />
                     <img
                         class="h-18 w-18 absolute -right-2 -top-14"
-                        src="/img/coins/coin-topright.svg"
+                        src="/img/common/coins/coin-topright.svg"
                     />
                     <img
                         class="h-18 w-18 absolute -bottom-14 -left-8"
-                        src="/img/coins/coin-bottomleft.svg"
+                        src="/img/common/coins/coin-bottomleft.svg"
                     />
                     <img
                         class="h-18 w-18 absolute -bottom-12 -right-2"
-                        src="/img/coins/coin-bottomright.svg"
+                        src="/img/common/coins/coin-bottomright.svg"
                     />
                     <span class="text-white text-3xl text-center text-bold p-2 whitespace-pre-line">
                         {header_text}

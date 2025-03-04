@@ -9,9 +9,8 @@ use super::login_modal::LoginModal;
 pub fn ConnectLogin(
     #[prop(optional, default = "Login")] login_text: &'static str,
     #[prop(optional, default = "menu")] cta_location: &'static str,
+    #[prop(optional, default = RwSignal::new(false))] show_login: RwSignal<bool>,
 ) -> impl IntoView {
-    let show_login = RwSignal::new(false);
-
     LoginJoinOverlayViewed.send_event();
 
     let login_click_action = Action::new(move |()| async move {

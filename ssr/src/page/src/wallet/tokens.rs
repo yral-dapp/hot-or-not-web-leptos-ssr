@@ -15,9 +15,11 @@ use component::share_popup::ShareContent;
 use component::tooltip::Tooltip;
 use consts::USER_PRINCIPAL_STORE;
 use leptos::html;
+use leptos_router::hooks::use_navigate;
 use leptos_use::use_cookie;
 use state::canisters::authenticated_canisters;
 use state::canisters::unauth_canisters;
+use utils::event_streaming::events::account_connected_reader;
 use utils::host::{get_host, show_pnd_page};
 use utils::send_wrap;
 use utils::token::icpump::IcpumpTokenInfo;
@@ -30,6 +32,8 @@ use yral_pump_n_dump_common::WithdrawalState;
 
 use leptos::prelude::*;
 use leptos_icons::*;
+
+use super::ShowLoginSignal;
 
 #[component]
 pub fn TokenViewFallback() -> impl IntoView {
@@ -114,6 +118,23 @@ pub fn WalletCard(
         user_principal,
     });
 
+    // let airdrop_popup = RwSignal::new(false);
+    // let buffer_signal = RwSignal::new(false);
+    // let claimed = RwSignal::new(is_airdrop_claimed);
+    let (is_connected, _) = account_connected_reader();
+    let show_login = use_context()
+        .map(|ShowLoginSignal(show_login)| show_login)
+        .unwrap_or_else(|| RwSignal::new(false));
+    let nav = use_navigate();
+    let withdraw_handle = move |_| {
+        if !is_connected() {
+            show_login.set(true);
+            return;
+        }
+
+        nav("/pnd/withdraw", Default::default());
+    };
+
     let airdrop_popup = RwSignal::new(false);
     let buffer_signal = RwSignal::new(false);
     let claimed = RwSignal::new(is_airdrop_claimed);
@@ -165,14 +186,14 @@ pub fn WalletCard(
                             <Tooltip icon=Information title="Withdrawal Tokens" description="Only Cents earned above your airdrop amount can be withdrawn." />
                             <span class="ml-auto">{withdrawable_balance}</span>
                         </div>
-                        <a
+                        <button
                             class="rounded-lg px-5 py-2 text-sm text-center font-bold"
                             class=(["pointer-events-none", "text-primary-300", "bg-brand-gradient-disabled"], !is_withdrawable)
                             class=(["text-neutral-50", "bg-brand-gradient"], is_withdrawable)
-                            href="/pnd/withdraw"
+                            on:click=withdraw_handle
                         >
                             Withdraw
-                        </a>
+                        </button>
                     </div>
 
                 })}

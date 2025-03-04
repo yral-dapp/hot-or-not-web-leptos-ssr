@@ -67,13 +67,13 @@ pub fn BullBearSlider() -> impl IntoView {
                 >
                     <img
                         style="filter: drop-shadow( -3px 3px 2px rgba(0, 0, 0, .7));"
-                        src="/img/bear.png"
+                        src="/img/pumpdump/bear.webp"
                         alt="Bear"
                         class=move || format!("h-6 {}", anim_classes.with(|c| c.0))
                     />
                     <img
                         style="filter: drop-shadow( 3px 3px 2px rgba(0, 0, 0, .7));"
-                        src="/img/bull.png"
+                        src="/img/pumpdump/bull.webp"
                         alt="Bull"
                         class=move || format!("h-7 {}", anim_classes.with(|c| c.1))
                     />
@@ -97,13 +97,13 @@ pub fn MockBullBearSlider() -> impl IntoView {
                 >
                     <img
                         style="filter: drop-shadow( -3px 3px 2px rgba(0, 0, 0, .7));"
-                        src="/img/bear.png"
+                        src="/img/pumpdump/bear.webp"
                         alt="Bear"
                         class="h-6 push-right shake"
                     />
                     <img
                         style="filter: drop-shadow( 3px 3px 2px rgba(0, 0, 0, .7));"
-                        src="/img/bull.png"
+                        src="/img/pumpdump/bull.webp"
                         alt="Bull"
                         class="h-7 push-left shake"
                     />

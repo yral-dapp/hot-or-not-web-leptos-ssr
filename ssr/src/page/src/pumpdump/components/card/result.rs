@@ -57,7 +57,7 @@ pub fn PlayingCard() -> impl IntoView {
                     >
                         <div class="flex items-center gap-1">
                             <div class="text-neutral-400 text-xs">Winning Pot:</div>
-                            <img src="/img/cents.png" alt="Coin" class="size-5" />
+                            <img src="/img/pumpdump/cents.webp" alt="Coin" class="size-5" />
                             <div class="text-neutral-200 font-bold">{winning_pot} Cents</div>
                         </div>
                         <button
@@ -71,7 +71,7 @@ pub fn PlayingCard() -> impl IntoView {
                         style="--animation-delay:5s;"
                         class="w-full top-14 animate-slide-up flex items-center gap-1 absolute inset-0 py-2 pl-4 pr-2"
                     >
-                        <img src="/img/player.png" alt="Coin" class="w-5 h-5" />
+                        <img src="/img/pumpdump/player.webp" alt="Coin" class="w-5 h-5" />
                         <div class="text-neutral-200 font-bold">{player_count}</div>
                         <div class="text-neutral-400 text-xs">players are playing - join the action!</div>
                     </div>
@@ -82,7 +82,7 @@ pub fn PlayingCard() -> impl IntoView {
                 <div
                     class="flex relative items-center gap-6 justify-center w-full"
                 >
-                    <audio node_ref=audio_ref preload="auto" src="/pnd-tap.mp3"/>
+                    <audio node_ref=audio_ref preload="auto" src="/img/pumpdump/tap.mp3"/>
                     <DumpButton audio_ref />
 
                     <PumpButton audio_ref />
@@ -119,10 +119,10 @@ fn WonCard(win_amount: u128) -> impl IntoView {
     // TODO: add confetti animation
     view! {
         <div
-            style="background-size: cover; background-position: center; background-image: url('/img/pnd-onboarding-bg.png');"
+            style="background-size: cover; background-position: center; background-image: url('/img/pumpdump/onboarding-bg.webp');"
             class="rounded-2xl overflow-hidden flip-card card-flipped absolute inset-0 h-full w-full shrink-0 items-center justify-center flex flex-col gap-7 pt-14 pb-5 px-5"
         >
-            <img src="/img/trophy.png" alt="Trophy" class="w-32 h-[7.6rem] translate-x-3" />
+            <img src="/img/pumpdump/trophy.webp" alt="Trophy" class="w-32 h-[7.6rem] translate-x-3" />
             <div class="flex flex-col gap-4 items-center">
                 <div class="font-semibold text-xl">Victory is yours!</div>
                 <div class="text-neutral-400 text-center">
@@ -132,7 +132,7 @@ fn WonCard(win_amount: u128) -> impl IntoView {
                     class="bg-[#212121] w-full px-4 py-2 rounded-full flex items-center justify-center gap-2"
                 >
                     <span class="text-neutral-400 text-xs">You have won:</span>
-                    <img src="/img/cents.png" alt="Coin" class="w-5 h-5" />
+                    <img src="/img/pumpdump/cents.webp" alt="Coin" class="w-5 h-5" />
                     <span class="text-neutral-200 font-bold">{win_amount} Cents</span>
                 </div>
             </div>
@@ -179,7 +179,7 @@ fn LostCard() -> impl IntoView {
             style="background: radial-gradient(100% 100% at -14% 74%, rgba(46, 124, 246, 0.16) 0%, rgba(23, 23, 23, 1) 100%);"
             class="rounded-2xl flip-card card-flipped absolute inset-0 h-full w-full shrink-0 items-center justify-center flex flex-col gap-7 pt-14 pb-5 px-5"
         >
-            <img src="/img/sadface.png" alt="Sad face emoji" class="h-36 w-36" />
+            <img src="/img/pumpdump/sadface.webp" alt="Sad face emoji" class="h-36 w-36" />
             <div class="flex flex-col gap-4 items-center">
                 <div class="font-semibold text-xl">The Tide Turned Against You!</div>
                 <div class="text-neutral-400 text-center">

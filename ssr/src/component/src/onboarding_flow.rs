@@ -32,27 +32,27 @@ pub fn OnboardingPopUp(onboard_on_click: WriteSignal<bool>) -> impl IntoView {
                             </p>
                             <img
                                 class="-left-6 top-8 h-5 w-5 absolute"
-                                src="/img/decorator/star.svg"
+                                src="/img/common/decorator/star.svg"
                             />
                             <img
                                 class="-left-2 -top-6 h-4 w-4 absolute"
-                                src="/img/decorator/star.svg"
+                                src="/img/common/decorator/star.svg"
                             />
                             <img
                                 class="left-6 -top-2 h-3 w-3 absolute"
-                                src="/img/decorator/star.svg"
+                                src="/img/common/decorator/star.svg"
                             />
                             <img
                                 class="-right-6 -top-2 h-6 w-6 absolute"
-                                src="/img/decorator/star.svg"
+                                src="/img/common/decorator/star.svg"
                             />
                             <img
                                 class="right-2 -top-1 h-2 w-2 absolute"
-                                src="/img/decorator/star.svg"
+                                src="/img/common/decorator/star.svg"
                             />
                             <img
                                 class="-right-5 bottom-4 h-2 w-2 absolute"
-                                src="/img/decorator/star.svg"
+                                src="/img/common/decorator/star.svg"
                             />
                         </div>
                         <div class="flex flex-col items-center gap-y-4">
@@ -111,7 +111,7 @@ pub fn OnboardingPopUp(onboard_on_click: WriteSignal<bool>) -> impl IntoView {
                         </div>
                         <div class="flex flex-col justify-center gap-y-3 mt-12">
                             <div class="self-center">
-                                <img src="/img/decorator/buy_coin.svg" />
+                                <img src="/img/common/decorator/buy_coin.svg" />
                             </div>
                             <div class="self-center">
                                 <p class="text-white text-center font-medium text-sm leading-normal">
@@ -121,7 +121,7 @@ pub fn OnboardingPopUp(onboard_on_click: WriteSignal<bool>) -> impl IntoView {
                         </div>
                         <div class="flex flex-col justify-center gap-y-3 mt-12">
                             <div class="self-center">
-                                <img src="/img/decorator/prizes.svg" />
+                                <img src="/img/common/decorator/prizes.svg" />
                             </div>
                             <div class="self-center">
                                 <p class="text-white text-center font-medium text-sm leading-normal">
@@ -147,10 +147,10 @@ pub fn OnboardingTopDecorator() -> impl IntoView {
     view! {
         <div class="top-0 w-full flex justify-center">
             <div class="absolute left-0 top-0">
-                <img src="/img/decorator/decore-left.svg" />
+                <img src="/img/common/decorator/decore-left.svg" />
             </div>
             <div class="absolute right-0 top-0">
-                <img src="/img/decorator/decore-right.svg" />
+                <img src="/img/common/decorator/decore-right.svg" />
             </div>
         </div>
     }
@@ -210,19 +210,19 @@ pub fn OnboardingContent(
                     </div>
                     <Show when=move || { onboarding_page_no.get() == 2 }>
                         <img
-                            src="/img/decorator/coin_arrow.svg"
+                            src="/img/common/decorator/coin_arrow.svg"
                             class="absolute h-[30vh] hot-left-arrow -ml-56 sm:-ml-64 mt-48 sm:mt:64"
                         />
                     </Show>
                     <Show when=move || { onboarding_page_no.get() == 3 }>
                         <img
-                            src="/img/decorator/hot_arrow.svg"
+                            src="/img/common/decorator/hot_arrow.svg"
                             class="absolute h-[33vh] hot-left-arrow -ml-60 sm:-ml-72 mt-48 sm:mt-64"
                         />
                     </Show>
                     <Show when=move || { onboarding_page_no.get() == 4 }>
                         <img
-                            src="/img/decorator/not_arrow.svg"
+                            src="/img/common/decorator/not_arrow.svg"
                             class="absolute h-[33vh] hot-left-arrow ml-60 sm:ml-72 mt-48 sm:mt-64"
                         />
                     </Show>

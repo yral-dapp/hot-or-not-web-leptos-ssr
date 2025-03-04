@@ -103,7 +103,7 @@ fn ReferView() -> impl IntoView {
 
     view! {
         <div class="flex flex-col w-full h-full items-center text-white gap-10">
-            <img class="shrink-0 h-40 select-none" src="/img/coins-stash.webp" />
+            <img class="shrink-0 h-40 select-none" src="/img/common/coins-stash.webp" />
             <div class="flex flex-col w-full items-center gap-4 text-center">
                 <span class="font-bold text-2xl">Invite & Win upto <br />500 Coyns</span>
             </div>

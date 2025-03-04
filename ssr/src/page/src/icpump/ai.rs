@@ -72,7 +72,7 @@ pub fn ICPumpAiPage1(
 ) -> impl IntoView {
     view! {
         <div class="flex flex-col items-center justify-center gap-3">
-            <img src="/img/pump-ai.svg" class="h-18 w-18"/>
+            <img src="/img/icpump/pump-ai.svg" class="h-18 w-18"/>
             <div class="font-kumbh font-semibold text-3xl text-center">Welcome to <br/>Pump AI</div>
             <div class="bg-[#202125] w-full rounded-sm relative">
               <input
@@ -144,7 +144,7 @@ pub fn ICPumpAiPage2(
 
     view! {
         <div class="bg-black z-[4] absolute top-0 select-none inset-x-0 py-3 px-4 flex items-center justify-center gap-3">
-            <img src="/img/pump-ai.svg" class="h-5 w-5"/>
+            <img src="/img/icpump/pump-ai.svg" class="h-5 w-5"/>
             <div class="text-xl font-semibold">Pump AI</div>
             <button class="absolute z-[5] left-0 px-4 h-full"
                 on:click={
@@ -323,7 +323,7 @@ pub fn ICPumpAiPage3(
 ) -> impl IntoView {
     view! {
         <div class="bg-black z-[4] absolute top-0 select-none inset-x-0 py-3 px-4 flex items-center justify-center gap-3">
-            <img src="/img/pump-ai.svg" class="h-5 w-5"/>
+            <img src="/img/icpump/pump-ai.svg" class="h-5 w-5"/>
             <div class="text-xl font-semibold">Pump AI</div>
             <button class="absolute z-[5] left-0 px-4 h-full"
                 on:click={
