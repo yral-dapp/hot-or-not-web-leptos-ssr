@@ -219,8 +219,8 @@ macro_rules! input_component {
             #[prop(into)] heading: String,
             #[prop(into)] placeholder: String,
             #[prop(optional)] initial_value: Option<String>,
-            #[prop(optional, into)] input_type: Option<String>,
-            #[prop(default = false)] disabled: bool,
+            #[prop(optional, into)] _input_type: Option<String>,
+            #[prop(default = false)] _disabled: bool,
             updater: U,
             validator: V,
         ) -> impl IntoView {
@@ -284,7 +284,7 @@ macro_rules! input_component {
                         on_input,
                         placeholder,
                         input_class,
-                        input_type
+                        _input_type
                      }}
                     <span class="text-red-500 font-semibold">
                         <Show when=move || show_error() && error()>
@@ -452,7 +452,7 @@ pub fn CreateToken() -> impl IntoView {
                 <InputBox
                     heading="Distribution"
                     placeholder="Distribution Tokens"
-                    input_type="number"
+                    _input_type="number"
                     updater=set_total_distribution
                     // initial_value="100000000".into()
                     initial_value=(ctx

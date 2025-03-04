@@ -1,4 +1,4 @@
-use crate::app::{shell, App};
+use crate::app::shell;
 use axum::response::Response as AxumResponse;
 use axum::{
     body::Body,

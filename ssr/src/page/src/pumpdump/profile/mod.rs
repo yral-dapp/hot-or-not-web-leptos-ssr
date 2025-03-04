@@ -220,11 +220,11 @@ async fn load_from_chain(
 type GameplayHistorySignal = RwSignal<GameplayHistory>;
 
 #[component]
-fn Stat(stat: u64, #[prop(into)] info: String) -> impl IntoView {
+fn Stat(_stat: u64, #[prop(into)] _info: String) -> impl IntoView {
     view! {
         <div class="flex flex-1 flex-col items-center text-white space-y-0.5">
-            <span class="font-bold text-xl text-neutral-50">{stat}</span>
-            <span class="text-md text-neutral-400">{info}</span>
+            <span class="font-bold text-xl text-neutral-50">{_stat}</span>
+            <span class="text-md text-neutral-400">{_info}</span>
         </div>
     }
 }
