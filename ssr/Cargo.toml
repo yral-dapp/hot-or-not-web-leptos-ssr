@@ -44,7 +44,7 @@ serde_bytes.workspace = true
 hex = "0.4.3"
 leptos_icons = "0.3.0"
 icondata = "0.3.0"
-gloo = { version = "0.11.0", features = ["futures", "net", "net", "timers"] }
+gloo = { version = "0.11.0", features = ["futures", "net", "net"] }
 once_cell = "1.19.0"
 web-time.workspace = true
 k256 = { version = "0.13.4", default-features = false, features = [
