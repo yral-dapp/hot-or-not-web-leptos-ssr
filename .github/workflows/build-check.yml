@@ -97,6 +97,6 @@ jobs:
       - name: Find and display hash file
         run: |
           find . -name "hash.txt" -type f          
-      - name: Tree files
-        run: |
-          tree
+      # - name: Tree files
+      #   run: |
+      #     tree
