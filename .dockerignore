@@ -14,6 +14,6 @@
 **/end2end/playwright-report
 **/playwright/.cache
 
-# flyctl launch added from node_modules/.pnpm/tailwindcss@3.4.0/node_modules/tailwindcss/stubs/.gitignore
-!node_modules/.pnpm/tailwindcss@3.4.0/node_modules/tailwindcss/stubs/**/*
+# flyctl launch added from node_modules/.pnpm/tailwindcss@4.0.9/node_modules/tailwindcss/stubs/.gitignore
+!node_modules/.pnpm/tailwindcss@4.0.9/node_modules/tailwindcss/stubs/**/*
 fly.toml
