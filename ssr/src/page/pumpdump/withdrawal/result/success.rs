@@ -21,7 +21,7 @@ pub fn Success() -> impl IntoView {
 
     // Track the withdrawal event
     let auth_cans = authenticated_canisters();
-    let cents_value = formatted_cents.clone().parse::<u64>().unwrap_or(0);
+    let cents_value = formatted_cents.clone().parse::<f64>().unwrap_or(0.0);
     
     create_effect(move |_| {
         let auth_cans_c = auth_cans.clone();

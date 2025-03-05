@@ -991,7 +991,7 @@ impl CentsAdded {
 pub struct CentsWithdrawn;
 
 impl CentsWithdrawn {
-    pub fn send_event(&self, cans_store: Canisters<true>, amount_withdrawn: u64) {
+    pub fn send_event(&self, cans_store: Canisters<true>, amount_withdrawn: f64) {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
         {
             let details = cans_store.profile_details();
