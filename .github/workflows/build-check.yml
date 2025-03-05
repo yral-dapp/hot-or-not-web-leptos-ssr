@@ -90,7 +90,7 @@ jobs:
           name: build-musl
           path: |
             target/x86_64-unknown-linux-musl/release/hot-or-not-web-leptos-ssr
-            ssr/target/x86_64-unknown-linux-musl/release/hash.txt 
+            target/x86_64-unknown-linux-musl/release/hash.txt 
             target/site
             .empty
 
