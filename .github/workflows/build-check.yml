@@ -96,4 +96,4 @@ jobs:
 
       - name: Find and display hash file
         run: |
-          find . -name "hash.txt" -type f -exec cat {} \;
+          find . -name "hash.txt" -type f
