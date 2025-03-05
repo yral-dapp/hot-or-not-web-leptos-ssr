@@ -22,7 +22,6 @@ tokio = { version = "1", optional = true, features = [
     "time",
 ] }
 tower = { version = "0.4", optional = true }
-time = "=0.3.37"
 tower-http = { version = "0.5", features = ["fs", "cors"], optional = true }
 wasm-bindgen = "=0.2.99"
 thiserror = "1.0"
@@ -119,7 +118,7 @@ ciborium = "0.2.2"
 yral-metadata-client = { git = "https://github.com/yral-dapp/yral-metadata", rev = "56e3f1f1f5f452673bee17739520c800c1264295", optional = true }
 yral-metadata-types = { git = "https://github.com/yral-dapp/yral-metadata", rev = "56e3f1f1f5f452673bee17739520c800c1264295", optional = true }
 yral-pump-n-dump-common = { git = "https://github.com/yral-dapp/yral-common", features = ["client"], rev = "78c1ec2888c0705dfc875b47c2f31206eb954fec", version = "0.1.0" }
-uuid = { version = "=1.11.0", features = ["serde", "v4"] }
+uuid = { version = "1.11.0", features = ["serde", "v4"] }
 regex = { version = "1.11.1", optional = true  }
 rand = { version = "0.9.0", default-features = false, features = ["small_rng"]}
 
