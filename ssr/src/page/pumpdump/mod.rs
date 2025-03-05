@@ -1,4 +1,3 @@
-use analytics::setup_flush_timer;
 use codee::string::FromToStringCodec;
 use leptos::{html::Div, *};
 use leptos_router::use_query;
@@ -17,7 +16,6 @@ pub use profile::*;
 pub mod test;
 pub mod withdrawal;
 pub use test::*;
-pub mod analytics;
 
 pub(super) mod model;
 use model::*;
@@ -31,9 +29,6 @@ use components::{
     card::{CardSkeleton, GameCard},
     onboarding::OnboardingPopup,
 };
-
-#[cfg(feature = "hydrate")]
-static ANALYTICS_FLUSH_TIMER_SETUP: std::sync::Once = std::sync::Once::new();
 
 async fn load_selected_card(
     cans: &Canisters<true>,
@@ -73,11 +68,6 @@ async fn load_selected_card(
 
 #[component]
 pub fn PumpNDump() -> impl IntoView {
-    #[cfg(feature = "hydrate")]
-    ANALYTICS_FLUSH_TIMER_SETUP.call_once(|| {
-        setup_flush_timer();
-    });
-
     let card_query = use_query::<CardQuery>();
     let s: ShowSelectedCardSignal = create_rw_signal(ShowSelectedCard(
         card_query.with_untracked(|cq| cq.as_ref().is_ok_and(|q| q.is_valid())),

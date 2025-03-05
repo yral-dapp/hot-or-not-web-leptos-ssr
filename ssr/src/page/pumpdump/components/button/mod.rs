@@ -3,11 +3,15 @@ mod particles;
 use leptos::{html::Audio, *};
 use particles::{FireBubbles, SkullBubbles};
 use yral_pump_n_dump_common::GameDirection;
+use yral_canisters_common::Canisters;
 
 use crate::page::{
     icpump::ProcessedTokenListResponse,
-    pumpdump::{analytics::record_action, PlayerDataRes, RunningGameRes},
+    pumpdump::{PlayerDataRes, RunningGameRes},
 };
+use crate::utils::event_streaming::events::TokenPumpedDumped;
+use crate::state::canisters::authenticated_canisters;
+
 
 fn non_visual_feedback(audio_ref: NodeRef<Audio>) {
     #[cfg(not(feature = "hydrate"))]
@@ -57,6 +61,40 @@ pub fn DumpButton(audio_ref: NodeRef<Audio>) -> impl IntoView {
     };
 
     let spawn_bubbles = create_rw_signal(0u32);
+    let auth_cans = authenticated_canisters();
+
+    let press_count = create_rw_signal(0u32);
+
+    let send_event = leptos_use::use_debounce_fn(
+        move || {
+            let count = press_count.get();
+            if count > 0 {
+                let auth_cans_c = auth_cans.clone();
+                let token_details = token.token_details.clone();
+                let token_root = token.root;
+                let press_count_value = count;
+                
+                spawn_local(async move {
+                    if let Ok(cans_wire) = auth_cans_c.wait_untracked().await {
+                        if let Ok(cans) = Canisters::from_wire(cans_wire, expect_context()) {
+                            TokenPumpedDumped.send_event(
+                                cans,
+                                token_details.token_name,
+                                token_root,
+                                "dump".to_string(),
+                                press_count_value
+                            );
+                        }
+                    }
+                });
+                
+                // Reset the counter after sending
+                press_count.set(0);
+            }
+        },
+        1000.0, // 1 second debounce
+    );
+
     let onclick = move |_| {
         non_visual_feedback(audio_ref);
         spawn_bubbles.update(|b| *b += 1);
@@ -65,13 +103,8 @@ pub fn DumpButton(audio_ref: NodeRef<Audio>) -> impl IntoView {
         };
         ctx.send_bet(GameDirection::Dump);
 
-        // debounceResistanceAnimation();
-        // Record the action for buffered analytics
-        record_action(
-            token.token_details.token_name.clone(),
-            token.root,
-            GameDirection::Dump,
-        );
+        press_count.update(|count| *count += 1);
+        send_event();
     };
 
     view! {
@@ -156,6 +189,39 @@ pub fn PumpButton(audio_ref: NodeRef<Audio>) -> impl IntoView {
     };
 
     let spawn_bubbles = create_rw_signal(0u32);
+    let auth_cans = authenticated_canisters();
+    let press_count = create_rw_signal(0u32);
+
+    let send_event = leptos_use::use_debounce_fn(
+        move || {
+            let count = press_count.get();
+            if count > 0 {
+                let auth_cans_c = auth_cans.clone();
+                let token_details = token.token_details.clone();
+                let token_root = token.root;
+                let press_count_value = count;
+                
+                spawn_local(async move {
+                    if let Ok(cans_wire) = auth_cans_c.wait_untracked().await {
+                        if let Ok(cans) = Canisters::from_wire(cans_wire, expect_context()) {
+                            TokenPumpedDumped.send_event(
+                                cans,
+                                token_details.token_name,
+                                token_root,
+                                "pump".to_string(),
+                                press_count_value
+                            );
+                        }
+                    }
+                });
+                
+                // Reset the counter after sending
+                press_count.set(0);
+            }
+        },
+        1000.0, // 1 second debounce
+    );
+    
     let onclick = move |_| {
         non_visual_feedback(audio_ref);
         spawn_bubbles.update(|b| *b += 1);
@@ -164,13 +230,8 @@ pub fn PumpButton(audio_ref: NodeRef<Audio>) -> impl IntoView {
         };
         ctx.send_bet(GameDirection::Pump);
 
-        // debounceResistanceAnimation();
-        // Record the action for buffered analytics
-        record_action(
-            token.token_details.token_name.clone(),
-            token.root,
-            GameDirection::Pump,
-        );
+        press_count.update(|count| *count += 1);
+        send_event();
     };
 
     view! {

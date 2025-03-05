@@ -1024,6 +1024,7 @@ impl TokenPumpedDumped {
         token_name: String,
         token_root: Principal,
         direction: String,
+        count: u32,
     ) {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
         {
@@ -1041,6 +1042,7 @@ impl TokenPumpedDumped {
                     "token_name": token_name,
                     "token_root": token_root.to_string(),
                     "direction": direction,
+                    "count": count,
                     "is_loggedin": is_loggedin,
                 })
                 .to_string(),
