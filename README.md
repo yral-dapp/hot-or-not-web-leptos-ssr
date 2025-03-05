@@ -15,7 +15,7 @@ If you don't have `cargo-leptos` installed you can install it with
 cargo install cargo-leptos
 ```
 
-Then run
+Then run test
 ```bash
 cargo leptos new --git leptos-rs/start-axum
 ```
