@@ -93,3 +93,7 @@ jobs:
             ssr/target/x86_64-unknown-linux-musl/release/hash.txt 
             target/site
             .empty
+
+      - name: Find and display hash file
+        run: |
+          find . -name "hash.txt" -type f -exec cat {} \;
