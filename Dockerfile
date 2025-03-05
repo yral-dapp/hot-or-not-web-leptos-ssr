@@ -1,7 +1,6 @@
 FROM scratch
 
 WORKDIR /app
-RUN tree
 COPY ./target/x86_64-unknown-linux-musl/release/hot-or-not-web-leptos-ssr .
 COPY ./target/x86_64-unknown-linux-musl/release/hash.txt .
 
