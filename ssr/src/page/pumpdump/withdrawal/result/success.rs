@@ -1,11 +1,12 @@
 use candid::Nat;
-use leptos::{component, view, IntoView, Params, SignalGetUntracked};
+use leptos::{component, create_effect, view, IntoView, Params, SignalGetUntracked};
 use leptos_router::{use_query, Params};
 use yral_canisters_common::utils::token::balance::TokenBalance;
 
 use crate::{
     component::{back_btn::BackButton, title::TitleText},
     try_or_redirect_opt,
+    utils::event_streaming::events::CentsWithdrawn,
 };
 
 #[derive(Debug, PartialEq, Eq, Clone, Params)]
@@ -19,6 +20,13 @@ pub fn Success() -> impl IntoView {
     let SuccessParams { cents } = try_or_redirect_opt!(params.get_untracked());
     let formatted_dolr = TokenBalance::new(cents.clone(), 8).humanize_float_truncate_to_dp(4);
     let formatted_cents = TokenBalance::new(cents.clone(), 6).humanize_float_truncate_to_dp(4);
+
+    // Track the withdrawal event
+    let cents_value = formatted_cents.clone().parse::<f64>().unwrap_or(0.0);
+
+    create_effect(move |_| {
+        CentsWithdrawn.send_event(cents_value);
+    });
 
     Some(view! {
         <div

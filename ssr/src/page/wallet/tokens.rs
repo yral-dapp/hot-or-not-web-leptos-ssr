@@ -25,6 +25,7 @@ use crate::page::wallet::airdrop::AirdropPopup;
 use crate::page::wallet::ShowLoginSignal;
 use crate::state::auth::account_connected_reader;
 use crate::state::canisters::authenticated_canisters;
+use crate::utils::event_streaming::events::CentsAdded;
 use crate::utils::host::{get_host, show_pnd_page};
 use crate::utils::token::icpump::IcpumpTokenInfo;
 use crate::{component::infinite_scroller::InfiniteScroller, state::canisters::unauth_canisters};
@@ -258,6 +259,11 @@ fn WalletCardOptions(
                     .await?;
                 let user = cans.individual_user(cans.user_canister()).await;
                 user.add_token(root).await?;
+
+                if is_utility_token {
+                    CentsAdded.send_event("airdrop".to_string(), 100);
+                }
+
                 buffer_signal.set(false);
                 claimed.set(true);
                 Ok::<_, ServerFnError>(())

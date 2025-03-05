@@ -1,15 +1,18 @@
 use candid::Principal;
+use codee::string::{FromToStringCodec, JsonSerdeCodec};
 use ic_agent::Identity;
 use leptos::html::Input;
 use leptos::{create_effect, MaybeSignal, ReadSignal, RwSignal, SignalGetUntracked};
 use leptos::{create_signal, ev, expect_context, html::Video, NodeRef, SignalGet, SignalSet};
-use leptos_use::{use_event_listener, use_timeout_fn, UseTimeoutFnReturn};
+use leptos_use::storage::use_local_storage;
+use leptos_use::{use_cookie, use_event_listener, use_timeout_fn, UseTimeoutFnReturn};
 use serde_json::json;
 use sns_validation::pbs::sns_pb::SnsInitPayload;
 use wasm_bindgen::JsCast;
 
 use super::EventHistory;
 use crate::component::auth_providers::ProviderKind;
+use crate::consts::{USER_CANISTER_ID_STORE, USER_PRINCIPAL_STORE};
 use crate::state::auth::account_connected_reader;
 use crate::state::canisters::auth_canisters_store;
 use crate::state::history::HistoryCtx;
@@ -49,6 +52,9 @@ pub enum AnalyticsEvent {
     TokensClaimedFromNeuron(TokensClaimedFromNeuron),
     TokensTransferred(TokensTransferred),
     PageVisit(PageVisit),
+    CentsAdded(CentsAdded),
+    CentsWithdrawn(CentsWithdrawn),
+    TokenPumpedDumped(TokenPumpedDumped),
 }
 
 #[derive(Default)]
@@ -950,6 +956,97 @@ impl PageVisit {
             );
 
             start(());
+        }
+    }
+}
+
+#[derive(Default)]
+pub struct CentsAdded;
+
+impl CentsAdded {
+    pub fn send_event(&self, payment_source: String, amount: u64) {
+        #[cfg(all(feature = "hydrate", feature = "ga4"))]
+        {
+            let (canister_id, _, _) =
+                use_local_storage::<Option<Principal>, JsonSerdeCodec>(USER_CANISTER_ID_STORE);
+            let (user_id, _) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE);
+            let (is_connected, _) = account_connected_reader();
+            let is_connected = is_connected.get_untracked();
+
+            send_event_ssr_spawn(
+                "cents_added".to_string(),
+                json!({
+                    "user_id": user_id,
+                    "canister_id": canister_id,
+                    "is_loggedin": is_connected,
+                    "amount_added": amount,
+                    "payment_source": payment_source,
+                })
+                .to_string(),
+            );
+        }
+    }
+}
+
+#[derive(Default)]
+pub struct CentsWithdrawn;
+
+impl CentsWithdrawn {
+    pub fn send_event(&self, amount_withdrawn: f64) {
+        #[cfg(all(feature = "hydrate", feature = "ga4"))]
+        {
+            let (canister_id, _, _) =
+                use_local_storage::<Option<Principal>, JsonSerdeCodec>(USER_CANISTER_ID_STORE);
+            let (user_id, _) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE);
+            let (is_connected, _) = account_connected_reader();
+            let is_connected = is_connected.get_untracked();
+
+            send_event_ssr_spawn(
+                "cents_withdrawn".to_string(),
+                json!({
+                    "user_id": user_id,
+                    "canister_id": canister_id,
+                    "is_loggedin": is_connected,
+                    "amount_withdrawn": amount_withdrawn,
+                })
+                .to_string(),
+            );
+        }
+    }
+}
+
+#[derive(Default)]
+pub struct TokenPumpedDumped;
+
+impl TokenPumpedDumped {
+    pub fn send_event(
+        &self,
+        token_name: String,
+        token_root: Principal,
+        direction: String,
+        count: u32,
+    ) {
+        #[cfg(all(feature = "hydrate", feature = "ga4"))]
+        {
+            let (canister_id, _, _) =
+                use_local_storage::<Option<Principal>, JsonSerdeCodec>(USER_CANISTER_ID_STORE);
+            let (user_id, _) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE);
+
+            let is_loggedin = account_connected_reader().0.get_untracked();
+
+            send_event_ssr_spawn(
+                "token_pumped_dumped".to_string(),
+                json!({
+                    "user_id": user_id,
+                    "canister_id": canister_id,
+                    "token_name": token_name,
+                    "token_root": token_root.to_string(),
+                    "direction": direction,
+                    "count": count,
+                    "is_loggedin": is_loggedin,
+                })
+                .to_string(),
+            );
         }
     }
 }
