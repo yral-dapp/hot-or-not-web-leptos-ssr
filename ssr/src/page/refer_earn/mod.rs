@@ -5,15 +5,17 @@ use gloo::timers::callback::Timeout;
 use ic_agent::Identity;
 use leptos::*;
 use leptos_icons::*;
+use leptos_meta::*;
 use leptos_router::create_query_signal;
 use leptos_use::use_window;
 
 use crate::component::canisters_prov::AuthCansProvider;
 use crate::component::connect::ConnectLogin;
+use crate::state::app_state::AppState;
 use crate::state::canisters::auth_canisters_store;
 use crate::utils::event_streaming::events::{Refer, ReferShareLink};
 use crate::{
-    component::{back_btn::BackButton, dashbox::DashboxLoading, title::Title},
+    component::{back_btn::BackButton, dashbox::DashboxLoading, title::TitleText},
     state::auth::account_connected_reader,
     utils::web::{copy_to_clipboard, share_url},
 };
@@ -104,7 +106,7 @@ fn ReferView() -> impl IntoView {
 
     view! {
         <div class="flex flex-col w-full h-full items-center text-white gap-10">
-            <img class="shrink-0 h-40 select-none" src="/img/coins-stash.webp" />
+            <img class="shrink-0 h-40 select-none" src="/img/common/coins-stash.webp" />
             <div class="flex flex-col w-full items-center gap-4 text-center">
                 <span class="font-bold text-2xl">Invite & Win upto <br />500 Coyns</span>
             </div>
@@ -212,15 +214,18 @@ fn ListSwitcher() -> impl IntoView {
 pub fn ReferEarn() -> impl IntoView {
     let (logged_in, _) = account_connected_reader();
 
+    let app_state = use_context::<AppState>();
+    let page_title = app_state.unwrap().name.to_owned() + " - Refer & Earn";
     view! {
+        <Title text=page_title />
         <div class="flex flex-col items-center min-w-dvw min-h-dvh bg-black pt-2 pb-12 gap-6">
-            <Title justify_center=false>
+            <TitleText justify_center=false>
                 <div class="flex flex-row justify-between">
                     <BackButton fallback="/menu".to_string() />
                     <span class="text-lg font-bold text-white">Refer & Earn</span>
                     <div></div>
                 </div>
-            </Title>
+            </TitleText>
             <div class="px-8 w-full sm:w-7/12">
                 <Show when=logged_in fallback=ReferView>
                     <ListSwitcher />

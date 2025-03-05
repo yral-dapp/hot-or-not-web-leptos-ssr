@@ -1,16 +1,14 @@
 use candid::Principal;
 use leptos::*;
+use leptos_meta::*;
 use leptos_router::*;
-use rand_chacha::{
-    rand_core::{RngCore, SeedableRng},
-    ChaCha8Rng,
-};
 use yral_canisters_common::utils::time::current_epoch;
 
 use crate::{
     component::spinner::FullScreenSpinner,
+    page::pumpdump::PumpNDump,
     utils::{
-        host::show_cdao_page,
+        host::{show_cdao_page, show_pnd_page},
         ml_feed::{
             get_coldstart_feed_paginated, get_coldstart_nsfw_feed_paginated,
             get_posts_ml_feed_cache_paginated,
@@ -83,6 +81,7 @@ async fn get_top_post_id_mlcache() -> Result<Option<(Principal, u64)>, ServerFnE
 
 #[server]
 async fn get_top_post_id_mlfeed() -> Result<Option<(Principal, u64)>, ServerFnError> {
+    use rand::{rngs::SmallRng, Rng, SeedableRng};
     let top_posts_fut = get_coldstart_feed_paginated(0, 50);
 
     let top_items = match top_posts_fut.await {
@@ -94,8 +93,8 @@ async fn get_top_post_id_mlfeed() -> Result<Option<(Principal, u64)>, ServerFnEr
             ));
         }
     };
-    let mut rand_gen = ChaCha8Rng::seed_from_u64(current_epoch().as_nanos() as u64);
-    let rand_num = rand_gen.next_u32() as usize % top_items.len();
+    let mut rand_gen = SmallRng::seed_from_u64(current_epoch().as_nanos() as u64);
+    let rand_num = rand_gen.random_range(0..top_items.len());
     let top_item = top_items[rand_num];
 
     Ok(Some((top_item.0, top_item.1)))
@@ -103,6 +102,7 @@ async fn get_top_post_id_mlfeed() -> Result<Option<(Principal, u64)>, ServerFnEr
 
 #[server]
 async fn get_top_post_id_mlfeed_nsfw() -> Result<Option<(Principal, u64)>, ServerFnError> {
+    use rand::{rngs::SmallRng, Rng, SeedableRng};
     let top_posts_fut = get_coldstart_nsfw_feed_paginated(0, 50);
 
     let top_items = match top_posts_fut.await {
@@ -114,8 +114,8 @@ async fn get_top_post_id_mlfeed_nsfw() -> Result<Option<(Principal, u64)>, Serve
             ));
         }
     };
-    let mut rand_gen = ChaCha8Rng::seed_from_u64(current_epoch().as_nanos() as u64);
-    let rand_num = rand_gen.next_u32() as usize % top_items.len();
+    let mut rand_gen = SmallRng::seed_from_u64(current_epoch().as_nanos() as u64);
+    let rand_num = rand_gen.random_range(0..top_items.len());
     let top_item = top_items[rand_num];
 
     Ok(Some((top_item.0, top_item.1)))
@@ -150,6 +150,7 @@ pub fn YralRootPage() -> impl IntoView {
     }
 
     view! {
+        <Title text="YRAL - Home" />
         <Suspense fallback=FullScreenSpinner>
             {move || {
                 target_post
@@ -172,7 +173,9 @@ pub fn YralRootPage() -> impl IntoView {
 
 #[component]
 pub fn RootPage() -> impl IntoView {
-    if show_cdao_page() {
+    if show_pnd_page() {
+        view! { <PumpNDump /> }
+    } else if show_cdao_page() {
         view! { <CreatorDaoRootPage /> }
     } else {
         view! { <YralRootPage /> }

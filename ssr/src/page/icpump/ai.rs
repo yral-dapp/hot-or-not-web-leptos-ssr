@@ -2,6 +2,7 @@ use std::collections::VecDeque;
 
 use leptos::*;
 use leptos_icons::*;
+use leptos_meta::*;
 use pulldown_cmark::{Options, Parser};
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::Closure;
@@ -71,7 +72,7 @@ pub fn ICPumpAiPage1(
 ) -> impl IntoView {
     view! {
         <div class="flex flex-col items-center justify-center gap-3">
-            <img src="/img/pump-ai.svg" class="h-18 w-18"/>
+            <img src="/img/icpump/pump-ai.svg" class="h-18 w-18"/>
             <div class="font-kumbh font-semibold text-3xl text-center">Welcome to <br/>Pump AI</div>
             <div class="bg-[#202125] w-full rounded-sm relative">
               <input
@@ -143,7 +144,7 @@ pub fn ICPumpAiPage2(
 
     view! {
         <div class="bg-black z-[4] absolute top-0 select-none inset-x-0 py-3 px-4 flex items-center justify-center gap-3">
-            <img src="/img/pump-ai.svg" class="h-5 w-5"/>
+            <img src="/img/icpump/pump-ai.svg" class="h-5 w-5"/>
             <div class="text-xl font-semibold">Pump AI</div>
             <button class="absolute z-[5] left-0 px-4 h-full"
                 on:click={
@@ -207,7 +208,7 @@ pub fn ICPumpAiToken(details: TokenListItem) -> impl IntoView {
         <a
             href=details.link
             class="text-xs w-full p-2 flex gap-2 border border-gray-900 bg-transparent hover:bg-white/10 active:bg-white/5">
-          <div class="relative">
+          <div class="relative shrink-0">
             <img
                 src=details.logo
                 class=move || {
@@ -323,7 +324,7 @@ pub fn ICPumpAiPage3(
 ) -> impl IntoView {
     view! {
         <div class="bg-black z-[4] absolute top-0 select-none inset-x-0 py-3 px-4 flex items-center justify-center gap-3">
-            <img src="/img/pump-ai.svg" class="h-5 w-5"/>
+            <img src="/img/icpump/pump-ai.svg" class="h-5 w-5"/>
             <div class="text-xl font-semibold">Pump AI</div>
             <button class="absolute z-[5] left-0 px-4 h-full"
                 on:click={
@@ -480,6 +481,7 @@ pub fn ICPumpAi() -> impl IntoView {
     });
 
     view! {
+        <Title text="ICPump - AI Chat" />
         <div class="h-screen w-screen block bg-black text-white">
           <div class="max-w-md flex flex-col relative w-full mx-auto h-full"
                 class:justify-center={move|| page_no.get() != 2}

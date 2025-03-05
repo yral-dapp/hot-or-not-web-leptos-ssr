@@ -13,8 +13,20 @@ jobs:
     with:
       publish-artifact: true
 
+  destroy_preview:
+    if: ${{github.event.pull_request.state == 'closed'}}
+    runs-on: ubuntu-latest
+    environment:
+      name: pr-${{ github.event.number }}
+      url: ${{ steps.deploy.outputs.url }}
+
+    steps:
+      - name: Deploy
+        id: destroy
+        uses: superfly/fly-pr-review-apps@1.2.1
+
   preview:
-    if: ${{ github.event.pull_request.merged == false}}
+    if: ${{ github.event.pull_request.state == 'open'}}
     needs: build_check
     runs-on: ubuntu-latest
 
@@ -32,7 +44,6 @@ jobs:
       - uses: actions/checkout@v3
       - name: Download build
         uses: actions/download-artifact@v4
-        if: ${{ github.event.pull_request.state == 'open'}}
         with:
           name: build-musl
       - run: chmod +x target/x86_64-unknown-linux-musl/release/hot-or-not-web-leptos-ssr
@@ -43,7 +54,6 @@ jobs:
 
       - uses: superfly/flyctl-actions/setup-flyctl@master
       - name: Set secret tokens
-        if: ${{ github.event.pull_request.state == 'open'}}
         run: |
           APP_NAME="pr-${{github.event.number}}-yral-dapp-hot-or-not-web-leptos-ssr"
           flyctl secrets set CF_TOKEN="$CF_TOKEN" --app "$APP_NAME" --stage
@@ -54,6 +64,7 @@ jobs:
           flyctl secrets set GRPC_AUTH_TOKEN="$GRPC_AUTH_TOKEN" --app "$APP_NAME" --stage
           flyctl secrets set HOTORNOT_GOOGLE_CLIENT_SECRET="$HOTORNOT_GOOGLE_CLIENT_SECRET" --app "$APP_NAME" --stage
           flyctl secrets set ICPUMPFUN_GOOGLE_CLIENT_SECRET="$ICPUMPFUN_GOOGLE_CLIENT_SECRET" --app "$APP_NAME" --stage
+          flyctl secrets set PUMPDUMP_GOOGLE_CLIENT_SECRET="$PUMPDUMP_GOOGLE_CLIENT_SECRET" --app "$APP_NAME" --stage
           flyctl secrets set "HON_GOOGLE_SERVICE_ACCOUNT=$HON_GOOGLE_SERVICE_ACCOUNT" --app "$APP_NAME" --stage
           flyctl secrets set QSTASH_TOKEN="$QSTASH_TOKEN" --app "$APP_NAME" --stage
           flyctl secrets set GA4_API_SECRET="$GA4_API_SECRET" --app "$APP_NAME" --stage
@@ -69,6 +80,7 @@ jobs:
           GRPC_AUTH_TOKEN: ${{ secrets.OFF_CHAIN_AGENT_GRPC_AUTH_TOKEN }}
           HOTORNOT_GOOGLE_CLIENT_SECRET: ${{ secrets.HOT_OR_NOT_WTF_DOMAIN_GOOGLE_LOGIN_AUTH_CLIENT_SECRET }}
           ICPUMPFUN_GOOGLE_CLIENT_SECRET: ${{secrets.IC_PUMP_FUN_GOOGLE_AUTH_CLIENT_SECRET}}
+          PUMPDUMP_GOOGLE_CLIENT_SECRET: ${{secrets.PUMP_DUMP_WTF_DOMAIN_GOOGLE_LOGIN_AUTH_CLIENT_SECRET}}
           HON_GOOGLE_SERVICE_ACCOUNT: ${{ secrets.HOT_OR_NOT_FEED_INTELLIGENCE_FIREBASE_PROJECT_EVENTS_BQ_SERVICE_ACCOUNT_JSON_FOR_WEB_LEPTOS_SSR_APP }}
           QSTASH_TOKEN: ${{ secrets.QSTASH_TOKEN }}
           GA4_API_SECRET: ${{ secrets.GOOGLE_ANALYTICS_MEASUREMENT_PROTOCOL_API_SECRET }}

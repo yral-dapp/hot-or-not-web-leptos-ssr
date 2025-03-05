@@ -158,7 +158,7 @@ pub fn BaseRoute() -> impl IntoView {
                     .map(|temp_identity| {
                         view! {
                             <CtxProvider temp_identity>
-                                <Outlet />
+                                <Outlet/>
                             </CtxProvider>
                         }
                     })
