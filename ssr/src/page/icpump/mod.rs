@@ -4,6 +4,7 @@ use crate::component::overlay::PopupOverlay;
 use crate::consts::ICPUMP_LISTING_PAGE_SIZE;
 use crate::consts::USER_PRINCIPAL_STORE;
 use crate::state::canisters::authenticated_canisters;
+use crate::utils::event_streaming::events::CentsAdded;
 use std::collections::VecDeque;
 
 use candid::Nat;
@@ -343,10 +344,12 @@ pub fn TokenCard(
     let share_link = create_rw_signal("".to_string());
     let share_link_coin = format!("/token/info/{}/{}", root, details.user_id);
     let symbol = details.token_symbol.clone();
+    let token_symbol_c = details.token_symbol.clone();
+    let token_symbol_c2 = token_symbol_c.clone();
     let share_message = move || {
         format!(
         "Hey! Check out the token: {} I created on YRAL 👇 {}. I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter",
-        details.token_symbol.clone(),
+        token_symbol_c2,
         share_link.get(),
     )
     };
@@ -361,6 +364,7 @@ pub fn TokenCard(
     let airdrop_action = create_action(move |&()| {
         let cans_res = cans_res.clone();
         let token_owner_cans_id = token_owner_c.clone().unwrap().canister_id;
+        let token_symbol = token_symbol_c.clone();
         airdrop_popup.set(true);
         async move {
             if claimed.get() && !buffer_signal.get() {
@@ -382,6 +386,10 @@ pub fn TokenCard(
 
             let user = cans.individual_user(cans.user_canister()).await;
             user.add_token(root).await?;
+
+            if token_symbol == "COYNS" || token_symbol == "CENTS" {
+                CentsAdded.send_event(cans.clone(), "airdrop".to_string(), 100);
+            }
 
             buffer_signal.set(false);
             claimed.set(true);
