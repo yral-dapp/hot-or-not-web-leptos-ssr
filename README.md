@@ -22,7 +22,7 @@ cargo leptos new --git leptos-rs/start-axum
 
 to generate a new project template.
 
-```bash
+```bash new
 cd leptos-ssr
 ```
 
