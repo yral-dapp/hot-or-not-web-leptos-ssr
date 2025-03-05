@@ -4,7 +4,10 @@ use leptos::{html::Audio, *};
 use particles::{FireBubbles, SkullBubbles};
 use yral_pump_n_dump_common::GameDirection;
 
-use crate::page::{icpump::ProcessedTokenListResponse, pumpdump::{analytics::record_action, PlayerDataRes, RunningGameRes}};
+use crate::page::{
+    icpump::ProcessedTokenListResponse,
+    pumpdump::{analytics::record_action, PlayerDataRes, RunningGameRes},
+};
 
 fn non_visual_feedback(audio_ref: NodeRef<Audio>) {
     #[cfg(not(feature = "hydrate"))]
@@ -67,7 +70,7 @@ pub fn DumpButton(audio_ref: NodeRef<Audio>) -> impl IntoView {
         record_action(
             token.token_details.token_name.clone(),
             token.root,
-            GameDirection::Dump
+            GameDirection::Dump,
         );
     };
 
@@ -166,7 +169,7 @@ pub fn PumpButton(audio_ref: NodeRef<Audio>) -> impl IntoView {
         record_action(
             token.token_details.token_name.clone(),
             token.root,
-            GameDirection::Pump
+            GameDirection::Pump,
         );
     };
 

@@ -90,7 +90,7 @@ fn AirdropButton(
             if name_c == "COYNS" || name_c == "CENTS" {
                 CentsAdded.send_event(cans.clone(), "airdrop".to_string(), airdrop_amount);
             }
-            
+
             buffer_signal.set(false);
             claimed.set(true);
             Ok::<_, ServerFnError>(())

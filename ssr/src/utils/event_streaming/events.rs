@@ -957,7 +957,6 @@ impl PageVisit {
     }
 }
 
-
 #[derive(Default)]
 pub struct CentsAdded;
 
@@ -1015,12 +1014,17 @@ impl CentsWithdrawn {
     }
 }
 
-
 #[derive(Default)]
 pub struct TokenPumpedDumped;
 
 impl TokenPumpedDumped {
-    pub fn send_event(&self, cans_store: Canisters<true>, token_name: String, token_root: Principal, direction: String) {
+    pub fn send_event(
+        &self,
+        cans_store: Canisters<true>,
+        token_name: String,
+        token_root: Principal,
+        direction: String,
+    ) {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
         {
             let details = cans_store.profile_details();

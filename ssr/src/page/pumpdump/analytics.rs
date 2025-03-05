@@ -19,7 +19,7 @@ struct ActionBuffer {
 }
 
 // Global buffer storage
-static ACTION_BUFFERS: Lazy<Mutex<HashMap<Principal, ActionBuffer>>> = 
+static ACTION_BUFFERS: Lazy<Mutex<HashMap<Principal, ActionBuffer>>> =
     Lazy::new(|| Mutex::new(HashMap::new()));
 
 // Buffer flush interval (60 seconds)
@@ -27,7 +27,7 @@ const FLUSH_INTERVAL: Duration = Duration::from_secs(60);
 
 pub fn record_action(token_name: String, token_root: Principal, direction: GameDirection) {
     let mut buffers = ACTION_BUFFERS.lock().unwrap();
-    
+
     // Get or create buffer for this token
     let buffer = buffers.entry(token_root).or_insert_with(|| ActionBuffer {
         token_name: token_name.clone(),
@@ -35,13 +35,13 @@ pub fn record_action(token_name: String, token_root: Principal, direction: GameD
         dump_count: 0,
         last_flush: Instant::now(),
     });
-    
+
     // Update counts
     match direction {
         GameDirection::Pump => buffer.pump_count += 1,
         GameDirection::Dump => buffer.dump_count += 1,
     }
-    
+
     // Check if it's time to flush
     if buffer.last_flush.elapsed() >= FLUSH_INTERVAL {
         flush_buffer(token_root);
@@ -50,7 +50,7 @@ pub fn record_action(token_name: String, token_root: Principal, direction: GameD
 
 pub fn flush_buffer(token_root: Principal) {
     let mut buffers = ACTION_BUFFERS.lock().unwrap();
-    
+
     if let Some(buffer) = buffers.get_mut(&token_root) {
         // Only send events if there are actions to report
         if buffer.pump_count > 0 || buffer.dump_count > 0 {
@@ -64,7 +64,7 @@ pub fn flush_buffer(token_root: Principal) {
                 ));
                 buffer.pump_count = 0;
             }
-            
+
             // Send dump events if any
             if buffer.dump_count > 0 {
                 spawn_local(send_buffered_event(
@@ -76,7 +76,7 @@ pub fn flush_buffer(token_root: Principal) {
                 buffer.dump_count = 0;
             }
         }
-        
+
         // Reset timer
         buffer.last_flush = Instant::now();
     }
@@ -105,7 +105,7 @@ pub fn setup_flush_timer() {
     #[cfg(feature = "hydrate")]
     {
         use gloo::timers::callback::Interval;
-        
+
         let _interval = Interval::new(FLUSH_INTERVAL.as_millis() as u32, move || {
             let buffers = ACTION_BUFFERS.lock().unwrap();
             for token_root in buffers.keys().copied().collect::<Vec<_>>() {
