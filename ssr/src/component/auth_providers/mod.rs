@@ -49,7 +49,6 @@ async fn handle_user_login(
 
     if first_time_login {
         CentsAdded.send_event(
-            canisters.clone(),
             "signup".to_string(),
             NEW_USER_SIGNUP_REWARD,
         );
@@ -58,7 +57,7 @@ async fn handle_user_login(
     match referrer {
         Some(_referee_principal) if first_time_login => {
             issue_referral_rewards(canisters.user_canister()).await?;
-            CentsAdded.send_event(canisters, "referral".to_string(), REFERRAL_REWARD);
+            CentsAdded.send_event( "referral".to_string(), REFERRAL_REWARD);
             Ok(())
         }
         _ => Ok(()),

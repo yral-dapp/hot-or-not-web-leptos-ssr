@@ -26,18 +26,10 @@ pub fn Success() -> impl IntoView {
     let formatted_cents = TokenBalance::new(cents.clone(), 6).humanize_float_truncate_to_dp(4);
 
     // Track the withdrawal event
-    let auth_cans = authenticated_canisters();
     let cents_value = formatted_cents.clone().parse::<f64>().unwrap_or(0.0);
 
     create_effect(move |_| {
-        let auth_cans_c = auth_cans.clone();
-        spawn_local(async move {
-            if let Ok(cans_wire) = auth_cans_c.wait_untracked().await {
-                if let Ok(cans) = Canisters::from_wire(cans_wire, expect_context()) {
-                    CentsWithdrawn.send_event(cans, cents_value);
-                }
-            }
-        });
+        CentsWithdrawn.send_event(cents_value);
     });
 
     Some(view! {

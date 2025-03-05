@@ -388,7 +388,7 @@ pub fn TokenCard(
             user.add_token(root).await?;
 
             if token_symbol == "COYNS" || token_symbol == "CENTS" {
-                CentsAdded.send_event(cans.clone(), "airdrop".to_string(), 100);
+                CentsAdded.send_event("airdrop".to_string(), 100);
             }
 
             buffer_signal.set(false);

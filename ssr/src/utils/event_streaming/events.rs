@@ -1,15 +1,18 @@
 use candid::Principal;
+use codee::string::{FromToStringCodec, JsonSerdeCodec};
 use ic_agent::Identity;
 use leptos::html::Input;
 use leptos::{create_effect, MaybeSignal, ReadSignal, RwSignal, SignalGetUntracked};
 use leptos::{create_signal, ev, expect_context, html::Video, NodeRef, SignalGet, SignalSet};
-use leptos_use::{use_event_listener, use_timeout_fn, UseTimeoutFnReturn};
+use leptos_use::storage::use_local_storage;
+use leptos_use::{use_cookie, use_event_listener, use_timeout_fn, UseTimeoutFnReturn};
 use serde_json::json;
 use sns_validation::pbs::sns_pb::SnsInitPayload;
 use wasm_bindgen::JsCast;
 
 use super::EventHistory;
 use crate::component::auth_providers::ProviderKind;
+use crate::consts::{USER_CANISTER_ID_STORE, USER_PRINCIPAL_STORE};
 use crate::state::auth::account_connected_reader;
 use crate::state::canisters::auth_canisters_store;
 use crate::state::history::HistoryCtx;
@@ -961,13 +964,12 @@ impl PageVisit {
 pub struct CentsAdded;
 
 impl CentsAdded {
-    pub fn send_event(&self, cans_store: Canisters<true>, payment_source: String, amount: u64) {
+    pub fn send_event(&self, payment_source: String, amount: u64) {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
         {
-            let details = cans_store.profile_details();
-
-            let user_id = details.principal;
-            let canister_id = cans_store.user_canister();
+            let (canister_id, _, _) = 
+     use_local_storage::<Option<Principal>, JsonSerdeCodec>(USER_CANISTER_ID_STORE); 
+            let (user_id, _) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE); 
             let (is_connected, _) = account_connected_reader();
             let is_connected = is_connected.get_untracked();
 
@@ -990,13 +992,12 @@ impl CentsAdded {
 pub struct CentsWithdrawn;
 
 impl CentsWithdrawn {
-    pub fn send_event(&self, cans_store: Canisters<true>, amount_withdrawn: f64) {
+    pub fn send_event(&self, amount_withdrawn: f64) {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
         {
-            let details = cans_store.profile_details();
-
-            let user_id = details.principal;
-            let canister_id = cans_store.user_canister();
+            let (canister_id, _, _) = 
+     use_local_storage::<Option<Principal>, JsonSerdeCodec>(USER_CANISTER_ID_STORE); 
+            let (user_id, _) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE); 
             let (is_connected, _) = account_connected_reader();
             let is_connected = is_connected.get_untracked();
 
@@ -1020,7 +1021,6 @@ pub struct TokenPumpedDumped;
 impl TokenPumpedDumped {
     pub fn send_event(
         &self,
-        cans_store: Canisters<true>,
         token_name: String,
         token_root: Principal,
         direction: String,
@@ -1028,9 +1028,9 @@ impl TokenPumpedDumped {
     ) {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
         {
-            let details = cans_store.profile_details();
-            let user_id = details.principal;
-            let canister_id = cans_store.user_canister();
+            let (canister_id, _, _) = 
+     use_local_storage::<Option<Principal>, JsonSerdeCodec>(USER_CANISTER_ID_STORE); 
+            let (user_id, _) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE); 
 
             let is_loggedin = account_connected_reader().0.get_untracked();
 

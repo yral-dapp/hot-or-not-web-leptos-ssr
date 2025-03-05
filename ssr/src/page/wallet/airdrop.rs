@@ -88,7 +88,7 @@ fn AirdropButton(
             user.add_token(root.unwrap()).await?;
 
             if name_c == "COYNS" || name_c == "CENTS" {
-                CentsAdded.send_event(cans.clone(), "airdrop".to_string(), airdrop_amount);
+                CentsAdded.send_event("airdrop".to_string(), airdrop_amount);
             }
 
             buffer_signal.set(false);
