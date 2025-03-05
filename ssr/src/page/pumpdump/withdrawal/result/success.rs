@@ -1,14 +1,10 @@
 use candid::Nat;
-use leptos::{
-    component, create_effect, expect_context, spawn_local, view, IntoView, Params,
-    SignalGetUntracked,
-};
+use leptos::{component, create_effect, view, IntoView, Params, SignalGetUntracked};
 use leptos_router::{use_query, Params};
-use yral_canisters_common::{utils::token::balance::TokenBalance, Canisters};
+use yral_canisters_common::utils::token::balance::TokenBalance;
 
 use crate::{
     component::{back_btn::BackButton, title::TitleText},
-    state::canisters::authenticated_canisters,
     try_or_redirect_opt,
     utils::event_streaming::events::CentsWithdrawn,
 };

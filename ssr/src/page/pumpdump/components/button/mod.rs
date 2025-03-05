@@ -2,14 +2,12 @@ mod particles;
 
 use leptos::{html::Audio, *};
 use particles::{FireBubbles, SkullBubbles};
-use yral_canisters_common::Canisters;
 use yral_pump_n_dump_common::GameDirection;
 
 use crate::page::{
     icpump::ProcessedTokenListResponse,
     pumpdump::{PlayerDataRes, RunningGameRes},
 };
-use crate::state::canisters::authenticated_canisters;
 use crate::utils::event_streaming::events::TokenPumpedDumped;
 
 fn non_visual_feedback(audio_ref: NodeRef<Audio>) {

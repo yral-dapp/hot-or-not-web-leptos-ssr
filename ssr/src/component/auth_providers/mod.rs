@@ -48,16 +48,13 @@ async fn handle_user_login(
     let first_time_login = mark_user_registered(user_principal).await?;
 
     if first_time_login {
-        CentsAdded.send_event(
-            "signup".to_string(),
-            NEW_USER_SIGNUP_REWARD,
-        );
+        CentsAdded.send_event("signup".to_string(), NEW_USER_SIGNUP_REWARD);
     }
 
     match referrer {
         Some(_referee_principal) if first_time_login => {
             issue_referral_rewards(canisters.user_canister()).await?;
-            CentsAdded.send_event( "referral".to_string(), REFERRAL_REWARD);
+            CentsAdded.send_event("referral".to_string(), REFERRAL_REWARD);
             Ok(())
         }
         _ => Ok(()),

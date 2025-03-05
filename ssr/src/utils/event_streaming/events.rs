@@ -967,9 +967,9 @@ impl CentsAdded {
     pub fn send_event(&self, payment_source: String, amount: u64) {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
         {
-            let (canister_id, _, _) = 
-     use_local_storage::<Option<Principal>, JsonSerdeCodec>(USER_CANISTER_ID_STORE); 
-            let (user_id, _) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE); 
+            let (canister_id, _, _) =
+                use_local_storage::<Option<Principal>, JsonSerdeCodec>(USER_CANISTER_ID_STORE);
+            let (user_id, _) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE);
             let (is_connected, _) = account_connected_reader();
             let is_connected = is_connected.get_untracked();
 
@@ -995,9 +995,9 @@ impl CentsWithdrawn {
     pub fn send_event(&self, amount_withdrawn: f64) {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
         {
-            let (canister_id, _, _) = 
-     use_local_storage::<Option<Principal>, JsonSerdeCodec>(USER_CANISTER_ID_STORE); 
-            let (user_id, _) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE); 
+            let (canister_id, _, _) =
+                use_local_storage::<Option<Principal>, JsonSerdeCodec>(USER_CANISTER_ID_STORE);
+            let (user_id, _) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE);
             let (is_connected, _) = account_connected_reader();
             let is_connected = is_connected.get_untracked();
 
@@ -1028,9 +1028,9 @@ impl TokenPumpedDumped {
     ) {
         #[cfg(all(feature = "hydrate", feature = "ga4"))]
         {
-            let (canister_id, _, _) = 
-     use_local_storage::<Option<Principal>, JsonSerdeCodec>(USER_CANISTER_ID_STORE); 
-            let (user_id, _) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE); 
+            let (canister_id, _, _) =
+                use_local_storage::<Option<Principal>, JsonSerdeCodec>(USER_CANISTER_ID_STORE);
+            let (user_id, _) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE);
 
             let is_loggedin = account_connected_reader().0.get_untracked();
 
