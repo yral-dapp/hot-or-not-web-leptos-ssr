@@ -93,7 +93,7 @@ consts = {workspace = true}
 utils.workspace = true
 component.workspace = true
 state.workspace = true
-
+rand.workspace = true
 
 [features]
 hydrate = [

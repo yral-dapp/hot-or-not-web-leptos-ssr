@@ -150,10 +150,7 @@ pub mod provider {
     mod mock {
         use std::convert::Infallible;
 
-        use rand_chacha::{
-            rand_core::{RngCore, SeedableRng},
-            ChaCha8Rng,
-        };
+        use rand::{rngs::SmallRng, RngCore, SeedableRng};
         use yral_canisters_common::{
             cursored_data::PageEntry,
             utils::{time::current_epoch, token::balance::TokenBalance},
@@ -194,7 +191,7 @@ pub mod provider {
                 from: usize,
                 end: usize,
             ) -> Result<PageEntry<TxnInfoWallet>, Infallible> {
-                let mut rand_gen = ChaCha8Rng::seed_from_u64(current_epoch().as_nanos() as u64);
+                let mut rand_gen = SmallRng::seed_from_u64(current_epoch().as_nanos() as u64);
                 let data = (from..end)
                     .map(|_| TxnInfoWallet {
                         amount: TokenBalance::new_cdao((rand_gen.next_u64() % 3001).into()),

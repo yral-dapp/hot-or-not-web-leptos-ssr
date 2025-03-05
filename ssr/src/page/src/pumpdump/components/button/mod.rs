@@ -1,9 +1,10 @@
-use crate::pumpdump::RunningGameRes;
-use leptos::prelude::*;
-use leptos::{html::Audio, *};
+mod particles;
+
+use leptos::{html::Audio, prelude::*, tachys::dom::window};
+use particles::{FireBubbles, SkullBubbles};
 use yral_pump_n_dump_common::GameDirection;
 
-use crate::pumpdump::PlayerDataRes;
+use crate::pumpdump::{PlayerDataRes, RunningGameRes};
 
 fn non_visual_feedback(audio_ref: NodeRef<Audio>) {
     #[cfg(not(feature = "hydrate"))]
@@ -49,8 +50,10 @@ pub fn DumpButton(audio_ref: NodeRef<Audio>) -> impl IntoView {
             .unwrap_or_else(|| "-".into())
     };
 
+    let spawn_bubbles = RwSignal::new(0u32);
     let onclick = move |_| {
         non_visual_feedback(audio_ref);
+        spawn_bubbles.update(|b| *b += 1);
         let Some(Ok(ctx)) = game_res.get().map(|res| res.take()) else {
             return;
         };
@@ -60,30 +63,35 @@ pub fn DumpButton(audio_ref: NodeRef<Audio>) -> impl IntoView {
     };
 
     view! {
-        <button
-            aria-label="Vibration"
-            on:click=onclick
-            disabled=has_no_balance
-            class="dump-button transition duration-300 disabled:grayscale rounded-[28px] transition-all duration-150 ring-4 group text-white ring-white/25 gap-2 min-w-36 p-3 flex flex-col items-center justify-center touch-none"
-        >
-            <div class="text-xl font-bold">DUMP</div>
-            <div class="bg-[#4683DC] rounded-full w-12 h-3 relative">
-                <div
-                    class="w-full h-full relative overflow-hidden font-bold text-xs items-center flex justify-center"
-                >
-                        <span
-                            class="absolute inset-0 flex items-center justify-center"
-                        >
-                            {counter}
-                        </span>
-                </div>
-                <img
-                    src="/img/pumpdump/skull.webp"
-                    class="absolute w-6 h-6 -left-3 -top-1/2 transition group-active:saturate-150 group-active:scale-110 group-active:rotate-12"
-                    alt="DUMP"
-                />
+        <div class="relative">
+            <div class="absolute -top-24 h-36 left-0">
+                <SkullBubbles spawn_bubbles/>
             </div>
-        </button>
+            <button
+                aria-label="Vibration"
+                on:click=onclick
+                disabled=has_no_balance
+                class="dump-button transition duration-300 disabled:grayscale rounded-[28px] transition-all duration-150 ring-4 group text-white ring-white/25 gap-2 min-w-36 p-3 flex flex-col items-center justify-center touch-none"
+            >
+                <div class="text-xl font-bold">DUMP</div>
+                <div class="bg-[#4683DC] rounded-full w-12 h-3 relative">
+                    <div
+                        class="w-full h-full relative overflow-hidden font-bold text-xs items-center flex justify-center"
+                    >
+                            <span
+                                class="absolute inset-0 flex items-center justify-center"
+                            >
+                                {counter}
+                            </span>
+                    </div>
+                    <img
+                        src="/img/pumpdump/skull.webp"
+                        class="absolute w-6 h-6 -left-3 -top-1/2 transition group-active:saturate-150 group-active:scale-110 group-active:rotate-12"
+                        alt="DUMP"
+                    />
+                </div>
+            </button>
+        </div>
     }
 }
 
@@ -133,8 +141,10 @@ pub fn PumpButton(audio_ref: NodeRef<Audio>) -> impl IntoView {
             .unwrap_or_else(|| "-".into())
     };
 
+    let spawn_bubbles = RwSignal::new(0u32);
     let onclick = move |_| {
         non_visual_feedback(audio_ref);
+        spawn_bubbles.update(|b| *b += 1);
         let Some(Ok(ctx)) = game_res.get().map(|res| res.take()) else {
             return;
         };
@@ -144,30 +154,35 @@ pub fn PumpButton(audio_ref: NodeRef<Audio>) -> impl IntoView {
     };
 
     view! {
-        <button
-            aria-label="Vibration"
-            on:click=onclick
-            disabled=has_no_balance
-            class="pump-button transition duration-300 disabled:grayscale rounded-[28px] transition-all duration-150 ring-4 group text-white ring-white/25 gap-2 min-w-36 p-3 flex flex-col items-center justify-center touch-none"
-        >
-            <div class="text-xl font-bold">PUMP</div>
-            <div class="bg-[#E2027B] rounded-full w-12 h-3 relative">
-                <div
-                    class="w-full h-full relative overflow-hidden font-bold text-xs items-center flex justify-center"
-                >
-                    <span
-                        class="absolute inset-0 flex items-center justify-center"
-                    >
-                        {counter}
-                    </span>
-                </div>
-                <img
-                    src="/img/pumpdump/fire.webp"
-                    class="absolute w-6 h-6 -left-3 -top-1/2 transition group-active:saturate-150 group-active:scale-110 group-active:-rotate-12"
-                    alt="PUMP"
-                />
+        <div class="relative">
+            <div class="absolute -top-24 h-36 right-0">
+                <FireBubbles spawn_bubbles/>
             </div>
-        </button>
+            <button
+                aria-label="Vibration"
+                on:click=onclick
+                disabled=has_no_balance
+                class="pump-button transition duration-300 disabled:grayscale rounded-[28px] transition-all duration-150 ring-4 group text-white ring-white/25 gap-2 min-w-36 p-3 flex flex-col items-center justify-center touch-none"
+            >
+                <div class="text-xl font-bold">PUMP</div>
+                <div class="bg-[#E2027B] rounded-full w-12 h-3 relative">
+                    <div
+                        class="w-full h-full relative overflow-hidden font-bold text-xs items-center flex justify-center"
+                    >
+                        <span
+                            class="absolute inset-0 flex items-center justify-center"
+                        >
+                            {counter}
+                        </span>
+                    </div>
+                    <img
+                        src="/img/pumpdump/fire.webp"
+                        class="absolute w-6 h-6 -left-3 -top-1/2 transition group-active:saturate-150 group-active:scale-110 group-active:-rotate-12"
+                        alt="PUMP"
+                    />
+                </div>
+            </button>
+        </div>
     }
 }
 
