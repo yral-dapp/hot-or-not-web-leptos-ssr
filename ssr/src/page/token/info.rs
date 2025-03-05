@@ -1,9 +1,15 @@
+use crate::component::icons::airdrop_icon::AirdropIcon;
+use crate::component::icons::arrow_left_right_icon::ArrowLeftRightIcon;
+use crate::component::icons::chevron_right_icon::ChevronRightIcon;
+use crate::component::icons::send_icon::SendIcon;
+use crate::component::icons::share_icon::ShareIcon;
 use crate::page::token::RootType;
 use crate::page::token::TokenInfoParams;
 use crate::page::wallet::airdrop::AirdropPage;
 use crate::state::canisters::authenticated_canisters;
 
 use crate::utils::token::icpump::IcpumpTokenInfo;
+use crate::utils::web::share_url;
 use crate::{
     component::{
         back_btn::BackButton, share_popup::*, spinner::FullScreenSpinner, title::TitleText,
@@ -20,6 +26,9 @@ use serde::{Deserialize, Serialize};
 use yral_canisters_common::cursored_data::transaction::IndexOrLedger;
 use yral_canisters_common::utils::token::TokenMetadata;
 use yral_canisters_common::Canisters;
+
+use crate::component::overlay::PopupOverlay;
+use crate::utils::host::get_host;
 
 #[component]
 fn TokenField(
@@ -65,6 +74,57 @@ pub fn generate_share_link(root: &RootType, key_principal: Principal) -> String 
 }
 
 #[component]
+pub fn ActionButton(
+    href: String,
+    label: String,
+    children: Children,
+    #[prop(optional, into)] disabled: MaybeSignal<bool>,
+) -> impl IntoView {
+    view! {
+        <a
+            aria-disabled=move || disabled().to_string()
+            href=href
+            class=move || {
+                format!(
+                    "flex flex-col gap-1 justify-center items-center text-xs transition-colors {}",
+                    if !disabled.get() {
+                        "group-hover:text-white text-neutral-300"
+                    } else {
+                        "text-neutral-600 pointer-events-none"
+                    },
+                )
+            }
+        >
+            <div class="w-[1.125rem] h-[1.125rem] flex items-center justify-center">
+                {children()}
+            </div>
+
+            <div class="text-[0.625rem] font-medium leading-4">{label}</div>
+        </a>
+    }
+}
+
+#[component]
+pub fn ActionButtonLink(
+    label: String,
+    children: Children,
+    #[prop(optional, into)] disabled: MaybeSignal<bool>,
+) -> impl IntoView {
+    view! {
+        <button
+            disabled=disabled
+            class="flex flex-col gap-1 justify-center items-center text-xs transition-colors enabled:group-hover:text-white enabled:text-neutral-300 disabled:group-hover:cursor-default disabled:text-neutral-600"
+        >
+            <div class="w-[1.125rem] h-[1.125rem] flex items-center justify-center">
+                {children()}
+            </div>
+
+            <div>{label}</div>
+        </button>
+    }
+}
+
+#[component]
 fn TokenInfoInner(
     root: RootType,
     meta: TokenMetadata,
@@ -89,9 +149,35 @@ fn TokenInfoInner(
 
     let decimals = meta.decimals;
     let blur_active = create_rw_signal(meta.is_nsfw);
+    let is_utility_token =
+        Signal::derive(move || matches!(root, RootType::COYNS | RootType::CENTS));
+
+    let base_url = get_host();
+    let show_fallback = create_rw_signal(false);
+    let share_link_d = share_link.unwrap_or_default();
+    let on_share_click = move |ev: ev::MouseEvent| {
+        ev.stop_propagation();
+        if share_url(&share_link_d.clone()).is_none() {
+            show_fallback.set(true);
+        }
+    };
+
+    let share_link_c = share_link_d.clone();
+
+    let key_principal_s = key_principal
+        .clone()
+        .map(|p| p.to_text())
+        .unwrap_or_default();
 
     view! {
-        <div class="w-dvw min-h-dvh bg-neutral-800  flex flex-col gap-4">
+        <div class="max-w-md mx-auto bg-black flex flex-col gap-4">
+            <PopupOverlay show=show_fallback>
+                <ShareContent
+                    share_link=format!("{base_url}{share_link_c}")
+                    message=message.clone().unwrap_or_default()
+                    show_popup=show_fallback
+                />
+            </PopupOverlay>
             <TitleText justify_center=false>
                 <div class="grid grid-cols-3 justify-start w-full">
                     <BackButton fallback="/wallet" />
@@ -99,103 +185,77 @@ fn TokenInfoInner(
                 </div>
             </TitleText>
             <div class="flex flex-col w-full items-center px-8 md:px-10 gap-8">
-                <div class="flex flex-col justify-self-start w-full gap-6 md:gap-8 items-center">
-                    <div class="flex flex-col gap-4 w-full bg-white/5 p-4 drop-shadow-lg rounded-xl">
-                        <div class="flex flex-row justify-between items-center">
-                            <div class="flex flex-row gap-2 items-center">
-                                <div class="relative">
-                                    <img
-                                        class=move || format!("object-cover h-14 w-14 md:w-18 md:h-18 rounded-full cursor-pointer {}",
-                                            if blur_active() { "blur-md" } else { "" }
-                                        )
-                                        src=meta.logo_b64
-                                        on:click=move |_| {
-                                            if meta.is_nsfw {
-                                                blur_active.update(|b| *b = !*b);
-                                            }
+                <div class="flex flex-col bg-[#171717] rounded-lg p-3 gap-4">
+                    <div class="flex items-center gap-2 w-full">
+                        <div class="relative shrink-0">
+                            <img
+                                class=move || format!("object-cover h-12 w-12 rounded-sm cursor-pointer {}",
+                                    if blur_active() { "blur-md" } else { "" }
+                                )
+                                src=meta.logo_b64
+                                on:click=move |_| {
+                                    if meta.is_nsfw {
+                                        blur_active.update(|b| *b = !*b);
+                                    }
+                                }
+                            />
+                            <Show when=move || blur_active()>
+                                <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
+                                    on:click=move |_| {
+                                        if meta.is_nsfw {
+                                            blur_active.update(|b| *b = !*b);
                                         }
+                                    }>
+                                    <Icon
+                                        class="w-6 h-6 text-white/80"
+                                        icon=icondata::AiEyeInvisibleOutlined
                                     />
-                                    <Show when=move || blur_active()>
-                                        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
-                                            on:click=move |_| {
-                                                if meta.is_nsfw {
-                                                    blur_active.update(|b| *b = !*b);
-                                                }
-                                            }>
-                                            <Icon
-                                                class="w-6 h-6 text-white/80"
-                                                icon=icondata::AiEyeInvisibleOutlined
-                                            />
-                                        </div>
-                                    </Show>
                                 </div>
-                                <span class="text-base md:text-lg font-semibold text-white">
-                                    {meta.name}
-                                </span>
-                            </div>
-                            {share_link
-                                .zip(message)
-                                .map(|(share_link, message)| {
-                                    view! {
-                                        <ShareButtonWithFallbackPopup
-                                            share_link
-                                            message
-                                            style="w-12 h-12".into()
-                                        />
-                                    }
-                                })}
+                            </Show>
                         </div>
-
-                        <Show when= move|| key_principal.clone().is_some()>
-                            <div class="flex flex-row justify-between border-b p-1 border-white items-center">
-                                <span class="text-xs md:text-sm text-green-500">Balance</span>
-                                <span class="text-lg md:text-xl text-white">
-                                    {meta
-                                        .balance.clone()
-                                        .map(|balance| {
-                                            view! {
-                                                <span class="font-bold">
-                                                    {format!("{} ", balance.humanize_float_truncate_to_dp(2))}
-                                                </span>
-                                                <span>{meta_c1.symbol.clone()}</span>
-                                    }
-                                    })}
-                                </span>
+                        <div class="flex items-center justify-between grow gap-4">
+                            <div class="flex flex-col gap-1">
+                                <div class="text-lg font-medium text-neutral-50 line-clamp-1">{meta.name}</div>
+                                <div class="font-medium text-sm line-clamp-1 text-neutral-400">Created by {meta.token_owner.clone().unwrap().principal_id.to_text()}</div>
                             </div>
-                        </Show>
-                        <button
-                            on:click=move |_| detail_toggle.update(|t| *t = !*t)
-                            class="w-full bg-transparent p-1 flex flex-row justify-center items-center gap-2 text-white"
-                        >
-                            <span class="text-xs md:text-sm">View details</span>
-                            <div class="p-1 bg-white/15 rounded-full">
-                                <Icon class="text-xs md:text-sm text-white" icon=view_detail_icon />
+                            <div class="flex flex-col gap-1">
+                                <div class="text-lg font-bold text-neutral-50 shrink-0">${meta.symbol.clone()}</div>
+                                <div class="font-medium text-sm text-neutral-400 shrink-0">
+                                    3 Hrs ago
+                                </div>
                             </div>
-                        </button>
+                        </div>
                     </div>
-                    <Show when=detail_toggle>
-                        <TokenDetails meta=meta_c.clone() />
-                    </Show>
+                    <div class="flex flex-row justify-between">
+                        <ActionButton disabled=is_utility_token href=format!("/token/transfer/{root}") label="Send".to_string()>
+                            <SendIcon class="h-full w-full" />
+                        </ActionButton>
+                        <ActionButton disabled=true href="#".to_string() label="Buy/Sell".to_string()>
+                        <Icon class="h-6 w-6" icon=ArrowLeftRightIcon />
+                        </ActionButton>
+                        <ActionButtonLink disabled=true on:click=move |_|{} label="Airdrop".to_string()>
+                            <Icon class="h-6 w-6" icon=AirdropIcon />
+                        </ActionButtonLink>
+
+                        <ActionButton disabled=is_utility_token href="#".to_string() label="Share".to_string()>
+                            <Icon class="h-6 w-6" icon=ShareIcon on:click=on_share_click />
+                        </ActionButton>
+                        <ActionButton disabled=is_utility_token href=format!("/token/info/{root}/{key_principal_s}") label="Details".to_string()>
+                            <Icon class="h-6 w-6" icon=ChevronRightIcon />
+                        </ActionButton>
+                    </div>
                 </div>
-                    <Show when= move || is_user_principal>
-                        <a
-                            href=format!("/token/transfer/{}", root.to_string())
-                            class="fixed bottom-20 left-4 right-4 p-3 bg-primary-600 text-white text-center md:text-lg rounded-full z-50"
-                        >
-                            Send
-                        </a>
-                    </Show>
-                {if let Some(key_principal) = key_principal {
-                    view! { <Transactions source=IndexOrLedger::Index { key_principal, index: meta.index } symbol=meta.symbol.clone() decimals/> }
-                } else {
-                    view! {
-                        <Transactions
-                            source=IndexOrLedger::Ledger(meta.ledger)
-                            symbol=meta.symbol.clone()
-                            decimals
-                        />
-                    }
-                }}
+                    {if let Some(key_principal) = key_principal {
+                        view! { <Transactions source=IndexOrLedger::Index { key_principal, index: meta.index } symbol=meta.symbol.clone() decimals/> }
+                    } else {
+                        view! {
+                            <Transactions
+                                source=IndexOrLedger::Ledger(meta.ledger)
+                                symbol=meta.symbol.clone()
+                                decimals
+                            />
+                        }
+                    }}
             </div>
         </div>
     }

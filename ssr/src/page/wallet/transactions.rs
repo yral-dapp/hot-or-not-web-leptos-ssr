@@ -10,7 +10,7 @@ const FETCH_CNT: usize = 15;
 pub fn TransactionList(source: IndexOrLedger, symbol: String, decimals: u8) -> impl IntoView {
     let provider = get_history_provider(unauth_canisters(), source, decimals);
     view! {
-        <div class="flex flex-col w-full justify-between items-stretch">
+        <div class="flex flex-col w-full gap-3 justify-between items-stretch">
             <InfiniteScroller
                 provider
                 fetch_count=FETCH_CNT
@@ -25,13 +25,11 @@ pub fn TransactionList(source: IndexOrLedger, symbol: String, decimals: u8) -> i
 #[component]
 pub fn Transactions(source: IndexOrLedger, symbol: String, decimals: u8) -> impl IntoView {
     view! {
-
-    <span class="text-xl w-full text-white font-bold">Transactions</span>
-
-        <div class="flex items-center flex-col gap- pb-12 w-full">
-            <div class="flex flex-col divide-y divide-white/10 w-full">
-                <TransactionList source=source symbol decimals/>
+        <div class="flex flex-col gap-3 p-3 bg-[#171717] rounded-lg w-full">
+            <div class="w-full text-white flex items-center justify-center rounded-md bg-neutral-950 text-sm font-bold py-3">
+                Transactions
             </div>
+            <TransactionList source=source symbol decimals/>
         </div>
     }
 }

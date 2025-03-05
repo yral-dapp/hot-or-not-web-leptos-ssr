@@ -203,7 +203,7 @@ pub fn NavBar() -> impl IntoView {
 
     view! {
         <Suspense>
-            <div class="flex fixed bottom-0 left-0 z-50 flex-row justify-between items-center px-6 w-full bg-black/80">
+            <div class="flex fixed bottom-0 left-0 z-50 flex-row justify-between items-center px-6 md:px-44 w-full bg-black/80">
                 {items.iter().map(|item| {
                     let cur_selected = item.cur_selected;
                     match item.render_data.clone() {
