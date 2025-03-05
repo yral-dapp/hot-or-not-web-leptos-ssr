@@ -20,10 +20,10 @@ web-time = "1.0.0"
 axum = { version = "0.7", features = ["macros"] }
 console_error_panic_hook = "0.1"
 console_log = "1"
-leptos = { version = "0.7.6", features = ["nightly"] }
-leptos_axum = { version = "0.7.6" }
-leptos_meta = "0.7.6"
-leptos_router = { version = "0.7.6", features = ["nightly"] }
+leptos = { version = "0.7.7", features = ["nightly"] }
+leptos_axum = { version = "0.7.7" }
+leptos_meta = "0.7.7"
+leptos_router = { version = "0.7.7", features = ["nightly"] }
 log = "0.4"
 simple_logger = "4.0"
 tokio = { version = "1", features = [
