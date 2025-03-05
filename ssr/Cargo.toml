@@ -44,7 +44,7 @@ serde_bytes.workspace = true
 hex = "0.4.3"
 leptos_icons = "0.3.0"
 icondata = "0.3.0"
-gloo = { version = "0.11.0", features = ["futures", "net", "net"] }
+gloo = { version = "0.11.0", features = ["futures", "net", "net", "timers"] }
 once_cell = "1.19.0"
 web-time.workspace = true
 k256 = { version = "0.13.4", default-features = false, features = [
@@ -117,9 +117,11 @@ ic-certification = "2.6.0"
 ciborium = "0.2.2"
 yral-metadata-client = { git = "https://github.com/yral-dapp/yral-metadata", rev = "56e3f1f1f5f452673bee17739520c800c1264295", optional = true }
 yral-metadata-types = { git = "https://github.com/yral-dapp/yral-metadata", rev = "56e3f1f1f5f452673bee17739520c800c1264295", optional = true }
-yral-pump-n-dump-common = { git = "https://github.com/yral-dapp/yral-common", features = ["client"], rev = "34b050a0cc7adce42bbfa0bf09f1bf4e2d4ed72e", version = "0.1.0" }
+yral-pump-n-dump-common = { git = "https://github.com/yral-dapp/yral-common", features = [
+    "client",
+], rev = "34b050a0cc7adce42bbfa0bf09f1bf4e2d4ed72e", version = "0.1.0" }
 uuid = { version = "1.11.0", features = ["serde", "v4"] }
-regex = { version = "1.11.1", optional = true  }
+regex = { version = "1.11.1", optional = true }
 
 [build-dependencies]
 tonic-build = { version = "0.12.0", default-features = false, features = [

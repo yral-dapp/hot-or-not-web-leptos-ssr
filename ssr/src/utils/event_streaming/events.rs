@@ -49,6 +49,9 @@ pub enum AnalyticsEvent {
     TokensClaimedFromNeuron(TokensClaimedFromNeuron),
     TokensTransferred(TokensTransferred),
     PageVisit(PageVisit),
+    CentsAdded(CentsAdded),
+    CentsWithdrawn(CentsWithdrawn),
+    TokenPumpedDumped(TokenPumpedDumped),
 }
 
 #[derive(Default)]
@@ -950,6 +953,94 @@ impl PageVisit {
             );
 
             start(());
+        }
+    }
+}
+
+
+#[derive(Default)]
+pub struct CentsAdded;
+
+impl CentsAdded {
+    pub fn send_event(&self, cans_store: Canisters<true>, payment_source: String, amount: u64) {
+        #[cfg(all(feature = "hydrate", feature = "ga4"))]
+        {
+            let details = cans_store.profile_details();
+
+            let user_id = details.principal;
+            let canister_id = cans_store.user_canister();
+            let (is_connected, _) = account_connected_reader();
+            let is_connected = is_connected.get_untracked();
+
+            send_event_ssr_spawn(
+                "cents_added".to_string(),
+                json!({
+                    "user_id": user_id,
+                    "canister_id": canister_id,
+                    "is_loggedin": is_connected,
+                    "amount_added": amount,
+                    "payment_source": payment_source,
+                })
+                .to_string(),
+            );
+        }
+    }
+}
+
+#[derive(Default)]
+pub struct CentsWithdrawn;
+
+impl CentsWithdrawn {
+    pub fn send_event(&self, cans_store: Canisters<true>, amount_withdrawn: u64) {
+        #[cfg(all(feature = "hydrate", feature = "ga4"))]
+        {
+            let details = cans_store.profile_details();
+
+            let user_id = details.principal;
+            let canister_id = cans_store.user_canister();
+            let (is_connected, _) = account_connected_reader();
+            let is_connected = is_connected.get_untracked();
+
+            send_event_ssr_spawn(
+                "cents_withdrawn".to_string(),
+                json!({
+                    "user_id": user_id,
+                    "canister_id": canister_id,
+                    "is_loggedin": is_connected,
+                    "amount_withdrawn": amount_withdrawn,
+                })
+                .to_string(),
+            );
+        }
+    }
+}
+
+
+#[derive(Default)]
+pub struct TokenPumpedDumped;
+
+impl TokenPumpedDumped {
+    pub fn send_event(&self, cans_store: Canisters<true>, token_name: String, token_root: Principal, direction: String) {
+        #[cfg(all(feature = "hydrate", feature = "ga4"))]
+        {
+            let details = cans_store.profile_details();
+            let user_id = details.principal;
+            let canister_id = cans_store.user_canister();
+
+            let is_loggedin = account_connected_reader().0.get_untracked();
+
+            send_event_ssr_spawn(
+                "token_pumped_dumped".to_string(),
+                json!({
+                    "user_id": user_id,
+                    "canister_id": canister_id,
+                    "token_name": token_name,
+                    "token_root": token_root.to_string(),
+                    "direction": direction,
+                    "is_loggedin": is_loggedin,
+                })
+                .to_string(),
+            );
         }
     }
 }

@@ -1,11 +1,10 @@
 use candid::Nat;
-use leptos::{component, view, IntoView, Params, SignalGetUntracked};
+use leptos::{component, create_effect, expect_context, view, IntoView, Params, SignalGetUntracked, spawn_local};
 use leptos_router::{use_query, Params};
-use yral_canisters_common::utils::token::balance::TokenBalance;
+use yral_canisters_common::{utils::token::balance::TokenBalance, Canisters};
 
 use crate::{
-    component::{back_btn::BackButton, title::TitleText},
-    try_or_redirect_opt,
+    component::{back_btn::BackButton, title::TitleText}, state::canisters::authenticated_canisters, try_or_redirect_opt, utils::event_streaming::events::CentsWithdrawn
 };
 
 #[derive(Debug, PartialEq, Eq, Clone, Params)]
@@ -19,6 +18,21 @@ pub fn Success() -> impl IntoView {
     let SuccessParams { cents } = try_or_redirect_opt!(params.get_untracked());
     let formatted_dolr = TokenBalance::new(cents.clone(), 8).humanize_float_truncate_to_dp(4);
     let formatted_cents = TokenBalance::new(cents.clone(), 6).humanize_float_truncate_to_dp(4);
+
+    // Track the withdrawal event
+    let auth_cans = authenticated_canisters();
+    let cents_value = formatted_cents.clone().parse::<u64>().unwrap_or(0);
+    
+    create_effect(move |_| {
+        let auth_cans_c = auth_cans.clone();
+        spawn_local(async move {
+            if let Ok(cans_wire) = auth_cans_c.wait_untracked().await {
+                if let Ok(cans) = Canisters::from_wire(cans_wire, expect_context()) {
+                    CentsWithdrawn.send_event(cans, cents_value);
+                }
+            }
+        });
+    });
 
     Some(view! {
         <div

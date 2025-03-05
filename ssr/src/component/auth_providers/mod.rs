@@ -11,10 +11,10 @@ use leptos_use::storage::use_local_storage;
 use yral_types::delegated_identity::DelegatedIdentityWire;
 
 use crate::{
-    consts::ACCOUNT_CONNECTED_STORE,
+    consts::{ACCOUNT_CONNECTED_STORE, NEW_USER_SIGNUP_REWARD, REFERRAL_REWARD},
     state::{auth::auth_state, local_storage::use_referrer_store},
     utils::{
-        event_streaming::events::{LoginMethodSelected, LoginSuccessful},
+        event_streaming::events::{CentsAdded, LoginMethodSelected, LoginSuccessful},
         MockPartialEq,
     },
 };
@@ -47,9 +47,14 @@ async fn handle_user_login(
     let user_principal = canisters.identity().sender().unwrap();
     let first_time_login = mark_user_registered(user_principal).await?;
 
+    if first_time_login {
+        CentsAdded.send_event(canisters.clone(), "signup".to_string(), NEW_USER_SIGNUP_REWARD);
+    }
+
     match referrer {
         Some(_referee_principal) if first_time_login => {
             issue_referral_rewards(canisters.user_canister()).await?;
+            CentsAdded.send_event(canisters, "referral".to_string(), REFERRAL_REWARD);
             Ok(())
         }
         _ => Ok(()),

@@ -1,7 +1,7 @@
 use leptos::{html::Audio, *};
 use yral_pump_n_dump_common::GameDirection;
 
-use crate::page::pumpdump::{PlayerDataRes, RunningGameRes};
+use crate::page::{icpump::ProcessedTokenListResponse, pumpdump::{analytics::record_action, PlayerDataRes, RunningGameRes}};
 
 fn non_visual_feedback(audio_ref: NodeRef<Audio>) {
     #[cfg(not(feature = "hydrate"))]
@@ -34,6 +34,7 @@ fn non_visual_feedback(audio_ref: NodeRef<Audio>) {
 pub fn DumpButton(audio_ref: NodeRef<Audio>) -> impl IntoView {
     let game_res: RunningGameRes = expect_context();
     let player_data: PlayerDataRes = expect_context();
+    let token: ProcessedTokenListResponse = expect_context();
     let has_no_balance = move || {
         player_data
             .read
@@ -57,6 +58,12 @@ pub fn DumpButton(audio_ref: NodeRef<Audio>) -> impl IntoView {
         ctx.send_bet(GameDirection::Dump);
 
         // debounceResistanceAnimation();
+        // Record the action for buffered analytics
+        record_action(
+            token.token_details.token_name.clone(),
+            token.root,
+            GameDirection::Dump
+        );
     };
 
     view! {
@@ -119,6 +126,7 @@ pub fn MockDumpButton() -> impl IntoView {
 pub fn PumpButton(audio_ref: NodeRef<Audio>) -> impl IntoView {
     let game_res: RunningGameRes = expect_context();
     let player_data: PlayerDataRes = expect_context();
+    let token: ProcessedTokenListResponse = expect_context();
     let has_no_balance = move || {
         player_data
             .read
@@ -142,6 +150,12 @@ pub fn PumpButton(audio_ref: NodeRef<Audio>) -> impl IntoView {
         ctx.send_bet(GameDirection::Pump);
 
         // debounceResistanceAnimation();
+        // Record the action for buffered analytics
+        record_action(
+            token.token_details.token_name.clone(),
+            token.root,
+            GameDirection::Pump
+        );
     };
 
     view! {
