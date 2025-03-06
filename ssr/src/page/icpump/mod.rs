@@ -5,6 +5,7 @@ use crate::consts::ICPUMP_LISTING_PAGE_SIZE;
 use crate::consts::USER_PRINCIPAL_STORE;
 use crate::state::canisters::authenticated_canisters;
 use crate::utils::token::icpump::get_airdrop_amount_from_kv;
+use crate::utils::event_streaming::events::CentsAdded;
 use std::collections::VecDeque;
 
 use candid::Nat;
@@ -63,7 +64,7 @@ pub async fn process_token_list_item(
                 item.link
                     .trim_end_matches('/')
                     .split('/')
-                    .last()
+                    .next_back()
                     .ok_or(ServerFnError::new("Not root given"))
                     .unwrap_or_default(),
             )
@@ -351,10 +352,13 @@ pub fn TokenCard(
     let share_link = create_rw_signal("".to_string());
     let share_link_coin = format!("/token/info/{}/{}", root, details.user_id);
     let symbol = details.token_symbol.clone();
+    let token_symbol_c = details.token_symbol.clone();
+    let token_symbol_c2 = token_symbol_c.clone();
+    let token_symbol_c3 = token_symbol_c.clone();
     let share_message = move || {
         format!(
         "Hey! Check out the token: {} I created on YRAL 👇 {}. I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter",
-        details.token_symbol.clone(),
+        token_symbol_c2,
         share_link.get(),
     )
     };
@@ -370,6 +374,7 @@ pub fn TokenCard(
     let airdrop_action = create_action(move |&()| {
         let cans_res = cans_res.clone();
         let token_owner_cans_id = token_owner_c.clone().unwrap().canister_id;
+        let token_symbol_c4 = token_symbol_c3.clone();
         async move {
             let amount = get_airdrop_amount_from_kv().await?;
             airdrop_amount.set(amount);
@@ -395,6 +400,10 @@ pub fn TokenCard(
 
             let user = cans.individual_user(cans.user_canister()).await;
             user.add_token(root).await?;
+
+            if token_symbol_c4 == "COYNS" || token_symbol_c4 == "CENTS" {
+                CentsAdded.send_event("airdrop".to_string(), 100);
+            }
 
             buffer_signal.set(false);
             claimed.set(true);
@@ -434,7 +443,9 @@ pub fn TokenCard(
                 <div class="flex flex-col justify-between overflow-hidden w-full">
                     <div class="flex flex-col gap-2">
                         <div class="flex gap-4 justify-between items-center w-full text-lg">
-                            <span class="font-medium shrink line-clamp-1">{details.name.clone()}</span>
+                            <span class="font-medium shrink line-clamp-1">
+                                {details.name.clone()}
+                            </span>
                             <span class="font-bold shrink-0">{symbol}</span>
                         </div>
                         <span class="text-sm line-clamp-2 text-neutral-400">
@@ -455,7 +466,13 @@ pub fn TokenCard(
                 <ActionButton label="Buy/Sell".to_string() href="#".to_string() disabled=true>
                     <Icon class="w-full h-full" icon=ArrowLeftRightIcon />
                 </ActionButton>
-                <ActionButtonLink disabled=airdrop_disabled on:click=move |_|{airdrop_action.dispatch(());} label="Airdrop".to_string()>
+                <ActionButtonLink
+                    disabled=airdrop_disabled
+                    on:click=move |_| {
+                        airdrop_action.dispatch(());
+                    }
+                    label="Airdrop".to_string()
+                >
                     <Icon class="h-full w-full" icon=AirdropIcon />
                 </ActionButtonLink>
                 <ActionButton label="Share".to_string() href="#".to_string()>
@@ -479,7 +496,7 @@ pub fn TokenCard(
                     show_popup=pop_up
                 />
             </PopupOverlay>
-            <ShadowOverlay show=airdrop_popup >
+            <ShadowOverlay show=airdrop_popup>
                 <div class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 max-w-[560px] max-h-[634px] min-w-[343px] min-h-[480px] backdrop-blur-lg rounded-lg">
                     <div class="rounded-lg z-[500]">
                         <AirdropPopup

@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use yral_canisters_common::utils::time::current_epoch;
 use std::{
     env,
     time::{SystemTime, UNIX_EPOCH},
@@ -158,7 +159,7 @@ pub async fn get_paginated_token_list_with_limit(
                 description: "This is a test token".to_string(),
                 created_at: "69".to_string(),
                 formatted_created_at: "69 mins".to_string(),
-                link: "http://localhost:3000/token/info/53fza-eeaaa-aaaaa-qacda-cai/".to_string(),
+                link: "https://icpump.fun/token/info/lf5yo-eiaaa-aaaah-alwya-cai/".to_string(),
                 is_nsfw: false,
                 timestamp: 0,
             }])
@@ -400,6 +401,7 @@ pub async fn get_airdrop_amount_from_kv() -> Result<u64, ServerFnError> {
     use derive_more::Display;
     use rand::prelude::*;
     use yral_config_keys::key_derive;
+    use speedate::DateTime;
 
     let kv_config = get_kv_config()?;
 
@@ -424,7 +426,8 @@ pub async fn get_airdrop_amount_from_kv() -> Result<u64, ServerFnError> {
         )
     })?;
 
-    let amount: u64 = rand::thread_rng().gen_range(lower..=upper);
+    let mut rng = SmallRng::seed_from_u64(DateTime::now(0).unwrap().timestamp() as u64);
+    let amount: u64 = rng.random_range(lower..=upper);
 
     Ok(amount)
 }

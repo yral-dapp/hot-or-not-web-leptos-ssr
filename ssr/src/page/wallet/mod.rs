@@ -24,8 +24,14 @@ use crate::{
     try_or_redirect_opt,
 };
 
+/// Controller for the login modal, passed through context
+/// under wallet
+#[derive(Debug, Clone, Copy)]
+pub struct ShowLoginSignal(RwSignal<bool>);
+
 #[component]
 fn ProfileCard(details: ProfileDetails, is_own_account: bool, is_connected: bool) -> impl IntoView {
+    let ShowLoginSignal(show_login) = expect_context();
     view! {
         <div class="w-full flex flex-col bg-neutral-900 rounded-lg p-4 gap-4">
             <div class="flex items-center gap-4">
@@ -43,6 +49,7 @@ fn ProfileCard(details: ProfileDetails, is_own_account: bool, is_connected: bool
 
             <Show when=move || !is_connected && is_own_account>
                 <ConnectLogin
+                    show_login
                     login_text=if !show_pnd_page() {"Login to claim your COYNs"} else {"Login to claim your Cents"}
                     cta_location="wallet"
                 />
@@ -156,9 +163,13 @@ pub fn Wallet() -> impl IntoView {
         }}
     }
 }
+
 #[component]
 pub fn WalletImpl(principal: Principal) -> impl IntoView {
     let (is_connected, _) = account_connected_reader();
+    let show_login = create_rw_signal(false);
+
+    provide_context(ShowLoginSignal(show_login));
 
     let auth_cans = authenticated_canisters();
 

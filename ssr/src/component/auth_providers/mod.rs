@@ -11,10 +11,10 @@ use leptos_use::storage::use_local_storage;
 use yral_types::delegated_identity::DelegatedIdentityWire;
 
 use crate::{
-    consts::ACCOUNT_CONNECTED_STORE,
+    consts::{ACCOUNT_CONNECTED_STORE, NEW_USER_SIGNUP_REWARD, REFERRAL_REWARD},
     state::{auth::auth_state, local_storage::use_referrer_store},
     utils::{
-        event_streaming::events::{LoginMethodSelected, LoginSuccessful},
+        event_streaming::events::{CentsAdded, LoginMethodSelected, LoginSuccessful},
         MockPartialEq,
     },
 };
@@ -47,9 +47,14 @@ async fn handle_user_login(
     let user_principal = canisters.identity().sender().unwrap();
     let first_time_login = mark_user_registered(user_principal).await?;
 
+    if first_time_login {
+        CentsAdded.send_event("signup".to_string(), NEW_USER_SIGNUP_REWARD);
+    }
+
     match referrer {
         Some(_referee_principal) if first_time_login => {
             issue_referral_rewards(canisters.user_canister()).await?;
+            CentsAdded.send_event("referral".to_string(), REFERRAL_REWARD);
             Ok(())
         }
         _ => Ok(()),
@@ -157,7 +162,7 @@ pub fn LoginProviders(show_modal: RwSignal<bool>, lock_closing: RwSignal<bool>) 
     view! {
         <div class="flex flex-col py-12 px-16 items-center gap-2 bg-neutral-900 text-white cursor-auto">
             <h1 class="text-xl">Login to Yral</h1>
-            <img class="h-32 w-32 object-contain my-8" src="/img/logo.webp" />
+            <img class="h-32 w-32 object-contain my-8" src="/img/yral/logo.webp" />
             <span class="text-md">Continue with</span>
             <div class="flex flex-col w-full gap-4 items-center">
 

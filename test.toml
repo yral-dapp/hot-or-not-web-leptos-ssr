@@ -1,0 +1,309 @@
+[package]
+name = "hot-or-not-web-leptos-ssr"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+axum = { version = "0.7", optional = true, features = ["macros"] }
+console_error_panic_hook = "0.1"
+console_log = "1"
+leptos = { version = "0.6", features = ["nightly"] }
+leptos_axum = { version = "0.6", optional = true }
+leptos_meta = { version = "0.6", features = ["nightly"] }
+leptos_router = { version = "0.6", features = ["nightly"] }
+log = "0.4"
+simple_logger = "4.0"
+tokio = { version = "1", optional = true, features = [
+    "rt-multi-thread",
+    "signal",
+    "time",
+] }
+tower = { version = "0.4", optional = true }
+tower-http = { version = "0.5", features = ["fs", "cors"], optional = true }
+wasm-bindgen = "=0.2.99"
+thiserror = "1.0"
+tracing = { version = "0.1.37", optional = true }
+http = "1.1.0"
+serde.workspace = true
+candid.workspace = true
+ic-agent = { version = "0.38.1", default-features = false, features = ["pem"] }
+ic-base-types = { git = "https://github.com/dfinity/ic", rev = "tags/release-2024-10-17_03-07-base" }
+icp-ledger = { git = "https://github.com/dfinity/ic", rev = "tags/release-2024-10-17_03-07-base" }
+serde-wasm-bindgen = "0.6.5"
+futures = "0.3.30"
+leptos-use = "0.13.13"
+codee = { version = "0.2", features = ["json_serde"] }
+reqwest = { version = "0.12", default-features = false, features = [
+    "json",
+    "http2",
+] }
+serde_bytes.workspace = true
+hex = "0.4.3"
+leptos_icons = "0.3.0"
+icondata = "0.3.0"
+gloo = { version = "0.11.0", features = ["futures", "net", "net"] }
+once_cell = "1.19.0"
+web-time.workspace = true
+k256 = { version = "0.13.4", default-features = false, features = [
+    "std",
+    "jwk",
+] }
+icondata_core = "0.1.0"
+serde_json = "1.0"
+crc32fast = "1.4.0"
+uts2ts = "0.4.1"
+rand_chacha = { version = "0.3.1", optional = true }
+web-sys = { version = "0.3", features = [
+    "Clipboard",
+    "Navigator",
+    "ShareData",
+    "Window",
+    "Document",
+    "Worker",
+    "CanvasRenderingContext2d",
+], optional = true }
+circular-buffer = "0.1.7"
+redb = { version = "2.0.0", optional = true }
+enum_dispatch = { version = "0.3.12", optional = true }
+axum-extra = { version = "0.9.3", optional = true, features = [
+    "cookie",
+    "cookie-signed",
+    "cookie-private",
+] }
+openidconnect = { version = "3.5.0", optional = true }
+dotenv = { version = "0.15.0", optional = true }
+redis = { version = "0.25.2", features = [
+    "tokio-rustls-comp",
+    "aio",
+    "ahash",
+    "connection-manager",
+    "keep-alive",
+], default-features = false, optional = true }
+bb8 = { version = "0.8.3", optional = true }
+bb8-redis = { version = "0.15.0", optional = true }
+gob-cloudflare = { git = "https://github.com/yral-dapp/gob-cloudflare", rev = "c847ba87ecc73a33520b24bd62503420d7e23e3e", default-features = false, optional = true }
+gloo-utils = { version = "0.2.0", features = ["serde"] }
+hmac = { version = "0.12.1", optional = true }
+wasm-bindgen-futures = { version = "0.4.42" }
+testcontainers = { version = "0.20.0", optional = true }
+yral-testcontainers = { git = "https://github.com/yral-dapp/yral-testcontainers", rev = "7438ba7cb281e7f195cf81f2a8532f63ce005771", optional = true }
+sns-validation = { git = "https://github.com/yral-dapp/yral-common.git" }
+yral-grpc-traits = { git = "https://github.com/yral-dapp/yral-common.git" }
+js-sys = "0.3.69"
+tonic-web-wasm-client = { version = "0.6" }
+tonic = { version = "0.12.0", default-features = false, features = [
+    "prost",
+    "codegen",
+] }
+prost = "0.13.0"
+priority-queue = "2.1.0"
+rust_decimal = "1.36"
+firestore = { version = "0.43.1", default-features = false, features = [
+    "tls-webpki-roots",
+], optional = true }
+speedate = { version = "0.14.4", optional = true }
+urlencoding = "2.1.3"
+yral-types = { git = "https://github.com/yral-dapp/yral-common.git " }
+yral-qstash-types = { git = "https://github.com/yral-dapp/yral-common.git" }
+yral-canisters-client = { git = "https://github.com/yral-dapp/yral-common.git", features = [
+    "full",
+] }
+yral-canisters-common = { git = "https://github.com/yral-dapp/yral-common.git" }
+pulldown-cmark = "0.12.1"
+ic-certification = "2.6.0"
+ciborium = "0.2.2"
+yral-metadata-client = { git = "https://github.com/yral-dapp/yral-metadata", rev = "56e3f1f1f5f452673bee17739520c800c1264295", optional = true }
+yral-metadata-types = { git = "https://github.com/yral-dapp/yral-metadata", rev = "56e3f1f1f5f452673bee17739520c800c1264295", optional = true }
+yral-pump-n-dump-common = { git = "https://github.com/yral-dapp/yral-common.git", features = [
+    "client",
+], version = "0.1.0" }
+yral-config-cf-kv = { git = "https://github.com/yral-dapp/yral-common.git" }
+yral-config-keys = { git = "https://github.com/yral-dapp/yral-common.git" }
+derive_more = { version = "2", features = ["display"] }
+
+uuid = { version = "1.11.0", features = ["serde", "v4"] }
+regex = { version = "1.11.1", optional = true }
+rand = "0.8.5"
+
+[build-dependencies]
+tonic-build = { version = "0.12.0", default-features = false, features = [
+    "prost",
+] }
+anyhow = "1.0.86"
+
+[features]
+hydrate = [
+    "leptos/hydrate",
+    "leptos_meta/hydrate",
+    "leptos_router/hydrate",
+    "ic-agent/wasm-bindgen",
+    "uuid/js",
+    "dep:web-sys",
+    "reqwest/native-tls",
+    "dep:rand_chacha",
+    "tonic/codegen",
+    "speedate",
+]
+ssr = [
+    "dep:axum",
+    "dep:tokio",
+    "dep:tower",
+    "dep:tower-http",
+    "dep:leptos_axum",
+    "leptos/ssr",
+    "leptos_meta/ssr",
+    "leptos_router/ssr",
+    "dep:tracing",
+    "leptos-use/ssr",
+    "leptos-use/axum",
+    "reqwest/rustls-tls",
+    "dep:redis",
+    "yral-canisters-common/rustls-tls",
+    "dep:redb",
+    "dep:enum_dispatch",
+    "axum-extra",
+    "dep:rand_chacha",
+    "dep:dotenv",
+    "bb8",
+    "bb8-redis",
+    "hmac",
+    "tonic/tls",
+    "tonic/tls-webpki-roots",
+    "tonic/transport",
+    "tonic-build/transport",
+    "speedate",
+    "dep:regex",
+]
+# Fetch mock referral history instead of history via canister
+mock-referral-history = ["dep:rand_chacha", "k256/arithmetic"]
+
+
+mock-history = ["mock-referral-history", "mock-wallet-history"]
+oauth-ssr = ["dep:openidconnect"]
+oauth-hydrate = []
+local-auth = []
+redis-kv = []
+cloudflare = ["dep:gob-cloudflare"]
+backend-admin = []
+ga4 = []
+mock-wallet-history = ["dep:rand_chacha"]
+firestore = ["dep:firestore", "speedate"]
+qstash = []
+release-bin = [
+    "ssr",
+    "cloudflare",
+    "gob-cloudflare/rustls-tls",
+    "redis-kv",
+    "backend-admin",
+    "oauth-ssr",
+    "ga4",
+    "firestore",
+    "qstash",
+]
+release-lib = [
+    "hydrate",
+    "cloudflare",
+    "redis-kv",
+    "backend-admin",
+    "dep:openidconnect",
+    "oauth-hydrate",
+    "ga4",
+]
+local-bin = [
+    "ssr",
+    "redis-kv",
+    "local-auth",
+    "backend-admin",
+    "dep:testcontainers",
+    "dep:yral-testcontainers",
+    "yral-canisters-common/local",
+    "dep:yral-metadata-client",
+    "dep:yral-metadata-types",
+]
+local-lib = [
+    "hydrate",
+    "redis-kv",
+    "local-auth",
+    "backend-admin",
+    "yral-canisters-common/local",
+]
+
+[package.metadata.leptos]
+# The name used by wasm-bindgen/cargo-leptos for the JS/WASM bundle. Defaults to the crate name
+output-name = "hot-or-not-leptos-ssr"
+
+# The site root folder is where cargo-leptos generate all output. WARNING: all content of this folder will be erased on a rebuild. Use it in your server setup.
+site-root = "target/site"
+
+# The site-root relative folder where all compiled output (JS, WASM and CSS) is written
+# Defaults to pkg
+site-pkg-dir = "pkg"
+
+# [Optional] The source CSS file. If it ends with .sass or .scss then it will be compiled by dart-sass into CSS. The CSS is optimized by Lightning CSS before being written to <site-root>/<site-pkg>/app.css
+#style-file = "style/main.scss"
+
+# The tailwind input file.
+tailwind-input-file = "style/input.css"
+
+# The tailwind config file.
+tailwind-config-file = "tailwind.config.js"
+
+# Enables additional file hashes on outputted css, js, and wasm files
+#
+# Optional: Defaults to false. Can also be set with the LEPTOS_HASH_FILES=false env var
+hash-files = false
+
+# Assets source dir. All files found here will be copied and synchronized to site-root.
+# The assets-dir cannot have a sub directory with the same name/path as site-pkg-dir.
+#
+# Optional. Env: LEPTOS_ASSETS_DIR.
+assets-dir = "public"
+
+# The IP and port (ex: 127.0.0.1:3000) where the server serves the content. Use it in your server setup.
+site-addr = "127.0.0.1:3000"
+
+# The port to use for automatic reload monitoring
+reload-port = 3001
+
+# [Optional] Command to use when running end2end tests. It will run in the end2end dir.
+#   [Windows] for non-WSL use "npx.cmd playwright test"
+#   This binary name can be checked in Powershell with Get-Command npx
+end2end-cmd = "npx playwright test"
+end2end-dir = "end2end"
+
+#  The browserlist query used for optimizing the CSS.
+browserquery = "defaults"
+
+# Set by cargo-leptos watch when building with that tool. Controls whether autoreload JS will be included in the head
+watch = false
+
+# The environment Leptos will run in, usually either "DEV" or "PROD"
+env = "DEV"
+
+# The features to use when compiling the bin target
+#
+# Optional. Can be over-ridden with the command line parameter --bin-features
+bin-features = ["ssr", "local-auth"]
+
+# If the --no-default-features flag should be used when compiling the bin target
+#
+# Optional. Defaults to false.
+bin-default-features = false
+
+# The features to use when compiling the lib target
+#
+# Optional. Can be over-ridden with the command line parameter --lib-features
+lib-features = ["hydrate local-auth"]
+
+# If the --no-default-features flag should be used when compiling the lib target
+#
+# Optional. Defaults to false.
+lib-default-features = false
+
+# The profile to use for the lib target when compiling for release
+#
+# Optional. Defaults to "release".
+lib-profile-release = "wasm-release"
