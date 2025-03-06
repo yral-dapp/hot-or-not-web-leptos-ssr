@@ -96,5 +96,6 @@ where
         <Show when=move || {
             !data_loading() && data.with(|d| d.is_empty())
         }>{empty_content.run()}</Show>
-    }.into_any()
+    }
+    .into_any()
 }
