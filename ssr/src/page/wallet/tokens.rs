@@ -243,7 +243,7 @@ fn WalletCardOptions(
             let cans_res = cans_res.clone();
             let token_owner_cans_id = token_owner_c.clone().unwrap().canister_id;
             let root = Principal::from_text(root_c.clone()).unwrap();
-            
+
             async move {
                 let amount = get_airdrop_amount_from_kv().await?;
                 airdrop_amount.set(amount);
@@ -256,7 +256,7 @@ fn WalletCardOptions(
                 let cans_wire = cans_res.wait_untracked().await?;
                 let cans = Canisters::from_wire(cans_wire, expect_context())?;
                 let token_owner = cans.individual_user(token_owner_cans_id).await;
-                
+
                 token_owner
                     .request_airdrop(
                         root,

@@ -1,9 +1,9 @@
 use serde::{Deserialize, Serialize};
-use yral_canisters_common::utils::time::current_epoch;
 use std::{
     env,
     time::{SystemTime, UNIX_EPOCH},
 };
+use yral_canisters_common::utils::time::current_epoch;
 use yral_config_cf_kv::KVConfig;
 
 use futures::stream::BoxStream;
@@ -400,8 +400,8 @@ impl AirdropConfigProvider for AirdropKVConfig {
 pub async fn get_airdrop_amount_from_kv() -> Result<u64, ServerFnError> {
     use derive_more::Display;
     use rand::prelude::*;
-    use yral_config_keys::key_derive;
     use speedate::DateTime;
+    use yral_config_keys::key_derive;
 
     let kv_config = get_kv_config()?;
 
