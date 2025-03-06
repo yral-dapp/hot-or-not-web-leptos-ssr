@@ -3,7 +3,6 @@ use std::{
     env,
     time::{SystemTime, UNIX_EPOCH},
 };
-use yral_canisters_common::utils::time::current_epoch;
 use yral_config_cf_kv::KVConfig;
 
 use futures::stream::BoxStream;
@@ -339,12 +338,12 @@ impl TokenInfoProvider for IcpumpTokenInfo {
 }
 
 fn get_kv_config() -> Result<KVConfig, ServerFnError> {
-    let url = env::var("CF_KV_FETCH_URL").map_err(|e| {
+    let url = env::var("CF_KV_FETCH_URL").map_err(|_e| {
         ServerFnError::ServerError::<std::convert::Infallible>(
             "CF_KV_FETCH_URL is not set".to_string(),
         )
     })?;
-    let token = env::var("CF_KV_FETCH_TOKEN").map_err(|e| {
+    let token = env::var("CF_KV_FETCH_TOKEN").map_err(|_e| {
         ServerFnError::ServerError::<std::convert::Infallible>(
             "CF_KV_FETCH_TOKEN is not set".to_string(),
         )
@@ -370,12 +369,12 @@ async fn get_airdrop_config_from_kv() -> Result<AirdropConfig, ServerFnError> {
     pub struct ClaimLimit;
     key_derive!(ClaimLimit => usize|3);
 
-    let cycle_duration = kv_config.get(CycleDuration).await.map_err(|e| {
+    let cycle_duration = kv_config.get(CycleDuration).await.map_err(|_e| {
         ServerFnError::ServerError::<std::convert::Infallible>(
             "cannot fetch airdrop cycle_duration from cf kv".to_string(),
         )
     })?;
-    let claim_limit = kv_config.get(ClaimLimit).await.map_err(|e| {
+    let claim_limit = kv_config.get(ClaimLimit).await.map_err(|_e| {
         ServerFnError::ServerError::<std::convert::Infallible>(
             "cannot fetch airdrop claim_limit from cf kv".to_string(),
         )
@@ -415,12 +414,12 @@ pub async fn get_airdrop_amount_from_kv() -> Result<u64, ServerFnError> {
     pub struct AirdropLowerLimit;
     key_derive!(AirdropLowerLimit => u64|10);
 
-    let upper = kv_config.get(AirdropUpperLimit).await.map_err(|e| {
+    let upper = kv_config.get(AirdropUpperLimit).await.map_err(|_e| {
         ServerFnError::ServerError::<std::convert::Infallible>(
             "cannot fetch airdrop cycle_duration from cf kv".to_string(),
         )
     })?;
-    let lower = kv_config.get(AirdropLowerLimit).await.map_err(|e| {
+    let lower = kv_config.get(AirdropLowerLimit).await.map_err(|_e| {
         ServerFnError::ServerError::<std::convert::Infallible>(
             "cannot fetch airdrop claim_limit from cf kv".to_string(),
         )

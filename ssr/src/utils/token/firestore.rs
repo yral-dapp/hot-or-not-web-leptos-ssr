@@ -1,7 +1,4 @@
-use std::{
-    sync::{Arc, Mutex},
-    time::UNIX_EPOCH,
-};
+use std::sync::{Arc, Mutex};
 
 use js_sys::Object;
 use serde::{Deserialize, Serialize};
