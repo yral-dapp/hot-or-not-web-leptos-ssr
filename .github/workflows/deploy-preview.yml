@@ -69,6 +69,8 @@ jobs:
           flyctl secrets set QSTASH_TOKEN="$QSTASH_TOKEN" --app "$APP_NAME" --stage
           flyctl secrets set GA4_API_SECRET="$GA4_API_SECRET" --app "$APP_NAME" --stage
           flyctl secrets set NSFW_GRPC_TOKEN="$NSFW_GRPC_TOKEN" --app "$APP_NAME" --stage
+          flyctl secrets set CF_KV_FETCH_URL="$CF_KV_FETCH_URL" --app "$APP_NAME" --stage
+          flyctl secrets set CF_KV_FETCH_TOKEN="$CF_KV_FETCH_TOKEN" --app "$APP_NAME" --stage
           flyctl deploy --app $APP_NAME
         env:
           CF_TOKEN: ${{ secrets.CLOUDFLARE_STREAM_IMAGES_ANALYTICS_READ_WRITE_SECRET }}
@@ -85,7 +87,8 @@ jobs:
           QSTASH_TOKEN: ${{ secrets.QSTASH_TOKEN }}
           GA4_API_SECRET: ${{ secrets.GOOGLE_ANALYTICS_MEASUREMENT_PROTOCOL_API_SECRET }}
           NSFW_GRPC_TOKEN: ${{ secrets.TOKEN_TO_SIGN_OUTGOING_CALLS_TO_NSFW_DETECT_SERVICE }}
-
+          CF_KV_FETCH_URL: https://kv-fetch.go-bazzinga.workers.dev
+          CF_KV_FETCH_TOKEN: ${{ secrets.KV_FETCH_JWT_TOKEN }}
   e2e-tests:
     needs: preview
     uses: ./.github/workflows/e2e-tests.yml
