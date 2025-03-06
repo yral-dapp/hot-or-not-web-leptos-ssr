@@ -115,6 +115,7 @@ hydrate = [
     "state/hydrate",
     "component/hydrate",
     "page/hydrate",
+    "yral-canisters-common/js",
 ]
 ssr = [
     "dep:axum",

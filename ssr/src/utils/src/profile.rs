@@ -39,7 +39,7 @@ impl CursoredDataProvider for PostsProvider {
     type Data = PostDetails;
     type Error = AgentError;
 
-    async fn get_by_cursor(
+    async fn get_by_cursor_inner(
         &self,
         start: usize,
         end: usize,

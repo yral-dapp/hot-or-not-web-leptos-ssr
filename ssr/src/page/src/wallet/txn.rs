@@ -186,7 +186,7 @@ pub mod provider {
             type Data = TxnInfoWallet;
             type Error = Infallible;
 
-            async fn get_by_cursor(
+            async fn get_by_cursor_inner(
                 &self,
                 from: usize,
                 end: usize,

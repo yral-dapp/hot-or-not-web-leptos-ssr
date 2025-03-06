@@ -1,5 +1,3 @@
-use send_wrapper::SendWrapper;
-
 use super::bullet_loader::BulletLoader;
 use leptos::{html::ElementType, prelude::*};
 use leptos_use::{
@@ -41,11 +39,10 @@ where
     let fetch_res = Resource::new(cursor, move |cursor| {
         let provider = provider.clone();
         async move {
-            let future = provider.get_by_cursor(cursor, cursor + fetch_count);
             let PageEntry {
                 data: mut fetched,
                 end: list_end,
-            } = match SendWrapper::new(future).await {
+            } = match provider.get_by_cursor(cursor, cursor + fetch_count).await {
                 Ok(t) => t,
                 Err(e) => {
                     log::warn!("failed to fetch data err {e}");
@@ -99,6 +96,5 @@ where
         <Show when=move || {
             !data_loading() && data.with(|d| d.is_empty())
         }>{empty_content.run()}</Show>
-    }
-    .into_any()
+    }.into_any()
 }
