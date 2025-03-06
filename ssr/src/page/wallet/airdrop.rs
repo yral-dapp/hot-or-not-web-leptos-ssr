@@ -75,18 +75,14 @@ fn AirdropButton(
             let cans = Canisters::from_wire(cans_wire, expect_context())?;
             let token_owner = cans.individual_user(token_owner_cans_id).await;
 
-            let airdrop_res = token_owner
+            token_owner
                 .request_airdrop(
                     root.unwrap(),
                     None,
                     Into::<Nat>::into(airdrop_amount) * 10u64.pow(8),
                     cans.user_canister(),
                 )
-                .await;
-
-            println!("DEBUG ----> airdrop request result is {:?}", airdrop_res);
-
-            airdrop_res?;
+                .await?;
 
             let user = cans.individual_user(cans.user_canister()).await;
             user.add_token(root.unwrap()).await?;
