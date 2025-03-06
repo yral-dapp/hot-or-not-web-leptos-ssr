@@ -129,18 +129,7 @@ fn TokenInfoInner(
     root: RootType,
     meta: TokenMetadata,
     key_principal: Option<Principal>,
-    is_user_principal: bool,
 ) -> impl IntoView {
-    let meta_c1 = meta.clone();
-    let meta_c = meta.clone();
-    let detail_toggle = create_rw_signal(false);
-    let view_detail_icon = Signal::derive(move || {
-        if detail_toggle() {
-            icondata::AiUpOutlined
-        } else {
-            icondata::AiDownOutlined
-        }
-    });
     let share_link = key_principal.map(|key_principal| generate_share_link(&root, key_principal));
     let message = share_link.clone().map(|share_link|format!(
         "Hey! Check out the token: {} I created on YRAL 👇 {}. I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter",
@@ -149,23 +138,24 @@ fn TokenInfoInner(
 
     let decimals = meta.decimals;
     let blur_active = create_rw_signal(meta.is_nsfw);
+    let root_c = root.clone();
     let is_utility_token =
-        Signal::derive(move || matches!(root, RootType::COYNS | RootType::CENTS));
+        Signal::derive(move || matches!(root_c, RootType::COYNS | RootType::CENTS));
 
     let base_url = get_host();
     let show_fallback = create_rw_signal(false);
-    let share_link_d = share_link.unwrap_or_default();
+
+    let share_link_c = share_link.clone().unwrap_or_default();
     let on_share_click = move |ev: ev::MouseEvent| {
         ev.stop_propagation();
-        if share_url(&share_link_d.clone()).is_none() {
+        if share_url(&share_link_c.clone()).is_none() {
             show_fallback.set(true);
         }
     };
 
-    let share_link_c = share_link_d.clone();
+    let share_link_c = share_link.clone().unwrap_or_default();
 
     let key_principal_s = key_principal
-        .clone()
         .map(|p| p.to_text())
         .unwrap_or_default();
 
@@ -361,7 +351,6 @@ pub fn TokenInfo() -> impl IntoView {
                                         root
                                         key_principal
                                         meta
-                                        is_user_principal=is_user_principal
                                     />
                                 }
                             }
