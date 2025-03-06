@@ -2,9 +2,9 @@ use candid::Nat;
 use component::{back_btn::BackButton, title::TitleText};
 use leptos::prelude::*;
 use leptos_router::{hooks::use_query, params::Params};
+use utils::event_streaming::events::CentsWithdrawn;
 use utils::try_or_redirect_opt;
 use yral_canisters_common::utils::token::balance::TokenBalance;
-use utils::event_streaming::events::CentsWithdrawn;
 #[derive(Debug, PartialEq, Eq, Clone, Params)]
 struct SuccessParams {
     cents: Nat,

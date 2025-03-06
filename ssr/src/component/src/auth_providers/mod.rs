@@ -5,18 +5,18 @@ pub mod local_storage;
 use candid::Principal;
 use codee::string::FromToStringCodec;
 use consts::ACCOUNT_CONNECTED_STORE;
+use consts::NEW_USER_SIGNUP_REWARD;
+use consts::REFERRAL_REWARD;
 use ic_agent::Identity;
 use leptos::prelude::ServerFnError;
 use leptos::{ev, prelude::*, reactive::wrappers::write::SignalSetter};
 use leptos_use::storage::use_local_storage;
 use state::{auth::auth_state, local_storage::use_referrer_store};
+use utils::event_streaming::events::CentsAdded;
 use utils::{
     event_streaming::events::{LoginMethodSelected, LoginSuccessful, ProviderKind},
     MockPartialEq,
 };
-use utils::event_streaming::events::CentsAdded;
-use consts::NEW_USER_SIGNUP_REWARD;
-use consts::REFERRAL_REWARD;
 use yral_canisters_common::Canisters;
 use yral_types::delegated_identity::DelegatedIdentityWire;
 

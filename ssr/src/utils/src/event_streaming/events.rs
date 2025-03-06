@@ -1,20 +1,20 @@
 use super::EventHistory;
 use candid::Principal;
 use codee::string::FromToStringCodec;
+use codee::string::JsonSerdeCodec;
 use consts::ACCOUNT_CONNECTED_STORE;
+use consts::USER_CANISTER_ID_STORE;
+use consts::USER_PRINCIPAL_STORE;
 use ic_agent::Identity;
 use leptos::html::Input;
 use leptos::prelude::Signal;
 use leptos::{ev, prelude::*};
 use leptos_use::storage::use_local_storage;
+use leptos_use::use_cookie;
 use leptos_use::{use_event_listener, use_timeout_fn, UseTimeoutFnReturn};
 use serde_json::json;
 use sns_validation::pbs::sns_pb::SnsInitPayload;
 use wasm_bindgen::JsCast;
-use codee::string::JsonSerdeCodec;
-use leptos_use::use_cookie;
-use consts::USER_CANISTER_ID_STORE;
-use consts::USER_PRINCIPAL_STORE;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ProviderKind {

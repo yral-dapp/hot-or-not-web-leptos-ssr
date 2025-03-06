@@ -8,12 +8,12 @@ use leptos::prelude::*;
 use leptos_icons::Icon;
 use leptos_router::hooks::use_location;
 use state::canisters::authenticated_canisters;
+use utils::event_streaming::events::CentsAdded;
 use utils::{host::get_host, send_wrap};
 use yral_canisters_common::{
     utils::token::{TokenMetadata, TokenOwner},
     Canisters,
 };
-use utils::event_streaming::events::CentsAdded;
 #[component]
 pub fn AirdropPage(meta: TokenMetadata, airdrop_amount: u64) -> impl IntoView {
     let claimed = RwSignal::new(false);

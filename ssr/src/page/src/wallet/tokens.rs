@@ -15,11 +15,14 @@ use component::share_popup::ShareContent;
 use component::tooltip::Tooltip;
 use consts::USER_PRINCIPAL_STORE;
 use leptos::html;
+use leptos::prelude::*;
+use leptos_icons::*;
 use leptos_router::hooks::use_navigate;
 use leptos_use::use_cookie;
 use state::canisters::authenticated_canisters;
 use state::canisters::unauth_canisters;
 use utils::event_streaming::events::account_connected_reader;
+use utils::event_streaming::events::CentsAdded;
 use utils::host::{get_host, show_pnd_page};
 use utils::send_wrap;
 use utils::token::icpump::IcpumpTokenInfo;
@@ -29,9 +32,6 @@ use yral_canisters_common::utils::token::{RootType, TokenMetadata, TokenOwner};
 use yral_canisters_common::Canisters;
 use yral_canisters_common::CENT_TOKEN_NAME;
 use yral_pump_n_dump_common::WithdrawalState;
-use utils::event_streaming::events::CentsAdded;
-use leptos::prelude::*;
-use leptos_icons::*;
 
 use super::ShowLoginSignal;
 

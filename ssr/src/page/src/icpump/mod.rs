@@ -1,16 +1,12 @@
 use leptos::task::spawn_local;
 use leptos_meta::*;
 
-use component::overlay::PopupOverlay;
-use consts::ICPUMP_LISTING_PAGE_SIZE;
-use consts::USER_PRINCIPAL_STORE;
-use state::canisters::authenticated_canisters;
-use std::collections::VecDeque;
-use utils::send_wrap;
-use utils::event_streaming::events::CentsAdded;
 use candid::Nat;
 use candid::Principal;
 use codee::string::FromToStringCodec;
+use component::overlay::PopupOverlay;
+use consts::ICPUMP_LISTING_PAGE_SIZE;
+use consts::USER_PRINCIPAL_STORE;
 use futures::StreamExt;
 use leptos::html::Div;
 use leptos::prelude::*;
@@ -21,6 +17,10 @@ use leptos_use::use_media_query;
 use leptos_use::UseIntersectionObserverOptions;
 use serde::Deserialize;
 use serde::Serialize;
+use state::canisters::authenticated_canisters;
+use std::collections::VecDeque;
+use utils::event_streaming::events::CentsAdded;
+use utils::send_wrap;
 use yral_canisters_common::utils::token::TokenOwner;
 use yral_canisters_common::Canisters;
 
