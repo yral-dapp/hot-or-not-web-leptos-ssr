@@ -155,9 +155,7 @@ fn TokenInfoInner(
 
     let share_link_c = share_link.clone().unwrap_or_default();
 
-    let key_principal_s = key_principal
-        .map(|p| p.to_text())
-        .unwrap_or_default();
+    let key_principal_s = key_principal.map(|p| p.to_text()).unwrap_or_default();
 
     view! {
         <div class="max-w-md mx-auto bg-black flex flex-col gap-4">
