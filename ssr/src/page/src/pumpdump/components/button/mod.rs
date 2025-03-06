@@ -3,9 +3,9 @@ mod particles;
 use leptos::{html::Audio, prelude::*, tachys::dom::window};
 use particles::{FireBubbles, SkullBubbles};
 use yral_pump_n_dump_common::GameDirection;
-
+use crate::pumpdump::ProcessedTokenListResponse;
 use crate::pumpdump::{PlayerDataRes, RunningGameRes};
-
+use utils::event_streaming::events::TokenPumpedDumped;
 fn non_visual_feedback(audio_ref: NodeRef<Audio>) {
     #[cfg(not(feature = "hydrate"))]
     {
@@ -36,6 +36,7 @@ fn non_visual_feedback(audio_ref: NodeRef<Audio>) {
 pub fn DumpButton(audio_ref: NodeRef<Audio>) -> impl IntoView {
     let game_res: RunningGameRes = expect_context();
     let player_data: PlayerDataRes = expect_context();
+    let token: ProcessedTokenListResponse = expect_context();
     let has_no_balance = move || {
         player_data
             .read
@@ -51,6 +52,31 @@ pub fn DumpButton(audio_ref: NodeRef<Audio>) -> impl IntoView {
     };
 
     let spawn_bubbles = RwSignal::new(0u32);
+
+    let press_count = RwSignal::new(0u32);
+
+    let send_event = leptos_use::use_debounce_fn(
+        move || {
+            let count = press_count.get();
+            if count > 0 {
+                let token_details = token.token_details.clone();
+                let token_root = token.root;
+                let press_count_value = count;
+
+                TokenPumpedDumped.send_event(
+                    token_details.token_name,
+                    token_root,
+                    "dump".to_string(),
+                    press_count_value,
+                );
+
+                // Reset the counter after sending
+                press_count.set(0);
+            }
+        },
+        1000.0, // 1 second debounce
+    );
+
     let onclick = move |_| {
         non_visual_feedback(audio_ref);
         spawn_bubbles.update(|b| *b += 1);
@@ -59,7 +85,8 @@ pub fn DumpButton(audio_ref: NodeRef<Audio>) -> impl IntoView {
         };
         ctx.send_bet(GameDirection::Dump);
 
-        // debounceResistanceAnimation();
+        press_count.update(|count| *count += 1);
+        send_event();
     };
 
     view! {
@@ -127,6 +154,7 @@ pub fn MockDumpButton() -> impl IntoView {
 pub fn PumpButton(audio_ref: NodeRef<Audio>) -> impl IntoView {
     let game_res: RunningGameRes = expect_context();
     let player_data: PlayerDataRes = expect_context();
+    let token: ProcessedTokenListResponse = expect_context();
     let has_no_balance = move || {
         player_data
             .read
@@ -142,6 +170,30 @@ pub fn PumpButton(audio_ref: NodeRef<Audio>) -> impl IntoView {
     };
 
     let spawn_bubbles = RwSignal::new(0u32);
+    let press_count = RwSignal::new(0u32);
+
+    let send_event = leptos_use::use_debounce_fn(
+        move || {
+            let count = press_count.get();
+            if count > 0 {
+                let token_details = token.token_details.clone();
+                let token_root = token.root;
+                let press_count_value = count;
+
+                TokenPumpedDumped.send_event(
+                    token_details.token_name,
+                    token_root,
+                    "pump".to_string(),
+                    press_count_value,
+                );
+
+                // Reset the counter after sending
+                press_count.set(0);
+            }
+        },
+        1000.0, // 1 second debounce
+    );
+
     let onclick = move |_| {
         non_visual_feedback(audio_ref);
         spawn_bubbles.update(|b| *b += 1);
@@ -150,7 +202,8 @@ pub fn PumpButton(audio_ref: NodeRef<Audio>) -> impl IntoView {
         };
         ctx.send_bet(GameDirection::Pump);
 
-        // debounceResistanceAnimation();
+        press_count.update(|count| *count += 1);
+        send_event();
     };
 
     view! {

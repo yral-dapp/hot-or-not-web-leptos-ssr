@@ -13,7 +13,7 @@ use yral_canisters_common::{
     utils::token::{TokenMetadata, TokenOwner},
     Canisters,
 };
-
+use utils::event_streaming::events::CentsAdded;
 #[component]
 pub fn AirdropPage(meta: TokenMetadata, airdrop_amount: u64) -> impl IntoView {
     let claimed = RwSignal::new(false);
@@ -59,9 +59,12 @@ fn AirdropButton(
     root: Option<Principal>,
 ) -> impl IntoView {
     let cans_res = authenticated_canisters();
+    let name_for_action = name.clone();
+
     let airdrop_action = Action::new(move |&()| {
         let cans_res = cans_res;
         let token_owner_cans_id = token_owner.clone().unwrap().canister_id;
+        let name_c = name_for_action.clone();
         send_wrap(async move {
             if claimed.get() && !buffer_signal.get() {
                 return Ok(());
@@ -82,6 +85,10 @@ fn AirdropButton(
 
             let user = cans.individual_user(cans.user_canister()).await;
             user.add_token(root.unwrap()).await?;
+
+            if name_c == "COYNS" || name_c == "CENTS" {
+                CentsAdded.send_event("airdrop".to_string(), airdrop_amount);
+            }
 
             buffer_signal.set(false);
             claimed.set(true);

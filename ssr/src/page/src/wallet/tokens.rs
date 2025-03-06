@@ -29,7 +29,7 @@ use yral_canisters_common::utils::token::{RootType, TokenMetadata, TokenOwner};
 use yral_canisters_common::Canisters;
 use yral_canisters_common::CENT_TOKEN_NAME;
 use yral_pump_n_dump_common::WithdrawalState;
-
+use utils::event_streaming::events::CentsAdded;
 use leptos::prelude::*;
 use leptos_icons::*;
 
@@ -263,6 +263,11 @@ fn WalletCardOptions(
                     .await?;
                 let user = cans.individual_user(cans.user_canister()).await;
                 user.add_token(root).await?;
+
+                if is_utility_token {
+                    CentsAdded.send_event("airdrop".to_string(), 100);
+                }
+
                 buffer_signal.set(false);
                 claimed.set(true);
                 Ok::<_, ServerFnError>(())
