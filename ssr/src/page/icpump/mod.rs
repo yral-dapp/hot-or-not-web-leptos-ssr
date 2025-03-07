@@ -5,6 +5,7 @@ use crate::consts::ICPUMP_LISTING_PAGE_SIZE;
 use crate::consts::USER_PRINCIPAL_STORE;
 use crate::state::canisters::authenticated_canisters;
 use crate::utils::event_streaming::events::CentsAdded;
+use crate::utils::token::icpump::get_airdrop_amount_from_kv;
 use std::collections::VecDeque;
 
 use candid::Nat;
@@ -86,7 +87,7 @@ pub async fn process_token_list_item(
     token_list_item: Vec<TokenListItem>,
     key_principal: Principal,
 ) -> Vec<ProcessedTokenListResponse> {
-    use crate::state::canisters::unauth_canisters;
+    use crate::{state::canisters::unauth_canisters, utils::token::icpump::AirdropKVConfig};
     use futures::stream::FuturesOrdered;
 
     let mut fut = FuturesOrdered::new();
@@ -109,10 +110,17 @@ pub async fn process_token_list_item(
                 .get_token_owner(root_principal)
                 .await
                 .unwrap_or_default();
+
             let is_airdrop_claimed = if let Some(token_owner) = &token_owner_canister_id {
-                cans.get_airdrop_status(token_owner.canister_id, root_principal, key_principal)
-                    .await
-                    .unwrap_or(true)
+                cans.get_airdrop_status(
+                    token_owner.canister_id,
+                    root_principal,
+                    key_principal,
+                    Some(token.timestamp),
+                    &AirdropKVConfig,
+                )
+                .await
+                .unwrap_or(true)
             } else {
                 true
             };
@@ -346,6 +354,7 @@ pub fn TokenCard(
     let symbol = details.token_symbol.clone();
     let token_symbol_c = details.token_symbol.clone();
     let token_symbol_c2 = token_symbol_c.clone();
+    let token_symbol_c3 = token_symbol_c.clone();
     let share_message = move || {
         format!(
         "Hey! Check out the token: {} I created on YRAL 👇 {}. I just minted my own token—come see and create yours! 🚀 #YRAL #TokenMinter",
@@ -354,6 +363,7 @@ pub fn TokenCard(
     )
     };
     let pop_up = create_rw_signal(false);
+    let airdrop_amount = create_rw_signal::<u64>(0);
     let airdrop_popup = create_rw_signal(false);
     let base_url = get_host();
 
@@ -364,9 +374,12 @@ pub fn TokenCard(
     let airdrop_action = create_action(move |&()| {
         let cans_res = cans_res.clone();
         let token_owner_cans_id = token_owner_c.clone().unwrap().canister_id;
-        let token_symbol = token_symbol_c.clone();
-        airdrop_popup.set(true);
+        let token_symbol_c4 = token_symbol_c3.clone();
         async move {
+            let amount = get_airdrop_amount_from_kv().await?;
+            airdrop_amount.set(amount);
+            airdrop_popup.set(true);
+
             if claimed.get() && !buffer_signal.get() {
                 return Ok(());
             }
@@ -379,7 +392,7 @@ pub fn TokenCard(
                 .request_airdrop(
                     root,
                     None,
-                    Into::<Nat>::into(100u64) * 10u64.pow(8),
+                    Into::<Nat>::into(amount) * 10u64.pow(8),
                     cans.user_canister(),
                 )
                 .await?;
@@ -387,7 +400,7 @@ pub fn TokenCard(
             let user = cans.individual_user(cans.user_canister()).await;
             user.add_token(root).await?;
 
-            if token_symbol == "COYNS" || token_symbol == "CENTS" {
+            if token_symbol_c4 == "COYNS" || token_symbol_c4 == "CENTS" {
                 CentsAdded.send_event("airdrop".to_string(), 100);
             }
 
@@ -429,7 +442,9 @@ pub fn TokenCard(
                 <div class="flex flex-col justify-between overflow-hidden w-full">
                     <div class="flex flex-col gap-2">
                         <div class="flex gap-4 justify-between items-center w-full text-lg">
-                            <span class="font-medium shrink line-clamp-1">{details.name.clone()}</span>
+                            <span class="font-medium shrink line-clamp-1">
+                                {details.name.clone()}
+                            </span>
                             <span class="font-bold shrink-0">{symbol}</span>
                         </div>
                         <span class="text-sm line-clamp-2 text-neutral-400">
@@ -450,7 +465,13 @@ pub fn TokenCard(
                 <ActionButton label="Buy/Sell".to_string() href="#".to_string() disabled=true>
                     <Icon class="w-full h-full" icon=ArrowLeftRightIcon />
                 </ActionButton>
-                <ActionButtonLink disabled=airdrop_disabled on:click=move |_|{airdrop_action.dispatch(());} label="Airdrop".to_string()>
+                <ActionButtonLink
+                    disabled=airdrop_disabled
+                    on:click=move |_| {
+                        airdrop_action.dispatch(());
+                    }
+                    label="Airdrop".to_string()
+                >
                     <Icon class="h-full w-full" icon=AirdropIcon />
                 </ActionButtonLink>
                 <ActionButton label="Share".to_string() href="#".to_string()>
@@ -474,13 +495,14 @@ pub fn TokenCard(
                     show_popup=pop_up
                 />
             </PopupOverlay>
-            <ShadowOverlay show=airdrop_popup >
+            <ShadowOverlay show=airdrop_popup>
                 <div class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 max-w-[560px] max-h-[634px] min-w-[343px] min-h-[480px] backdrop-blur-lg rounded-lg">
                     <div class="rounded-lg z-[500]">
                         <AirdropPopup
                             name=details.name.clone()
                             logo=details.logo.clone()
                             buffer_signal
+                            amount=airdrop_amount
                             claimed
                             airdrop_popup
                         />
