@@ -1,3 +1,4 @@
+#![recursion_limit = "256"]
 use axum::{
     body::Body as AxumBody,
     extract::{Path, State},
@@ -6,12 +7,14 @@ use axum::{
 };
 use axum::{routing::get, Router};
 use hot_or_not_web_leptos_ssr::fallback::file_and_error_handler;
-use hot_or_not_web_leptos_ssr::{
-    app::App, init::AppStateBuilder, state::server::AppState,
-    utils::host::is_host_or_origin_from_preview_domain,
-};
+use state::server::AppState;
+use utils::host::is_host_or_origin_from_preview_domain;
+
+use hot_or_not_web_leptos_ssr::app::shell;
+use hot_or_not_web_leptos_ssr::{app::App, init::AppStateBuilder};
 use http::{header, Method};
-use leptos::{get_configuration, logging::log, provide_context};
+use leptos::logging::log;
+use leptos::prelude::*;
 use leptos_axum::handle_server_fns_with_context;
 use leptos_axum::{generate_route_list, LeptosRoutes};
 use tower_http::cors::{AllowOrigin, CorsLayer};
@@ -52,12 +55,9 @@ pub async fn server_fn_handler(
     .await
 }
 
-pub async fn leptos_routes_handler(
-    State(app_state): State<AppState>,
-    req: Request<AxumBody>,
-) -> Response {
+pub async fn leptos_routes_handler(state: State<AppState>, req: Request<AxumBody>) -> Response {
+    let State(app_state) = state.clone();
     let handler = leptos_axum::render_route_with_context(
-        app_state.leptos_options.clone(),
         app_state.routes.clone(),
         move || {
             provide_context(app_state.canisters.clone());
@@ -82,9 +82,9 @@ pub async fn leptos_routes_handler(
             provide_context(app_state.grpc_icpump_search_channel.clone());
             provide_context(app_state.grpc_nsfw_channel.clone());
         },
-        App,
+        move || shell(app_state.leptos_options.clone()),
     );
-    handler(req).await.into_response()
+    handler(state, req).await.into_response()
 }
 
 #[tokio::main]
@@ -97,7 +97,7 @@ async fn main() {
     // <https://github.com/leptos-rs/start-axum#executing-a-server-on-a-remote-machine-without-the-toolchain>
     // Alternately a file can be specified such as Some("Cargo.toml")
     // The file would need to be included with the executable when moved to deployment
-    let conf = get_configuration(None).await.unwrap();
+    let conf = get_configuration(None).unwrap();
     let leptos_options = conf.leptos_options;
     let addr = leptos_options.site_addr;
     let routes = generate_route_list(App);
