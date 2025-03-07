@@ -94,7 +94,7 @@ where
     let loader = custom_loader.unwrap_or_else(|| BulletLoader.into());
 
     view! {
-        <Suspense>
+        
             <For
                 each=move || data.get()
                 key=KeyedData::key
@@ -113,6 +113,5 @@ where
             }>
                 {empty_content.run()}
             </Show>
-        </Suspense>
     }
 }
