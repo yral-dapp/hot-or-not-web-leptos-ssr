@@ -70,7 +70,6 @@ pub fn TokenList(user_principal: Principal, user_canister: Principal) -> impl In
                     }
                 }
             />
-
         </div>
     }
 }

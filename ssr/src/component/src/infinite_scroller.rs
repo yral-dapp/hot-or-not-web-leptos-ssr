@@ -76,7 +76,7 @@ where
             if end.get_untracked() {
                 return;
             }
-            cursor.update(|c| *c += fetch_count);
+            cursor.try_update(|c| *c += fetch_count);
         },
         UseIntersectionObserverOptions::default().thresholds(vec![0.1]),
     );
@@ -85,6 +85,7 @@ where
     let loader = custom_loader.unwrap_or_else(|| BulletLoader.into());
 
     view! {
+        <Suspense>
         <For
             each=upper_data
             key=KeyedData::key
@@ -96,6 +97,7 @@ where
         <Show when=move || {
             !data_loading() && data.with(|d| d.is_empty())
         }>{empty_content.run()}</Show>
+        </Suspense>
     }
     .into_any()
 }
