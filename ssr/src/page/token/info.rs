@@ -3,11 +3,14 @@ use crate::component::icons::arrow_left_right_icon::ArrowLeftRightIcon;
 use crate::component::icons::chevron_right_icon::ChevronRightIcon;
 use crate::component::icons::send_icon::SendIcon;
 use crate::component::icons::share_icon::ShareIcon;
+use crate::component::overlay::PopupOverlay;
+use crate::component::overlay::ShadowOverlay;
 use crate::page::token::RootType;
 use crate::page::token::TokenInfoParams;
 use crate::page::wallet::airdrop::AirdropPage;
+use crate::page::wallet::airdrop::AirdropPopup;
 use crate::state::canisters::authenticated_canisters;
-
+use crate::utils::host::get_host;
 use crate::utils::token::icpump::IcpumpTokenInfo;
 use crate::utils::web::share_url;
 use crate::{
@@ -17,6 +20,7 @@ use crate::{
     page::wallet::transactions::Transactions,
     utils::web::copy_to_clipboard,
 };
+use candid::Nat;
 use candid::Principal;
 use leptos::*;
 use leptos_icons::*;
@@ -26,9 +30,6 @@ use serde::{Deserialize, Serialize};
 use yral_canisters_common::cursored_data::transaction::IndexOrLedger;
 use yral_canisters_common::utils::token::TokenMetadata;
 use yral_canisters_common::Canisters;
-
-use crate::component::overlay::PopupOverlay;
-use crate::utils::host::get_host;
 
 #[component]
 fn TokenField(
@@ -129,6 +130,7 @@ fn TokenInfoInner(
     root: RootType,
     meta: TokenMetadata,
     key_principal: Option<Principal>,
+    is_airdrop_claioed: bool,
 ) -> impl IntoView {
     let share_link = key_principal.map(|key_principal| generate_share_link(&root, key_principal));
     let message = share_link.clone().map(|share_link|format!(
@@ -156,6 +158,46 @@ fn TokenInfoInner(
     let share_link_c = share_link.clone().unwrap_or_default();
 
     let key_principal_s = key_principal.map(|p| p.to_text()).unwrap_or_default();
+    let claimed = RwSignal::new(is_airdrop_claioed);
+    let buffer_signal = RwSignal::new(false);
+    let airdrop_popup = RwSignal::new(false);
+
+    let token_owner_c = meta.token_owner.clone();
+    let root_c = root.clone();
+    let cans_res = authenticated_canisters();
+    let airdrop_action = create_action(move |&()| {
+        let cans_res = cans_res.clone();
+        let token_owner_cans_id = token_owner_c.clone().unwrap().canister_id;
+        airdrop_popup.set(true);
+        let root = Principal::from_text(root_c.clone().to_string()).unwrap();
+
+        async move {
+            if claimed.get() && !buffer_signal.get() {
+                return Ok(());
+            }
+            buffer_signal.set(true);
+            let cans_wire = cans_res.wait_untracked().await?;
+            let cans = Canisters::from_wire(cans_wire, expect_context())?;
+            let token_owner = cans.individual_user(token_owner_cans_id).await;
+            token_owner
+                .request_airdrop(
+                    root,
+                    None,
+                    Into::<Nat>::into(100u64) * 10u64.pow(8),
+                    cans.user_canister(),
+                )
+                .await?;
+            let user = cans.individual_user(cans.user_canister()).await;
+            user.add_token(root).await?;
+            buffer_signal.set(false);
+            claimed.set(true);
+            Ok::<_, ServerFnError>(())
+        }
+    });
+    let token_owner_c = meta.token_owner.clone();
+
+    let airdrop_disabled =
+        Signal::derive(move || token_owner_c.is_some() && claimed.get() || token_owner_c.is_none());
 
     view! {
         <div class="max-w-md mx-auto bg-black flex flex-col gap-4">
@@ -180,7 +222,7 @@ fn TokenInfoInner(
                                 class=move || format!("object-cover h-12 w-12 rounded-sm cursor-pointer {}",
                                     if blur_active() { "blur-md" } else { "" }
                                 )
-                                src=meta.logo_b64
+                                src=meta.logo_b64.clone()
                                 on:click=move |_| {
                                     if meta.is_nsfw {
                                         blur_active.update(|b| *b = !*b);
@@ -203,7 +245,7 @@ fn TokenInfoInner(
                         </div>
                         <div class="flex items-center justify-between grow gap-4">
                             <div class="flex flex-col gap-1">
-                                <div class="text-lg font-medium text-neutral-50 line-clamp-1">{meta.name}</div>
+                                <div class="text-lg font-medium text-neutral-50 line-clamp-1">{meta.name.clone()}</div>
                                 <div class="font-medium text-sm line-clamp-1 text-neutral-400">Created by {meta.token_owner.clone().unwrap().principal_id.to_text()}</div>
                             </div>
                             <div class="flex flex-col gap-1">
@@ -221,7 +263,7 @@ fn TokenInfoInner(
                         <ActionButton disabled=true href="#".to_string() label="Buy/Sell".to_string()>
                         <Icon class="h-6 w-6" icon=ArrowLeftRightIcon />
                         </ActionButton>
-                        <ActionButtonLink disabled=true on:click=move |_|{} label="Airdrop".to_string()>
+                        <ActionButtonLink disabled=airdrop_disabled on:click=move |_|airdrop_action.dispatch(()) label="Airdrop".to_string()>
                             <Icon class="h-6 w-6" icon=AirdropIcon />
                         </ActionButtonLink>
 
@@ -245,6 +287,20 @@ fn TokenInfoInner(
                         }
                     }}
             </div>
+
+            <ShadowOverlay show=airdrop_popup >
+            <div class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 max-w-[560px] max-h-[634px] min-w-[343px] min-h-[480px] backdrop-blur-lg rounded-lg">
+                <div class="rounded-lg z-[500]">
+                    <AirdropPopup
+                        name=meta.name.clone()
+                        logo=meta.logo_b64.clone()
+                        buffer_signal
+                        claimed
+                        airdrop_popup
+                    />
+                </div>
+            </div>
+        </ShadowOverlay>
         </div>
     }
 }
@@ -349,6 +405,7 @@ pub fn TokenInfo() -> impl IntoView {
                                         root
                                         key_principal
                                         meta
+                                        is_airdrop_claioed=is_token_viewer_airdrop_claimed
                                     />
                                 }
                             }
