@@ -103,7 +103,7 @@ where
                 key=KeyedData::key
                 children=move |item| {
                     let is_last = data.with(|d| d.last().map(|last| KeyedData::key(last) == KeyedData::key(&item)).unwrap_or(false));
-                    (children.get_value())(item, if is_last { Some(last_elem.clone()) } else { None })
+                    (children.get_value())(item, if is_last { Some(last_elem) } else { None })
                 }
             />
 
