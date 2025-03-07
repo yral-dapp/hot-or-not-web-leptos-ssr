@@ -38,7 +38,7 @@ pub fn TxnView(
     );
 
     view! {
-        <div _ref=_ref class="grid grid-cols-2 grid-rows-1 w-full py-3 border-b-2 border-white/10 justify-between">
+        <div _ref=_ref class="grid grid-cols-2 grid-rows-1 w-full py-3 bg-neutral-800 rounded-[4px] px-2 justify-between">
             <div class="flex flex-row gap-2">
                 {
                     match direction{
