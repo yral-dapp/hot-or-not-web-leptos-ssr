@@ -34,15 +34,18 @@ where
 {
     let data = RwSignal::new(Vec::<InferData<Prov>>::new());
     let end = RwSignal::new(false);
+    let loading = RwSignal::new(false);
     let cursor = RwSignal::new(0);
 
-    let fetch_res = Resource::new(cursor, move |cursor| {
+    let fetch_more = Action::new(move |_: &()| {
         let provider = provider.clone();
+        let current_cursor = cursor.get_untracked();
         async move {
+            loading.set(true);
             let PageEntry {
                 data: mut fetched,
                 end: list_end,
-            } = match provider.get_by_cursor(cursor, cursor + fetch_count).await {
+            } = match provider.get_by_cursor(current_cursor, current_cursor + fetch_count).await {
                 Ok(t) => t,
                 Err(e) => {
                     log::warn!("failed to fetch data err {e}");
@@ -52,19 +55,22 @@ where
                     }
                 }
             };
-            data.try_update(|t| t.append(&mut fetched));
-            end.try_set(list_end);
+
+            if !fetched.is_empty() {
+                cursor.update(|c| *c += fetched.len());
+            }
+            
+            data.update(|d| d.append(&mut fetched));
+            end.set(list_end);
+            loading.set(false);
         }
     });
-    let upper_data = move || {
-        data.with(|data| {
-            data.iter()
-                .take(data.len().saturating_sub(1))
-                .cloned()
-                .collect::<Vec<_>>()
-        })
-    };
-    let last_data = move || data.with(|data| data.last().cloned());
+
+    // Initial load
+    Effect::new(move |_| {
+        fetch_more.dispatch(());
+    });
+
     let last_elem = NodeRef::<RootNode>::new();
 
     use_intersection_observer_with_options(
@@ -73,31 +79,40 @@ where
             let Some(_visible) = entry.first().filter(|entry| entry.is_intersecting()) else {
                 return;
             };
-            if end.get_untracked() {
-                return;
+            
+            let is_loading = loading.get_untracked();
+            let reached_end = end.get_untracked();
+
+            if !is_loading && !reached_end {
+                fetch_more.dispatch(());
             }
-            cursor.try_update(|c| *c += fetch_count);
         },
         UseIntersectionObserverOptions::default().thresholds(vec![0.1]),
     );
-    let data_loading = move || fetch_res.with(|d| d.is_none());
+
     let children = StoredValue::new(children);
     let loader = custom_loader.unwrap_or_else(|| BulletLoader.into());
 
     view! {
         <Suspense>
-        <For
-            each=upper_data
-            key=KeyedData::key
-            children=move |data| (children.get_value())(data, None)
-        />
-        {move || { last_data().map(|info| (children.get_value())(info, Some(last_elem))) }}
+            <For
+                each=move || data.get()
+                key=KeyedData::key
+                children=move |item| {
+                    let is_last = data.with(|d| d.last().map(|last| KeyedData::key(last) == KeyedData::key(&item)).unwrap_or(false));
+                    (children.get_value())(item, if is_last { Some(last_elem.clone()) } else { None })
+                }
+            />
 
-        <Show when=data_loading>{loader.run()}</Show>
-        <Show when=move || {
-            !data_loading() && data.with(|d| d.is_empty())
-        }>{empty_content.run()}</Show>
+            <Show when=move || loading.get()>
+                {loader.run()}
+            </Show>
+
+            <Show when=move || {
+                !loading.get() && data.with(|d| d.is_empty())
+            }>
+                {empty_content.run()}
+            </Show>
         </Suspense>
     }
-    .into_any()
 }
