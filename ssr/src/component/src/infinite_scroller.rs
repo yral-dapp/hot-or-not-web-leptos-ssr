@@ -45,7 +45,10 @@ where
             let PageEntry {
                 data: mut fetched,
                 end: list_end,
-            } = match provider.get_by_cursor(current_cursor, current_cursor + fetch_count).await {
+            } = match provider
+                .get_by_cursor(current_cursor, current_cursor + fetch_count)
+                .await
+            {
                 Ok(t) => t,
                 Err(e) => {
                     log::warn!("failed to fetch data err {e}");
@@ -59,7 +62,7 @@ where
             if !fetched.is_empty() {
                 cursor.update(|c| *c += fetched.len());
             }
-            
+
             data.update(|d| d.append(&mut fetched));
             end.set(list_end);
             loading.set(false);
@@ -79,7 +82,7 @@ where
             let Some(_visible) = entry.first().filter(|entry| entry.is_intersecting()) else {
                 return;
             };
-            
+
             let is_loading = loading.get_untracked();
             let reached_end = end.get_untracked();
 
@@ -94,7 +97,7 @@ where
     let loader = custom_loader.unwrap_or_else(|| BulletLoader.into());
 
     view! {
-        
+
             <For
                 each=move || data.get()
                 key=KeyedData::key
