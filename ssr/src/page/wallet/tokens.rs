@@ -63,9 +63,15 @@ pub fn TokenList(user_principal: Principal, user_canister: Principal) -> impl In
             <InfiniteScroller
                 provider
                 fetch_count=5
-                children=move |TokenListResponse{token_metadata, airdrop_claimed, root}, _ref| {
+                children=move |TokenListResponse { token_metadata, airdrop_claimed, root }, _ref| {
                     view! {
-                        <WalletCard user_principal token_metadata=token_metadata is_airdrop_claimed=airdrop_claimed _ref=_ref.unwrap_or_default() is_utility_token=matches!(root, RootType::COYNS | RootType::CENTS)/>
+                        <WalletCard
+                            user_principal
+                            token_metadata=token_metadata
+                            is_airdrop_claimed=airdrop_claimed
+                            _ref=_ref.unwrap_or_default()
+                            is_utility_token=matches!(root, RootType::COYNS | RootType::CENTS)
+                        />
                     }
                 }
             />
@@ -80,6 +86,7 @@ struct WalletCardOptionsContext {
     root: String,
     token_owner: Option<TokenOwner>,
     user_principal: Principal,
+    symbol: String
 }
 
 #[component]
@@ -115,6 +122,7 @@ pub fn WalletCard(
         root,
         token_owner: token_metadata.token_owner,
         user_principal,
+        symbol: symbol.clone(),
     });
 
     let (is_connected, _) = account_connected_reader();
@@ -155,7 +163,10 @@ pub fn WalletCard(
         })
         .unwrap_or_default();
     view! {
-        <div node_ref=_ref class="flex flex-col gap-4 bg-neutral-900/90 rounded-lg w-full font-kumbh text-white p-4">
+        <div
+            node_ref=_ref
+            class="flex flex-col gap-4 bg-neutral-900/90 rounded-lg w-full font-kumbh text-white p-4"
+        >
             <div class="flex flex-col gap-4 p-3 rounded-sm bg-neutral-800/70">
                 <div class="w-full flex items-center justify-between">
                     <div class="flex items-center gap-2">
@@ -165,41 +176,78 @@ pub fn WalletCard(
                             alt=token_metadata.name.clone()
                             class="w-8 h-8 rounded-full object-cover"
                         />
-                        <div class="text-sm font-medium uppercase truncate">{token_metadata.name.clone()}</div>
+                        <div class="text-sm font-medium uppercase truncate">
+                            {token_metadata.name.clone()}
+                        </div>
                     </div>
                     <div class="flex flex-col items-end">
-                        {
-                            token_metadata.balance.map(|b| view! {
-                                <div class="text-lg font-medium">{b.humanize_float_truncate_to_dp(2)}</div>
-                            })
-                        }
-                        <div class="text-xs">{symbol}</div>
+                        {token_metadata
+                            .balance
+                            .map(|b| {
+                                view! {
+                                    <div class="text-lg font-medium">
+                                        {b.humanize_float_truncate_to_dp(2)}
+                                    </div>
+                                }
+                            })} <div class="text-xs">{symbol}</div>
                     </div>
                 </div>
-                {is_cents.then_some(view! {
-                    <div class="border-t border-neutral-700 flex flex-col pt-4 gap-2">
-                        <div class="flex items-center">
-                            <Icon class="text-neutral-300" icon=if is_withdrawable { PadlockOpen } else { PadlockClose } />
-                            <span class="text-neutral-400 text-xs mx-2">{withdraw_message}</span>
-                            <Tooltip icon=Information title="Withdrawal Tokens" description="Only Cents earned above your airdrop amount can be withdrawn." />
-                            <span class="ml-auto">{withdrawable_balance}</span>
-                        </div>
-                        <button
-                            class="rounded-lg px-5 py-2 text-sm text-center font-bold"
-                            class=(["pointer-events-none", "text-primary-300", "bg-brand-gradient-disabled"], !is_withdrawable)
-                            class=(["text-neutral-50", "bg-brand-gradient"], is_withdrawable)
-                            on:click=withdraw_handle
-                        >
-                            Withdraw
-                        </button>
-                    </div>
-
-                })}
+                {is_cents
+                    .then_some(
+                        view! {
+                            <div class="border-t border-neutral-700 flex flex-col pt-4 gap-2">
+                                <div class="flex items-center">
+                                    <Icon
+                                        class="text-neutral-300"
+                                        icon=if is_withdrawable {
+                                            PadlockOpen
+                                        } else {
+                                            PadlockClose
+                                        }
+                                    />
+                                    <span class="text-neutral-400 text-xs mx-2">
+                                        {withdraw_message}
+                                    </span>
+                                    <Tooltip
+                                        icon=Information
+                                        title="Withdrawal Tokens"
+                                        description="Only Cents earned above your airdrop amount can be withdrawn."
+                                    />
+                                    <span class="ml-auto">{withdrawable_balance}</span>
+                                </div>
+                                <button
+                                    class="rounded-lg px-5 py-2 text-sm text-center font-bold"
+                                    class=(
+                                        [
+                                            "pointer-events-none",
+                                            "text-primary-300",
+                                            "bg-brand-gradient-disabled",
+                                        ],
+                                        !is_withdrawable,
+                                    )
+                                    class=(
+                                        ["text-neutral-50", "bg-brand-gradient"],
+                                        is_withdrawable,
+                                    )
+                                    on:click=withdraw_handle
+                                >
+                                    Withdraw
+                                </button>
+                            </div>
+                        },
+                    )}
             </div>
 
-            <WalletCardOptions airdrop_amount pop_up=pop_up.write_only() share_link=share_link.write_only() airdrop_popup buffer_signal claimed/>
+            <WalletCardOptions
+                airdrop_amount
+                pop_up=pop_up.write_only()
+                share_link=share_link.write_only()
+                airdrop_popup
+                buffer_signal
+                claimed
+            />
 
-            <PopupOverlay show=pop_up >
+            <PopupOverlay show=pop_up>
                 <ShareContent
                     share_link=format!("{base_url}{}", share_link())
                     message=share_message()
@@ -207,7 +255,7 @@ pub fn WalletCard(
                 />
             </PopupOverlay>
 
-            <ShadowOverlay show=airdrop_popup >
+            <ShadowOverlay show=airdrop_popup>
                 <div class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 max-w-[560px] max-h-[634px] min-w-[343px] min-h-[480px] backdrop-blur-lg rounded-lg">
                     <div class="rounded-lg z-[500]">
                         <AirdropPopup
@@ -234,7 +282,7 @@ fn WalletCardOptions(
     buffer_signal: RwSignal<bool>,
     claimed: RwSignal<bool>,
 ) -> impl IntoView {
-    use_context().map(|WalletCardOptionsContext { is_utility_token, root, token_owner, user_principal, .. }|{
+    use_context().map(|WalletCardOptionsContext { is_utility_token, root, token_owner, user_principal, symbol, .. }|{
         let share_link_coin = format!("/token/info/{root}/{user_principal}");
         let token_owner_c = token_owner.clone();
         let root_c = root.clone();
@@ -243,9 +291,9 @@ fn WalletCardOptions(
             let cans_res = cans_res.clone();
             let token_owner_cans_id = token_owner_c.clone().unwrap().canister_id;
             let root = Principal::from_text(root_c.clone()).unwrap();
-
+            let symbol_c = symbol.clone();
             async move {
-                let amount = get_airdrop_amount_from_kv().await?;
+                let amount = get_airdrop_amount_from_kv(symbol_c.clone()).await?;
                 airdrop_amount.set(amount);
                 airdrop_popup.set(true);
 
@@ -281,23 +329,48 @@ fn WalletCardOptions(
         let airdrop_disabled = Signal::derive(move || token_owner.is_some() && claimed.get() || token_owner.is_none());
         view! {
             <div class="flex items-center justify-around">
-            <ActionButton disabled=is_utility_token href=format!("/token/transfer/{root}") label="Send".to_string()>
-                <SendIcon class="h-full w-full" />
-            </ActionButton>
-            <ActionButton disabled=true href="#".to_string() label="Buy/Sell".to_string()>
-                <Icon class="h-6 w-6" icon=ArrowLeftRightIcon />
-            </ActionButton>
-            <ActionButtonLink disabled=airdrop_disabled on:click=move |_|{airdrop_action.dispatch(());} label="Airdrop".to_string()>
-                <Icon class="h-6 w-6" icon=AirdropIcon />
-            </ActionButtonLink>
+                <ActionButton
+                    disabled=is_utility_token
+                    href=format!("/token/transfer/{root}")
+                    label="Send".to_string()
+                >
+                    <SendIcon class="h-full w-full" />
+                </ActionButton>
+                <ActionButton disabled=true href="#".to_string() label="Buy/Sell".to_string()>
+                    <Icon class="h-6 w-6" icon=ArrowLeftRightIcon />
+                </ActionButton>
+                <ActionButtonLink
+                    disabled=airdrop_disabled
+                    on:click=move |_| {
+                        airdrop_action.dispatch(());
+                    }
+                    label="Airdrop".to_string()
+                >
+                    <Icon class="h-6 w-6" icon=AirdropIcon />
+                </ActionButtonLink>
 
-            <ActionButton disabled=is_utility_token href="#".to_string() label="Share".to_string()>
-                <Icon class="h-6 w-6" icon=ShareIcon on:click=move |_| {pop_up.set(true); share_link.set(share_link_coin.clone())}/>
-            </ActionButton>
-            <ActionButton disabled=is_utility_token href=format!("/token/info/{root}/{user_principal}") label="Details".to_string()>
-                <Icon class="h-6 w-6" icon=ChevronRightIcon />
-            </ActionButton>
-        </div>
+                <ActionButton
+                    disabled=is_utility_token
+                    href="#".to_string()
+                    label="Share".to_string()
+                >
+                    <Icon
+                        class="h-6 w-6"
+                        icon=ShareIcon
+                        on:click=move |_| {
+                            pop_up.set(true);
+                            share_link.set(share_link_coin.clone())
+                        }
+                    />
+                </ActionButton>
+                <ActionButton
+                    disabled=is_utility_token
+                    href=format!("/token/info/{root}/{user_principal}")
+                    label="Details".to_string()
+                >
+                    <Icon class="h-6 w-6" icon=ChevronRightIcon />
+                </ActionButton>
+            </div>
         }
     })
 }

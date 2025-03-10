@@ -64,6 +64,7 @@ async fn process_profile_tokens(
                 {
                     Some(
                         cans.get_airdrop_status(
+                            token.symbol.clone(),
                             token_owner.canister_id,
                             root,
                             user_principal,
