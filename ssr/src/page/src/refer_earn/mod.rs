@@ -73,7 +73,7 @@ fn ReferLoaded(user_principal: Principal) -> impl IntoView {
         <div class="flex items-center w-fit rounded-full border-dashed border-2 p-3 gap-2 border-primary-500">
             <span class="text-md lg:text-lg text-ellipsis line-clamp-1">{refer_code}</span>
             <button on:click=move |_| handle_share()>
-                <Icon class="text-xl text-primary-500" icon=icondata::IoShareSocialSharp />
+                <Icon attr:class="text-xl text-primary-500" icon=icondata::IoShareSocialSharp />
             </button>
         </div>
         <Show when=show_copied_popup>

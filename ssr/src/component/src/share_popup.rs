@@ -40,7 +40,7 @@ pub fn ShareContent(
             <div class="flex overflow-x-auto justify-center items-center px-10 mx-1 space-x-2 w-full rounded-xl border-2 border-neutral-700 h-[2.5rem] md:h-[5rem]">
                 <span class="text-lg text-black md:text-xl truncate">{share_link.clone()}</span>
                 <button on:click=copy_clipboard>
-                    <Icon class="w-6 h-6 text-black cursor-pointer" icon=icondata::BiCopyRegular />
+                    <Icon attr:class="w-6 h-6 text-black cursor-pointer" icon=icondata::BiCopyRegular />
                 </button>
             </div>
             <button
@@ -83,18 +83,18 @@ fn SocialShare(share_link: String, message: String) -> impl IntoView {
         <div class="flex gap-4">
             // Facebook button
             <a href=fb_url target="_blank">
-                <Icon class="text-3xl md:text-4xl text-primary-600" icon=icondata::BsFacebook />
+                <Icon attr:class="text-3xl md:text-4xl text-primary-600" icon=icondata::BsFacebook />
             </a>
 
             // Twitter button
             <a href=twitter_url target="_blank">
-                <Icon class="text-3xl md:text-4xl text-primary-600" icon=icondata::BsTwitterX />
+                <Icon attr:class="text-3xl md:text-4xl text-primary-600" icon=icondata::BsTwitterX />
             </a>
 
             // WhatsApp button
             <a href=whatsapp_url target="_blank">
                 <Icon
-                    class="text-3xl md:text-4xl text-primary-600"
+                attr:class="text-3xl md:text-4xl text-primary-600"
                     icon=icondata::FaSquareWhatsappBrands
                 />
             </a>
@@ -102,13 +102,13 @@ fn SocialShare(share_link: String, message: String) -> impl IntoView {
             // LinkedIn button
             <a href=linkedin_url target="_blank">
                 <Icon
-                    class="text-3xl md:text-4xl text-primary-600"
+                attr:class="text-3xl md:text-4xl text-primary-600"
                     icon=icondata::TbBrandLinkedin
                 />
             </a>
             <a href=telegram_url target="_blank">
                 <Icon
-                    class="text-3xl md:text-4xl text-primary-600"
+                attr:class="text-3xl md:text-4xl text-primary-600"
                     icon=icondata::TbBrandTelegram
                 />
             </a>
@@ -138,7 +138,7 @@ pub fn ShareButtonWithFallbackPopup(
 
     view! {
         <button on:click=on_share_click class=class>
-            <Icon  class="h-6 w-6 text-neutral-300" icon=ShareIcon />
+            <Icon  attr:class="h-6 w-6 text-neutral-300" icon=ShareIcon />
         </button>
         <PopupOverlay show=show_fallback>
             <ShareContent

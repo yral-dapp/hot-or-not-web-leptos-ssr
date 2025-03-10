@@ -454,14 +454,14 @@ pub fn TokenCard(
                     <SendIcon class="w-full h-full" />
                 </ActionButton>
                 <ActionButton label="Buy/Sell".to_string() href="#".to_string() disabled=true>
-                    <Icon class="w-full h-full" icon=ArrowLeftRightIcon />
+                    <Icon attr:class="w-full h-full" icon=ArrowLeftRightIcon />
                 </ActionButton>
                 <ActionButtonLink disabled=airdrop_disabled on:click=move |_|{airdrop_action.dispatch(());} label="Airdrop".to_string()>
-                    <Icon class="h-full w-full" icon=AirdropIcon />
+                    <Icon attr:class="h-full w-full" icon=AirdropIcon />
                 </ActionButtonLink>
                 <ActionButton label="Share".to_string() href="#".to_string()>
                     <Icon
-                        class="w-full h-full"
+                    attr:class="w-full h-full"
                         icon=ShareIcon
                         on:click=move |_| {
                             pop_up.set(true);
@@ -470,7 +470,7 @@ pub fn TokenCard(
                     />
                 </ActionButton>
                 <ActionButton label="Details".to_string() href=details.link>
-                    <Icon class="w-4 h-4" icon=ChevronRightIcon />
+                    <Icon attr:class="w-4 h-4" icon=ChevronRightIcon />
                 </ActionButton>
             </div>
             <PopupOverlay show=pop_up>
@@ -546,7 +546,7 @@ pub fn PageSelector(page: RwSignal<u64>, end_of_list: RwSignal<bool>) -> impl In
                 }
                 disabled=move || page.get() == 1
             >
-                <Icon class="w-4 h-4 rotate-180" icon=ChevronRightIcon />
+                <Icon attr:class="w-4 h-4 rotate-180" icon=ChevronRightIcon />
             </button>
             <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white bg-blue-500">
                 {page}
@@ -558,7 +558,7 @@ pub fn PageSelector(page: RwSignal<u64>, end_of_list: RwSignal<bool>) -> impl In
                 }
                 disabled=move || end_of_list.get()
             >
-                <Icon class="w-4 h-4" icon=ChevronRightIcon />
+                <Icon attr:class="w-4 h-4" icon=ChevronRightIcon />
             </button>
         </div>
     }

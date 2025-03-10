@@ -48,21 +48,21 @@ fn Post(details: PostDetails, user_canister: Principal, _ref: NodeRef<html::Div>
                     >
 
                         <div class="h-full flex text-center flex-col place-content-center items-center text-white">
-                            <Icon class="h-8 w-8" icon=icondata::TbCloudX />
+                            <Icon attr:class="h-8 w-8" icon=icondata::TbCloudX />
                             <span class="text-md">Not Available</span>
                         </div>
                     </Show>
 
                     <div class="absolute bottom-1 left-1 grid grid-cols-2 items-center gap-1">
                         <Icon
-                            class="h-5 w-5 p-1 text-primary-500 rounded-full bg-black/30"
+                        attr:class="h-5 w-5 p-1 text-primary-500 rounded-full bg-black/30"
                             icon=icondata::AiHeartOutlined
                         />
                         <span class="text-white text-xs">{details.likes}</span>
                     </div>
                     <div class="absolute bottom-1 right-1 grid grid-cols-2 items-center gap-1">
                         <Icon
-                            class="h-5 w-5 p-1 text-white rounded-full bg-black/30"
+                        attr:class="h-5 w-5 p-1 text-white rounded-full bg-black/30"
                             icon=icondata::AiEyeOutlined
                         />
                         <span class="text-white text-xs">{details.views}</span>

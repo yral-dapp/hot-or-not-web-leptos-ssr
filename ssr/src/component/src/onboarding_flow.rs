@@ -165,7 +165,7 @@ pub fn OnboardingTopCross(onboard_on_click: WriteSignal<bool>) -> impl IntoView 
                     class="text-white bg-transparent bg-opacity-70"
                     on:click=move |_| onboard_on_click.set(true)
                 >
-                    <Icon class="w-[24px] h-[24px]" icon=icondata::ChCross />
+                    <Icon attr:class="w-[24px] h-[24px]" icon=icondata::ChCross />
                 </button>
             </div>
         </div>

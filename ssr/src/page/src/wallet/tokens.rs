@@ -180,7 +180,7 @@ pub fn WalletCard(
                 {is_cents.then_some(view! {
                     <div class="border-t border-neutral-700 flex flex-col pt-4 gap-2">
                         <div class="flex items-center">
-                            <Icon class="text-neutral-300" icon=if is_withdrawable { PadlockOpen } else { PadlockClose } />
+                            <Icon attr:class="text-neutral-300" icon=if is_withdrawable { PadlockOpen } else { PadlockClose } />
                             <span class="text-neutral-400 text-xs mx-2">{withdraw_message}</span>
                             <Tooltip icon=Information title="Withdrawal Tokens" description="Only Cents earned above your airdrop amount can be withdrawn." />
                             <span class="ml-auto">{withdrawable_balance}</span>
@@ -280,17 +280,17 @@ fn WalletCardOptions(
                 <SendIcon class="h-full w-full" />
             </ActionButton>
             <ActionButton disabled=true href="#".to_string() label="Buy/Sell".to_string()>
-                <Icon class="h-6 w-6" icon=ArrowLeftRightIcon />
+                <Icon attr:class="h-6 w-6" icon=ArrowLeftRightIcon />
             </ActionButton>
             <ActionButtonLink disabled=airdrop_disabled on:click=move |_|{airdrop_action.dispatch(());} label="Airdrop".to_string()>
-                <Icon class="h-6 w-6" icon=AirdropIcon />
+                <Icon attr:class="h-6 w-6" icon=AirdropIcon />
             </ActionButtonLink>
 
             <ActionButton disabled=is_utility_token href="#".to_string() label="Share".to_string()>
-                <Icon class="h-6 w-6" icon=ShareIcon on:click=move |_| {pop_up.set(true); share_link.set(share_link_coin.clone())}/>
+                <Icon attr:class="h-6 w-6" icon=ShareIcon on:click=move |_| {pop_up.set(true); share_link.set(share_link_coin.clone())}/>
             </ActionButton>
             <ActionButton disabled=is_utility_token href=format!("/token/info/{root}/{user_principal}") label="Details".to_string()>
-                <Icon class="h-6 w-6" icon=ChevronRightIcon />
+                <Icon attr:class="h-6 w-6" icon=ChevronRightIcon />
             </ActionButton>
         </div>
         }

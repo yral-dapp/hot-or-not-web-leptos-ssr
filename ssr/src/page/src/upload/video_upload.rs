@@ -31,7 +31,7 @@ use yral_canisters_common::Canisters;
 pub fn DropBox() -> impl IntoView {
     view! {
         <div class="flex flex-col items-center justify-self-center justify-center w-full border-2 border-dashed rounded-lg cursor-pointer border-gray-600 hover:bg-gray-600 aspect-[3/4] lg:aspect-[5/4]">
-            <Icon class="w-10 h-10 mb-4 text-gray-400" icon=icondata::BiCloudUploadRegular />
+            <Icon attr:class="w-10 h-10 mb-4 text-gray-400" icon=icondata::BiCloudUploadRegular />
             <p class="text-center mb-2 mx-2 text-sm text-gray-400">
                 <span class="font-semibold">Click to upload</span>
                 or drag and drop
@@ -139,13 +139,13 @@ pub fn ProgressItem(
             when=loading
             fallback=move || {
                 view! {
-                    <Icon class="w-10 h-10 text-green-600" icon=icondata::BsCheckCircleFill />
+                    <Icon attr:class="w-10 h-10 text-green-600" icon=icondata::BsCheckCircleFill />
                     <span class="text-white text-lg font-semibold">{done_text.clone()}</span>
                 }
             }
         >
 
-            <Icon class="w-10 h-10 text-primary-600 animate-spin" icon=icondata::CgSpinnerTwo />
+            <Icon attr:class="w-10 h-10 text-primary-600 animate-spin" icon=icondata::CgSpinnerTwo />
             <span class="text-white text-lg font-semibold">{initial_text.clone()}</span>
         </Show>
     }

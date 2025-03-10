@@ -16,7 +16,7 @@ pub fn MuteIconOverlay(show_mute_icon: RwSignal<bool>) -> impl IntoView {
                 on:click=move |_| AudioState::toggle_mute()
             >
                 <Icon
-                    class="text-white/80 animate-ping text-4xl"
+                attr:class="text-white/80 animate-ping text-4xl"
                     icon=icondata::BiVolumeMuteSolid
                 />
             </button>

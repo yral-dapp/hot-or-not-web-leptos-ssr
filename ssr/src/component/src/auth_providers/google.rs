@@ -88,7 +88,7 @@ pub fn GoogleAuthProvider() -> impl IntoView {
         >
 
             <div class="grid grid-cols-1 place-items-center bg-white p-2 rounded-full">
-                <Icon class="text-xl rounded-full" icon=GoogleLogoSymbol />
+                <Icon attr:class="text-xl rounded-full" icon=GoogleLogoSymbol />
             </div>
             <span class="text-white">{current_text}</span>
         </LoginProvButton>

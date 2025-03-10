@@ -39,13 +39,13 @@ icon_gen!(
 #[component]
 pub fn SpinnerCircle(#[prop(optional, default = "")] class: &'static str) -> impl IntoView {
     view! {
-        <Icon icon=SpinnerCircleIcon class=format!("animate-spin w-full h-full {}", class)/>
+        <Icon icon=SpinnerCircleIcon attr:class=format!("animate-spin w-full h-full {}", class)/>
     }
 }
 #[component]
 pub fn SpinnerCircleStyled(#[prop(optional, default = "")] class: &'static str) -> impl IntoView {
     view! {
-        <Icon icon=SpinnerCircleStyledIcon class=format!("animate-spin w-full h-full {}", class)/>
+        <Icon icon=SpinnerCircleStyledIcon attr:class=format!("animate-spin w-full h-full {}", class)/>
     }
 }
 icon_gen!(

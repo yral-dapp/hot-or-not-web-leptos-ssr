@@ -49,7 +49,7 @@ pub fn PlayingCard() -> impl IntoView {
                 <img class="size-32 rounded-sm" alt="Avatar" src=token.token_details.logo />
                 <a href=token_link class="flex items-center gap-1">
                     <div class="font-bold text-lg">{token.token_details.token_name}</div>
-                    <Icon icon=ChevronRightIcon class="w-5 h-5 -mb-px" />
+                    <Icon icon=ChevronRightIcon attr:class="w-5 h-5 -mb-px" />
                 </a>
                 <div class="bg-[#212121] shrink-0 rounded-full relative w-full h-11 overflow-hidden">
                     <div

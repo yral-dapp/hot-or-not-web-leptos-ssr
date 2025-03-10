@@ -24,10 +24,10 @@ fn MenuItem(
     view! {
         <a href=href class="grid grid-cols-3 items-center w-full" target=target>
             <div class="flex flex-row gap-4 items-center col-span-2">
-                <Icon class="text-2xl" icon=icon />
+                <Icon attr:class="text-2xl" icon=icon />
                 <span class="text-wrap">{text}</span>
             </div>
-            <Icon class="text-2xl justify-self-end" icon=icondata::AiRightOutlined />
+            <Icon attr:class="text-2xl justify-self-end" icon=icondata::AiRightOutlined />
         </a>
     }
 }
@@ -127,7 +127,7 @@ fn EnableNotifications(user_details: ProfileDetails) -> impl IntoView {
     view! {
         <div class="grid grid-cols-2 items-center w-full">
             <div class="flex flex-row gap-4 items-center">
-                <Icon class="text-2xl" icon=icondata::BiCommentDotsRegular />
+                <Icon attr:class="text-2xl" icon=icondata::BiCommentDotsRegular />
                 <span>Enable Notifications</span>
             </div>
             <div class="justify-self-end">

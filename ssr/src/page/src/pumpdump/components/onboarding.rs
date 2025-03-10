@@ -26,14 +26,14 @@ pub fn OnboardingPopup() -> impl IntoView {
                 >
                 {move || (step.get() == 1).then(|| view! {
                     <button on:click=move |_| set_step.set(0) class="text-neutral-400">
-                        <Icon class="size-5" icon=icondata::FiChevronLeft />
+                        <Icon attr:class="size-5" icon=icondata::FiChevronLeft />
                     </button>
                 })}
                     <button
                         on:click=move |_| show_onboarding.hide()
                         class="p-1 flex items-center justify-center bg-neutral-600 rounded-full"
                     >
-                        <Icon class="size-3" icon=icondata::IoClose />
+                        <Icon attr:class="size-3" icon=icondata::IoClose />
                     </button>
                 </div>
                 {move || if step.get() == 0 {
@@ -55,7 +55,7 @@ pub fn OnboardingPopup() -> impl IntoView {
                                 on:click=move |_| set_step.set(1)
                                 class="appearance-none text-xl font-semibold">Next</button
                             >
-                            <Icon class="size-6 -mb-0.5" icon=icondata::FiChevronRight />
+                            <Icon attr:class="size-6 -mb-0.5" icon=icondata::FiChevronRight />
                         </div>
                     }.into_any())
                 } else {

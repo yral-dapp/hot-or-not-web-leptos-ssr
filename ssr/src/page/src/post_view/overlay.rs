@@ -207,7 +207,7 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
                         <span class="font-semibold">"|"</span>
                         <span class="flex flex-row gap-1 items-center">
                             <Icon
-                                class="text-sm md:text-base lg:text-lg"
+                            attr:class="text-sm md:text-base lg:text-lg"
                                 icon=icondata::AiEyeOutlined
                             />
                             {post.views}
@@ -219,14 +219,14 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
             <div class="flex flex-col gap-2 w-full">
                 <div class="flex flex-col pointer-events-auto gap-6 self-end items-end text-2xl md:text-3xl lg:text-4xl">
                     <button on:click=move |_| show_report.set(true)>
-                        <Icon class="drop-shadow-lg size-7" icon=icondata::TbMessageReport />
+                        <Icon attr:class="drop-shadow-lg size-7" icon=icondata::TbMessageReport />
                     </button>
                     <a href="/refer-earn">
-                        <Icon class="drop-shadow-lg size-7" icon=icondata::AiGiftFilled />
+                        <Icon attr:class="drop-shadow-lg size-7" icon=icondata::AiGiftFilled />
                     </a>
                     <LikeAndAuthCanLoader post=post_c.clone() />
                     <button on:click=move |_| share()>
-                        <Icon class="drop-shadow-lg size-7" icon=HomeFeedShareIcon />
+                        <Icon attr:class="drop-shadow-lg size-7" icon=HomeFeedShareIcon />
                     </button>
                 </div>
                 <div class="w-full bg-transparent pointer-events-auto">
@@ -242,7 +242,7 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
                         {video_url}
                     </p>
                     <button on:click=move |_| click_copy(video_url())>
-                        <Icon class="text-xl" icon=icondata::FaCopyRegular />
+                        <Icon attr:class="text-xl" icon=icondata::FaCopyRegular />
                     </button>
                 </div>
             </div>

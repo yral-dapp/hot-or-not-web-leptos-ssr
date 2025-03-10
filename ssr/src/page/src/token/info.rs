@@ -42,7 +42,7 @@ fn TokenField(
                 <ShowAny when=move || copy>
                     <button on:click=copy_clipboard.clone()>
                         <Icon
-                            class="w-6 h-6 text-white/50 cursor-pointer hover:text-white/80"
+                        attr:class="w-6 h-6 text-white/50 cursor-pointer hover:text-white/80"
                             icon=icondata::BiCopyRegular
                         />
                     </button>
@@ -126,7 +126,7 @@ fn TokenInfoInner(
                                                 }
                                             }>
                                             <Icon
-                                                class="w-6 h-6 text-white/80"
+                                            attr:class="w-6 h-6 text-white/80"
                                                 icon=icondata::AiEyeInvisibleOutlined
                                             />
                                         </div>
@@ -172,7 +172,7 @@ fn TokenInfoInner(
                         >
                             <span class="text-xs md:text-sm">View details</span>
                             <div class="p-1 bg-white/15 rounded-full">
-                                <Icon class="text-xs md:text-sm text-white" icon=view_detail_icon />
+                                <Icon attr:class="text-xs md:text-sm text-white" icon=view_detail_icon />
                             </div>
                         </button>
                     </div>

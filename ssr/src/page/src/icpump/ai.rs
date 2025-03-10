@@ -225,7 +225,7 @@ pub fn ICPumpAiToken(details: TokenListItem) -> impl IntoView {
                 <div class="absolute inset-0 flex items-center justify-center">
                     <Icon
                         icon=icondata::AiEyeInvisibleOutlined
-                        class="w-8 h-8 text-gray-200"
+                        attr:class="w-8 h-8 text-gray-200"
                     />
                 </div>
             </Show>

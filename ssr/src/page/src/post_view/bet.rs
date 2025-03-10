@@ -66,7 +66,7 @@ fn CoinStateView(
 
     view! {
         <div class:grayscale=disabled>
-            <Icon class=class icon />
+            <Icon attr:class=class icon />
         </div>
     }
 }
@@ -93,7 +93,7 @@ fn HNButton(
             on:click=move |_| bet_direction.set(Some(kind))
         >
             <Show when=move || !show_spinner() fallback=SpinnerFit>
-                <Icon class="w-full h-full drop-shadow-lg" icon=icon />
+                <Icon attr:class="w-full h-full drop-shadow-lg" icon=icon />
             </Show>
         </button>
     }
@@ -162,7 +162,7 @@ fn HNButtonOverlay(
 
         <div class="flex justify-center w-full touch-manipulation">
             <button disabled=running on:click=move |_| coin.update(|c| *c = c.wrapping_next())>
-                <Icon class="justify-self-end text-2xl text-white" icon=icondata::AiUpOutlined />
+                <Icon attr:class="justify-self-end text-2xl text-white" icon=icondata::AiUpOutlined />
             </button>
         </div>
         <div class="flex flex-row gap-6 justify-center items-center w-full touch-manipulation">
@@ -183,7 +183,7 @@ fn HNButtonOverlay(
             <p class="w-14 md:w-16 lg:w-18">Hot</p>
             <div class="flex justify-center w-12 md:w-14 lg:w-16">
                 <button disabled=running on:click=move |_| coin.update(|c| *c = c.wrapping_prev())>
-                    <Icon class="text-2xl text-white" icon=icondata::AiDownOutlined />
+                    <Icon attr:class="text-2xl text-white" icon=icondata::AiDownOutlined />
                 </button>
             </div>
             <p class="w-14 md:w-16 lg:w-18">Not</p>
@@ -199,7 +199,7 @@ fn WinBadge() -> impl IntoView {
 
             <div class="flex justify-center items-center">
                 <span class="">
-                    <Icon class="fill-white" style="" icon=icondata::RiTrophyFinanceFill />
+                    <Icon attr:class="fill-white" style="" icon=icondata::RiTrophyFinanceFill />
                 </span>
                 <span class="ml-2">"You Won"</span>
             </div>
@@ -211,7 +211,7 @@ fn WinBadge() -> impl IntoView {
 fn LostBadge() -> impl IntoView {
     view! {
         <button class="py-2 px-4 w-full text-sm font-bold text-black bg-white rounded-sm">
-            <Icon class="fill-white" style="" icon=icondata::RiTrophyFinanceFill />
+            <Icon attr:class="fill-white" style="" icon=icondata::RiTrophyFinanceFill />
 
             "You Lost"
         </button>
@@ -238,7 +238,7 @@ fn HNWonLost(participation: VoteDetails) -> impl IntoView {
         <div class="flex gap-6 justify-center items-center p-4 w-full bg-transparent rounded-xl shadow-sm">
             <div class="relative flex-shrink-0 drop-shadow-lg">
                 <CoinStateView class="w-14 h-14 md:w-16 md:h-16" coin />
-                <Icon class="absolute -bottom-0.5 -right-3 w-7 h-7 md:w-9 md:h-9" icon=hn_icon />
+                <Icon attr:class="absolute -bottom-0.5 -right-3 w-7 h-7 md:w-9 md:h-9" icon=hn_icon />
 
             </div>
 
@@ -329,7 +329,7 @@ fn HNAwaitingResults(
         <div class="flex flex-col gap-1 items-center p-4 w-full shadow-sm">
             <div class="flex flex-row gap-4 justify-center items-end w-full">
                 <div class="relative flex-shrink-0 drop-shadow-lg">
-                    <Icon class="w-12 h-12 md:w-14 md:h-14 lg:w-16 lg:h-16" icon=hn_icon />
+                    <Icon attr:class="w-12 h-12 md:w-14 md:h-14 lg:w-16 lg:h-16" icon=hn_icon />
                     <CoinStateView
                         class="absolute bottom-0 -right-3 w-7 h-7 md:w-9 md:h-9 lg:w-11 lg:h-11"
                         coin

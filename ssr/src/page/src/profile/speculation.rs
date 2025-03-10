@@ -145,7 +145,7 @@ pub fn Speculation(details: VoteDetails, _ref: NodeRef<html::Div>) -> impl IntoV
             amt,
             view! {
                 <div class="flex w-full justify-center items-center text-white bg-primary-600 h-6 gap-0.5">
-                    <Icon class="text-sm fill-white" icon=icondata::RiTrophyFinanceFill />
+                    <Icon attr:class="text-sm fill-white" icon=icondata::RiTrophyFinanceFill />
                     <span class="text-xs font-medium">You Won</span>
                 </div>
             }.into_any(),

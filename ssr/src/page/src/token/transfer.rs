@@ -69,7 +69,7 @@ fn FormError<V: 'static + Send + Sync>(
     view! {
         <Show when=move || res.with(|r| r.is_err())>
             <div class="flex flex-row items-center gap-1 w-full text-sm md:text-base">
-                <Icon class="text-red-600" icon=icondata::AiInfoCircleOutlined />
+                <Icon attr:class="text-red-600" icon=icondata::AiInfoCircleOutlined />
                 <span class="text-white/60">{move || err().unwrap()}</span>
             </div>
         </Show>
@@ -259,7 +259,7 @@ fn TokenTransferInner(
                         <p class="text-sm md:text-md text-white/80">{source_addr.to_string()}</p>
                         <button on:click=move |_| copy_source()>
                             <Icon
-                                class="text-white text-lg md:text-xl"
+                            attr:class="text-white text-lg md:text-xl"
                                 icon=icondata::FaCopyRegular
                             />
                         </button>
@@ -278,7 +278,7 @@ fn TokenTransferInner(
                         />
                         <button on:click=move |_| {paste_destination.dispatch(());}>
                             <Icon
-                                class="text-neutral-600 text-lg md:text-xl"
+                            attr:class="text-neutral-600 text-lg md:text-xl"
                                 icon=icondata::BsClipboard
                             />
                         </button>
