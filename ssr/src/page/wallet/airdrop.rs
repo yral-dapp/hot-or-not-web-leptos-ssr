@@ -5,7 +5,7 @@ use crate::{
         spinner::{SpinnerCircle, SpinnerCircleStyled},
     },
     state::canisters::authenticated_canisters,
-    utils::{event_streaming::events::CentsAdded, host::get_host},
+    utils::{event_streaming::events::CentsAdded, host::get_host, token::claim_cents_airdrop},
 };
 use candid::{Nat, Principal};
 use leptos::*;
@@ -64,7 +64,7 @@ fn AirdropButton(
     let name_for_action = name.clone();
     let airdrop_action = create_action(move |&()| {
         let cans_res = cans_res.clone();
-        let token_owner_cans_id = token_owner.clone().unwrap().canister_id;
+        let token_owner = token_owner.clone();
         let name_c = name_for_action.clone();
         async move {
             if claimed.get() && !buffer_signal.get() {
@@ -73,22 +73,24 @@ fn AirdropButton(
             buffer_signal.set(true);
             let cans_wire = cans_res.wait_untracked().await?;
             let cans = Canisters::from_wire(cans_wire, expect_context())?;
-            let token_owner = cans.individual_user(token_owner_cans_id).await;
 
-            token_owner
-                .request_airdrop(
-                    root.unwrap(),
-                    None,
-                    Into::<Nat>::into(airdrop_amount) * 10u64.pow(8),
-                    cans.user_canister(),
-                )
-                .await?;
-
-            let user = cans.individual_user(cans.user_canister()).await;
-            user.add_token(root.unwrap()).await?;
-
-            if name_c == "COYNS" || name_c == "CENTS" {
+            if name_c == "CENTS" && root.is_none() {
+                claim_cents_airdrop(cans.user_canister()).await?;
                 CentsAdded.send_event("airdrop".to_string(), airdrop_amount);
+            } else {
+                let token_owner_can = token_owner.unwrap().canister_id;
+                let token_owner = cans.individual_user(token_owner_can).await;
+                token_owner
+                    .request_airdrop(
+                        root.unwrap(),
+                        None,
+                        Into::<Nat>::into(airdrop_amount) * 10u64.pow(8),
+                        cans.user_canister(),
+                    )
+                    .await?;
+
+                let user = cans.individual_user(cans.user_canister()).await;
+                user.add_token(root.unwrap()).await?;
             }
 
             buffer_signal.set(false);
@@ -203,19 +205,25 @@ fn AirdropPopUpButton(
 ) -> impl IntoView {
     let host = get_host();
     let pathname = use_location();
-    let name_c = name.clone();
-    let name_c2 = name.clone();
+
+    let claim_prefix = if name == "CENTS" {
+        name.clone()
+    } else {
+        format!("100 {name}")
+    };
+    let claim_prefix_2 = claim_prefix.clone();
+
     view! {
         <div
             style="--duration:1500ms"
             class="fade-in flex text-xl font-bold z-[2] w-full flex-col gap-4 items-center justify-center px-8"
         >
             <Show when=claimed fallback=move || view! {
-                <div class="text-center font-normal"><span class="font-semibold">100 {name_c.clone()}</span> successfully claimed and added to your wallet!</div>
+                <div class="text-center font-normal"><span class="font-semibold">{claim_prefix.clone()}</span> successfully claimed and added to your wallet!</div>
             }.into_view()>
                 <div class="text-center">
-                    {format!("100 {}", name_c2.clone())} <br />
-                    <span class="text-center font-normal">Claim for <span class="font-semibold">100 {name_c2.clone()}</span> is being processed</span>
+                    {claim_prefix_2.clone()} <br />
+                    <span class="text-center font-normal">Claim for <span class="font-semibold">{claim_prefix_2.clone()}</span> is being processed</span>
                 </div>
             </Show>
             {move || {
