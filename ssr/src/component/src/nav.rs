@@ -234,14 +234,14 @@ fn NavIcon(
                 when=move || cur_selected()
                 fallback=move || {
                     view! {
-                        <div class="py-5">
+                        <div class="py-4">
                             <Icon icon=icon class="text-2xl text-white md:text-3xl size-6" />
                         </div>
                     }
                 }
             >
 
-                <div class="py-5 border-t-2 border-t-pink-500">
+                <div class="py-4 border-t-2 border-t-pink-500">
                     <Icon
                         icon=filled_icon.unwrap_or(icon)
                         class="text-2xl text-white md:text-3xl size-6 aspect-square"
@@ -262,7 +262,7 @@ fn UploadIcon(#[prop(into)] cur_selected: Signal<bool>) -> impl IntoView {
                     view! {
                         <Icon
                             icon=icondata::AiPlusOutlined
-                            class="p-2 w-10 h-10 bg-transparent rounded-full border-2"
+                            class="p-2 w-8 h-8 bg-transparent rounded-full border-2"
                         />
                     }
                 }
@@ -271,7 +271,7 @@ fn UploadIcon(#[prop(into)] cur_selected: Signal<bool>) -> impl IntoView {
                 <div class="border-t-2 border-transparent">
                     <Icon
                         icon=icondata::AiPlusOutlined
-                        class="p-2 w-10 h-10 rounded-full bg-primary-600 aspect-square"
+                        class="p-2 w-8 h-8 rounded-full bg-primary-600 aspect-square"
                     />
                     <div class="absolute bottom-0 w-10 bg-primary-600 blur-md"></div>
                 </div>

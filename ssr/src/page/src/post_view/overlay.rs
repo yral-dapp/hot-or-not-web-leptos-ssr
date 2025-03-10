@@ -94,14 +94,14 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
     let liking = like_toggle.pending();
 
     view! {
-        <div class="flex flex-col gap-1 items-center">
+        <div class="flex flex-col gap-1 items-center size-3/4">
             <button
                 on:click=move |_| {like_toggle.dispatch(());}
                 disabled=move || liking() || liked.with(|l| l.is_none())
             >
-                <img src=icon_name style="width: 1em; height: 1em;" />
+                <img src=icon_name style="width: 1em; height: 1em;" class="size-2/3" />
             </button>
-            <span class="text-sm md:text-md">{likes}</span>
+            <span class="text-xs md:text-sm">{likes}</span>
             <Suspense>
                 {move || Suspend::new(async move {
                     match liked_fetch.await {
@@ -219,14 +219,14 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
             <div class="flex flex-col gap-2 w-full">
                 <div class="flex flex-col pointer-events-auto gap-6 self-end items-end text-2xl md:text-3xl lg:text-4xl">
                     <button on:click=move |_| show_report.set(true)>
-                        <Icon class="drop-shadow-lg" icon=icondata::TbMessageReport />
+                        <Icon class="drop-shadow-lg size-7" icon=icondata::TbMessageReport />
                     </button>
                     <a href="/refer-earn">
-                        <Icon class="drop-shadow-lg" icon=icondata::AiGiftFilled />
+                        <Icon class="drop-shadow-lg size-7" icon=icondata::AiGiftFilled />
                     </a>
                     <LikeAndAuthCanLoader post=post_c.clone() />
                     <button on:click=move |_| share()>
-                        <Icon class="drop-shadow-lg" icon=HomeFeedShareIcon />
+                        <Icon class="drop-shadow-lg size-7" icon=HomeFeedShareIcon />
                     </button>
                 </div>
                 <div class="w-full bg-transparent pointer-events-auto">
