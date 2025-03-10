@@ -113,6 +113,7 @@ pub async fn process_token_list_item(
 
             let is_airdrop_claimed = if let Some(token_owner) = &token_owner_canister_id {
                 cans.get_airdrop_status(
+                    token.token_symbol.clone(),
                     token_owner.canister_id,
                     root_principal,
                     key_principal,
@@ -376,7 +377,7 @@ pub fn TokenCard(
         let token_owner_cans_id = token_owner_c.clone().unwrap().canister_id;
         let token_symbol_c4 = token_symbol_c3.clone();
         async move {
-            let amount = get_airdrop_amount_from_kv().await?;
+            let amount = get_airdrop_amount_from_kv(token_symbol_c4.clone()).await?;
             airdrop_amount.set(amount);
             airdrop_popup.set(true);
 
