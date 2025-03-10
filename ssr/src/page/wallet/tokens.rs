@@ -27,6 +27,7 @@ use crate::state::auth::account_connected_reader;
 use crate::state::canisters::authenticated_canisters;
 use crate::utils::event_streaming::events::CentsAdded;
 use crate::utils::host::{get_host, show_pnd_page};
+use crate::utils::token::claim_cents_airdrop;
 use crate::utils::token::icpump::IcpumpTokenInfo;
 use crate::{component::infinite_scroller::InfiniteScroller, state::canisters::unauth_canisters};
 
@@ -94,7 +95,7 @@ pub fn WalletCard(
         .map(|r| r.to_text())
         .unwrap_or(token_metadata.name.to_lowercase());
 
-    let is_cents = token_metadata.name == CENT_TOKEN_NAME;
+    let is_cents = token_metadata.name == CENT_TOKEN_NAME && token_metadata.root.is_none();
 
     let share_link = create_rw_signal("".to_string());
 
@@ -132,7 +133,7 @@ pub fn WalletCard(
 
     let airdrop_popup = create_rw_signal(false);
     let buffer_signal = create_rw_signal(false);
-    let claimed = create_rw_signal(is_airdrop_claimed);
+    let claimed = create_rw_signal(is_airdrop_claimed && !is_cents);
     let (is_withdrawable, withdraw_message, withdrawable_balance) = token_metadata
         .withdrawable_state
         .as_ref()
@@ -195,7 +196,7 @@ pub fn WalletCard(
                 })}
             </div>
 
-            <WalletCardOptions pop_up=pop_up.write_only() share_link=share_link.write_only() airdrop_popup buffer_signal claimed/>
+            <WalletCardOptions pop_up=pop_up.write_only() share_link=share_link.write_only() airdrop_popup buffer_signal claimed is_cents=is_cents/>
 
             <PopupOverlay show=pop_up >
                 <ShareContent
@@ -229,6 +230,7 @@ fn WalletCardOptions(
     airdrop_popup: RwSignal<bool>,
     buffer_signal: RwSignal<bool>,
     claimed: RwSignal<bool>,
+    is_cents: bool,
 ) -> impl IntoView {
     use_context().map(|WalletCardOptionsContext { is_utility_token, root, token_owner, user_principal, .. }|{
         let share_link_coin = format!("/token/info/{root}/{user_principal}");
@@ -237,9 +239,9 @@ fn WalletCardOptions(
         let cans_res = authenticated_canisters();
         let airdrop_action = create_action(move |&()| {
             let cans_res = cans_res.clone();
-            let token_owner_cans_id = token_owner_c.clone().unwrap().canister_id;
+            let token_owner = token_owner_c.clone();
+            let root = root_c.clone();
             airdrop_popup.set(true);
-            let root = Principal::from_text(root_c.clone()).unwrap();
 
             async move {
                 if claimed.get() && !buffer_signal.get() {
@@ -248,20 +250,23 @@ fn WalletCardOptions(
                 buffer_signal.set(true);
                 let cans_wire = cans_res.wait_untracked().await?;
                 let cans = Canisters::from_wire(cans_wire, expect_context())?;
-                let token_owner = cans.individual_user(token_owner_cans_id).await;
-                token_owner
-                    .request_airdrop(
-                        root,
-                        None,
-                        Into::<Nat>::into(100u64) * 10u64.pow(8),
-                        cans.user_canister(),
-                    )
-                    .await?;
-                let user = cans.individual_user(cans.user_canister()).await;
-                user.add_token(root).await?;
-
-                if is_utility_token {
+                if is_cents {
+                    claim_cents_airdrop(cans.user_canister()).await?;
                     CentsAdded.send_event("airdrop".to_string(), 100);
+                } else {
+                    let token_owner_can = token_owner.unwrap().canister_id;
+                    let token_owner = cans.individual_user(token_owner_can).await;
+                    let root = Principal::from_text(root).unwrap();
+                    token_owner
+                        .request_airdrop(
+                            root,
+                            None,
+                            Into::<Nat>::into(100u64) * 10u64.pow(8),
+                            cans.user_canister(),
+                        )
+                        .await?;
+                    let user = cans.individual_user(cans.user_canister()).await;
+                    user.add_token(root).await?;
                 }
 
                 buffer_signal.set(false);
@@ -270,7 +275,7 @@ fn WalletCardOptions(
             }
         });
 
-        let airdrop_disabled = Signal::derive(move || token_owner.is_some() && claimed.get() || token_owner.is_none());
+        let airdrop_disabled = Signal::derive(move || token_owner.is_some() && claimed.get() || token_owner.is_none() && !is_cents);
         view! {
             <div class="flex items-center justify-around">
             <ActionButton disabled=is_utility_token href=format!("/token/transfer/{root}") label="Send".to_string()>
