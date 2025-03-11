@@ -2,7 +2,7 @@ use codee::string::FromToStringCodec;
 use component::content_upload::AuthorizedUserToSeedContent;
 use component::content_upload::YoutubeUpload;
 use component::modal::Modal;
-use component::spinner::Spinner;
+use component::spinner::FullScreenSpinner;
 use component::title::TitleText;
 use component::{connect::ConnectLogin, social::*, toggle::Toggle};
 use consts::{social, NSFW_TOGGLE_STORE};
@@ -229,7 +229,7 @@ pub fn Menu() -> impl IntoView {
     let page_title = app_state.unwrap().name.to_owned() + " - Menu";
     view! {
         <Title text=page_title />
-        <Suspense fallback=Spinner>
+        <Suspense fallback=FullScreenSpinner>
             {
                 move ||{
                     authorized_fetch_res.get().map(|profile_details|{
