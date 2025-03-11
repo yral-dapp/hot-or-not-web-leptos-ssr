@@ -5,7 +5,7 @@ use component::{
 use leptos::{either::Either, prelude::*};
 use leptos_icons::*;
 use leptos_use::use_interval_fn;
-use state::canisters::unauth_canisters;
+use state::canisters::{authenticated_canisters, unauth_canisters};
 use utils::{send_wrap, time::to_hh_mm_ss, try_or_redirect_opt};
 use web_time::Duration;
 use yral_canisters_client::individual_user_template::BettingStatus;
@@ -453,57 +453,74 @@ pub fn HNGameOverlay(post: PostDetails) -> impl IntoView {
     let refetch_bet = Trigger::new();
     let post = StoredValue::new(post);
 
-    let create_bet_participation_outcome = move |canisters: Canisters<true>| {
-        // TODO: leptos 0.7, switch to `create_resource`
-        LocalResource::new(
-            // MockPartialEq is necessary
-            // See: https://github.com/leptos-rs/leptos/issues/2661
-            move || {
-                refetch_bet.track();
-                let cans = canisters.clone();
-                async move {
-                    let post = post.get_value();
-                    let user = cans.authenticated_user().await;
-                    let bet_participation = user
-                        .get_individual_hot_or_not_bet_placed_by_this_profile(
-                            post.canister_id,
-                            post.post_id,
-                        )
-                        .await?;
-                    Ok::<_, ServerFnError>(bet_participation.map(VoteDetails::from))
-                }
-            },
-        )
-    };
+    // let create_bet_participation_outcome = move |canisters: Canisters<true>| {
+    //     // TODO: leptos 0.7, switch to `create_resource`
+    //     LocalResource::new(
+    //         // MockPartialEq is necessary
+    //         // See: https://github.com/leptos-rs/leptos/issues/2661
+    //         move || {
+    //             refetch_bet.track();
+    //             let cans = canisters.clone();
+    //             async move {
+    //                 let post = post.get_value();
+    //                 let user = cans.authenticated_user().await;
+    //                 let bet_participation = user
+    //                     .get_individual_hot_or_not_bet_placed_by_this_profile(
+    //                         post.canister_id,
+    //                         post.post_id,
+    //                     )
+    //                     .await?;
+    //                 Ok::<_, ServerFnError>(bet_participation.map(VoteDetails::from))
+    //             }
+    //         },
+    //     )
+    // };
 
+    let create_bet_participation_outcome = Resource::new(
+        move || (),
+        move |_| {
+            refetch_bet.track();
+            async move {
+                let cans = authenticated_canisters().await?;
+                let cans = Canisters::from_wire(cans, expect_context())?;
+                let post = post.get_value();
+                let user = cans.authenticated_user().await;
+                let bet_participation =
+                    send_wrap(user.get_individual_hot_or_not_bet_placed_by_this_profile(
+                        post.canister_id,
+                        post.post_id,
+                    ))
+                    .await?;
+                Ok::<_, ServerFnError>(bet_participation.map(VoteDetails::from))
+            }
+        },
+    );
     view! {
-        <AuthCansProvider fallback=LoaderWithShadowBg let:canisters>
+        <Suspense fallback=LoaderWithShadowBg>
 
             {
-                let bet_participation_outcome = create_bet_participation_outcome(canisters);
-                view! {
-                    {move || {
-                        bet_participation_outcome.get()
-                            .and_then(|res| {
-                                let participation = try_or_redirect_opt!(res.as_ref());
-                                let post = post.get_value();
-                                Some(
-                                    if let Some(participation) = participation {
-                                        view! {
-                                            <HNUserParticipation post refetch_bet participation=participation.clone() />
-                                        }.into_any()
-                                    } else {
-                                        view! {
-                                            <MaybeHNButtons post bet_direction coin refetch_bet />
-                                        }.into_any()
-                                    },
-                                )
-                            })
-                            .unwrap_or_else(|| view! { <LoaderWithShadowBg /> }.into_any())
-                    }}
+                move || {
+                    create_bet_participation_outcome.get()
+                    .and_then(|res| {
+                        let participation = try_or_redirect_opt!(res.as_ref());
+                        let post = post.get_value();
+                        Some(
+                            if let Some(participation) = participation {
+                                view! {
+                                    <HNUserParticipation post refetch_bet participation=participation.clone() />
+                                }.into_any()
+                            } else {
+                                view! {
+                                    <MaybeHNButtons post bet_direction coin refetch_bet />
+                                }.into_any()
+                            },
+                        )
+                    })
+                    .unwrap_or_else(|| view! { <LoaderWithShadowBg /> }.into_any())
                 }
+
             }
 
-        </AuthCansProvider>
+        </Suspense>
     }
 }
