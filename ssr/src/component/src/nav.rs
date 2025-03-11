@@ -234,17 +234,17 @@ fn NavIcon(
                 when=move || cur_selected()
                 fallback=move || {
                     view! {
-                        <div class="py-6ccc">
-                            <Icon icon=icon attr:class="text-2xl text-white md:text-3xl size-7" />
+                        <div class="py-5">
+                            <Icon icon=icon attr:class="text-2xl text-white md:text-3xl" />
                         </div>
                     }
                 }
             >
 
-                <div class="py-6 border-t-2 border-t-pink-500">
+                <div class="py-5 border-t-2 border-t-pink-500">
                     <Icon
                         icon=filled_icon.unwrap_or(icon)
-                        attr:class="text-2xl text-white md:text-3xl size-7 aspect-square"
+                        attr:class="text-2xl text-white md:text-3xl aspect-square"
                     />
                 </div>
             </Show>
