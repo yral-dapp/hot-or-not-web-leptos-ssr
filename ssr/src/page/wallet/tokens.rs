@@ -293,6 +293,15 @@ async fn request_airdrop_user_token(cans_res: AuthCansResource, token_owner_cans
     Ok(())
 }
 
+async fn request_airdrop_cent_token(cans_res: AuthCansResource, amount: u64) -> Result<(), ServerFnError> {
+    let cans_wire = cans_res.wait_untracked().await?;
+    let cans = Canisters::from_wire(cans_wire, expect_context())?;
+    let user = cans.individual_user(cans.user_canister()).await;
+    user.request_airdrop_cent( Into::<Nat>::into(amount)).await?;
+    
+    Ok(())
+}
+
 #[component]
 fn WalletCardOptions(
     pop_up: WriteSignal<bool>,
@@ -322,7 +331,11 @@ fn WalletCardOptions(
                 }
                 buffer_signal.set(true);
 
-                request_airdrop_user_token(cans_res, token_owner_cans_id, root, amount).await?;
+                if symbol_c == "CENTS" {
+                    request_airdrop_cent_token(cans_res, amount).await?;
+                } else {
+                    request_airdrop_user_token(cans_res, token_owner_cans_id, root, amount).await?;
+                }
 
                 if is_utility_token {
                     CentsAdded.send_event("airdrop".to_string(), 100);
