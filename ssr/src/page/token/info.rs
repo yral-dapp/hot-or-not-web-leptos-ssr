@@ -259,6 +259,7 @@ pub fn TokenInfo() -> impl IntoView {
 
                     let is_airdrop_claimed = cans
                         .get_airdrop_status(
+                            m.symbol.clone(), 
                             token_owner.canister_id,
                             *root,
                             cans.user_principal(),

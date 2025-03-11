@@ -353,7 +353,7 @@ fn get_kv_config() -> Result<KVConfig, ServerFnError> {
 }
 
 #[server]
-async fn get_airdrop_config_from_kv() -> Result<AirdropConfig, ServerFnError> {
+async fn get_airdrop_config_from_kv(symbol: String) -> Result<AirdropConfig, ServerFnError> {
     use derive_more::Display;
     use yral_config_keys::key_derive;
 
@@ -369,16 +369,23 @@ async fn get_airdrop_config_from_kv() -> Result<AirdropConfig, ServerFnError> {
     pub struct ClaimLimit;
     key_derive!(ClaimLimit => usize|3);
 
-    let cycle_duration = kv_config.get(CycleDuration).await.map_err(|_e| {
-        ServerFnError::ServerError::<std::convert::Infallible>(
-            "cannot fetch airdrop cycle_duration from cf kv".to_string(),
-        )
-    })?;
-    let claim_limit = kv_config.get(ClaimLimit).await.map_err(|_e| {
-        ServerFnError::ServerError::<std::convert::Infallible>(
-            "cannot fetch airdrop claim_limit from cf kv".to_string(),
-        )
-    })?;
+    let cycle_duration = kv_config
+        .get(CycleDuration, Some(symbol.clone()))
+        .await
+        .map_err(|e| {
+            ServerFnError::ServerError::<std::convert::Infallible>(format!(
+                "cannot fetch airdrop cycle_duration from cf kv, {:?}",
+                e
+            ))
+        })?;
+    let claim_limit = kv_config
+        .get(ClaimLimit, Some(symbol.clone()))
+        .await
+        .map_err(|e| {
+            ServerFnError::ServerError::<std::convert::Infallible>(
+                "cannot fetch airdrop claim_limit from cf kv".to_string(),
+            )
+        })?;
 
     Ok(AirdropConfig {
         cycle_duration,
@@ -390,13 +397,13 @@ async fn get_airdrop_config_from_kv() -> Result<AirdropConfig, ServerFnError> {
 pub struct AirdropKVConfig;
 
 impl AirdropConfigProvider for AirdropKVConfig {
-    async fn get_airdrop_config(&self) -> AirdropConfig {
-        get_airdrop_config_from_kv().await.unwrap()
+    async fn get_airdrop_config(&self, symbol: String) -> AirdropConfig {
+        get_airdrop_config_from_kv(symbol).await.unwrap()
     }
 }
 
 #[server]
-pub async fn get_airdrop_amount_from_kv() -> Result<u64, ServerFnError> {
+pub async fn get_airdrop_amount_from_kv(symbol: String) -> Result<u64, ServerFnError> {
     use derive_more::Display;
     use rand::prelude::*;
     use speedate::DateTime;
@@ -414,16 +421,23 @@ pub async fn get_airdrop_amount_from_kv() -> Result<u64, ServerFnError> {
     pub struct AirdropLowerLimit;
     key_derive!(AirdropLowerLimit => u64|10);
 
-    let upper = kv_config.get(AirdropUpperLimit).await.map_err(|_e| {
-        ServerFnError::ServerError::<std::convert::Infallible>(
-            "cannot fetch airdrop cycle_duration from cf kv".to_string(),
-        )
-    })?;
-    let lower = kv_config.get(AirdropLowerLimit).await.map_err(|_e| {
-        ServerFnError::ServerError::<std::convert::Infallible>(
-            "cannot fetch airdrop claim_limit from cf kv".to_string(),
-        )
-    })?;
+    let upper = kv_config
+        .get(AirdropUpperLimit, Some(symbol.clone()))
+        .await
+        .map_err(|_e| {
+            ServerFnError::ServerError::<std::convert::Infallible>(
+                "cannot fetch airdrop cycle_duration from cf kv".to_string(),
+            )
+        })?;
+
+    let lower = kv_config
+        .get(AirdropLowerLimit, Some(symbol.clone()))
+        .await
+        .map_err(|_e| {
+            ServerFnError::ServerError::<std::convert::Infallible>(
+                "cannot fetch airdrop claim_limit from cf kv".to_string(),
+            )
+        })?;
 
     let mut rng = SmallRng::seed_from_u64(DateTime::now(0).unwrap().timestamp() as u64);
     let amount: u64 = rng.random_range(lower..=upper);
