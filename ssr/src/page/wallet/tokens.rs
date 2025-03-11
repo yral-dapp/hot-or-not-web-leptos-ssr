@@ -1,5 +1,6 @@
 use candid::{Nat, Principal};
 use codee::string::FromToStringCodec;
+use ic_agent::AgentError;
 use leptos_router::use_navigate;
 use leptos_use::use_cookie;
 use yral_canisters_common::cursored_data::token_roots::{TokenListResponse, TokenRootList};
@@ -24,7 +25,7 @@ use crate::page::icpump::{ActionButton, ActionButtonLink};
 use crate::page::wallet::airdrop::AirdropPopup;
 use crate::page::wallet::ShowLoginSignal;
 use crate::state::auth::account_connected_reader;
-use crate::state::canisters::authenticated_canisters;
+use crate::state::canisters::{authenticated_canisters, AuthCansResource};
 use crate::utils::event_streaming::events::CentsAdded;
 use crate::utils::host::{get_host, show_pnd_page};
 use crate::utils::token::icpump::{get_airdrop_amount_from_kv, AirdropKVConfig, IcpumpTokenInfo};
@@ -273,6 +274,25 @@ pub fn WalletCard(
     }
 }
 
+async fn request_airdrop_user_token(cans_res: AuthCansResource, token_owner_cans_id: Principal, root: Principal, amount: u64) -> Result<(), ServerFnError> {
+    let cans_wire = cans_res.wait_untracked().await?;
+    let cans = Canisters::from_wire(cans_wire, expect_context())?;
+    let token_owner = cans.individual_user(token_owner_cans_id).await;
+
+    token_owner
+        .request_airdrop(
+            root,
+            None,
+            Into::<Nat>::into(amount) * 10u64.pow(8),
+            cans.user_canister(),
+        )
+        .await?;
+    let user = cans.individual_user(cans.user_canister()).await;
+    user.add_token(root).await?;
+
+    Ok(())
+}
+
 #[component]
 fn WalletCardOptions(
     pop_up: WriteSignal<bool>,
@@ -301,20 +321,8 @@ fn WalletCardOptions(
                     return Ok(());
                 }
                 buffer_signal.set(true);
-                let cans_wire = cans_res.wait_untracked().await?;
-                let cans = Canisters::from_wire(cans_wire, expect_context())?;
-                let token_owner = cans.individual_user(token_owner_cans_id).await;
 
-                token_owner
-                    .request_airdrop(
-                        root,
-                        None,
-                        Into::<Nat>::into(amount) * 10u64.pow(8),
-                        cans.user_canister(),
-                    )
-                    .await?;
-                let user = cans.individual_user(cans.user_canister()).await;
-                user.add_token(root).await?;
+                request_airdrop_user_token(cans_res, token_owner_cans_id, root, amount).await?;
 
                 if is_utility_token {
                     CentsAdded.send_event("airdrop".to_string(), 100);
