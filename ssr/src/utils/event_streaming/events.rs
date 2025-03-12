@@ -2,7 +2,7 @@ use candid::Principal;
 use codee::string::{FromToStringCodec, JsonSerdeCodec};
 use ic_agent::Identity;
 use leptos::html::Input;
-use leptos::{create_effect, MaybeSignal, ReadSignal, RwSignal, SignalGetUntracked};
+use leptos::{create_effect, spawn_local, MaybeSignal, ReadSignal, RwSignal, SignalGetUntracked};
 use leptos::{create_signal, ev, expect_context, html::Video, NodeRef, SignalGet, SignalSet};
 use leptos_use::storage::use_local_storage;
 use leptos_use::{use_cookie, use_event_listener, use_timeout_fn, UseTimeoutFnReturn};
@@ -11,8 +11,9 @@ use sns_validation::pbs::sns_pb::SnsInitPayload;
 use wasm_bindgen::JsCast;
 
 use super::EventHistory;
+use crate::auth::delegate_short_lived_identity;
 use crate::component::auth_providers::ProviderKind;
-use crate::consts::{USER_CANISTER_ID_STORE, USER_PRINCIPAL_STORE};
+use crate::consts::{OFF_CHAIN_AGENT_URL, USER_CANISTER_ID_STORE, USER_PRINCIPAL_STORE};
 use crate::state::auth::account_connected_reader;
 use crate::state::canisters::auth_canisters_store;
 use crate::state::history::HistoryCtx;
@@ -224,11 +225,34 @@ impl LikeVideo {
             let post_id = post_details.post_id;
             let publisher_canister_id = post_details.canister_id;
 
+            let canister_true = cans_store.get_untracked().unwrap();
+            let identity = canister_true.identity();
+            let delegated_identity_wire =  delegate_short_lived_identity(identity);
+
             let (is_connected, _) = account_connected_reader();
             // like_video - analytics
 
             let user = user_details_can_store_or_ret!(cans_store);
-
+            let user_c = user.clone();
+            let video_id_c = video_id.clone();
+            spawn_local(async move {
+                
+                let reqwest_client = reqwest::Client::new();
+                let res = reqwest_client.post(format!("{}api/v1/posts/events/like_video", OFF_CHAIN_AGENT_URL.as_ref()))
+                .json(&json!({
+                    "delegated_identity_wire": delegated_identity_wire,
+                    "canister_id": user_c.canister_id,
+                    "user_principal": user_c.details.principal,
+                    "publisher_canister_id": publisher_canister_id,
+                    "post_id": post_id,
+                    "video_id": video_id_c,
+                }))
+                .send()
+                .await.expect("Failed to send like video event");
+                let body = res.text().await.expect("Failed to get like video event response");
+                println!("{}", body);
+            });
+            
             send_event_ssr_spawn(
                 "like_video".to_string(),
                 json!({
@@ -278,6 +302,29 @@ impl ShareVideo {
             let (is_connected, _) = account_connected_reader();
 
             let user = user_details_can_store_or_ret!(cans_store);
+
+
+            let canister_true = cans_store.get_untracked().unwrap();
+            let identity = canister_true.identity();
+            let delegated_identity_wire =  delegate_short_lived_identity(identity);
+
+            let user_c = user.clone();
+            let video_id_c = video_id.clone();
+            spawn_local(async move {
+                
+                let reqwest_client = reqwest::Client::new();
+                let res = reqwest_client.delete(format!("{}api/v1/posts", OFF_CHAIN_AGENT_URL.as_ref()))
+                .json(&json!({
+                    "delegated_identity_wire": delegated_identity_wire,
+                    "canister_id": user_c.canister_id,
+                    "post_id": post_details.post_id,
+                    "video_id": video_id_c,
+                }))
+                .send()
+                .await.expect("Failed to send like video event");
+                let body = res.text().await.expect("Failed to get like video event response");
+                println!("{}", body);
+            });
 
             // share_video - analytics
             send_event_ssr_spawn(
