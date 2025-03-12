@@ -1,7 +1,6 @@
 use crate::icpump::{ActionButton, ActionButtonLink};
 use crate::wallet::airdrop::AirdropPopup;
 use candid::{Nat, Principal};
-use codee::string::FromToStringCodec;
 use component::icons::information_icon::Information;
 use component::icons::padlock_icon::{PadlockClose, PadlockOpen};
 use component::icons::{
@@ -13,12 +12,10 @@ use component::overlay::PopupOverlay;
 use component::overlay::ShadowOverlay;
 use component::share_popup::ShareContent;
 use component::tooltip::Tooltip;
-use consts::USER_PRINCIPAL_STORE;
 use leptos::html;
 use leptos::prelude::*;
 use leptos_icons::*;
 use leptos_router::hooks::use_navigate;
-use leptos_use::use_cookie;
 use state::canisters::authenticated_canisters;
 use state::canisters::unauth_canisters;
 use utils::event_streaming::events::account_connected_reader;
