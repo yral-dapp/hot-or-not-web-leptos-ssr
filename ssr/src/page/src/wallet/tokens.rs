@@ -49,7 +49,7 @@ pub fn TokenList(user_principal: Principal, user_canister: Principal) -> impl In
                         let viewer_principal = Canisters::from_wire(authenticated_canisters().await.unwrap(), expect_context()).unwrap().user_principal();
 
                         let provider = TokenRootList {
-                            viewer_principal: viewer_principal,
+                            viewer_principal,
                             canisters: unauth_canisters(),
                             user_canister,
                             user_principal,
