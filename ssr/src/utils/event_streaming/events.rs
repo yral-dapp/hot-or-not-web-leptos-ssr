@@ -227,7 +227,7 @@ impl LikeVideo {
 
             let canister_true = cans_store.get_untracked().unwrap();
             let identity = canister_true.identity();
-            let delegated_identity_wire =  delegate_short_lived_identity(identity);
+            let delegated_identity_wire = delegate_short_lived_identity(identity);
 
             let (is_connected, _) = account_connected_reader();
             // like_video - analytics
@@ -236,23 +236,30 @@ impl LikeVideo {
             let user_c = user.clone();
             let video_id_c = video_id.clone();
             spawn_local(async move {
-                
                 let reqwest_client = reqwest::Client::new();
-                let res = reqwest_client.post(format!("{}api/v1/posts/events/like_video", OFF_CHAIN_AGENT_URL.as_ref()))
-                .json(&json!({
-                    "delegated_identity_wire": delegated_identity_wire,
-                    "canister_id": user_c.canister_id,
-                    "user_principal": user_c.details.principal,
-                    "publisher_canister_id": publisher_canister_id,
-                    "post_id": post_id,
-                    "video_id": video_id_c,
-                }))
-                .send()
-                .await.expect("Failed to send like video event");
-                let body = res.text().await.expect("Failed to get like video event response");
+                let res = reqwest_client
+                    .post(format!(
+                        "{}api/v1/posts/events/like_video",
+                        OFF_CHAIN_AGENT_URL.as_ref()
+                    ))
+                    .json(&json!({
+                        "delegated_identity_wire": delegated_identity_wire,
+                        "canister_id": user_c.canister_id,
+                        "user_principal": user_c.details.principal,
+                        "publisher_canister_id": publisher_canister_id,
+                        "post_id": post_id,
+                        "video_id": video_id_c,
+                    }))
+                    .send()
+                    .await
+                    .expect("Failed to send like video event");
+                let body = res
+                    .text()
+                    .await
+                    .expect("Failed to get like video event response");
                 println!("{}", body);
             });
-            
+
             send_event_ssr_spawn(
                 "like_video".to_string(),
                 json!({
@@ -303,26 +310,29 @@ impl ShareVideo {
 
             let user = user_details_can_store_or_ret!(cans_store);
 
-
             let canister_true = cans_store.get_untracked().unwrap();
             let identity = canister_true.identity();
-            let delegated_identity_wire =  delegate_short_lived_identity(identity);
+            let delegated_identity_wire = delegate_short_lived_identity(identity);
 
             let user_c = user.clone();
             let video_id_c = video_id.clone();
             spawn_local(async move {
-                
                 let reqwest_client = reqwest::Client::new();
-                let res = reqwest_client.delete(format!("{}api/v1/posts", OFF_CHAIN_AGENT_URL.as_ref()))
-                .json(&json!({
-                    "delegated_identity_wire": delegated_identity_wire,
-                    "canister_id": user_c.canister_id,
-                    "post_id": post_details.post_id,
-                    "video_id": video_id_c,
-                }))
-                .send()
-                .await.expect("Failed to send like video event");
-                let body = res.text().await.expect("Failed to get like video event response");
+                let res = reqwest_client
+                    .delete(format!("{}api/v1/posts", OFF_CHAIN_AGENT_URL.as_ref()))
+                    .json(&json!({
+                        "delegated_identity_wire": delegated_identity_wire,
+                        "canister_id": user_c.canister_id,
+                        "post_id": post_details.post_id,
+                        "video_id": video_id_c,
+                    }))
+                    .send()
+                    .await
+                    .expect("Failed to send like video event");
+                let body = res
+                    .text()
+                    .await
+                    .expect("Failed to get like video event response");
                 println!("{}", body);
             });
 

@@ -1,16 +1,20 @@
 use crate::{
-    auth::delegate_short_lived_identity, component::{
+    auth::delegate_short_lived_identity,
+    component::{
         canisters_prov::{with_cans, WithAuthCans},
         hn_icons::HomeFeedShareIcon,
         modal::Modal,
         option::SelectOption,
-    }, consts::OFF_CHAIN_AGENT_URL, state::canisters::auth_canisters_store, utils::{
+    },
+    consts::OFF_CHAIN_AGENT_URL,
+    state::canisters::auth_canisters_store,
+    utils::{
         event_streaming::events::{LikeVideo, ShareVideo},
         report::ReportOption,
         route::failure_redirect,
         user::UserDetails,
         web::{copy_to_clipboard, share_url},
-    }
+    },
 };
 use gloo::timers::callback::Timeout;
 use leptos::*;
@@ -161,27 +165,34 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
 
             let canister_true = canisters_copy.get_untracked().unwrap();
             let identity = canister_true.identity();
-            let delegated_identity_wire =  delegate_short_lived_identity(identity);
+            let delegated_identity_wire = delegate_short_lived_identity(identity);
             let user_details_c = user_details.clone();
 
-
             spawn_local(async move {
-                let user_c = user_details_c.details.principal.clone();
+                let user_c = user_details_c.details.principal;
                 let video_id_c = post_details.uid.clone();
                 let reqwest_client = reqwest::Client::new();
-                let res = reqwest_client.post(format!("{}api/v1/posts/report", OFF_CHAIN_AGENT_URL.as_ref()))
-                .json(&json!({
-                    "delegated_identity_wire": delegated_identity_wire,
-                    "canister_id": post_details.canister_id,
-                    "post_id": post_details.post_id,
-                    "video_id": video_id_c,
-                    "user_canister_id": user_details_c.canister_id,
-                    "user_principal": user_c,
-                    "reason": report_option.get_untracked(),
-                }))
-                .send()
-                .await.expect("Failed to send like video event");
-                let body = res.text().await.expect("Failed to get like video event response");
+                let res = reqwest_client
+                    .post(format!(
+                        "{}api/v1/posts/report",
+                        OFF_CHAIN_AGENT_URL.as_ref()
+                    ))
+                    .json(&json!({
+                        "delegated_identity_wire": delegated_identity_wire,
+                        "canister_id": post_details.canister_id,
+                        "post_id": post_details.post_id,
+                        "video_id": video_id_c,
+                        "user_canister_id": user_details_c.canister_id,
+                        "user_principal": user_c,
+                        "reason": report_option.get_untracked(),
+                    }))
+                    .send()
+                    .await
+                    .expect("Failed to send like video event");
+                let body = res
+                    .text()
+                    .await
+                    .expect("Failed to get like video event response");
                 println!("{}", body);
 
                 send_report_offchain(
