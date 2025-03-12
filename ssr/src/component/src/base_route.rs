@@ -115,18 +115,21 @@ fn CtxProvider(children: ChildrenFn) -> impl IntoView {
                 let user_canister = cans.user_canister();
                 let user_principal = cans.user_principal();
                 Effect::new(move |_| {
+                    log::debug!("Setting user canister id: {:?}", user_principal.to_text());
                     set_user_canister_id(Some(user_canister));
                     set_user_principal(Some(user_principal));
                 });
 
                 // We need to perform this cleanup in case the user's cookie expired
-                Effect::new(move |_| {
-                    if temp_id.is_some() {
-                        set_logged_in(false);
-                        set_user_canister_id(None);
-                        set_user_principal(None);
-                    }
-                });
+                // Cleanup doent work, it sets it but simulatanously removes it lols
+                // Effect::new(move |_| {
+                //     if temp_id.is_some() {
+                //         log::debug!("Removing user principal");
+                //         set_logged_in(false);
+                //         set_user_canister_id(None);
+                //         set_user_principal(None);
+                //     }
+                // });
 
                 canisters_store.set(Some(cans.clone()));
                 Effect::new(move |_| {
