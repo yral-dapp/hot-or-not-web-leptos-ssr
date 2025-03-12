@@ -44,32 +44,40 @@ pub fn TokenViewFallback() -> impl IntoView {
 
 #[component]
 pub fn TokenList(user_principal: Principal, user_canister: Principal) -> impl IntoView {
-    let (viewer_principal, _) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE);
-
-    let provider = TokenRootList {
-        viewer_principal: viewer_principal.get_untracked().unwrap(),
-        canisters: unauth_canisters(),
-        user_canister,
-        user_principal,
-        nsfw_detector: IcpumpTokenInfo,
-        exclude: if show_pnd_page() {
-            vec![RootType::COYNS]
-        } else {
-            vec![RootType::CENTS]
-        },
-    };
-
     view! {
         <div class="flex flex-col w-full gap-2 mb-2 items-center">
-            <InfiniteScroller
-                provider
-                fetch_count=5
-                children=move |TokenListResponse{token_metadata, airdrop_claimed, root}, _ref| {
-                    view! {
-                        <WalletCard user_principal token_metadata=token_metadata is_airdrop_claimed=airdrop_claimed _ref=_ref.unwrap_or_default() is_utility_token=matches!(root, RootType::COYNS | RootType::CENTS)/>
-                    }
+           <Suspense>
+                {
+                    Suspend::new(async move {
+                        let viewer_principal = Canisters::from_wire(authenticated_canisters().await.unwrap(), expect_context()).unwrap().user_principal();
+
+                        let provider = TokenRootList {
+                            viewer_principal: viewer_principal,
+                            canisters: unauth_canisters(),
+                            user_canister,
+                            user_principal,
+                            nsfw_detector: IcpumpTokenInfo,
+                            exclude: if show_pnd_page() {
+                                vec![RootType::COYNS]
+                            } else {
+                                vec![RootType::CENTS]
+                            },
+                        };
+
+                        view! {
+                            <InfiniteScroller
+                            provider
+                            fetch_count=5
+                            children=move |TokenListResponse{token_metadata, airdrop_claimed, root}, _ref| {
+                                view! {
+                                    <WalletCard user_principal token_metadata=token_metadata is_airdrop_claimed=airdrop_claimed _ref=_ref.unwrap_or_default() is_utility_token=matches!(root, RootType::COYNS | RootType::CENTS)/>
+                                }
+                            }
+                        />
+                        }
+                    })
                 }
-            />
+            </Suspense>
         </div>
     }
 }
