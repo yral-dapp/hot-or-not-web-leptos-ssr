@@ -115,7 +115,9 @@ fn CtxProvider(children: ChildrenFn) -> impl IntoView {
                 let user_canister = cans.user_canister();
                 let user_principal = cans.user_principal();
                 Effect::new(move |_| {
-                    log::debug!("Setting user canister id: {:?}", user_principal.to_text());
+                    if temp_id.is_some() {
+                        set_logged_in(false);
+                    }
                     set_user_canister_id(Some(user_canister));
                     set_user_principal(Some(user_principal));
                 });

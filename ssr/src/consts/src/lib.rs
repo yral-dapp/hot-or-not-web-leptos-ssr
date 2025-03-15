@@ -59,9 +59,11 @@ pub const NEW_USER_SIGNUP_REWARD: u64 = 1000;
 pub const REFERRAL_REWARD: u64 = 500;
 
 pub mod social {
-    pub const TELEGRAM: &str = "https://t.me/+c-LTX0Cp-ENmMzI1";
+    pub const TELEGRAM_YRAL: &str = "https://t.me/+c-LTX0Cp-ENmMzI1";
+    pub const TELEGRAM_PND: &str = "https://t.me/Pump_Dump_dapp";
     pub const DISCORD: &str = "https://discord.gg/GZ9QemnZuj";
-    pub const TWITTER: &str = "https://twitter.com/Yral_app";
+    pub const TWITTER_YRAL: &str = "https://twitter.com/Yral_app";
+    pub const TWITTER_PND: &str = "https://x.com/dolr_ai";
     pub const IC_WEBSITE: &str = "https://vyatz-hqaaa-aaaam-qauea-cai.ic0.app";
 }
 

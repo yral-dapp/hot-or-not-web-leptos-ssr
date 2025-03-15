@@ -5,7 +5,7 @@ use component::modal::Modal;
 use component::spinner::FullScreenSpinner;
 use component::title::TitleText;
 use component::{connect::ConnectLogin, social::*, toggle::Toggle};
-use consts::{social, NSFW_TOGGLE_STORE};
+use consts::NSFW_TOGGLE_STORE;
 use leptos::either::Either;
 use leptos::html::Input;
 use leptos::{ev, prelude::*};
@@ -289,7 +289,7 @@ pub fn Menu() -> impl IntoView {
                 <MenuItem href="/refer-earn" text="Refer & Earn" icon=icondata::AiGiftFilled />
                 <MenuItem href="/leaderboard" text="Leaderboard" icon=icondata::ChTrophy />
                 <MenuItem
-                    href=social::TELEGRAM
+                    href=domain_specific_href("TELEGRAM")
                     text="Talk to the team"
                     icon=icondata::BiWhatsapp
                     target="_blank"

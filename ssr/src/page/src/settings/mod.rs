@@ -10,6 +10,7 @@ use leptos_icons::*;
 use leptos_use::storage::use_local_storage;
 use leptos_use::use_event_listener;
 use utils::event_streaming::events::account_connected_reader;
+use utils::host::{show_cdao_page, show_pnd_page};
 use utils::notifications::get_token_for_principal;
 use yral_canisters_common::utils::profile::ProfileDetails;
 
@@ -91,7 +92,15 @@ fn ProfileLoaded(user_details: ProfileDetails) -> impl IntoView {
             <span class="text-white text-ellipsis line-clamp-1 text-xl">
                 {user_details.display_name_or_fallback()}
             </span>
-            <a class="text-primary-600 text-md" href="/your-profile">
+            <a class="text-primary-600 text-md" href={
+                if show_pnd_page(){
+                    "/pnd/profile".to_string()
+                } else if show_cdao_page(){
+                    "/profile/token".to_string()
+                }else{
+                    "/profile/posts".to_string()
+                }
+            }>
                 View Profile
             </a>
         </div>
