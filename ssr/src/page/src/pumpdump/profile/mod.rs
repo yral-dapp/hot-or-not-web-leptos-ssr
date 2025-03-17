@@ -348,9 +348,9 @@ pub fn PndProfilePage() -> impl IntoView {
                 let user = cans_wire.profile_details.clone();
                 let canisters = Canisters::from_wire(cans_wire.clone(), expect_context())?;
                 let ind_user = canisters.individual_user(canisters.user_canister()).await;
-                Ok(ProfileData::load(user, ind_user)
-                    .await
-                    .map_err(|e| ServerFnError::new(e.to_string()))?)
+                ProfileData::load(user, ind_user)
+                .await
+                .map_err(|e| ServerFnError::new(e.to_string()))
             },
         );
     view! {
@@ -392,7 +392,7 @@ pub fn PndProfilePage() -> impl IntoView {
                                 view!{
                                     <InfiniteScroller
                                     provider
-                                    fetch_count=5
+                                    fetch_count=6
                                     children=move |item, _ref| {
                                         view! {
                                             <div node_ref=_ref.unwrap_or_default()>
