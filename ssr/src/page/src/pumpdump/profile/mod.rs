@@ -2,7 +2,9 @@ use std::convert::Infallible;
 
 use crate::pumpdump::{convert_e8s_to_cents, GameResult};
 use candid::Principal;
-use component::{back_btn::BackButton, infinite_scroller::InfiniteScroller, skeleton::Skeleton, title::TitleText};
+use component::{
+    back_btn::BackButton, infinite_scroller::InfiniteScroller, skeleton::Skeleton, title::TitleText,
+};
 use consts::PUMP_AND_DUMP_WORKER_URL;
 use futures::{stream::FuturesOrdered, StreamExt};
 use leptos::prelude::*;
@@ -13,10 +15,11 @@ use yral_canisters_client::{
     sns_root::ListSnsCanistersArg,
 };
 use yral_canisters_common::{
-    cursored_data::{CursoredDataProvider, KeyedData, PageEntry}, utils::profile::{propic_from_principal, ProfileDetails}, Canisters
+    cursored_data::{CursoredDataProvider, KeyedData, PageEntry},
+    utils::profile::{propic_from_principal, ProfileDetails},
+    Canisters,
 };
 use yral_pump_n_dump_common::rest::{CompletedGameInfo, UncommittedGameInfo, UncommittedGamesRes};
-
 
 use super::GameState;
 
@@ -33,7 +36,6 @@ impl ProfileData {
         Ok(Self { user })
     }
 }
-
 
 #[derive(Debug, Clone)]
 struct GameplayHistoryItem {
@@ -71,7 +73,11 @@ fn compute_result(info: impl Into<CompletedGameInfo>) -> GameResult {
 }
 
 // TODO: switch to using in-house `InfiniteScroller` for 0.7 migration
-async fn load_history(cans: Canisters<true>, start_idx: u64, end_idx: u64) -> Result<(GameplayHistory, bool), String> {
+async fn load_history(
+    cans: Canisters<true>,
+    start_idx: u64,
+    end_idx: u64,
+) -> Result<(GameplayHistory, bool), String> {
     // to test without playing games
     // #[cfg(any(feature = "local-lib", feature = "local-bin"))]
     // {
@@ -220,7 +226,6 @@ async fn load_from_chain(
     Ok(items)
 }
 
-
 #[component]
 fn Stat(_stat: u64, #[prop(into)] _info: String) -> impl IntoView {
     view! {
@@ -335,15 +340,19 @@ fn GameplayHistoryCard(#[prop(into)] details: GameplayHistoryItem) -> impl IntoV
 #[component]
 pub fn PndProfilePage() -> impl IntoView {
     let auth_cans = authenticated_canisters();
-    let fetch_profile_data: Resource<std::result::Result<ProfileData, ServerFnError>> = Resource::new(move || (), move |_| async move {
-        let cans_wire = authenticated_canisters().await?;
-        let user = cans_wire.profile_details.clone();
-        let canisters = Canisters::from_wire(cans_wire.clone(), expect_context())?;
-        let ind_user = canisters.individual_user(canisters.user_canister()).await;
-        Ok(ProfileData::load(user, ind_user)
-        .await
-        .map_err(|e| ServerFnError::new(e.to_string()))?)
-    });
+    let fetch_profile_data: Resource<std::result::Result<ProfileData, ServerFnError>> =
+        Resource::new(
+            move || (),
+            move |_| async move {
+                let cans_wire = authenticated_canisters().await?;
+                let user = cans_wire.profile_details.clone();
+                let canisters = Canisters::from_wire(cans_wire.clone(), expect_context())?;
+                let ind_user = canisters.individual_user(canisters.user_canister()).await;
+                Ok(ProfileData::load(user, ind_user)
+                    .await
+                    .map_err(|e| ServerFnError::new(e.to_string()))?)
+            },
+        );
     view! {
         <div class="min-h-screen w-full flex flex-col text-white pt-2 pb-12 bg-black items-center">
             <div id="back-nav" class="flex flex-col items-center w-full gap-20 pb-16">
@@ -409,7 +418,6 @@ pub fn PndProfilePage() -> impl IntoView {
     }
 }
 
-
 #[derive(Clone)]
 struct GameplayHistoryProvider(Canisters<true>);
 
@@ -418,11 +426,17 @@ impl CursoredDataProvider for GameplayHistoryProvider {
     type Error = Infallible;
 
     async fn get_by_cursor_inner(
-            &self,
-            start: usize,
-            end: usize,
-        ) -> std::result::Result<yral_canisters_common::cursored_data::PageEntry<Self::Data>, Self::Error> {
-        let (items, request_more) = load_history(self.0.clone(), start as u64, end as u64).await.unwrap();
-        Ok(PageEntry { data: items, end: request_more })
+        &self,
+        start: usize,
+        end: usize,
+    ) -> std::result::Result<yral_canisters_common::cursored_data::PageEntry<Self::Data>, Self::Error>
+    {
+        let (items, request_more) = load_history(self.0.clone(), start as u64, end as u64)
+            .await
+            .unwrap();
+        Ok(PageEntry {
+            data: items,
+            end: request_more,
+        })
     }
 }
