@@ -38,75 +38,103 @@ pub fn TxnView(
     );
 
     view! {
-        <div _ref=_ref class="grid grid-cols-2 grid-rows-1 w-full py-3 border-b-2 border-white/10 justify-between">
-            <div class="flex flex-row gap-2">
-                {
-                    match direction{
-                        TxnDirection::Added => {
-                            view! {
-                                <div class="flex items-center justify-center w-7 h-7 lg:w-10 lg:h-10 rounded-md text-green-600 bg-green-600/5 text-lg lg:text-xl">
-                                    <Icon icon=txn_info_to_icon(info.tag) />
-                                </div>
-                            }
-                        },
-                        TxnDirection::Deducted => {
-                            view! {
-                                <div class="flex items-center justify-center w-7 h-7 lg:w-10 lg:h-10 rounded-md text-red-600 bg-red-600/5 text-lg lg:text-xl">
-                                    <Icon icon=txn_info_to_icon(info.tag) />
-                                </div>
-                            }
-                        },
-                        TxnDirection::Transaction => {
-                            view! {
-                                <div class="flex items-center justify-center w-7 h-7 lg:w-10 lg:h-10 rounded-md text-white bg-blue-600/5 text-lg lg:text-xl">
-                                    <Icon icon=txn_info_to_icon(info.tag) />
-                                </div>
-                            }
-                        },
-                    }
-                }
-                <div class="flex flex-col">
-                    <span class="text-md md:text-lg font-semibold text-white">
-                        {info.tag.to_text()}
-                    </span>
+        <div _ref=_ref class="w-full flex flex-col gap-8 bg-neutral-800 rounded-[4px] py-3 px-2">
+            <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2">
                     {
-                        move || {
-                            match info.tag{
-                                TxnInfoType::Mint { to } => {
-                                    match params.get(){
-                                        Ok(_) => None,
-                                        Err(_) => Some(view! {<div class="text-sm md:text-md text-white/50">{format!("To: {}", to)}</div>})
-                                    }
-                                },
-                                TxnInfoType::Burn { from } => {
-                                    match params.get(){
-                                        Ok(_) => None,
-                                        Err(_) => Some(view! {<div class="text-sm md:text-md text-white/50">{format!("From: {}", from)}</div>})
-                                    }
-                                },
-                                TxnInfoType::Received { from } => Some(view! {<div class="text-sm md:text-md text-white/50">{format!("From: {}", from)}</div>}),
-                                TxnInfoType::Sent { to } => Some(view! {<div class="text-sm md:text-md text-white/50">{format!("To: {}", to)}</div>}),
-                                TxnInfoType::Transfer { from, to } => Some(view! {
-                                    <div class="flex flex-col space-y-1">
-                                    <div class="text-sm md:text-md text-white/50">{format!("From: {}", from)}</div>
-                                    <div class="text-sm md:text-md text-white/50">{format!("To: {}", to)}</div>
+                        match direction{
+                            TxnDirection::Added => {
+                                view! {
+                                    <div class="flex items-center justify-center w-6 h-6 p-1 rounded-full shrink-0 bg-[#1EC9811A] text-[#158F5C]">
+                                        <Icon icon=txn_info_to_icon(info.tag) />
                                     </div>
-                                })
-                            }
+                                }
+                            },
+                            TxnDirection::Deducted => {
+                                view! {
+                                    <div class="flex items-center justify-center w-6 h-6 rounded-full shrink-0 text-red-600 bg-red-600/5 p-1">
+                                        <Icon icon=txn_info_to_icon(info.tag) />
+                                    </div>
+                                }
+                            },
+                            TxnDirection::Transaction => {
+                                view! {
+                                    <div class="flex items-center justify-center w-6 h-6 rounded-full shrink-0 text-neutral-500 bg-neutral-700 p-1">
+                                        <Icon icon=txn_info_to_icon(info.tag) />
+                                    </div>
+                                }
+                            },
                         }
                     }
                 </div>
+                <div class="font-medium text-neutral-50">
+                    {info.tag.to_text()}
+                </div>
+                <div class={format!("font-bold text-lg {}", if direction == TxnDirection::Added {
+                    "text-green-600"
+                } else {
+                    "text-neutral-50"
+                })}>
+                    <span>{bal_res}</span>
+                    <span class="text-[8px]">(${symbol})</span>
+                </div>
             </div>
-            <div class="flex flex-col top-0 text-right">
-            <span class=move || {
-                match direction {
-                    TxnDirection::Added => "text-green-600 font-semibold",
-                    _ => "text-white font-semibold",
-                }
-            }>{format!("{} {}", bal_res, symbol)}</span>
-            <span class="text-sm md:text-md text-white/50">
-                {parse_ns_to_datetime(info.timestamp).ok()}
-            </span>
+            <div class="flex flex-col gap-3 text-[#A3A3A3] text-sm">
+                {
+                    move || {
+                        match info.tag{
+                            TxnInfoType::Mint { to } => {
+                                match params.get(){
+                                    Ok(_) => None,
+                                    Err(_) => Some(view! {
+                                        <div class="flex flex-col gap-2">
+                                            <div>To</div>
+                                            <div class="underline line-clamp-1">{to.to_string()}</div>
+                                        </div>
+                                    })
+                                }
+                            },
+                            TxnInfoType::Burn { from } => {
+                                match params.get(){
+                                    Ok(_) => None,
+                                    Err(_) => Some(view! {
+                                        <div class="flex flex-col gap-2">
+                                            <div>From</div>
+                                            <div class="underline line-clamp-1">{from.to_string()}</div>
+                                        </div>
+                                    })
+                                }
+                            },
+                            TxnInfoType::Received { from } => Some(view! {
+                                <div class="flex flex-col gap-2">
+                                    <div>From</div>
+                                    <div class="underline line-clamp-1">{from.to_string()}</div>
+                                </div>
+                            }),
+                            TxnInfoType::Sent { to } => Some(view! {
+                                <div class="flex flex-col gap-2">
+                                    <div>To</div>
+                                    <div class="underline line-clamp-1">{to.to_string()}</div>
+                                </div>
+                            }),
+                            TxnInfoType::Transfer { from, to } => Some(view! {
+                                <div class="flex flex-col gap-3">
+                                    <div class="flex flex-col gap-2">
+                                        <div>From</div>
+                                        <div class="underline line-clamp-1">{from.to_string()}</div>
+                                    </div>
+                                    <div class="flex flex-col gap-2">
+                                        <div>To</div>
+                                        <div class="underline line-clamp-1">{to.to_string()}</div>
+                                    </div>
+                                </div>
+                            })
+                        }
+                    }
+                }    
+                <div class="line-clamp-1 text-[#525252]">
+                    {parse_ns_to_datetime(info.timestamp).ok()}
+                </div>
             </div>
         </div>
     }
