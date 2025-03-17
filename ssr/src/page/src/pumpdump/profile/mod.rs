@@ -349,8 +349,8 @@ pub fn PndProfilePage() -> impl IntoView {
                 let canisters = Canisters::from_wire(cans_wire.clone(), expect_context())?;
                 let ind_user = canisters.individual_user(canisters.user_canister()).await;
                 ProfileData::load(user, ind_user)
-                .await
-                .map_err(|e| ServerFnError::new(e.to_string()))
+                    .await
+                    .map_err(|e| ServerFnError::new(e.to_string()))
             },
         );
     view! {
