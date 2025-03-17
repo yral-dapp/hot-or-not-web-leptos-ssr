@@ -26,16 +26,12 @@ pub async fn server_fn_handler(
     handle_server_fns_with_context(
         move || {
             provide_context(app_state.canisters.clone());
-            
             #[cfg(feature = "backend-admin")]
             provide_context(app_state.admin_canisters.clone());
-
             #[cfg(feature = "cloudflare")]
             provide_context(app_state.cloudflare.clone());
-
             provide_context(app_state.kv.clone());
             provide_context(app_state.cookie_key.clone());
-
             #[cfg(feature = "oauth-ssr")]
             provide_context(app_state.google_oauth_clients.clone());
 
