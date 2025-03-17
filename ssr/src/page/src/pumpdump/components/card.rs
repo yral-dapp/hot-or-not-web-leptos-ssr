@@ -92,22 +92,20 @@ pub fn GameCard(token: ProcessedTokenListResponse) -> impl IntoView {
     provide_context::<RunningGameRes>(running_game_res);
 
     view! {
-        <Suspense> // <-- This suspense somehow prevents infinite scroller from resetting scroll :|
-            {move || game_state.get().map(move |game_state| view! {
-                <div
-                    style="perspective: 500px; transition: transform 0.4s; transform-style: preserve-3d;"
-                    class="relative w-full min-h-[31rem] snap-start snap-always"
-                >
-                    {match game_state {
-                        GameState::Playing => Either::Left(view! {
-                            <PlayingCard/>
-                        }.into_any()),
-                        GameState::ResultDeclared(result) => Either::Right(view! {
-                            <ResultDeclaredCard result/>
-                        }.into_any())
-                    }}
-                </div>
-            })}
-        </Suspense>
+        {move || game_state.get().map(move |game_state| view! {
+            <div
+                style="perspective: 500px; transition: transform 0.4s; transform-style: preserve-3d;"
+                class="relative w-full min-h-[31rem] snap-start snap-always"
+            >
+                {match game_state {
+                    GameState::Playing => Either::Left(view! {
+                        <PlayingCard/>
+                    }.into_any()),
+                    GameState::ResultDeclared(result) => Either::Right(view! {
+                        <ResultDeclaredCard result/>
+                    }.into_any())
+                }}
+            </div>
+        })}
     }
 }
