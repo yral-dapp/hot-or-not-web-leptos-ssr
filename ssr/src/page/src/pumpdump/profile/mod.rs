@@ -1,26 +1,26 @@
+use std::convert::Infallible;
+
 use crate::pumpdump::{convert_e8s_to_cents, GameResult};
 use candid::Principal;
-use component::{back_btn::BackButton, skeleton::Skeleton, title::TitleText};
+use component::{back_btn::BackButton, infinite_scroller::InfiniteScroller, skeleton::Skeleton, title::TitleText};
 use consts::PUMP_AND_DUMP_WORKER_URL;
 use futures::{stream::FuturesOrdered, StreamExt};
-use leptos::{html::Div, prelude::*};
-use leptos_use::{use_infinite_scroll_with_options, UseInfiniteScrollOptions};
+use leptos::prelude::*;
+use serde::{Deserialize, Serialize};
 use state::canisters::authenticated_canisters;
 use yral_canisters_client::{
     individual_user_template::IndividualUserTemplate, sns_ledger::MetadataValue,
     sns_root::ListSnsCanistersArg,
 };
 use yral_canisters_common::{
-    utils::profile::{propic_from_principal, ProfileDetails},
-    Canisters,
+    cursored_data::{CursoredDataProvider, KeyedData, PageEntry}, utils::profile::{propic_from_principal, ProfileDetails}, Canisters
 };
 use yral_pump_n_dump_common::rest::{CompletedGameInfo, UncommittedGameInfo, UncommittedGamesRes};
 
-use utils::try_or_redirect;
 
 use super::GameState;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub(super) struct ProfileData {
     pub(super) user: ProfileDetails,
 }
@@ -34,7 +34,6 @@ impl ProfileData {
     }
 }
 
-type ProfileDataSignal = RwSignal<Option<ProfileData>>;
 
 #[derive(Debug, Clone)]
 struct GameplayHistoryItem {
@@ -45,6 +44,13 @@ struct GameplayHistoryItem {
     state: GameState,
 }
 
+impl KeyedData for GameplayHistoryItem {
+    type Key = Principal;
+
+    fn key(&self) -> Self::Key {
+        self.root
+    }
+}
 type GameplayHistory = Vec<GameplayHistoryItem>;
 
 fn compute_result(info: impl Into<CompletedGameInfo>) -> GameResult {
@@ -65,7 +71,7 @@ fn compute_result(info: impl Into<CompletedGameInfo>) -> GameResult {
 }
 
 // TODO: switch to using in-house `InfiniteScroller` for 0.7 migration
-async fn load_history(cans: Canisters<true>, page: u64) -> Result<(GameplayHistory, bool), String> {
+async fn load_history(cans: Canisters<true>, start_idx: u64, end_idx: u64) -> Result<(GameplayHistory, bool), String> {
     // to test without playing games
     // #[cfg(any(feature = "local-lib", feature = "local-bin"))]
     // {
@@ -80,17 +86,14 @@ async fn load_history(cans: Canisters<true>, page: u64) -> Result<(GameplayHisto
     //     return Ok((history, true));
     // }
 
-    let (items, request_more) = match page {
-        0 => (load_uncommitted_games(&cans).await?, true),
-        page => {
-            let page = page - 1; // -1 to take into account the uncommitted games
-            let limit = 10;
-            let start_index = page * limit;
-            let items = load_from_chain(&cans, start_index, limit).await?;
-            let request_more = !items.is_empty();
-
-            (items, request_more)
-        }
+    let (items, request_more) = if start_idx == 0 {
+        // First page includes uncommitted games
+        (load_uncommitted_games(&cans).await?, true)
+    } else {
+        // Subsequent pages load from chain
+        let items = load_from_chain(&cans, start_idx - 1, end_idx - start_idx).await?;
+        let request_more = !items.is_empty();
+        (items, request_more)
     };
 
     let token_infos = items
@@ -217,7 +220,6 @@ async fn load_from_chain(
     Ok(items)
 }
 
-type GameplayHistorySignal = RwSignal<GameplayHistory>;
 
 #[component]
 fn Stat(_stat: u64, #[prop(into)] _info: String) -> impl IntoView {
@@ -330,87 +332,18 @@ fn GameplayHistoryCard(#[prop(into)] details: GameplayHistoryItem) -> impl IntoV
         </a>
     }
 }
-
 #[component]
 pub fn PndProfilePage() -> impl IntoView {
-    let profile_data: ProfileDataSignal = RwSignal::new(None);
-    // TODO: write the create_effect and action combo for profile data
-
-    let gameplay_history: GameplayHistorySignal = RwSignal::new(Default::default());
-
     let auth_cans = authenticated_canisters();
-    let auth_cans_for_profile = auth_cans;
-    let load_profile_data: Action<(), std::result::Result<(), _>, LocalStorage> =
-        Action::new_unsync(move |&()| {
-            let value = auth_cans_for_profile;
-            async move {
-                let cans_wire = value.get().ok_or(ServerFnError::new("Auth failed"))??;
-
-                let user = cans_wire.profile_details.clone();
-                let canisters = Canisters::from_wire(cans_wire.clone(), expect_context())?;
-
-                let ind_user = canisters.individual_user(canisters.user_canister()).await;
-
-                // TODO: send telemetry or something for these errors
-                profile_data.set(Some(
-                    ProfileData::load(user, ind_user)
-                        .await
-                        .map_err(|e| ServerFnError::new(e.to_string()))?,
-                ));
-
-                Ok::<_, ServerFnError>(())
-            }
-        });
-
-    Effect::new(move |_| {
-        if profile_data.get_untracked().is_none() {
-            load_profile_data.dispatch(());
-        }
+    let fetch_profile_data: Resource<std::result::Result<ProfileData, ServerFnError>> = Resource::new(move || (), move |_| async move {
+        let cans_wire = authenticated_canisters().await?;
+        let user = cans_wire.profile_details.clone();
+        let canisters = Canisters::from_wire(cans_wire.clone(), expect_context())?;
+        let ind_user = canisters.individual_user(canisters.user_canister()).await;
+        Ok(ProfileData::load(user, ind_user)
+        .await
+        .map_err(|e| ServerFnError::new(e.to_string()))?)
     });
-
-    let auth_can_for_history = auth_cans;
-    let page = RwSignal::new(0);
-    let should_load_more = RwSignal::new(true);
-
-    let scroll_container = NodeRef::<Div>::new();
-    let is_loading = use_infinite_scroll_with_options(
-        scroll_container,
-        move |_| {
-            let cans_wire_res = auth_can_for_history;
-            async move {
-                if !should_load_more.get() {
-                    return;
-                }
-                // since we are starting a load job, no more load jobs should be start
-                should_load_more.set(false);
-                let cans_wire = cans_wire_res.await.map_err(|_| "Couldn't get cans_wire");
-                let cans_wire = try_or_redirect!(cans_wire);
-                let cans = Canisters::from_wire(cans_wire.clone(), expect_context())
-                    .map_err(|_| "Unable to authenticate".to_string());
-                let cans = try_or_redirect!(cans);
-
-                let (processed_items, had_items) =
-                    try_or_redirect!(load_history(cans, page.get_untracked()).await);
-                gameplay_history.update(|list| {
-                    list.extend(processed_items);
-                });
-
-                if had_items {
-                    // since there were tokens loaded
-                    // assume we have more tokens to load
-                    // so, allow token loading
-                    page.update_untracked(|v| {
-                        *v += 1;
-                    });
-                    should_load_more.set(true);
-                }
-            }
-        },
-        UseInfiniteScrollOptions::default()
-            .distance(400f64)
-            .interval(2000f64),
-    );
-
     view! {
         <div class="min-h-screen w-full flex flex-col text-white pt-2 pb-12 bg-black items-center">
             <div id="back-nav" class="flex flex-col items-center w-full gap-20 pb-16">
@@ -422,25 +355,74 @@ pub fn PndProfilePage() -> impl IntoView {
                     </div>
                 </TitleText>
             </div>
-            <Show when=move || profile_data.get().is_some()>
-                <ProfileDataSection profile_data=profile_data.get().unwrap() />
-            </Show>
+            <Suspense>
+            {
+                move || {
+                    let profile_data_res = fetch_profile_data.get();
+                    match profile_data_res {
+                        Some(Ok(profile_data)) => Some(view! {
+                            <ProfileDataSection profile_data=profile_data />
+                        }),
+                        _ => None
+                    }
+                }
+            }
+            </Suspense>
+
             <div class="w-11/12 flex justify-center">
-                <div node_ref=scroll_container class="flex flex-wrap gap-4 justify-center pt-8 pb-16">
-                    <For
-                        each=move || gameplay_history.get().into_iter().enumerate()
-                        key=|(idx, _)| *idx
-                        let:item
-                    >
-                        <GameplayHistoryCard details=item.1 />
-                    </For>
-                    <Show when=move || is_loading() && should_load_more.get_untracked()>
-                        <For each=move || 0..6 key=|&idx| idx let:_>
-                            <GameplayHistorySkeleton />
-                        </For>
-                    </Show>
+                <div class="flex flex-wrap gap-4 justify-center pt-8 pb-16">
+                    <Suspense>
+                        {
+                            Suspend::new(async move {
+                                // cant use auth cans in the cursoreddata impl expect context fails
+                                let cans_wire = auth_cans.await;
+                                let cans_wire = cans_wire.unwrap();
+                                let canisters = Canisters::from_wire(cans_wire, expect_context()).unwrap();
+                                let provider = GameplayHistoryProvider(canisters);
+
+                                view!{
+                                    <InfiniteScroller
+                                    provider
+                                    fetch_count=5
+                                    children=move |item, _ref| {
+                                        view! {
+                                            <div node_ref=_ref.unwrap_or_default()>
+                                                <GameplayHistoryCard details=item />
+                                            </div>
+                                        }.into_any()
+                                    }
+                                    custom_loader=move || {
+                                        view! {
+                                            <For each=move || 0..6 key=|&idx| idx let:_>
+                                                <GameplayHistorySkeleton />
+                                            </For>
+                                        }.into_any()
+                                    }
+                                />
+                                }
+                            })
+                        }
+                </Suspense>
                 </div>
             </div>
         </div>
+    }
+}
+
+
+#[derive(Clone)]
+struct GameplayHistoryProvider(Canisters<true>);
+
+impl CursoredDataProvider for GameplayHistoryProvider {
+    type Data = GameplayHistoryItem;
+    type Error = Infallible;
+
+    async fn get_by_cursor_inner(
+            &self,
+            start: usize,
+            end: usize,
+        ) -> std::result::Result<yral_canisters_common::cursored_data::PageEntry<Self::Data>, Self::Error> {
+        let (items, request_more) = load_history(self.0.clone(), start as u64, end as u64).await.unwrap();
+        Ok(PageEntry { data: items, end: request_more })
     }
 }
