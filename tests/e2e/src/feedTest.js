@@ -5,21 +5,21 @@ const path = require('path');
 describe('GRPC API Test', function() {
   let client;
 
-  before(function(browser) {
-    // Load your proto file and create a client
-    const PROTO_PATH = path.resolve(__dirname, '../../../ssr/src/utils/contracts/projects/ml_feed/ml_feed.proto');
-    const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
-      keepCase: true,
-      longs: String,
-      enums: String,
-      defaults: true,
-      oneofs: true
-    });
+  // before(function(browser) {
+  //   // Load your proto file and create a client
+  //   const PROTO_PATH = path.resolve(__dirname, '../../../ssr/src/utils/contracts/projects/ml_feed/ml_feed.proto');
+  //   const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
+  //     keepCase: true,
+  //     longs: String,
+  //     enums: String,
+  //     defaults: true,
+  //     oneofs: true
+  //   });
 
-    const protoDescriptor = grpc.loadPackageDefinition(packageDefinition);
-    // Replace with your service name and endpoint
-    client = new protoDescriptor.ml_feed.MLFeed('yral-ml-feed-server.fly.dev:443', grpc.credentials.createSsl());
-  });
+  //   const protoDescriptor = grpc.loadPackageDefinition(packageDefinition);
+  //   // Replace with your service name and endpoint
+  //   client = new protoDescriptor.ml_feed.MLFeed('yral-ml-feed-server.fly.dev:443', grpc.credentials.createSsl());
+  // });
 
   it('should successfully make a GRPC API call to get feed clean', function(browser) {
     // Create a promise wrapper for the GRPC call
