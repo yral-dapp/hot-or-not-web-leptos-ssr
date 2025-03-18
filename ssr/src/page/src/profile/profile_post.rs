@@ -112,7 +112,7 @@ fn ProfilePostWithUpdates<const LIMIT: u64, VidStream: ProfVideoStream<LIMIT>>(
         }
 
         use_navigate()(
-            &format!("profile/{canister_id}/post/{post_id}"),
+            &format!("/profile/{canister_id}/post/{post_id}"),
             NavigateOptions {
                 replace: true,
                 ..Default::default()
