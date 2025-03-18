@@ -244,7 +244,7 @@ impl LikeVideo {
                     ))
                     .json(&json!({
                         "delegated_identity_wire": delegated_identity_wire,
-                        "canister_id": user_c.canister_id,
+                        "user_canister_id": user_c.canister_id,
                         "user_principal": user_c.details.principal,
                         "publisher_canister_id": publisher_canister_id,
                         "post_id": post_id,
