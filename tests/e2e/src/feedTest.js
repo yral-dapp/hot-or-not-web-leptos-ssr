@@ -7,7 +7,7 @@ describe('GRPC API Test', function() {
 
   before(function(browser) {
     // Load your proto file and create a client
-    const PROTO_PATH = path.resolve(__dirname, '../../../ssr/contracts/projects/ml_feed/ml_feed.proto');
+    const PROTO_PATH = path.resolve(__dirname, '../../../ssr/src/utils/contracts/projects/ml_feed/ml_feed.proto');
     const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
       keepCase: true,
       longs: String,
