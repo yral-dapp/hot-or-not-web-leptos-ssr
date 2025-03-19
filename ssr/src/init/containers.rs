@@ -1,7 +1,10 @@
 use std::time::Duration;
 
+use crate::canister_ids::USER_INDEX_ID;
+use consts::{METADATA_API_BASE, YRAL_BACKEND_CONTAINER_TAG, YRAL_METADATA_CONTAINER_TAG};
 use ic_agent::{identity::Secp256k1Identity, AgentError, Identity};
 use k256::SecretKey;
+use state::admin_canisters::AdminCanisters;
 use testcontainers::{
     core::{ContainerPort, IntoContainerPort, WaitFor},
     runners::AsyncRunner,
@@ -12,12 +15,6 @@ use yral_metadata_types::UserMetadata;
 use yral_testcontainers::{
     backend::{self, YralBackend, ADMIN_SECP_BYTES},
     metadata::{self, YralMetadata},
-};
-
-use crate::{
-    canister_ids::USER_INDEX_ID,
-    consts::{METADATA_API_BASE, YRAL_BACKEND_CONTAINER_TAG, YRAL_METADATA_CONTAINER_TAG},
-    state::admin_canisters::AdminCanisters,
 };
 
 type MaybeContainer<I> = Option<ContainerAsync<I>>;

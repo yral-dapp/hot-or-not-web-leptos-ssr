@@ -18,7 +18,7 @@ describe("wallet page tests", function () {
         
         const centsIsPresent = browser.element.findByText("CENTS", { timeout: 10000 }).isPresent();
         if (centsIsPresent) {
-            browser.element.findByText("1000", { timeout: 10000 }).waitUntil('visible', { timeout: 10000 }).assert.enabled();
+            browser.element.findByText("2000", { timeout: 10000 }).waitUntil('visible', { timeout: 10000 }).assert.enabled();
         } else {
             browser.element.findByText("COYNS", { timeout: 10000 }).waitUntil('visible', { timeout: 10000 }).assert.enabled();
             browser.element.findByText("1000", { timeout: 10000 }).waitUntil('visible', { timeout: 10000 }).assert.enabled();
