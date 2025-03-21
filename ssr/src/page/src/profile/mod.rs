@@ -119,7 +119,7 @@ fn ProfileViewInner(user: ProfileDetails, user_canister: Principal) -> impl Into
     let display_name = user.display_name_or_fallback();
     let earnings = user.lifetime_earnings;
     let (is_connected, _) = account_connected_reader();
-    let (viewer_principal, _)= use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE);
+    let (viewer_principal, _) = use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE);
 
     view! {
         <div class="min-h-screen bg-black text-white overflow-y-auto pt-10 pb-12">
