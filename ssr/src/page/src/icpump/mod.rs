@@ -377,7 +377,7 @@ pub fn TokenCard(
     let cans_res = authenticated_canisters();
     let token_owner_c = token_owner.clone();
     let airdrop_action = Action::new(move |&()| {
-        let cans_res = cans_res.clone();
+        let cans_res = cans_res;
         let token_owner_cans_id = token_owner_c.clone().unwrap().canister_id;
         let token_symbol_c4 = token_symbol_c3.clone();
         send_wrap(async move {
