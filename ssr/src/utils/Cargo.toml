@@ -89,7 +89,10 @@ tonic-build = {workspace = true}
 anyhow = {workspace = true}
 send_wrapper = {workspace = true}
 consts = {workspace = true}
-
+derive_more = {workspace = true}
+rand = {workspace = true}
+yral-config-keys = {workspace = true}
+yral-config-cf-kv = {workspace = true}
 [build-dependencies]
 tonic-build = {workspace = true}
 anyhow = {workspace = true}

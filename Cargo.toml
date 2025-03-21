@@ -86,8 +86,8 @@ hmac = { version = "0.12.1" }
 wasm-bindgen-futures = { version = "0.4.42" }
 testcontainers = { version = "0.20.0" }
 yral-testcontainers = { git = "https://github.com/yral-dapp/yral-testcontainers", rev = "7438ba7cb281e7f195cf81f2a8532f63ce005771" }
-sns-validation = { git = "https://github.com/yral-dapp/yral-common.git", rev = "95f61ef7a745a12f19abf03ef4f24f1161daed6a" }
-yral-grpc-traits = { git = "https://github.com/yral-dapp/yral-common.git", rev = "95f61ef7a745a12f19abf03ef4f24f1161daed6a" }
+sns-validation = { git = "https://github.com/yral-dapp/yral-common.git", rev = "0c69edc3682403318ec09602b6536f24104e7bca" }
+yral-grpc-traits = { git = "https://github.com/yral-dapp/yral-common.git", rev = "0c69edc3682403318ec09602b6536f24104e7bca" }
 js-sys = "0.3.69"
 tonic-web-wasm-client = { version = "0.6" }
 tonic = { version = "0.12.0", default-features = false, features = [
@@ -102,18 +102,20 @@ firestore = { version = "0.43.1", default-features = false, features = [
 ] }
 speedate = { version = "0.14.4" }
 urlencoding = "2.1.3"
-yral-types = { git = "https://github.com/yral-dapp/yral-common.git", rev = "95f61ef7a745a12f19abf03ef4f24f1161daed6a" }
-yral-qstash-types = { git = "https://github.com/yral-dapp/yral-common.git", rev = "95f61ef7a745a12f19abf03ef4f24f1161daed6a" }
-yral-canisters-client = { git = "https://github.com/yral-dapp/yral-common.git", rev = "95f61ef7a745a12f19abf03ef4f24f1161daed6a", features = [
+yral-types = { git = "https://github.com/yral-dapp/yral-common.git", rev = "0c69edc3682403318ec09602b6536f24104e7bca" }
+yral-qstash-types = { git = "https://github.com/yral-dapp/yral-common.git", rev = "0c69edc3682403318ec09602b6536f24104e7bca" }
+yral-canisters-client = { git = "https://github.com/yral-dapp/yral-common.git", rev = "0c69edc3682403318ec09602b6536f24104e7bca", features = [
     "full",
 ] }
-yral-canisters-common = { git = "https://github.com/yral-dapp/yral-common.git", rev = "95f61ef7a745a12f19abf03ef4f24f1161daed6a" }
+yral-canisters-common = { git = "https://github.com/yral-dapp/yral-common.git", rev = "0c69edc3682403318ec09602b6536f24104e7bca" }
+yral-config-keys = { git = "https://github.com/yral-dapp/yral-common.git", rev = "0c69edc3682403318ec09602b6536f24104e7bca" }
+yral-config-cf-kv = { git = "https://github.com/yral-dapp/yral-common.git", rev = "0c69edc3682403318ec09602b6536f24104e7bca" }
 pulldown-cmark = "0.12.1"
 ic-certification = "2.6.0"
 ciborium = "0.2.2"
 yral-metadata-client = { git = "https://github.com/yral-dapp/yral-metadata", rev = "56e3f1f1f5f452673bee17739520c800c1264295" }
 yral-metadata-types = { git = "https://github.com/yral-dapp/yral-metadata", rev = "56e3f1f1f5f452673bee17739520c800c1264295" }
-yral-pump-n-dump-common = { git = "https://github.com/yral-dapp/yral-common", features = ["client"], rev = "95f61ef7a745a12f19abf03ef4f24f1161daed6a", version = "0.1.0" }
+yral-pump-n-dump-common = { git = "https://github.com/yral-dapp/yral-common", features = ["client"], rev = "0c69edc3682403318ec09602b6536f24104e7bca", version = "0.1.0" }
 uuid = { version = "1.11.0", features = ["v4", "js"] }
 regex = { version = "1.11.1"  }
 tonic-build = { version = "0.12.0", default-features = false, features = [
@@ -128,5 +130,7 @@ state = {path = "./ssr/src/state"}
 utils = {path = "./ssr/src/utils"}
 page = {path = "./ssr/src/page"}
 rand = { version = "0.9.0", default-features = false, features = ["small_rng"]}
+derive_more = { version = "2", features = ["display"] }
+
 # [patch.crates-io]
 # codee = { git = "https://github.com/Synphonyte/codee", branch = "main" }

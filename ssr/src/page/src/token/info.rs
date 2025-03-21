@@ -5,6 +5,7 @@ use component::show_any::ShowAny;
 use component::{
     back_btn::BackButton, share_popup::*, spinner::FullScreenSpinner, title::TitleText,
 };
+use utils::token::icpump::AirdropKVConfig;
 use leptos_router::components::Redirect;
 use leptos_router::hooks::use_params;
 use leptos_router::hooks::use_query;
@@ -261,12 +262,14 @@ pub fn TokenInfo() -> impl IntoView {
                             .clone()
                             .ok_or(ServerFnError::new("Token owner not found for yral token"))?;
                         let is_airdrop_claimed = cans
-                            .get_airdrop_status(
-                                token_owner.canister_id,
-                                *root,
-                                cans.user_principal(),
-                            )
-                            .await?;
+                        .get_airdrop_status(
+                            token_owner.canister_id,
+                            *root,
+                            cans.user_principal(),
+                            m.timestamp,
+                            &AirdropKVConfig,
+                        )
+                        .await?;
 
                         Some(TokenInfoResponse {
                             meta: m,

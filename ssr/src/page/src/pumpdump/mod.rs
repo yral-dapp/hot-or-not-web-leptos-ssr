@@ -61,12 +61,14 @@ async fn load_selected_card(
             formatted_created_at: "notneeded".into(),
             link: "notneeded".into(),
             is_nsfw: meta.is_nsfw,
+            timestamp: 0,
         },
         root,
         token_owner: meta.token_owner,
         is_airdrop_claimed: false, // not needed
     })
 }
+
 
 #[component]
 pub fn PumpNDump() -> impl IntoView {

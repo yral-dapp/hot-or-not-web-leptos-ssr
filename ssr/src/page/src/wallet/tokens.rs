@@ -29,7 +29,7 @@ use yral_canisters_common::utils::token::{RootType, TokenMetadata, TokenOwner};
 use yral_canisters_common::Canisters;
 use yral_canisters_common::CENT_TOKEN_NAME;
 use yral_pump_n_dump_common::WithdrawalState;
-
+use utils::token::icpump::{get_airdrop_amount_from_kv, AirdropKVConfig};
 use super::ShowLoginSignal;
 
 #[component]
@@ -59,6 +59,7 @@ pub fn TokenList(user_principal: Principal, user_canister: Principal) -> impl In
                             } else {
                                 vec![RootType::CENTS]
                             },
+                            airdrop_config_provider: AirdropKVConfig
                         };
 
                         view! {
@@ -122,9 +123,6 @@ pub fn WalletCard(
         user_principal,
     });
 
-    // let airdrop_popup = RwSignal::new(false);
-    // let buffer_signal = RwSignal::new(false);
-    // let claimed = RwSignal::new(is_airdrop_claimed);
     let (is_connected, _) = account_connected_reader();
     let show_login = use_context()
         .map(|ShowLoginSignal(show_login)| show_login)
@@ -140,6 +138,7 @@ pub fn WalletCard(
     };
 
     let airdrop_popup = RwSignal::new(false);
+    let airdrop_amount = RwSignal::new(0u64);
     let buffer_signal = RwSignal::new(false);
     let claimed = RwSignal::new(is_airdrop_claimed);
     let (is_withdrawable, withdraw_message, withdrawable_balance) = token_metadata
@@ -203,7 +202,7 @@ pub fn WalletCard(
                 })}
             </div>
 
-            <WalletCardOptions pop_up=pop_up.write_only() share_link=share_link.write_only() airdrop_popup buffer_signal claimed/>
+            <WalletCardOptions airdrop_amount pop_up=pop_up.write_only() share_link=share_link.write_only() airdrop_popup buffer_signal claimed/>
 
             <PopupOverlay show=pop_up >
                 <ShareContent
@@ -218,6 +217,7 @@ pub fn WalletCard(
                     <div class="rounded-lg z-[500]">
                         <AirdropPopup
                             name=token_metadata.name.clone()
+                            amount=airdrop_amount
                             logo=token_metadata.logo_b64.clone()
                             buffer_signal
                             claimed
@@ -234,6 +234,7 @@ pub fn WalletCard(
 fn WalletCardOptions(
     pop_up: WriteSignal<bool>,
     share_link: WriteSignal<String>,
+    airdrop_amount: RwSignal<u64>,
     airdrop_popup: RwSignal<bool>,
     buffer_signal: RwSignal<bool>,
     claimed: RwSignal<bool>,
@@ -242,26 +243,29 @@ fn WalletCardOptions(
         let share_link_coin = format!("/token/info/{root}/{user_principal}");
         let token_owner_c = token_owner.clone();
         let root_c = root.clone();
-        let cans_res = authenticated_canisters();
         let airdrop_action = Action::new(move |&()| {
-            let cans_res = cans_res;
             let token_owner_cans_id = token_owner_c.clone().unwrap().canister_id;
             airdrop_popup.set(true);
             let root = Principal::from_text(root_c.clone()).unwrap();
 
-            send_wrap(async move {
+            send_wrap( async move {
+                let amount = get_airdrop_amount_from_kv().await?;
+                airdrop_amount.set(amount);
+                airdrop_popup.set(true);
+
                 if claimed.get() && !buffer_signal.get() {
                     return Ok(());
                 }
                 buffer_signal.set(true);
-                let cans_wire = cans_res.await?;
+                let cans_wire = authenticated_canisters().await?;
                 let cans = Canisters::from_wire(cans_wire, expect_context())?;
                 let token_owner = cans.individual_user(token_owner_cans_id).await;
+
                 token_owner
                     .request_airdrop(
                         root,
                         None,
-                        Into::<Nat>::into(100u64) * 10u64.pow(8),
+                        Into::<Nat>::into(amount) * 10u64.pow(8),
                         cans.user_canister(),
                     )
                     .await?;

@@ -198,50 +198,72 @@ fn pop_up_button_href(host: String, pathname: String) -> PopUpButtonTextRedirect
 fn AirdropPopUpButton(
     claimed: RwSignal<bool>,
     name: String,
+    amount: RwSignal<u64>,
     buffer_signal: RwSignal<bool>,
 ) -> impl IntoView {
     let host = get_host();
     let pathname = use_location();
     let name_c = name.clone();
     let name_c2 = name.clone();
+    let name_c3 = name.clone();
     view! {
         <div
             style="--duration:1500ms"
             class="fade-in flex text-xl font-bold z-[2] w-full flex-col gap-4 items-center justify-center px-8"
         >
-            <Show when=claimed fallback=move || view! {
-                <div class="text-center font-normal"><span class="font-semibold">100 {name_c.clone()}</span> successfully claimed and added to your wallet!</div>
-            }.into_view()>
+            <Show
+                when=claimed
+                fallback=move || {
+                    view! {
+                        <div class="text-center font-normal">
+                            <span class="font-semibold">{amount} {format!(" {}", name_c)}</span>
+                            successfully claimed and added to your wallet!
+                        </div>
+                    }
+                        .into_view()
+                }
+            >
                 <div class="text-center">
-                    {format!("100 {}", name_c2.clone())} <br />
-                    <span class="text-center font-normal">Claim for <span class="font-semibold">100 {name_c2.clone()}</span> is being processed</span>
+                    {amount} {format!(" {}", name_c2)} <br />
+                    <span class="text-center font-normal">
+                        Claim for
+                        <span class="font-semibold">{amount} {format!(" {}", name_c3)}</span>
+                        is being processed
+                    </span>
                 </div>
             </Show>
             {move || {
                 if buffer_signal.get() {
-                    Some(view! {
-                        <div class="max-w-100 mt-10 mb-16 scale-[4] ">
-                            <SpinnerCircleStyled/>
-                        </div>
-                    }
-                        .into_any())
+                    Some(
+                        view! {
+                            <div class="max-w-100 mt-10 mb-16 scale-[4] ">
+                                <SpinnerCircleStyled />
+                            </div>
+                        }
+                            .into_any(),
+                    )
                 } else if claimed.get() {
                     let host = host.clone();
-                    let PopUpButtonTextRedirection { href, text } = pop_up_button_href(host, pathname.pathname.get());
-                    Some(view! {
-                        <div class="mt-10 mb-16">
-                            <HighlightedLinkButton
-                                alt_style=true
-                                disabled=false
-                                classes="max-w-96 mx-auto py-[12px] px-[20px] w-full".to_string()
-                                href=href
-                            >
-                                {text}
-                            </HighlightedLinkButton>
-                        </div>
-
-                    }
-                        .into_any())
+                    let PopUpButtonTextRedirection { href, text } = pop_up_button_href(
+                        host,
+                        pathname.pathname.get(),
+                    );
+                    Some(
+                        view! {
+                            <div class="mt-10 mb-16">
+                                <HighlightedLinkButton
+                                    alt_style=true
+                                    disabled=false
+                                    classes="max-w-96 mx-auto py-[12px] px-[20px] w-full"
+                                        .to_string()
+                                    href=href
+                                >
+                                    {text}
+                                </HighlightedLinkButton>
+                            </div>
+                        }
+                            .into_any(),
+                    )
                 } else {
                     None
                 }
@@ -253,6 +275,7 @@ fn AirdropPopUpButton(
 #[component]
 pub fn AirdropPopup(
     name: String,
+    amount: RwSignal<u64>,
     logo: String,
     buffer_signal: RwSignal<bool>,
     claimed: RwSignal<bool>,
@@ -263,7 +286,10 @@ pub fn AirdropPopup(
             style="background: radial-gradient(circle, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 75%, rgba(50,0,28,0.5) 100%);"
             class="h-full w-full relative items-center justify-center text-white font-kumbh flex flex-col overflow-hidden gap-4 rounded-lg"
         >
-            <button on:click=move |_| airdrop_popup.set(false) class="absolute z-40 right-5 top-5 scale-125 p-2 rounded-full bg-neutral-800">
+            <button
+                on:click=move |_| airdrop_popup.set(false)
+                class="absolute z-40 right-5 top-5 scale-125 p-2 rounded-full bg-neutral-800"
+            >
                 <Icon icon=icondata::TbX />
             </button>
             <img
@@ -271,12 +297,8 @@ pub fn AirdropPopup(
                 src="/img/airdrop/bg.webp"
                 class="absolute inset-0 z-[1] fade-in w-full h-full object-cover"
             />
-            <AirdropAnimation claimed=claimed.into() logo=logo.clone()/>
-            <AirdropPopUpButton
-                claimed
-                name
-                buffer_signal
-            />
+            <AirdropAnimation claimed=claimed.into() logo=logo.clone() />
+            <AirdropPopUpButton claimed name amount buffer_signal />
         </div>
     }
 }
