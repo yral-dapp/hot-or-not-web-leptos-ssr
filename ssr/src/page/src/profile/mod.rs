@@ -7,11 +7,14 @@ mod speculation;
 mod tokens;
 
 use candid::Principal;
+use codee::string::FromToStringCodec;
 use component::connect::ConnectLogin;
+use consts::USER_PRINCIPAL_STORE;
 use leptos::prelude::*;
 use leptos_icons::*;
 use leptos_meta::*;
 use leptos_router::{components::Redirect, hooks::use_params, params::Params};
+use leptos_use::use_cookie;
 use posts::ProfilePosts;
 use speculation::ProfileSpeculations;
 use state::{
@@ -116,6 +119,7 @@ fn ProfileViewInner(user: ProfileDetails, user_canister: Principal) -> impl Into
     let display_name = user.display_name_or_fallback();
     let earnings = user.lifetime_earnings;
     let (is_connected, _) = account_connected_reader();
+    let (viewer_principal, _)= use_cookie::<Principal, FromToStringCodec>(USER_PRINCIPAL_STORE);
 
     view! {
         <div class="min-h-screen bg-black text-white overflow-y-auto pt-10 pb-12">
@@ -141,7 +145,7 @@ fn ProfileViewInner(user: ProfileDetails, user_canister: Principal) -> impl Into
                                 // <p class="text-white">@ {username_or_principal}</p>
                                 <p class="text-primary-500">{earnings} Earnings</p>
                             </div>
-                            <Show when=move || !is_connected()>
+                            <Show when=move || !is_connected() && viewer_principal.get().map(|v| v.to_text() == username_or_principal).unwrap_or(false)>
                                 <div class="md:w-4/12 w-6/12 pt-5">
                                     <ConnectLogin cta_location="profile" />
                                 </div>
