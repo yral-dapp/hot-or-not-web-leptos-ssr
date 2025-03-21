@@ -18,10 +18,10 @@ use leptos_use::UseIntersectionObserverOptions;
 use serde::Deserialize;
 use serde::Serialize;
 use state::canisters::authenticated_canisters;
-use utils::token::icpump::get_airdrop_amount_from_kv;
 use std::collections::VecDeque;
 use utils::event_streaming::events::CentsAdded;
 use utils::send_wrap;
+use utils::token::icpump::get_airdrop_amount_from_kv;
 use yral_canisters_common::utils::token::TokenOwner;
 use yral_canisters_common::Canisters;
 
@@ -88,9 +88,9 @@ pub async fn process_token_list_item(
     token_list_item: Vec<TokenListItem>,
     key_principal: Principal,
 ) -> Vec<ProcessedTokenListResponse> {
+    use futures::stream::FuturesOrdered;
     use state::canisters::unauth_canisters;
     use utils::token::icpump::AirdropKVConfig;
-    use futures::stream::FuturesOrdered;
 
     let mut fut = FuturesOrdered::new();
 

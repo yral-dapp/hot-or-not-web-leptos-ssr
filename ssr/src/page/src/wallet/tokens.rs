@@ -1,3 +1,4 @@
+use super::ShowLoginSignal;
 use crate::icpump::{ActionButton, ActionButtonLink};
 use crate::wallet::airdrop::AirdropPopup;
 use candid::{Nat, Principal};
@@ -23,14 +24,13 @@ use utils::event_streaming::events::CentsAdded;
 use utils::host::{get_host, show_pnd_page};
 use utils::send_wrap;
 use utils::token::icpump::IcpumpTokenInfo;
+use utils::token::icpump::{get_airdrop_amount_from_kv, AirdropKVConfig};
 use yral_canisters_common::cursored_data::token_roots::{TokenListResponse, TokenRootList};
 use yral_canisters_common::utils::token::balance::TokenBalance;
 use yral_canisters_common::utils::token::{RootType, TokenMetadata, TokenOwner};
 use yral_canisters_common::Canisters;
 use yral_canisters_common::CENT_TOKEN_NAME;
 use yral_pump_n_dump_common::WithdrawalState;
-use utils::token::icpump::{get_airdrop_amount_from_kv, AirdropKVConfig};
-use super::ShowLoginSignal;
 
 #[component]
 pub fn TokenViewFallback() -> impl IntoView {

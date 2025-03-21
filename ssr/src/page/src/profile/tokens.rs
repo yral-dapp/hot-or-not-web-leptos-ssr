@@ -1,14 +1,14 @@
+use crate::wallet::tokens::WalletCard;
 use candid::Principal;
+use component::{bullet_loader::BulletLoader, token_confetti_symbol::TokenConfettiSymbol};
 use futures::{stream::FuturesOrdered, TryStreamExt};
 use leptos::prelude::*;
-use yral_canisters_client::individual_user_template::DeployedCdaoCanisters;
-use yral_canisters_client::individual_user_template::IndividualUserTemplate;
-use utils::token::icpump::AirdropKVConfig;
-use crate::wallet::tokens::WalletCard;
-use component::{bullet_loader::BulletLoader, token_confetti_symbol::TokenConfettiSymbol};
 use state::canisters::authenticated_canisters;
 use utils::send_wrap;
+use utils::token::icpump::AirdropKVConfig;
 use utils::token::icpump::IcpumpTokenInfo;
+use yral_canisters_client::individual_user_template::DeployedCdaoCanisters;
+use yral_canisters_client::individual_user_template::IndividualUserTemplate;
 use yral_canisters_common::{utils::token::TokenMetadata, Canisters, Error as CanistersError};
 
 #[component]

@@ -69,7 +69,6 @@ async fn load_selected_card(
     })
 }
 
-
 #[component]
 pub fn PumpNDump() -> impl IntoView {
     let card_query = use_query::<CardQuery>();

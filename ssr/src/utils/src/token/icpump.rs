@@ -1,10 +1,13 @@
 use serde::{Deserialize, Serialize};
-use std::{env, time::{SystemTime, UNIX_EPOCH}};
+use std::{
+    env,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 use futures::stream::BoxStream;
 use futures::StreamExt;
-use yral_config_cf_kv::KVConfig;
 use leptos::prelude::*;
+use yral_config_cf_kv::KVConfig;
 use yral_grpc_traits::{AirdropConfig, AirdropConfigProvider, TokenInfoProvider, TokenListItemFS};
 
 #[cfg(feature = "ssr")]
@@ -163,8 +166,8 @@ pub async fn get_paginated_token_list_with_limit(
 }
 
 pub async fn get_mocked_paginated_token_list(page: u32) -> Vec<TokenListItem> {
-    use consts::ICPUMP_LISTING_PAGE_SIZE;
     use candid::Principal;
+    use consts::ICPUMP_LISTING_PAGE_SIZE;
 
     let page_range = if page == 21 {
         0..5
