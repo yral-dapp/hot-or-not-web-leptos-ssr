@@ -3,11 +3,13 @@ use candid::Principal;
 use codee::string::FromToStringCodec;
 use codee::string::JsonSerdeCodec;
 use consts::ACCOUNT_CONNECTED_STORE;
+use consts::OFF_CHAIN_AGENT_URL;
 use consts::USER_CANISTER_ID_STORE;
 use consts::USER_PRINCIPAL_STORE;
 use ic_agent::Identity;
 use leptos::html::Input;
 use leptos::prelude::Signal;
+use leptos::task::spawn_local;
 use leptos::{ev, prelude::*};
 use leptos_use::storage::use_local_storage;
 use leptos_use::use_cookie;
@@ -353,6 +355,59 @@ impl LikeVideo {
     }
 }
 
+use ic_agent::{
+    identity::{Delegation, Secp256k1Identity, SignedDelegation},
+};
+use k256::elliptic_curve::JwkEcKey;
+use leptos::prelude::*;
+use leptos::{server, server_fn::codec::Json};
+use rand_chacha::rand_core::OsRng;
+use serde::{Deserialize, Serialize};
+use web_time::Duration;
+use yral_canisters_common::utils::time::current_epoch;
+
+use consts::auth::DELEGATION_MAX_AGE;
+use yral_types::delegated_identity::DelegatedIdentityWire;
+
+fn delegate_identity_with_max_age(
+    from: &impl Identity,
+    max_age: Duration,
+) -> DelegatedIdentityWire {
+    let to_secret = k256::SecretKey::random(&mut OsRng);
+    let to_identity = Secp256k1Identity::from_private_key(to_secret.clone());
+    let expiry = current_epoch() + max_age;
+    let expiry_ns = expiry.as_nanos() as u64;
+    let delegation = Delegation {
+        pubkey: to_identity.public_key().unwrap(),
+        expiration: expiry_ns,
+        targets: None,
+    };
+    let sig = from.sign_delegation(&delegation).unwrap();
+    let signed_delegation = SignedDelegation {
+        delegation,
+        signature: sig.signature.unwrap(),
+    };
+
+    let mut delegation_chain = from.delegation_chain();
+    delegation_chain.push(signed_delegation);
+
+    DelegatedIdentityWire {
+        from_key: sig.public_key.unwrap(),
+        to_secret: to_secret.to_jwk(),
+        delegation_chain,
+    }
+}
+
+pub fn delegate_identity(from: &impl Identity) -> DelegatedIdentityWire {
+    delegate_identity_with_max_age(from, DELEGATION_MAX_AGE)
+}
+
+pub fn delegate_short_lived_identity(from: &impl Identity) -> DelegatedIdentityWire {
+    let max_age = Duration::from_secs(24 * 60 * 60); // 1 day
+    delegate_identity_with_max_age(from, max_age)
+}
+
+
 #[derive(Default)]
 pub struct ShareVideo;
 
@@ -375,6 +430,33 @@ impl ShareVideo {
             let (is_connected, _) = account_connected_reader();
 
             let user = user_details_can_store_or_ret!(cans_store);
+
+            let canister_true = cans_store.get_untracked().unwrap();
+            let identity = canister_true.identity();
+            let delegated_identity_wire = delegate_short_lived_identity(identity);
+
+            let user_c = user.clone();
+            let video_id_c = video_id.clone();
+            spawn_local(async move {
+                let reqwest_client = reqwest::Client::new();
+                let res = reqwest_client
+                    .delete(format!("{}api/v1/posts", OFF_CHAIN_AGENT_URL.as_ref()))
+                    .json(&json!({
+                        "delegated_identity_wire": delegated_identity_wire,
+                        "canister_id": user_c.canister_id,
+                        "post_id": post_details.post_id,
+                        "video_id": video_id_c,
+                    }))
+                    .send()
+                    .await
+                    .expect("Failed to send like video event");
+                let body = res
+                    .text()
+                    .await
+                    .expect("Failed to get like video event response");
+                println!("{}", body);
+            });
+
 
             // share_video - analytics
             send_event_ssr_spawn(
