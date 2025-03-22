@@ -1,6 +1,7 @@
 use component::content_upload::AuthorizedUserToSeedContent;
 use page::icpump::ai::ICPumpAi;
 use page::icpump::ICPumpLanding;
+use page::post_view::PostDetailsCacheCtx;
 use page::pumpdump::{withdrawal, PndProfilePage};
 use state::app_type::AppType;
 // use crate::page::wallet::TestIndex;
@@ -120,12 +121,7 @@ pub fn App() -> impl IntoView {
     provide_context(AuthorizedUserToSeedContent::default());
     provide_context(AudioState::default());
     provide_context(CreateTokenCtx::default());
-
-    #[cfg(feature = "hydrate")]
-    {
-        use utils::ml_feed::ml_feed_grpcweb::MLFeed;
-        provide_context(MLFeed::default());
-    }
+    provide_context(PostDetailsCacheCtx::default());
 
     // History Tracking
     let history_ctx = HistoryCtx::default();

@@ -9,7 +9,8 @@ use component::spinner::FullScreenSpinner;
 use consts::NSFW_TOGGLE_STORE;
 use priority_queue::DoublePriorityQueue;
 use state::canisters::{authenticated_canisters, unauth_canisters};
-use std::cmp::Reverse;
+use yral_types::post::PostItem;
+use std::{cmp::Reverse, collections::HashMap};
 
 use candid::Principal;
 use codee::string::FromToStringCodec;
@@ -20,7 +21,7 @@ use leptos_router::{
     params::Params,
 };
 use leptos_use::{storage::use_local_storage, use_debounce_fn};
-use utils::{posts::FetchCursor, route::failure_redirect, send_wrap, try_or_redirect};
+use utils::{posts::FetchCursor, route::failure_redirect, send_wrap, try_or_redirect, types::PostId};
 
 use video_iter::{FeedResultType, VideoFetchStream};
 use yral_canisters_common::{utils::posts::PostDetails, Canisters};
@@ -49,6 +50,11 @@ pub struct PostViewCtx {
     queue_end: RwSignal<bool>,
     priority_q: RwSignal<DoublePriorityQueue<PostDetails, (usize, Reverse<usize>)>>, // we are using DoublePriorityQueue for GC in the future through pop_min
     batch_cnt: RwSignal<usize>,
+}
+
+#[derive(Clone, Default)]
+pub struct PostDetailsCacheCtx {
+    pub post_details: RwSignal<HashMap<PostId, PostItem>>,
 }
 
 #[component]
@@ -94,11 +100,11 @@ pub fn CommonPostViewWithUpdates<S: Storage<ArcAction<(), ()>>>(
     });
     let next_videos = use_debounce_fn(
         move || {
-            if !fetch_video_action.pending().get_untracked() && !queue_end.get_untracked() {
+            if !fetch_video_action.pending().get_untracked()  { // && !queue_end.get_untracked()
                 fetch_video_action.dispatch(());
             }
         },
-        500.0,
+        100.0,
     );
 
     let current_post_base = Memo::new(move |_| {
@@ -198,6 +204,7 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
         queue_end,
         priority_q,
         batch_cnt,
+        // current_idx,
         ..
     } = expect_context();
 
@@ -205,11 +212,29 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
 
     let auth_cans = authenticated_canisters();
 
-    // TODO: use Action::new_local
-    let fetch_video_action: Action<_, _, LocalStorage> = Action::new_unsync(move |_| {
+
+
+    // TODO: use Action::new_local new_unsync
+    let fetch_video_action: Action<_, _, LocalStorage> = Action::new_local(move |_| {
         let auth_cans = auth_cans;
         async move {
-            while priority_q.with_untracked(|q| q.len()) < 15 {
+            {
+                let mut prio_q = priority_q.write();
+                let mut video_q = video_queue.write();
+                let mut cnt = 0;
+                while let Some((next, _)) = prio_q.pop_max() {
+                    video_q.push(next);
+                    // video_queue.update(|vq| vq.push(next));
+                    cnt += 1;
+                    if cnt >= 30 {
+                        break;
+                    }
+                }
+            }
+
+            // leptos::logging::log!("dasddf p1 vq {} pq {}", video_queue.with_untracked(|vq| vq.len()), priority_q.with_untracked(|pq| pq.len()));
+
+            if priority_q.with_untracked(|q| q.len()) < fetch_cursor.with_untracked(|c| c.limit as usize) {
                 let Some(cursor) = fetch_cursor.try_get_untracked() else {
                     return;
                 };
@@ -234,7 +259,7 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
                 while let Some(chunk) = chunks.next().await {
                     for uid in chunk {
                         let post_detail = try_or_redirect!(uid);
-                        if video_queue.with_untracked(|vq| vq.len() < 10) {
+                        if cnt < 50 {
                             video_queue.update(|vq| vq.push(post_detail));
                         } else {
                             priority_q.update(|pq| {
@@ -248,8 +273,8 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
                 leptos::logging::log!("feed type: {:?}", res.res_type);
                 if res.res_type != FeedResultType::MLFeed {
                     fetch_cursor.try_update(|c| {
-                        c.set_limit(15);
-                        c.advance_and_set_limit(15)
+                        c.set_limit(100);
+                        c.advance_and_set_limit(100)
                     });
                 }
 
@@ -260,20 +285,31 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
                 batch_cnt.update(|x| *x += 1);
             }
 
-            let mut prio_q = priority_q.write();
-            let mut video_q = video_queue.write();
-            let mut cnt = 0;
-            while let Some((next, _)) = prio_q.pop_max() {
-                video_q.push(next);
-                cnt += 1;
-                if cnt >= 10 {
-                    break;
+
+            // leptos::logging::log!("dasddf p2 vq {} pq {}", video_queue.with_untracked(|vq| vq.len()), priority_q.with_untracked(|pq| pq.len()));
+
+
+            {
+                let mut prio_q = priority_q.write();
+                let mut video_q = video_queue.write();
+                let mut cnt = 0;
+                while let Some((next, _)) = prio_q.pop_max() {
+                    video_q.push(next);
+                    // video_queue.update(|vq| vq.push(next));
+                    cnt += 1;
+                    if cnt >= 30 {
+                        break;
+                    }
                 }
             }
+
+
+            // leptos::logging::log!("dasddf p3 vq {} pq {}", video_queue.with_untracked(|vq| vq.len()), priority_q.with_untracked(|pq| pq.len()));
+
         }
     });
 
-    view! { <CommonPostViewWithUpdates initial_post fetch_video_action threshold_trigger_fetch=15 /> }
+    view! { <CommonPostViewWithUpdates initial_post fetch_video_action threshold_trigger_fetch=100 /> }
 }
 
 #[component]
@@ -296,6 +332,8 @@ pub fn PostView() -> impl IntoView {
         ..
     } = expect_context();
     let canisters = unauth_canisters();
+    let post_details_cache: PostDetailsCacheCtx = expect_context();
+
 
     let fetch_first_video_uid = Resource::new(initial_canister_and_post, move |params| {
         let canisters = canisters.clone();
@@ -311,8 +349,16 @@ pub fn PostView() -> impl IntoView {
             if let Some(post) = cached_post {
                 return Ok(Some(post));
             }
+            let post_nsfw_prob = post_details_cache.post_details.with_untracked(|p| {
+                let item =p.get(&(params.canister_id, params.post_id));
+                if let Some(item) = item {
+                    item.nsfw_probability
+                } else {
+                    0.0
+                }
+            });
 
-            match send_wrap(canisters.get_post_details(params.canister_id, params.post_id)).await {
+            match send_wrap(canisters.get_post_details_with_nsfw_info(params.canister_id, params.post_id, post_nsfw_prob)).await {
                 Ok(post) => Ok(post),
                 Err(e) => {
                     failure_redirect(e);

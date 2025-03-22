@@ -183,7 +183,8 @@ impl VideoWatched {
                 let video = target.unchecked_into::<web_sys::HtmlVideoElement>();
                 let duration = video.duration();
                 let current_time = video.current_time();
-
+                let nsfw_probability = post.map(|p| p.nsfw_probability);
+                let is_nsfw = nsfw_probability.map(|prob| prob > 0.5 );
                 if current_time < 0.95 * duration {
                     set_full_video_watched.set(false);
                 }
@@ -202,7 +203,7 @@ impl VideoWatched {
                             "video_category": "NA",
                             "creator_category": "NApublisher_canister_id(",
                             "hashtag_count": post.map(|p| p.hastags.len()),
-                            "is_NSFW": post.map(|p| p.is_nsfw),
+                            "is_NSFW": is_nsfw,
                             "is_hotorNot": post.map(|p| p.is_hot_or_not()),
                             "feed_type": "NA",
                             "view_count": post.map(|p| p.views),
@@ -213,6 +214,7 @@ impl VideoWatched {
                             "video_duration": duration,
                             "post_id": post.map(|p| p.post_id),
                             "publisher_canister_id": post.map(|p| p.canister_id),
+                            "nsfw_probability": nsfw_probability,
                         })
                         .to_string(),
                     );
@@ -237,7 +239,7 @@ impl VideoWatched {
                             "video_category": "NA",
                             "creator_category": "NA",
                             "hashtag_count": post.map(|p| p.hastags.len()),
-                            "is_NSFW": post.map(|p| p.is_nsfw),
+                            "is_NSFW": is_nsfw,
                             "is_hotorNot": post.map(|p| p.is_hot_or_not()),
                             "feed_type": "NA",
                             "view_count": post.map(|p| p.views),
@@ -245,6 +247,7 @@ impl VideoWatched {
                             "share_count": 0,
                             "post_id": post.map(|p| p.post_id),
                             "publisher_canister_id": post.map(|p| p.canister_id),
+                            "nsfw_probability": nsfw_probability,
                         })
                         .to_string(),
                     );
@@ -258,12 +261,13 @@ impl VideoWatched {
                 let user = user_details_can_store_or_ret!(cans_store);
                 let post_o = post_for_warehouse();
                 let post = post_o.as_ref();
-
+                let nsfw_probability = post.map(|p| p.nsfw_probability);
+                let is_nsfw = nsfw_probability.map(|prob| prob > 0.5);
                 let target = evt.target().unwrap();
                 let video = target.unchecked_into::<web_sys::HtmlVideoElement>();
                 let duration = video.duration();
                 let current_time = video.current_time();
-                if current_time < 1.0 {
+                if current_time < 0.7 {
                     return;
                 }
 
@@ -281,7 +285,7 @@ impl VideoWatched {
                         "video_category": "NA",
                         "creator_category": "NA",
                         "hashtag_count": post.map(|p| p.hastags.len()),
-                        "is_NSFW": post.map(|p| p.is_nsfw),
+                        "is_NSFW": is_nsfw,
                         "is_hotorNot": post.map(|p| p.is_hot_or_not()),
                         "feed_type": "NA",
                         "view_count": post.map(|p| p.views),
@@ -292,6 +296,7 @@ impl VideoWatched {
                         "video_duration": duration,
                         "post_id": post.map(|p| p.post_id),
                         "publisher_canister_id": post.map(|p| p.canister_id),
+                        "nsfw_probability": nsfw_probability,
                     })
                     .to_string(),
                 );
