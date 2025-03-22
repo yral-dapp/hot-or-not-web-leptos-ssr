@@ -185,7 +185,7 @@ impl<'a> VideoFetchStream<'a, true> {
         video_queue: Vec<PostDetails>,
     ) -> Result<FetchVideosRes<'a>, ServerFnError> {
         if video_queue.len() < 30 {
-            self.cursor.set_limit(100);
+            self.cursor.set_limit(30);
             self.fetch_post_uids_mlfeed_cache_chunked(chunks, _allow_nsfw, video_queue)
                 .await
         } else {
@@ -196,7 +196,7 @@ impl<'a> VideoFetchStream<'a, true> {
             match res {
                 Ok(res) => Ok(res),
                 Err(_) => {
-                    self.cursor.set_limit(100);
+                    self.cursor.set_limit(50);
                     self.fetch_post_uids_mlfeed_cache_chunked(chunks, _allow_nsfw, video_queue)
                         .await
                 }

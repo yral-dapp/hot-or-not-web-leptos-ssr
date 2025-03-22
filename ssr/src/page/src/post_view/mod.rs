@@ -234,7 +234,7 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
                         vq.push(next);
                     });
                     cnt += 1;
-                    if cnt >= 50 {
+                    if cnt >= 25 {
                         break;
                     }
                 }
@@ -269,7 +269,7 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
                 while let Some(chunk) = chunks.next().await {
                     for uid in chunk {
                         let post_detail = try_or_redirect!(uid);
-                        if unique_videos.with_untracked(|vq| vq.len()).saturating_sub(current_idx.get_untracked()) <= 50 {
+                        if unique_videos.with_untracked(|vq| vq.len()).saturating_sub(current_idx.get_untracked()) <= 25 {
                             unique_videos.update(|uv| {
                                 uv.insert(post_detail.uid.clone());
                             });
@@ -288,8 +288,8 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
                 leptos::logging::log!("feed type: {:?} cnt {}", res.res_type, cnt);
                 if res.res_type != FeedResultType::MLFeed {
                     fetch_cursor.try_update(|c| {
-                        c.set_limit(100);
-                        c.advance_and_set_limit(100)
+                        c.set_limit(50);
+                        c.advance_and_set_limit(50)
                     });
                 }
 
@@ -300,27 +300,27 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
                 batch_cnt.update(|x| *x += 1);
             }
 
-            {
-                let mut prio_q = priority_q.write();
-                let mut cnt = 0;
-                while let Some((next, _)) = prio_q.pop_max() {
-                    unique_videos.update(|uv| {
-                        uv.insert(next.uid.clone());
-                    });
-                    video_queue.update(|vq| {
-                        vq.push(next);
-                    });
-                    cnt += 1;
-                    if cnt >= 30 {
-                        break;
-                    }
-                }
-                leptos::logging::log!("3. added {} posts ; video_queue len {}", cnt, video_queue.with_untracked(|vq| vq.len()));
-            }
+            // {
+            //     let mut prio_q = priority_q.write();
+            //     let mut cnt = 0;
+            //     while let Some((next, _)) = prio_q.pop_max() {
+            //         unique_videos.update(|uv| {
+            //             uv.insert(next.uid.clone());
+            //         });
+            //         video_queue.update(|vq| {
+            //             vq.push(next);
+            //         });
+            //         cnt += 1;
+            //         if cnt >= 10 {
+            //             break;
+            //         }
+            //     }
+            //     leptos::logging::log!("3. added {} posts ; video_queue len {}", cnt, video_queue.with_untracked(|vq| vq.len()));
+            // }
         }
     });
 
-    view! { <CommonPostViewWithUpdates initial_post fetch_video_action threshold_trigger_fetch=100 /> }
+    view! { <CommonPostViewWithUpdates initial_post fetch_video_action threshold_trigger_fetch=50 /> }
 }
 
 #[component]

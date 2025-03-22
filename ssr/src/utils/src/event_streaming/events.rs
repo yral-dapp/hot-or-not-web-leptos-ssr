@@ -267,7 +267,7 @@ impl VideoWatched {
                 let video = target.unchecked_into::<web_sys::HtmlVideoElement>();
                 let duration = video.duration();
                 let current_time = video.current_time();
-                if current_time < 0.7 {
+                if current_time < 0.3 {
                     return;
                 }
 
