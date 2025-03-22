@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use crate::post_view::video_loader::{BgView, VideoViewForQueue};
 use leptos::html;
 use leptos::prelude::*;
@@ -27,6 +29,7 @@ pub fn MuteIconOverlay(show_mute_icon: RwSignal<bool>) -> impl IntoView {
 #[component]
 pub fn ScrollingPostView<F: Fn() -> V + Clone + 'static + Send + Sync, V>(
     video_queue: RwSignal<Vec<PostDetails>>,
+    #[prop(optional)] unique_videos: RwSignal<HashSet<String>>,
     current_idx: RwSignal<usize>,
     #[prop(optional)] fetch_next_videos: Option<F>,
     recovering_state: RwSignal<bool>,
@@ -54,7 +57,7 @@ pub fn ScrollingPostView<F: Fn() -> V + Clone + 'static + Send + Sync, V>(
 
                 <For
                     each=move || video_queue.get().into_iter().enumerate()
-                    key=move |(_, details)| (details.canister_id, details.post_id)
+                    key=move |(i, details)| (*i, details.canister_id, details.post_id)
                     children=move |(queue_idx, _details)| {
                         let container_ref = NodeRef::<html::Div>::new();
                         let next_videos = fetch_next_videos.clone();
@@ -75,14 +78,14 @@ pub fn ScrollingPostView<F: Fn() -> V + Clone + 'static + Send + Sync, V>(
                                 // leptos::logging::log!("queue_idx: {} {} {}", queue_idx, video_queue.with_untracked(|q| q.len()), video_queue.with_untracked(|q| q.len()).saturating_sub(queue_idx)
                                 // <= threshold_trigger_fetch);
                                 // leptos::logging::log!("updated1 queue_idx: {} current_idx.get_untracked() {}", queue_idx, current_idx.get_untracked());
-                                // current_idx.set(queue_idx);
-                                if video_queue.with_untracked(|q| q.len()).saturating_sub(queue_idx)
+                                current_idx.set(queue_idx);
+                                if unique_videos.with_untracked(|q| q.len()).saturating_sub(queue_idx)
                                     <= threshold_trigger_fetch
                                 {
                                     // leptos::logging::log!("fetching next videos");
                                     next_videos.as_ref().map(|nv| { nv() });
                                 }
-                                current_idx.set(queue_idx);
+                                // current_idx.set(queue_idx);
                                 // leptos::logging::log!("updated2 queue_idx: {} current_idx.get_untracked() {}", queue_idx, current_idx.get_untracked());
                             },
                             UseIntersectionObserverOptions::default()
@@ -98,20 +101,8 @@ pub fn ScrollingPostView<F: Fn() -> V + Clone + 'static + Send + Sync, V>(
                                 recovering_state.set(false);
                             }
                         });
-                        // Effect::new(move |_| {
-                        //     // Access video_queue to track changes
-                        //     let _ = video_queue.get();
-                        //     leptos::logging::log!("updateding scroll");
-                        //     // Schedule a microtask to update the scroll container after DOM updates
-                        //     request_animation_frame(move || {
-                        //         if let Some(root) = scroll_root.get() {
-                        //             // Force a layout recalculation
-                        //             let _ = root.scroll_height();
-                        //         }
-                        //     });
-                        // });
                         let show_video = Memo::new(move |_| {
-                            queue_idx.abs_diff(current_idx()) <= 40
+                            queue_idx.abs_diff(current_idx()) <= 20
                         });
                         view! {
                             <div node_ref=container_ref class="snap-always snap-end w-full h-full">

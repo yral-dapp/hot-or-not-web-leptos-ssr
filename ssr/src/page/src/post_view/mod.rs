@@ -10,7 +10,7 @@ use consts::NSFW_TOGGLE_STORE;
 use priority_queue::DoublePriorityQueue;
 use state::canisters::{authenticated_canisters, unauth_canisters};
 use yral_types::post::PostItem;
-use std::{cmp::Reverse, collections::HashMap};
+use std::{cmp::Reverse, collections::{HashMap, HashSet}};
 
 use candid::Principal;
 use codee::string::FromToStringCodec;
@@ -46,6 +46,7 @@ pub struct PostViewCtx {
     // as uids only occupy 32 bytes each
     // but ideally this should be cleaned up
     video_queue: RwSignal<Vec<PostDetails>>,
+    unique_videos: RwSignal<HashSet<String>>,
     current_idx: RwSignal<usize>,
     queue_end: RwSignal<bool>,
     priority_q: RwSignal<DoublePriorityQueue<PostDetails, (usize, Reverse<usize>)>>, // we are using DoublePriorityQueue for GC in the future through pop_min
@@ -66,6 +67,7 @@ pub fn CommonPostViewWithUpdates<S: Storage<ArcAction<(), ()>>>(
     let PostViewCtx {
         fetch_cursor,
         video_queue,
+        unique_videos,
         current_idx,
         queue_end,
         ..
@@ -128,6 +130,7 @@ pub fn CommonPostViewWithUpdates<S: Storage<ArcAction<(), ()>>>(
     view! {
         <ScrollingPostView
             video_queue
+            unique_videos
             current_idx
             recovering_state
             fetch_next_videos=next_videos
@@ -201,10 +204,11 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
     let PostViewCtx {
         fetch_cursor,
         video_queue,
+        unique_videos,
         queue_end,
         priority_q,
         batch_cnt,
-        // current_idx,
+        current_idx,
         ..
     } = expect_context();
 
@@ -216,25 +220,30 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
 
     // TODO: use Action::new_local new_unsync
     let fetch_video_action: Action<_, _, LocalStorage> = Action::new_local(move |_| {
+        leptos::logging::log!("fetch_video_action");
         let auth_cans = auth_cans;
         async move {
             {
                 let mut prio_q = priority_q.write();
-                let mut video_q = video_queue.write();
                 let mut cnt = 0;
                 while let Some((next, _)) = prio_q.pop_max() {
-                    video_q.push(next);
-                    // video_queue.update(|vq| vq.push(next));
+                    unique_videos.update(|uv| {
+                        uv.insert(next.uid.clone());
+                    });
+                    video_queue.update(|vq| {
+                        vq.push(next);
+                    });
                     cnt += 1;
-                    if cnt >= 30 {
+                    if cnt >= 50 {
                         break;
                     }
                 }
+                leptos::logging::log!("1. added {} posts ; video_queue len {}", cnt, video_queue.with_untracked(|vq| vq.len()));
             }
 
             // leptos::logging::log!("dasddf p1 vq {} pq {}", video_queue.with_untracked(|vq| vq.len()), priority_q.with_untracked(|pq| pq.len()));
 
-            if priority_q.with_untracked(|q| q.len()) < fetch_cursor.with_untracked(|c| c.limit as usize) {
+            if priority_q.with_untracked(|q| q.len()) < 100 {
                 let Some(cursor) = fetch_cursor.try_get_untracked() else {
                     return;
                 };
@@ -256,11 +265,16 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
                 let res = try_or_redirect!(chunks);
                 let mut chunks = res.posts_stream;
                 let mut cnt = 0usize;
+                let mut added_cnt = 0usize;
                 while let Some(chunk) = chunks.next().await {
                     for uid in chunk {
                         let post_detail = try_or_redirect!(uid);
-                        if cnt < 50 {
+                        if unique_videos.with_untracked(|vq| vq.len()).saturating_sub(current_idx.get_untracked()) <= 50 {
+                            unique_videos.update(|uv| {
+                                uv.insert(post_detail.uid.clone());
+                            });
                             video_queue.update(|vq| vq.push(post_detail));
+                            added_cnt += 1;
                         } else {
                             priority_q.update(|pq| {
                                 pq.push(post_detail, (batch_cnt_val, Reverse(cnt)));
@@ -270,7 +284,8 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
                     }
                 }
 
-                leptos::logging::log!("feed type: {:?}", res.res_type);
+                leptos::logging::log!("2. added {} posts ; video_queue len {}", added_cnt, video_queue.with_untracked(|vq| vq.len()));
+                leptos::logging::log!("feed type: {:?} cnt {}", res.res_type, cnt);
                 if res.res_type != FeedResultType::MLFeed {
                     fetch_cursor.try_update(|c| {
                         c.set_limit(100);
@@ -285,27 +300,23 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
                 batch_cnt.update(|x| *x += 1);
             }
 
-
-            // leptos::logging::log!("dasddf p2 vq {} pq {}", video_queue.with_untracked(|vq| vq.len()), priority_q.with_untracked(|pq| pq.len()));
-
-
             {
                 let mut prio_q = priority_q.write();
-                let mut video_q = video_queue.write();
                 let mut cnt = 0;
                 while let Some((next, _)) = prio_q.pop_max() {
-                    video_q.push(next);
-                    // video_queue.update(|vq| vq.push(next));
+                    unique_videos.update(|uv| {
+                        uv.insert(next.uid.clone());
+                    });
+                    video_queue.update(|vq| {
+                        vq.push(next);
+                    });
                     cnt += 1;
                     if cnt >= 30 {
                         break;
                     }
                 }
+                leptos::logging::log!("3. added {} posts ; video_queue len {}", cnt, video_queue.with_untracked(|vq| vq.len()));
             }
-
-
-            // leptos::logging::log!("dasddf p3 vq {} pq {}", video_queue.with_untracked(|vq| vq.len()), priority_q.with_untracked(|pq| pq.len()));
-
         }
     });
 
