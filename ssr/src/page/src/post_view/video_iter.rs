@@ -6,17 +6,18 @@ use futures::{stream::FuturesOrdered, Stream, StreamExt};
 use leptos::prelude::*;
 
 use consts::USER_CANISTER_ID_STORE;
+use leptos_use::storage::use_local_storage;
 use utils::{
     event_streaming::events::auth_canisters_store,
     host::show_nsfw_content,
-    ml_feed::{get_ml_feed_clean, get_ml_feed_coldstart_clean, get_ml_feed_coldstart_nsfw, get_ml_feed_nsfw},
+    ml_feed::{
+        get_ml_feed_clean, get_ml_feed_coldstart_clean, get_ml_feed_coldstart_nsfw,
+        get_ml_feed_nsfw,
+    },
     posts::FetchCursor,
 };
 use yral_canisters_client::post_cache::{self, NsfwFilter};
 use yral_canisters_common::{utils::posts::PostDetails, Canisters, Error as CanistersError};
-use leptos_use::storage::use_local_storage;
-use codee::string::FromToStringCodec;
-use consts::NSFW_TOGGLE_STORE;
 
 type PostsStream<'a> = Pin<Box<dyn Stream<Item = Vec<Result<PostDetails, CanistersError>>> + 'a>>;
 
@@ -122,17 +123,33 @@ impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
 
         let show_nsfw = allow_nsfw || show_nsfw_content();
         let top_posts = if show_nsfw {
-            get_ml_feed_nsfw(user_canister_id, self.cursor.limit as u32, video_queue.clone())
-                .await.map_err(|e| ServerFnError::new(format!("Error fetching ml feed: {e:?}")))?
+            get_ml_feed_nsfw(
+                user_canister_id,
+                self.cursor.limit as u32,
+                video_queue.clone(),
+            )
+            .await
+            .map_err(|e| ServerFnError::new(format!("Error fetching ml feed: {e:?}")))?
         } else {
-            get_ml_feed_clean(user_canister_id, self.cursor.limit as u32, video_queue.clone())
-                .await.map_err(|e| ServerFnError::new(format!("Error fetching ml feed: {e:?}")))?
+            get_ml_feed_clean(
+                user_canister_id,
+                self.cursor.limit as u32,
+                video_queue.clone(),
+            )
+            .await
+            .map_err(|e| ServerFnError::new(format!("Error fetching ml feed: {e:?}")))?
         };
 
         let end = false;
         let chunk_stream = top_posts
             .into_iter()
-            .map(move |item| self.canisters.get_post_details_with_nsfw_info(item.canister_id, item.post_id, item.nsfw_probability))
+            .map(move |item| {
+                self.canisters.get_post_details_with_nsfw_info(
+                    item.canister_id,
+                    item.post_id,
+                    item.nsfw_probability,
+                )
+            })
             .collect::<FuturesOrdered<_>>()
             .filter_map(|res| async { res.transpose() })
             .chunks(chunks);
@@ -142,9 +159,7 @@ impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
             end,
             res_type: FeedResultType::MLFeed,
         })
-        
     }
-
 }
 
 impl<'a> VideoFetchStream<'a, true> {
@@ -160,15 +175,33 @@ impl<'a> VideoFetchStream<'a, true> {
 
         let show_nsfw = allow_nsfw || show_nsfw_content();
         let top_posts = if show_nsfw {
-            get_ml_feed_coldstart_nsfw(user_canister_id, self.cursor.limit as u32, video_queue.clone()).await.map_err(|e| ServerFnError::new(format!("Error fetching ml feed: {e:?}")))?
+            get_ml_feed_coldstart_nsfw(
+                user_canister_id,
+                self.cursor.limit as u32,
+                video_queue.clone(),
+            )
+            .await
+            .map_err(|e| ServerFnError::new(format!("Error fetching ml feed: {e:?}")))?
         } else {
-            get_ml_feed_coldstart_clean(user_canister_id, self.cursor.limit as u32, video_queue.clone()).await.map_err(|e| ServerFnError::new(format!("Error fetching ml feed: {e:?}")))?
+            get_ml_feed_coldstart_clean(
+                user_canister_id,
+                self.cursor.limit as u32,
+                video_queue.clone(),
+            )
+            .await
+            .map_err(|e| ServerFnError::new(format!("Error fetching ml feed: {e:?}")))?
         };
 
         let end = false;
         let chunk_stream = top_posts
             .into_iter()
-            .map(move |item| self.canisters.get_post_details_with_nsfw_info(item.canister_id, item.post_id, item.nsfw_probability))
+            .map(move |item| {
+                self.canisters.get_post_details_with_nsfw_info(
+                    item.canister_id,
+                    item.post_id,
+                    item.nsfw_probability,
+                )
+            })
             .collect::<FuturesOrdered<_>>()
             .filter_map(|res| async { res.transpose() })
             .chunks(chunks);

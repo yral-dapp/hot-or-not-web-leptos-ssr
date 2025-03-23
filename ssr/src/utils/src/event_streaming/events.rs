@@ -184,7 +184,7 @@ impl VideoWatched {
                 let duration = video.duration();
                 let current_time = video.current_time();
                 let nsfw_probability = post.map(|p| p.nsfw_probability);
-                let is_nsfw = nsfw_probability.map(|prob| prob > 0.5 );
+                let is_nsfw = nsfw_probability.map(|prob| prob > 0.5);
                 if current_time < 0.95 * duration {
                     set_full_video_watched.set(false);
                 }

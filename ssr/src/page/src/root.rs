@@ -1,16 +1,16 @@
-use crate::{post_view::{PostDetailsCacheCtx}, pumpdump::PumpNDump};
+use crate::post_view::PostDetailsCacheCtx;
+use crate::pumpdump::PumpNDump;
 use candid::Principal;
 use component::spinner::FullScreenSpinner;
 use leptos::prelude::*;
 use leptos_meta::*;
-use leptos_router::{components::Redirect, hooks::use_query};
 use leptos_router::params::Params;
+use leptos_router::{components::Redirect, hooks::use_query};
 use utils::{
-    host::{show_cdao_page, show_pnd_page}, ml_feed::{get_ml_feed_coldstart_clean, get_ml_feed_coldstart_nsfw},
+    host::{show_cdao_page, show_pnd_page},
+    ml_feed::{get_ml_feed_coldstart_clean, get_ml_feed_coldstart_nsfw},
 };
-use yral_canisters_common::utils::time::current_epoch;
 use yral_types::post::PostItem;
-use leptos_use::storage::use_local_storage;
 
 #[server]
 async fn get_top_post_id() -> Result<Option<PostItem>, ServerFnError> {
@@ -51,7 +51,9 @@ async fn get_top_post_id() -> Result<Option<PostItem>, ServerFnError> {
 
 #[server]
 async fn get_top_post_id_global_clean_feed() -> Result<Option<PostItem>, ServerFnError> {
-    let posts = get_ml_feed_coldstart_clean(Principal::anonymous(), 1, vec![]).await.map_err(|e| ServerFnError::new(e.to_string()))?;
+    let posts = get_ml_feed_coldstart_clean(Principal::anonymous(), 1, vec![])
+        .await
+        .map_err(|e| ServerFnError::new(e.to_string()))?;
     if !posts.is_empty() {
         return Ok(Some(posts[0].clone()));
     }
@@ -61,7 +63,9 @@ async fn get_top_post_id_global_clean_feed() -> Result<Option<PostItem>, ServerF
 
 #[server]
 async fn get_top_post_id_global_nsfw_feed() -> Result<Option<PostItem>, ServerFnError> {
-    let posts = get_ml_feed_coldstart_nsfw(Principal::anonymous(), 1, vec![]).await.map_err(|e| ServerFnError::new(e.to_string()))?;
+    let posts = get_ml_feed_coldstart_nsfw(Principal::anonymous(), 1, vec![])
+        .await
+        .map_err(|e| ServerFnError::new(e.to_string()))?;
     if !posts.is_empty() {
         return Ok(Some(posts[0].clone()));
     }
@@ -83,10 +87,10 @@ struct NsfwParam {
 
 #[component]
 pub fn YralRootPage() -> impl IntoView {
-
     // check nsfw param
     let params = use_query::<NsfwParam>();
-    let nsfw_enabled = params.get_untracked().map(|p| p.nsfw).unwrap_or(false);
+    let _nsfw_enabled = params.get_untracked().map(|p| p.nsfw).unwrap_or(false);
+    // TODO: change to mixed API
 
     let target_post;
     #[cfg(any(feature = "local-bin", feature = "local-lib"))]
@@ -97,7 +101,7 @@ pub fn YralRootPage() -> impl IntoView {
     {
         use utils::host::show_nsfw_content;
 
-        if nsfw_enabled || show_nsfw_content() {
+        if _nsfw_enabled || show_nsfw_content() {
             target_post = Resource::new(|| (), |_| get_top_post_id_global_nsfw_feed());
         } else {
             target_post = Resource::new(|| (), |_| get_top_post_id_global_clean_feed());

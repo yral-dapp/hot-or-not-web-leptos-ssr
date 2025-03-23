@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 use codee::string::FromToStringCodec;
 use component::{
     canisters_prov::with_cans, hn_icons::HomeFeedShareIcon, modal::Modal, option::SelectOption,
@@ -9,10 +7,8 @@ use consts::NSFW_TOGGLE_STORE;
 use gloo::timers::callback::Timeout;
 use leptos::{prelude::*, task::spawn_local};
 use leptos_icons::*;
-use leptos_router::hooks::use_navigate;
 use leptos_use::storage::use_local_storage;
 use leptos_use::use_window;
-use priority_queue::DoublePriorityQueue;
 use utils::event_streaming::events::auth_canisters_store;
 use utils::{
     event_streaming::events::{LikeVideo, ShareVideo},
@@ -25,7 +21,6 @@ use utils::{
 use yral_canisters_common::{utils::posts::PostDetails, Canisters};
 
 use super::bet::HNGameOverlay;
-use super::PostViewCtx;
 
 #[component]
 fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
@@ -198,17 +193,16 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
 
     // TODO: temp for testing mixed feed
     let (nsfw_enabled, set_nsfw_enabled, _) =
-    use_local_storage::<bool, FromToStringCodec>(NSFW_TOGGLE_STORE);
-    let click_nsfw = Action::new_local(move |()| {
-        async move {
-            set_nsfw_enabled(!nsfw_enabled());
+        use_local_storage::<bool, FromToStringCodec>(NSFW_TOGGLE_STORE);
+    let click_nsfw = Action::new_local(move |()| async move {
+        set_nsfw_enabled(!nsfw_enabled());
 
-            let window = window();
-            let nsfw_enabled = nsfw_enabled();
-            let _ = window.location().set_href(&format!("/?nsfw={}", nsfw_enabled));
-        }
+        let window = window();
+        let nsfw_enabled = nsfw_enabled();
+        let _ = window
+            .location()
+            .set_href(&format!("/?nsfw={}", nsfw_enabled));
     });
-
 
     view! {
         <div class="flex flex-col pointer-events-none flex-nowrap h-full justify-between pt-5 pb-20 px-2 md:px-6 w-full text-white absolute bottom-0 left-0 bg-transparent z-[4]">
@@ -253,7 +247,7 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
                     <button on:click=move |_| {
                         click_nsfw.dispatch(());
                     }>
-                        <Show when=move || nsfw_enabled.get_untracked() 
+                        <Show when=move || nsfw_enabled.get_untracked()
                               fallback=move || {
                                 view! {
                                     <Icon attr:class="drop-shadow-lg text-green-500" icon=icondata::FaFaceDizzyRegular />

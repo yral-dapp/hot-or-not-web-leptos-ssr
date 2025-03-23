@@ -1,6 +1,4 @@
-use codee::string::FromToStringCodec;
-use consts::NSFW_TOGGLE_STORE;
-use leptos_use::{storage::{use_local_storage, use_local_storage_with_options, UseStorageOptions}, use_window};
+use leptos_use::use_window;
 use std::sync::LazyLock;
 
 pub fn get_host() -> String {
@@ -68,10 +66,9 @@ pub fn show_pnd_page() -> bool {
 }
 
 pub fn show_pnd_condition(host: &str) -> bool {
-    host == "pumpdump.wtf"
-        || host == "www.pumpdump.wtf"
-        // || host.contains("localhost")
-        // || host.contains("yral-dapp-hot-or-not-web-leptos-ssr.fly.dev") // Use this when testing icpump changes
+    host == "pumpdump.wtf" || host == "www.pumpdump.wtf"
+    // || host.contains("localhost")
+    // || host.contains("yral-dapp-hot-or-not-web-leptos-ssr.fly.dev") // Use this when testing icpump changes
 }
 
 // TODO: migrate to AppType

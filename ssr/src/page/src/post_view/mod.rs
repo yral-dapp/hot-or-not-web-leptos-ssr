@@ -9,8 +9,11 @@ use component::spinner::FullScreenSpinner;
 use consts::NSFW_TOGGLE_STORE;
 use priority_queue::DoublePriorityQueue;
 use state::canisters::{authenticated_canisters, unauth_canisters};
+use std::{
+    cmp::Reverse,
+    collections::{HashMap, HashSet},
+};
 use yral_types::post::PostItem;
-use std::{cmp::Reverse, collections::{HashMap, HashSet}};
 
 use candid::Principal;
 use codee::string::FromToStringCodec;
@@ -21,7 +24,9 @@ use leptos_router::{
     params::Params,
 };
 use leptos_use::{storage::use_local_storage, use_debounce_fn};
-use utils::{posts::FetchCursor, route::failure_redirect, send_wrap, try_or_redirect, types::PostId};
+use utils::{
+    posts::FetchCursor, route::failure_redirect, send_wrap, try_or_redirect, types::PostId,
+};
 
 use video_iter::{FeedResultType, VideoFetchStream};
 use yral_canisters_common::{utils::posts::PostDetails, Canisters};
@@ -102,7 +107,8 @@ pub fn CommonPostViewWithUpdates<S: Storage<ArcAction<(), ()>>>(
     });
     let next_videos = use_debounce_fn(
         move || {
-            if !fetch_video_action.pending().get_untracked()  { // && !queue_end.get_untracked()
+            if !fetch_video_action.pending().get_untracked() {
+                // && !queue_end.get_untracked()
                 fetch_video_action.dispatch(());
             }
         },
@@ -212,7 +218,6 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
         ..
     } = expect_context();
 
-
     let auth_cans = authenticated_canisters();
 
     let fetch_video_action: Action<_, _, LocalStorage> = Action::new_local(move |_| {
@@ -263,7 +268,11 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
                 while let Some(chunk) = chunks.next().await {
                     for uid in chunk {
                         let post_detail = try_or_redirect!(uid);
-                        if unique_videos.with_untracked(|vq| vq.len()).saturating_sub(current_idx.get_untracked()) <= 25 {
+                        if unique_videos
+                            .with_untracked(|vq| vq.len())
+                            .saturating_sub(current_idx.get_untracked())
+                            <= 25
+                        {
                             unique_videos.update(|uv| {
                                 uv.insert(post_detail.uid.clone());
                             });
@@ -320,7 +329,6 @@ pub fn PostView() -> impl IntoView {
     let canisters = unauth_canisters();
     let post_details_cache: PostDetailsCacheCtx = expect_context();
 
-
     let fetch_first_video_uid = Resource::new(initial_canister_and_post, move |params| {
         let canisters = canisters.clone();
         async move {
@@ -336,7 +344,7 @@ pub fn PostView() -> impl IntoView {
                 return Ok(Some(post));
             }
             let post_nsfw_prob = post_details_cache.post_details.with_untracked(|p| {
-                let item =p.get(&(params.canister_id, params.post_id));
+                let item = p.get(&(params.canister_id, params.post_id));
                 if let Some(item) = item {
                     item.nsfw_probability
                 } else {
@@ -344,7 +352,13 @@ pub fn PostView() -> impl IntoView {
                 }
             });
 
-            match send_wrap(canisters.get_post_details_with_nsfw_info(params.canister_id, params.post_id, post_nsfw_prob)).await {
+            match send_wrap(canisters.get_post_details_with_nsfw_info(
+                params.canister_id,
+                params.post_id,
+                post_nsfw_prob,
+            ))
+            .await
+            {
                 Ok(post) => Ok(post),
                 Err(e) => {
                     failure_redirect(e);
