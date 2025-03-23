@@ -4,7 +4,6 @@ use candid::Principal;
 use codee::string::JsonSerdeCodec;
 use futures::{stream::FuturesOrdered, Stream, StreamExt};
 use leptos::prelude::*;
-use leptos_use::storage::use_local_storage;
 
 use consts::USER_CANISTER_ID_STORE;
 use utils::{
@@ -15,6 +14,9 @@ use utils::{
 };
 use yral_canisters_client::post_cache::{self, NsfwFilter};
 use yral_canisters_common::{utils::posts::PostDetails, Canisters, Error as CanistersError};
+use leptos_use::storage::use_local_storage;
+use codee::string::FromToStringCodec;
+use consts::NSFW_TOGGLE_STORE;
 
 type PostsStream<'a> = Pin<Box<dyn Stream<Item = Vec<Result<PostDetails, CanistersError>>> + 'a>>;
 
@@ -95,7 +97,7 @@ impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
     pub async fn fetch_post_uids_ml_feed_chunked(
         &self,
         chunks: usize,
-        _allow_nsfw: bool,
+        allow_nsfw: bool,
         video_queue: Vec<PostDetails>,
     ) -> Result<FetchVideosRes<'a>, ServerFnError> {
         let (user_canister_id_local_storage, _, _) =
@@ -118,7 +120,7 @@ impl<'a, const AUTH: bool> VideoFetchStream<'a, AUTH> {
             user_canister_id = cans.user_canister();
         }
 
-        let show_nsfw = show_nsfw_content();
+        let show_nsfw = allow_nsfw || show_nsfw_content();
         let top_posts = if show_nsfw {
             get_ml_feed_nsfw(user_canister_id, self.cursor.limit as u32, video_queue.clone())
                 .await.map_err(|e| ServerFnError::new(format!("Error fetching ml feed: {e:?}")))?
@@ -156,7 +158,7 @@ impl<'a> VideoFetchStream<'a, true> {
 
         let user_canister_id = cans_true.user_canister();
 
-        let show_nsfw = show_nsfw_content();
+        let show_nsfw = allow_nsfw || show_nsfw_content();
         let top_posts = if show_nsfw {
             get_ml_feed_coldstart_nsfw(user_canister_id, self.cursor.limit as u32, video_queue.clone()).await.map_err(|e| ServerFnError::new(format!("Error fetching ml feed: {e:?}")))?
         } else {
@@ -181,23 +183,23 @@ impl<'a> VideoFetchStream<'a, true> {
     pub async fn fetch_post_uids_hybrid(
         &mut self,
         chunks: usize,
-        _allow_nsfw: bool,
+        allow_nsfw: bool,
         video_queue: Vec<PostDetails>,
     ) -> Result<FetchVideosRes<'a>, ServerFnError> {
         if video_queue.len() < 30 {
             self.cursor.set_limit(30);
-            self.fetch_post_uids_mlfeed_cache_chunked(chunks, _allow_nsfw, video_queue)
+            self.fetch_post_uids_mlfeed_cache_chunked(chunks, allow_nsfw, video_queue)
                 .await
         } else {
             let res = self
-                .fetch_post_uids_ml_feed_chunked(chunks, _allow_nsfw, video_queue.clone())
+                .fetch_post_uids_ml_feed_chunked(chunks, allow_nsfw, video_queue.clone())
                 .await;
 
             match res {
                 Ok(res) => Ok(res),
                 Err(_) => {
                     self.cursor.set_limit(50);
-                    self.fetch_post_uids_mlfeed_cache_chunked(chunks, _allow_nsfw, video_queue)
+                    self.fetch_post_uids_mlfeed_cache_chunked(chunks, allow_nsfw, video_queue)
                         .await
                 }
             }

@@ -1,14 +1,16 @@
-use crate::{post_view::PostDetailsCacheCtx, pumpdump::PumpNDump};
+use crate::{post_view::{PostDetailsCacheCtx}, pumpdump::PumpNDump};
 use candid::Principal;
 use component::spinner::FullScreenSpinner;
 use leptos::prelude::*;
 use leptos_meta::*;
-use leptos_router::components::Redirect;
+use leptos_router::{components::Redirect, hooks::use_query};
+use leptos_router::params::Params;
 use utils::{
     host::{show_cdao_page, show_pnd_page}, ml_feed::{get_ml_feed_coldstart_clean, get_ml_feed_coldstart_nsfw},
 };
 use yral_canisters_common::utils::time::current_epoch;
 use yral_types::post::PostItem;
+use leptos_use::storage::use_local_storage;
 
 #[server]
 async fn get_top_post_id() -> Result<Option<PostItem>, ServerFnError> {
@@ -47,51 +49,11 @@ async fn get_top_post_id() -> Result<Option<PostItem>, ServerFnError> {
     }))
 }
 
-// #[server]
-// async fn get_top_post_id_user_cache() -> Result<Option<(Principal, u64)>, ServerFnError> {
-//     use auth::server_impl::extract_principal_from_cookie;
-//     use axum_extra::extract::{cookie::Key, SignedCookieJar};
-//     use leptos_axum::extract_with_state;
-//     use state::canisters::unauth_canisters;
-
-//     let key: Key = expect_context();
-//     let jar: SignedCookieJar = extract_with_state(&key).await?;
-//     let principal = extract_principal_from_cookie(&jar)?;
-//     if principal.is_none() {
-//         return get_top_post_id_global_feed().await;
-//     }
-
-//     let canisters = unauth_canisters();
-//     let user_canister_id = canisters
-//         .get_individual_canister_by_user_principal(principal.unwrap())
-//         .await?;
-//     if user_canister_id.is_none() {
-//         return get_top_post_id_global_feed().await;
-//     }
-
-//     let posts = get_ml_feed_coldstart_clean(user_canister_id.unwrap(), 1, vec![]).await;
-//     if let Ok(posts) = posts {
-//         if !posts.is_empty() {
-//             let post_details_cache: PostDetailsCacheCtx = expect_context();
-//             post_details_cache.post_details.update(|post_details| {
-//                 post_details.insert((posts[0].canister_id, posts[0].post_id), posts[0].clone());
-//             });
-
-//             return Ok(Some((posts[0].canister_id, posts[0].post_id)));
-//         }
-//     }
-//     get_top_post_id_global_feed().await
-// }
-
 #[server]
 async fn get_top_post_id_global_clean_feed() -> Result<Option<PostItem>, ServerFnError> {
-    let posts = get_ml_feed_coldstart_clean(Principal::anonymous(), 1, vec![]).await;
-    if let Ok(posts) = posts {
-        if !posts.is_empty() {
-            return Ok(Some(posts[0].clone()));
-        }
-    } else {
-        leptos::logging::error!("Error fetching ml feed: {:?}", posts);
+    let posts = get_ml_feed_coldstart_clean(Principal::anonymous(), 1, vec![]).await.map_err(|e| ServerFnError::new(e.to_string()))?;
+    if !posts.is_empty() {
+        return Ok(Some(posts[0].clone()));
     }
 
     Ok(None)
@@ -99,11 +61,9 @@ async fn get_top_post_id_global_clean_feed() -> Result<Option<PostItem>, ServerF
 
 #[server]
 async fn get_top_post_id_global_nsfw_feed() -> Result<Option<PostItem>, ServerFnError> {
-    let posts = get_ml_feed_coldstart_nsfw(Principal::anonymous(), 1, vec![]).await;
-    if let Ok(posts) = posts {
-        if !posts.is_empty() {
-            return Ok(Some(posts[0].clone()));
-        }
+    let posts = get_ml_feed_coldstart_nsfw(Principal::anonymous(), 1, vec![]).await.map_err(|e| ServerFnError::new(e.to_string()))?;
+    if !posts.is_empty() {
+        return Ok(Some(posts[0].clone()));
     }
 
     Ok(None)
@@ -116,8 +76,18 @@ pub fn CreatorDaoRootPage() -> impl IntoView {
     }
 }
 
+#[derive(Clone, Params, PartialEq)]
+struct NsfwParam {
+    nsfw: bool,
+}
+
 #[component]
 pub fn YralRootPage() -> impl IntoView {
+
+    // check nsfw param
+    let params = use_query::<NsfwParam>();
+    let nsfw_enabled = params.get_untracked().map(|p| p.nsfw).unwrap_or(false);
+
     let target_post;
     #[cfg(any(feature = "local-bin", feature = "local-lib"))]
     {
@@ -127,13 +97,11 @@ pub fn YralRootPage() -> impl IntoView {
     {
         use utils::host::show_nsfw_content;
 
-        if show_nsfw_content() {
+        if nsfw_enabled || show_nsfw_content() {
             target_post = Resource::new(|| (), |_| get_top_post_id_global_nsfw_feed());
         } else {
             target_post = Resource::new(|| (), |_| get_top_post_id_global_clean_feed());
         }
-
-
     }
     let post_details_cache: PostDetailsCacheCtx = expect_context();
 
