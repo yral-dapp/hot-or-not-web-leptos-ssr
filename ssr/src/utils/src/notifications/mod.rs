@@ -1,32 +1,44 @@
 use wasm_bindgen::prelude::*;
-use wasm_bindgen_futures::JsFuture;
 
-pub mod device_id;
+pub mod register_device;
 
 #[wasm_bindgen(module = "/src/notifications/setup-firebase-messaging-inline.js")]
 extern "C" {
-    #[wasm_bindgen(js_name = default)]
-    fn get_token() -> js_sys::Promise;
+    #[wasm_bindgen(catch, js_name = getToken)]
+    async fn get_token() -> Result<JsValue, JsValue>;
+
+    #[wasm_bindgen(catch, js_name = getDeviceFingerprint)]
+    async fn get_device_fingerprint() -> Result<JsValue, JsValue>;
 }
 
 pub async fn get_token_for_principal(principal_id: String) {
-    let token_promise = get_token();
-    match JsFuture::from(token_promise).await {
-        Ok(token_js) => {
-            let token: String = token_js.as_string().unwrap_or_default();
-            #[cfg(feature = "ga4")]
-            {
-                use device_id::send_principal_and_token_offchain;
-                log::info!("sending offchain with params: {}, {}", token, principal_id);
-                send_principal_and_token_offchain(token.clone(), principal_id)
-                    .await
-                    .unwrap();
-            }
-            // Ok(token)
+    let device_fingerprint = match get_device_fingerprint().await {
+        Ok(device_fingerprint_js) => device_fingerprint_js.as_string().unwrap(),
+        Err(err) => {
+            log::warn!("Failed to get device fingerprint: {:?}", err);
+            return;
         }
+    };
+
+    let token = match get_token().await {
+        Ok(token_js) => token_js.as_string().unwrap(),
         Err(err) => {
             log::warn!("Failed to get token: {:?}", err);
-            // Err(())
+            return;
         }
+    };
+
+    #[cfg(feature = "ga4")]
+    {
+        use register_device::register_device;
+        log::info!(
+            "registering device with params: {}, {}, {}",
+            token,
+            principal_id,
+            device_fingerprint
+        );
+        register_device(token.clone(), device_fingerprint)
+            .await
+            .unwrap();
     }
 }
