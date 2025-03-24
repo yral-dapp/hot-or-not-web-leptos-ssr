@@ -221,7 +221,7 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
     let auth_cans = authenticated_canisters();
 
     let fetch_video_action: Action<_, _, LocalStorage> = Action::new_local(move |_| {
-        leptos::logging::log!("fetch_video_action");
+        // leptos::logging::log!("fetch_video_action");
         let auth_cans = auth_cans;
         let (nsfw_enabled, _, _) = use_local_storage::<bool, FromToStringCodec>(NSFW_TOGGLE_STORE);
         async move {
