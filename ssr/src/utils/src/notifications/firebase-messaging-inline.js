@@ -1,30 +1,21 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import { getMessaging } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging.js";
 
-let app = null;
+const app = initializeApp({
+  apiKey: "AIzaSyCwo0EWTJz_w-J1lUf9w9NcEBdLNmGUaIo",
+  authDomain: "hot-or-not-feed-intelligence.firebaseapp.com",
+  projectId: "hot-or-not-feed-intelligence",
+  storageBucket: "hot-or-not-feed-intelligence.appspot.com",
+  messagingSenderId: "82502260393",
+  appId: "1:82502260393:web:390e9d4e588cba65237bb8",
+});
 
-function initFirebase() {
-  if (app !== null) {
-    return;
-  }
-
-  app = initializeApp({
-    apiKey: "AIzaSyCwo0EWTJz_w-J1lUf9w9NcEBdLNmGUaIo",
-    authDomain: "hot-or-not-feed-intelligence.firebaseapp.com",
-    projectId: "hot-or-not-feed-intelligence",
-    storageBucket: "hot-or-not-feed-intelligence.appspot.com",
-    messagingSenderId: "82502260393",
-    appId: "1:82502260393:web:390e9d4e588cba65237bb8",
-  });
-}
+const messaging = getMessaging(app);
 
 const vapidKey =
   "BOmsEya6dANYUoElzlUWv3Jekmw08_nqDEUFu06aTak-HQGd-G_Lsk8y4Bs9B4kcEjBM8FXF0IQ_oOpJDmU3zMs";
 
 export async function getToken() {
-  initFirebase();
-
-  const messaging = getMessaging(app);
   const currentToken = await messaging.getToken({ vapidKey: vapidKey });
   return currentToken;
 }
@@ -59,3 +50,12 @@ export async function getNotificationPermission() {
   const permission = await Notification.requestPermission();
   return permission === "granted";
 }
+
+// This is called when a message is received while the app is in the foreground
+messaging.onMessage((payload) => {
+  console.log("Message received. ", payload);
+
+  // TODO: show a notification to the user in the app
+});
+
+// TODO: load the service worker to handle background messages
