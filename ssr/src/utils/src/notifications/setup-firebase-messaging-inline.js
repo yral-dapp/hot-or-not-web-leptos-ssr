@@ -54,3 +54,8 @@ async function sha256(message) {
     .join("");
   return hashHex;
 }
+
+export async function getNotificationPermission() {
+  const permission = await Notification.requestPermission();
+  return permission === "granted";
+}

@@ -1,7 +1,7 @@
 use component::canisters_prov::AuthCansProvider;
 use leptos::prelude::*;
 use utils::event_streaming::events::account_connected_reader;
-use utils::notifications::get_token_for_principal;
+use utils::notifications::register_device_for_principal;
 
 use yral_canisters_common::utils::profile::ProfileDetails;
 
@@ -10,7 +10,7 @@ fn NotifInnerComponent(details: ProfileDetails) -> impl IntoView {
     let (_, _) = account_connected_reader();
 
     let on_token_click: Action<(), (), LocalStorage> = Action::new_unsync(move |()| async move {
-        get_token_for_principal(details.principal.to_string()).await;
+        register_device_for_principal(details.principal.to_string()).await;
     });
 
     view! {
