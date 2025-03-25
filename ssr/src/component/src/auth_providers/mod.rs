@@ -40,7 +40,7 @@ async fn mark_user_registered(user_principal: Principal) -> Result<bool, ServerF
     mark_user_registered_impl(user_canister).await
 }
 
-async fn handle_user_login(
+pub async fn handle_user_login(
     canisters: Canisters<true>,
     referrer: Option<Principal>,
 ) -> Result<(), ServerFnError> {
