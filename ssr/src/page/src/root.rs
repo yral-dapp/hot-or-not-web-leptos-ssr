@@ -167,11 +167,12 @@ pub fn YralRootPage() -> impl IntoView {
 
 #[component]
 pub fn RootPage() -> impl IntoView {
-    if show_pnd_page() {
-        view! { <PumpNDump /> }.into_any()
-    } else if show_cdao_page() {
-        view! { <CreatorDaoRootPage /> }.into_any()
-    } else {
-        view! { <YralRootPage /> }.into_any()
-    }
+    // if show_pnd_page() {
+    //     view! { <PumpNDump /> }.into_any()
+    // } else if show_cdao_page() {
+    //     view! { <CreatorDaoRootPage /> }.into_any()
+    // } else {
+    //     view! { <YralRootPage /> }.into_any()
+    // }
+    view! { <PumpNDump /> }.into_any()
 }
