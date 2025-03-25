@@ -13,7 +13,11 @@ use leptos::{ev, prelude::*, reactive::wrappers::write::SignalSetter};
 use leptos_use::storage::use_local_storage;
 use state::{auth::auth_state, local_storage::use_referrer_store};
 use utils::event_streaming::events::CentsAdded;
-use utils::event_streaming::events::{LoginMethodSelected, LoginSuccessful, ProviderKind};
+use utils::send_wrap;
+use utils::{
+    event_streaming::events::{LoginMethodSelected, LoginSuccessful, ProviderKind},
+    MockPartialEq,
+};
 use yral_canisters_common::Canisters;
 use yral_types::delegated_identity::DelegatedIdentityWire;
 
@@ -110,26 +114,31 @@ pub fn LoginProviders(show_modal: RwSignal<bool>, lock_closing: RwSignal<bool>) 
 
     let processing = RwSignal::new(None);
 
-    LocalResource::new(move || async move {
-        let identity = new_identity.get();
-        let Some(identity) = identity else {
-            return Ok(());
-        };
+    let login_resource = Resource::new(
+        move || MockPartialEq(new_identity()),
+        move |identity| async move {
+            send_wrap(async move {
+                let Some(identity) = identity.0 else {
+                    return Ok(());
+                };
 
-        let (referrer_store, _, _) = use_referrer_store();
-        let referrer = referrer_store.get_untracked();
+                let (referrer_store, _, _) = use_referrer_store();
+                let referrer = referrer_store.get_untracked();
 
-        // This is some redundant work, but saves us 100+ lines of resource handling
-        let canisters = Canisters::authenticate_with_network(identity, referrer).await?;
+                // This is some redundant work, but saves us 100+ lines of resource handling
+                let canisters = Canisters::authenticate_with_network(identity, referrer).await?;
 
-        if let Err(e) = handle_user_login(canisters.clone(), referrer).await {
-            log::warn!("failed to handle user login, err {e}. skipping");
-        }
+                if let Err(e) = handle_user_login(canisters.clone(), referrer).await {
+                    log::warn!("failed to handle user login, err {e}. skipping");
+                }
 
-        LoginSuccessful.send_event(canisters);
+                LoginSuccessful.send_event(canisters);
 
-        Ok::<_, ServerFnError>(())
-    });
+                Ok::<_, ServerFnError>(())
+            })
+            .await
+        },
+    );
 
     let ctx = LoginProvCtx {
         processing: processing.read_only(),
@@ -147,7 +156,12 @@ pub fn LoginProviders(show_modal: RwSignal<bool>, lock_closing: RwSignal<bool>) 
     provide_context(ctx);
 
     view! {
-        <div class="flex flex-col py-12 px-16 items-center gap-2 bg-neutral-900 text-white cursor-auto">
+        <Suspense>
+        {move ||
+            {
+            let _ = login_resource.get().unwrap();
+
+                view!{<div class="flex flex-col py-12 px-16 items-center gap-2 bg-neutral-900 text-white cursor-auto">
             <h1 class="text-xl">Login to Yral</h1>
             <img class="h-32 w-32 object-contain my-8" src="/img/yral/logo.webp" />
             <span class="text-md">Continue with</span>
@@ -167,7 +181,8 @@ pub fn LoginProviders(show_modal: RwSignal<bool>, lock_closing: RwSignal<bool>) 
                     By continuing you agree to our <a class="text-primary-600 underline" href="/terms-of-service">Terms of Service</a>
                 </div>
             </div>
-        </div>
+        </div>}}}
+        </Suspense>
     }
 }
 
