@@ -13,10 +13,7 @@ use leptos::{ev, prelude::*, reactive::wrappers::write::SignalSetter};
 use leptos_use::storage::use_local_storage;
 use state::{auth::auth_state, local_storage::use_referrer_store};
 use utils::event_streaming::events::CentsAdded;
-use utils::{
-    event_streaming::events::{LoginMethodSelected, LoginSuccessful, ProviderKind},
-    MockPartialEq,
-};
+use utils::event_streaming::events::{LoginMethodSelected, LoginSuccessful, ProviderKind};
 use yral_canisters_common::Canisters;
 use yral_types::delegated_identity::DelegatedIdentityWire;
 
@@ -114,8 +111,8 @@ pub fn LoginProviders(show_modal: RwSignal<bool>, lock_closing: RwSignal<bool>) 
     let processing = RwSignal::new(None);
 
     LocalResource::new(move || async move {
-        let identity = move || MockPartialEq(new_identity());
-        let Some(identity) = identity().0 else {
+        let identity = new_identity.get();
+        let Some(identity) = identity else {
             return Ok(());
         };
 
