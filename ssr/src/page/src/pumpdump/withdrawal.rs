@@ -1,7 +1,11 @@
 use crate::format_cents;
 use candid::{Nat, Principal};
 use component::{
-    auth_providers::handle_user_login, back_btn::BackButton, icons::{information_icon::Information, notification_icon::NotificationIcon}, title::TitleText, tooltip::Tooltip
+    auth_providers::handle_user_login,
+    back_btn::BackButton,
+    icons::{information_icon::Information, notification_icon::NotificationIcon},
+    title::TitleText,
+    tooltip::Tooltip,
 };
 use consts::PUMP_AND_DUMP_WORKER_URL;
 use futures::TryFutureExt;
@@ -127,7 +131,6 @@ pub fn PndWithdrawal() -> impl IntoView {
     let send_claim = Action::new(move |&()| {
         let auth_wire = auth_wire;
         send_wrap(async move {
-
             let auth_wire = auth_wire.await.map_err(ServerFnError::new)?;
 
             let cans = Canisters::from_wire(auth_wire.clone(), expect_context())
