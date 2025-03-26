@@ -46,11 +46,13 @@ pub async fn handle_user_login(
     referrer: Option<Principal>,
 ) -> Result<(), ServerFnError> {
     let user_principal = canisters.identity().sender().unwrap();
+    log::error!("Handle login: user principal: {:?}", user_principal);
     let first_time_login = mark_user_registered(user_principal).await?;
 
     if first_time_login {
         CentsAdded.send_event("signup".to_string(), NEW_USER_SIGNUP_REWARD);
     }
+    log::error!("Handle login2: user principal: {:?}", user_principal);
 
     match referrer {
         Some(_referee_principal) if first_time_login => {
