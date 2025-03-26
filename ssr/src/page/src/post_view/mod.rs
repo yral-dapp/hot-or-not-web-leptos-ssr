@@ -45,17 +45,17 @@ pub struct BetEligiblePostCtx {
 
 #[derive(Clone, Default)]
 pub struct PostViewCtx {
-    pub fetch_cursor: RwSignal<FetchCursor>,
+    fetch_cursor: RwSignal<FetchCursor>,
     // TODO: this is a dead simple with no GC
     // We're using virtual lists for DOM, so this doesn't consume much memory
     // as uids only occupy 32 bytes each
     // but ideally this should be cleaned up
-    pub video_queue: RwSignal<Vec<PostDetails>>,
-    pub unique_videos: RwSignal<HashSet<String>>,
-    pub current_idx: RwSignal<usize>,
-    pub queue_end: RwSignal<bool>,
-    pub priority_q: RwSignal<DoublePriorityQueue<PostDetails, (usize, Reverse<usize>)>>, // we are using DoublePriorityQueue for GC in the future through pop_min
-    pub batch_cnt: RwSignal<usize>,
+    video_queue: RwSignal<Vec<PostDetails>>,
+    unique_videos: RwSignal<HashSet<String>>,
+    current_idx: RwSignal<usize>,
+    queue_end: RwSignal<bool>,
+    priority_q: RwSignal<DoublePriorityQueue<PostDetails, (usize, Reverse<usize>)>>, // we are using DoublePriorityQueue for GC in the future through pop_min
+    batch_cnt: RwSignal<usize>,
 }
 
 #[derive(Clone, Default)]
@@ -107,8 +107,7 @@ pub fn CommonPostViewWithUpdates<S: Storage<ArcAction<(), ()>>>(
     });
     let next_videos = use_debounce_fn(
         move || {
-            if !fetch_video_action.pending().get_untracked() {
-                // && !queue_end.get_untracked()
+            if !fetch_video_action.pending().get_untracked() && !queue_end.get_untracked() {
                 fetch_video_action.dispatch(());
             }
         },
@@ -225,6 +224,7 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
         let auth_cans = auth_cans;
         let (nsfw_enabled, _, _) = use_local_storage::<bool, FromToStringCodec>(NSFW_TOGGLE_STORE);
         async move {
+            // initial fetch from PQ to video_queue for quick feed population
             {
                 let mut prio_q = priority_q.write();
                 let mut cnt = 0;
@@ -243,6 +243,8 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
                 // leptos::logging::log!("1. added {} posts ; video_queue len {}", cnt, video_queue.with_untracked(|vq| vq.len()));
             }
 
+            // backfill PQ from ML feed server
+            // fetch to video_queue based on threshold
             if priority_q.with_untracked(|q| q.len()) < 100 {
                 let Some(cursor) = fetch_cursor.try_get_untracked() else {
                     return;
@@ -348,7 +350,7 @@ pub fn PostView() -> impl IntoView {
                 if let Some(item) = item {
                     item.nsfw_probability
                 } else {
-                    0.0
+                    1.0 // TODO: handle this for when we don't have details (when user shares video)
                 }
             });
 

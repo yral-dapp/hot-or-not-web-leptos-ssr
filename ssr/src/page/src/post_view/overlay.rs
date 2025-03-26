@@ -206,6 +206,7 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
                 set_nsfw_enabled(!nsfw_enabled());
             }
 
+            // using set_href to hard reload the page
             let window = window();
             let _ = window
                 .location()

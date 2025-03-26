@@ -36,9 +36,8 @@ pub static OFF_CHAIN_AGENT_GRPC_URL: Lazy<Url> =
 pub static GTAG_MEASUREMENT_ID: Lazy<&str> = Lazy::new(|| "G-PLNNETMSLM");
 pub static DOWNLOAD_UPLOAD_SERVICE: Lazy<Url> =
     Lazy::new(|| Url::parse("https://download-upload-service.fly.dev").unwrap());
-pub const ML_FEED_GRPC_URL: &str = "https://pr-16-yral-ml-feed-server.fly.dev:443"; // "https://yral-ml-feed-server.fly.dev:443"; // "http://localhost:50052";//
 pub static ML_FEED_URL: Lazy<Url> =
-    Lazy::new(|| Url::parse("https://pr-16-yral-ml-feed-server.fly.dev").unwrap());
+    Lazy::new(|| Url::parse("https://yral-ml-feed-server-staging.fly.dev").unwrap());
 
 pub static FALLBACK_USER_INDEX: Lazy<Principal> =
     Lazy::new(|| Principal::from_text("rimrc-piaaa-aaaao-aaljq-cai").unwrap());
