@@ -53,7 +53,7 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
                 *likes_w -= 1;
                 *liked_w = Some(false);
             } else {
-                *likes_w -= 1;
+                *likes_w += 1;
                 *liked_w = Some(true);
                 LikeVideo.send_event(post_details, likes, canister_store);
             }
