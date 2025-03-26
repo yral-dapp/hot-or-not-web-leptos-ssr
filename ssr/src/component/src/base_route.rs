@@ -101,8 +101,6 @@ fn CtxProvider(children: ChildrenFn) -> impl IntoView {
     );
     provide_context::<AuthCansResource>(canisters_res);
 
-    log::error!("Base Route test logger");
-    leptos::logging::error!("Base Route test");
     let location = leptos_router::hooks::use_location();
 
     view! {
