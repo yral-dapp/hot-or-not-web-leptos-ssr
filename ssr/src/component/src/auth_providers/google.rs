@@ -41,11 +41,11 @@ pub fn GoogleAuthProvider() -> impl IntoView {
 
         // Check if the target window was closed by the user
         let target_c = target.clone();
-        _ = use_interval_fn(
+        let pause = use_interval_fn(
             move || {
                 // Target window was closed by user
-                if target.closed().unwrap_or_default() && !done_guard() {
-                    ctx.set_processing.set(None);
+                if target.closed().unwrap_or_default() && !done_guard.try_get().unwrap_or(true) {
+                    ctx.set_processing.try_set(None);
                 }
             },
             500,
@@ -72,7 +72,9 @@ pub fn GoogleAuthProvider() -> impl IntoView {
                 }
             };
             done_guard.set(true);
+            (pause.pause)();
             _ = target_c.close();
+            ctx.set_processing.set(None);
             ctx.login_complete.set(res);
         });
     };

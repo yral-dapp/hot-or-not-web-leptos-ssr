@@ -13,11 +13,7 @@ use leptos::{ev, prelude::*, reactive::wrappers::write::SignalSetter};
 use leptos_use::storage::use_local_storage;
 use state::{auth::auth_state, local_storage::use_referrer_store};
 use utils::event_streaming::events::CentsAdded;
-use utils::send_wrap;
-use utils::{
-    event_streaming::events::{LoginMethodSelected, LoginSuccessful, ProviderKind},
-    MockPartialEq,
-};
+use utils::event_streaming::events::{LoginMethodSelected, LoginSuccessful, ProviderKind};
 use yral_canisters_common::Canisters;
 use yral_types::delegated_identity::DelegatedIdentityWire;
 
@@ -112,35 +108,26 @@ pub fn LoginProviders(show_modal: RwSignal<bool>, lock_closing: RwSignal<bool>) 
         use_local_storage::<bool, FromToStringCodec>(ACCOUNT_CONNECTED_STORE);
     let auth = auth_state();
 
-    let new_identity = RwSignal::new(None::<DelegatedIdentityWire>);
-
     let processing = RwSignal::new(None);
+    let (referrer_store, _, _) = use_referrer_store();
 
-    let login_resource = Resource::new(
-        move || MockPartialEq(new_identity()),
-        move |identity| async move {
-            send_wrap(async move {
-                let Some(identity) = identity.0 else {
-                    return Ok(());
-                };
+    let login_action = Action::new_local(move |id: &DelegatedIdentityWire| {
+        let id = id.clone();
+        async move {
+            let referrer = referrer_store.get_untracked();
 
-                let (referrer_store, _, _) = use_referrer_store();
-                let referrer = referrer_store.get_untracked();
+            // This is some redundant work, but saves us 100+ lines of resource handling
+            let canisters = Canisters::authenticate_with_network(id, referrer).await?;
 
-                // This is some redundant work, but saves us 100+ lines of resource handling
-                let canisters = Canisters::authenticate_with_network(identity, referrer).await?;
+            if let Err(e) = handle_user_login(canisters.clone(), referrer).await {
+                log::warn!("failed to handle user login, err {e}. skipping");
+            }
 
-                if let Err(e) = handle_user_login(canisters.clone(), referrer).await {
-                    log::warn!("failed to handle user login, err {e}. skipping");
-                }
+            LoginSuccessful.send_event(canisters);
 
-                LoginSuccessful.send_event(canisters);
-
-                Ok::<_, ServerFnError>(())
-            })
-            .await
-        },
-    );
+            Ok::<_, ServerFnError>(())
+        }
+    });
 
     let ctx = LoginProvCtx {
         processing: processing.read_only(),
@@ -149,7 +136,7 @@ pub fn LoginProviders(show_modal: RwSignal<bool>, lock_closing: RwSignal<bool>) 
             processing.set(val);
         }),
         login_complete: SignalSetter::map(move |val: DelegatedIdentityWire| {
-            new_identity.set(Some(val.clone()));
+            login_action.dispatch(val.clone());
             write_account_connected(true);
             auth.set(Some(val));
             show_modal.set(false);
@@ -158,33 +145,27 @@ pub fn LoginProviders(show_modal: RwSignal<bool>, lock_closing: RwSignal<bool>) 
     provide_context(ctx);
 
     view! {
-        <Suspense>
-        {move ||
+        <div class="flex flex-col py-12 px-16 items-center gap-2 bg-neutral-900 text-white cursor-auto">
+        <h1 class="text-xl">Login to Yral</h1>
+        <img class="h-32 w-32 object-contain my-8" src="/img/yral/logo.webp" />
+        <span class="text-md">Continue with</span>
+        <div class="flex flex-col w-full gap-4 items-center">
+
             {
-            let _ = login_resource.get().unwrap();
-
-                view!{<div class="flex flex-col py-12 px-16 items-center gap-2 bg-neutral-900 text-white cursor-auto">
-            <h1 class="text-xl">Login to Yral</h1>
-            <img class="h-32 w-32 object-contain my-8" src="/img/yral/logo.webp" />
-            <span class="text-md">Continue with</span>
-            <div class="flex flex-col w-full gap-4 items-center">
-
-                {
-                    #[cfg(feature = "local-auth")]
-                    view! {
-                        <local_storage::LocalStorageProvider></local_storage::LocalStorageProvider>
-                    }
+                #[cfg(feature = "local-auth")]
+                view! {
+                    <local_storage::LocalStorageProvider></local_storage::LocalStorageProvider>
                 }
-                {
-                    #[cfg(any(feature = "oauth-ssr", feature = "oauth-hydrate"))]
-                    view! { <google::GoogleAuthProvider></google::GoogleAuthProvider> }
-                }
-                <div id="tnc" class="text-white text-center">
-                    By continuing you agree to our <a class="text-primary-600 underline" href="/terms-of-service">Terms of Service</a>
-                </div>
+            }
+            {
+                #[cfg(any(feature = "oauth-ssr", feature = "oauth-hydrate"))]
+                view! { <google::GoogleAuthProvider></google::GoogleAuthProvider> }
+            }
+            <div id="tnc" class="text-white text-center">
+                By continuing you agree to our <a class="text-primary-600 underline" href="/terms-of-service">Terms of Service</a>
             </div>
-        </div>}}}
-        </Suspense>
+        </div>
+    </div>
     }
 }
 
