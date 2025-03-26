@@ -17,7 +17,7 @@ inherits = "release"
 opt-level = 'z'
 lto = true
 codegen-units = 1
-panic = "abort"
+# panic = "abort"
 
 [workspace.dependencies]
 serde = { version = "1.0", features = ["derive"] }
