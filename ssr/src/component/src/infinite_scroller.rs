@@ -62,7 +62,7 @@ where
             if !fetched.is_empty() {
                 cursor.update(|c| *c += fetched.len());
             }
-
+            log::error!("fetched {} items", fetched.len());
             data.update(|d| d.append(&mut fetched));
             end.set(list_end);
             loading.set(false);
