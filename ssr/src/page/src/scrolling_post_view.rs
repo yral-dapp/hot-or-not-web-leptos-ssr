@@ -1,6 +1,5 @@
-use std::collections::HashSet;
-
 use crate::post_view::video_loader::{BgView, VideoViewForQueue};
+use indexmap::IndexSet;
 use leptos::html;
 use leptos::prelude::*;
 use leptos_icons::*;
@@ -28,8 +27,7 @@ pub fn MuteIconOverlay(show_mute_icon: RwSignal<bool>) -> impl IntoView {
 
 #[component]
 pub fn ScrollingPostView<F: Fn() -> V + Clone + 'static + Send + Sync, V>(
-    video_queue: RwSignal<Vec<PostDetails>>,
-    #[prop(optional)] unique_videos: RwSignal<HashSet<String>>,
+    video_queue: RwSignal<IndexSet<PostDetails>>,
     current_idx: RwSignal<usize>,
     #[prop(optional)] fetch_next_videos: Option<F>,
     recovering_state: RwSignal<bool>,
@@ -77,7 +75,7 @@ pub fn ScrollingPostView<F: Fn() -> V + Clone + 'static + Send + Sync, V>(
 
                                 current_idx.set(queue_idx);
                                 
-                                if unique_videos.with_untracked(|q| q.len()).saturating_sub(queue_idx)
+                                if video_queue.with_untracked(|q| q.len()).saturating_sub(queue_idx)
                                     <= threshold_trigger_fetch
                                 {
                                     next_videos.as_ref().map(|nv| { nv() });

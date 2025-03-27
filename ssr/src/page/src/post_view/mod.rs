@@ -52,7 +52,6 @@ pub struct PostViewCtx {
     // as uids only occupy 32 bytes each
     // but ideally this should be cleaned up
     video_queue: RwSignal<IndexSet<PostDetails>>,
-    // unique_videos: RwSignal<HashSet<String>>,
     current_idx: RwSignal<usize>,
     queue_end: RwSignal<bool>,
     priority_q: RwSignal<DoublePriorityQueue<PostDetails, (usize, Reverse<usize>)>>, // we are using DoublePriorityQueue for GC in the future through pop_min
@@ -73,7 +72,6 @@ pub fn CommonPostViewWithUpdates<S: Storage<ArcAction<(), ()>>>(
     let PostViewCtx {
         fetch_cursor,
         video_queue,
-        unique_videos,
         current_idx,
         queue_end,
         ..
@@ -97,7 +95,8 @@ pub fn CommonPostViewWithUpdates<S: Storage<ArcAction<(), ()>>>(
                 v.drain(rem);
                 return;
             }
-            *v = vec![initial_post];
+            *v = IndexSet::new();
+            v.insert(initial_post);
         })
     }
 
@@ -118,7 +117,7 @@ pub fn CommonPostViewWithUpdates<S: Storage<ArcAction<(), ()>>>(
     let current_post_base = Memo::new(move |_| {
         video_queue.with(|q| {
             let cur_idx = current_idx();
-            let details = q.get(cur_idx)?;
+            let details = q.get_index(cur_idx)?;
             Some((details.canister_id, details.post_id))
         })
     });
@@ -136,7 +135,6 @@ pub fn CommonPostViewWithUpdates<S: Storage<ArcAction<(), ()>>>(
     view! {
         <ScrollingPostView
             video_queue
-            unique_videos
             current_idx
             recovering_state
             fetch_next_videos=next_videos
@@ -151,7 +149,6 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
     let PostViewCtx {
         fetch_cursor,
         video_queue,
-        unique_videos,
         queue_end,
         priority_q,
         batch_cnt,
@@ -169,13 +166,11 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
                 let mut prio_q = priority_q.write();
                 let mut cnt = 0;
                 while let Some((next, _)) = prio_q.pop_max() {
-                    unique_videos.update(|uv| {
-                        uv.insert(next.uid.clone());
-                    });
                     video_queue.update(|vq| {
-                        vq.push(next);
+                        if vq.insert(next) {
+                            cnt += 1;
+                        }
                     });
-                    cnt += 1;
                     if cnt >= 25 {
                         break;
                     }
@@ -200,7 +195,7 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
 
                 let mut fetch_stream = VideoFetchStream::new(&cans_true, cursor);
                 let chunks = fetch_stream
-                    .fetch_post_uids_hybrid(3, nsfw_enabled, video_queue.get_untracked())
+                    .fetch_post_uids_hybrid(3, nsfw_enabled, video_queue.get_untracked().iter().cloned().collect())
                     .await;
 
                 let res = try_or_redirect!(chunks);
@@ -209,15 +204,14 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
                 while let Some(chunk) = chunks.next().await {
                     for uid in chunk {
                         let post_detail = try_or_redirect!(uid);
-                        if unique_videos
+                        if video_queue
                             .with_untracked(|vq| vq.len())
                             .saturating_sub(current_idx.get_untracked())
                             <= 25
                         {
-                            unique_videos.update(|uv| {
-                                uv.insert(post_detail.uid.clone());
+                            video_queue.update(|vq| {
+                                let _ = vq.insert(post_detail);
                             });
-                            video_queue.update(|vq| vq.push(post_detail));
                         } else {
                             priority_q.update(|pq| {
                                 pq.push(post_detail, (batch_cnt_val, Reverse(cnt)));
@@ -276,7 +270,7 @@ pub fn PostView() -> impl IntoView {
                 return Err(());
             };
             let cached_post = video_queue
-                .with_untracked(|q| q.get(current_idx.get_untracked()).cloned())
+                .with_untracked(|q| q.get_index(current_idx.get_untracked()).cloned())
                 .filter(|post| {
                     post.canister_id == params.canister_id && post.post_id == params.post_id
                 });

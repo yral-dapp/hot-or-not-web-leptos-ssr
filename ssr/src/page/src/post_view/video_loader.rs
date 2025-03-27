@@ -1,4 +1,5 @@
 use codee::string::FromToStringCodec;
+use indexmap::IndexSet;
 use leptos::{html::Video, prelude::*};
 use leptos_use::storage::use_local_storage;
 
@@ -16,12 +17,12 @@ use super::{overlay::VideoDetailsOverlay, PostDetails};
 
 #[component]
 pub fn BgView(
-    video_queue: RwSignal<Vec<PostDetails>>,
+    video_queue: RwSignal<IndexSet<PostDetails>>,
     current_idx: RwSignal<usize>,
     idx: usize,
     children: Children,
 ) -> impl IntoView {
-    let post = Memo::new(move |_| video_queue.with(|q| q.get(idx).cloned()));
+    let post = Memo::new(move |_| video_queue.with(|q| q.get_index(idx).cloned()));
     let uid = move || post().as_ref().map(|q| q.uid.clone()).unwrap_or_default();
 
     let (is_connected, _) = account_connected_reader();
@@ -139,7 +140,7 @@ pub fn VideoView(
 
 #[component]
 pub fn VideoViewForQueue(
-    video_queue: RwSignal<Vec<PostDetails>>,
+    video_queue: RwSignal<IndexSet<PostDetails>>,
     current_idx: RwSignal<usize>,
     idx: usize,
     muted: RwSignal<bool>,
@@ -159,7 +160,7 @@ pub fn VideoViewForQueue(
         _ = vid.play();
     });
 
-    let post = Signal::derive(move || video_queue.with(|q| q.get(idx).cloned()));
+    let post = Signal::derive(move || video_queue.with(|q| q.get_index(idx).cloned()));
 
     view! { <VideoView post _ref=container_ref muted /> }
 }
