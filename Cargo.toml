@@ -154,6 +154,7 @@ state = { path = "./ssr/src/state" }
 utils = { path = "./ssr/src/utils" }
 page = { path = "./ssr/src/page" }
 rand = { version = "0.9.0", default-features = false, features = ["small_rng"] }
+indexmap = "2.8.0"
 
 # [patch.crates-io]
 # codee = { git = "https://github.com/Synphonyte/codee", branch = "main" }

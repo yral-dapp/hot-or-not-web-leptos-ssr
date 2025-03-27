@@ -14,6 +14,7 @@ use std::{
     collections::{HashMap, HashSet},
 };
 use yral_types::post::PostItem;
+use indexmap::IndexSet;
 
 use candid::Principal;
 use codee::string::FromToStringCodec;
@@ -50,8 +51,8 @@ pub struct PostViewCtx {
     // We're using virtual lists for DOM, so this doesn't consume much memory
     // as uids only occupy 32 bytes each
     // but ideally this should be cleaned up
-    video_queue: RwSignal<Vec<PostDetails>>,
-    unique_videos: RwSignal<HashSet<String>>,
+    video_queue: RwSignal<IndexSet<PostDetails>>,
+    // unique_videos: RwSignal<HashSet<String>>,
     current_idx: RwSignal<usize>,
     queue_end: RwSignal<bool>,
     priority_q: RwSignal<DoublePriorityQueue<PostDetails, (usize, Reverse<usize>)>>, // we are using DoublePriorityQueue for GC in the future through pop_min
@@ -146,65 +147,6 @@ pub fn CommonPostViewWithUpdates<S: Storage<ArcAction<(), ()>>>(
 }
 
 #[component]
-pub fn PostViewWithUpdates(initial_post: Option<PostDetails>) -> impl IntoView {
-    let PostViewCtx {
-        fetch_cursor,
-        video_queue,
-        queue_end,
-        ..
-    } = expect_context();
-
-    let (nsfw_enabled, _, _) = use_local_storage::<bool, FromToStringCodec>(NSFW_TOGGLE_STORE);
-    let auth_canisters: RwSignal<Option<Canisters<true>>> = expect_context();
-
-    // TODO: switch to Action::new_local
-    let fetch_video_action: Action<_, _, LocalStorage> = Action::new_unsync(move |_| async move {
-        loop {
-            let Some(cursor) = fetch_cursor.try_get_untracked() else {
-                return;
-            };
-            let Some(auth_canisters) = auth_canisters.try_get_untracked() else {
-                return;
-            };
-            let Some(nsfw_enabled) = nsfw_enabled.try_get_untracked() else {
-                return;
-            };
-            let unauth_canisters = unauth_canisters();
-
-            let chunks = if let Some(canisters) = auth_canisters.as_ref() {
-                let fetch_stream = VideoFetchStream::new(canisters, cursor);
-                fetch_stream.fetch_post_uids_chunked(3, nsfw_enabled).await
-            } else {
-                let fetch_stream = VideoFetchStream::new(&unauth_canisters, cursor);
-                fetch_stream.fetch_post_uids_chunked(3, nsfw_enabled).await
-            };
-
-            let res = try_or_redirect!(chunks);
-            let mut chunks = res.posts_stream;
-            let mut cnt = 0;
-            while let Some(chunk) = chunks.next().await {
-                cnt += chunk.len();
-                video_queue.try_update(|q| {
-                    for uid in chunk {
-                        let uid = try_or_redirect!(uid);
-                        q.push(uid);
-                    }
-                });
-            }
-            if res.end || cnt >= 8 {
-                queue_end.try_set(res.end);
-                break;
-            }
-            fetch_cursor.try_update(|c| c.advance());
-        }
-
-        fetch_cursor.try_update(|c| c.advance());
-    });
-
-    view! { <CommonPostViewWithUpdates initial_post fetch_video_action threshold_trigger_fetch=10 /> }
-}
-
-#[component]
 pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl IntoView {
     let PostViewCtx {
         fetch_cursor,
@@ -220,11 +162,9 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
     let auth_cans = authenticated_canisters();
 
     let fetch_video_action: Action<_, _, LocalStorage> = Action::new_local(move |_| {
-        // leptos::logging::log!("fetch_video_action");
         let auth_cans = auth_cans;
         let (nsfw_enabled, _, _) = use_local_storage::<bool, FromToStringCodec>(NSFW_TOGGLE_STORE);
         async move {
-            // initial fetch from PQ to video_queue for quick feed population
             {
                 let mut prio_q = priority_q.write();
                 let mut cnt = 0;
@@ -240,7 +180,6 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
                         break;
                     }
                 }
-                // leptos::logging::log!("1. added {} posts ; video_queue len {}", cnt, video_queue.with_untracked(|vq| vq.len()));
             }
 
             // backfill PQ from ML feed server
@@ -288,8 +227,7 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
                     }
                 }
 
-                // leptos::logging::log!("2. added {} posts ; video_queue len {}", added_cnt, video_queue.with_untracked(|vq| vq.len()));
-                leptos::logging::log!("feed type: {:?} cnt {}", res.res_type, cnt);
+                leptos::logging::log!("feed type: {:?} cnt {}", res.res_type, cnt); // For debugging purposes
                 if res.res_type != FeedResultType::MLFeed {
                     fetch_cursor.try_update(|c| {
                         c.set_limit(50);
@@ -374,9 +312,6 @@ pub fn PostView() -> impl IntoView {
         <Suspense fallback=FullScreenSpinner>
             {move || Suspend::new(async move {
                 let initial_post = fetch_first_video_uid.await.ok()?;
-                #[cfg(any(feature = "local-bin", feature = "local-lib"))]
-                { Some(view! { <PostViewWithUpdates initial_post /> }) }
-                #[cfg(not(any(feature = "local-bin", feature = "local-lib")))]
                 { Some(view! { <PostViewWithUpdatesMLFeed initial_post /> }) }
             })}
         </Suspense>

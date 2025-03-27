@@ -72,21 +72,16 @@ pub fn ScrollingPostView<F: Fn() -> V + Clone + 'static + Send + Sync, V>(
                                 if rect.y() == rect.height()
                                     || queue_idx == current_idx.get_untracked()
                                 {
-                                    // leptos::logging::log!("queue_idx: {} current_idx.get_untracked() {}", queue_idx, current_idx.get_untracked());
                                     return;
                                 }
-                                // leptos::logging::log!("queue_idx: {} {} {}", queue_idx, video_queue.with_untracked(|q| q.len()), video_queue.with_untracked(|q| q.len()).saturating_sub(queue_idx)
-                                // <= threshold_trigger_fetch);
-                                // leptos::logging::log!("updated1 queue_idx: {} current_idx.get_untracked() {}", queue_idx, current_idx.get_untracked());
+
                                 current_idx.set(queue_idx);
+                                
                                 if unique_videos.with_untracked(|q| q.len()).saturating_sub(queue_idx)
                                     <= threshold_trigger_fetch
                                 {
-                                    // leptos::logging::log!("fetching next videos");
                                     next_videos.as_ref().map(|nv| { nv() });
                                 }
-                                // current_idx.set(queue_idx);
-                                // leptos::logging::log!("updated2 queue_idx: {} current_idx.get_untracked() {}", queue_idx, current_idx.get_untracked());
                             },
                             UseIntersectionObserverOptions::default()
                                 .thresholds(vec![0.83])

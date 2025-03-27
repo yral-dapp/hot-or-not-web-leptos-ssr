@@ -94,6 +94,7 @@ utils.workspace = true
 state.workspace = true
 component.workspace = true
 page.workspace = true
+indexmap.workspace = true
 
 
 [build-dependencies]
