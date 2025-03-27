@@ -139,6 +139,7 @@ pub fn CommonPostViewWithUpdates<S: Storage<ArcAction<(), ()>>>(
             threshold_trigger_fetch
         />
     }
+    .into_any()
 }
 
 #[component]
@@ -239,7 +240,7 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
         }
     });
 
-    view! { <CommonPostViewWithUpdates initial_post fetch_video_action threshold_trigger_fetch=50 /> }
+    view! { <CommonPostViewWithUpdates initial_post fetch_video_action threshold_trigger_fetch=50 /> }.into_any()
 }
 
 #[component]
@@ -307,7 +308,7 @@ pub fn PostView() -> impl IntoView {
         <Suspense fallback=FullScreenSpinner>
             {move || Suspend::new(async move {
                 let initial_post = fetch_first_video_uid.await.ok()?;
-                { Some(view! { <PostViewWithUpdatesMLFeed initial_post /> }) }
+                { Some(view! { <PostViewWithUpdatesMLFeed initial_post /> }.into_any()) }
             })}
         </Suspense>
     }

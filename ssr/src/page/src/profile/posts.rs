@@ -70,7 +70,7 @@ fn Post(details: PostDetails, user_canister: Principal, _ref: NodeRef<html::Div>
                 </a>
             </div>
         </div>
-    }
+    }.into_any()
 }
 
 #[component]
@@ -99,4 +99,5 @@ pub fn ProfilePosts(user_canister: Principal) -> impl IntoView {
             }
         />
     }
+    .into_any()
 }

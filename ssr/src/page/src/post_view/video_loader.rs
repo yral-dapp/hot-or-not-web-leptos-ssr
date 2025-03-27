@@ -136,6 +136,7 @@ pub fn VideoView(
             view_video_url=Signal::derive(view_video_url)
         />
     }
+    .into_any()
 }
 
 #[component]
@@ -162,5 +163,5 @@ pub fn VideoViewForQueue(
 
     let post = Signal::derive(move || video_queue.with(|q| q.get_index(idx).cloned()));
 
-    view! { <VideoView post _ref=container_ref muted /> }
+    view! { <VideoView post _ref=container_ref muted /> }.into_any()
 }

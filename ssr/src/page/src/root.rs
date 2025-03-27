@@ -88,6 +88,7 @@ pub fn YralRootPage() -> impl IntoView {
 
         </Suspense>
     }
+    .into_any()
 }
 
 #[component]

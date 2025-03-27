@@ -199,6 +199,7 @@ fn ProfilePostBase<
 
         </Suspense>
     }
+    .into_any()
 }
 
 #[derive(Params, PartialEq)]
@@ -229,6 +230,7 @@ pub fn ProfilePost() -> impl IntoView {
         > user_canister=pd.canister_id initial_post=pd />
         </ProfilePostBase>
     }
+    .into_any()
 }
 
 // TODO: handle custom context management for bets
