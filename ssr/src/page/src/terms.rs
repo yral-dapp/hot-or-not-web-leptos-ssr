@@ -167,7 +167,7 @@ pub fn TermsOfService() -> impl IntoView {
                 <div class="flex flex-col space-y-2">
                     <div class="text-sm font-semibold">NSFW Content Policy</div>
                     <div class="text-xs">
-                        By enabling the NSFW (Not Safe for Work) content toggle, you acknowledge and consent to viewing adult-oriented 
+                        By enabling the NSFW (Not Safe for Work) content toggle, you acknowledge and consent to viewing adult-oriented
                         content within your feed. This content may include themes that are intended for mature audiences.
                         You agree that:
                         <ul class="list-decimal py-2 pl-6">
