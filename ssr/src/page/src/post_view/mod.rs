@@ -7,14 +7,11 @@ pub mod video_loader;
 use crate::scrolling_post_view::ScrollingPostView;
 use component::spinner::FullScreenSpinner;
 use consts::NSFW_TOGGLE_STORE;
+use indexmap::IndexSet;
 use priority_queue::DoublePriorityQueue;
 use state::canisters::{authenticated_canisters, unauth_canisters};
-use std::{
-    cmp::Reverse,
-    collections::{HashMap, HashSet},
-};
+use std::{cmp::Reverse, collections::HashMap};
 use yral_types::post::PostItem;
-use indexmap::IndexSet;
 
 use candid::Principal;
 use codee::string::FromToStringCodec;
@@ -195,7 +192,11 @@ pub fn PostViewWithUpdatesMLFeed(initial_post: Option<PostDetails>) -> impl Into
 
                 let mut fetch_stream = VideoFetchStream::new(&cans_true, cursor);
                 let chunks = fetch_stream
-                    .fetch_post_uids_hybrid(3, nsfw_enabled, video_queue.get_untracked().iter().cloned().collect())
+                    .fetch_post_uids_hybrid(
+                        3,
+                        nsfw_enabled,
+                        video_queue.get_untracked().iter().cloned().collect(),
+                    )
                     .await;
 
                 let res = try_or_redirect!(chunks);

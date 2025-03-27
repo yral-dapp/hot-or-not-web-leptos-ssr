@@ -74,7 +74,7 @@ pub fn ScrollingPostView<F: Fn() -> V + Clone + 'static + Send + Sync, V>(
                                 }
 
                                 current_idx.set(queue_idx);
-                                
+
                                 if video_queue.with_untracked(|q| q.len()).saturating_sub(queue_idx)
                                     <= threshold_trigger_fetch
                                 {

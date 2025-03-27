@@ -68,7 +68,7 @@ impl CursoredDataProvider for PostsProvider {
             .collect();
         let post_details_indexset: IndexSet<PostDetails> = post_details.iter().cloned().collect();
         self.video_queue.update_untracked(|vq| {
-            let _ = vq.extend(post_details_indexset);
+            vq.extend(post_details_indexset);
         });
         Ok(PageEntry {
             data: post_details,
