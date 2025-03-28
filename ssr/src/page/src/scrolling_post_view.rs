@@ -1,4 +1,5 @@
 use crate::post_view::video_loader::{BgView, VideoViewForQueue};
+use indexmap::IndexSet;
 use leptos::html;
 use leptos::prelude::*;
 use leptos_icons::*;
@@ -26,7 +27,7 @@ pub fn MuteIconOverlay(show_mute_icon: RwSignal<bool>) -> impl IntoView {
 
 #[component]
 pub fn ScrollingPostView<F: Fn() -> V + Clone + 'static + Send + Sync, V>(
-    video_queue: RwSignal<Vec<PostDetails>>,
+    video_queue: RwSignal<IndexSet<PostDetails>>,
     current_idx: RwSignal<usize>,
     #[prop(optional)] fetch_next_videos: Option<F>,
     recovering_state: RwSignal<bool>,
@@ -53,7 +54,7 @@ pub fn ScrollingPostView<F: Fn() -> V + Clone + 'static + Send + Sync, V>(
                 {overlay.map(|o| o.run())}
 
                 <For
-                    each=move || video_queue().into_iter().enumerate()
+                    each=move || video_queue.get().into_iter().enumerate()
                     key=move |(_, details)| (details.canister_id, details.post_id)
                     children=move |(queue_idx, _details)| {
                         let container_ref = NodeRef::<html::Div>::new();
@@ -71,12 +72,14 @@ pub fn ScrollingPostView<F: Fn() -> V + Clone + 'static + Send + Sync, V>(
                                 {
                                     return;
                                 }
+
+                                current_idx.set(queue_idx);
+
                                 if video_queue.with_untracked(|q| q.len()).saturating_sub(queue_idx)
                                     <= threshold_trigger_fetch
                                 {
                                     next_videos.as_ref().map(|nv| { nv() });
                                 }
-                                current_idx.set(queue_idx);
                             },
                             UseIntersectionObserverOptions::default()
                                 .thresholds(vec![0.83])

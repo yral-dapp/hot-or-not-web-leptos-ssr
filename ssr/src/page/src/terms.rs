@@ -165,7 +165,22 @@ pub fn TermsOfService() -> impl IntoView {
                     </div>
                 </div>
                 <div class="flex flex-col space-y-2">
-                    <div class="text-sm font-semibold">{r#"Children's Privacy"""#}</div>
+                    <div class="text-sm font-semibold">NSFW Content Policy</div>
+                    <div class="text-xs">
+                        By enabling the NSFW (Not Safe for Work) content toggle, you acknowledge and consent to viewing adult-oriented
+                        content within your feed. This content may include themes that are intended for mature audiences.
+                        You agree that:
+                        <ul class="list-decimal py-2 pl-6">
+                            <li>You are of legal age to view such content in your jurisdiction.</li>
+                            <li>The platform is not responsible for any distress or offense caused by NSFW content.</li>
+                            <li>
+                            You may disable NSFW content at any time by turning off the toggle in your settings.
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="flex flex-col space-y-2">
+                    <div class="text-sm font-semibold">{r#"Children's Privacy"#}</div>
                     <div class="text-xs">
                         These Services are not for any child under the age of 13. We do not
                         knowingly collect personally identifiable information from children

@@ -66,16 +66,16 @@ pub fn show_pnd_page() -> bool {
 }
 
 pub fn show_pnd_condition(host: &str) -> bool {
-    host == "pumpdump.wtf"
-        || host == "www.pumpdump.wtf"
-        || host.contains("localhost")
-        || host.contains("yral-dapp-hot-or-not-web-leptos-ssr.fly.dev")
-        || host.contains("hot-or-not-web-leptos-ssr-staging.fly.dev") // Use this when testing icpump changes
+    host == "pumpdump.wtf" || host == "www.pumpdump.wtf"
+    // || host.contains("localhost")
+    // || host.contains("yral-dapp-hot-or-not-web-leptos-ssr.fly.dev")
+    // || host.contains("hot-or-not-web-leptos-ssr-staging.fly.dev") // Use this when testing icpump changes
 }
 
 // TODO: migrate to AppType
 pub fn show_nsfw_content() -> bool {
     let host = get_host();
+
     show_nsfw_condition(host)
 }
 

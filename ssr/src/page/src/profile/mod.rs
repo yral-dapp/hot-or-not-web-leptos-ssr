@@ -10,6 +10,7 @@ use candid::Principal;
 use codee::string::FromToStringCodec;
 use component::connect::ConnectLogin;
 use consts::USER_PRINCIPAL_STORE;
+use indexmap::IndexSet;
 use leptos::prelude::*;
 use leptos_icons::*;
 use leptos_meta::*;
@@ -30,7 +31,7 @@ use yral_canisters_common::{
 
 #[derive(Clone, Default)]
 pub struct ProfilePostsContext {
-    video_queue: RwSignal<Vec<PostDetails>>,
+    video_queue: RwSignal<IndexSet<PostDetails>>,
     start_index: RwSignal<usize>,
     current_index: RwSignal<usize>,
     queue_end: RwSignal<bool>,
