@@ -14,7 +14,7 @@ pub fn HighlightedButton(
             on:click=on_click
             disabled=disabled
             class=format!(
-                "w-full px-5 py-3 rounded-lg flex items-center transition-all justify-center gap-8 font-kumbh font-bold {}",
+                "w-full px-5 py-3 mt-4 rounded-lg flex items-center transition-all justify-center gap-8 font-kumbh font-bold {}",
                 classes,
             )
             style=if alt_style {

@@ -247,7 +247,7 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
                     <img
                     on:click=move |_| { let _ = click_nsfw.dispatch(()); }
                     src=move || if nsfw_enabled() { "/img/yral/nsfw/nsfw-toggle-on.svg" } else { "/img/yral/nsfw/nsfw-toggle-off.svg" }
-                    class="w-[76px] h-[37px] object-contain"
+                    class="w-[76px] h-[36px] object-contain"
                     alt="NSFW Toggle"
                     />
                 </button>
@@ -332,7 +332,7 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
             </div>
         </Modal>
         <Modal show=show_nsfw_permission>
-                <div class="flex flex-col justify-center items-center gap-4 text-white">
+            <div class="flex flex-col justify-center items-center gap-4 text-white">
                 <img class="h-32 w-32 object-contain" src="/img/yral/nsfw/nsfw-modal-logo.svg" />
                 <h1 class="text-xl font-bold font-kumbh">Enable NSFW Content?</h1>
                 <span class="text-sm w-50 md:w-80 text-center font-kumbh font-thin">By enabling NSFW content, you confirm that you are 18 years or older and consent to viewing content that may include explicit, sensitive, or mature material. This content is intended for adult audiences only and may not be suitable for all viewers. Viewer discretion is advised.</span>
