@@ -20,7 +20,7 @@ use state::content_seed_client::ContentSeedClient;
 use utils::event_streaming::events::account_connected_reader;
 use utils::host::show_cdao_page;
 use utils::host::show_pnd_page;
-use utils::notifications::get_token_for_principal;
+use utils::notifications::register_device_for_principal;
 use utils::send_wrap;
 use yral_canisters_common::utils::profile::ProfileDetails;
 use yral_canisters_common::Canisters;
@@ -157,7 +157,7 @@ fn EnableNotifications(user_details: ProfileDetails) -> impl IntoView {
     let (_, _) = account_connected_reader();
 
     let on_token_click: Action<(), (), LocalStorage> = Action::new_unsync(move |()| async move {
-        get_token_for_principal(user_details.principal.to_string()).await;
+        register_device_for_principal(user_details.principal.to_string()).await;
     });
 
     view! {
