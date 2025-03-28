@@ -171,7 +171,7 @@ pub fn TermsOfService() -> impl IntoView {
                         content within your feed. This content may include themes that are intended for mature audiences.
                         You agree that:
                         <ul class="list-decimal py-2 pl-6">
-                            <li>You are of legal age to view such content in your jurisdiction.;</li>
+                            <li>You are of legal age to view such content in your jurisdiction.</li>
                             <li>The platform is not responsible for any distress or offense caused by NSFW content.</li>
                             <li>
                             You may disable NSFW content at any time by turning off the toggle in your settings.
