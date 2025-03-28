@@ -246,7 +246,7 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
                 <button class="pointer-events-auto py-2">
                     <img
                     on:click=move |_| { let _ = click_nsfw.dispatch(()); }
-                    src=move || if nsfw_enabled() { "/img/yral/nsfw/nsfw-toggle-on.svg" } else { "/img/yral/nsfw/nsfw-toggle-off.svg" }
+                    src=move || if nsfw_enabled() { "/img/yral/nsfw/nsfw-toggle-on.webp" } else { "/img/yral/nsfw/nsfw-toggle-off.webp" }
                     class="w-[76px] h-[36px] object-contain"
                     alt="NSFW Toggle"
                     />
