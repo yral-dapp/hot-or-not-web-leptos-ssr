@@ -340,7 +340,7 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
                     <a class="text-[#E2017B] font-bold text-sm text-center font-kumbh" href="/terms-of-service">View NSFW Content Policy</a>
                 </div>
                 <HighlightedButton
-                    classes="w-full".to_string()
+                    classes="w-full mt-4".to_string()
                     alt_style=false
                     disabled=false
                     on_click=move || {click_nsfw.dispatch(());}
