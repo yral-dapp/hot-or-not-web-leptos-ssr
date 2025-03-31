@@ -11,6 +11,7 @@ use leptos_icons::*;
 use leptos_use::storage::use_local_storage;
 use leptos_use::use_window;
 use utils::event_streaming::events::auth_canisters_store;
+use utils::host::show_nsfw_content;
 use utils::{
     event_streaming::events::{LikeVideo, ShareVideo},
     report::ReportOption,
@@ -195,7 +196,18 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
 
     let (nsfw_enabled, set_nsfw_enabled, _) =
         use_local_storage::<bool, FromToStringCodec>(NSFW_TOGGLE_STORE);
+    let nsfw_enabled_with_host = Signal::derive(move || {
+        if show_nsfw_content() {
+            true
+        } else {
+            nsfw_enabled()
+        }
+    });
     let click_nsfw = Action::new(move |()| async move {
+        if show_nsfw_content() {
+            return;
+        }
+
         if !nsfw_enabled() && !show_nsfw_permission() {
             show_nsfw_permission.set(true);
         } else {
@@ -246,7 +258,7 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
                 <button class="pointer-events-auto py-2">
                     <img
                     on:click=move |_| { let _ = click_nsfw.dispatch(()); }
-                    src=move || if nsfw_enabled() { "/img/yral/nsfw/nsfw-toggle-on.webp" } else { "/img/yral/nsfw/nsfw-toggle-off.webp" }
+                    src=move || if nsfw_enabled_with_host() { "/img/yral/nsfw/nsfw-toggle-on.webp" } else { "/img/yral/nsfw/nsfw-toggle-off.webp" }
                     class="w-[76px] h-[36px] object-contain"
                     alt="NSFW Toggle"
                     />
