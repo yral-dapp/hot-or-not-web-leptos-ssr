@@ -57,7 +57,7 @@ fn ProfilePostWithUpdates<const LIMIT: u64, VidStream: ProfVideoStream<LIMIT>>(
 
     if start_index.get_untracked() == 0 {
         video_queue.update_untracked(|vq| {
-            vq.push(initial_post.clone());
+            let _ = vq.insert(initial_post.clone());
         });
         queue_end.set(true)
     }
@@ -77,7 +77,7 @@ fn ProfilePostWithUpdates<const LIMIT: u64, VidStream: ProfVideoStream<LIMIT>>(
         queue_end.set(res.end);
         res.posts.into_iter().for_each(|p| {
             video_queue.try_update(|q| {
-                q.push(p);
+                let _ = q.insert(p);
             });
         });
         fetch_cursor.try_update(|c| {
@@ -97,7 +97,7 @@ fn ProfilePostWithUpdates<const LIMIT: u64, VidStream: ProfVideoStream<LIMIT>>(
 
     let current_post_base = Memo::new(move |_| {
         video_queue.with(|q| {
-            let details = q.get(current_index());
+            let details = q.get_index(current_index());
             details.map(|d| (d.canister_id, d.post_id))
         })
     });
@@ -161,7 +161,7 @@ fn ProfilePostBase<
                     .iter()
                     .position(|post| post.canister_id == canister_id && post.post_id == post_id);
                 current_index.update(|idx| *idx = post_idx.unwrap_or(0));
-                post_idx.and_then(|p_idx| vq.get(p_idx)).cloned()
+                post_idx.and_then(|p_idx| vq.get_index(p_idx)).cloned()
             });
 
             if let Some(post) = retrieved_post {
@@ -199,6 +199,7 @@ fn ProfilePostBase<
 
         </Suspense>
     }
+    .into_any()
 }
 
 #[derive(Params, PartialEq)]
@@ -229,6 +230,7 @@ pub fn ProfilePost() -> impl IntoView {
         > user_canister=pd.canister_id initial_post=pd />
         </ProfilePostBase>
     }
+    .into_any()
 }
 
 // TODO: handle custom context management for bets

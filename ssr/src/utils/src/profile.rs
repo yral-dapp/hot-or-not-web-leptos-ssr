@@ -1,5 +1,6 @@
 use candid::Principal;
 use ic_agent::AgentError;
+use indexmap::IndexSet;
 use leptos::prelude::*;
 use yral_canisters_client::individual_user_template::Result13;
 
@@ -14,7 +15,7 @@ pub const PROFILE_CHUNK_SZ: usize = 10;
 #[derive(Clone)]
 pub struct PostsProvider {
     canisters: Canisters<false>,
-    video_queue: RwSignal<Vec<PostDetails>>,
+    video_queue: RwSignal<IndexSet<PostDetails>>,
     start_index: RwSignal<usize>,
     user: Principal,
 }
@@ -22,7 +23,7 @@ pub struct PostsProvider {
 impl PostsProvider {
     pub fn new(
         canisters: Canisters<false>,
-        video_queue: RwSignal<Vec<PostDetails>>,
+        video_queue: RwSignal<IndexSet<PostDetails>>,
         start_index: RwSignal<usize>,
         user: Principal,
     ) -> Self {
@@ -65,8 +66,9 @@ impl CursoredDataProvider for PostsProvider {
             .into_iter()
             .map(|details| PostDetails::from_canister_post(false, self.user, details))
             .collect();
+        let post_details_indexset: IndexSet<PostDetails> = post_details.iter().cloned().collect();
         self.video_queue.update_untracked(|vq| {
-            vq.extend_from_slice(&post_details);
+            vq.extend(post_details_indexset);
         });
         Ok(PageEntry {
             data: post_details,

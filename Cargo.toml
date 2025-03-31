@@ -1,7 +1,14 @@
 [workspace]
-members = ["ssr", "ssr/src/auth", "ssr/src/component", "ssr/src/consts", "ssr/src/state", "ssr/src/utils", "ssr/src/page"]
+members = [
+    "ssr",
+    "ssr/src/auth",
+    "ssr/src/component",
+    "ssr/src/consts",
+    "ssr/src/state",
+    "ssr/src/utils",
+    "ssr/src/page",
+]
 resolver = "2"
-
 
 
 # Defines a size-optimized profile for the WASM bundle in release mode
@@ -10,7 +17,7 @@ inherits = "release"
 opt-level = 'z'
 lto = true
 codegen-units = 1
-panic = "abort"
+# panic = "abort"
 
 [workspace.dependencies]
 serde = { version = "1.0", features = ["derive"] }
@@ -26,11 +33,7 @@ leptos_meta = "0.7.7"
 leptos_router = { version = "0.7.7", features = ["nightly"] }
 log = "0.4"
 simple_logger = "4.0"
-tokio = { version = "1", features = [
-    "rt-multi-thread",
-    "signal",
-    "time",
-] }
+tokio = { version = "1", features = ["rt-multi-thread", "signal", "time"] }
 tower = { version = "0.4" }
 tower-http = { version = "0.5", features = ["fs", "cors"] }
 wasm-bindgen = "=0.2.100"
@@ -42,15 +45,21 @@ ic-base-types = { git = "https://github.com/dfinity/ic", rev = "tags/release-202
 icp-ledger = { git = "https://github.com/dfinity/ic", rev = "tags/release-2024-10-17_03-07-base" }
 serde-wasm-bindgen = "0.6.5"
 futures = "0.3.30"
-leptos-use = {git="https://github.com/Synphonyte/leptos-use", rev="bacd162a9d11b3f1be117851308469e3eec09f30"}
+leptos-use = { git = "https://github.com/Synphonyte/leptos-use", rev = "bacd162a9d11b3f1be117851308469e3eec09f30" }
 codee = { version = "0.3.0", features = ["json_serde"] }
-reqwest = { version = "0.12", default-features = false, features = ["json", "http2"] }
+reqwest = { version = "0.12", default-features = false, features = [
+    "json",
+    "http2",
+] }
 hex = "0.4.3"
 leptos_icons = "0.5.0"
 icondata = "0.3.0"
 gloo = { version = "0.11.0", features = ["futures", "net", "net"] }
 once_cell = "1.19.0"
-k256 = { version = "0.13.4", default-features = false, features = ["std", "jwk"] }
+k256 = { version = "0.13.4", default-features = false, features = [
+    "std",
+    "jwk",
+] }
 icondata_core = "0.1.0"
 serde_json = "1.0"
 crc32fast = "1.4.0"
@@ -68,7 +77,11 @@ web-sys = { version = "0.3", features = [
 circular-buffer = "0.1.7"
 redb = { version = "2.0.0" }
 enum_dispatch = { version = "0.3.12" }
-axum-extra = { version = "0.9.3", features = ["cookie", "cookie-signed", "cookie-private"] }
+axum-extra = { version = "0.9.3", features = [
+    "cookie",
+    "cookie-signed",
+    "cookie-private",
+] }
 openidconnect = { version = "3.5.0" }
 dotenv = { version = "0.15.0" }
 redis = { version = "0.25.2", features = [
@@ -86,8 +99,10 @@ hmac = { version = "0.12.1" }
 wasm-bindgen-futures = { version = "0.4.42" }
 testcontainers = { version = "0.20.0" }
 yral-testcontainers = { git = "https://github.com/yral-dapp/yral-testcontainers", rev = "7438ba7cb281e7f195cf81f2a8532f63ce005771" }
-sns-validation = { git = "https://github.com/yral-dapp/yral-common.git", rev = "95f61ef7a745a12f19abf03ef4f24f1161daed6a" }
-yral-grpc-traits = { git = "https://github.com/yral-dapp/yral-common.git", rev = "95f61ef7a745a12f19abf03ef4f24f1161daed6a" }
+sns-validation = { git = "https://github.com/yral-dapp/yral-common.git", rev = "209963155b549a5ddfa9fb42403ddc0541ba24be" }
+# sns-validation = { path = "../yral-common/sns-validation" }
+yral-grpc-traits = { git = "https://github.com/yral-dapp/yral-common.git", rev = "209963155b549a5ddfa9fb42403ddc0541ba24be" }
+# yral-grpc-traits = { path = "../yral-common/grpc-traits" }
 js-sys = "0.3.69"
 tonic-web-wasm-client = { version = "0.6" }
 tonic = { version = "0.12.0", default-features = false, features = [
@@ -102,12 +117,18 @@ firestore = { version = "0.43.1", default-features = false, features = [
 ] }
 speedate = { version = "0.14.4" }
 urlencoding = "2.1.3"
-yral-types = { git = "https://github.com/yral-dapp/yral-common.git", rev = "95f61ef7a745a12f19abf03ef4f24f1161daed6a" }
-yral-qstash-types = { git = "https://github.com/yral-dapp/yral-common.git", rev = "95f61ef7a745a12f19abf03ef4f24f1161daed6a" }
-yral-canisters-client = { git = "https://github.com/yral-dapp/yral-common.git", rev = "95f61ef7a745a12f19abf03ef4f24f1161daed6a", features = [
+yral-types = { git = "https://github.com/yral-dapp/yral-common.git", rev = "209963155b549a5ddfa9fb42403ddc0541ba24be" }
+# yral-types = { path = "../yral-common/types" }
+yral-qstash-types = { git = "https://github.com/yral-dapp/yral-common.git", rev = "209963155b549a5ddfa9fb42403ddc0541ba24be" }
+# yral-qstash-types = { path = "../yral-common/qstash-types" }
+yral-canisters-client = { git = "https://github.com/yral-dapp/yral-common.git", rev = "209963155b549a5ddfa9fb42403ddc0541ba24be", features = [
     "full",
 ] }
-yral-canisters-common = { git = "https://github.com/yral-dapp/yral-common.git", rev = "95f61ef7a745a12f19abf03ef4f24f1161daed6a" }
+# yral-canisters-client = { path = "../yral-common/canisters-client", features = [
+#     "full",
+# ] }
+yral-canisters-common = { git = "https://github.com/yral-dapp/yral-common.git", rev = "209963155b549a5ddfa9fb42403ddc0541ba24be" }
+# yral-canisters-common = { path = "../yral-common/canisters-common" }
 pulldown-cmark = "0.12.1"
 ic-certification = "2.6.0"
 ciborium = "0.2.2"
@@ -116,20 +137,22 @@ ciborium = "0.2.2"
 yral-metadata-client = { git = "https://github.com/yral-dapp/yral-metadata", branch = "geet/notifications" }
 # yral-metadata-types = { git = "https://github.com/yral-dapp/yral-metadata", rev = "56e3f1f1f5f452673bee17739520c800c1264295" }
 yral-metadata-types = { git = "https://github.com/yral-dapp/yral-metadata", branch = "geet/notifications" }
-yral-pump-n-dump-common = { git = "https://github.com/yral-dapp/yral-common", features = ["client"], rev = "95f61ef7a745a12f19abf03ef4f24f1161daed6a", version = "0.1.0" }
+yral-pump-n-dump-common = { git = "https://github.com/yral-dapp/yral-common", features = ["client"], rev = "209963155b549a5ddfa9fb42403ddc0541ba24be", version = "0.1.0" }
 uuid = { version = "1.11.0", features = ["v4", "js"] }
-regex = { version = "1.11.1"  }
+regex = { version = "1.11.1" }
 tonic-build = { version = "0.12.0", default-features = false, features = [
     "prost",
 ] }
 anyhow = { version = "1.0.86" }
 send_wrapper = { version = "0.6.0", features = ["futures"] }
-auth ={ path = "./ssr/src/auth"}
-component ={ path = "./ssr/src/component"}
-consts = {path = "./ssr/src/consts"}
-state = {path = "./ssr/src/state"}
-utils = {path = "./ssr/src/utils"}
-page = {path = "./ssr/src/page"}
-rand = { version = "0.9.0", default-features = false, features = ["small_rng"]}
+auth = { path = "./ssr/src/auth" }
+component = { path = "./ssr/src/component" }
+consts = { path = "./ssr/src/consts" }
+state = { path = "./ssr/src/state" }
+utils = { path = "./ssr/src/utils" }
+page = { path = "./ssr/src/page" }
+rand = { version = "0.9.0", default-features = false, features = ["small_rng"] }
+indexmap = "2.8.0"
+
 # [patch.crates-io]
 # codee = { git = "https://github.com/Synphonyte/codee", branch = "main" }

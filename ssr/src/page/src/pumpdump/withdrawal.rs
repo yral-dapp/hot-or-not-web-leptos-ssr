@@ -1,6 +1,7 @@
 use crate::format_cents;
 use candid::{Nat, Principal};
 use component::{
+    auth_providers::handle_user_login,
     back_btn::BackButton,
     icons::{information_icon::Information, notification_icon::NotificationIcon},
     title::TitleText,
@@ -134,6 +135,8 @@ pub fn PndWithdrawal() -> impl IntoView {
 
             let cans = Canisters::from_wire(auth_wire.clone(), expect_context())
                 .map_err(ServerFnError::new)?;
+
+            handle_user_login(cans.clone(), None).await?;
 
             let req = ClaimReq::new(cans.identity(), dolrs()).map_err(ServerFnError::new)?;
             let claim_url = PUMP_AND_DUMP_WORKER_URL

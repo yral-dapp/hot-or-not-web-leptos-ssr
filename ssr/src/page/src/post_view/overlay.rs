@@ -1,10 +1,14 @@
+use codee::string::FromToStringCodec;
+use component::buttons::HighlightedButton;
 use component::{
     canisters_prov::with_cans, hn_icons::HomeFeedShareIcon, modal::Modal, option::SelectOption,
 };
 
+use consts::NSFW_TOGGLE_STORE;
 use gloo::timers::callback::Timeout;
 use leptos::{prelude::*, task::spawn_local};
 use leptos_icons::*;
+use leptos_use::storage::use_local_storage;
 use leptos_use::use_window;
 use utils::event_streaming::events::auth_canisters_store;
 use utils::{
@@ -53,7 +57,7 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
                 *likes_w -= 1;
                 *liked_w = Some(false);
             } else {
-                *likes_w -= 1;
+                *likes_w += 1;
                 *liked_w = Some(true);
                 LikeVideo.send_event(post_details, likes, canister_store);
             }
@@ -123,6 +127,7 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
 pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
     let show_share = RwSignal::new(false);
     let show_report = RwSignal::new(false);
+    let show_nsfw_permission = RwSignal::new(false);
     let report_option = RwSignal::new(ReportOption::Nudity.as_str().to_string());
     let show_copied_popup = RwSignal::new(false);
     let base_url = || {
@@ -188,33 +193,64 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
         }
     });
 
+    let (nsfw_enabled, set_nsfw_enabled, _) =
+        use_local_storage::<bool, FromToStringCodec>(NSFW_TOGGLE_STORE);
+    let click_nsfw = Action::new(move |()| async move {
+        if !nsfw_enabled() && !show_nsfw_permission() {
+            show_nsfw_permission.set(true);
+        } else {
+            if !nsfw_enabled() && show_nsfw_permission() {
+                show_nsfw_permission.set(false);
+                set_nsfw_enabled(!nsfw_enabled());
+            } else {
+                set_nsfw_enabled(!nsfw_enabled());
+            }
+
+            // using set_href to hard reload the page
+            let window = window();
+            let _ = window
+                .location()
+                .set_href(&format!("/?nsfw={}", nsfw_enabled()));
+        }
+    });
+
     view! {
-        <div class="flex flex-col pointer-events-none flex-nowrap h-full justify-between pt-5 pb-20 px-2 md:px-6 w-full text-white absolute bottom-0 left-0 bg-transparent z-[4]">
-            <div class="flex pointer-events-auto flex-row gap-2 w-9/12 rounded-s-full bg-gradient-to-r from-black/25 via-80% via-black/10 items-center p-2">
-                <div class="w-fit flex">
-                    <a
-                        href=profile_url.clone()
-                        class="w-10 md:w-12 h-10 md:h-12 overflow-clip rounded-full border-primary-600 border-2"
-                    >
-                        <img class="h-full w-full object-cover" src=post.propic_url />
-                    </a>
-                </div>
-                <div class="flex flex-col justify-center min-w-0">
-                    <div class="flex flex-row text-xs md:text-sm lg:text-base gap-1">
-                        <span class="font-semibold truncate">
-                            <a href=profile_url>{post.display_name}</a>
-                        </span>
-                        <span class="font-semibold">"|"</span>
-                        <span class="flex flex-row gap-1 items-center">
-                            <Icon
-                            attr:class="text-sm md:text-base lg:text-lg"
-                                icon=icondata::AiEyeOutlined
-                            />
-                            {post.views}
-                        </span>
+        <div class="flex flex-col pointer-events-none flex-nowrap h-full justify-between pt-5 pb-20 px-[16px] md:px-[16px] w-full text-white absolute bottom-0 left-0 bg-transparent z-[4]">
+            <div class="flex pointer-events-auto flex-row justify-between w-full items-center">
+                <div class="flex flex-row gap-2 w-9/12 rounded-s-full bg-gradient-to-r from-black/25 via-80% via-black/10 items-center p-2">
+                    <div class="w-fit flex">
+                        <a
+                            href=profile_url.clone()
+                            class="w-10 md:w-12 h-10 md:h-12 overflow-clip rounded-full border-primary-600 border-2"
+                        >
+                            <img class="h-full w-full object-cover" src=post.propic_url />
+                        </a>
                     </div>
-                    <ExpandableText description=post.description />
+                    <div class="flex flex-col justify-center min-w-0">
+                        <div class="flex flex-row text-xs md:text-sm lg:text-base gap-1 items-center">
+                            <span class="font-semibold truncate">
+                                <a href=profile_url>{post.display_name}</a>
+                            </span>
+                            <span class="font-semibold">"|"</span>
+                            <span class="flex flex-row gap-1 items-center">
+                                <Icon
+                                attr:class="text-sm md:text-base lg:text-lg"
+                                    icon=icondata::AiEyeOutlined
+                                />
+                                {post.views}
+                            </span>
+                        </div>
+                        <ExpandableText description=post.description />
+                    </div>
                 </div>
+                <button class="pointer-events-auto py-2">
+                    <img
+                    on:click=move |_| { let _ = click_nsfw.dispatch(()); }
+                    src=move || if nsfw_enabled() { "/img/yral/nsfw/nsfw-toggle-on.webp" } else { "/img/yral/nsfw/nsfw-toggle-off.webp" }
+                    class="w-[76px] h-[36px] object-contain"
+                    alt="NSFW Toggle"
+                    />
+                </button>
             </div>
             <div class="flex flex-col gap-2 w-full">
                 <div class="flex flex-col pointer-events-auto gap-6 self-end items-end text-2xl md:text-3xl lg:text-4xl">
@@ -293,6 +329,24 @@ pub fn VideoDetailsOverlay(post: PostDetails) -> impl IntoView {
                 <button on:click=move |_| {click_report.dispatch(());}>
                     <div class="rounded-lg bg-pink-500 p-1">Submit</div>
                 </button>
+            </div>
+        </Modal>
+        <Modal show=show_nsfw_permission>
+            <div class="flex flex-col justify-center items-center gap-4 text-white">
+                <img class="h-32 w-32 object-contain" src="/img/yral/nsfw/nsfw-modal-logo.svg" />
+                <h1 class="text-xl font-bold font-kumbh">Enable NSFW Content?</h1>
+                <span class="text-sm w-50 md:w-80 text-center font-kumbh font-thin">By enabling NSFW content, you confirm that you are 18 years or older and consent to viewing content that may include explicit, sensitive, or mature material. This content is intended for adult audiences only and may not be suitable for all viewers. Viewer discretion is advised.</span>
+                <div class="flex flex-col w-full gap-4 items-center">
+                    <a class="text-[#E2017B] font-bold text-sm text-center font-kumbh" href="/terms-of-service">View NSFW Content Policy</a>
+                </div>
+                <HighlightedButton
+                    classes="w-full mt-4".to_string()
+                    alt_style=false
+                    disabled=false
+                    on_click=move || {click_nsfw.dispatch(());}
+                    >
+                        I Agree
+                </HighlightedButton>
             </div>
         </Modal>
     }.into_any()
