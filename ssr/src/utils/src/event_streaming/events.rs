@@ -325,6 +325,7 @@ impl LikeVideo {
             let view_count = post_details.views;
             let post_id = post_details.post_id;
             let publisher_canister_id = post_details.canister_id;
+            let nsfw_probability = post_details.nsfw_probability;
 
             let (is_connected, _) = account_connected_reader();
             // like_video - analytics
@@ -351,6 +352,7 @@ impl LikeVideo {
                     "share_count": 0,
                     "post_id": post_id,
                     "publisher_canister_id": publisher_canister_id,
+                    "nsfw_probability": nsfw_probability,
                 })
                 .to_string(),
             );
@@ -376,6 +378,7 @@ impl ShareVideo {
             let is_hotornot = post_details.hot_or_not_feed_ranking_score.is_some();
             let view_count = post_details.views;
             let like_count = post_details.likes;
+            let nsfw_probability = post_details.nsfw_probability;
 
             let (is_connected, _) = account_connected_reader();
 
@@ -400,6 +403,7 @@ impl ShareVideo {
                     "view_count": view_count,
                     "like_count": like_count,
                     "share_count": 0,
+                    "nsfw_probability": nsfw_probability,
                 })
                 .to_string(),
             );
