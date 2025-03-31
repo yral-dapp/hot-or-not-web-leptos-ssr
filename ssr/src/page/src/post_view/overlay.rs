@@ -93,7 +93,6 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
         <div class="flex flex-col gap-1 items-center">
             <button
                 on:click=move |_| {like_toggle.dispatch(());}
-                // disabled=move || liking() || liked.with(|l| l.is_none())
             >
                 <img src=icon_name style="width: 1em; height: 1em;" />
             </button>
