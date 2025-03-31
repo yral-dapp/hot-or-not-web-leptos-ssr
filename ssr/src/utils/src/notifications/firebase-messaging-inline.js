@@ -55,7 +55,22 @@ export async function getNotificationPermission() {
 messaging.onMessage((payload) => {
   console.log("Message received. ", payload);
 
-  // TODO: show a notification to the user in the app
+  const { notification: notificationData } = payload;
+
+  // We can modify the notification here
+
+  const { title, body, image } = notificationData;
+  const notificationOptions = {
+    body,
+    icon: image,
+  };
+
+  // Send a notification to the user
+  const notification = new Notification(title, notificationOptions);
+  notification.onerror = (event) => {
+    console.log("Could not send notification");
+    console.log(event);
+  };
 });
 
 // TODO: load the service worker to handle background messages
