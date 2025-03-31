@@ -22,7 +22,7 @@ pub async fn register_device(
             user_identity,
             DeviceRegistrationToken {
                 token: registration_token,
-                device_fingerprint: device_fingerprint,
+                device_fingerprint,
             },
         )
         .await?;
@@ -52,7 +52,7 @@ pub async fn deregister_device(
             user_identity,
             DeviceRegistrationToken {
                 token: registration_token,
-                device_fingerprint: device_fingerprint,
+                device_fingerprint,
             },
         )
         .await?;
