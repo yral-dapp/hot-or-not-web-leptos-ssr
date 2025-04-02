@@ -42,7 +42,7 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
     let initial_liked = (post.liked_by_user, post.likes);
     let canisters = auth_canisters_store();
 
-    let like_toggle: Action<_, _, LocalStorage> = Action::new_unsync(move |&()| {
+    let like_toggle = Action::new(move |&()| {
         let post_details = post.clone();
         let canister_store = canisters;
 
@@ -52,24 +52,22 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
                 return;
             };
 
-            let mut likes_w = likes.write();
-            let mut liked_w = liked.write();
-            if liked_w.unwrap_or_default() {
-                *likes_w -= 1;
-                *liked_w = Some(false);
-            } else {
-                *likes_w += 1;
-                *liked_w = Some(true);
+            let should_like = {
+                let mut liked_w = liked.write();
+                let current = liked_w.unwrap_or_default();
+                *liked_w = Some(!current);
+                !current
+            };
+
+            if should_like {
+                likes.update(|l| *l += 1);
                 LikeVideo.send_event(post_details, likes, canister_store);
+            } else {
+                likes.update(|l| *l -= 1);
             }
-            // this is important to commit the writes to the signal
-            std::mem::drop((likes_w, liked_w));
 
             let individual = canisters.individual_user(post_canister).await;
-            match individual
-                .update_post_toggle_like_status_by_caller(post_id)
-                .await
-            {
+            match send_wrap(individual.update_post_toggle_like_status_by_caller(post_id)).await {
                 Ok(_) => (),
                 Err(e) => {
                     log::warn!("Error toggling like status: {:?}", e);
@@ -96,13 +94,10 @@ fn LikeAndAuthCanLoader(post: PostDetails) -> impl IntoView {
         })
     });
 
-    let liking = like_toggle.pending();
-
     view! {
         <div class="flex flex-col gap-1 items-center">
             <button
                 on:click=move |_| {like_toggle.dispatch(());}
-                disabled=move || liking() || liked.with(|l| l.is_none())
             >
                 <img src=icon_name style="width: 1em; height: 1em;" />
             </button>
