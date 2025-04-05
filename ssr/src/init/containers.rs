@@ -76,6 +76,7 @@ impl TestContainers {
         let metadata = UserMetadata {
             user_canister_id: admin_canister,
             user_name: "".into(),
+            notification_key: None,
         };
 
         metadata_client
