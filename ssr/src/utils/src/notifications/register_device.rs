@@ -34,7 +34,7 @@ pub async fn register_device(
 
 #[cfg(feature = "ga4")]
 #[server]
-pub async fn deregister_device(
+pub async fn unregister_device(
     registration_token: String,
     device_fingerprint: String,
 ) -> Result<(), ServerFnError> {
@@ -57,7 +57,7 @@ pub async fn deregister_device(
         )
         .await?;
 
-    log::info!("Device registered successfully");
+    log::info!("Device unregistered successfully");
 
     Ok(())
 }

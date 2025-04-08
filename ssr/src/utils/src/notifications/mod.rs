@@ -58,3 +58,48 @@ pub async fn register_device_for_principal(principal_id: String) {
             .unwrap();
     }
 }
+
+pub async fn unregister_device_for_principal(principal_id: String) {
+    let permission = match get_notification_permission().await {
+        Ok(permission_js) => permission_js.as_bool().unwrap(),
+        Err(err) => {
+            log::warn!("Failed to get notification permission: {:?}", err);
+            return;
+        }
+    };
+    if !permission {
+        // TODO: show a notification to the user to allow notifications
+        log::warn!("Notification permission not granted");
+        return;
+    }
+
+    let device_fingerprint = match get_device_fingerprint().await {
+        Ok(device_fingerprint_js) => device_fingerprint_js.as_string().unwrap(),
+        Err(err) => {
+            log::warn!("Failed to get device fingerprint: {:?}", err);
+            return;
+        }
+    };
+
+    let token = match get_token().await {
+        Ok(token_js) => token_js.as_string().unwrap(),
+        Err(err) => {
+            log::warn!("Failed to get token: {:?}", err);
+            return;
+        }
+    };
+
+    #[cfg(feature = "ga4")]
+    {
+        use register_device::unregister_device;
+        log::info!(
+            "unregistering device with params: {}, {}, {}",
+            token,
+            principal_id,
+            device_fingerprint
+        );
+        unregister_device(token.clone(), device_fingerprint)
+            .await
+            .unwrap();
+    }
+}

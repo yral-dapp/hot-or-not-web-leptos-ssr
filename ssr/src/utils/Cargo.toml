@@ -173,6 +173,8 @@ release-bin = [
     "firestore",
     "qstash",
     "consts/release-bin",
+    "dep:yral-metadata-client",
+    "dep:yral-metadata-types",
 ]
 release-lib = [
     "hydrate",
