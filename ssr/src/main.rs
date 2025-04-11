@@ -93,9 +93,7 @@ pub async fn leptos_routes_handler(state: State<AppState>, req: Request<AxumBody
     handler(state, req).await.into_response()
 }
 
-#[instrument]
 async fn main_impl() {
-    // simple_logger::init_with_level(log::Level::Debug).expect("couldn't initialize logging");
     dotenv::dotenv().ok();
 
     // Setting get_configuration(None) means we'll be using cargo-leptos's env values
