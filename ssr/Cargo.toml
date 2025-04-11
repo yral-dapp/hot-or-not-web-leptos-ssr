@@ -95,6 +95,12 @@ state.workspace = true
 component.workspace = true
 page.workspace = true
 indexmap.workspace = true
+sentry-tracing = { workspace = true, optional = true }
+tracing-log = { workspace = true, optional = true }
+tracing-subscriber = { workspace = true, optional = true }
+tracing-futures = { workspace = true, optional = true }
+sentry = { workspace = true, optional = true }
+sentry-tower = { workspace = true, optional = true }
 
 
 [build-dependencies]
@@ -152,6 +158,12 @@ ssr = [
     "component/ssr",
     "page/ssr",
     "auth/ssr",
+    "dep:sentry-tracing",
+    "dep:tracing-log",
+    "dep:tracing-subscriber",
+    "dep:tracing-futures",
+    "dep:sentry",
+    "dep:sentry-tower",
 ]
 # Fetch mock referral history instead of history via canister
 mock-referral-history = [

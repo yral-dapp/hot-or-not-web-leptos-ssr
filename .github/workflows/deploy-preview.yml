@@ -17,7 +17,7 @@ jobs:
     if: ${{github.event.pull_request.state == 'closed'}}
     runs-on: ubuntu-latest
     environment:
-      name: pr-${{ github.event.number }}
+      name: pr-env
       url: ${{ steps.deploy.outputs.url }}
 
     steps:
@@ -37,7 +37,7 @@ jobs:
     # Create a GitHub deployment environment per staging app so it shows up
     # in the pull request UI.
     environment:
-      name: pr-${{ github.event.number }}
+      name: pr-env
       url: ${{ steps.deploy.outputs.url }}
 
     steps:

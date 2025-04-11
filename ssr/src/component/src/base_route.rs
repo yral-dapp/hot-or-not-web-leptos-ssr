@@ -114,12 +114,36 @@ fn CtxProvider(children: ChildrenFn) -> impl IntoView {
                 let cans = try_or_redirect!(maybe_cans);
                 let user_canister = cans.user_canister();
                 let user_principal = cans.user_principal();
+
                 Effect::new(move |_| {
                     if temp_id.is_some() {
                         set_logged_in(false);
+                        let _ = js_sys::eval(
+                            r#"
+                            window.Sentry &&
+                                        Sentry.onLoad(function () {{
+                                               Sentry.setUser(null);
+                                               Sentry.setTag("user_canister", null);
+                                        }});
+                            "#,
+                        );
                     }
                     set_user_canister_id(Some(user_canister));
                     set_user_principal(Some(user_principal));
+                    let user_principal_str = user_principal.to_string();
+                    let user_canister_str = user_canister.to_string();
+                    let _ = js_sys::eval(&format!(
+                        r#"
+                        window.Sentry &&
+                                    Sentry.onLoad(function () {{
+                                           Sentry.setUser({{
+                                                id: "{user_principal_str}",
+                                           }});
+
+                                           Sentry.setTag("user_canister", "{user_canister_str}");
+                                    }});
+                        "#,
+                    ));
                 });
 
                 // We need to perform this cleanup in case the user's cookie expired

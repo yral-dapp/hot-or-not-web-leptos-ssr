@@ -29,3 +29,4 @@ ICPUMPFUN_GOOGLE_CLIENT_ID = "804814798298-158b70qepftmlj83aad55thihuq62m1q.apps
 ICPUMPFUN_GOOGLE_REDIRECT_URL = "https://icpump.fun/auth/google_redirect"
 PUMPDUMP_GOOGLE_CLIENT_ID = "804814798298-03b84c357eorb2obv3954n9fvuf2jrgu.apps.googleusercontent.com"
 PUMPDUMP_GOOGLE_REDIRECT_URL = "https://pumpdump.wtf/auth/google_redirect"
+SENTRY_ENVIRONMENT = "preview"
