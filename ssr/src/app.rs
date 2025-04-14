@@ -174,9 +174,12 @@ pub fn App() -> impl IntoView {
                 "#}
                 </Script>
             </Show>
+            <Script
+            async_="true"
+            src="https://sentry.yral.com/js-sdk-loader/3f7d672f8461961bd7b6bec57acf7f18.min.js"
+            crossorigin="anonymous"
+            ></Script>
 
-            // <Script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js"></Script>
-            // <Script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js"></Script>
             <Router>
             <main class="bg-black" id="body">
                 <Routes fallback=|| view! { <NotFound/> }.into_view()>

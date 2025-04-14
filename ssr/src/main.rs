@@ -7,7 +7,11 @@ use axum::{
 };
 use axum::{routing::get, Router};
 use hot_or_not_web_leptos_ssr::fallback::file_and_error_handler;
+use sentry_tower::{NewSentryLayer, SentryHttpLayer};
 use state::server::AppState;
+use tower::ServiceBuilder;
+use tracing::instrument;
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use utils::host::is_host_or_origin_from_preview_domain;
 
 use hot_or_not_web_leptos_ssr::app::shell;
@@ -19,6 +23,7 @@ use leptos_axum::handle_server_fns_with_context;
 use leptos_axum::{generate_route_list, LeptosRoutes};
 use tower_http::cors::{AllowOrigin, CorsLayer};
 
+#[instrument(skip(app_state))]
 pub async fn server_fn_handler(
     State(app_state): State<AppState>,
     path: Path<String>,
@@ -55,6 +60,7 @@ pub async fn server_fn_handler(
     .await
 }
 
+#[instrument(skip(state))]
 pub async fn leptos_routes_handler(state: State<AppState>, req: Request<AxumBody>) -> Response {
     let State(app_state) = state.clone();
     let handler = leptos_axum::render_route_with_context(
@@ -87,9 +93,7 @@ pub async fn leptos_routes_handler(state: State<AppState>, req: Request<AxumBody
     handler(state, req).await.into_response()
 }
 
-#[tokio::main]
-async fn main() {
-    simple_logger::init_with_level(log::Level::Debug).expect("couldn't initialize logging");
+async fn main_impl() {
     dotenv::dotenv().ok();
 
     // Setting get_configuration(None) means we'll be using cargo-leptos's env values
@@ -138,6 +142,10 @@ async fn main() {
         }
     };
 
+    let sentry_tower_layer = ServiceBuilder::new()
+        .layer(NewSentryLayer::new_from_top())
+        .layer(SentryHttpLayer::with_transaction());
+
     // build our application with a route
     let app = Router::new()
         .route(
@@ -159,6 +167,7 @@ async fn main() {
         )
         .leptos_routes_with_handler(routes, get(leptos_routes_handler))
         .fallback(file_and_error_handler)
+        .layer(sentry_tower_layer)
         .with_state(res.app_state);
 
     // run our app with hyper
@@ -169,4 +178,40 @@ async fn main() {
         .with_graceful_shutdown(terminate)
         .await
         .unwrap();
+}
+
+fn main() {
+    let _guard = sentry::init((
+        "https://385626ba180040d470df02ac5ba1c6f4@sentry.yral.com/4",
+        sentry::ClientOptions {
+            release: sentry::release_name!(),
+            debug: true,
+            traces_sample_rate: 0.25,
+            ..Default::default()
+        },
+    ));
+
+    tracing_subscriber::registry()
+        .with(
+            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
+                // axum logs rejections from built-in extractors with the `axum::rejection`
+                // target, at `TRACE` level. `axum::rejection=trace` enables showing those events
+                format!(
+                    "{}=debug,tower_http=debug,axum::rejection=trace",
+                    env!("CARGO_CRATE_NAME")
+                )
+                .into()
+            }),
+        )
+        .with(tracing_subscriber::fmt::layer())
+        .with(sentry_tracing::layer())
+        .init();
+
+    tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .build()
+        .unwrap()
+        .block_on(async {
+            main_impl().await;
+        });
 }
