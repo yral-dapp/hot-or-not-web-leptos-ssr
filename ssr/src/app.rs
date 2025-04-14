@@ -27,6 +27,7 @@ use page::{
     },
     upload::UploadPostPage,
     wallet::Wallet,
+    terms_ios::TermsIos,
 };
 use state::app_state::AppState;
 
@@ -216,6 +217,7 @@ pub fn App() -> impl IntoView {
                         <Route path=path!("/pnd/withdraw") view=withdrawal::PndWithdrawal />
                         <Route path=path!("/pnd/withdraw/success") view=withdrawal::result::Success />
                         <Route path=path!("/pnd/withdraw/failure") view=withdrawal::result::Failure />
+                        <Route path=path!("/terms-ios") view=TermsIos/>
                         // {
                         //     #[cfg(any(feature = "local-bin", feature = "local-lib"))]
                         //     view! {
