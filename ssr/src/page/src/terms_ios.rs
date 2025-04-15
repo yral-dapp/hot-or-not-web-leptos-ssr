@@ -3,27 +3,33 @@ use leptos::prelude::*;
 use leptos_meta::*;
 use state::app_state::AppState;
 
-fn terms_section<'a>(title: &'a str, content: impl IntoView + 'a) -> impl IntoView + 'a {
+fn terms_section<T: IntoView>(title: &str, content: T) -> impl IntoView + use<'_, T> {
     view! {
-        <div class="term-section">
-            <div class="term-title">{title}</div>
+        <div class="term-section mb-6">
+            <div class="term-title text-sm font-semibold mb-3">{title}</div>
             <div class="term-content">{content}</div>
         </div>
     }
 }
 
-fn bullet_list<'a>(items: Vec<&'a str>) -> impl IntoView + 'a {
+fn bullet_list(items: Vec<&str>) -> impl IntoView + '_ {
     let list_items = items
         .into_iter()
         .map(|item| {
-            view! { <li>{item}</li> }
+            view! { <li class="mb-2">{item}</li> }
         })
         .collect_view();
 
     view! {
-        <ul class="term-list">
+        <ul class="list-disc pl-6 py-2 text-xs">
             {list_items}
         </ul>
+    }
+}
+
+fn text_paragraph(content: &str) -> impl IntoView + use<'_> {
+    view! {
+        <p class={"mb-3 text-xs"}>{content}</p>
     }
 }
 
@@ -48,58 +54,8 @@ pub fn TermsIos() -> impl IntoView {
         "You may not create an account if you are legally prohibited from using our services under local or international laws."
     ];
 
-    // CSS styles embedded in the HTML
-    let styles = r#"
-        <style>
-            .terms-container {
-                padding: 0 16px;
-                color: white;
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-            }
-            .terms-header {
-                text-align: center;
-                margin-bottom: 24px;
-            }
-            .terms-meta {
-                font-size: 14px;
-                margin-bottom: 16px;
-                opacity: 0.8;
-            }
-            .term-section {
-                margin-bottom: 24px;
-            }
-            .term-title {
-                font-size: 18px;
-                font-weight: 600;
-                margin-bottom: 12px;
-            }
-            .term-content {
-                font-size: 14px;
-                line-height: 1.5;
-                white-space: pre-line;
-            }
-            .term-list {
-                list-style-type: disc;
-                padding-left: 24px;
-                margin: 12px 0;
-            }
-            .term-list li {
-                margin-bottom: 8px;
-                font-size: 14px;
-            }
-            .term-paragraph {
-                margin-bottom: 12px;
-            }
-            .term-subheading {
-                font-weight: 600;
-                margin: 16px 0 8px 0;
-            }
-        </style>
-    "#;
-
     view! {
         <Title text=page_title />
-        <Raw html=styles />
 
         <div class="w-screen min-h-screen bg-black pt-4 pb-12 text-white flex flex-col items-center">
             <TitleText justify_center=false>
@@ -110,27 +66,27 @@ pub fn TermsIos() -> impl IntoView {
                 </div>
             </TitleText>
 
-            <div class="terms-container w-full max-w-3xl py-8">
-                <div class="terms-header">
+            <div class="px-8 flex h-full w-full flex-col space-y-8 overflow-hidden overflow-y-auto py-16">
+                <div class="text-center mb-6">
                     <h1 class="text-xl font-bold mb-2">Terms of Use | Yral</h1>
-                    <div class="terms-meta">
+                    <div class="text-sm opacity-80 mb-4">
                         <p><strong>Effective Date:</strong> 13th July 2023</p>
                         <p><strong>Last Updated:</strong> 11th April 2025</p>
                     </div>
                 </div>
 
-                <div class="term-content">{intro_content}</div>
+                <div class="text-xs whitespace-pre-line mb-6">{intro_content}</div>
 
                 {terms_section("1. Your Account & Registration", view! {
                     <div>
-                        <p class="term-paragraph">{account_text}</p>
+                        <p class="mb-3 text-xs">{account_text}</p>
                         {bullet_list(account_bullets)}
                     </div>
                 })}
 
                 {terms_section("2. Community Guidelines on Yral Content", view! {
                     <div>
-                        <p class="term-paragraph">
+                        <p class="mb-3 text-xs">
                             "Yral is a platform for user-generated video content. By posting any content on or through our Services, you hereby grant us a non-exclusive, fully paid and royalty-free, worldwide, limited licence to display such content as felt appropriate, in any media formats through any media channels, and delete such content solely for the purpose of operating and improving the Yral platform. We do not claim any ownership or modification or derivative rights in any Content or to the underlying works in the content that you post on or through our Services. You agree that your use of the Services does not grant you any right to any compensation or share in revenue or value. To the extent it's necessary, when you generate content, you also grant us, our affiliates, and our business partners the unrestricted, worldwide, perpetual right and licence to use your name, likeness, and voice. You will not be entitled to any compensation from us, our affiliates, or our business partners if your name, likeness, or voice is conveyed through the Services. You represent, warrant and covenant, as applicable, that:"
                         </p>
 
@@ -141,7 +97,7 @@ pub fn TermsIos() -> impl IntoView {
                             "Your actions on Yral shall not be in violation of applicable law or regulation. We are not responsible for any Content posted by you or any consequences thereof."
                         ])}
 
-                        <p class="term-paragraph">You agree that you shall not host, display, upload, modify, publish, transmit, store, update or share any information that: -</p>
+                        <p class="mb-3 text-xs">"You agree that you shall not host, display, upload, modify, publish, transmit, store, update or share any information that: "</p>
 
                         {bullet_list(vec![
                             "Belongs to another person and to which you do not have any right to;",
@@ -158,15 +114,15 @@ pub fn TermsIos() -> impl IntoView {
                             "Is patently false and untrue, and is written or published in any form, with the intent to mislead or harass a person, entity or agency for financial gain or to cause any injury to any person."
                         ])}
 
-                        <p class="term-paragraph">
-                            "You acknowledge and agree that the content uploaded is the sole responsibility of the user who has uploaded such content and the views expressed are their own. We are not responsible for the content posted by you. You shall be solely responsible for the content posted, shared, modified, uploaded, transmitted, updated and hosted by you. You agree that your use of our Services will conform to the community guidelines as defined by the App. You agree that in case of non-compliance with applicable laws, or with these terms and conditions, or with the Yral privacy policy or with our community guidelines, we have the right to terminate your access or usage rights to Yral immediately and remove non-compliant content from Yral. You hereby agree that you will never use Yral in violation of any applicable law. If any violation of these terms is brought to our actual knowledge by an affected person, we shall act within twenty-four hours and where applicable, work with the user or owner of such information to delete/disable such information/content that is in contravention of these terms. We will not intimate you if any of the content posted by you is taken down / deleted or your account is disabled pursuant to the above. We will preserve such information and associated records for at least one hundred and eighty days for investigation purposes. Please contact the grievance officer whose details are provided in the last section of these terms, in case of any violation or grievances."
+                        <p class="mb-3 text-xs">
+                            You acknowledge and agree that the content uploaded is the sole responsibility of the user who has uploaded such content and the views expressed are their own. We are not responsible for the content posted by you. You shall be solely responsible for the content posted, shared, modified, uploaded, transmitted, updated and hosted by you. You agree that your use of our Services will conform to the community guidelines as defined by the App. You agree that in case of non-compliance with applicable laws, or with these terms and conditions, or with the Yral privacy policy or with our community guidelines, we have the right to terminate your access or usage rights to Yral immediately and remove non-compliant content from Yral. You hereby agree that you will never use Yral in violation of any applicable law. If any violation of these terms is brought to our actual knowledge by an affected person, we shall act within twenty-four hours and where applicable, work with the user or owner of such information to delete/disable such information/content that is in contravention of these terms. We will not intimate you if any of the content posted by you is taken down / deleted or your account is disabled pursuant to the above. We will preserve such information and associated records for at least one hundred and eighty days for investigation purposes. Please contact the grievance officer whose details are provided in the last section of these terms, in case of any violation or grievances.
                         </p>
                     </div>
                 })}
 
                 {terms_section("3. Community Guidelines", view! {
                     <div>
-                        <p class="term-paragraph">"You agree to follow Yral's Community Guidelines, which prohibit any sort of objectionable content that is:"</p>
+                        <p class="mb-3 text-xs">"You agree to follow Yral's Community Guidelines, which prohibit any sort of objectionable content that is:"</p>
 
                         {bullet_list(vec![
                             "Defamatory, discriminatory, or mean-spirited content, including references or commentary about religion, race, sexual orientation, gender, national/ethnic origin, or other targeted groups—particularly if the app could humiliate, intimidate, or harm a targeted individual or group. Professional political satirists and humorists are exempt from this requirement.",
@@ -178,33 +134,33 @@ pub fn TermsIos() -> impl IntoView {
                             "Harmful content that attempts to profit from recent or current events such as violent conflicts, terrorist attacks, or epidemics."
                         ])}
 
-                        <p class="term-paragraph">Violating these guidelines will result in content removal, account restrictions, or permanent suspension.</p>
+                        <p class="mb-3 text-xs">Violating these guidelines will result in content removal, account restrictions, or permanent suspension.</p>
                     </div>
                 })}
 
                 {terms_section("4. Content Moderation & Safety", view! {
                     <div>
-                        <p class="term-paragraph">
-                            "Yral uses a mix of AI enabled automated filters and human moderation to detect and manage objectionable content. Our automated filters automatically delete Not Safe For Work (NSFW) content containing nudity, pornography, or other harmful content that violates our community guidelines. Further, users have the ability to report NSFW content while using the App. Users are encouraged to report NSFW content that our automated filters miss. Such reports are prioritized by our moderation team."
+                        <p class="mb-3 text-xs">
+                            Yral uses a mix of AI enabled automated filters and human moderation to detect and manage objectionable content. Our automated filters automatically delete Not Safe For Work (NSFW) content containing nudity, pornography, or other harmful content that violates our community guidelines. Further, users have the ability to report NSFW content while using the App. Users are encouraged to report NSFW content that our automated filters miss. Such reports are prioritized by our moderation team.
                         </p>
 
-                        <p class="term-paragraph">We have a dedicated team to review all valid reports within 24 hours and take appropriate action, including:</p>
+                        <p class="mb-3 text-xs">We have a dedicated team to review all valid reports within 24 hours and take appropriate action, including:</p>
 
                         {bullet_list(vec![
                             "Removing the reported content",
                             "Temporarily or permanently banning the offending user"
                         ])}
 
-                        <p class="term-paragraph">
-                            "To ensure platform integrity and a safe environment, Yral takes violations of community standards very seriously and will block abusive users immediately and indefinitely. We aim to be transparent with moderation decisions and provide users with feedback when appropriate."
+                        <p class="mb-3 text-xs">
+                            To ensure platform integrity and a safe environment, Yral takes violations of community standards very seriously and will block abusive users immediately and indefinitely. We aim to be transparent with moderation decisions and provide users with feedback when appropriate.
                         </p>
                     </div>
                 })}
 
                 {terms_section("5. NSFW Content Policy", view! {
                     <div>
-                        <p class="term-paragraph">
-                            "By enabling the NSFW (Not Safe for Work) content toggle, you acknowledge and consent to viewing adult-oriented content within your feed. This content may include themes that are intended for mature audiences. You agree that:"
+                        <p class="mb-3 text-xs">
+                            By enabling the NSFW (Not Safe for Work) content toggle, you acknowledge and consent to viewing adult-oriented content within your feed. This content may include themes that are intended for mature audiences. You agree that:
                         </p>
 
                         {bullet_list(vec![
@@ -217,8 +173,8 @@ pub fn TermsIos() -> impl IntoView {
 
                 {terms_section("6. Blocking Other Users", view! {
                     <div>
-                        <p class="term-paragraph">
-                            "You may block, report, or both block and report other users at any time if you experience inconvenience, discomfort, or simply wish to do so. When blocked:"
+                        <p class="mb-3 text-xs">
+                            You may block, report, or both block and report other users at any time if you experience inconvenience, discomfort, or simply wish to do so. When blocked:
                         </p>
 
                         {bullet_list(vec![
@@ -227,36 +183,36 @@ pub fn TermsIos() -> impl IntoView {
                             "They are not notified of the block"
                         ])}
 
-                        <p class="term-paragraph">This is a key part of maintaining your control over your in-app experience.</p>
+                        <p class="mb-3 text-xs">This is a key part of maintaining your control over your in-app experience.</p>
                     </div>
                 })}
 
                 {terms_section("7. Use License (EULA Equivalent)", view! {
                     <div>
-                        <p class="term-paragraph">
-                            "We grant you a limited, non-exclusive, non-transferable, revocable license to use the Yral mobile and web application (the \"App\") solely for your personal, non-commercial use on any Apple-branded device that you own or control, and as permitted by the Usage Rules set forth in the Apple App Store Terms of Service. These Usage Rules govern how apps can be used on Apple devices, including limitations on sharing, duplication, and access based on your Apple ID and device ownership."
+                        <p class="mb-3 text-xs">
+                            We grant you a limited, non-exclusive, non-transferable, revocable license to use the Yral mobile and web application (the "App") solely for your personal, non-commercial use on any Apple-branded device that you own or control, and as permitted by the Usage Rules set forth in the Apple App Store Terms of Service. These Usage Rules govern how apps can be used on Apple devices, including limitations on sharing, duplication, and access based on your Apple ID and device ownership.
                         </p>
 
-                        <p class="term-paragraph">You agree not to:</p>
+                        <p class="mb-3 text-xs">You agree not to:</p>
 
-                        <p class="term-subheading">Technical Restrictions</p>
+                        <p class="mb-2 text-xs font-medium">Technical Restrictions</p>
                         {bullet_list(vec![
                             "Reverse-engineer, decompile, disassemble, modify, translate, or attempt to discover the source code or underlying ideas or algorithms of the App;",
                             "Interfere with or disrupt the App, its servers, or networks connected to the App;",
                             "Upload, post, or transmit any viruses, worms, defects, Trojan horses, or any malicious code through the App;"
                         ])}
 
-                        <p class="term-subheading">Commercial Misuse</p>
+                        <p class="mb-2 text-xs font-medium">Commercial Misuse</p>
                         {bullet_list(vec![
                             "Reproduce, redistribute, sublicense, lease, rent, publish, sell, or exploit the App or any portion of the App in any way;"
                         ])}
 
-                        <p class="term-subheading">User Data and Privacy</p>
+                        <p class="mb-2 text-xs font-medium">User Data and Privacy</p>
                         {bullet_list(vec![
                             "Access or attempt to access data of other users without authorization."
                         ])}
 
-                        <p class="term-paragraph">You acknowledge and agree that:</p>
+                        <p class="mb-3 text-xs">You acknowledge and agree that:</p>
                         {bullet_list(vec![
                             "The license is granted by HotorNot (HON) GmbH (\"we\", \"our\", or \"us\"), and not by Apple.",
                             "We are solely responsible for the App and the content moderation therein.",
@@ -267,7 +223,7 @@ pub fn TermsIos() -> impl IntoView {
                             "Apple and its subsidiaries are third-party beneficiaries of this EULA. Upon your acceptance of this agreement, Apple will have the right (and will be deemed to have accepted the right) to enforce these Terms against you as a third-party beneficiary."
                         ])}
 
-                        <p class="term-paragraph">
+                        <p class="mb-3 text-xs">
                             "This license is effective until terminated by you or by us. You may terminate the license at any time by uninstalling the App or deleting your account through the App's settings. Your rights under this license will also terminate automatically without notice if you fail to comply with any of its terms. Upon termination, you must cease all use of the App and destroy all copies, full or partial, of the App."
                         </p>
                     </div>
@@ -275,28 +231,30 @@ pub fn TermsIos() -> impl IntoView {
 
                 {terms_section("8. Content Removal and Disabling or Terminating Your Account", view! {
                     <div>
-                        <p class="term-paragraph">We may remove any content, suspend or terminate your account without notice if:</p>
+                        <p class="mb-3 text-xs">We may remove any content, suspend or terminate your account without notice if:</p>
                         {bullet_list(vec![
                             "You breach these Terms",
                             "You violate laws or community accepted standards",
                             "Your behaviour puts other users at risk"
                         ])}
 
-                        <p class="term-paragraph">"You may delete your account at any time via the app's settings."</p>
+                        <p class="mb-3 text-xs">"You may delete your account at any time via the app's settings."</p>
                     </div>
                 })}
 
                 {terms_section("9. Privacy Policy", view! {
                     <div>
-                        <p class="term-paragraph">
-                            "We take your privacy seriously. Please refer to Privacy Policy for detailed information on the data we collect, how we use it, your rights, and how to exercise them. You can access the full policy from the menu."
+                        <p class="mb-3 text-xs">
+                            "We take your privacy seriously. Please refer to "
+                            <a href="/privacy-policy" class="underline text-blue-400">Privacy Policy</a>
+                            "for detailed information on the data we collect, how we use it, your rights, and how to exercise them. You can access the full policy from the menu."
                         </p>
                     </div>
                 })}
 
                 {terms_section("10. Disclaimers", view! {
                     <div>
-                        <p class="term-paragraph">
+                        <p class="mb-3 text-xs">
                             "To the maximum extent permitted by applicable law, the App is licensed 'as is,' and you use it at your sole risk. The developer disclaims all warranties, express or implied. We do not guarantee:"
                         </p>
 
@@ -306,13 +264,13 @@ pub fn TermsIos() -> impl IntoView {
                             "That content will remain available or accessible."
                         ])}
 
-                        <p class="term-paragraph">Use Yral at your own risk.</p>
+                        <p class="mb-3 text-xs">Use Yral at your own risk.</p>
                     </div>
                 })}
 
                 {terms_section("11. Limitation of Liability", view! {
                     <div>
-                        <p class="term-paragraph">
+                        <p class="mb-3 text-xs">
                             "We shall not be liable to you for any loss or damages or claims including but not limited to the following:"
                         </p>
 
@@ -325,15 +283,15 @@ pub fn TermsIos() -> impl IntoView {
                             "Any damage incurred as a result of the actions of another user."
                         ])}
 
-                        <p class="term-paragraph">
-                            "Any dispute that may arise between you and any third party arising from your use of the services shall be only between you and a third party and you release us and our affiliates from any such claims and damages connected with such disputes."
+                        <p class="mb-3 text-xs ">
+                            Any dispute that may arise between you and any third party arising from your use of the services shall be only between you and a third party and you release us and our affiliates from any such claims and damages connected with such disputes.
                         </p>
                     </div>
                 })}
 
-                {terms_section("12. Changes to These Terms", view! {
+                {terms_section("12. Changes to These Terms ", view! {
                     <div>
-                        <p class="term-paragraph">
+                        <p class="mb-3 text-xs ">
                             "We may update these Terms from time to time. We'll notify you of major changes through the App or email. Continued use of the App after changes means you accept the revised Terms."
                         </p>
                     </div>
@@ -341,8 +299,8 @@ pub fn TermsIos() -> impl IntoView {
 
                 {terms_section("13. Contact Us", view! {
                     <div>
-                        <p class="term-paragraph">Have questions or concerns?</p>
-                        <p class="term-paragraph">Email us at: support@yral.com</p>
+                        {text_paragraph("Have questions or concerns?")}
+                        {text_paragraph("📧 Email us at: support@yral.com")}
                     </div>
                 })}
             </div>
