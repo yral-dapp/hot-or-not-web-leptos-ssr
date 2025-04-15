@@ -34,6 +34,7 @@ use leptos::prelude::*;
 use leptos_meta::*;
 use leptos_router::hooks::use_location;
 use leptos_router::{components::*, path, MatchNestedRoutes};
+use page::terms_ios::TermsIos;
 use state::{audio_state::AudioState, content_seed_client::ContentSeedClient};
 use utils::event_streaming::events::HistoryCtx;
 use utils::event_streaming::EventHistory;
@@ -216,6 +217,7 @@ pub fn App() -> impl IntoView {
                         <Route path=path!("/pnd/withdraw") view=withdrawal::PndWithdrawal />
                         <Route path=path!("/pnd/withdraw/success") view=withdrawal::result::Success />
                         <Route path=path!("/pnd/withdraw/failure") view=withdrawal::result::Failure />
+                        <Route path=path!("/terms-ios") view=TermsIos/>
                         // {
                         //     #[cfg(any(feature = "local-bin", feature = "local-lib"))]
                         //     view! {
