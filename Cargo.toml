@@ -132,14 +132,12 @@ yral-canisters-common = { git = "https://github.com/yral-dapp/yral-common.git", 
 pulldown-cmark = "0.12.1"
 ic-certification = "2.6.0"
 ciborium = "0.2.2"
-yral-metadata-client = { git = "https://github.com/yral-dapp/yral-metadata", rev = "56e3f1f1f5f452673bee17739520c800c1264295" }
-yral-metadata-types = { git = "https://github.com/yral-dapp/yral-metadata", rev = "56e3f1f1f5f452673bee17739520c800c1264295" }
-yral-pump-n-dump-common = { git = "https://github.com/yral-dapp/yral-common", features = [
-    "client",
-], rev = "209963155b549a5ddfa9fb42403ddc0541ba24be", version = "0.1.0" }
-# yral-pump-n-dump-common = { path = "../yral-common/pump-n-dump-common", features = [
-#     "client",
-# ], version = "0.1.0" }
+# yral-metadata-client = { git = "https://github.com/yral-dapp/yral-metadata", rev = "56e3f1f1f5f452673bee17739520c800c1264295" }
+# yral-metadata-client = { path = "../yral-metadata/client" }
+yral-metadata-client = { git = "https://github.com/yral-dapp/yral-metadata", branch = "geet/notifications" }
+# yral-metadata-types = { git = "https://github.com/yral-dapp/yral-metadata", rev = "56e3f1f1f5f452673bee17739520c800c1264295" }
+yral-metadata-types = { git = "https://github.com/yral-dapp/yral-metadata", branch = "geet/notifications" }
+yral-pump-n-dump-common = { git = "https://github.com/yral-dapp/yral-common", features = ["client"], rev = "209963155b549a5ddfa9fb42403ddc0541ba24be", version = "0.1.0" }
 uuid = { version = "1.11.0", features = ["v4", "js"] }
 regex = { version = "1.11.1" }
 tonic-build = { version = "0.12.0", default-features = false, features = [

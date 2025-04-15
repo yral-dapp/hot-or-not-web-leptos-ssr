@@ -11,7 +11,7 @@ use leptos_use::storage::use_local_storage;
 use leptos_use::use_event_listener;
 use utils::event_streaming::events::account_connected_reader;
 use utils::host::{show_cdao_page, show_pnd_page};
-use utils::notifications::get_token_for_principal;
+use utils::notifications::{register_device_for_principal, unregister_device_for_principal};
 use yral_canisters_common::utils::profile::ProfileDetails;
 
 #[component]
@@ -125,12 +125,16 @@ fn EnableNotifications(user_details: ProfileDetails) -> impl IntoView {
     let toggle_ref = NodeRef::<Input>::new();
 
     let on_token_click: Action<(), (), LocalStorage> = Action::new_unsync(move |()| async move {
-        get_token_for_principal(user_details.principal.to_string()).await;
+        if notifs_enabled.get() {
+            unregister_device_for_principal(user_details.principal.to_string()).await;
+        } else {
+            register_device_for_principal(user_details.principal.to_string()).await;
+        }
     });
 
     _ = use_event_listener(toggle_ref, ev::change, move |_| {
         on_token_click.dispatch(());
-        set_notifs_enabled(true)
+        set_notifs_enabled(!notifs_enabled.get());
     });
 
     view! {
