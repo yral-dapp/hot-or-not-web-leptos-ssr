@@ -94,5 +94,5 @@ jobs:
     if: ${{ github.event.pull_request.state == 'open'}}
     secrets: inherit
     with:
-      preview_url: https://pr-${{github.event.number}}-yral-dapp-hot-or-not-web-leptos-ssr.fly.dev
+      preview_url: https://pr-${{github.event.number}}-${{github.repository_owner}}-hot-or-not-web-leptos-ssr.fly.dev
       build_name: PR-${{github.event.number}}-commit-${{github.sha}}-attempt-${{github.run_attempt}}
