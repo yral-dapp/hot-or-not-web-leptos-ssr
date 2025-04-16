@@ -57,7 +57,7 @@ jobs:
       - uses: superfly/flyctl-actions/setup-flyctl@master
       - name: Set secret tokens
         run: |
-          APP_NAME="pr-${{github.event.number}}-yral-dapp-hot-or-not-web-leptos-ssr"
+          APP_NAME="pr-${{github.event.number}}-dolr-ai-hot-or-not-web-leptos-ssr"
           flyctl secrets set CF_TOKEN="$CF_TOKEN" --app "$APP_NAME" --stage
           flyctl secrets set BACKEND_ADMIN_IDENTITY="$BACKEND_ADMIN_IDENTITY" --app "$APP_NAME" --stage
           flyctl secrets set COOKIE_KEY="$COOKIE_KEY" --app "$APP_NAME" --stage
