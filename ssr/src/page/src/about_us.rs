@@ -41,19 +41,19 @@ pub fn AboutUs() -> impl IntoView {
                     <div class="text-sm font-semibold">Our Leadership</div>
                     <div class="text-xs">
                         <div class="flex flex-col space-y-4">
-                            <div class="bg-gray-900 rounded-lg p-4">
+                            <div class="bg-black rounded-lg p-4">
                                 <div class="font-semibold">Rishi Chadha</div>
                                 <div class="text-gray-400">CEO & Co-Founder</div>
                                 <div class="mt-2">A serial entrepreneur with global experience across 35+ countries, leading our vision for decentralized social media.</div>
                             </div>
 
-                            <div class="bg-gray-900 rounded-lg p-4">
+                            <div class="bg-black rounded-lg p-4">
                                 <div class="font-semibold">Saikat Das</div>
                                 <div class="text-gray-400">CTO & Co-Founder</div>
                                 <div class="mt-2">Tech innovator specializing in Rust programming, blockchain, and AI, driving our technological advancement.</div>
                             </div>
 
-                            <div class="bg-gray-900 rounded-lg p-4">
+                            <div class="bg-black rounded-lg p-4">
                                 <div class="font-semibold">Utkarsh Goyal</div>
                                 <div class="text-gray-400">CFO & Co-Founder</div>
                                 <div class="mt-2">Financial strategist with an MBA, overseeing operations and ensuring sustainable growth.</div>
