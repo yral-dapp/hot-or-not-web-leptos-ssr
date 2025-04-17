@@ -31,7 +31,10 @@ struct UploadParams {
 }
 
 #[component]
-fn PreUploadView(trigger_upload: WriteSignal<Option<UploadParams>, LocalStorage>) -> impl IntoView {
+fn PreUploadView(
+    trigger_upload: WriteSignal<Option<UploadParams>, LocalStorage>,
+    uid: RwSignal<String, LocalStorage>,
+) -> impl IntoView {
     let description_err = RwSignal::new(String::new());
     let desc_err_memo = Memo::new(move |_| description_err());
     let hashtags = RwSignal::new(Vec::new());
@@ -55,7 +58,6 @@ fn PreUploadView(trigger_upload: WriteSignal<Option<UploadParams>, LocalStorage>
     let enable_hot_or_not = NodeRef::<Input>::new();
     let is_nsfw = NodeRef::<Input>::new();
     let canister_store = auth_canisters_store();
-
     VideoUploadInitiated.send_event();
 
     let on_submit = move || {
@@ -103,7 +105,7 @@ fn PreUploadView(trigger_upload: WriteSignal<Option<UploadParams>, LocalStorage>
     });
 
     view! {
-        <PreVideoUpload file_blob=file_blob.write_only() />
+        <PreVideoUpload file_blob=file_blob uid=uid />
         <div class="flex flex-col gap-4 lg:basis-7/12">
             <div class="flex flex-col gap-y-2">
                 <Show when=move || { description_err.with(| description_err | ! description_err.is_empty()) }>
@@ -166,6 +168,7 @@ pub fn CreatorDaoCreatePage() -> impl IntoView {
 #[component]
 pub fn YralUploadPostPage() -> impl IntoView {
     let trigger_upload = RwSignal::new_local(None::<UploadParams>);
+    let uid = RwSignal::new_local(String::new());
 
     view! {
         <Title text="YRAL - Upload" />
@@ -179,11 +182,11 @@ pub fn YralUploadPostPage() -> impl IntoView {
                 <Show
                     when=move || { trigger_upload.with(| trigger_upload | trigger_upload.is_some()) }
                     fallback=move || {
-                        view! { <PreUploadView trigger_upload=trigger_upload.write_only() /> }
+                        view! { <PreUploadView trigger_upload=trigger_upload.write_only() uid=uid /> }
                     }
                 >
 
-                    <VideoUploader params=trigger_upload.get_untracked().unwrap() />
+                    <VideoUploader params=trigger_upload.get_untracked().unwrap() uid=uid />
                 </Show>
             </div>
         </div>
