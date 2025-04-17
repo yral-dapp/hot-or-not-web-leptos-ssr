@@ -6,7 +6,7 @@ use leptos::ev;
 use leptos::{html::Video, prelude::*};
 use leptos_use::storage::use_local_storage;
 use leptos_use::use_event_listener;
-use state::canisters::unauth_canisters;
+use state::admin_canisters::admin_canisters;
 use utils::send_wrap;
 use yral_canisters_client::individual_user_template::PostViewDetailsFromFrontend;
 
@@ -145,7 +145,7 @@ pub fn VideoView(
             let post_for_view = post_for_view;
 
             send_wrap(async move {
-                let canisters = unauth_canisters();
+                let canisters = admin_canisters();
 
                 let payload = match percentage_watched.cmp(&95) {
                     Ordering::Less => {
@@ -161,7 +161,7 @@ pub fn VideoView(
                 let post_id = post.as_ref().map(|p| p.post_id).unwrap();
                 let canister_id = post.as_ref().map(|p| p.canister_id).unwrap();
                 let send_view_res = canisters
-                    .individual_user(canister_id)
+                    .individual_user_for(canister_id)
                     .await
                     .update_post_add_view_details(post_id, payload)
                     .await;
