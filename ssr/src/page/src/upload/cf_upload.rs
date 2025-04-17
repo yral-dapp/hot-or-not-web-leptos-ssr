@@ -1,8 +1,8 @@
 use candid::Principal;
+// #[cfg(feature = "cloudflare")]
+// pub use cf_impl::publish_video;
 #[cfg(all(feature = "cloudflare", feature = "ssr"))]
 use cf_impl::server_func::*;
-#[cfg(feature = "cloudflare")]
-pub use cf_impl::{publish_video, upload_video_stream};
 use leptos::prelude::*;
 #[cfg(all(not(feature = "cloudflare"), feature = "ssr"))]
 use mock_impl::server_func::*;
@@ -44,10 +44,10 @@ pub async fn get_video_status(uid: String) -> Result<String, ServerFnError> {
 
 #[cfg(feature = "cloudflare")]
 mod cf_impl {
-    use leptos::prelude::ServerFnError;
-    use yral_canisters_client::individual_user_template::{PostDetailsFromFrontend, Result2};
+    // use leptos::prelude::ServerFnError;
+    // use yral_canisters_client::individual_user_template::Result2;
 
-    use yral_canisters_common::Canisters;
+    // use yral_canisters_common::Canisters;
 
     use super::UploadInfo;
 
@@ -103,47 +103,47 @@ mod cf_impl {
         }
     }
 
-    pub async fn upload_video_stream(
-        _upload_res: &UploadInfo,
-        _file: &gloo::file::File,
-    ) -> Result<(), gloo::net::Error> {
-        #[cfg(feature = "hydrate")]
-        {
-            use gloo::net::http::Request;
-            use leptos::web_sys::FormData;
-            let form = FormData::new().unwrap();
-            form.append_with_blob("file", _file.as_ref()).unwrap();
-            let req = Request::post(&_upload_res.upload_url).body(form).unwrap();
-            req.send().await?;
-        }
-        Ok(())
-    }
+    // pub async fn upload_video_stream(
+    //     _upload_res: &UploadInfo,
+    //     _file: &gloo::file::File,
+    // ) -> Result<(), gloo::net::Error> {
+    //     #[cfg(feature = "hydrate")]
+    //     {
+    //         use gloo::net::http::Request;
+    //         use leptos::web_sys::FormData;
+    //         let form = FormData::new().unwrap();
+    //         form.append_with_blob("file", _file.as_ref()).unwrap();
+    //         let req = Request::post(&_upload_res.upload_url).body(form).unwrap();
+    //         req.send().await?;
+    //     }
+    //     Ok(())
+    // }
 
-    pub async fn publish_video(
-        canisters: Canisters<true>,
-        hashtags: Vec<String>,
-        description: String,
-        uid: String,
-        enable_hot_or_not: bool,
-        is_nsfw: bool,
-    ) -> Result<u64, ServerFnError> {
-        let user = canisters.authenticated_user().await;
-        let res = user
-            .add_post_v_2(PostDetailsFromFrontend {
-                hashtags,
-                description,
-                video_uid: uid,
-                creator_consent_for_inclusion_in_hot_or_not: enable_hot_or_not,
-                is_nsfw,
-            })
-            .await?;
-        let post_id = match res {
-            Result2::Ok(p) => p,
-            Result2::Err(e) => return Err(ServerFnError::new(e)),
-        };
-        user.update_post_as_ready_to_view(post_id).await?;
-        Ok(post_id)
-    }
+    // pub async fn publish_video(
+    //     canisters: Canisters<true>,
+    //     hashtags: Vec<String>,
+    //     description: String,
+    //     uid: String,
+    //     enable_hot_or_not: bool,
+    //     is_nsfw: bool,
+    // ) -> Result<u64, ServerFnError> {
+    //     let user = canisters.authenticated_user().await;
+    //     let res = user
+    //         .add_post_v_2(PostDetailsFromFrontend {
+    //             hashtags,
+    //             description,
+    //             video_uid: uid,
+    //             creator_consent_for_inclusion_in_hot_or_not: enable_hot_or_not,
+    //             is_nsfw,
+    //         })
+    //         .await?;
+    //     let post_id = match res {
+    //         Result2::Ok(p) => p,
+    //         Result2::Err(e) => return Err(ServerFnError::new(e)),
+    //     };
+    //     user.update_post_as_ready_to_view(post_id).await?;
+    //     Ok(post_id)
+    // }
 }
 
 #[cfg(not(feature = "cloudflare"))]

@@ -1,11 +1,7 @@
-use super::{
-    cf_upload::{get_upload_info, get_video_status, publish_video, upload_video_stream},
-    UploadParams,
-};
+use super::UploadParams;
+use auth::delegate_short_lived_identity;
 use component::modal::Modal;
-use futures::StreamExt;
-use gloo::timers::future::IntervalStream;
-use ic_agent::Identity;
+use gloo::net::http::Request;
 use leptos::{
     ev::durationchange,
     html::{Input, Video},
@@ -13,6 +9,8 @@ use leptos::{
 };
 use leptos_icons::*;
 use leptos_use::use_event_listener;
+use serde::{Deserialize, Serialize};
+use serde_json::json;
 use state::canisters::authenticated_canisters;
 use utils::{
     event_streaming::events::{
@@ -22,9 +20,8 @@ use utils::{
     route::go_to_root,
     try_or_redirect_opt,
     web::FileWithUrl,
-    MockPartialEq,
 };
-use web_time::SystemTime;
+use web_sys::{Blob, FormData};
 use yral_canisters_common::Canisters;
 
 #[component]
@@ -42,7 +39,10 @@ pub fn DropBox() -> impl IntoView {
 }
 
 #[component]
-pub fn PreVideoUpload(file_blob: WriteSignal<Option<FileWithUrl>, LocalStorage>) -> impl IntoView {
+pub fn PreVideoUpload(
+    file_blob: RwSignal<Option<FileWithUrl>, LocalStorage>,
+    uid: RwSignal<String, LocalStorage>,
+) -> impl IntoView {
     let file_ref = NodeRef::<Input>::new();
     let file = RwSignal::new_local(None::<FileWithUrl>);
     let video_ref = NodeRef::<Video>::new();
@@ -66,6 +66,25 @@ pub fn PreVideoUpload(file_blob: WriteSignal<Option<FileWithUrl>, LocalStorage>)
         });
     }
 
+    let canister_store = auth_canisters_store();
+
+    let upload_action: Action<(), (), LocalStorage> = Action::new_local(move |_| async move {
+        let upload_base_url = "https://yral-upload-video.go-bazzinga.workers.dev";
+
+        let message = upload_video_part(
+            upload_base_url,
+            "file",
+            file_blob.get_untracked().unwrap().file.as_ref(),
+        )
+        .await
+        .inspect_err(|e| {
+            VideoUploadUnsuccessful.send_event(e.to_string(), 0, false, true, canister_store);
+        })
+        .unwrap();
+
+        uid.set(message.data.unwrap().uid.unwrap());
+    });
+
     _ = use_event_listener(video_ref, durationchange, move |_| {
         let duration = video_ref
             .get_untracked()
@@ -77,6 +96,7 @@ pub fn PreVideoUpload(file_blob: WriteSignal<Option<FileWithUrl>, LocalStorage>)
         if duration <= 60.0 || duration.is_nan() {
             modal_show.set(false);
             file_blob.set(Some(vid_file));
+            upload_action.dispatch(());
             return;
         }
 
@@ -150,9 +170,101 @@ pub fn ProgressItem(
         </Show>
     }
 }
+#[allow(dead_code)]
+#[derive(Deserialize, Debug, Clone)]
+pub struct Message {
+    pub message: Option<String>,
+    pub success: Option<bool>,
+    pub data: Option<Data>,
+}
+#[allow(dead_code)]
+#[derive(Deserialize, Debug, Clone)]
+pub struct Data {
+    #[serde(rename = "scheduledDeletion")]
+    pub scheduled_deletion: Option<String>,
+    pub uid: Option<String>,
+    #[serde(rename = "uploadURL")]
+    pub upload_url: Option<String>,
+    pub watermark: Option<Watermark>,
+}
+#[allow(dead_code)]
+#[derive(Deserialize, Debug, Clone)]
+pub struct Watermark {
+    pub created: Option<String>,
+    #[serde(rename = "downloadedFrom")]
+    pub downloaded_from: Option<String>,
+    pub height: Option<f64>,
+    pub name: Option<String>,
+    pub opacity: Option<f64>,
+    pub padding: Option<f64>,
+    pub position: Option<String>,
+    pub scale: Option<f64>,
+    pub size: Option<f64>,
+    pub uid: Option<String>,
+}
+#[allow(dead_code)]
+#[derive(Serialize, Debug)]
+pub struct VideoMetadata {
+    pub title: String,
+    pub description: String,
+    pub tags: String,
+}
+
+#[derive(Serialize, Debug)]
+pub struct SerializablePostDetailsFromFrontend {
+    pub is_nsfw: bool,
+    pub hashtags: Vec<String>,
+    pub description: String,
+    pub video_uid: String,
+    pub creator_consent_for_inclusion_in_hot_or_not: bool,
+}
+
+async fn upload_video_part(
+    upload_base_url: &str,
+    form_field_name: &str,
+    file_blob: &Blob,
+) -> Result<Message, ServerFnError> {
+    let get_url_endpoint = format!("{}/get_upload_url", upload_base_url);
+    let response = Request::get(&get_url_endpoint).send().await?;
+    if !response.ok() {
+        return Err(ServerFnError::new(format!(
+            "Failed to get upload URL: status {}",
+            response.status()
+        )));
+    }
+    let response_text = response.text().await?;
+    let upload_message: Message = serde_json::from_str(&response_text)
+        .map_err(|e| ServerFnError::new(format!("Failed to parse upload URL response: {}", e)))?;
+
+    let upload_url = upload_message
+        .data
+        .clone()
+        .and_then(|d| d.upload_url)
+        .ok_or_else(|| ServerFnError::new("Upload URL not found in response".to_string()))?;
+
+    let form = FormData::new().map_err(|js_value| {
+        ServerFnError::new(format!("Failed to create FormData: {:?}", js_value))
+    })?;
+    form.append_with_blob(form_field_name, file_blob)
+        .map_err(|js_value| {
+            ServerFnError::new(format!("Failed to append blob to FormData: {:?}", js_value))
+        })?;
+
+    let upload_response = Request::post(&upload_url).body(form)?.send().await?;
+
+    if !upload_response.ok() {
+        return Err(ServerFnError::new(format!(
+            "Upload request failed: status {} {}",
+            upload_response.status(),
+            upload_response.status_text()
+        )));
+    }
+
+    Ok(upload_message)
+}
 
 #[component]
-pub fn VideoUploader(params: UploadParams) -> impl IntoView {
+pub fn VideoUploader(params: UploadParams, uid: RwSignal<String, LocalStorage>) -> impl IntoView {
     let file_blob = params.file_blob;
     let hashtags = params.hashtags;
     let description = params.description;
@@ -161,112 +273,45 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
     let processing = RwSignal::new(true);
     let publishing = RwSignal::new(true);
     let video_url = StoredValue::new_local(file_blob.url);
-    let file_blob = file_blob.file.clone();
 
-    let up_hashtags = hashtags.clone();
-    let hashtags_len = hashtags.len();
     let is_nsfw = params.is_nsfw;
     let enable_hot_or_not = params.enable_hot_or_not;
     let canister_store = auth_canisters_store();
 
-    let up_desc = description.clone();
-
-    let upload_action = LocalResource::new(move || {
-        let cans = canister_store().map(MockPartialEq);
-        let hashtags = up_hashtags.clone();
-        let description = up_desc.clone();
-        let file_blob = file_blob.clone();
-        async move {
-            let cans = cans?.0;
-            let creator_principal = cans.identity().sender().unwrap();
-            let time_ms = SystemTime::now()
-                .duration_since(SystemTime::UNIX_EPOCH)
-                .unwrap()
-                .as_millis();
-
-            // TODO: authenticated call
-            let res = get_upload_info(
-                creator_principal,
-                hashtags,
-                description,
-                time_ms.to_string(),
-            )
-            .await;
-
-            if res.is_err() {
-                let e = res.as_ref().err().unwrap().to_string();
-                VideoUploadUnsuccessful.send_event(
-                    e,
-                    hashtags_len,
-                    is_nsfw,
-                    enable_hot_or_not,
-                    canister_store,
-                );
-            }
-
-            let upload_info = try_or_redirect_opt!(res);
-
-            let res = upload_video_stream(&upload_info, &file_blob).await;
-
-            if res.is_err() {
-                let e = res.as_ref().err().unwrap().to_string();
-                VideoUploadUnsuccessful.send_event(
-                    e,
-                    hashtags_len,
-                    is_nsfw,
-                    enable_hot_or_not,
-                    canister_store,
-                );
-            }
-
-            try_or_redirect_opt!(res);
-
-            uploading.set(false);
-
-            let mut check_status = IntervalStream::new(4000);
-            while (check_status.next().await).is_some() {
-                let uid = upload_info.uid.clone();
-                let res = get_video_status(uid).await;
-
-                if res.is_err() {
-                    let e = res.as_ref().err().unwrap().to_string();
-                    VideoUploadUnsuccessful.send_event(
-                        e,
-                        hashtags_len,
-                        is_nsfw,
-                        enable_hot_or_not,
-                        canister_store,
-                    );
-                }
-
-                let status = try_or_redirect_opt!(res);
-                if status == "ready" {
-                    break;
-                }
-            }
-            processing.set(false);
-
-            Some(upload_info.uid)
-        }
-    });
-
     let publish_action: Action<_, _, LocalStorage> =
-        Action::new_unsync(move |(canisters, uid): &(Canisters<true>, String)| {
+        Action::new_unsync(move |canisters: &Canisters<true>| {
             let canisters = canisters.clone();
             let hashtags = hashtags.clone();
             let hashtags_len = hashtags.len();
             let description = description.clone();
-            let uid = uid.clone();
+            let uid = uid.get_untracked();
             async move {
-                let res = publish_video(
-                    canisters,
-                    hashtags,
-                    description,
-                    uid.clone(),
-                    params.enable_hot_or_not,
-                    params.is_nsfw,
-                )
-                .await;
+                let upload_base_url = "https://yral-upload-video.go-bazzinga.workers.dev";
+                let id = canisters.identity();
+                let delegated_identity = delegate_short_lived_identity(id);
+                let res: std::result::Result<gloo::net::http::Response, ServerFnError> = {
+                    Request::post(&format!("{}/update_metadata", upload_base_url))
+                        .json(&json!({
+                            "video_uid": uid,
+                            "delegated_identity": delegated_identity,
+                            "meta": VideoMetadata{
+                                title: description.clone(),
+                                description: description.clone(),
+                                tags: hashtags.join(",")
+                            },
+                            "post_details": SerializablePostDetailsFromFrontend{
+                                is_nsfw,
+                                hashtags,
+                                description,
+                                video_uid: uid.clone(),
+                                creator_consent_for_inclusion_in_hot_or_not: enable_hot_or_not,
+                            }
+                        }))
+                        .unwrap()
+                        .send()
+                        .await
+                        .map_err(|e| ServerFnError::new(format!("Failed to send request: {:?}", e)))
+                };
 
                 if res.is_err() {
                     let e = res.as_ref().err().unwrap().to_string();
@@ -283,13 +328,12 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
 
                 publishing.set(false);
 
-                let post_id = res.unwrap();
                 VideoUploadSuccessful.send_event(
                     uid,
                     hashtags_len,
                     is_nsfw,
                     enable_hot_or_not,
-                    post_id,
+                    0,
                     canister_store,
                 );
 
@@ -321,10 +365,9 @@ pub fn VideoUploader(params: UploadParams) -> impl IntoView {
                 <ProgressItem initial_text="Publishing" done_text="Published" loading=publishing />
                 <Suspense>
                     {move || {
-                        let uid = upload_action.get().map(|a| a.take())??;
                         let cans_wire = cans_res.get()?.ok()?;
                         let canisters = Canisters::from_wire(cans_wire, expect_context()).ok()?;
-                        publish_action.dispatch((canisters, uid));
+                        publish_action.dispatch(canisters);
                         Some(())
                     }}
 
