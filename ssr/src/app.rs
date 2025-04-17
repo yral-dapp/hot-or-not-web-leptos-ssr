@@ -41,6 +41,15 @@ use utils::event_streaming::EventHistory;
 use yral_canisters_common::Canisters;
 
 #[component]
+fn GoogleTagManager() -> impl IntoView {
+    view! {
+        <div>
+            <div inner_html=r#"<iframe src="https://www.googletagmanager.com/ns.html?id=GTM-MNBWSPVJ" height="0" width="0" style="display:none;visibility:hidden"></iframe>"#></div>
+        </div>
+    }
+}
+
+#[component]
 fn NotFound() -> impl IntoView {
     let mut outside_errors = Errors::default();
     outside_errors.insert_with_default_key(AppError::NotFound);
@@ -113,7 +122,7 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
                 </Script>
             </head>
             <body>
-                <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-MNBWSPVJ" height="0" width="0" style="display:none;visibility:hidden"></iframe>
+                <GoogleTagManager/>
                 <App/>
             </body>
         </html>
