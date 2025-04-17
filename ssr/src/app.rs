@@ -98,7 +98,7 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
                 <HashedStylesheet id="leptos" options=options.clone()/>
                 <HydrationScripts options/>
                 <MetaTags/>
-                <Script>
+                <Script async_="true">
                     {r#"
                     (function(w,d,s,l,i){
                         w[l]=w[l]||[];
