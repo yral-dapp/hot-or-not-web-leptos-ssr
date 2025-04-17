@@ -126,7 +126,7 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
             <head>
                 <meta charset="utf-8"/>
                 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-                // GTM script - similar to the React example
+                // GTM script is always included since it doesn't affect the DOM structure
                 <script async type="text/javascript" inner_html=r#"
                     (function(w,d,s,l,i){
                         w[l]=w[l]||[];
@@ -144,8 +144,34 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
                 <MetaTags/>
             </head>
             <body>
-                // GTM iframe - using inner_html to avoid hydration issues
-                <div inner_html=r#"<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-MNBWSPVJ" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>"#></div>
+                // Only include placeholder div for server rendering
+                #[cfg(not(feature = "hydrate"))]
+                <div id="gtm-noscript-placeholder"></div>
+                
+                // Only include client-side script for hydration
+                #[cfg(feature = "hydrate")]
+                <script type="text/javascript" inner_html=r#"
+                    // Execute immediately after page load
+                    (function() {
+                        var noscript = document.createElement('noscript');
+                        var iframe = document.createElement('iframe');
+                        iframe.src = "https://www.googletagmanager.com/ns.html?id=GTM-MNBWSPVJ";
+                        iframe.height = "0";
+                        iframe.width = "0";
+                        iframe.style.display = "none";
+                        iframe.style.visibility = "hidden";
+                        noscript.appendChild(iframe);
+                        
+                        // Replace the placeholder or insert at beginning
+                        var placeholder = document.getElementById('gtm-noscript-placeholder');
+                        if (placeholder) {
+                            placeholder.parentNode.replaceChild(noscript, placeholder);
+                        } else {
+                            document.body.insertBefore(noscript, document.body.firstChild);
+                        }
+                    })();
+                "#></script>
+                
                 <App/>
             </body>
         </html>
