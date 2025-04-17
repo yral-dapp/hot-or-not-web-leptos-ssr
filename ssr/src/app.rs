@@ -147,10 +147,11 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
                 // Only include placeholder div for server rendering
                 #[cfg(not(feature = "hydrate"))]
                 <div id="gtm-noscript-placeholder"></div>
-                
+
                 // Only include client-side script for hydration
                 #[cfg(feature = "hydrate")]
-                <script type="text/javascript" inner_html=r#"
+                <Script>
+                    {r#"
                     // Execute immediately after page load
                     (function() {
                         var noscript = document.createElement('noscript');
@@ -170,8 +171,9 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
                             document.body.insertBefore(noscript, document.body.firstChild);
                         }
                     })();
-                "#></script>
-                
+                    "#}
+                </Script>
+
                 <App/>
             </body>
         </html>
