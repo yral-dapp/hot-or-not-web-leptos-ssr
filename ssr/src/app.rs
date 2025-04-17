@@ -40,38 +40,6 @@ use utils::event_streaming::events::HistoryCtx;
 use utils::event_streaming::EventHistory;
 use yral_canisters_common::Canisters;
 
-// #[component]
-// fn GoogleTagManager() -> impl IntoView {
-//     // Only run the script on the client side after hydration
-//     view! {
-//         <div id="gtm-container"></div>
-//         <Script>
-//             {r#"
-//             // Wait for hydration to complete
-//             document.addEventListener("DOMContentLoaded", function() {
-//                 // Insert GTM iframe
-//                 const noscript = document.createElement('noscript');
-//                 const iframe = document.createElement('iframe');
-//                 iframe.src = "https://www.googletagmanager.com/ns.html?id=GTM-MNBWSPVJ";
-//                 iframe.height = "0";
-//                 iframe.width = "0";
-//                 iframe.style.display = "none";
-//                 iframe.style.visibility = "hidden";
-//                 noscript.appendChild(iframe);
-
-//                 // Insert at the beginning of body
-//                 const body = document.body;
-//                 if (body.firstChild) {
-//                     body.insertBefore(noscript, body.firstChild);
-//                 } else {
-//                     body.appendChild(noscript);
-//                 }
-//             });
-//             "#}
-//         </Script>
-//     }
-// }
-
 #[component]
 fn NotFound() -> impl IntoView {
     let mut outside_errors = Errors::default();
@@ -126,8 +94,8 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
             <head>
                 <meta charset="utf-8"/>
                 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-                // GTM script is always included since it doesn't affect the DOM structure
-                <script async type="text/javascript" inner_html=r#"
+                <Script async_="true">
+                    {r#"
                     (function(w,d,s,l,i){
                         w[l]=w[l]||[];
                         w[l].push({'gtm.start': new Date().getTime(),event:'gtm.js'});
@@ -137,43 +105,14 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
                         j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;
                         f.parentNode.insertBefore(j,f);
                     })(window,document,'script','dataLayer','GTM-MNBWSPVJ');
-                "#></script>
+                    "#}
+                </Script>
                 <AutoReload options=options.clone() />
                 <HashedStylesheet id="leptos" options=options.clone()/>
                 <HydrationScripts options/>
                 <MetaTags/>
             </head>
             <body>
-                // Only include placeholder div for server rendering
-                #[cfg(not(feature = "hydrate"))]
-                <div id="gtm-noscript-placeholder"></div>
-
-                // Only include client-side script for hydration
-                #[cfg(feature = "hydrate")]
-                <Script>
-                    {r#"
-                    // Execute immediately after page load
-                    (function() {
-                        var noscript = document.createElement('noscript');
-                        var iframe = document.createElement('iframe');
-                        iframe.src = "https://www.googletagmanager.com/ns.html?id=GTM-MNBWSPVJ";
-                        iframe.height = "0";
-                        iframe.width = "0";
-                        iframe.style.display = "none";
-                        iframe.style.visibility = "hidden";
-                        noscript.appendChild(iframe);
-                        
-                        // Replace the placeholder or insert at beginning
-                        var placeholder = document.getElementById('gtm-noscript-placeholder');
-                        if (placeholder) {
-                            placeholder.parentNode.replaceChild(noscript, placeholder);
-                        } else {
-                            document.body.insertBefore(noscript, document.body.firstChild);
-                        }
-                    })();
-                    "#}
-                </Script>
-
                 <App/>
             </body>
         </html>
