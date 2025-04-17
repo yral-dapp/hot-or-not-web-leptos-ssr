@@ -2,6 +2,7 @@ use super::UploadParams;
 use auth::delegate_short_lived_identity;
 use component::modal::Modal;
 use gloo::net::http::Request;
+use leptos::web_sys::{Blob, FormData};
 use leptos::{
     ev::durationchange,
     html::{Input, Video},
@@ -21,7 +22,6 @@ use utils::{
     try_or_redirect_opt,
     web::FileWithUrl,
 };
-use leptos::web_sys::{Blob, FormData};
 use yral_canisters_common::Canisters;
 
 #[component]
