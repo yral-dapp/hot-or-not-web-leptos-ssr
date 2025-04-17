@@ -21,7 +21,7 @@ use utils::{
     try_or_redirect_opt,
     web::FileWithUrl,
 };
-use web_sys::{Blob, FormData};
+use leptos::web_sys::{Blob, FormData};
 use yral_canisters_common::Canisters;
 
 #[component]
