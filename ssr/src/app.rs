@@ -58,7 +58,7 @@ use yral_canisters_common::Canisters;
 //                 iframe.style.display = "none";
 //                 iframe.style.visibility = "hidden";
 //                 noscript.appendChild(iframe);
-                
+
 //                 // Insert at the beginning of body
 //                 const body = document.body;
 //                 if (body.firstChild) {
