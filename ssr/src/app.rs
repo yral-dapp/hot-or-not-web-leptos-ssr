@@ -42,10 +42,33 @@ use yral_canisters_common::Canisters;
 
 #[component]
 fn GoogleTagManager() -> impl IntoView {
+    // Only run the script on the client side after hydration
     view! {
-        <div>
-            <div inner_html=r#"<iframe src="https://www.googletagmanager.com/ns.html?id=GTM-MNBWSPVJ" height="0" width="0" style="display:none;visibility:hidden"></iframe>"#></div>
-        </div>
+        <div id="gtm-container"></div>
+        <Script>
+            {r#"
+            // Wait for hydration to complete
+            document.addEventListener("DOMContentLoaded", function() {
+                // Insert GTM iframe
+                const noscript = document.createElement('noscript');
+                const iframe = document.createElement('iframe');
+                iframe.src = "https://www.googletagmanager.com/ns.html?id=GTM-MNBWSPVJ";
+                iframe.height = "0";
+                iframe.width = "0";
+                iframe.style.display = "none";
+                iframe.style.visibility = "hidden";
+                noscript.appendChild(iframe);
+                
+                // Insert at the beginning of body
+                const body = document.body;
+                if (body.firstChild) {
+                    body.insertBefore(noscript, body.firstChild);
+                } else {
+                    body.appendChild(noscript);
+                }
+            });
+            "#}
+        </Script>
     }
 }
 
