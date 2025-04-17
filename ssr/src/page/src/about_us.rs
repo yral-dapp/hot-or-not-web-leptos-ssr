@@ -20,44 +20,43 @@ pub fn AboutUs() -> impl IntoView {
                     <div></div>
                 </div>
             </TitleText>
-            <div class="px-8 flex h-full w-full flex-col space-y-8 overflow-hidden overflow-y-auto py-16">
-                <div class="text-xs whitespace-pre-line">
+            <div class="px-8 md:px-16 flex h-full w-full flex-col overflow-hidden overflow-y-auto max-w-5xl mx-auto">
+                <div class="text-xs md:text-base whitespace-pre-line text-left md:text-center mb-6">
                     {"Yral is a short video-sharing platform built on the Internet Computer Protocol (ICP) blockchain, powered by Rust. The platform merges social media entertainment with user monetization, letting users earn COYN tokens by interacting with content. We aim to create a social platform where users receive financial rewards for their engagement. Through various skill-based games, users can earn rewards while engaging with creators' content."}
                 </div>
 
-                <div class="text-xs whitespace-pre-line">
+                <div class="text-xs md:text-base whitespace-pre-line text-left md:text-center mb-6">
                     {"Most Yral data is stored on the blockchain, except for videos and profile pictures which are hosted on Cloudflare. As technology advances, we plan to move all storage onto the blockchain. Yral tackles the common problems of monetization and centralization found in traditional social media by creating a fair and transparent system."}
                 </div>
 
-                <div class="text-xs whitespace-pre-line">
+                <div class="text-xs md:text-base whitespace-pre-line text-left md:text-center mb-6">
                     {"Users can upload 60-second videos, interact with content, personalize their profiles, grow their communities, and enjoy customized content feeds. Using blockchain technology, Yral ensures users maintain control over their data, supporting Web3 principles of privacy and data ownership."}
                 </div>
 
-                <div class="text-xs whitespace-pre-line">
+                <div class="text-xs md:text-base whitespace-pre-line text-left md:text-center mb-8">
                     {"Yral is operated by HotorNot (HON) GmbH."}
                 </div>
 
-                <div class="flex flex-col space-y-2">
-                    <div class="text-sm font-semibold">Our Leadership</div>
-                    <div class="text-xs">
-                        <div class="flex flex-col space-y-4">
-                            <div class="bg-neutral-900 rounded-lg p-4">
-                                <div class="font-semibold">Rishi Chadha</div>
-                                <div class="text-gray-400">CEO & Co-Founder</div>
-                                <div class="mt-2">A serial entrepreneur with global experience across 35+ countries, leading our vision for decentralized social media.</div>
-                            </div>
+                <div class="flex flex-col space-y-4 mb-12">
+                    <div class="text-sm md:text-lg font-semibold md:text-center mb-6">Our Leadership</div>
 
-                            <div class="bg-neutral-900 rounded-lg p-4">
-                                <div class="font-semibold">Saikat Das</div>
-                                <div class="text-gray-400">CTO & Co-Founder</div>
-                                <div class="mt-2">Tech innovator specializing in Rust programming, blockchain, and AI, driving our technological advancement.</div>
-                            </div>
+                    <div class="flex flex-col md:flex-row gap-4">
+                        <div class="bg-neutral-900 rounded-lg p-4 flex-1">
+                            <div class="font-semibold">Rishi Chadha</div>
+                            <div class="text-gray-400">CEO & Co-Founder</div>
+                            <div class="mt-2 text-xs md:text-sm">A serial entrepreneur with global experience across 35+ countries, leading our vision for decentralized social media.</div>
+                        </div>
 
-                            <div class="bg-neutral-900 rounded-lg p-4">
-                                <div class="font-semibold">Utkarsh Goyal</div>
-                                <div class="text-gray-400">CFO & Co-Founder</div>
-                                <div class="mt-2">Financial strategist with an MBA, overseeing operations and ensuring sustainable growth.</div>
-                            </div>
+                        <div class="bg-neutral-900 rounded-lg p-4 flex-1">
+                            <div class="font-semibold">Saikat Das</div>
+                            <div class="text-gray-400">CTO & Co-Founder</div>
+                            <div class="mt-2 text-xs md:text-sm">Tech innovator specializing in Rust programming, blockchain, and AI, driving our technological advancement.</div>
+                        </div>
+
+                        <div class="bg-neutral-900 rounded-lg p-4 flex-1">
+                            <div class="font-semibold">Utkarsh Goyal</div>
+                            <div class="text-gray-400">CFO & Co-Founder</div>
+                            <div class="mt-2 text-xs md:text-sm">Financial strategist with an MBA, overseeing operations and ensuring sustainable growth.</div>
                         </div>
                     </div>
                 </div>
